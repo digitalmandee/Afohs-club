@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create Super Admin
-        $superAdmin = User::create([
+        $superAdmin = User::factory()->create([
             'name' => 'Super Admin',
             'email' => 'superadmin@gmail.com',
             'password' => bcrypt('12345678'),
