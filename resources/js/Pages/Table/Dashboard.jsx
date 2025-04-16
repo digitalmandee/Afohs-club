@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from 'react';
 import SideNav from "@/Components/SideBar/SideNav";
+import { DndProvider, useDrag, useDrop } from "react-dnd"
+import { HTML5Backend } from "react-dnd-html5-backend"
+import update from "immutability-helper"
+import TableSetting from "./Setting";
+import AddReservation from './Action';
 import {
     Box,
+    Modal,
     Typography,
     IconButton,
     Button,
@@ -22,6 +28,109 @@ import Table1Icon from "@/Components/Icons/Table1";
 import TableIcon from "@/Components/Icons/BTable";
 import Table2Icon from "@/Components/Icons/CTable";
 
+const ItemTypes = {
+    TABLE: "table",
+}
+
+// DraggableTable component
+const DraggableTable = ({
+    id,
+    tableNumber,
+    width,
+    height,
+    tableIcon: TableComponent,
+    fill,
+    reservation,
+    index,
+    moveTable,
+    onClick
+}) => {
+    // Set up drag functionality
+    const [{ isDragging }, drag] = useDrag(() => ({
+        type: ItemTypes.TABLE,
+        item: { id, index },
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging(),
+        }),
+    }))
+
+    // Set up drop functionality
+    const [, drop] = useDrop(
+        () => ({
+            accept: ItemTypes.TABLE,
+            hover: (draggedItem) => {
+                if (draggedItem.id !== id) {
+                    moveTable(draggedItem.index, index)
+                    // Update the index in the dragged item to reflect its new position
+                    draggedItem.index = index
+                }
+            },
+        }),
+        [id, index, moveTable],
+    )
+
+    // Determine text color based on reservation status
+    const getTextColor = () => {
+        if (fill === "#d1fae5") return "#059669"
+        if (fill === "#cfe7ff") return "#3b82f6"
+        return "#6b7280"
+    }
+
+    return (
+        <Box
+            onClick={onClick}
+            ref={(node) => drag(drop(node))}
+            sx={{
+                width,
+                height,
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                opacity: isDragging ? 0.5 : 1,
+                cursor: "move",
+                transition: "all 0.2s",
+                "&:hover": {
+                    transform: "scale(1.02)",
+                },
+            }}
+        >
+            <TableComponent
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    bgcolor: fill,
+                }}
+            />
+            <Box
+                sx={{
+                    position: "absolute",
+                    zIndex: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+            >
+                <Typography variant="body2" sx={{ fontWeight: "medium", color: getTextColor() }}>
+                    {tableNumber}
+                </Typography>
+                {reservation && (
+                    <>
+                        <Typography variant="caption" sx={{ color: getTextColor(), fontWeight: "medium" }}>
+                            #{reservation.id}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "#6b7280", fontSize: "0.65rem" }}>
+                            {reservation.customer}
+                        </Typography>
+                    </>
+                )}
+            </Box>
+        </Box>
+    )
+}
+
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
@@ -29,6 +138,153 @@ const TableManagement = () => {
     const [open, setOpen] = useState(false);
     const [selectedFloor, setSelectedFloor] = useState(1);
     const [selectedDate, setSelectedDate] = useState(7);
+    const [openSettings, setOpenSettings] = useState(false)
+    const [openReservation, setOpenReservation] = useState(false);
+    const [selectedTable, setSelectedTable] = useState(null);
+    const [tables, setTables] = useState([
+        // First row
+        {
+            id: "1",
+            tableNumber: "T12",
+            width: 130,
+            height: 120,
+            tableIcon: Table1Icon,
+            fill: "white",
+        },
+        {
+            id: "2",
+            tableNumber: "T13",
+            width: 130,
+            height: 120,
+            tableIcon: Table1Icon,
+            fill: "white",
+        },
+        {
+            id: "3",
+            tableNumber: "T14",
+            width: 130,
+            height: 120,
+            tableIcon: Table1Icon,
+            fill: "#cfe7ff",
+            reservation: {
+                id: "RSV002",
+                customer: "Hanna Rose",
+            },
+        },
+        {
+            id: "4",
+            tableNumber: "T15",
+            width: 130,
+            height: 120,
+            tableIcon: Table1Icon,
+            fill: "white",
+        },
+        {
+            id: "5",
+            tableNumber: "T16",
+            width: 220,
+            height: 120,
+            tableIcon: TableIcon,
+            fill: "#cfe7ff",
+            reservation: {
+                id: "RSV012",
+                customer: "Ahman Maulana",
+            },
+        },
+        // Second row
+        {
+            id: "6",
+            tableNumber: "T17",
+            width: 230,
+            height: 120,
+            tableIcon: Table2Icon,
+            fill: "white",
+            row: 2,
+        },
+        {
+            id: "7",
+            tableNumber: "T18",
+            width: 230,
+            height: 120,
+            tableIcon: Table2Icon,
+            fill: "white",
+            row: 2,
+        },
+        {
+            id: "8",
+            tableNumber: "T19",
+            width: 230,
+            height: 120,
+            tableIcon: Table2Icon,
+            fill: "#d1fae5",
+            reservation: {
+                id: "RSV003",
+                customer: "John Doe",
+            },
+            row: 2,
+        },
+        // Third row
+        {
+            id: "9",
+            tableNumber: "T20",
+            width: 230,
+            height: 120,
+            tableIcon: Table2Icon,
+            fill: "white",
+            row: 3,
+        },
+        {
+            id: "10",
+            tableNumber: "T21",
+            width: 230,
+            height: 120,
+            tableIcon: Table2Icon,
+            fill: "white",
+            row: 3,
+        },
+        {
+            id: "11",
+            tableNumber: "T22",
+            width: 230,
+            height: 120,
+            tableIcon: Table2Icon,
+            fill: "#d1fae5",
+            reservation: {
+                id: "RSV004",
+                customer: "Jane Smith",
+            },
+            row: 3,
+        },
+    ])
+
+    const handleOpenReservation = (table) => {
+        setSelectedTable(table);
+        setOpenReservation(true);
+    };
+
+    const handleCloseReservation = () => {
+        setOpenReservation(false);
+        setSelectedTable(null);
+    };
+
+    const moveTable = useCallback((dragIndex, hoverIndex) => {
+        setTables((prevTables) =>
+            update(prevTables, {
+                $splice: [
+                    [dragIndex, 1],
+                    [hoverIndex, 0, prevTables[dragIndex]],
+                ],
+            }),
+        )
+    }, [])
+
+    // Group tables by row
+    const firstRowTables = tables.slice(0, 5)
+    const secondRowTables = tables.slice(5, 8)
+    const thirdRowTables = tables.slice(8, 11)
+
+    const handleOpenSettings = () => setOpenSettings(true);
+    const handleCloseSettings = () => setOpenSettings(false);
 
     const handleFloorChange = (event, newValue) => {
         setSelectedFloor(newValue);
@@ -54,143 +310,6 @@ const TableManagement = () => {
         { id: 0, name: "Floor 1", area: "Indoor Area", capacity: "62-Person" },
         { id: 1, name: "Floor 1", area: "Outdoor Area", capacity: "62-Person" },
         { id: 2, name: "Floor 2", area: "Indoor Area", capacity: "50-Person" },
-    ];
-
-    // Table data
-    const tables = [
-        {
-            id: "T12",
-            x: 148,
-            y: 180,
-            width: 80,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T13",
-            x: 265,
-            y: 180,
-            width: 80,
-            height: 60,
-            status: "reserved",
-            reservation: { number: "#RSV002", name: "Hanna Rose" },
-        },
-        {
-            id: "T14",
-            x: 370,
-            y: 180,
-            width: 80,
-            height: 60,
-            status: "reserved",
-            reservation: { number: "#RSV002", name: "Hanna Rose" },
-        },
-        {
-            id: "T15",
-            x: 475,
-            y: 180,
-            width: 80,
-            height: 60,
-            status: "reserved",
-            reservation: { number: "#RSV002", name: "Hanna Rose" },
-        },
-        {
-            id: "T16",
-            x: 630,
-            y: 180,
-            width: 80,
-            height: 60,
-            status: "reserved",
-            reservation: { number: "#RSV012", name: "Ammar Maulana" },
-        },
-        {
-            id: "T11",
-            x: 148,
-            y: 290,
-            width: 170,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T10",
-            x: 370,
-            y: 290,
-            width: 170,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T9",
-            x: 590,
-            y: 290,
-            width: 170,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T6",
-            x: 148,
-            y: 380,
-            width: 170,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T7",
-            x: 370,
-            y: 380,
-            width: 170,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T8",
-            x: 590,
-            y: 380,
-            width: 170,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T5",
-            x: 148,
-            y: 480,
-            width: 80,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T4",
-            x: 265,
-            y: 480,
-            width: 80,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T3",
-            x: 370,
-            y: 480,
-            width: 80,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T2",
-            x: 475,
-            y: 480,
-            width: 80,
-            height: 60,
-            status: "available",
-        },
-        {
-            id: "T1",
-            x: 630,
-            y: 430,
-            width: 80,
-            height: 60,
-            status: "available",
-        },
-        { id: "BAR", x: 720, y: 380, width: 30, height: 150, status: "fixed" },
     ];
 
     return (
@@ -252,6 +371,7 @@ const TableManagement = () => {
                             <Button
                                 variant="outlined"
                                 startIcon={<Settings />}
+                                onClick={handleOpenSettings}
                                 sx={{
                                     border: "1px solid #3F4E4F",
                                     color: "#3F4E4F",
@@ -264,6 +384,24 @@ const TableManagement = () => {
                                 Table Settings
                             </Button>
                         </Box>
+                        <Modal open={openSettings} onClose={handleCloseSettings}>
+                            <Box
+                                sx={{
+                                    position: "fixed",
+                                    top: 5,
+                                    bottom: 5,
+                                    right: 10,
+                                    bgcolor: "#FFFFFF",
+                                    boxShadow: 24,
+                                    // p: 4,
+                                    borderRadius: 2,
+                                    width: 400,
+                                    overflowY: "hidden", // Enables scrolling if content overflows
+                                }}
+                            >
+                                <TableSetting />
+                            </Box>
+                        </Modal>
                     </Box>
 
                     {/* Main Content */}
@@ -613,596 +751,140 @@ const TableManagement = () => {
                             </Box>
 
                             {/* Floor Plan */}
-                            <Box
-                                sx={{
-                                    flexGrow: 1,
-                                    bgcolor: "#3F4E4F",
-                                    position: "relative",
-                                    // mt: -5,
-                                    overflow: "auto",
-                                    height: "100%",
-                                    minHeight: 500,
-                                }}
-                            >
-                                {/* First row of tables - stretched and aligned */}
+                            <DndProvider backend={HTML5Backend}>
                                 <Box
                                     sx={{
-                                        position: "absolute",
-                                        top: 10,
-                                        left: 0,
-                                        right: 0,
-                                        display: "flex",
-                                        justifyContent: "space-around",
-                                        // px: 1,
-                                        width: "100%",
-                                        gap: "10px",
+                                        flexGrow: 1,
+                                        bgcolor: "#3F4E4F",
+                                        position: "relative",
+                                        overflow: "auto",
+                                        height: "100%",
+                                        minHeight: 500,
                                     }}
                                 >
-                                    {/* Table T12 */}
+                                    {/* First row of tables */}
                                     <Box
                                         sx={{
-                                            width: 130,
-                                            height: 120,
-                                            position: "relative",
+                                            position: "absolute",
+                                            top: 10,
+                                            left: 0,
+                                            right: 0,
                                             display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
+                                            justifyContent: "space-around",
+                                            width: "100%",
+                                            gap: "10px",
                                         }}
                                     >
-                                        <Table1Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "white",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#6b7280",
-                                                }}
-                                            >
-                                                T12
-                                            </Typography>
-                                        </Box>
+                                        {firstRowTables.map((table, index) => (
+                                            <DraggableTable
+                                                key={table.id}
+                                                id={table.id}
+                                                index={index}
+                                                tableNumber={table.tableNumber}
+                                                width={table.width}
+                                                height={table.height}
+                                                tableIcon={table.tableIcon}
+                                                fill={table.fill}
+                                                reservation={table.reservation}
+                                                moveTable={moveTable}
+                                                onClick={() => handleOpenReservation(table)}
+                                            />
+                                        ))}
+
                                     </Box>
 
-                                    {/* Table T13 */}
+                                    {/* Second row of tables */}
                                     <Box
                                         sx={{
-                                            width: 130,
-                                            height: 120,
-                                            position: "relative",
+                                            position: "absolute",
+                                            top: 190,
+                                            left: 0,
+                                            right: 0,
                                             display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
+                                            justifyContent: "space-around",
+                                            width: "80%",
                                         }}
                                     >
-                                        <Table1Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "white",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#6b7280",
-                                                }}
-                                            >
-                                                T13
-                                            </Typography>
-                                        </Box>
+                                        {secondRowTables.map((table, index) => (
+                                            <DraggableTable
+                                                key={table.id}
+                                                id={table.id}
+                                                index={index + firstRowTables.length}
+                                                tableNumber={table.tableNumber}
+                                                width={table.width}
+                                                height={table.height}
+                                                tableIcon={table.tableIcon}
+                                                fill={table.fill}
+                                                reservation={table.reservation}
+                                                moveTable={moveTable}
+                                                onClick={() => handleOpenReservation(table)}
+                                            />
+                                        ))}
                                     </Box>
 
-                                    {/* Table T14 - Reserved */}
+                                    {/* Third row of tables */}
                                     <Box
                                         sx={{
-                                            width: 130,
-                                            height: 120,
-                                            position: "relative",
+                                            position: "absolute",
+                                            top: 360,
+                                            left: 0,
+                                            right: 0,
                                             display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
+                                            justifyContent: "space-around",
+                                            width: "80%",
                                         }}
                                     >
-                                        <Table1Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "#d1fae5",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#059669",
-                                                }}
-                                            >
-                                                T14
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: "#059669",
-                                                    fontWeight: "medium",
-                                                }}
-                                            >
-                                                #RSV002
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: "#6b7280",
-                                                    fontSize: "0.65rem",
-                                                }}
-                                            >
-                                                Hanna Rose
-                                            </Typography>
-                                        </Box>
+                                        {thirdRowTables.map((table, index) => (
+                                            <DraggableTable
+                                                key={table.id}
+                                                id={table.id}
+                                                index={index + firstRowTables.length + secondRowTables.length}
+                                                tableNumber={table.tableNumber}
+                                                width={table.width}
+                                                height={table.height}
+                                                tableIcon={table.tableIcon}
+                                                fill={table.fill}
+                                                reservation={table.reservation}
+                                                moveTable={moveTable}
+                                                onClick={() => handleOpenReservation(table)}
+                                            />
+                                        ))}
                                     </Box>
 
-                                    {/* Table T15 */}
+                                    {/* Bar/Counter */}
                                     <Box
                                         sx={{
-                                            width: 130,
-                                            height: 120,
-                                            position: "relative",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
+                                            position: "absolute",
+                                            right: 40,
+                                            top: 380,
+                                            width: 30,
+                                            height: 150,
+                                            bgcolor: "#e5e7eb",
+                                            borderRadius: 1,
                                         }}
-                                    >
-                                        <Table1Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "white",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#6b7280",
-                                                }}
-                                            >
-                                                T15
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    {/* Table T16 - Reserved (wider) */}
-                                    <Box
-                                        sx={{
-                                            width: 220,
-                                            height: 120,
-                                            position: "relative",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <TableIcon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "#cfe7ff",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#3b82f6",
-                                                }}
-                                            >
-                                                T16
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: "#3b82f6",
-                                                    fontWeight: "medium",
-                                                }}
-                                            >
-                                                #RSV012
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: "#6b7280",
-                                                    fontSize: "0.65rem",
-                                                }}
-                                            >
-                                                Ahman Maulana
-                                            </Typography>
-                                        </Box>
-                                    </Box>
+                                    />
                                 </Box>
-
-                                {/* Rest of the tables would go here */}
-                                <Box
-                                    sx={{
-                                        position: "absolute",
-                                        top: 190,
-                                        left: 0,
-                                        right: 0,
-                                        display: "flex",
-                                        justifyContent: "space-around",
-                                        // px: 1,
-                                        width: "80%",
-                                        // gap: '10px'
-                                    }}
-                                >
-                                    {/* Table T12 */}
+                                <Modal open={openReservation} onClose={handleCloseReservation}>
                                     <Box
                                         sx={{
-                                            width: 230,
-                                            height: 120,
-                                            position: "relative",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
+                                            position: "absolute",
+                                            top: "50%",
+                                            left: "50%",
+                                            transform: "translate(-50%, -50%)",
+                                            bgcolor: "white",
+                                            borderRadius: 2,
+                                            boxShadow: 24,
+                                            p: 3,
+                                            maxWidth: 600,
+                                            width: "90%",
+                                            maxHeight: "90vh",
+                                            overflow: "auto", // or remove if you want to hide scroll
                                         }}
                                     >
-                                        <Table2Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "white",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#6b7280",
-                                                }}
-                                            >
-                                                T12
-                                            </Typography>
-                                        </Box>
+                                        <AddReservation table={selectedTable} onClose={handleCloseReservation} />
                                     </Box>
-
-                                    {/* Table T13 */}
-                                    <Box
-                                        sx={{
-                                            width: 230,
-                                            height: 120,
-                                            position: "relative",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <Table2Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "white",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#6b7280",
-                                                }}
-                                            >
-                                                T13
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    {/* Table T14 - Reserved */}
-                                    <Box
-                                        sx={{
-                                            width: 230,
-                                            height: 120,
-                                            position: "relative",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <Table2Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "#d1fae5",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#059669",
-                                                }}
-                                            >
-                                                T14
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: "#059669",
-                                                    fontWeight: "medium",
-                                                }}
-                                            >
-                                                #RSV002
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: "#6b7280",
-                                                    fontSize: "0.65rem",
-                                                }}
-                                            >
-                                                Hanna Rose
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                </Box>
-
-                                <Box
-                                    sx={{
-                                        position: "absolute",
-                                        top: 360,
-                                        left: 0,
-                                        right: 0,
-                                        display: "flex",
-                                        justifyContent: "space-around",
-                                        // px: 1,
-                                        width: "80%",
-                                        // gap: '10px'
-                                    }}
-                                >
-                                    {/* Table T12 */}
-                                    <Box
-                                        sx={{
-                                            width: 230,
-                                            height: 120,
-                                            position: "relative",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <Table2Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "white",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#6b7280",
-                                                }}
-                                            >
-                                                T12
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    {/* Table T13 */}
-                                    <Box
-                                        sx={{
-                                            width: 230,
-                                            height: 120,
-                                            position: "relative",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <Table2Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "white",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#6b7280",
-                                                }}
-                                            >
-                                                T13
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    {/* Table T14 - Reserved */}
-                                    <Box
-                                        sx={{
-                                            width: 230,
-                                            height: 120,
-                                            position: "relative",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <Table2Icon
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                fill: "#d1fae5",
-                                            }}
-                                        />
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                zIndex: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    fontWeight: "medium",
-                                                    color: "#059669",
-                                                }}
-                                            >
-                                                T14
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: "#059669",
-                                                    fontWeight: "medium",
-                                                }}
-                                            >
-                                                #RSV002
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: "#6b7280",
-                                                    fontSize: "0.65rem",
-                                                }}
-                                            >
-                                                Hanna Rose
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                </Box>
-                                {/* Bar/Counter */}
-                                <Box
-                                    sx={{
-                                        position: "absolute",
-                                        right: 40,
-                                        top: 380,
-                                        width: 30,
-                                        height: 150,
-                                        bgcolor: "#e5e7eb",
-                                        borderRadius: 1,
-                                    }}
-                                />
-                            </Box>
+                                </Modal>
+                            </DndProvider>
                         </Box>
                     </Box>
                 </Box>

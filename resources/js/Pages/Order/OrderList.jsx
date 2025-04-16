@@ -516,7 +516,7 @@ const AllOrder = () => {
                                     <Badge
                                         badgeContent="3"
                                         color="primary"
-                                        sx={{ ml: 1 }}
+                                        sx={{ ml: 2, mr:2 }}
                                     />
                                 </Button>
                             </Box>
