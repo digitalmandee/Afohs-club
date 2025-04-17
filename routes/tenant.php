@@ -27,9 +27,15 @@ Route::middleware([
         // Route::get('/', function () {
         //     return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
         // });
-        Route::get('/', function () {
-            return Inertia::render('App/Auth/SignIn');
+        Route::middleware(['auth', 'verified'])->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('App/Dashboard/Dashboardm');
+            });
         });
+
+        // Route::get('/', function () {
+        //     return Inertia::render('App/Auth/SignIn');
+        // });
 
         Route::get('/forget-pin', function () {
             return Inertia::render('App/Auth/ForgetPin');
@@ -49,10 +55,6 @@ Route::middleware([
 
         Route::get('/success', function () {
             return Inertia::render('App/Auth/Success');
-        });
-
-        Route::get('/dashboard', function () {
-            return Inertia::render('App/Dashboard/Dashboardm');
         });
 
         Route::get('/order/queue', function () {
@@ -86,5 +88,8 @@ Route::middleware([
         Route::get('/add/newfloor', function () {
             return Inertia::render('App/Table/Newfloor');
         });
+
+        // Authentication
+        require __DIR__ . '/tenant-auth.php';
     }
 });
