@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -23,8 +24,67 @@ Route::middleware([
 ])->group(function () {
     $allowedDomains = config('tenancy.central_domains');
     if (!in_array(request()->getHost(), $allowedDomains)) {
+        // Route::get('/', function () {
+        //     return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
+        // });
         Route::get('/', function () {
-            return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
+            return Inertia::render('App/Auth/SignIn');
+        });
+
+        Route::get('/forget-pin', function () {
+            return Inertia::render('App/Auth/ForgetPin');
+        });
+
+        Route::get('/reset/pin', function () {
+            return Inertia::render('App/Auth/Reset');
+        });
+
+        Route::get('/set/new/pin', function () {
+            return Inertia::render('App/Auth/NewPin');
+        });
+
+        Route::get('/employee/sign-in', function () {
+            return Inertia::render('App/Auth/EmployeeSignIn');
+        });
+
+        Route::get('/success', function () {
+            return Inertia::render('App/Auth/Success');
+        });
+
+        Route::get('/dashboard', function () {
+            return Inertia::render('App/Dashboard/Dashboardm');
+        });
+
+        Route::get('/order/queue', function () {
+            return Inertia::render('App/Order/Queue');
+        });
+
+        Route::get('/all/order', function () {
+            return Inertia::render('App/Order/OrderList');
+        });
+
+        Route::get('/new/order', function () {
+            return Inertia::render('App/Order/New/Index');
+        });
+
+        Route::get('/inventory', function () {
+            return Inertia::render('App/Inventory/Dashboard');
+        });
+
+        Route::get('/transaction', function () {
+            return Inertia::render('App/Transaction/Dashboard');
+        });
+
+        Route::get('/settings', function () {
+            return Inertia::render('App/Settings/Dashboard');
+        });
+
+        Route::get('/table/management', function () {
+            return Inertia::render('App/Table/Dashboard');
+        });
+
+        Route::get('/add/newfloor', function () {
+            return Inertia::render('App/Table/Newfloor');
         });
     }
 });
