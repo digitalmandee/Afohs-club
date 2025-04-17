@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         // Create Tenant
         $tenantName = 'Afohs';
         $tenantEmail = 'afohs@gmail.com';
-        $tenantPassword = '12345678';
+        $tenantPassword = '123456';
         $subdomain = strtolower($tenantName);
         $fullDomain = $subdomain . '.' . config('app.domain');
 
@@ -47,6 +47,7 @@ class DatabaseSeeder extends Seeder
                 Password:  12345678
 
             Tenant ({$tenant->name}):
+                id:        12345678
                 URL:       http://{$fullDomain}:8000
                 Login URL: http://{$fullDomain}:8000/login
                 Email:     {$tenant->email}

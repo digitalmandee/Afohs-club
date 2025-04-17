@@ -49,10 +49,6 @@ Route::middleware([
             return Inertia::render('App/Auth/NewPin');
         });
 
-        Route::get('/employee/sign-in', function () {
-            return Inertia::render('App/Auth/EmployeeSignIn');
-        });
-
         Route::get('/success', function () {
             return Inertia::render('App/Auth/Success');
         });
