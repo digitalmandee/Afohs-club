@@ -76,6 +76,10 @@ Route::get('/add/newfloor', function () {
     return Inertia::render('Table/Newfloor');
 });
 
+Route::get('/kitchen', function () {
+    return Inertia::render('Kitchen/Dashboard');
+});
+
 // Route::get('/dashboard', function () {
 //     return Inertia::render('Dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');

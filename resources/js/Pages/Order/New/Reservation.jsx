@@ -7,26 +7,14 @@ import {
     Grid,
     Paper,
     Radio,
-    RadioGroup,
-    FormControlLabel,
     InputAdornment,
     IconButton,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemSecondaryAction,
-    ToggleButtonGroup,
-    ToggleButton,
 } from "@mui/material";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
-import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
-import EventNoteIcon from "@mui/icons-material/EventNote";
 import { router } from "@inertiajs/react";
 
 const ReservationDialog = () => {
@@ -78,25 +66,26 @@ const ReservationDialog = () => {
                         <Paper
                             elevation={0}
                             sx={{
-                                bgcolor: "#f5f5f5",
+                                bgcolor: "#F6F6F6",
                                 p: 1.5,
                                 borderRadius: 1,
+                                border: '1px solid #E3E3E3'
                             }}
                         >
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                                 <Typography
                                     variant="body2"
                                     color="text.secondary"
-                                    sx={{ mr: 1 }}
+                                    sx={{ mr: 1, fontSize: '16px', color: '#7F7F7F' }}
                                 >
                                     Order id:
                                 </Typography>
                                 <Typography
                                     variant="body1"
-                                    fontWeight="medium"
+                                    fontWeight='600'
                                     color="#063455"
                                 >
-                                    #RSVO01
+                                    #RSV001
                                 </Typography>
                             </Box>
                         </Paper>
@@ -107,7 +96,7 @@ const ReservationDialog = () => {
                         <Typography
                             variant="body2"
                             color="text.secondary"
-                            sx={{ mb: 1 }}
+                            sx={{ mb: 1, fontSize: '14px', color: '#121212' }}
                         >
                             Customer Name or Scan Member Card
                         </Typography>
@@ -115,6 +104,21 @@ const ReservationDialog = () => {
                             fullWidth
                             size="small"
                             placeholder="Entry name"
+                            variant="outlined"
+                            sx={{
+                                bgcolor: '#FFFFFF',
+                                "& .MuiOutlinedInput-root": {
+                                    "& fieldset": {
+                                        border: "1px solid #121212 !important",
+                                    },
+                                    "&:hover fieldset": {
+                                        border: "1px solid #121212 !important",
+                                    },
+                                    "&.Mui-focused fieldset": {
+                                        border: "1px solid #121212 !important",
+                                    },
+                                },
+                            }}
                             InputProps={{
                                 endAdornment: (
                                     <InputAdornment position="end">
@@ -128,87 +132,121 @@ const ReservationDialog = () => {
                     </Box>
 
                     {/* Customer Qty and Down Payment */}
-                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <Grid container spacing={2} sx={{ mb: 2, alignItems: "center" }}>
+                        {/* Customer Qty Grid */}
                         <Grid item xs={6}>
-                            <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ mb: 1 }}
-                            >
-                                Customer Qty
-                            </Typography>
-                            <Box sx={{ display: "flex" }}>
-                                <TextField
-                                    size="small"
-                                    type="number"
-                                    defaultValue="10"
-                                    sx={{ width: "60%" }}
-                                />
-                                <Button
-                                    variant="outlined"
-                                    sx={{
-                                        ml: 1,
-                                        textTransform: "none",
-                                        color: "#666",
-                                        borderColor: "#ddd",
-                                        flexGrow: 1,
-                                    }}
-                                >
-                                    Person
-                                </Button>
-                            </Box>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    mb: 1,
-                                }}
-                            >
+                            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                                 <Typography
                                     variant="body2"
-                                    color="text.secondary"
+                                    sx={{ mb: 1, fontSize: '14px', color: "#121212" }}
                                 >
-                                    Down Payment
+                                    Customer Qty
                                 </Typography>
-                                <Box
-                                    sx={{
-                                        ml: "auto",
-                                        display: "flex",
-                                        alignItems: "center",
-                                    }}
-                                >
-                                    <Radio
-                                        checked={paymentType === "percentage"}
-                                        onChange={() =>
-                                            setPaymentType("percentage")
-                                        }
+                                <Box sx={{ display: "flex", width: "100%" }}>
+                                    <TextField
                                         size="small"
-                                        sx={{ p: 0.5 }}
+                                        type="number"
+                                        defaultValue="10"
+                                        sx={{
+                                            width: "60%",
+                                            "& .MuiOutlinedInput-root": {
+                                                borderRadius: 0,
+                                            },
+                                            "& fieldset": {
+                                                borderColor: "#121212",
+                                            },
+                                        }}
                                     />
-                                    <Typography
-                                        variant="body2"
-                                        sx={{ ml: 0.5 }}
+                                    <Button
+                                        variant="outlined"
+                                        sx={{
+                                            textTransform: "none",
+                                            color: "#666",
+                                            bgcolor: '#EEEEEE',
+                                            borderColor: "#121212",
+                                            borderRadius: 0,
+                                            width: "20%",
+                                            borderLeft: "none",
+                                        }}
                                     >
-                                        Percentage
-                                    </Typography>
+                                        Person
+                                    </Button>
                                 </Box>
                             </Box>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Typography variant="body2">
-                                                Rs
-                                            </Typography>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                defaultValue="10"
-                            />
+                        </Grid>
+
+                        {/* Down Payment Grid */}
+                        <Grid item xs={6}>
+                            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        mb: 0.2,
+                                    }}
+                                >
+                                    <Typography variant="body2" color="#121212">
+                                        Down Payment
+                                    </Typography>
+                                    <Box sx={{ ml: "auto", display: "flex", alignItems: "center" }}>
+                                        <Radio
+                                            checked={paymentType === "percentage"}
+                                            onChange={() => setPaymentType("percentage")}
+                                            size="small"
+                                            sx={{ p: 0.5 }}
+                                        />
+                                        <Typography variant="body2" sx={{ ml: 0.5 }}>
+                                            Percentage
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    defaultValue="10"
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            borderRadius: 0,
+                                            padding: 0,
+                                            alignItems: 'stretch'
+                                        },
+                                        "& fieldset": {
+                                            borderColor: "#121212",
+                                        },
+                                    }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment
+                                                position="start"
+                                                sx={{
+                                                    m: 0, // Remove default margin from InputAdornment
+                                                    height: '200%',
+                                                    display: "flex",
+                                                    alignItems: "stretch",
+                                                }}
+                                            >
+                                                <Box
+                                                    sx={{
+                                                        bgcolor: "#EEEEEE",
+                                                        border: "1px solid #121212",
+                                                        borderRadius: 0,
+                                                        px: 1,
+                                                        py: 0.5,
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        height: "200%",
+                                                        marginRight:2
+                                                    }}
+                                                >
+                                                    <Typography variant="body2" sx={{ lineHeight: 2.2 }}>
+                                                        Rs
+                                                    </Typography>
+                                                </Box>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Box>
                         </Grid>
                     </Grid>
 
@@ -222,7 +260,7 @@ const ReservationDialog = () => {
                                 mb: 1,
                             }}
                         >
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" color="#121212">
                                 Select Date
                             </Typography>
                             <Box
@@ -232,7 +270,7 @@ const ReservationDialog = () => {
                                     cursor: "pointer",
                                 }}
                             >
-                                <Typography variant="body2">
+                                <Typography variant="body2" color="#063455">
                                     July 2024
                                 </Typography>
                                 <KeyboardArrowDownIcon fontSize="small" />
@@ -251,7 +289,7 @@ const ReservationDialog = () => {
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    bgcolor: "#e3f2fd",
+                                    bgcolor: "#B0DEFF",
                                     p: 0.5,
                                     borderRadius: 1,
                                 }}
@@ -290,13 +328,13 @@ const ReservationDialog = () => {
                                             p: 1,
                                             bgcolor:
                                                 selectedDate === index + 7
-                                                    ? "#bbdefb"
-                                                    : "transparent",
+                                                    ? "#B0DEFF"
+                                                    : "#FFFFFF",
                                             cursor: "pointer",
                                             borderRight:
                                                 index < 6
-                                                    ? "1px solid #e0e0e0"
-                                                    : "none",
+                                                    ? "1px solid #063455"
+                                                    : "#E3E3E3",
                                         }}
                                         onClick={() =>
                                             setSelectedDate(index + 7)
@@ -328,7 +366,7 @@ const ReservationDialog = () => {
                     <Box sx={{ mb: 2 }}>
                         <Typography
                             variant="body2"
-                            color="text.secondary"
+                            color="#121212"
                             sx={{ mb: 1 }}
                         >
                             Select Time of Attendance
@@ -360,7 +398,7 @@ const ReservationDialog = () => {
                                     <Radio
                                         checked={
                                             selectedTime ===
-                                                time.toLowerCase() ||
+                                            time.toLowerCase() ||
                                             (customTime && time === "Custom")
                                         }
                                         size="small"
@@ -379,7 +417,7 @@ const ReservationDialog = () => {
                         <Grid item xs={6}>
                             <Typography
                                 variant="body2"
-                                color="text.secondary"
+                                color="#121212"
                                 sx={{ mb: 1 }}
                             >
                                 Select Custom Time
@@ -388,6 +426,9 @@ const ReservationDialog = () => {
                                 fullWidth
                                 size="small"
                                 placeholder="Select time"
+                                sx={{
+                                    border:'1px solid #121212'
+                                }}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -404,14 +445,14 @@ const ReservationDialog = () => {
                         <Grid item xs={6}>
                             <Typography
                                 variant="body2"
-                                color="text.secondary"
+                                color="#121212"
                                 sx={{ mb: 1 }}
                             >
-                                Select Custom Time
+                                Selected Custom Time
                             </Typography>
                             <Box
                                 sx={{
-                                    border: "1px solid #e0e0e0",
+                                    border: "transparent",
                                     borderRadius: 1,
                                     p: 1,
                                     height: 40,
@@ -447,7 +488,7 @@ const ReservationDialog = () => {
                             variant="outlined"
                             sx={{
                                 textTransform: "none",
-                                borderColor: "#ddd",
+                                border: "1px solid #063455",
                                 color: "#333",
                             }}
                         >
