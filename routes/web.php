@@ -80,6 +80,10 @@ Route::get('/kitchen', function () {
     return Inertia::render('Kitchen/Dashboard');
 });
 
+Route::get('/add/product', function () {
+    return Inertia::render('Inventory/Product');
+});
+
 // Route::get('/dashboard', function () {
 //     return Inertia::render('Dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
