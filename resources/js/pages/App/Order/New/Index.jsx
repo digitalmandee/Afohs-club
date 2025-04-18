@@ -1,44 +1,44 @@
-import React, { useState } from "react";
-import SideNav from "@/Components/SideBar/SideNav";
+import FoodIcon from '@/Components/App/Icons/Food';
+import ShopIcon from '@/Components/App/Icons/ShoppingBag';
+import SofaIcon from '@/Components/App/Icons/Sofa';
+import SideNav from '@/Components/App/SideBar/SideNav';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
     Box,
+    Button,
     IconButton,
-    Typography,
-    Paper,
-    ToggleButtonGroup,
-    ToggleButton,
     List,
     ListItem,
-    ListItemText,
     ListItemSecondaryAction,
+    ListItemText,
+    Paper,
     Radio,
-    Button,
-} from "@mui/material";
-import TakeAwayDialog from "./Takeaway";
-import DineDialog from "./Dine";
-import ReservationDialog from "./Reservation";
-import FoodIcon from "@/Components/Icons/Food";
-import ShopIcon from "@/Components/Icons/ShoppingBag";
-import SofaIcon from "@/Components/Icons/Sofa";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+    ToggleButton,
+    ToggleButtonGroup,
+    Typography,
+} from '@mui/material';
+import { useState } from 'react';
+import DineDialog from './Dine';
+import ReservationDialog from './Reservation';
+import TakeAwayDialog from './Takeaway';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const NewOrderDialog = ({ onClose }) => {
-    const [orderType, setOrderType] = useState("dineIn");
+    const [orderType, setOrderType] = useState('dineIn');
     const [open, setOpen] = useState(false);
-    const [seatingArea, setSeatingArea] = useState("indoor");
-    const [filterOption, setFilterOption] = useState("all");
-    const [selectedTable, setSelectedTable] = useState("T8");
+    const [seatingArea, setSeatingArea] = useState('indoor');
+    const [filterOption, setFilterOption] = useState('all');
+    const [selectedTable, setSelectedTable] = useState('T8');
     const [selectedWeek, setSelectedWeek] = useState(2);
 
     const weeks = [
-        { id: 1, label: "Week 1", dateRange: "01 - 06 July" },
-        { id: 2, label: "Week 2", dateRange: "07 - 13 July" },
-        { id: 3, label: "Week 3", dateRange: "14 - 20 July" },
-        { id: 4, label: "Week 4", dateRange: "21 - 27 July" },
-        { id: 5, label: "Week 5", dateRange: "28 July - 03 August" },
+        { id: 1, label: 'Week 1', dateRange: '01 - 06 July' },
+        { id: 2, label: 'Week 2', dateRange: '07 - 13 July' },
+        { id: 3, label: 'Week 3', dateRange: '14 - 20 July' },
+        { id: 4, label: 'Week 4', dateRange: '21 - 27 July' },
+        { id: 5, label: 'Week 5', dateRange: '28 July - 03 August' },
     ];
 
     const handleOrderTypeChange = (event, newOrderType) => {
@@ -52,15 +52,15 @@ const NewOrderDialog = ({ onClose }) => {
     };
 
     const tables = [
-        { id: "T8", capacity: 4, available: true },
-        { id: "T9", capacity: 2, available: true },
-        { id: "T10", capacity: 2, available: true },
-        { id: "T11", capacity: 2, available: true },
-        { id: "T12", capacity: 2, available: true },
-        { id: "T2", capacity: 4, available: false },
-        { id: "T5", capacity: 2, available: false },
-        { id: "T6", capacity: 4, available: false },
-        { id: "T7", capacity: 2, available: false },
+        { id: 'T8', capacity: 4, available: true },
+        { id: 'T9', capacity: 2, available: true },
+        { id: 'T10', capacity: 2, available: true },
+        { id: 'T11', capacity: 2, available: true },
+        { id: 'T12', capacity: 2, available: true },
+        { id: 'T2', capacity: 4, available: false },
+        { id: 'T5', capacity: 2, available: false },
+        { id: 'T6', capacity: 4, available: false },
+        { id: 'T7', capacity: 2, available: false },
     ];
 
     return (
@@ -68,41 +68,38 @@ const NewOrderDialog = ({ onClose }) => {
             <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
-                    marginLeft: open
-                        ? `${drawerWidthOpen}px`
-                        : `${drawerWidthClosed}px`,
-                    transition: "margin-left 0.3s ease-in-out",
-                    marginTop: "7rem",
+                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    transition: 'margin-left 0.3s ease-in-out',
+                    marginTop: '7rem',
                 }}
             >
                 <Box
                     sx={{
-                        display: "flex",
+                        display: 'flex',
                         gap: 2,
-                        maxWidth:
-                            orderType === "reservation" ? "1000px" : "732px",
-                        mx: "auto",
+                        maxWidth: orderType === 'reservation' ? '1000px' : '732px',
+                        mx: 'auto',
                         mt: 5,
                         mb: 5,
                     }}
                 >
                     {/* Select Week Panel - Only shown when reservation is selected */}
-                    {orderType === "reservation" && (
-                        <Box sx={{ width: "240px", flexShrink: 0 }}>
+                    {orderType === 'reservation' && (
+                        <Box sx={{ width: '240px', flexShrink: 0 }}>
                             <Paper
                                 elevation={2}
                                 sx={{
-                                    width: "100%",
+                                    width: '100%',
                                     borderRadius: 1,
-                                    overflow: "hidden",
+                                    overflow: 'hidden',
                                 }}
                             >
                                 {/* Header */}
                                 <Box
                                     sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
                                         px: 2.5,
                                         py: 2,
                                     }}
@@ -110,8 +107,8 @@ const NewOrderDialog = ({ onClose }) => {
                                     <Typography
                                         variant="h6"
                                         sx={{
-                                            fontWeight: "medium",
-                                            fontSize: "1rem",
+                                            fontWeight: 'medium',
+                                            fontSize: '1rem',
                                         }}
                                     >
                                         Select Week
@@ -127,23 +124,15 @@ const NewOrderDialog = ({ onClose }) => {
                                         <ListItem
                                             key={week.id}
                                             disablePadding
-                                            onClick={() =>
-                                                handleWeekChange(week.id)
-                                            }
+                                            onClick={() => handleWeekChange(week.id)}
                                             sx={{
                                                 px: 2.5,
                                                 py: 1.5,
-                                                bgcolor:
-                                                    selectedWeek === week.id
-                                                        ? "#e3f2fd"
-                                                        : "transparent",
-                                                borderTop: "1px solid #f0f0f0",
-                                                cursor: "pointer",
-                                                "&:hover": {
-                                                    bgcolor:
-                                                        selectedWeek === week.id
-                                                            ? "#e3f2fd"
-                                                            : "#f5f5f5",
+                                                bgcolor: selectedWeek === week.id ? '#e3f2fd' : 'transparent',
+                                                borderTop: '1px solid #f0f0f0',
+                                                cursor: 'pointer',
+                                                '&:hover': {
+                                                    bgcolor: selectedWeek === week.id ? '#e3f2fd' : '#f5f5f5',
                                                 },
                                             }}
                                         >
@@ -152,8 +141,7 @@ const NewOrderDialog = ({ onClose }) => {
                                                     <Typography
                                                         variant="body1"
                                                         sx={{
-                                                            fontWeight:
-                                                                "medium",
+                                                            fontWeight: 'medium',
                                                         }}
                                                     >
                                                         {week.label}
@@ -164,7 +152,7 @@ const NewOrderDialog = ({ onClose }) => {
                                                         variant="body2"
                                                         color="text.secondary"
                                                         sx={{
-                                                            fontSize: "0.75rem",
+                                                            fontSize: '0.75rem',
                                                         }}
                                                     >
                                                         {week.dateRange}
@@ -173,18 +161,12 @@ const NewOrderDialog = ({ onClose }) => {
                                             />
                                             <ListItemSecondaryAction>
                                                 <Radio
-                                                    checked={
-                                                        selectedWeek === week.id
-                                                    }
-                                                    onChange={() =>
-                                                        handleWeekChange(
-                                                            week.id
-                                                        )
-                                                    }
+                                                    checked={selectedWeek === week.id}
+                                                    onChange={() => handleWeekChange(week.id)}
                                                     size="small"
                                                     sx={{
-                                                        "&.Mui-checked": {
-                                                            color: "#1976d2",
+                                                        '&.Mui-checked': {
+                                                            color: '#1976d2',
                                                         },
                                                     }}
                                                 />
@@ -199,12 +181,12 @@ const NewOrderDialog = ({ onClose }) => {
                                         fullWidth
                                         variant="contained"
                                         sx={{
-                                            bgcolor: "#0c3b5c",
-                                            color: "white",
+                                            bgcolor: '#0c3b5c',
+                                            color: 'white',
                                             py: 1.5,
-                                            textTransform: "none",
-                                            "&:hover": {
-                                                bgcolor: "#072a42",
+                                            textTransform: 'none',
+                                            '&:hover': {
+                                                bgcolor: '#072a42',
                                             },
                                         }}
                                     >
@@ -219,11 +201,11 @@ const NewOrderDialog = ({ onClose }) => {
                     <Paper
                         elevation={0}
                         sx={{
-                            width: "100%",
-                            maxWidth: "732px",
-                            overflow: "hidden",
+                            width: '100%',
+                            maxWidth: '732px',
+                            overflow: 'hidden',
                             p: 2,
-                            border: "2px solid #E3E3E3",
+                            border: '2px solid #E3E3E3',
                             flexGrow: 1,
                         }}
                     >
@@ -232,8 +214,8 @@ const NewOrderDialog = ({ onClose }) => {
                                 variant="body2"
                                 sx={{
                                     mb: 1,
-                                    color: "#121212",
-                                    fontSize: "14px",
+                                    color: '#121212',
+                                    fontSize: '14px',
                                 }}
                             >
                                 Choose Order Type
@@ -244,13 +226,12 @@ const NewOrderDialog = ({ onClose }) => {
                                 onChange={handleOrderTypeChange}
                                 aria-label="order type"
                                 sx={{
-                                    width: "100%",
-                                    height: "100px",
+                                    width: '100%',
+                                    height: '100px',
                                     gap: 2,
-                                    "& .MuiToggleButtonGroup-grouped:not(:first-of-type)":
-                                        {
-                                            borderLeft: "1px solid #063455",
-                                        },
+                                    '& .MuiToggleButtonGroup-grouped:not(:first-of-type)': {
+                                        borderLeft: '1px solid #063455',
+                                    },
                                 }}
                             >
                                 <ToggleButton
@@ -259,22 +240,16 @@ const NewOrderDialog = ({ onClose }) => {
                                     sx={{
                                         flex: 1,
                                         py: 1.5,
-                                        flexDirection: "column",
-                                        textTransform: "none",
-                                        border: "1px solid #063455",
-                                        backgroundColor:
-                                            orderType === "dineIn"
-                                                ? "#B0DEFF"
-                                                : "transparent",
-                                        color:
-                                            orderType === "dineIn"
-                                                ? "#1976d2"
-                                                : "inherit",
-                                        "&.Mui-selected": {
-                                            backgroundColor: "#B0DEFF",
-                                            color: "#1976d2",
-                                            "&:hover": {
-                                                backgroundColor: "#B0DEFF",
+                                        flexDirection: 'column',
+                                        textTransform: 'none',
+                                        border: '1px solid #063455',
+                                        backgroundColor: orderType === 'dineIn' ? '#B0DEFF' : 'transparent',
+                                        color: orderType === 'dineIn' ? '#1976d2' : 'inherit',
+                                        '&.Mui-selected': {
+                                            backgroundColor: '#B0DEFF',
+                                            color: '#1976d2',
+                                            '&:hover': {
+                                                backgroundColor: '#B0DEFF',
                                             },
                                         },
                                     }}
@@ -282,15 +257,10 @@ const NewOrderDialog = ({ onClose }) => {
                                     <FoodIcon
                                         sx={{
                                             mb: 0.5,
-                                            color:
-                                                orderType === "dineIn"
-                                                    ? "#063455"
-                                                    : "inherit",
+                                            color: orderType === 'dineIn' ? '#063455' : 'inherit',
                                         }}
                                     />
-                                    <Typography variant="body2">
-                                        Dine In
-                                    </Typography>
+                                    <Typography variant="body2">Dine In</Typography>
                                 </ToggleButton>
 
                                 <ToggleButton
@@ -299,14 +269,14 @@ const NewOrderDialog = ({ onClose }) => {
                                     sx={{
                                         flex: 1,
                                         py: 1.5,
-                                        flexDirection: "column",
-                                        textTransform: "none",
-                                        border: "1px solid #063455",
-                                        "&.Mui-selected": {
-                                            backgroundColor: "#B0DEFF",
-                                            color: "#1976d2",
-                                            "&:hover": {
-                                                backgroundColor: "#B0DEFF",
+                                        flexDirection: 'column',
+                                        textTransform: 'none',
+                                        border: '1px solid #063455',
+                                        '&.Mui-selected': {
+                                            backgroundColor: '#B0DEFF',
+                                            color: '#1976d2',
+                                            '&:hover': {
+                                                backgroundColor: '#B0DEFF',
                                             },
                                         },
                                     }}
@@ -314,15 +284,10 @@ const NewOrderDialog = ({ onClose }) => {
                                     <ShopIcon
                                         sx={{
                                             mb: 0.5,
-                                            fill:
-                                                orderType === "takeaway"
-                                                    ? "#063455"
-                                                    : "inherit",
+                                            fill: orderType === 'takeaway' ? '#063455' : 'inherit',
                                         }}
                                     />
-                                    <Typography variant="body2">
-                                        Takeaway
-                                    </Typography>
+                                    <Typography variant="body2">Takeaway</Typography>
                                 </ToggleButton>
 
                                 <ToggleButton
@@ -331,14 +296,14 @@ const NewOrderDialog = ({ onClose }) => {
                                     sx={{
                                         flex: 1,
                                         py: 1.5,
-                                        flexDirection: "column",
-                                        textTransform: "none",
-                                        border: "1px solid #063455",
-                                        "&.Mui-selected": {
-                                            backgroundColor: "#B0DEFF",
-                                            color: "#1976d2",
-                                            "&:hover": {
-                                                backgroundColor: "#B0DEFF",
+                                        flexDirection: 'column',
+                                        textTransform: 'none',
+                                        border: '1px solid #063455',
+                                        '&.Mui-selected': {
+                                            backgroundColor: '#B0DEFF',
+                                            color: '#1976d2',
+                                            '&:hover': {
+                                                backgroundColor: '#B0DEFF',
                                             },
                                         },
                                     }}
@@ -346,21 +311,16 @@ const NewOrderDialog = ({ onClose }) => {
                                     <SofaIcon
                                         sx={{
                                             mb: 0.5,
-                                            fill:
-                                                orderType === "reservation"
-                                                    ? "#063455"
-                                                    : "inherit",
+                                            fill: orderType === 'reservation' ? '#063455' : 'inherit',
                                         }}
                                     />
-                                    <Typography variant="body2">
-                                        Reservation
-                                    </Typography>
+                                    <Typography variant="body2">Reservation</Typography>
                                 </ToggleButton>
                             </ToggleButtonGroup>
                         </Box>
-                        {orderType === "dineIn" && <DineDialog />}
-                        {orderType === "takeaway" && <TakeAwayDialog />}
-                        {orderType === "reservation" && <ReservationDialog />}
+                        {orderType === 'dineIn' && <DineDialog />}
+                        {orderType === 'takeaway' && <TakeAwayDialog />}
+                        {orderType === 'reservation' && <ReservationDialog />}
                     </Paper>
                 </Box>
             </div>

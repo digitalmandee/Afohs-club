@@ -124,12 +124,12 @@ export default function Category({ categoriesList }) {
                 });
                 setSnackbar({ open: true, message: 'Successfully Create Category', severity: 'success' });
             } else {
-                post('/inventory/category', {
+                post(route('inventory.category.store'), {
                     data: formData,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit('/inventory/category');
+                        router.visit(route('inventory.category'));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || errors.message || 'An error occurred while creating the category.');

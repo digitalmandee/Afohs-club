@@ -67,13 +67,14 @@ Route::middleware([
 
             // Inventory Category
 
-            Route::post('/inventory/category', [CategoryController::class, 'store']);
-            Route::get('/inventory/category', [CategoryController::class, 'index'])->name('category.index');
-            Route::post('/inventory/category', [CategoryController::class, 'store'])->name('category.store');
+            Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
+            Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
             Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
             Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
         });
+        // End of Tenant Routes
 
+        // Login Authentication Routes
         Route::get('/forget-pin', function () {
             return Inertia::render('App/Auth/ForgetPin');
         });
