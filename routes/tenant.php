@@ -1,6 +1,10 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\FloorController;
+use App\Http\Controllers\TableController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -65,12 +69,24 @@ Route::middleware([
                 return Inertia::render('App/Table/Newfloor');
             });
 
+
+
+
+
+
             // Inventory Category
 
             Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
             Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
             Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
             Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
+
+            // floors routes
+
+            Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
+            Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
+
+            // End of floors routes
         });
         // End of Tenant Routes
 

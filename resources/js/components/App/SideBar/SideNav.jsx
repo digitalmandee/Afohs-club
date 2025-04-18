@@ -224,7 +224,8 @@ export default function SideNav({ open, setOpen }) {
                             onClick={() => setShowProfile(true)}
                         >
                             <Avatar
-                                src="your-profile-image-url.jpg"
+                                // src="your-profile-image-url.jpg"
+                                src="#"
                                 alt="User Profile"
                                 sx={{
                                     width: 40,
