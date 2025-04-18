@@ -24,7 +24,6 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
             ...data,
             password: data.password.join(''),
         }));
-        console.log(data);
 
         post(route('login'), {
             onSuccess: () => {

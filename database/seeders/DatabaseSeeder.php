@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         $tenant = Tenant::create([
             'name' => $tenantName,
             'email' => $tenantEmail,
-            'password' => bcrypt($tenantPassword),
+            'password' => $tenantPassword,
         ]);
 
         $tenant->domains()->create([

@@ -1,91 +1,81 @@
-import React from "react";
-import {
-    Box,
-    Typography,
-    Paper,
-    Button,
-    Divider,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableRow,
-} from "@mui/material";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import LogoutIcon from "@mui/icons-material/Logout";
-import { router } from "@inertiajs/react";
+import { router } from '@inertiajs/react';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableRow, Typography } from '@mui/material';
 
 const LogoutScreen = ({ setProfileView }) => {
     const revenueDetails = [
-        { method: "Cash", amount: "Rs 167,730.60" },
-        { method: "Bank Transfer", amount: "Rs 111,820.40" },
-        { method: "QR Code", amount: "Rs 223,640.60" },
+        { method: 'Cash', amount: 'Rs 167,730.60' },
+        { method: 'Bank Transfer', amount: 'Rs 111,820.40' },
+        { method: 'QR Code', amount: 'Rs 223,640.60' },
     ];
+
+    const handleLogout = () => {
+        router.post(route('logout'));
+    };
 
     return (
         <Box
             sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: "100vh",
-                bgcolor: "#ffffff",
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh',
+                bgcolor: '#ffffff',
                 p: 2,
             }}
         >
             <Paper
                 elevation={0}
                 sx={{
-                    width: "100%",
+                    width: '100%',
                     //   maxWidth: 400,
                     //   border: '1px solid #e0e0e0',
                     borderRadius: 2,
                     p: 3,
-                    textAlign: "center",
+                    textAlign: 'center',
                 }}
             >
                 {/* Icon */}
                 <Box
                     sx={{
-                        display: "flex",
-                        justifyContent: "center",
+                        display: 'flex',
+                        justifyContent: 'center',
                         mb: 2,
                     }}
                 >
                     <Box
                         sx={{
-                            position: "relative",
+                            position: 'relative',
                             width: 80,
                             height: 80,
                         }}
                     >
                         <Box
                             sx={{
-                                position: "absolute",
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: "50%",
-                                bgcolor: "rgba(244, 67, 54, 0.1)",
+                                position: 'absolute',
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '50%',
+                                bgcolor: 'rgba(244, 67, 54, 0.1)',
                             }}
                         />
                         <Box
                             sx={{
-                                position: "absolute",
-                                top: "50%",
-                                left: "50%",
-                                transform: "translate(-50%, -50%)",
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
                                 width: 50,
                                 height: 50,
-                                borderRadius: "50%",
-                                bgcolor: "#f44336",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
+                                borderRadius: '50%',
+                                bgcolor: '#f44336',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
                             }}
                         >
-                            <ErrorOutlineIcon
-                                sx={{ color: "white", fontSize: 28 }}
-                            />
+                            <ErrorOutlineIcon sx={{ color: 'white', fontSize: 28 }} />
                         </Box>
 
                         {/* Small circles around the main icon */}
@@ -93,17 +83,13 @@ const LogoutScreen = ({ setProfileView }) => {
                             <Box
                                 key={index}
                                 sx={{
-                                    position: "absolute",
-                                    top: `calc(50% + ${
-                                        40 * Math.sin((angle * Math.PI) / 180)
-                                    }px)`,
-                                    left: `calc(50% + ${
-                                        40 * Math.cos((angle * Math.PI) / 180)
-                                    }px)`,
+                                    position: 'absolute',
+                                    top: `calc(50% + ${40 * Math.sin((angle * Math.PI) / 180)}px)`,
+                                    left: `calc(50% + ${40 * Math.cos((angle * Math.PI) / 180)}px)`,
                                     width: 6,
                                     height: 6,
-                                    borderRadius: "50%",
-                                    border: "1px solid #f44336",
+                                    borderRadius: '50%',
+                                    border: '1px solid #f44336',
                                 }}
                             />
                         ))}
@@ -113,16 +99,12 @@ const LogoutScreen = ({ setProfileView }) => {
                             <Box
                                 key={`plus-${index}`}
                                 sx={{
-                                    position: "absolute",
-                                    top: `calc(50% + ${
-                                        45 * Math.sin((angle * Math.PI) / 180)
-                                    }px)`,
-                                    left: `calc(50% + ${
-                                        45 * Math.cos((angle * Math.PI) / 180)
-                                    }px)`,
-                                    color: "#f44336",
+                                    position: 'absolute',
+                                    top: `calc(50% + ${45 * Math.sin((angle * Math.PI) / 180)}px)`,
+                                    left: `calc(50% + ${45 * Math.cos((angle * Math.PI) / 180)}px)`,
+                                    color: '#f44336',
                                     fontSize: 10,
-                                    transform: "translate(-50%, -50%)",
+                                    transform: 'translate(-50%, -50%)',
                                 }}
                             >
                                 +
@@ -132,24 +114,19 @@ const LogoutScreen = ({ setProfileView }) => {
                 </Box>
 
                 {/* Title */}
-                <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
                     Logout?
                 </Typography>
 
                 {/* Description */}
-                <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 3 }}
-                >
-                    Ensure the total revenue from your shift's orders is
-                    accurate for reporting.
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Ensure the total revenue from your shift's orders is accurate for reporting.
                 </Typography>
 
                 {/* Revenue Box */}
                 <Box
                     sx={{
-                        bgcolor: "#f9f9f9",
+                        bgcolor: '#f9f9f9',
                         borderRadius: 1,
                         p: 2,
                         mb: 3,
@@ -159,14 +136,11 @@ const LogoutScreen = ({ setProfileView }) => {
                         Total Revenue
                     </Typography>
 
-                    <Typography
-                        variant="h4"
-                        sx={{ color: "#0c3b5c", fontWeight: "bold", mb: 2 }}
-                    >
+                    <Typography variant="h4" sx={{ color: '#0c3b5c', fontWeight: 'bold', mb: 2 }}>
                         Rs 559,102
                     </Typography>
 
-                    <Box sx={{ textAlign: "left" }}>
+                    <Box sx={{ textAlign: 'left' }}>
                         <Typography variant="body2" sx={{ mb: 1 }}>
                             Revenue Detail :
                         </Typography>
@@ -178,25 +152,20 @@ const LogoutScreen = ({ setProfileView }) => {
                                         <TableRow
                                             key={item.method}
                                             sx={{
-                                                "& td": {
+                                                '& td': {
                                                     border: 0,
                                                     py: 0.5,
                                                 },
                                             }}
                                         >
                                             <TableCell sx={{ pl: 0 }}>
-                                                <Typography variant="body2">
-                                                    {item.method}
-                                                </Typography>
+                                                <Typography variant="body2">{item.method}</Typography>
                                             </TableCell>
-                                            <TableCell
-                                                align="right"
-                                                sx={{ pr: 0 }}
-                                            >
+                                            <TableCell align="right" sx={{ pr: 0 }}>
                                                 <Typography
                                                     variant="body2"
                                                     sx={{
-                                                        fontWeight: "medium",
+                                                        fontWeight: 'medium',
                                                     }}
                                                 >
                                                     {item.amount}
@@ -211,15 +180,15 @@ const LogoutScreen = ({ setProfileView }) => {
                 </Box>
 
                 {/* Action Buttons */}
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Button
                         variant="text"
                         sx={{
-                            color: "#666",
-                            textTransform: "none",
+                            color: '#666',
+                            textTransform: 'none',
                             px: 3,
                         }}
-                        onClick={() => setProfileView("profile")}
+                        onClick={() => setProfileView('profile')}
                     >
                         Cancel
                     </Button>
@@ -228,14 +197,15 @@ const LogoutScreen = ({ setProfileView }) => {
                         variant="contained"
                         endIcon={<LogoutIcon />}
                         sx={{
-                            bgcolor: "#f44336",
-                            "&:hover": {
-                                bgcolor: "#d32f2f",
+                            bgcolor: '#f44336',
+                            '&:hover': {
+                                bgcolor: '#d32f2f',
                             },
-                            textTransform: "none",
+                            textTransform: 'none',
                             px: 3,
                         }}
-                        onClick={() => router.visit("/")}
+                        onClick={handleLogout}
+                        // onClick={() => router.visit("/")}
                     >
                         Yes, Logout
                     </Button>

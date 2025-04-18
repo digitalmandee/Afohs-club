@@ -30,7 +30,6 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(TenantLoginRequest $request): RedirectResponse
     {
-        Log::info($request->all());
         $request->authenticate();
 
         $request->session()->regenerate();

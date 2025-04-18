@@ -41,11 +41,11 @@ class TenantLoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (!Auth::attempt(['email' => 'afohs@gmail.com', 'password' => '123456'], $this->boolean('remember'))) {
+        if (!Auth::attempt($this->only('user_id', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'user_id' => __('auth.failed'),
+                'password' => __('auth.failed'),
             ]);
         }
 

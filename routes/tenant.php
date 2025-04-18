@@ -30,12 +30,40 @@ Route::middleware([
         Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', function () {
                 return Inertia::render('App/Dashboard/Dashboardm');
+            })->name('dashboard');
+
+            Route::get('/order/queue', function () {
+                return Inertia::render('App/Order/Queue');
+            });
+
+            Route::get('/all/order', function () {
+                return Inertia::render('App/Order/OrderList');
+            });
+
+            Route::get('/new/order', function () {
+                return Inertia::render('App/Order/New/Index');
+            });
+
+            Route::get('/inventory', function () {
+                return Inertia::render('App/Inventory/Dashboard');
+            });
+
+            Route::get('/transaction', function () {
+                return Inertia::render('App/Transaction/Dashboard');
+            });
+
+            Route::get('/settings', function () {
+                return Inertia::render('App/Settings/Dashboard');
+            });
+
+            Route::get('/table/management', function () {
+                return Inertia::render('App/Table/Dashboard');
+            });
+
+            Route::get('/add/newfloor', function () {
+                return Inertia::render('App/Table/Newfloor');
             });
         });
-
-        // Route::get('/', function () {
-        //     return Inertia::render('App/Auth/SignIn');
-        // });
 
         Route::get('/forget-pin', function () {
             return Inertia::render('App/Auth/ForgetPin');
@@ -51,38 +79,6 @@ Route::middleware([
 
         Route::get('/success', function () {
             return Inertia::render('App/Auth/Success');
-        });
-
-        Route::get('/order/queue', function () {
-            return Inertia::render('App/Order/Queue');
-        });
-
-        Route::get('/all/order', function () {
-            return Inertia::render('App/Order/OrderList');
-        });
-
-        Route::get('/new/order', function () {
-            return Inertia::render('App/Order/New/Index');
-        });
-
-        Route::get('/inventory', function () {
-            return Inertia::render('App/Inventory/Dashboard');
-        });
-
-        Route::get('/transaction', function () {
-            return Inertia::render('App/Transaction/Dashboard');
-        });
-
-        Route::get('/settings', function () {
-            return Inertia::render('App/Settings/Dashboard');
-        });
-
-        Route::get('/table/management', function () {
-            return Inertia::render('App/Table/Dashboard');
-        });
-
-        Route::get('/add/newfloor', function () {
-            return Inertia::render('App/Table/Newfloor');
         });
 
         // Authentication
