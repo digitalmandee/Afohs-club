@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use App\Http\Controllers\App\CategoryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -63,6 +64,14 @@ Route::middleware([
             Route::get('/add/newfloor', function () {
                 return Inertia::render('App/Table/Newfloor');
             });
+
+            // Inventory Category
+
+            Route::post('/inventory/category', [CategoryController::class, 'store']);
+            Route::get('/inventory/category', [CategoryController::class, 'index'])->name('category.index');
+            Route::post('/inventory/category', [CategoryController::class, 'store'])->name('category.store');
+            Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
+            Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
         });
 
         Route::get('/forget-pin', function () {
