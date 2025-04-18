@@ -102,7 +102,7 @@ export default function SideNav({ open, setOpen }) {
     const [showOrder, setShowOrder] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
+        { text: 'Dashboard', icon: <HomeIcon />, path: '/' },
         { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
         { text: 'Transaction', icon: <PeopleIcon />, path: '/transaction' },
         { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
