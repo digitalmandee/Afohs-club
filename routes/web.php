@@ -84,6 +84,14 @@ Route::get('/add/product', function () {
     return Inertia::render('Inventory/Product');
 });
 
+Route::get('/members', function () {
+    return Inertia::render('Member/Dashboard');
+});
+
+Route::get('/add/information', function () {
+    return Inertia::render('Member/AddInfo');
+});
+
 // Route::get('/dashboard', function () {
 //     return Inertia::render('Dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');

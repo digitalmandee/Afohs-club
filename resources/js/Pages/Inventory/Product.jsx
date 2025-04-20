@@ -378,6 +378,7 @@ const AddProduct = () => {
             }}>
                 <Box sx={{
                     width: '650px',
+                    margin: '0 auto'
                 }}>
                     <Box sx={{ p: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <Typography variant="h5" fontWeight="bold">
