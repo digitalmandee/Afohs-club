@@ -2,39 +2,82 @@
 
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
-import { Add, ArrowBack, ExpandMore } from '@mui/icons-material';
-import { Box, Button, Container, Grid, IconButton, Paper, TextField, Typography } from '@mui/material';
+import { Add, ArrowBack, Delete, ExpandMore } from '@mui/icons-material';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const AddNewFloor = () => {
+const NewFloor = () => {
     const [open, setOpen] = useState(false);
-    const [capacity, setCapacity] = useState('2 Person');
-    const [tableNumber, setTableNumber] = useState('T-01');
     const [modalOpen, setModalOpen] = useState(true);
+    const [isFloorExpanded, setIsFloorExpanded] = useState(true);
+    const [isTableExpanded, setIsTableExpanded] = useState(true);
+
     const { data, setData, post, processing, errors, reset } = useForm({
-        name: '', // floor name
+        floors: [{ name: '', area: '' }],
+        tables: [{ table_no: '', capacity: '2 Person' }],
     });
 
-    const handleCapacityChange = (event) => {
-        setCapacity(event.target.value);
+    // Handle input changes for floors
+    const handleFloorChange = (index, key, value) => {
+        const updatedFloors = [...data.floors];
+        updatedFloors[index][key] = value;
+        setData('floors', updatedFloors);
     };
 
-    const handleTableNumberChange = (event) => {
-        setTableNumber(event.target.value);
+    const addNewFloor = () => {
+        setData('floors', [...data.floors, { name: '', area: '' }]);
+    };
+
+    // Handle input changes for tables
+    const handleTableChange = (index, key, value) => {
+        const updatedTables = [...data.tables];
+        updatedTables[index][key] = value;
+        setData('tables', updatedTables);
+        console.log(data.tables);
+    };
+    // remove table
+    const removeTable = (index) => {
+        const updatedTables = data.tables.filter((_, i) => i !== index);
+        setData('tables', updatedTables);
+    };
+    // remove floor
+    const removeFloor = (index) => {
+        const updatedFloors = data.floors.filter((_, i) => i !== index);
+        setData('floors', updatedFloors);
+    };
+
+    const addNewTable = () => {
+        setData('tables', [...data.tables, { table_no: '', capacity: '2 Person' }]);
     };
 
     const handleCloseModal = () => {
         setModalOpen(false);
     };
-    const handleFloorSave = () => {
-        post(route('floors.store'), {
+
+    const handleSaveFloorAndTable = () => {
+        const hasEmptyFields = data.floors.some((f) => !f.name.trim() || !f.area.trim()) || data.tables.some((t) => !t.table_no.trim());
+
+        const tableNumbers = data.tables.map((t) => t.table_no.trim());
+        const hasDuplicateTableNumbers = new Set(tableNumbers).size !== tableNumbers.length;
+
+        if (hasEmptyFields) {
+            alert('Please fill all fields before saving.');
+            return;
+        }
+
+        if (hasDuplicateTableNumbers) {
+            alert('Table numbers must be unique.');
+            return;
+        }
+        console.log('Data to be sent:', data);
+        router.post(route('floors.store'), data, {
             onSuccess: () => {
                 console.log('Floor saved!');
                 setModalOpen(false);
-                router.visit(route('floors'));
+                router.visit(route('table.management'));
             },
         });
     };
@@ -154,19 +197,15 @@ const AddNewFloor = () => {
                                     <Button
                                         variant="contained"
                                         size="small"
-                                        onClick={handleFloorSave}
-                                        sx={{
-                                            bgcolor: '#0d3b5c',
-                                            '&:hover': { bgcolor: '#0a2e4a' },
-                                            textTransform: 'none',
-                                            px: 3,
-                                        }}
+                                        onClick={handleSaveFloorAndTable}
+                                        disabled={processing}
+                                        sx={{ bgcolor: '#0d3b5c', '&:hover': { bgcolor: '#0a2e4a' }, textTransform: 'none', px: 3 }}
                                     >
-                                        Save
+                                        {processing ? 'Saving...' : 'Save'}
                                     </Button>
                                 </Box>
 
-                                {/* floor List Section */}
+                                {/* Floor List Section */}
                                 <Box sx={{ p: 2 }}>
                                     <Box
                                         sx={{
@@ -177,71 +216,54 @@ const AddNewFloor = () => {
                                         }}
                                     >
                                         <Typography variant="subtitle2">Floor List</Typography>
-                                        <IconButton size="small">
-                                            <ExpandMore fontSize="small" />
+                                        <IconButton size="small" onClick={() => setIsFloorExpanded(!isFloorExpanded)}>
+                                            <ExpandMore
+                                                fontSize="small"
+                                                sx={{ transform: isFloorExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }}
+                                            />
                                         </IconButton>
                                     </Box>
-
-                                    <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
-                                        <Grid item xs={5}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Floor Number
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={5}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Area
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={2}></Grid>
-                                    </Grid>
-
-                                    <Grid container spacing={2} alignItems="center">
-                                        <Grid item xs={5}>
-                                            <TextField
-                                                size="small"
-                                                value={data.name}
-                                                onChange={(e) => setData('name', e.target.value)}
-                                                fullWidth
-                                                sx={{ mb: 2 }}
-                                                error={!!errors.name}
-                                                helperText={errors.name}
-                                                InputProps={{
-                                                    sx: { borderRadius: 1 },
-                                                }}
-                                            />
-                                        </Grid>
-                                        <Grid item xs={5}>
-                                            <TextField
-                                                size="small"
-                                                value={data.name}
-                                                onChange={(e) => setData('name', e.target.value)}
-                                                fullWidth
-                                                sx={{ mb: 2 }}
-                                                error={!!errors.name}
-                                                helperText={errors.name}
-                                                InputProps={{
-                                                    sx: { borderRadius: 1 },
-                                                }}
-                                            />
-                                        </Grid>
-                                    </Grid>
-
-                                    <Button
-                                        startIcon={<Add />}
-                                        sx={{
-                                            mt: 0,
-                                            color: '#0d3b5c',
-                                            textTransform: 'none',
-                                            fontWeight: 500,
-                                        }}
-                                    >
+                                    {isFloorExpanded && (
+                                        <>
+                                            {data.floors.map((floor, index) => (
+                                                <Grid container spacing={2} alignItems="center" key={index} sx={{ mt: 0.5 }}>
+                                                    <Grid item xs={5}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Floor Name
+                                                        </Typography>
+                                                        <TextField
+                                                            size="small"
+                                                            value={floor.name}
+                                                            onChange={(e) => handleFloorChange(index, 'name', e.target.value)}
+                                                            fullWidth
+                                                        />
+                                                    </Grid>
+                                                    <Grid item xs={5}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Floor Area
+                                                        </Typography>
+                                                        <TextField
+                                                            size="small"
+                                                            value={floor.area}
+                                                            onChange={(e) => handleFloorChange(index, 'area', e.target.value)}
+                                                            fullWidth
+                                                        />
+                                                    </Grid>
+                                                    <Grid item xs={2} sx={{ textAlign: 'center' }}>
+                                                        <IconButton size="small" onClick={() => removeFloor(index)}>
+                                                            <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
+                                                        </IconButton>
+                                                    </Grid>
+                                                </Grid>
+                                            ))}
+                                        </>
+                                    )}
+                                    <Button startIcon={<Add />} onClick={addNewFloor}>
                                         Add Floor
                                     </Button>
                                 </Box>
 
                                 {/* Table List Section */}
-
                                 <Box sx={{ p: 2 }}>
                                     <Box
                                         sx={{
@@ -252,63 +274,51 @@ const AddNewFloor = () => {
                                         }}
                                     >
                                         <Typography variant="subtitle2">Table List</Typography>
-                                        <IconButton size="small">
-                                            <ExpandMore fontSize="small" />
+                                        <IconButton size="small" onClick={() => setIsTableExpanded(!isTableExpanded)}>
+                                            <ExpandMore
+                                                fontSize="small"
+                                                sx={{ transform: isTableExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }}
+                                            />
                                         </IconButton>
                                     </Box>
 
-                                    <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
-                                        <Grid item xs={5}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Table Number
-                                            </Typography>
+                                    {data.tables.map((table, index) => (
+                                        <Grid container spacing={2} alignItems="center" key={index} sx={{ mt: 0.5 }}>
+                                            <Grid item xs={5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Table Number
+                                                </Typography>
+                                                <TextField
+                                                    size="small"
+                                                    value={table.table_no}
+                                                    onChange={(e) => handleTableChange(index, 'table_no', e.target.value)}
+                                                    fullWidth
+                                                />
+                                            </Grid>
+                                            <Grid item xs={5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Capacity
+                                                </Typography>
+                                                <FormControl fullWidth size="small">
+                                                    <Select
+                                                        value={table.capacity}
+                                                        onChange={(e) => handleTableChange(index, 'capacity', e.target.value)}
+                                                    >
+                                                        <MenuItem value="2 Person">2 Person</MenuItem>
+                                                        <MenuItem value="4 Person">4 Person</MenuItem>
+                                                        <MenuItem value="6 Person">6 Person</MenuItem>
+                                                        <MenuItem value="8 Person">8 Person</MenuItem>
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid>
+                                            <Grid item xs={2} sx={{ textAlign: 'center' }}>
+                                                <IconButton size="small" onClick={() => removeTable(index)}>
+                                                    <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
+                                                </IconButton>
+                                            </Grid>
                                         </Grid>
-                                        <Grid item xs={5}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Capacity
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={2}></Grid>
-                                    </Grid>
-
-                                    <Grid container spacing={2} alignItems="center">
-                                        {/* <Grid item xs={5}>
-                                            <TextField
-                                                size="small"
-                                                value={tableNumber}
-                                                onChange={handleTableNumberChange}
-                                                fullWidth
-                                                InputProps={{
-                                                    sx: { borderRadius: 1 },
-                                                }}
-                                            />
-                                        </Grid> */}
-                                        {/* <Grid item xs={5}>
-                                            <FormControl fullWidth size="small">
-                                                <Select value={capacity} onChange={handleCapacityChange} displayEmpty sx={{ borderRadius: 1 }}>
-                                                    <MenuItem value="2 Person">2 Person</MenuItem>
-                                                    <MenuItem value="4 Person">4 Person</MenuItem>
-                                                    <MenuItem value="6 Person">6 Person</MenuItem>
-                                                    <MenuItem value="8 Person">8 Person</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Grid> */}
-                                        {/* <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                                            <IconButton size="small">
-                                                <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
-                                            </IconButton>
-                                        </Grid> */}
-                                    </Grid>
-
-                                    <Button
-                                        startIcon={<Add />}
-                                        sx={{
-                                            mt: 2,
-                                            color: '#0d3b5c',
-                                            textTransform: 'none',
-                                            fontWeight: 500,
-                                        }}
-                                    >
+                                    ))}
+                                    <Button startIcon={<Add />} onClick={addNewTable}>
                                         Add Table
                                     </Button>
                                 </Box>
@@ -321,4 +331,4 @@ const AddNewFloor = () => {
     );
 };
 
-export default AddNewFloor;
+export default NewFloor;

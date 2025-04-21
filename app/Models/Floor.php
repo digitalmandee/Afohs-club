@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Floor extends Model
 {
-    protected $fillable = ['name']; // 👈 Add this to allow mass assignment
+    protected $fillable = ['name', 'area'];
 
     public function tables()
     {

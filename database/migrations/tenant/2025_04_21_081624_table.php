@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('tables', function (Blueprint $table) {
             $table->id();
             $table->foreignId('floor_id')->constrained()->onDelete('cascade');
-            $table->integer('table_no');
-            $table->integer('capacity');
+            $table->string('table_no')->nullable();
+            $table->string('capacity');
             $table->timestamps();
         });
     }
