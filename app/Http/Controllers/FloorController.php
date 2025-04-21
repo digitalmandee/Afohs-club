@@ -72,9 +72,14 @@ class FloorController extends Controller
             'tablesData' => $tables,
         ]);
     }
+    public function toggleStatus(Request $request, $id)
+    {
+        $floor = Floor::findOrFail($id);
+        $floor->status = $request->status;
+        $floor->save();
 
-
-
+        return redirect()->back(); // ✅ Fix: send an Inertia-friendly response
+    }
 
 
     public function edit($id)

@@ -85,8 +85,8 @@ Route::middleware([
 
             Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
             Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
-
             Route::get('/table/management', [FloorController::class, 'floorTable'])->name('table.management');
+            Route::put('/floors/{id}/status', [FloorController::class, 'toggleStatus']);
 
             // End of floors routes
         });

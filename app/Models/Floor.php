@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Floor extends Model
 {
-    protected $fillable = ['name', 'area'];
+    protected $fillable = ['name', 'area', 'status'];
 
     public function tables()
     {

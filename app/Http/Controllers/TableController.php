@@ -32,7 +32,7 @@ class TableController extends Controller
     {
         $request->validate([
             'floor_id' => 'required|exists:floors,id',
-            'table_no' => 'required|string|max:255',
+            'table_no' => 'required|string|max:255|unique:tables,table_no',
             'capacity' => 'required|integer|min:1',
         ]);
 
