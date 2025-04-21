@@ -21,6 +21,7 @@ import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import NotificationsPanel from "./Notification";
@@ -109,7 +110,7 @@ export default function SideNav({ open, setOpen }) {
     const menuItems = [
         { text: "Dashboard", icon: <HomeIcon />, path: "/dashboard" },
         { text: "Inventory", icon: <InventoryIcon />, path: "/inventory" },
-        { text: "Transaction", icon: <PeopleIcon />, path: "/transaction" },
+        { text: "Transaction", icon: <ReceiptLongIcon />, path: "/transaction" },
         { text: "Settings", icon: <SettingsIcon />, path: "/settings" },
         {
             text: "Table Management",

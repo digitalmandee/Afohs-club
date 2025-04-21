@@ -92,6 +92,10 @@ Route::get('/add/information', function () {
     return Inertia::render('Member/AddInfo');
 });
 
+Route::get('/customers/list', function () {
+    return Inertia::render('Member/Customer');
+});
+
 // Route::get('/dashboard', function () {
 //     return Inertia::render('Dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
