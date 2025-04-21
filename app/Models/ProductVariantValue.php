@@ -16,4 +16,9 @@ class ProductVariantValue extends Model
         'stock',
         'is_default',
     ];
+
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class);
+    }
 }

@@ -15,7 +15,7 @@ return new class extends Migration {
 
             $table->string('name');
             $table->string('menu_code')->nullable();
-            $table->blob('description')->nullable();
+            $table->longText('description')->nullable();
             $table->json('images')->nullable();
 
             $table->foreignId('category_id')->constrained();

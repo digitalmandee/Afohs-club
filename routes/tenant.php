@@ -1,6 +1,9 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\InventoryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -45,9 +48,7 @@ Route::middleware([
                 return Inertia::render('App/Order/New/Index');
             });
 
-            Route::get('/inventory', function () {
-                return Inertia::render('App/Inventory/Dashboard');
-            });
+            Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
 
             Route::get('/transaction', function () {
                 return Inertia::render('App/Transaction/Dashboard');
@@ -66,11 +67,14 @@ Route::middleware([
             });
 
             // Inventory Category
-
             Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
             Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
             Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
             Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
+
+            // Inventory Items
+            Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
+            Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
         });
         // End of Tenant Routes
 

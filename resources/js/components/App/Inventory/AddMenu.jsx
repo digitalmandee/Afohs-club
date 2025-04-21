@@ -1,7 +1,7 @@
+import { useForm } from '@inertiajs/react';
 import {
     Add as AddIcon,
     Close as CloseIcon,
-    CloudUpload as CloudUploadIcon,
     EventSeat as EventSeatIcon,
     FormatBold as FormatBoldIcon,
     FormatItalic as FormatItalicIcon,
@@ -14,12 +14,13 @@ import {
     ShoppingBag as ShoppingBagIcon,
 } from '@mui/icons-material';
 import { Box, Button, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
 
 const AddMenu = ({ openMenu, onClose }) => {
-    const [newMenu, setNewMenu] = useState({
+    const { data, setData, post, processing, errors, reset, transform } = useForm({
         name: '',
         menu_code: '',
         category: '',
@@ -34,20 +35,30 @@ const AddMenu = ({ openMenu, onClose }) => {
         description: '',
         images: [],
     });
+    // const [newMenu, setNewMenu] = useState({
+    //     name: '',
+    //     menu_code: '',
+    //     category: '',
+    //     currentStock: '',
+    //     minimalStock: '',
+    //     outOfStock: false,
+    //     orderTypes: [],
+    //     cogs: '',
+    //     basePrice: '',
+    //     profit: '0.00',
+    //     variants: {},
+    //     description: '',
+    //     images: [],
+    // });
 
+    const [categories, setCategories] = useState([]);
     const [addMenuStep, setAddMenuStep] = useState(1);
     const [uploadedImages, setUploadedImages] = useState([]);
     const fileInputRef = useRef(null);
 
     // Snackbar
 
-    const productVariants = [
-        { name: 'Size', type: 'single', values: ['Small', 'Medium', 'Large'] },
-        { name: 'Temperature', type: 'single', values: ['Hot', 'Cold'] },
-        { name: 'Sweetness', type: 'single', values: ['Low', 'Medium', 'High'] },
-        { name: 'Milk Options', type: 'single', values: ['Oat', 'Almond', 'Coconut', 'Soy', 'Vanilla', 'None'] },
-        { name: 'Toppings', type: 'multiple', values: [] },
-    ];
+    const productVariants = [{ name: 'Size', type: 'multiple', values: ['Small', 'Medium', 'Large'] }];
 
     const orderTypes = [
         { value: 'dineIn', label: 'Dine In', icon: EventSeatIcon },
@@ -59,11 +70,10 @@ const AddMenu = ({ openMenu, onClose }) => {
 
     // Menu Steps
     const handleNextStep = () => {
-        const validationErrors = getMenuValidationErrors(newMenu);
+        const validationErrors = getMenuValidationErrors(data);
 
         if (validationErrors.length > 0) {
-            const now = new Date().getTime();
-            const errorSnackbars = validationErrors.map((error, index) => enqueueSnackbar(error, { error: 'error' }));
+            validationErrors.map((error, index) => enqueueSnackbar(error, { variant: 'error' }));
 
             // setSnackbarList((prev) => [...prev, ...errorSnackbars]);
             return;
@@ -77,7 +87,7 @@ const AddMenu = ({ openMenu, onClose }) => {
 
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.menu_code.trim()) errors.push('Menu code is required');
-        if (!menu.category.trim()) errors.push('Category is required');
+        if (!menu.category) errors.push('Category is required');
         if (!menu.currentStock || isNaN(menu.currentStock)) errors.push('Current stock must be a valid number');
         if (!menu.minimalStock || isNaN(menu.minimalStock)) errors.push('Minimal stock must be a valid number');
         if (!menu.orderTypes || menu.orderTypes.length === 0) errors.push('At least one order type must be selected');
@@ -96,21 +106,21 @@ const AddMenu = ({ openMenu, onClose }) => {
     // Handle form input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setNewMenu((prev) => ({
+        setData((prev) => ({
             ...prev,
             [name]: value,
         }));
     };
 
     const handleOrderTypeToggle = (type) => {
-        setNewMenu((prev) => ({
+        setData((prev) => ({
             ...prev,
             orderTypes: prev.orderTypes.includes(type) ? prev.orderTypes.filter((t) => t !== type) : [...prev.orderTypes, type],
         }));
     };
 
     const handleSelectAll = () => {
-        setNewMenu((prev) => {
+        setData((prev) => {
             const allSelected = orderTypes.every((opt) => prev.orderTypes.includes(opt.value));
 
             return {
@@ -122,7 +132,7 @@ const AddMenu = ({ openMenu, onClose }) => {
 
     // Handle variant changes
     const handleVariantToggle = (variantName) => {
-        setNewMenu((prev) => {
+        setData((prev) => {
             const existing = prev.variants[variantName];
             const isActive = existing?.active;
 
@@ -132,10 +142,7 @@ const AddMenu = ({ openMenu, onClose }) => {
             // If `variant` is found in `productVariants`
             if (!variant) return prev;
 
-            const newItems =
-                variant.type === 'single'
-                    ? variant.values.map((value) => ({ name: value, price: 0, stock: 0 })) // Use `values` for `name` in "single" type
-                    : []; // For "multiple" type, keep `items` empty initially.
+            const newItems = variant.values.map((value) => ({ name: value, price: 0, stock: 0 })); // For "multiple" type, keep `items` empty initially.
 
             return {
                 ...prev,
@@ -143,6 +150,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                     ...prev.variants,
                     [variantName]: {
                         active: !isActive,
+                        type: variant.type,
                         items: newItems, // New items for active variant
                         newItem: { name: '', price: '', stock: '' }, // Clear form for new item
                     },
@@ -152,7 +160,7 @@ const AddMenu = ({ openMenu, onClose }) => {
     };
 
     const handleNewVariantItemChange = (variantName, field, value) => {
-        setNewMenu((prev) => ({
+        setData((prev) => ({
             ...prev,
             variants: {
                 ...prev.variants,
@@ -168,7 +176,7 @@ const AddMenu = ({ openMenu, onClose }) => {
     };
 
     const handleAddVariantItem = (variantName) => {
-        setNewMenu((prev) => {
+        setData((prev) => {
             const variant = prev.variants[variantName];
             const { name, price, stock } = variant.newItem;
 
@@ -189,7 +197,7 @@ const AddMenu = ({ openMenu, onClose }) => {
     };
 
     const handleRemoveVariantItem = (variantName, index) => {
-        setNewMenu((prev) => {
+        setData((prev) => {
             const updatedItems = [...prev.variants[variantName].items];
             updatedItems.splice(index, 1);
 
@@ -210,12 +218,12 @@ const AddMenu = ({ openMenu, onClose }) => {
     const handleImageUpload = (e) => {
         const files = Array.from(e.target.files);
         if (files.length > 0) {
+            setData((prev) => ({
+                ...prev,
+                images: [...prev.images, ...files],
+            }));
             const newImages = files.map((file) => URL.createObjectURL(file));
             setUploadedImages((prev) => [...prev, ...newImages]);
-            setNewMenu((prev) => ({
-                ...prev,
-                images: [...prev.images, ...newImages],
-            }));
         }
     };
 
@@ -225,26 +233,43 @@ const AddMenu = ({ openMenu, onClose }) => {
 
     // Save new menu
     const handleSaveMenu = () => {
-        setProducts((prev) => [...prev, newProduct]);
-        setOpenAddMenu(false);
-        setShowConfirmation(true);
-        setUploadedImages([]);
+        post(route('inventory.store'), {
+            onSuccess: (data) => {
+                enqueueSnackbar('Product added successfully', { variant: 'success' });
+                reset();
+                setUploadedImages([]);
+                setOpenAddMenu(false);
+                setShowConfirmation(true);
+            },
+            onError: (errors) => {
+                enqueueSnackbar('Something went wrong', { variant: 'error' });
+                console.log(errors);
+            },
+        });
     };
 
     // Calculate profit when cogs or basePrice changes
     useEffect(() => {
-        if (newMenu.cogs && newMenu.basePrice) {
-            const cogs = Number.parseFloat(newMenu.cogs);
-            const basePrice = Number.parseFloat(newMenu.basePrice);
+        if (data.cogs && data.basePrice) {
+            const cogs = Number.parseFloat(data.cogs);
+            const basePrice = Number.parseFloat(data.basePrice);
             if (!isNaN(cogs) && !isNaN(basePrice)) {
                 const profit = (basePrice - cogs).toFixed(2);
-                setNewMenu((prev) => ({
+                setData((prev) => ({
                     ...prev,
                     profit,
                 }));
             }
         }
-    }, [newMenu.cogs, newMenu.basePrice]);
+    }, [data.cogs, data.basePrice]);
+
+    useEffect(() => {
+        axios.get(route('inventory.categories')).then((response) => {
+            setCategories(response.data.categories);
+        });
+    }, []);
+
+    // Render
     return (
         <>
             <Dialog
@@ -331,7 +356,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                         fullWidth
                                         placeholder="Cappucino"
                                         name="name"
-                                        value={newMenu.name}
+                                        value={data.name}
                                         onChange={handleInputChange}
                                         variant="outlined"
                                         size="small"
@@ -344,8 +369,8 @@ const AddMenu = ({ openMenu, onClose }) => {
                                     <TextField
                                         fullWidth
                                         placeholder="e.g. A001"
-                                        name="id"
-                                        value={newMenu.menu_code}
+                                        name="menu_code"
+                                        value={data.menu_code}
                                         onChange={handleInputChange}
                                         variant="outlined"
                                         size="small"
@@ -360,19 +385,21 @@ const AddMenu = ({ openMenu, onClose }) => {
                                         fullWidth
                                         placeholder="Choose category"
                                         name="category"
-                                        value={newMenu.category}
+                                        value={data.category}
                                         onChange={handleInputChange}
                                         variant="outlined"
                                         size="small"
                                         SelectProps={{
                                             displayEmpty: true,
-                                            renderValue: (value) => value || 'Choose category',
                                         }}
                                     >
                                         <MenuItem value="">Choose category</MenuItem>
-                                        <MenuItem value="Coffee & Beverage">Coffee & Beverage</MenuItem>
-                                        <MenuItem value="Food & Snack">Food & Snack</MenuItem>
-                                        <MenuItem value="Imaji at Home">Imaji at Home</MenuItem>
+                                        {categories?.length > 0 &&
+                                            categories.map(({ id, name }) => (
+                                                <MenuItem key={id} value={id}>
+                                                    {name}
+                                                </MenuItem>
+                                            ))}
                                     </TextField>
                                 </Grid>
                                 <Grid item xs={6}>
@@ -384,7 +411,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             fullWidth
                                             placeholder="10"
                                             name="currentStock"
-                                            value={newMenu.currentStock}
+                                            value={data.currentStock}
                                             onChange={handleInputChange}
                                             variant="outlined"
                                             size="small"
@@ -415,7 +442,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             fullWidth
                                             placeholder="10"
                                             name="minimalStock"
-                                            value={newMenu.minimalStock}
+                                            value={data.minimalStock}
                                             onChange={handleInputChange}
                                             variant="outlined"
                                             size="small"
@@ -463,8 +490,8 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             </Box>
                                         </Box>
                                         <Switch
-                                            checked={newMenu.outOfStock}
-                                            onChange={() => setNewMenu((prev) => ({ ...prev, outOfStock: !prev.outOfStock }))}
+                                            checked={data.outOfStock}
+                                            onChange={() => setData((prev) => ({ ...prev, outOfStock: !prev.outOfStock }))}
                                             color="primary"
                                         />
                                     </Box>
@@ -479,7 +506,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                                 Select All
                                             </Typography>
                                             <Switch
-                                                checked={orderTypes.every((opt) => newMenu.orderTypes.includes(opt.value))}
+                                                checked={orderTypes.every((opt) => data.orderTypes.includes(opt.value))}
                                                 onChange={handleSelectAll}
                                                 color="primary"
                                                 size="small"
@@ -488,7 +515,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                     </Box>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         {orderTypes.map((item, index) => {
-                                            const isSelected = newMenu.orderTypes.includes(item.value);
+                                            const isSelected = data.orderTypes.includes(item.value);
                                             return (
                                                 <Button
                                                     variant={isSelected ? 'contained' : 'outlined'}
@@ -535,7 +562,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             fullWidth
                                             placeholder="3.00"
                                             name="cogs"
-                                            value={newMenu.cogs}
+                                            value={data.cogs}
                                             onChange={handleInputChange}
                                             variant="outlined"
                                             size="small"
@@ -567,7 +594,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             fullWidth
                                             placeholder="4.00"
                                             name="basePrice"
-                                            value={newMenu.basePrice}
+                                            value={data.basePrice}
                                             onChange={handleInputChange}
                                             variant="outlined"
                                             size="small"
@@ -582,7 +609,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                     </Typography>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <Typography variant="h6" fontWeight="bold">
-                                            Rs {newMenu.profit}
+                                            Rs {data.profit}
                                         </Typography>
                                     </Box>
                                 </Grid>
@@ -595,7 +622,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                         </Typography>
                                     </Box>
 
-                                    {/* <pre>{JSON.stringify(newMenu.variants, null, 2)}</pre> */}
+                                    <pre>{JSON.stringify(data.variants, null, 2)}</pre>
 
                                     {productVariants.map((item) => (
                                         <Box key={item.name} sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 2 }}>
@@ -604,7 +631,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                                     {item.name}
                                                 </Typography>
                                                 <Switch
-                                                    checked={!!newMenu.variants[item.name]?.active}
+                                                    checked={!!data.variants[item.name]?.active}
                                                     onChange={() => handleVariantToggle(item.name)}
                                                     color="primary"
                                                     size="small"
@@ -612,10 +639,10 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             </Box>
 
                                             {/* Render if active */}
-                                            {newMenu.variants[item.name]?.active && (
+                                            {data.variants[item.name]?.active && (
                                                 <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                     {/* Loop through the items for both single and multiple variant types */}
-                                                    {newMenu.variants[item.name]?.items?.map((topping, index) => (
+                                                    {data.variants[item.name]?.items?.map((topping, index) => (
                                                         <Box
                                                             key={index}
                                                             sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}
@@ -630,7 +657,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                                                     value={topping.name}
                                                                     onChange={(e) => {
                                                                         const value = e.target.value;
-                                                                        setNewMenu((prev) => {
+                                                                        setData((prev) => {
                                                                             const items = [...prev.variants[item.name].items];
                                                                             items[index].name = value;
                                                                             return {
@@ -653,10 +680,13 @@ const AddMenu = ({ openMenu, onClose }) => {
                                                                 size="small"
                                                                 placeholder="Price"
                                                                 type="number"
+                                                                inputProps={{ min: 0 }}
                                                                 value={topping.price}
                                                                 onChange={(e) => {
-                                                                    const value = e.target.value;
-                                                                    setNewMenu((prev) => {
+                                                                    let value = parseFloat(e.target.value);
+                                                                    value = isNaN(value) ? '' : Math.max(0, value); // enforce minimum 0
+
+                                                                    setData((prev) => {
                                                                         const items = [...prev.variants[item.name].items];
                                                                         items[index].price = value;
                                                                         return {
@@ -673,15 +703,18 @@ const AddMenu = ({ openMenu, onClose }) => {
                                                                 }}
                                                                 sx={{ width: 120, mr: 1 }}
                                                             />
-                                                            {/* Stock field */}
+
                                                             <TextField
                                                                 size="small"
                                                                 placeholder="Stock"
                                                                 type="number"
+                                                                inputProps={{ min: 0 }}
                                                                 value={topping.stock}
                                                                 onChange={(e) => {
-                                                                    const value = e.target.value;
-                                                                    setNewMenu((prev) => {
+                                                                    let value = parseInt(e.target.value);
+                                                                    value = isNaN(value) ? '' : Math.max(0, value); // enforce minimum 0
+
+                                                                    setData((prev) => {
                                                                         const items = [...prev.variants[item.name].items];
                                                                         items[index].stock = value;
                                                                         return {
@@ -698,6 +731,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                                                 }}
                                                                 sx={{ width: 80, mr: 1 }}
                                                             />
+
                                                             <IconButton
                                                                 size="small"
                                                                 sx={{ width: 40 }}
@@ -718,7 +752,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                                                 <TextField
                                                                     placeholder="e.g. Oreo"
                                                                     size="small"
-                                                                    value={newMenu.variants[item.name]?.newItem?.name || ''}
+                                                                    value={data.variants[item.name]?.newItem?.name || ''}
                                                                     onChange={(e) => handleNewVariantItemChange(item.name, 'name', e.target.value)}
                                                                     sx={{ flex: 1, mr: 1 }}
                                                                 />
@@ -738,21 +772,29 @@ const AddMenu = ({ openMenu, onClose }) => {
                                                                         <Typography variant="body2">Rs</Typography>
                                                                     </Box>
                                                                     <TextField
+                                                                        type="number"
                                                                         placeholder="10"
                                                                         size="small"
-                                                                        value={newMenu.variants[item.name]?.newItem?.price || ''}
+                                                                        value={data.variants[item.name]?.newItem?.price || ''}
                                                                         onChange={(e) =>
                                                                             handleNewVariantItemChange(item.name, 'price', e.target.value)
                                                                         }
                                                                         fullWidth
+                                                                        inputProps={{
+                                                                            min: 0,
+                                                                        }}
                                                                     />
                                                                 </Box>
                                                                 <TextField
+                                                                    type="number"
                                                                     placeholder="0"
                                                                     size="small"
-                                                                    value={newMenu.variants[item.name]?.newItem?.stock || ''}
+                                                                    value={data.variants[item.name]?.newItem?.stock || ''}
                                                                     onChange={(e) => handleNewVariantItemChange(item.name, 'stock', e.target.value)}
                                                                     sx={{ width: 80, mr: 1 }}
+                                                                    inputProps={{
+                                                                        min: 0,
+                                                                    }}
                                                                 />
                                                                 <IconButton
                                                                     size="small"
@@ -792,7 +834,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             </Tooltip>
                                         </Box>
                                         <Switch
-                                            checked={newMenu.toppings.multipleChoice}
+                                            checked={data.toppings.multipleChoice}
                                             onChange={handleMultipleChoiceToggle}
                                             color="primary"
                                             size="small"
@@ -832,7 +874,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             />
                                         </Box>
                                     ))}
-                                <Box
+                                {/* <Box
                                     sx={{
                                         width: 80,
                                         height: 80,
@@ -845,13 +887,12 @@ const AddMenu = ({ openMenu, onClose }) => {
                                         cursor: 'pointer',
                                         backgroundColor: '#f5f5f5',
                                     }}
-                                    onClick={triggerFileInput}
                                 >
                                     <Typography variant="body2" fontWeight="bold">
                                         Upload
                                     </Typography>
                                     <CloudUploadIcon fontSize="small" sx={{ mt: 0.5 }} />
-                                </Box>
+                                </Box> */}
                                 <Box
                                     sx={{
                                         width: 80,
@@ -864,6 +905,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                         cursor: 'pointer',
                                         backgroundColor: '#e3f2fd',
                                     }}
+                                    onClick={triggerFileInput}
                                 >
                                     <AddIcon sx={{ color: '#90caf9' }} />
                                 </Box>
@@ -893,7 +935,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                     rows={5}
                                     placeholder="e.g An all-time favorite blend with citrus fruit character, caramel flavors, and a pleasant faintly floral aroma."
                                     name="description"
-                                    value={newMenu.description}
+                                    value={data.description}
                                     onChange={handleInputChange}
                                     variant="outlined"
                                     sx={{
@@ -929,7 +971,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                     Maximum 500 characters
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    {newMenu.description.length} / 500
+                                    {data.description.length} / 500
                                 </Typography>
                             </Box>
                         </Box>
@@ -985,6 +1027,9 @@ const AddMenu = ({ openMenu, onClose }) => {
                                         backgroundColor: '#002A41',
                                     },
                                 }}
+                                disabled={processing}
+                                loading={processing}
+                                loadingPosition="start"
                             >
                                 Save
                             </Button>

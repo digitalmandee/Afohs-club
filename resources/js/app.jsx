@@ -15,7 +15,7 @@ createInertiaApp({
         const root = createRoot(el);
 
         root.render(
-            <SnackbarProvider maxSnack={5}>
+            <SnackbarProvider maxSnack={8}>
                 <App {...props} />
             </SnackbarProvider>,
         );

@@ -14,4 +14,9 @@ class ProductVariant extends Model
         'name',
         'type',
     ];
+
+    public function values()
+    {
+        return $this->hasMany(ProductVariantValue::class);
+    }
 }

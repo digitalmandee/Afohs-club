@@ -2,35 +2,23 @@
 
 import AddMenu from '@/components/App/Inventory/AddMenu';
 import SideNav from '@/components/App/SideBar/SideNav';
+import { tenantAsset } from '@/helpers/asset';
 import {
     Add as AddIcon,
     ArrowDownward as ArrowDownwardIcon,
-    ArrowForward as ArrowForwardIcon,
     ArrowUpward as ArrowUpwardIcon,
     AttachMoney as AttachMoneyIcon,
     CheckCircle as CheckCircleIcon,
     Check as CheckIcon,
     ChevronRight as ChevronRightIcon,
     Close as CloseIcon,
-    CloudUpload as CloudUploadIcon,
     Delete as DeleteIcon,
     Edit as EditIcon,
-    EventSeat as EventSeatIcon,
     ExpandMore as ExpandMoreIcon,
     FilterList as FilterIcon,
-    FormatBold as FormatBoldIcon,
-    FormatItalic as FormatItalicIcon,
-    FormatListBulleted,
-    FormatListNumbered,
     Info as InfoIcon,
-    InsertEmoticon as InsertEmoticonIcon,
     Inventory as InventoryIcon,
-    Link as LinkIcon,
-    LocalMall as LocalMallIcon,
-    LocalShipping as LocalShippingIcon,
-    RestaurantMenu as RestaurantMenuIcon,
     Search as SearchIcon,
-    ShoppingBag as ShoppingBagIcon,
 } from '@mui/icons-material';
 import {
     Accordion,
@@ -49,8 +37,6 @@ import {
     Grid,
     IconButton,
     InputAdornment,
-    LinearProgress,
-    MenuItem,
     Snackbar,
     Switch,
     TextField,
@@ -59,12 +45,11 @@ import {
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-export default function CoffeeShop() {
+export default function CoffeeShop({ productLists }) {
     const [open, setOpen] = useState(false);
     const [openFilter, setOpenFilter] = useState(false);
     const [openProductDetail, setOpenProductDetail] = useState(false);
@@ -111,180 +96,7 @@ export default function CoffeeShop() {
     const [stockFilter, setStockFilter] = useState('All');
 
     // Product data
-    const [products, setProducts] = useState([
-        {
-            id: 'MENU001',
-            name: 'Ristretto Bianco',
-            category: 'Coffee & Beverage',
-            image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            images: [
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            ],
-            stock: { status: 'Ready Stock', quantity: '520 Pcs' },
-            price: { current: 4.0, original: 8.0, discount: '50%', cogs: 3.0, profit: 1.0 },
-            temperature: ['Ice', 'Hot'],
-            size: ['S', 'M', 'L'],
-            description:
-                'An all-time favorite blend with citrus fruit character, caramel flavors, and a pleasant faintly floral aroma. Locked scent: Excelso prevents all...',
-            available: true,
-            orderTypes: ['Dine In', 'Pick Up', 'Delivery', 'Takeway', 'Reservation'],
-            stockDetails: {
-                ready: 520,
-                outOfStock: 32,
-                totalVariant: 14,
-            },
-            sales: {
-                weekly: [120, 150, 180, 200, 170, 190, 160],
-                byOrderType: [
-                    { name: 'Dine In', value: 230, percentage: '25%', color: '#003B5C' },
-                    { name: 'Delivery', value: 120, percentage: '13%', color: '#0288d1' },
-                    { name: 'Pick Up', value: 80, percentage: '9%', color: '#4caf50' },
-                    { name: 'Reservation', value: 140, percentage: '15%', color: '#b0bec5' },
-                    { name: 'Other', value: 350, percentage: '38%', color: '#e0e0e0' },
-                ],
-                average: 2420,
-            },
-        },
-        {
-            id: 'MENU002',
-            name: 'Iced creamy latte',
-            category: 'Coffee & Beverage',
-            image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            images: [
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            ],
-            stock: { status: 'Out of Stock', quantity: '0 Pcs' },
-            price: { current: 5.0, original: null, discount: null, cogs: 4.0, profit: 1.0 },
-            temperature: ['Ice', 'Hot'],
-            size: ['S', 'M', 'L'],
-            description:
-                'A creamy, smooth latte with a perfect balance of espresso and milk. The iced version is refreshing and perfect for warm days.',
-            available: false,
-            orderTypes: ['Dine In', 'Pick Up', 'Delivery', 'Takeway', 'Reservation'],
-            stockDetails: {
-                ready: 0,
-                outOfStock: 120,
-                totalVariant: 8,
-            },
-            sales: {
-                weekly: [80, 100, 90, 110, 95, 105, 85],
-                byOrderType: [
-                    { name: 'Dine In', value: 180, percentage: '20%', color: '#003B5C' },
-                    { name: 'Delivery', value: 200, percentage: '22%', color: '#0288d1' },
-                    { name: 'Pick Up', value: 150, percentage: '17%', color: '#4caf50' },
-                    { name: 'Reservation', value: 120, percentage: '13%', color: '#b0bec5' },
-                    { name: 'Other', value: 250, percentage: '28%', color: '#e0e0e0' },
-                ],
-                average: 1850,
-            },
-        },
-        {
-            id: 'MENU003',
-            name: 'Cappucino',
-            category: 'Coffee & Beverage',
-            image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            images: [
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            ],
-            stock: { status: 'Ready Stock', quantity: '520 Pcs' },
-            price: { current: 4.0, original: 8.0, discount: '50%', cogs: 3.0, profit: 1.0 },
-            temperature: ['Ice', 'Hot'],
-            size: ['S', 'M', 'L'],
-            description: 'A classic Italian coffee drink prepared with espresso, hot milk, and steamed milk foam. Perfect balance of flavors.',
-            available: true,
-            orderTypes: ['Dine In', 'Pick Up', 'Delivery', 'Takeway', 'Reservation'],
-            stockDetails: {
-                ready: 520,
-                outOfStock: 0,
-                totalVariant: 12,
-            },
-            sales: {
-                weekly: [140, 160, 150, 180, 170, 190, 160],
-                byOrderType: [
-                    { name: 'Dine In', value: 250, percentage: '28%', color: '#003B5C' },
-                    { name: 'Delivery', value: 150, percentage: '17%', color: '#0288d1' },
-                    { name: 'Pick Up', value: 100, percentage: '11%', color: '#4caf50' },
-                    { name: 'Reservation', value: 120, percentage: '13%', color: '#b0bec5' },
-                    { name: 'Other', value: 280, percentage: '31%', color: '#e0e0e0' },
-                ],
-                average: 2200,
-            },
-        },
-        {
-            id: 'MENU004',
-            name: 'Orange juice',
-            category: 'Coffee & Beverage',
-            image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            images: [
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            ],
-            stock: { status: 'Ready Stock', quantity: '520 Pcs' },
-            price: { current: 4.0, original: null, discount: null, cogs: 2.5, profit: 1.5 },
-            temperature: ['Ice', 'Hot'],
-            size: ['S', 'M', 'L'],
-            description: 'Freshly squeezed orange juice, rich in vitamin C and refreshing taste. Made from premium oranges.',
-            available: true,
-            orderTypes: ['Dine In', 'Pick Up', 'Delivery', 'Takeway', 'Reservation'],
-            stockDetails: {
-                ready: 520,
-                outOfStock: 0,
-                totalVariant: 6,
-            },
-            sales: {
-                weekly: [100, 120, 110, 130, 125, 115, 105],
-                byOrderType: [
-                    { name: 'Dine In', value: 200, percentage: '25%', color: '#003B5C' },
-                    { name: 'Delivery', value: 180, percentage: '22%', color: '#0288d1' },
-                    { name: 'Pick Up', value: 150, percentage: '19%', color: '#4caf50' },
-                    { name: 'Reservation', value: 100, percentage: '12%', color: '#b0bec5' },
-                    { name: 'Other', value: 170, percentage: '22%', color: '#e0e0e0' },
-                ],
-                average: 1900,
-            },
-        },
-        {
-            id: 'MENU005',
-            name: 'Soda Beverage',
-            category: 'Coffee & Beverage',
-            image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            images: [
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jkx2mHK5QcKtUn8SdTDaegzAMc1u6b.png',
-            ],
-            stock: { status: 'Ready Stock', quantity: '520 Pcs' },
-            price: { current: 4.0, original: null, discount: null, cogs: 2.0, profit: 2.0 },
-            temperature: ['Ice', 'Hot'],
-            size: ['S', 'M', 'L'],
-            description: 'Refreshing carbonated beverage with a variety of flavors to choose from. Perfect for a quick refreshment.',
-            available: true,
-            orderTypes: ['Dine In', 'Pick Up', 'Delivery', 'Takeway', 'Reservation'],
-            stockDetails: {
-                ready: 520,
-                outOfStock: 0,
-                totalVariant: 10,
-            },
-            sales: {
-                weekly: [90, 110, 100, 120, 115, 105, 95],
-                byOrderType: [
-                    { name: 'Dine In', value: 180, percentage: '22%', color: '#003B5C' },
-                    { name: 'Delivery', value: 150, percentage: '18%', color: '#0288d1' },
-                    { name: 'Pick Up', value: 200, percentage: '24%', color: '#4caf50' },
-                    { name: 'Reservation', value: 120, percentage: '15%', color: '#b0bec5' },
-                    { name: 'Other', value: 170, percentage: '21%', color: '#e0e0e0' },
-                ],
-                average: 1800,
-            },
-        },
-    ]);
+    const [products, setProducts] = useState(productLists || []);
 
     // Add new state variables for Stock and Update Stock modals
     const [openStockModal, setOpenStockModal] = useState(false);
@@ -343,9 +155,9 @@ export default function CoffeeShop() {
         }
 
         if (sortingOptions.price === 'ascending') {
-            filtered.sort((a, b) => a.price.current - b.price.current);
+            filtered.sort((a, b) => a.base_price - b.base_price);
         } else if (sortingOptions.price === 'descending') {
-            filtered.sort((a, b) => b.price.current - a.price.current);
+            filtered.sort((a, b) => b.base_price - a.base_price);
         }
 
         setFilteredProducts(filtered);
@@ -600,7 +412,7 @@ export default function CoffeeShop() {
                         <div className="d-flex align-items-center mb-4">
                             <div className="d-flex align-items-center">
                                 <Typography variant="h4" component="h1" fontWeight="500" sx={{ mr: 2 }}>
-                                    67
+                                    {products.length}
                                 </Typography>
                                 <Typography variant="body1" color="#7F7F7F">
                                     Products
@@ -684,7 +496,7 @@ export default function CoffeeShop() {
                                             <Grid item xs={12} sm={3} md={2.5} sx={{ display: 'flex', alignItems: 'center' }}>
                                                 <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                     <img
-                                                        src={product.image || '/placeholder.svg'}
+                                                        src={(product.images.length > 0 && tenantAsset(product.images[0])) || '/placeholder.svg'}
                                                         alt={product.name}
                                                         style={{
                                                             width: '100%',
@@ -700,7 +512,7 @@ export default function CoffeeShop() {
                                                         {product.name}
                                                     </Typography>
                                                     <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#063455' }}>
-                                                        {product.category}
+                                                        {product.category?.name}
                                                     </Typography>
                                                 </Box>
                                             </Grid>
@@ -713,7 +525,7 @@ export default function CoffeeShop() {
                                                 sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                             >
                                                 <Box>
-                                                    {product.stock.status === 'Out of Stock' ? (
+                                                    {product.current_stock === 0 ? (
                                                         <Typography
                                                             variant="body2"
                                                             component="span"
@@ -722,15 +534,16 @@ export default function CoffeeShop() {
                                                                 background: '#F14C35',
                                                             }}
                                                         >
-                                                            {product.stock.status}
+                                                            Out of Stock
+                                                            {/* {product.stock.status} */}
                                                         </Typography>
                                                     ) : (
                                                         <Typography variant="body2" color="text.secondary">
-                                                            {product.stock.status}
+                                                            Stock Available
                                                         </Typography>
                                                     )}
                                                     <Typography variant="body1" fontWeight="500" sx={{ fontSize: '18px' }}>
-                                                        {product.stock.quantity}
+                                                        {product.current_stock}
                                                     </Typography>
                                                 </Box>
                                             </Grid>
@@ -747,17 +560,17 @@ export default function CoffeeShop() {
                                                         Rs
                                                     </Typography>
                                                     <Typography variant="h6" fontWeight="500" sx={{ fontSize: '24px' }}>
-                                                        {product.price.current.toFixed(2)}
+                                                        {product.base_price}
                                                     </Typography>
 
-                                                    {product.price.original && (
+                                                    {/* {product.cost_of_goods_sold && (
                                                         <>
                                                             <Typography
                                                                 variant="body2"
                                                                 color="#FFA90B"
                                                                 sx={{ ml: 1, textDecoration: 'line-through' }}
                                                             >
-                                                                Rs {product.price.original.toFixed(2)}
+                                                                Rs {product.cost_of_goods_sold}
                                                             </Typography>
                                                             <Chip
                                                                 label={product.price.discount}
@@ -771,56 +584,39 @@ export default function CoffeeShop() {
                                                                 }}
                                                             />
                                                         </>
-                                                    )}
+                                                    )} */}
                                                 </Box>
                                             </Grid>
 
                                             <Grid item xs={12} sm={3} md={4.5} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Temperature
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                        {product.temperature.map((temp) => (
-                                                            <Button
-                                                                key={temp}
-                                                                variant="outlined"
-                                                                size="small"
-                                                                sx={{
-                                                                    minWidth: 'unset',
-                                                                    px: 1.5,
-                                                                    borderColor: '#e0e0e0',
-                                                                    color: 'text.primary',
-                                                                }}
-                                                            >
-                                                                {temp}
-                                                            </Button>
-                                                        ))}
-                                                    </Box>
-                                                </Box>
-
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Size
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                        {product.size.map((size) => (
-                                                            <Button
-                                                                key={size}
-                                                                variant="outlined"
-                                                                size="small"
-                                                                sx={{
-                                                                    minWidth: 'unset',
-                                                                    px: 1.5,
-                                                                    borderColor: '#e0e0e0',
-                                                                    color: 'text.primary',
-                                                                }}
-                                                            >
-                                                                {size}
-                                                            </Button>
-                                                        ))}
-                                                    </Box>
-                                                </Box>
+                                                {product.variants.length > 0
+                                                    ? product.variants.map((variant, index) => {
+                                                          return (
+                                                              <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
+                                                                  <Typography variant="body2" color="text.secondary">
+                                                                      {variant.name}
+                                                                  </Typography>
+                                                                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                                      {variant.values.map((value, valueIndex) => (
+                                                                          <Button
+                                                                              key={valueIndex}
+                                                                              variant="outlined"
+                                                                              size="small"
+                                                                              sx={{
+                                                                                  minWidth: 'unset',
+                                                                                  px: 1.5,
+                                                                                  borderColor: '#e0e0e0',
+                                                                                  color: 'text.primary',
+                                                                              }}
+                                                                          >
+                                                                              {value.name}
+                                                                          </Button>
+                                                                      ))}
+                                                                  </Box>
+                                                              </Box>
+                                                          );
+                                                      })
+                                                    : '-----'}
 
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                     <IconButton onClick={() => handleProductClick(product)}>
@@ -1293,7 +1089,7 @@ export default function CoffeeShop() {
                                             {selectedProduct.name}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            {selectedProduct.id} • {selectedProduct.category}
+                                            {selectedProduct.id} • {selectedProduct.category?.name}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -1301,7 +1097,7 @@ export default function CoffeeShop() {
                                             <Typography variant="body2" sx={{ mr: 1 }}>
                                                 Available
                                             </Typography>
-                                            <Switch checked={selectedProduct.available} color="primary" size="small" />
+                                            <Switch checked={selectedProduct.status} color="primary" size="small" />
                                         </Box>
                                         <IconButton onClick={handleProductDetailClose}>
                                             <CloseIcon />
@@ -1325,7 +1121,7 @@ export default function CoffeeShop() {
                                                     }}
                                                 >
                                                     <img
-                                                        src={image || '/placeholder.svg'}
+                                                        src={image ? tenantAsset(image) : '/placeholder.svg'}
                                                         alt={`${selectedProduct.name} ${index + 1}`}
                                                         style={{
                                                             width: '100%',
@@ -1398,7 +1194,7 @@ export default function CoffeeShop() {
                                                     COGS
                                                 </Typography>
                                                 <Typography variant="h6" fontWeight="bold">
-                                                    Rs {selectedProduct.price.cogs.toFixed(2)}
+                                                    Rs {selectedProduct.cost_of_goods_sold}
                                                 </Typography>
                                             </Box>
 
@@ -1411,7 +1207,7 @@ export default function CoffeeShop() {
                                                     Base Price Selling
                                                 </Typography>
                                                 <Typography variant="h6" fontWeight="bold">
-                                                    Rs {selectedProduct.price.current.toFixed(2)}
+                                                    Rs {selectedProduct.base_price}
                                                 </Typography>
                                             </Box>
 
@@ -1425,7 +1221,7 @@ export default function CoffeeShop() {
                                                 </Typography>
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                     <Typography variant="h6" fontWeight="bold">
-                                                        Rs {selectedProduct.price.profit.toFixed(2)}
+                                                        Rs {(selectedProduct.base_price - selectedProduct.cost_of_goods_sold).toFixed(2)}
                                                     </Typography>
                                                     <Chip
                                                         label="33%"
@@ -1461,7 +1257,7 @@ export default function CoffeeShop() {
                                                 Available Order Type
                                             </Typography>
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                {selectedProduct.orderTypes.map((type) => (
+                                                {selectedProduct.available_order_types.map((type) => (
                                                     <Button
                                                         key={type}
                                                         variant="outlined"
@@ -1477,197 +1273,6 @@ export default function CoffeeShop() {
                                                         {type}
                                                     </Button>
                                                 ))}
-                                            </Box>
-                                        </Box>
-
-                                        {/* Stock Availability */}
-                                        <Box
-                                            sx={{
-                                                justifyContent: 'space-between',
-                                                border: '1px solid #e0e0e0',
-                                                borderRadius: '8px',
-                                                p: 2,
-                                                mb: 3,
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Typography variant="body1" fontWeight="bold">
-                                                    Stock Availability
-                                                </Typography>
-                                                <Button
-                                                    variant="text"
-                                                    size="small"
-                                                    endIcon={<ArrowForwardIcon fontSize="small" />}
-                                                    onClick={handleViewStock}
-                                                    sx={{
-                                                        color: 'primary.main',
-                                                        textTransform: 'none',
-                                                    }}
-                                                >
-                                                    View Stock
-                                                </Button>
-                                            </Box>
-
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Ready Stock
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Out of Stock
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Total Variant
-                                                </Typography>
-                                            </Box>
-
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                                                <Typography variant="body1" fontWeight="bold">
-                                                    {selectedProduct.stockDetails.ready} pcs
-                                                </Typography>
-                                                <Typography variant="body1" fontWeight="bold">
-                                                    {selectedProduct.stockDetails.outOfStock} pcs
-                                                </Typography>
-                                                <Typography variant="body1" fontWeight="bold">
-                                                    {selectedProduct.stockDetails.totalVariant} variant
-                                                </Typography>
-                                            </Box>
-
-                                            <Box sx={{ mb: 3 }}>
-                                                <LinearProgress
-                                                    variant="determinate"
-                                                    value={
-                                                        (selectedProduct.stockDetails.ready /
-                                                            (selectedProduct.stockDetails.ready + selectedProduct.stockDetails.outOfStock)) *
-                                                        100
-                                                    }
-                                                    sx={{
-                                                        height: 10,
-                                                        borderRadius: 5,
-                                                        backgroundColor: '#ff5722',
-                                                        '& .MuiLinearProgress-bar': {
-                                                            backgroundColor: '#003B5C',
-                                                        },
-                                                    }}
-                                                />
-                                            </Box>
-                                        </Box>
-
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                gap: 2,
-                                                mb: 3,
-                                            }}
-                                        >
-                                            {/* 1. Average Weekly Sales */}
-                                            <Box
-                                                sx={{
-                                                    flex: 1,
-                                                    border: '1px solid #e0e0e0',
-                                                    borderRadius: '12px',
-                                                    p: 3,
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    justifyContent: 'space-between',
-                                                }}
-                                            >
-                                                <Box>
-                                                    <Typography variant="h4" fontWeight="bold" sx={{ mb: 0.5 }}>
-                                                        Rs {selectedProduct.sales.average.toLocaleString()}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Average Weekly Sales
-                                                    </Typography>
-                                                </Box>
-
-                                                {/* Bar Chart */}
-                                                <Box sx={{ width: '100%', height: 100, mt: 2 }}>
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <BarChart
-                                                            data={selectedProduct.sales.weekly.map((value, index) => ({
-                                                                name: `Week ${index + 1}`,
-                                                                value,
-                                                            }))}
-                                                        >
-                                                            <Bar dataKey="value" fill="#003B5C" radius={[4, 4, 0, 0]} />
-                                                        </BarChart>
-                                                    </ResponsiveContainer>
-                                                </Box>
-                                            </Box>
-
-                                            {/* 2. Sales by Order Type */}
-                                            <Box
-                                                sx={{
-                                                    flex: 1,
-                                                    border: '1px solid #e0e0e0',
-                                                    borderRadius: '12px',
-                                                    p: 3,
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                }}
-                                            >
-                                                <Typography variant="body1" fontWeight="bold" sx={{ mb: 2 }}>
-                                                    Sales by Order Type
-                                                </Typography>
-
-                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    {/* Pie Chart */}
-                                                    <Box sx={{ width: '50%', height: 180 }}>
-                                                        <ResponsiveContainer width="100%" height="100%">
-                                                            <PieChart>
-                                                                <Pie
-                                                                    data={selectedProduct.sales.byOrderType}
-                                                                    cx="50%"
-                                                                    cy="50%"
-                                                                    innerRadius={50}
-                                                                    outerRadius={70}
-                                                                    paddingAngle={2}
-                                                                    dataKey="value"
-                                                                    nameKey="name"
-                                                                >
-                                                                    {selectedProduct.sales.byOrderType.map((entry, index) => (
-                                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                                    ))}
-                                                                </Pie>
-                                                                <Tooltip
-                                                                    contentStyle={{
-                                                                        backgroundColor: '#1c1c1c',
-                                                                        borderRadius: 6,
-                                                                        border: 'none',
-                                                                        color: '#fff',
-                                                                        fontSize: '14px',
-                                                                    }}
-                                                                    formatter={(value, name) => [`${value} pcs`, name]}
-                                                                />
-                                                            </PieChart>
-                                                        </ResponsiveContainer>
-                                                    </Box>
-
-                                                    {/* Legend */}
-                                                    <Box sx={{ width: '45%' }}>
-                                                        {selectedProduct.sales.byOrderType.slice(0, 4).map((entry) => (
-                                                            <Box key={entry.name} sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
-                                                                <Box
-                                                                    sx={{
-                                                                        width: 10,
-                                                                        height: 10,
-                                                                        borderRadius: '50%',
-                                                                        backgroundColor: entry.color,
-                                                                        mr: 1,
-                                                                    }}
-                                                                />
-                                                                <Typography variant="body2" sx={{ mr: 1 }}>
-                                                                    {entry.name}
-                                                                </Typography>
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    {entry.percentage}
-                                                                </Typography>
-                                                            </Box>
-                                                        ))}
-                                                    </Box>
-                                                </Box>
                                             </Box>
                                         </Box>
                                     </Box>
@@ -2254,992 +1859,6 @@ export default function CoffeeShop() {
                                 Save Changes
                             </Button>
                         </DialogActions>
-                    </Dialog>
-
-                    {/* Edit Menu Modal */}
-                    <Dialog
-                        open={openEditMenu}
-                        onClose={handleEditMenuClose}
-                        fullWidth
-                        maxWidth="md"
-                        PaperProps={{
-                            sx: {
-                                borderRadius: 1,
-                                m: 0,
-                                position: 'fixed',
-                                right: 0,
-                                top: 0,
-                                height: '100%',
-                                maxHeight: '100%',
-                            },
-                        }}
-                    >
-                        {selectedProduct.id && (
-                            <>
-                                <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="h5" fontWeight="bold">
-                                        Edit Menu
-                                    </Typography>
-                                    <IconButton onClick={handleEditMenuClose}>
-                                        <CloseIcon />
-                                    </IconButton>
-                                </Box>
-
-                                <DialogContent sx={{ p: 0 }}>
-                                    {/* Step Indicators */}
-                                    <Box sx={{ px: 3, mb: 3, display: 'flex', alignItems: 'center' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Box
-                                                sx={{
-                                                    width: 30,
-                                                    height: 30,
-                                                    borderRadius: '50%',
-                                                    backgroundColor: '#003B5C',
-                                                    color: 'white',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    mr: 1,
-                                                }}
-                                            >
-                                                1
-                                            </Box>
-                                            <Typography
-                                                variant="body2"
-                                                fontWeight="bold"
-                                                color={editMenuStep === 1 ? 'text.primary' : 'text.secondary'}
-                                            >
-                                                General Information
-                                            </Typography>
-                                        </Box>
-                                        <Box sx={{ flex: 1, mx: 2, height: 1, backgroundColor: '#e0e0e0' }} />
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Box
-                                                sx={{
-                                                    width: 30,
-                                                    height: 30,
-                                                    borderRadius: '50%',
-                                                    backgroundColor: editMenuStep === 2 ? '#003B5C' : '#e0e0e0',
-                                                    color: editMenuStep === 2 ? 'white' : 'text.secondary',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    mr: 1,
-                                                }}
-                                            >
-                                                2
-                                            </Box>
-                                            <Typography
-                                                variant="body2"
-                                                fontWeight="bold"
-                                                color={editMenuStep === 2 ? 'text.primary' : 'text.secondary'}
-                                            >
-                                                Descriptions and Image
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    {/* Step 1: General Information */}
-                                    {editMenuStep === 1 && (
-                                        <Box sx={{ px: 3, pb: 3 }}>
-                                            <Grid container spacing={3}>
-                                                <Grid item xs={12} md={6}>
-                                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                                        Product Name
-                                                    </Typography>
-                                                    <TextField
-                                                        fullWidth
-                                                        placeholder="Cappucino"
-                                                        name="name"
-                                                        defaultValue={selectedProduct.name}
-                                                        variant="outlined"
-                                                        size="small"
-                                                    />
-                                                </Grid>
-                                                <Grid item xs={12} md={6}>
-                                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                                        Menu Id (Optional)
-                                                    </Typography>
-                                                    <TextField
-                                                        fullWidth
-                                                        placeholder="e.g. A001"
-                                                        name="id"
-                                                        defaultValue={selectedProduct.id}
-                                                        variant="outlined"
-                                                        size="small"
-                                                    />
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                                        Categories
-                                                    </Typography>
-                                                    <TextField
-                                                        select
-                                                        fullWidth
-                                                        placeholder="Choose category"
-                                                        name="category"
-                                                        defaultValue={selectedProduct.category}
-                                                        variant="outlined"
-                                                        size="small"
-                                                        SelectProps={{
-                                                            displayEmpty: true,
-                                                            renderValue: (value) => value || 'Choose category',
-                                                        }}
-                                                    >
-                                                        <MenuItem value="">Choose category</MenuItem>
-                                                        <MenuItem value="Coffee & Beverage">Coffee & Beverage</MenuItem>
-                                                        <MenuItem value="Food & Snack">Food & Snack</MenuItem>
-                                                        <MenuItem value="Imaji at Home">Imaji at Home</MenuItem>
-                                                    </TextField>
-                                                </Grid>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                                        Current Ready Stock
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex' }}>
-                                                        <TextField
-                                                            fullWidth
-                                                            placeholder="10"
-                                                            name="currentStock"
-                                                            defaultValue={selectedProduct.stockDetails.ready}
-                                                            variant="outlined"
-                                                            size="small"
-                                                            type="number"
-                                                        />
-                                                        <Box
-                                                            sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                border: '1px solid #e0e0e0',
-                                                                borderLeft: 'none',
-                                                                px: 2,
-                                                                borderTopRightRadius: 4,
-                                                                borderBottomRightRadius: 4,
-                                                            }}
-                                                        >
-                                                            <Typography variant="body2">Pcs</Typography>
-                                                        </Box>
-                                                    </Box>
-                                                </Grid>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                                        Minimal Stock
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex' }}>
-                                                        <TextField
-                                                            fullWidth
-                                                            placeholder="10"
-                                                            name="minimalStock"
-                                                            defaultValue={selectedProduct.stockDetails.outOfStock}
-                                                            variant="outlined"
-                                                            size="small"
-                                                            type="number"
-                                                        />
-                                                        <Box
-                                                            sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                border: '1px solid #e0e0e0',
-                                                                borderLeft: 'none',
-                                                                px: 2,
-                                                                borderTopRightRadius: 4,
-                                                                borderBottomRightRadius: 4,
-                                                            }}
-                                                        >
-                                                            <Typography variant="body2">Pcs</Typography>
-                                                        </Box>
-                                                    </Box>
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <Box
-                                                        sx={{
-                                                            p: 2,
-                                                            border: '1px solid #e0e0e0',
-                                                            borderRadius: 1,
-                                                            backgroundColor: '#f5f5f5',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'space-between',
-                                                        }}
-                                                    >
-                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                            <Box sx={{ mr: 2 }}>
-                                                                <img src="/placeholder.svg" alt="Out of Stock" style={{ width: 40, height: 40 }} />
-                                                            </Box>
-                                                            <Box>
-                                                                <Typography variant="body1" fontWeight="bold">
-                                                                    Out of Stock Menu
-                                                                </Typography>
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    Out of Stock notification
-                                                                </Typography>
-                                                            </Box>
-                                                        </Box>
-                                                        <Switch defaultChecked={!selectedProduct.available} color="primary" />
-                                                    </Box>
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                        <Typography variant="body1" fontWeight="bold">
-                                                            Select Order Type
-                                                        </Typography>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                            <Typography variant="body2" sx={{ mr: 1 }}>
-                                                                Select All
-                                                            </Typography>
-                                                            <Switch
-                                                                defaultChecked={selectedProduct.orderTypes.length === 5}
-                                                                color="primary"
-                                                                size="small"
-                                                            />
-                                                        </Box>
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', gap: 1 }}>
-                                                        <Button
-                                                            variant={selectedProduct.orderTypes.includes('Dine In') ? 'contained' : 'outlined'}
-                                                            sx={{
-                                                                flex: 1,
-                                                                py: 2,
-                                                                borderRadius: 1,
-                                                                backgroundColor: selectedProduct.orderTypes.includes('Dine In')
-                                                                    ? '#003B5C'
-                                                                    : 'transparent',
-                                                                '&:hover': {
-                                                                    backgroundColor: selectedProduct.orderTypes.includes('Dine In')
-                                                                        ? '#003B5C'
-                                                                        : 'rgba(0, 59, 92, 0.04)',
-                                                                },
-                                                            }}
-                                                        >
-                                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                                <RestaurantMenuIcon sx={{ mb: 1 }} />
-                                                                <Typography variant="body2">Dine In</Typography>
-                                                            </Box>
-                                                        </Button>
-                                                        <Button
-                                                            variant={selectedProduct.orderTypes.includes('Pick Up') ? 'contained' : 'outlined'}
-                                                            sx={{
-                                                                flex: 1,
-                                                                py: 2,
-                                                                borderRadius: 1,
-                                                                backgroundColor: selectedProduct.orderTypes.includes('Pick Up')
-                                                                    ? '#003B5C'
-                                                                    : 'transparent',
-                                                                '&:hover': {
-                                                                    backgroundColor: selectedProduct.orderTypes.includes('Pick Up')
-                                                                        ? '#003B5C'
-                                                                        : 'rgba(0, 59, 92, 0.04)',
-                                                                },
-                                                            }}
-                                                        >
-                                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                                <LocalMallIcon sx={{ mb: 1 }} />
-                                                                <Typography variant="body2">Pick Up</Typography>
-                                                            </Box>
-                                                        </Button>
-                                                        <Button
-                                                            variant={selectedProduct.orderTypes.includes('Delivery') ? 'contained' : 'outlined'}
-                                                            sx={{
-                                                                flex: 1,
-                                                                py: 2,
-                                                                borderRadius: 1,
-                                                                backgroundColor: selectedProduct.orderTypes.includes('Delivery')
-                                                                    ? '#003B5C'
-                                                                    : 'transparent',
-                                                                '&:hover': {
-                                                                    backgroundColor: selectedProduct.orderTypes.includes('Delivery')
-                                                                        ? '#003B5C'
-                                                                        : 'rgba(0, 59, 92, 0.04)',
-                                                                },
-                                                            }}
-                                                        >
-                                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                                <LocalShippingIcon sx={{ mb: 1 }} />
-                                                                <Typography variant="body2">Delivery</Typography>
-                                                            </Box>
-                                                        </Button>
-                                                        <Button
-                                                            variant={selectedProduct.orderTypes.includes('Takeway') ? 'contained' : 'outlined'}
-                                                            sx={{
-                                                                flex: 1,
-                                                                py: 2,
-                                                                borderRadius: 1,
-                                                                backgroundColor: selectedProduct.orderTypes.includes('Takeway')
-                                                                    ? '#003B5C'
-                                                                    : 'transparent',
-                                                                '&:hover': {
-                                                                    backgroundColor: selectedProduct.orderTypes.includes('Takeway')
-                                                                        ? '#003B5C'
-                                                                        : 'rgba(0, 59, 92, 0.04)',
-                                                                },
-                                                            }}
-                                                        >
-                                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                                <ShoppingBagIcon sx={{ mb: 1 }} />
-                                                                <Typography variant="body2">Takeaway</Typography>
-                                                            </Box>
-                                                        </Button>
-                                                        <Button
-                                                            variant={selectedProduct.orderTypes.includes('Reservation') ? 'contained' : 'outlined'}
-                                                            sx={{
-                                                                flex: 1,
-                                                                py: 2,
-                                                                borderRadius: 1,
-                                                                backgroundColor: selectedProduct.orderTypes.includes('Reservation')
-                                                                    ? '#003B5C'
-                                                                    : 'transparent',
-                                                                '&:hover': {
-                                                                    backgroundColor: selectedProduct.orderTypes.includes('Reservation')
-                                                                        ? '#003B5C'
-                                                                        : 'rgba(0, 59, 92, 0.04)',
-                                                                },
-                                                            }}
-                                                        >
-                                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                                <EventSeatIcon sx={{ mb: 1 }} />
-                                                                <Typography variant="body2">Reservation</Typography>
-                                                            </Box>
-                                                        </Button>
-                                                    </Box>
-                                                </Grid>
-                                                <Grid item xs={4}>
-                                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                                        Cost Of Goods Sold (COGS)
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex' }}>
-                                                        <Box
-                                                            sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                border: '1px solid #e0e0e0',
-                                                                borderRight: 'none',
-                                                                px: 2,
-                                                                borderTopLeftRadius: 4,
-                                                                borderBottomLeftRadius: 4,
-                                                            }}
-                                                        >
-                                                            <Typography variant="body2">Rs</Typography>
-                                                        </Box>
-                                                        <TextField
-                                                            fullWidth
-                                                            placeholder="3.00"
-                                                            name="cogs"
-                                                            defaultValue={selectedProduct.price.cogs}
-                                                            variant="outlined"
-                                                            size="small"
-                                                            type="number"
-                                                            inputProps={{ step: '0.01' }}
-                                                        />
-                                                    </Box>
-                                                </Grid>
-                                                <Grid item xs={4}>
-                                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                                        Base Price Selling
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex' }}>
-                                                        <Box
-                                                            sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                border: '1px solid #e0e0e0',
-                                                                borderRight: 'none',
-                                                                px: 2,
-                                                                borderTopLeftRadius: 4,
-                                                                borderBottomLeftRadius: 4,
-                                                            }}
-                                                        >
-                                                            <Typography variant="body2">Rs</Typography>
-                                                        </Box>
-                                                        <TextField
-                                                            fullWidth
-                                                            placeholder="4.00"
-                                                            name="basePrice"
-                                                            defaultValue={selectedProduct.price.current}
-                                                            variant="outlined"
-                                                            size="small"
-                                                            type="number"
-                                                            inputProps={{ step: '0.01' }}
-                                                        />
-                                                    </Box>
-                                                </Grid>
-                                                <Grid item xs={4}>
-                                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                                        Profit Estimate
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Typography variant="h6" fontWeight="bold">
-                                                            Rs {selectedProduct.price.profit}
-                                                        </Typography>
-                                                    </Box>
-                                                </Grid>
-
-                                                {/* Product Variant */}
-                                                <Grid item xs={12}>
-                                                    <Box sx={{ mb: 2 }}>
-                                                        <Typography variant="h6" fontWeight="bold">
-                                                            Product Variant
-                                                        </Typography>
-                                                    </Box>
-
-                                                    <Box sx={{ mb: 2 }}>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                            <Typography variant="body1">Temperature</Typography>
-                                                            <Switch
-                                                                defaultChecked={selectedProduct.temperature.length > 0}
-                                                                color="primary"
-                                                                size="small"
-                                                            />
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                            <Typography variant="body1">Size</Typography>
-                                                            <Switch defaultChecked={selectedProduct.size.length > 0} color="primary" size="small" />
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                            <Typography variant="body1">Sweetness</Typography>
-                                                            <Switch defaultChecked={false} color="primary" size="small" />
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                            <Typography variant="body1">Milk Options</Typography>
-                                                            <Switch defaultChecked={false} color="primary" size="small" />
-                                                        </Box>
-                                                    </Box>
-
-                                                    {/* Toppings */}
-                                                    <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 2 }}>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                            <Typography variant="body1" fontWeight="bold">
-                                                                Toppings
-                                                            </Typography>
-                                                            <Switch defaultChecked={true} color="primary" size="small" />
-                                                        </Box>
-
-                                                        <Box sx={{ mb: 2 }}>
-                                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                Variant Name
-                                                            </Typography>
-                                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                                                <Typography variant="body2" sx={{ flex: 1 }}>
-                                                                    Variant Name
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ width: 120 }}>
-                                                                    Additional Price
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ width: 80 }}>
-                                                                    Stock
-                                                                </Typography>
-                                                                <Box sx={{ width: 40 }}></Box>
-                                                            </Box>
-
-                                                            <Box
-                                                                sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}
-                                                            >
-                                                                <TextField
-                                                                    placeholder="e.g. Oreo"
-                                                                    size="small"
-                                                                    defaultValue="Oreo"
-                                                                    sx={{ flex: 1, mr: 1 }}
-                                                                />
-                                                                <Box sx={{ display: 'flex', width: 120, mr: 1 }}>
-                                                                    <Box
-                                                                        sx={{
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            justifyContent: 'center',
-                                                                            border: '1px solid #e0e0e0',
-                                                                            borderRight: 'none',
-                                                                            px: 1,
-                                                                            borderTopLeftRadius: 4,
-                                                                            borderBottomLeftRadius: 4,
-                                                                        }}
-                                                                    >
-                                                                        <Typography variant="body2">Rs</Typography>
-                                                                    </Box>
-                                                                    <TextField placeholder="10" size="small" defaultValue="10" fullWidth />
-                                                                </Box>
-                                                                <TextField placeholder="0" size="small" defaultValue="0" sx={{ width: 80, mr: 1 }} />
-                                                                <IconButton size="small" sx={{ width: 40 }} color="error">
-                                                                    <CloseIcon fontSize="small" />
-                                                                </IconButton>
-                                                            </Box>
-
-                                                            <Button variant="text" startIcon={<AddIcon />} sx={{ mt: 1 }}>
-                                                                Add Variant
-                                                            </Button>
-                                                        </Box>
-
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                <Typography variant="body2" sx={{ mr: 1 }}>
-                                                                    Multiple Choice
-                                                                </Typography>
-                                                                <Tooltip title="Allow customers to select multiple toppings">
-                                                                    <IconButton size="small">
-                                                                        <InfoIcon fontSize="small" />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                            </Box>
-                                                            <Switch defaultChecked={true} color="primary" size="small" />
-                                                        </Box>
-                                                    </Box>
-                                                </Grid>
-                                            </Grid>
-                                        </Box>
-                                    )}
-
-                                    {/* Step 2: Descriptions and Image */}
-                                    {editMenuStep === 2 && (
-                                        <Box sx={{ px: 3, pb: 3 }}>
-                                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                                Menu Image
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
-                                                {selectedProduct.images.map((image, index) => (
-                                                    <Box
-                                                        key={index}
-                                                        sx={{
-                                                            width: 80,
-                                                            height: 80,
-                                                            borderRadius: 1,
-                                                            overflow: 'hidden',
-                                                        }}
-                                                    >
-                                                        <img
-                                                            src={image || '/placeholder.svg'}
-                                                            alt={`${selectedProduct.name} ${index + 1}`}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                objectFit: 'cover',
-                                                            }}
-                                                        />
-                                                    </Box>
-                                                ))}
-                                                <Box
-                                                    sx={{
-                                                        width: 80,
-                                                        height: 80,
-                                                        borderRadius: 1,
-                                                        border: '1px solid #e0e0e0',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        cursor: 'pointer',
-                                                        backgroundColor: '#f5f5f5',
-                                                    }}
-                                                >
-                                                    <Typography variant="body2" fontWeight="bold">
-                                                        Upload
-                                                    </Typography>
-                                                    <CloudUploadIcon fontSize="small" sx={{ mt: 0.5 }} />
-                                                </Box>
-                                                <Box
-                                                    sx={{
-                                                        width: 80,
-                                                        height: 80,
-                                                        borderRadius: 1,
-                                                        border: '1px dashed #90caf9',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        cursor: 'pointer',
-                                                        backgroundColor: '#e3f2fd',
-                                                    }}
-                                                >
-                                                    <AddIcon sx={{ color: '#90caf9' }} />
-                                                </Box>
-                                            </Box>
-
-                                            <Typography variant="body1" sx={{ mb: 2 }}>
-                                                Descriptions
-                                            </Typography>
-                                            <Box
-                                                sx={{
-                                                    border: '1px solid #e0e0e0',
-                                                    borderRadius: 1,
-                                                    mb: 1,
-                                                }}
-                                            >
-                                                <TextField
-                                                    fullWidth
-                                                    multiline
-                                                    rows={5}
-                                                    placeholder="e.g An all-time favorite blend with citrus fruit character, caramel flavors, and a pleasant faintly floral aroma."
-                                                    defaultValue={selectedProduct.description}
-                                                    variant="outlined"
-                                                    sx={{
-                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                            border: 'none',
-                                                        },
-                                                    }}
-                                                />
-                                                <Divider />
-                                                <Box sx={{ display: 'flex', p: 1 }}>
-                                                    <IconButton size="small">
-                                                        <InsertEmoticonIcon fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton size="small">
-                                                        <FormatBoldIcon fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton size="small">
-                                                        <FormatItalicIcon fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton size="small">
-                                                        <FormatListBulleted fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton size="small">
-                                                        <FormatListNumbered fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton size="small">
-                                                        <LinkIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Box>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Maximum 500 characters
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {selectedProduct.description.length} / 500
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    )}
-                                </DialogContent>
-
-                                <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
-                                    {editMenuStep === 1 ? (
-                                        <>
-                                            <Button
-                                                onClick={handleEditMenuClose}
-                                                sx={{
-                                                    color: 'text.primary',
-                                                    '&:hover': {
-                                                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                                                    },
-                                                }}
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                onClick={handleEditMenuNextStep}
-                                                variant="contained"
-                                                sx={{
-                                                    backgroundColor: '#003B5C',
-                                                    '&:hover': {
-                                                        backgroundColor: '#002A41',
-                                                    },
-                                                }}
-                                            >
-                                                Next
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Button
-                                                onClick={handleEditMenuPreviousStep}
-                                                sx={{
-                                                    color: 'text.primary',
-                                                    '&:hover': {
-                                                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                                                    },
-                                                }}
-                                            >
-                                                Previous
-                                            </Button>
-                                            <Button
-                                                onClick={handleSaveEditMenu}
-                                                variant="contained"
-                                                sx={{
-                                                    backgroundColor: '#003B5C',
-                                                    '&:hover': {
-                                                        backgroundColor: '#002A41',
-                                                    },
-                                                }}
-                                            >
-                                                Save
-                                            </Button>
-                                        </>
-                                    )}
-                                </DialogActions>
-                            </>
-                        )}
-                    </Dialog>
-
-                    {/* Adjust Price Modal */}
-                    <Dialog
-                        open={openAdjustPrice}
-                        onClose={handleAdjustPriceClose}
-                        fullWidth
-                        maxWidth="sm"
-                        PaperProps={{
-                            sx: {
-                                borderRadius: 1,
-                                m: 0,
-                                position: 'fixed',
-                                right: 0,
-                                top: 0,
-                                height: '100%',
-                                maxHeight: '100%',
-                            },
-                        }}
-                    >
-                        {selectedProduct.id && (
-                            <>
-                                <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="h5" fontWeight="bold">
-                                        Adjust Price
-                                    </Typography>
-                                    <IconButton onClick={handleAdjustPriceClose}>
-                                        <CloseIcon />
-                                    </IconButton>
-                                </Box>
-
-                                <DialogContent sx={{ p: 0 }}>
-                                    <Box sx={{ px: 3, pb: 3 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                            Valid From
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
-                                            placeholder="Select date"
-                                            variant="outlined"
-                                            size="small"
-                                            type="date"
-                                            InputProps={{
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <IconButton edge="end"></IconButton>
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                            sx={{ mb: 3 }}
-                                        />
-
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                            Valid to
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
-                                            placeholder="Select date"
-                                            variant="outlined"
-                                            size="small"
-                                            type="date"
-                                            InputProps={{
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <IconButton edge="end"></IconButton>
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                            sx={{ mb: 3 }}
-                                        />
-
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                            Cost Of Goods Sold (COGS)
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', mb: 3 }}>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: '1px solid #e0e0e0',
-                                                    borderRight: 'none',
-                                                    px: 2,
-                                                    borderTopLeftRadius: 4,
-                                                    borderBottomLeftRadius: 4,
-                                                }}
-                                            >
-                                                <Typography variant="body2">Rs</Typography>
-                                            </Box>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="3.00"
-                                                defaultValue={selectedProduct.price.cogs}
-                                                variant="outlined"
-                                                size="small"
-                                                type="number"
-                                                inputProps={{ step: '0.01' }}
-                                            />
-                                        </Box>
-
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                            New Base Price Selling
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', mb: 3 }}>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: '1px solid #e0e0e0',
-                                                    borderRight: 'none',
-                                                    px: 2,
-                                                    borderTopLeftRadius: 4,
-                                                    borderBottomLeftRadius: 4,
-                                                }}
-                                            >
-                                                <Typography variant="body2">Rs</Typography>
-                                            </Box>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="4.00"
-                                                defaultValue={selectedProduct.price.current}
-                                                variant="outlined"
-                                                size="small"
-                                                type="number"
-                                                inputProps={{ step: '0.01' }}
-                                            />
-                                        </Box>
-
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                            <Typography variant="body1">Have different Price</Typography>
-                                            <Switch defaultChecked={false} color="primary" />
-                                        </Box>
-
-                                        <Typography variant="body1" sx={{ mb: 2 }}>
-                                            Select Order Type
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
-                                            {selectedProduct.orderTypes.map((type) => (
-                                                <Button
-                                                    key={type}
-                                                    variant="outlined"
-                                                    size="small"
-                                                    sx={{
-                                                        borderRadius: 1,
-                                                        borderColor: '#e0e0e0',
-                                                        color: 'text.primary',
-                                                        textTransform: 'none',
-                                                    }}
-                                                    startIcon={<CheckIcon fontSize="small" />}
-                                                >
-                                                    {type}
-                                                </Button>
-                                            ))}
-                                        </Box>
-
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
-                                            Profit Estimate
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                                            <Typography variant="h6" fontWeight="bold">
-                                                Rs {selectedProduct.price.profit}
-                                            </Typography>
-                                        </Box>
-
-                                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                                            Adjustment History
-                                        </Typography>
-
-                                        <Box sx={{ mb: 2 }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Box
-                                                        sx={{
-                                                            width: 24,
-                                                            height: 24,
-                                                            borderRadius: '50%',
-                                                            backgroundColor: '#003B5C',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            mr: 2,
-                                                        }}
-                                                    >
-                                                        <CheckIcon sx={{ color: 'white', fontSize: 16 }} />
-                                                    </Box>
-                                                    <Box>
-                                                        <Typography variant="body2" fontWeight="bold">
-                                                            Rs 5.00 from Rs 4.00
-                                                        </Typography>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Monday, 3 April 2023, 10:58 AM
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                                <Box sx={{ textAlign: 'right' }}>
-                                                    <Typography variant="body2" fontWeight="bold">
-                                                        Valid from 10 Aug 23
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Valid to 10 Aug 24
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-
-                                        <Box sx={{ mb: 2 }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Box
-                                                        sx={{
-                                                            width: 24,
-                                                            height: 24,
-                                                            borderRadius: '50%',
-                                                            backgroundColor: '#003B5C',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            mr: 2,
-                                                        }}
-                                                    >
-                                                        <CheckIcon sx={{ color: 'white', fontSize: 16 }} />
-                                                    </Box>
-                                                    <Box>
-                                                        <Typography variant="body2" fontWeight="bold">
-                                                            Rs 4.00 from Rs 3.00
-                                                        </Typography>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Monday, 3 April 2023, 10:58 AM
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                                <Box sx={{ textAlign: 'right' }}>
-                                                    <Typography variant="body2" fontWeight="bold">
-                                                        Valid from 10 Aug 22
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Valid to 10 Aug 23
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-                                    </Box>
-                                </DialogContent>
-
-                                <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
-                                    <Button
-                                        onClick={handleAdjustPriceClose}
-                                        sx={{
-                                            color: 'text.primary',
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                                            },
-                                        }}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={handleSaveAdjustPrice}
-                                        variant="contained"
-                                        sx={{
-                                            backgroundColor: '#003B5C',
-                                            '&:hover': {
-                                                backgroundColor: '#002A41',
-                                            },
-                                        }}
-                                    >
-                                        Save Changes
-                                    </Button>
-                                </DialogActions>
-                            </>
-                        )}
                     </Dialog>
 
                     {/* Delete Confirmation Modal */}
