@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Floor;
+use App\Models\Table;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +14,7 @@ class FloorController extends Controller
         $floors = Floor::all();
         // dd('Rendering NewFloor');
         return Inertia::render('App/Table/NewFloor', [
-            'floors' => $floors,
+            'floorsdata' => $floors,
         ]);
     }
 
@@ -59,6 +60,20 @@ class FloorController extends Controller
 
         return redirect()->route('floors.index')->with('success', 'Floors and Tables added!');
     }
+
+    public function floorTable()
+    {
+        $floors = Floor::all();
+        $tables = Table::with('floor')->get();
+
+        // dd($floors, $tables);
+        return Inertia::render('App/Table/Dashboard', [
+            'floorsdata' => $floors,
+            'tablesData' => $tables,
+        ]);
+    }
+
+
 
 
 

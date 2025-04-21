@@ -106,7 +106,10 @@ const DraggableTable = ({ id, tableNumber, width, height, tableIcon: TableCompon
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const TableManagement = () => {
+const TableManagement = ({ floorsdata, tablesData }) => {
+    // console.log('tablesData', tablesData);
+    // console.log('floorsdata', floorsdata);
+
     const [open, setOpen] = useState(false);
     const [selectedFloor, setSelectedFloor] = useState(1);
     const [selectedDate, setSelectedDate] = useState(7);
@@ -286,6 +289,8 @@ const TableManagement = () => {
 
     return (
         <>
+            {/* <>{floorsdata}</> */}
+
             <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
@@ -322,7 +327,7 @@ const TableManagement = () => {
                                     color: '#3F4E4F',
                                 }}
                             >
-                                Table Management
+                                Table Managementsds
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -369,7 +374,7 @@ const TableManagement = () => {
                                     overflowY: 'hidden', // Enables scrolling if content overflows
                                 }}
                             >
-                                <TableSetting />
+                                <TableSetting floorsdata={floorsdata} tablesData={tablesData} />
                             </Box>
                         </Modal>
                     </Box>

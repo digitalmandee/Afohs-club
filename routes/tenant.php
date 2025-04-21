@@ -61,9 +61,9 @@ Route::middleware([
                 return Inertia::render('App/Settings/Dashboard');
             });
 
-            Route::get('/table/management', function () {
-                return Inertia::render('App/Table/Dashboard');
-            })->name('table.management');
+            // Route::get('/table/management', function () {
+            //     return Inertia::render('App/Table/Dashboard');
+            // })->name('table.management');
 
             Route::get('/add/newfloor', function () {
                 return Inertia::render('App/Table/NewFloor');
@@ -84,9 +84,9 @@ Route::middleware([
             // floors routes
 
             Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
-            // Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
             Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
 
+            Route::get('/table/management', [FloorController::class, 'floorTable'])->name('table.management');
 
             // End of floors routes
         });
