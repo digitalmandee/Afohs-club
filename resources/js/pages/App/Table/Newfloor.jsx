@@ -27,10 +27,6 @@ const NewFloor = () => {
         setData('floors', updatedFloors);
     };
 
-    const addNewFloor = () => {
-        setData('floors', [...data.floors, { name: '', area: '' }]);
-    };
-
     // Handle input changes for tables
     const handleTableChange = (index, key, value) => {
         const updatedTables = [...data.tables];
@@ -249,18 +245,10 @@ const NewFloor = () => {
                                                             fullWidth
                                                         />
                                                     </Grid>
-                                                    <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                                                        <IconButton size="small" onClick={() => removeFloor(index)}>
-                                                            <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
-                                                        </IconButton>
-                                                    </Grid>
                                                 </Grid>
                                             ))}
                                         </>
                                     )}
-                                    <Button startIcon={<Add />} onClick={addNewFloor}>
-                                        Add Floor
-                                    </Button>
                                 </Box>
 
                                 {/* Table List Section */}
