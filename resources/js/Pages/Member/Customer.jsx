@@ -3,6 +3,8 @@ import { Box, Typography, Drawer, TextField, Button, Grid, Paper, Avatar, InputA
 import { Search, FilterAlt } from "@mui/icons-material"
 import SideNav from "../../Components/SideBar/SideNav";
 import CustomerFilter from "./Filter";
+import CustomerProfile from "./Detail";
+import OrderHistory from "./History";
 import guest from "../../../../public/assets/Guest.png"
 import crown from "../../../../public/assets/Diamond.png"
 import badge from "../../../../public/assets/Badge.png"
@@ -95,6 +97,18 @@ const drawerWidthClosed = 110;
 const CustomerDashboard = () => {
     const [open, setOpen] = useState(false);
     const [openFilter, setOpenFilter] = useState(false);
+    const [openProfile, setOpenProfile] = useState(false);
+    const [profileView, setProfileView] = useState("customer");
+
+    const handleGoToHistory = () => {
+        setProfileView("history");
+    };
+
+    const handleProfileClose = () => {
+        setOpenProfile(false);
+        setProfileView("customer"); // Reset to default on close
+    };
+    const handleProfileOpen = () => setOpenProfile(true);
 
     const handleFilterOpen = () => setOpenFilter(true);
     const handleFilterClose = () => setOpenFilter(false);
@@ -241,8 +255,10 @@ const CustomerDashboard = () => {
                                         p: 2,
                                         borderRadius: 2,
                                         border: "1px solid #e0e0e0",
-                                        bgcolor: '#FBFBFB'
+                                        bgcolor: '#FBFBFB',
+                                        cursor: 'pointer'
                                     }}
+                                    onClick={handleProfileOpen}
                                 >
                                     <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                                         <Avatar src={customer.avatar} sx={{ width: 40, height: 40, mr: 1.5 }} />
@@ -315,6 +331,25 @@ const CustomerDashboard = () => {
                                 </Paper>
                             </Grid>
                         ))}
+                        <Drawer
+                            anchor="right"
+                            open={openProfile}
+                            onClose={handleProfileClose}
+                            PaperProps={{
+                                sx: {
+                                    width: 550,
+                                    top:0,
+                                    padding: 2,
+                                    bgcolor: "#E3F2FD",
+                                },
+                            }}
+                        >
+                            {profileView === "customer" ? (
+                                <CustomerProfile handleGoToHistory={handleGoToHistory} />
+                            ) : (
+                                <OrderHistory handleBackToProfile={() => setProfileView("customer")} />
+                            )}
+                        </Drawer>
                     </Grid>
                 </Box>
             </div>
