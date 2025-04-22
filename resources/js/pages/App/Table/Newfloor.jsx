@@ -328,9 +328,6 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                                                     </Grid>
                                                 </Grid>
                                             ))}
-                                            <Button startIcon={<Add />} onClick={() => setData('floors', [...data.floors, { name: '', area: '' }])}>
-                                                Add Floor
-                                            </Button>
                                         </>
                                     )}
                                 </Box>

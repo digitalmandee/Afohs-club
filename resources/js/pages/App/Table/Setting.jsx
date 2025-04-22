@@ -3,7 +3,7 @@ import { Add, ArrowBack } from '@mui/icons-material';
 import { Box, Button, CircularProgress, IconButton, Paper, Switch, Typography } from '@mui/material';
 import { useState } from 'react';
 
-const TableSetting = ({ floorsdata }) => {
+const TableSetting = ({ floorsdata, tablesData }) => {
     const [processingId, setProcessingId] = useState(null);
 
     const handleToggle = (id, newStatus) => {
@@ -24,6 +24,11 @@ const TableSetting = ({ floorsdata }) => {
 
     // Sort floorsdata in descending order by id
     const sortedFloors = [...floorsdata].sort((a, b) => b.id - a.id);
+
+    // Function to count tables for a given floor
+    const getTableCount = (floorId) => {
+        return tablesData.filter((table) => table.floor_id === floorId).length;
+    };
 
     return (
         <Box
@@ -116,7 +121,7 @@ const TableSetting = ({ floorsdata }) => {
 
                         <Box sx={{ flexGrow: 1 }}>
                             <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '0.9rem', color: '#121212' }}>
-                                {floor.name || `Floor ${index + 1}`}
+                                {floor.name || `Floor ${index + 1}`} (tables: {getTableCount(floor.id)})
                             </Typography>
                             <Typography variant="caption" sx={{ color: '#666' }}>
                                 {floor.area || 'No area defined'}
