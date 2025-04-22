@@ -1,8 +1,35 @@
 import { router } from '@inertiajs/react';
 import { Add, ArrowBack } from '@mui/icons-material';
-import { Box, Button, IconButton, Paper, Switch, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, IconButton, Paper, Switch, Typography } from '@mui/material';
+import { useState } from 'react';
 
-const TableSetting = () => {
+const TableSetting = ({ floorsdata, tablesData }) => {
+    const [processingId, setProcessingId] = useState(null);
+
+    const handleToggle = (id, newStatus) => {
+        setProcessingId(id);
+
+        router.put(
+            `/floors/${id}/status`,
+            {
+                status: newStatus,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => setProcessingId(null),
+            },
+        );
+    };
+
+    // Sort floorsdata in descending order by id
+    const sortedFloors = [...floorsdata].sort((a, b) => b.id - a.id);
+
+    // Function to count tables for a given floor
+    const getTableCount = (floorId) => {
+        return tablesData.filter((table) => table.floor_id === floorId).length;
+    };
+
     return (
         <Box
             sx={{
@@ -12,17 +39,11 @@ const TableSetting = () => {
                 mx: 'auto',
                 p: 1,
                 mt: 1,
+                display: 'flex',
+                flexDirection: 'column',
             }}
         >
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    //   p: 2,
-                    bgcolor: 'white',
-                    //   borderBottom: "1px solid #f0f0f0",
-                }}
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <IconButton sx={{ mr: 1 }}>
                     <ArrowBack fontSize="small" />
                 </IconButton>
@@ -35,18 +56,20 @@ const TableSetting = () => {
                 sx={{
                     p: 1.5,
                     mt: 1,
+                    flexGrow: 1,
+                    overflowY: 'auto',
+                    maxHeight: 'calc(100vh - 120px)',
                 }}
             >
                 <Typography variant="body2" sx={{ mb: 1.5, color: '#7F7F7F' }}>
                     Floor Plan List
                 </Typography>
 
-                {/* Add New Floor Button */}
                 <Button
                     variant="outlined"
                     fullWidth
                     startIcon={<Add />}
-                    onClick={() => router.visit('/add/newfloor')} // 👈 This is the key part
+                    onClick={() => router.visit('/add/newfloor')}
                     sx={{
                         mb: 2,
                         py: 1.5,
@@ -67,170 +90,63 @@ const TableSetting = () => {
                     Add New Floor
                 </Button>
 
-                {/* Floor 1 - Indoor */}
-                <Paper
-                    elevation={0}
-                    sx={{
-                        mb: 1,
-                        p: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        borderRadius: 1,
-                        bgcolor: '#F6F6F6',
-                        border: '1px solid #F1F1F2',
-                    }}
-                >
-                    <Box
+                {sortedFloors?.map((floor, index) => (
+                    <Paper
+                        key={floor.id}
+                        elevation={0}
                         sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '50%',
-                            bgcolor: '#FFFFFF',
+                            mb: 1,
+                            p: 2,
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            mr: 2,
+                            borderRadius: 1,
+                            bgcolor: '#F6F6F6',
+                            border: '1px solid #F1F1F2',
                         }}
                     >
-                        <img
-                            src="/assets/home-roof.png"
-                            alt=""
-                            style={{
-                                width: 18,
-                                height: 18,
+                        <Box
+                            sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                bgcolor: '#FFFFFF',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mr: 2,
                             }}
-                        />
-                    </Box>
-                    <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '0.9rem', color: '#121212' }}>
-                            Floor 1
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#666' }}>
-                            Indoor Area
-                        </Typography>
-                    </Box>
-                    <Switch defaultChecked size="small" />
-                    <img
-                        src="/assets/edit.png"
-                        alt=""
-                        style={{
-                            width: 20,
-                            height: 20,
-                            marginLeft: 15,
-                        }}
-                    />
-                </Paper>
+                        >
+                            <img src="/assets/home-roof.png" alt="" style={{ width: 18, height: 18 }} />
+                        </Box>
 
-                {/* Floor 1 - Outdoor */}
-                <Paper
-                    elevation={0}
-                    sx={{
-                        mb: 1,
-                        p: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        borderRadius: 1,
-                        bgcolor: '#F6F6F6',
-                        border: '1px solid #F1F1F2',
-                    }}
-                >
-                    <Box
-                        sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '50%',
-                            bgcolor: '#FFFFFF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            mr: 2,
-                        }}
-                    >
-                        <img
-                            src="/assets/tree.png"
-                            alt=""
-                            style={{
-                                width: 18,
-                                height: 18,
-                            }}
-                        />
-                    </Box>
-                    <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '0.9rem' }}>
-                            Floor 1
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#666' }}>
-                            Outdoor Area
-                        </Typography>
-                    </Box>
-                    <Switch defaultChecked size="small" />
-                    {/* <IconButton size="small" sx={{ ml: 1 }}>
-                        <Edit fontSize="small" sx={{ color: "#999" }} />
-                    </IconButton> */}
-                    <img
-                        src="/assets/edit.png"
-                        alt=""
-                        style={{
-                            width: 20,
-                            height: 20,
-                            marginLeft: 15,
-                        }}
-                    />
-                </Paper>
+                        <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '0.9rem', color: '#121212' }}>
+                                {floor.name || `Floor ${index + 1}`} (tables: {getTableCount(floor.id)})
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#666' }}>
+                                {floor.area || 'No area defined'}
+                            </Typography>
+                        </Box>
 
-                {/* Floor 2 */}
-                <Paper
-                    elevation={0}
-                    sx={{
-                        mb: 1,
-                        p: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        borderRadius: 1,
-                        bgcolor: '#F6F6F6',
-                        border: '1px solid #F1F1F2',
-                    }}
-                >
-                    <Box
-                        sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '50%',
-                            bgcolor: '#FFFFFF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            mr: 2,
-                        }}
-                    >
+                        {processingId === floor.id ? (
+                            <CircularProgress size={18} thickness={5} sx={{ mx: 1 }} />
+                        ) : (
+                            <Switch
+                                checked={floor.status}
+                                onChange={(e) => handleToggle(floor.id, e.target.checked)}
+                                size="small"
+                                disabled={processingId !== null}
+                            />
+                        )}
+
                         <img
-                            src="/assets/home-roof-activity.png"
-                            alt=""
-                            style={{
-                                width: 18,
-                                height: 18,
-                            }}
+                            src="/assets/edit.png"
+                            alt="Edit"
+                            style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }}
+                            onClick={() => router.visit(`/floors/${floor.id}/edit`)}
                         />
-                    </Box>
-                    <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '0.9rem' }}>
-                            Floor 2
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#666' }}>
-                            Indoor Area
-                        </Typography>
-                    </Box>
-                    <Switch defaultChecked size="small" />
-                    <img
-                        src="/assets/edit.png"
-                        alt=""
-                        style={{
-                            width: 20,
-                            height: 20,
-                            marginLeft: 15,
-                        }}
-                    />
-                </Paper>
+                    </Paper>
+                ))}
             </Box>
         </Box>
     );

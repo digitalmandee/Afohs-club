@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\FloorController;
+use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -58,13 +60,18 @@ Route::middleware([
                 return Inertia::render('App/Settings/Dashboard');
             });
 
-            Route::get('/table/management', function () {
-                return Inertia::render('App/Table/Dashboard');
-            });
+            // Route::get('/table/management', function () {
+            //     return Inertia::render('App/Table/Dashboard');
+            // })->name('table.management');
 
             Route::get('/add/newfloor', function () {
-                return Inertia::render('App/Table/Newfloor');
+                return Inertia::render('App/Table/NewFloor');
             });
+
+
+
+
+
 
             // Inventory Category
             Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
@@ -72,6 +79,21 @@ Route::middleware([
             Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
             Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
 
+            // Floors & Table Routes
+            Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
+            Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
+            Route::put('/floors/{id}', [FloorController::class, 'update'])->name('floors.update');
+            Route::delete('/floors/{floor}', [FloorController::class, 'destroy'])->name('floors.destroy');
+
+            Route::get('/floors/{id}/edit', [FloorController::class, 'edit'])->name('floors.edit');
+            Route::put('/floors/{id}/status', [FloorController::class, 'toggleStatus'])->name('floors.toggleStatus');
+            Route::get('/table/management', [FloorController::class, 'floorTable'])->name('table.management');
+
+            // Combined create/edit route
+            Route::get('/add/newfloor/{id?}', [FloorController::class, 'createOrEdit'])->name('floors.createOrEdit');
+
+            // End of floors routes
+          
             // Inventory Items
             Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
             Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
