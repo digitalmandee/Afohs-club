@@ -23,7 +23,7 @@ import { useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewFloor = ({ floorInfo }) => {
+const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
     const [open, setOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(true);
     const [isFloorExpanded, setIsFloorExpanded] = useState(true);
@@ -35,16 +35,17 @@ const NewFloor = ({ floorInfo }) => {
         severity: 'success', // 'success' | 'error' | 'info' | 'warning'
     });
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        floors: floorInfo ? [{ name: floorInfo.name, area: floorInfo.area }] : [{ name: '', area: '' }],
+    const { data, setData, post, put, processing, errors, reset } = useForm({
+        floors: floorInfo ? [{ name: floorInfo.name || '', area: floorInfo.area || '' }] : [{ name: '', area: '' }],
         tables:
             floorInfo && floorInfo.tables && floorInfo.tables.length > 0
                 ? floorInfo.tables.map((t) => ({
-                      table_no: t.table_no,
-                      capacity: t.capacity,
+                      table_no: t.table_no || '',
+                      capacity: t.capacity || '2 Person',
                   }))
                 : [{ table_no: '', capacity: '2 Person' }],
     });
+
     // Snackbar popup handle
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
@@ -63,15 +64,21 @@ const NewFloor = ({ floorInfo }) => {
         updatedTables[index][key] = value;
         setData('tables', updatedTables);
     };
-    // remove table
+
+    // Remove table
     const removeTable = (index) => {
-        const updatedTables = data.tables.filter((_, i) => i !== index);
-        setData('tables', updatedTables);
+        if (window.confirm('Are you sure you want to delete this table?')) {
+            const updatedTables = data.tables.filter((_, i) => i !== index);
+            setData('tables', updatedTables);
+        }
     };
-    // remove floor
+
+    // Remove floor
     const removeFloor = (index) => {
-        const updatedFloors = data.floors.filter((_, i) => i !== index);
-        setData('floors', updatedFloors);
+        if (window.confirm('Are you sure you want to delete this floor?')) {
+            const updatedFloors = data.floors.filter((_, i) => i !== index);
+            setData('floors', updatedFloors);
+        }
     };
 
     const addNewTable = () => {
@@ -80,6 +87,7 @@ const NewFloor = ({ floorInfo }) => {
 
     const handleCloseModal = () => {
         setModalOpen(false);
+        router.visit(route('table.management'));
     };
 
     const handleSaveFloorAndTable = () => {
@@ -89,28 +97,28 @@ const NewFloor = ({ floorInfo }) => {
         const hasDuplicateTableNumbers = new Set(tableNumbers).size !== tableNumbers.length;
 
         if (hasEmptyFields) {
-            alert('Please fill all fields before saving.');
+            setSnackbar({ open: true, message: 'Please fill all fields before saving.', severity: 'error' });
             return;
         }
 
         if (hasDuplicateTableNumbers) {
             setDuplicateError(true);
+            setSnackbar({ open: true, message: 'Duplicate table numbers are not allowed.', severity: 'error' });
             return;
         }
 
-        // console.log('Data to be sent:', data);
-
-        if (data.id) {
+        if (floorInfo && floorInfo.id) {
             // Update existing floor
-            router.put(route('floors.update', data.id), data, {
+            router.put(route('floors.update', floorInfo.id), data, {
                 onSuccess: () => {
                     reset();
                     setModalOpen(false);
                     setSnackbar({ open: true, message: 'Floor updated successfully!', severity: 'success' });
                     router.visit(route('table.management'));
                 },
-                onError: () => {
+                onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to update floor.', severity: 'error' });
+                    console.error('Update error:', err);
                 },
             });
         } else {
@@ -122,8 +130,9 @@ const NewFloor = ({ floorInfo }) => {
                     setSnackbar({ open: true, message: 'Floor created successfully!', severity: 'success' });
                     router.visit(route('table.management'));
                 },
-                onError: () => {
+                onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to create floor.', severity: 'error' });
+                    console.error('Create error:', err);
                 },
             });
         }
@@ -173,7 +182,9 @@ const NewFloor = ({ floorInfo }) => {
                                 }}
                             />
                             <Typography variant="body2" sx={{ color: 'white', fontWeight: 500 }}>
-                                Untitled Floor • Untitled Area
+                                {floorInfo && floorInfo.name && floorInfo.area
+                                    ? `${floorInfo.name} • ${floorInfo.area}`
+                                    : 'Untitled Floor • Untitled Area'}
                             </Typography>
                         </Box>
 
@@ -199,7 +210,7 @@ const NewFloor = ({ floorInfo }) => {
                                 transform: 'translate(-50%, -50%)',
                                 textAlign: 'center',
                                 maxWidth: 250,
-                                display: modalOpen ? 'none' : 'block', // Hide when modal is open
+                                display: modalOpen ? 'none' : 'block',
                             }}
                         >
                             <Typography variant="body2" sx={{ color: 'white' }}>
@@ -207,7 +218,7 @@ const NewFloor = ({ floorInfo }) => {
                             </Typography>
                         </Box>
 
-                        {/* Right side modal - positioned inside the blue container */}
+                        {/* Right side modal */}
                         {modalOpen && (
                             <Paper
                                 elevation={4}
@@ -239,14 +250,19 @@ const NewFloor = ({ floorInfo }) => {
                                         <IconButton size="small" sx={{ mr: 1 }} onClick={handleCloseModal}>
                                             <ArrowBack fontSize="small" />
                                         </IconButton>
-                                        <Typography variant="subtitle1">Add New Floor</Typography>
+                                        <Typography variant="subtitle1">{floorInfo && floorInfo.id ? 'Edit Floor' : 'Add New Floor'}</Typography>
                                     </Box>
                                     <Button
                                         variant="contained"
                                         size="small"
                                         onClick={handleSaveFloorAndTable}
                                         disabled={processing}
-                                        sx={{ bgcolor: '#0d3b5c', '&:hover': { bgcolor: '#0a2e4a' }, textTransform: 'none', px: 3 }}
+                                        sx={{
+                                            bgcolor: '#0d3b5c',
+                                            '&:hover': { bgcolor: '#0a2e4a' },
+                                            textTransform: 'none',
+                                            px: 3,
+                                        }}
                                     >
                                         {processing ? 'Saving...' : 'Save'}
                                     </Button>
@@ -266,7 +282,10 @@ const NewFloor = ({ floorInfo }) => {
                                         <IconButton size="small" onClick={() => setIsFloorExpanded(!isFloorExpanded)}>
                                             <ExpandMore
                                                 fontSize="small"
-                                                sx={{ transform: isFloorExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }}
+                                                sx={{
+                                                    transform: isFloorExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                    transition: '0.3s',
+                                                }}
                                             />
                                         </IconButton>
                                     </Box>
@@ -283,6 +302,8 @@ const NewFloor = ({ floorInfo }) => {
                                                             value={floor.name}
                                                             onChange={(e) => handleFloorChange(index, 'name', e.target.value)}
                                                             fullWidth
+                                                            error={!!errors[`floors.${index}.name`]}
+                                                            helperText={errors[`floors.${index}.name`]}
                                                         />
                                                     </Grid>
                                                     <Grid item xs={5}>
@@ -294,10 +315,22 @@ const NewFloor = ({ floorInfo }) => {
                                                             value={floor.area}
                                                             onChange={(e) => handleFloorChange(index, 'area', e.target.value)}
                                                             fullWidth
+                                                            error={!!errors[`floors.${index}.area`]}
+                                                            helperText={errors[`floors.${index}.area`]}
                                                         />
+                                                    </Grid>
+                                                    <Grid item xs={2} sx={{ textAlign: 'center' }}>
+                                                        {data.floors.length > 1 && (
+                                                            <IconButton size="small" onClick={() => removeFloor(index)}>
+                                                                <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
+                                                            </IconButton>
+                                                        )}
                                                     </Grid>
                                                 </Grid>
                                             ))}
+                                            <Button startIcon={<Add />} onClick={() => setData('floors', [...data.floors, { name: '', area: '' }])}>
+                                                Add Floor
+                                            </Button>
                                         </>
                                     )}
                                 </Box>
@@ -316,50 +349,60 @@ const NewFloor = ({ floorInfo }) => {
                                         <IconButton size="small" onClick={() => setIsTableExpanded(!isTableExpanded)}>
                                             <ExpandMore
                                                 fontSize="small"
-                                                sx={{ transform: isTableExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }}
+                                                sx={{
+                                                    transform: isTableExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                    transition: '0.3s',
+                                                }}
                                             />
                                         </IconButton>
                                     </Box>
 
-                                    {data.tables.map((table, index) => (
-                                        <Grid container spacing={2} alignItems="center" key={index} sx={{ mt: 0.5 }}>
-                                            <Grid item xs={5}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Table Number
-                                                </Typography>
-                                                <TextField
-                                                    size="small"
-                                                    value={table.table_no}
-                                                    onChange={(e) => handleTableChange(index, 'table_no', e.target.value)}
-                                                    fullWidth
-                                                />
-                                            </Grid>
-                                            <Grid item xs={5}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Capacity
-                                                </Typography>
-                                                <FormControl fullWidth size="small">
-                                                    <Select
-                                                        value={table.capacity}
-                                                        onChange={(e) => handleTableChange(index, 'capacity', e.target.value)}
-                                                    >
-                                                        <MenuItem value="2 Person">2 Person</MenuItem>
-                                                        <MenuItem value="4 Person">4 Person</MenuItem>
-                                                        <MenuItem value="6 Person">6 Person</MenuItem>
-                                                        <MenuItem value="8 Person">8 Person</MenuItem>
-                                                    </Select>
-                                                </FormControl>
-                                            </Grid>
-                                            <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                                                <IconButton size="small" onClick={() => removeTable(index)}>
-                                                    <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
-                                                </IconButton>
-                                            </Grid>
-                                        </Grid>
-                                    ))}
-                                    <Button startIcon={<Add />} onClick={addNewTable}>
-                                        Add Table
-                                    </Button>
+                                    {isTableExpanded && (
+                                        <>
+                                            {data.tables.map((table, index) => (
+                                                <Grid container spacing={2} alignItems="center" key={index} sx={{ mt: 0.5 }}>
+                                                    <Grid item xs={5}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Table Number
+                                                        </Typography>
+                                                        <TextField
+                                                            size="small"
+                                                            value={table.table_no}
+                                                            onChange={(e) => handleTableChange(index, 'table_no', e.target.value)}
+                                                            fullWidth
+                                                            error={!!errors[`tables.${index}.table_no`]}
+                                                            helperText={errors[`tables.${index}.table_no`]}
+                                                        />
+                                                    </Grid>
+                                                    <Grid item xs={5}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Capacity
+                                                        </Typography>
+                                                        <FormControl fullWidth size="small">
+                                                            <Select
+                                                                value={table.capacity}
+                                                                onChange={(e) => handleTableChange(index, 'capacity', e.target.value)}
+                                                                error={!!errors[`tables.${index}.capacity`]}
+                                                            >
+                                                                <MenuItem value="2 Person">2 Person</MenuItem>
+                                                                <MenuItem value="4 Person">4 Person</MenuItem>
+                                                                <MenuItem value="6 Person">6 Person</MenuItem>
+                                                                <MenuItem value="8 Person">8 Person</MenuItem>
+                                                            </Select>
+                                                        </FormControl>
+                                                    </Grid>
+                                                    <Grid item xs={2} sx={{ textAlign: 'center' }}>
+                                                        <IconButton size="small" onClick={() => removeTable(index)}>
+                                                            <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
+                                                        </IconButton>
+                                                    </Grid>
+                                                </Grid>
+                                            ))}
+                                            <Button startIcon={<Add />} onClick={addNewTable}>
+                                                Add Table
+                                            </Button>
+                                        </>
+                                    )}
                                 </Box>
                             </Paper>
                         )}

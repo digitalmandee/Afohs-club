@@ -22,13 +22,8 @@ const TableSetting = ({ floorsdata }) => {
         );
     };
 
-    // Sort floorsdata in descending order by id (or created_at)
-    const sortedFloors = [...floorsdata].sort((a, b) => {
-        // Sort by id (descending)
-        return b.id - a.id;
-        // Alternatively, if sorting by created_at:
-        // return new Date(b.created_at) - new Date(a.created_at);
-    });
+    // Sort floorsdata in descending order by id
+    const sortedFloors = [...floorsdata].sort((a, b) => b.id - a.id);
 
     return (
         <Box
@@ -58,7 +53,7 @@ const TableSetting = ({ floorsdata }) => {
                     mt: 1,
                     flexGrow: 1,
                     overflowY: 'auto',
-                    maxHeight: 'calc(100vh - 120px)', // Adjust based on header/button height
+                    maxHeight: 'calc(100vh - 120px)',
                 }}
             >
                 <Typography variant="body2" sx={{ mb: 1.5, color: '#7F7F7F' }}>

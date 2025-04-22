@@ -13,7 +13,6 @@ class FloorController extends Controller
     {
         $floors = Floor::all();
         $tables = Table::with('floor')->get();
-        // dd($floors);
         return Inertia::render('App/Table/NewFloor', [
             'floorsdata' => $floors,
             'tablesData' => $tables,
@@ -36,12 +35,8 @@ class FloorController extends Controller
             'tables.*.capacity' => 'required|string|max:255',
         ]);
 
-        // Check for duplicate  table_no
-        $tableNumbers = [];
-        foreach ($request->tables as $index => $table) {
-            $tableNumbers[] = $table['table_no'];
-        }
-
+        // Check for duplicate table_no
+        $tableNumbers = array_map(fn($table) => $table['table_no'], $request->tables);
         if (count($tableNumbers) !== count(array_unique($tableNumbers))) {
             return back()->withErrors(['tables' => 'Duplicate table numbers are not allowed.']);
         }
@@ -51,7 +46,6 @@ class FloorController extends Controller
                 'name' => $floorData['name'],
                 'area' => $floorData['area'],
             ]);
-            // dd($floor);
 
             foreach ($request->tables as $tableData) {
                 $floor->tables()->create([
@@ -61,7 +55,7 @@ class FloorController extends Controller
             }
         }
 
-        return redirect()->route('floors.index')->with('success', 'Floors and Tables added!');
+        return redirect()->route('table.management')->with('success', 'Floors and Tables added!');
     }
 
     public function floorTable()
@@ -69,19 +63,19 @@ class FloorController extends Controller
         $floors = Floor::all();
         $tables = Table::with('floor')->get();
 
-        // dd($floors, $tables);
         return Inertia::render('App/Table/Dashboard', [
             'floorsdata' => $floors,
             'tablesData' => $tables,
         ]);
     }
+
     public function toggleStatus(Request $request, $id)
     {
         $floor = Floor::findOrFail($id);
         $floor->status = $request->status;
         $floor->save();
 
-        return redirect()->back(); // ✅ Fix: send an Inertia-friendly response
+        return redirect()->back();
     }
 
     public function createOrEdit($id = null)
@@ -91,48 +85,68 @@ class FloorController extends Controller
         $tables = Table::with('floor')->get();
 
         return Inertia::render('App/Table/NewFloor', [
-            'floor' => $floor,
+            'floorInfo' => $floor,
             'floorsdata' => $floors,
             'tablesData' => $tables,
         ]);
     }
+
     public function edit($id)
     {
         $floor = Floor::with('tables')->findOrFail($id);
+        $floors = Floor::all();
+        $tables = Table::with('floor')->get();
 
         return Inertia::render('App/Table/NewFloor', [
-            'floorInfo' => $floor
+            'floorInfo' => $floor,
+            'floorsdata' => $floors,
+            'tablesData' => $tables,
         ]);
     }
-
-
-
-
-    // public function edit($id)
-    // {
-    //     $floor = Floor::findOrFail($id);
-
-    //     return Inertia::render('App/Table/NewFloor', [
-    //         'floor' => $floor,
-    //     ]);
-    // }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'floors' => 'required|array|min:1',
+            'floors.*.name' => 'required|string|max:255',
+            'floors.*.area' => 'required|string|max:255',
+            'tables' => 'required|array|min:1',
+            'tables.*.table_no' => 'required|string|max:255',
+            'tables.*.capacity' => 'required|string|max:255',
         ]);
 
-        $floor = Floor::findOrFail($id);
-        $floor->update(['name' => $request->name]);
+        // Check for duplicate table_no
+        $tableNumbers = array_map(fn($table) => $table['table_no'], $request->tables);
+        if (count($tableNumbers) !== count(array_unique($tableNumbers))) {
+            return back()->withErrors(['tables' => 'Duplicate table numbers are not allowed.']);
+        }
 
-        return redirect()->route('floors.index')->with('success', 'Floor updated successfully!');
+        $floor = Floor::findOrFail($id);
+
+        // Update floor details
+        $floor->update([
+            'name' => $request->floors[0]['name'],
+            'area' => $request->floors[0]['area'],
+        ]);
+
+        // Delete existing tables
+        $floor->tables()->delete();
+
+        // Create new tables
+        foreach ($request->tables as $tableData) {
+            $floor->tables()->create([
+                'table_no' => $tableData['table_no'],
+                'capacity' => $tableData['capacity'],
+            ]);
+        }
+
+        return redirect()->route('table.management')->with('success', 'Floor and tables updated successfully!');
     }
 
     public function destroy(Floor $floor)
     {
         $floor->delete();
 
-        return redirect()->route('floors.index')->with('success', 'Floor deleted!');
+        return redirect()->route('table.management')->with('success', 'Floor deleted!');
     }
 }

@@ -81,19 +81,17 @@ Route::middleware([
             Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
             Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
 
-            // // floors & table  routes
-
+            // Floors & Table Routes
             Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
             Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
-            // Route::put('/floors/{id}', [FloorController::class, 'update'])->name('floors.update');
-            Route::put('/floors/{floor}', [FloorController::class, 'update'])->name('floors.update');
+            Route::put('/floors/{id}', [FloorController::class, 'update'])->name('floors.update');
             Route::delete('/floors/{floor}', [FloorController::class, 'destroy'])->name('floors.destroy');
 
             Route::get('/floors/{id}/edit', [FloorController::class, 'edit'])->name('floors.edit');
-            Route::put('/floors/{id}/status', [FloorController::class, 'toggleStatus']);
+            Route::put('/floors/{id}/status', [FloorController::class, 'toggleStatus'])->name('floors.toggleStatus');
             Route::get('/table/management', [FloorController::class, 'floorTable'])->name('table.management');
 
-            // Or, combine create/edit:
+            // Combined create/edit route
             Route::get('/add/newfloor/{id?}', [FloorController::class, 'createOrEdit'])->name('floors.createOrEdit');
 
 
