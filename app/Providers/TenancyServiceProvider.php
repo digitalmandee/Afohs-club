@@ -6,10 +6,12 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Stancl\JobPipeline\JobPipeline;
+use Stancl\Tenancy\Controllers\TenantAssetsController;
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Jobs;
 use Stancl\Tenancy\Listeners;
 use Stancl\Tenancy\Middleware;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomainOrSubdomain;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -91,8 +93,9 @@ class TenancyServiceProvider extends ServiceProvider
     {
         $this->bootEvents();
         $this->mapRoutes();
-
+        
         $this->makeTenancyMiddlewareHighestPriority();
+        
     }
 
     protected function bootEvents()

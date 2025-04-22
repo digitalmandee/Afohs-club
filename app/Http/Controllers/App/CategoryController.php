@@ -23,6 +23,13 @@ class CategoryController extends Controller
         ]);
     }
 
+    public function getCategories()
+    {
+        $categories = Category::latest()->get();
+
+        return response()->json(['categories' => $categories]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
