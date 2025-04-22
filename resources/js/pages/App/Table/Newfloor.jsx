@@ -385,6 +385,7 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                                                                 <MenuItem value="4 Person">4 Person</MenuItem>
                                                                 <MenuItem value="6 Person">6 Person</MenuItem>
                                                                 <MenuItem value="8 Person">8 Person</MenuItem>
+                                                                <MenuItem value="10 Person">10 Person</MenuItem>
                                                             </Select>
                                                         </FormControl>
                                                     </Grid>
