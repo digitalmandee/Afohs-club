@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Floor;
 use App\Models\Table;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -27,9 +28,8 @@ class FloorController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'floors' => 'required|array|min:1',
-            'floors.*.name' => 'required|string|max:255',
-            'floors.*.area' => 'required|string|max:255',
+            'floor.name' => 'required|string|max:255',
+            'floor.area' => 'required|string|max:255',
             'tables' => 'required|array|min:1',
             'tables.*.table_no' => 'required|string|max:255',
             'tables.*.capacity' => 'required|string|max:255',
@@ -41,18 +41,16 @@ class FloorController extends Controller
             return back()->withErrors(['tables' => 'Duplicate table numbers are not allowed.']);
         }
 
-        foreach ($request->floors as $floorData) {
-            $floor = Floor::create([
-                'name' => $floorData['name'],
-                'area' => $floorData['area'],
-            ]);
+        $floor = Floor::create([
+            'name' => $request->floor['name'],
+            'area' => $request->floor['area'],
+        ]);
 
-            foreach ($request->tables as $tableData) {
-                $floor->tables()->create([
-                    'table_no' => $tableData['table_no'],
-                    'capacity' => $tableData['capacity'],
-                ]);
-            }
+        foreach ($request->tables as $tableData) {
+            $floor->tables()->create([
+                'table_no' => $tableData['table_no'],
+                'capacity' => $tableData['capacity'],
+            ]);
         }
 
         return redirect()->route('table.management')->with('success', 'Floors and Tables added!');
@@ -81,13 +79,9 @@ class FloorController extends Controller
     public function createOrEdit($id = null)
     {
         $floor = $id ? Floor::with('tables')->findOrFail($id) : null;
-        $floors = Floor::all();
-        $tables = Table::with('floor')->get();
 
         return Inertia::render('App/Table/NewFloor', [
             'floorInfo' => $floor,
-            'floorsdata' => $floors,
-            'tablesData' => $tables,
         ]);
     }
 
@@ -107,9 +101,8 @@ class FloorController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'floors' => 'required|array|min:1',
-            'floors.*.name' => 'required|string|max:255',
-            'floors.*.area' => 'required|string|max:255',
+            'floor.name' => 'required|string|max:255',
+            'floor.area' => 'required|string|max:255',
             'tables' => 'required|array|min:1',
             'tables.*.table_no' => 'required|string|max:255',
             'tables.*.capacity' => 'required|string|max:255',
@@ -125,8 +118,8 @@ class FloorController extends Controller
 
         // Update floor details
         $floor->update([
-            'name' => $request->floors[0]['name'],
-            'area' => $request->floors[0]['area'],
+            'name' => $request->floor['name'],
+            'area' => $request->floor['area'],
         ]);
 
         // Delete existing tables
@@ -141,6 +134,24 @@ class FloorController extends Controller
         }
 
         return redirect()->route('table.management')->with('success', 'Floor and tables updated successfully!');
+    }
+
+    public function getFloors(Request $request)
+    {
+        $date = $request->date;
+        $floor = $request->floor;
+
+        // Parse the incoming ISO date string to Carbon
+        $parsedDate = Carbon::parse($date)->startOfDay(); // For safe comparison
+
+        // Fetch floors created today or earlier
+        $floor = Floor::where('id', $floor)->whereDate('created_at', '<=', $parsedDate)
+            ->with(['tables' => function ($query) use ($parsedDate) {
+                $query->whereDate('created_at', '<=', $parsedDate);
+            }])
+            ->first();
+
+        return response()->json(['floor' => $floor]);
     }
 
     public function destroy(Floor $floor)

@@ -1,5 +1,5 @@
-'use client';
-
+import Table2Icon from '@/components/App/Icons/CTable';
+import Table1Icon from '@/components/App/Icons/Table1';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
 import { Add, ArrowBack, Delete, ExpandMore } from '@mui/icons-material';
@@ -23,7 +23,7 @@ import { useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
+const NewFloor = ({ floorInfo }) => {
     const [open, setOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(true);
     const [isFloorExpanded, setIsFloorExpanded] = useState(true);
@@ -36,14 +36,14 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
     });
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
-        floors: floorInfo ? [{ name: floorInfo.name || '', area: floorInfo.area || '' }] : [{ name: '', area: '' }],
+        floor: floorInfo ? { name: floorInfo.name || '', area: floorInfo.area || '' } : [{ name: '', area: '' }],
         tables:
             floorInfo && floorInfo.tables && floorInfo.tables.length > 0
                 ? floorInfo.tables.map((t) => ({
                       table_no: t.table_no || '',
-                      capacity: t.capacity || '2 Person',
+                      capacity: t.capacity || '2',
                   }))
-                : [{ table_no: '', capacity: '2 Person' }],
+                : [{ table_no: '', capacity: '2' }],
     });
 
     // Snackbar popup handle
@@ -52,10 +52,10 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
     };
 
     // Handle input changes for floors
-    const handleFloorChange = (index, key, value) => {
-        const updatedFloors = [...data.floors];
-        updatedFloors[index][key] = value;
-        setData('floors', updatedFloors);
+    const handleFloorChange = (key, value) => {
+        const updatedFloors = data.floor;
+        updatedFloors[key] = value;
+        setData('floor', updatedFloors);
     };
 
     // Handle input changes for tables
@@ -73,25 +73,17 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
         }
     };
 
-    // Remove floor
-    const removeFloor = (index) => {
-        if (window.confirm('Are you sure you want to delete this floor?')) {
-            const updatedFloors = data.floors.filter((_, i) => i !== index);
-            setData('floors', updatedFloors);
-        }
-    };
-
     const addNewTable = () => {
-        setData('tables', [...data.tables, { table_no: '', capacity: '2 Person' }]);
+        setData('tables', [...data.tables, { table_no: '', capacity: '2' }]);
     };
 
     const handleCloseModal = () => {
         setModalOpen(false);
-        router.visit(route('table.management'));
+        // router.visit(route('table.management'));
     };
 
     const handleSaveFloorAndTable = () => {
-        const hasEmptyFields = data.floors.some((f) => !f.name.trim() || !f.area.trim()) || data.tables.some((t) => !t.table_no.trim());
+        const hasEmptyFields = data.floor.some((f) => !f.name.trim() || !f.area.trim()) || data.tables.some((t) => !t.table_no.trim());
 
         const tableNumbers = data.tables.map((t) => t.table_no.trim());
         const hasDuplicateTableNumbers = new Set(tableNumbers).size !== tableNumbers.length;
@@ -156,6 +148,7 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                             bgcolor: '#0d3b5c',
                             position: 'relative',
                             overflow: 'hidden',
+                            display: 'flex',
                             borderRadius: 3,
                             boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
                         }}
@@ -181,13 +174,20 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                                     mr: 1.5,
                                 }}
                             />
-                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 500 }}>
-                                {floorInfo && floorInfo.name && floorInfo.area
-                                    ? `${floorInfo.name} • ${floorInfo.area}`
-                                    : 'Untitled Floor • Untitled Area'}
+                            <Typography
+                                onClick={() => setModalOpen(true)}
+                                variant="body2"
+                                sx={{ color: 'white', cursor: 'pointer', fontWeight: 500 }}
+                            >
+                                {data.floor.name
+                                    ? data.floor.area
+                                        ? `${data.floor.name} • ${data.floor.area}`
+                                        : `${data.floor.name} • Untitled Area`
+                                    : data.floor.area
+                                      ? `Untitled Floor • ${data.floor.area}`
+                                      : 'Untitled Floor • Untitled Area'}
                             </Typography>
                         </Box>
-
                         {/* Grid pattern */}
                         <Box
                             sx={{
@@ -200,23 +200,54 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                                 backgroundSize: '20px 20px',
                             }}
                         />
-
                         {/* Center message */}
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                textAlign: 'center',
-                                maxWidth: 250,
-                                display: modalOpen ? 'none' : 'block',
-                            }}
-                        >
-                            <Typography variant="body2" sx={{ color: 'white' }}>
-                                You need to fill out the properties form to view table at here
-                            </Typography>
-                        </Box>
+                        {data.tables.length === 0 && (
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    textAlign: 'center',
+                                    maxWidth: 250,
+                                    // display: modalOpen ? 'none' : 'block',
+                                }}
+                            >
+                                <Typography variant="body2" sx={{ color: 'white' }}>
+                                    You need to fill out the properties form to view table at here
+                                </Typography>
+                            </Box>
+                        )}
+
+                        {data.tables.length > 0 && (
+                            <Box
+                                sx={{
+                                    flexGrow: 1,
+                                    position: 'relative',
+                                    overflow: 'auto',
+                                    top: 50,
+                                    height: '100%',
+                                    minHeight: 500,
+                                    zIndex: 1,
+                                }}
+                            >
+                                {/* First row of tables */}
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 10,
+                                        left: 20,
+                                        right: 20,
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        width: '100%',
+                                        gap: '30px',
+                                    }}
+                                >
+                                    {data && data?.tables.map((table, index) => <DraggableTable index={index} data={table} />)}
+                                </Box>
+                            </Box>
+                        )}
 
                         {/* Right side modal */}
                         {modalOpen && (
@@ -230,10 +261,11 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                                     width: 400,
                                     borderTopLeftRadius: 12,
                                     borderBottomLeftRadius: 12,
-                                    overflow: 'hidden',
+                                    overflow: 'auto',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     boxShadow: '-4px 0 10px rgba(0, 0, 0, 0.15)',
+                                    zIndex: 2,
                                 }}
                             >
                                 {/* Header */}
@@ -275,7 +307,6 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                                             display: 'flex',
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
-                                            mb: 2,
                                         }}
                                     >
                                         <Typography variant="subtitle2">Floor List</Typography>
@@ -291,43 +322,34 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                                     </Box>
                                     {isFloorExpanded && (
                                         <>
-                                            {data.floors.map((floor, index) => (
-                                                <Grid container spacing={2} alignItems="center" key={index} sx={{ mt: 0.5 }}>
-                                                    <Grid item xs={5}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Floor Name
-                                                        </Typography>
-                                                        <TextField
-                                                            size="small"
-                                                            value={floor.name}
-                                                            onChange={(e) => handleFloorChange(index, 'name', e.target.value)}
-                                                            fullWidth
-                                                            error={!!errors[`floors.${index}.name`]}
-                                                            helperText={errors[`floors.${index}.name`]}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={5}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Floor Area
-                                                        </Typography>
-                                                        <TextField
-                                                            size="small"
-                                                            value={floor.area}
-                                                            onChange={(e) => handleFloorChange(index, 'area', e.target.value)}
-                                                            fullWidth
-                                                            error={!!errors[`floors.${index}.area`]}
-                                                            helperText={errors[`floors.${index}.area`]}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                                                        {data.floors.length > 1 && (
-                                                            <IconButton size="small" onClick={() => removeFloor(index)}>
-                                                                <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
-                                                            </IconButton>
-                                                        )}
-                                                    </Grid>
+                                            <Grid container spacing={2} alignItems="center" sx={{ mt: 0.5 }}>
+                                                <Grid item xs={5}>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Floor Name
+                                                    </Typography>
+                                                    <TextField
+                                                        size="small"
+                                                        value={data.floor.name}
+                                                        onChange={(e) => handleFloorChange('name', e.target.value)}
+                                                        fullWidth
+                                                        error={!!errors[`floor.name`]}
+                                                        helperText={errors[`floor.name`]}
+                                                    />
                                                 </Grid>
-                                            ))}
+                                                <Grid item xs={5}>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Floor Area
+                                                    </Typography>
+                                                    <TextField
+                                                        size="small"
+                                                        value={data.floor.area}
+                                                        onChange={(e) => handleFloorChange('area', e.target.value)}
+                                                        fullWidth
+                                                        error={!!errors[`floor.area`]}
+                                                        helperText={errors[`floor.area`]}
+                                                    />
+                                                </Grid>
+                                            </Grid>
                                         </>
                                     )}
                                 </Box>
@@ -381,11 +403,11 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
                                                                 onChange={(e) => handleTableChange(index, 'capacity', e.target.value)}
                                                                 error={!!errors[`tables.${index}.capacity`]}
                                                             >
-                                                                <MenuItem value="2 Person">2 Person</MenuItem>
-                                                                <MenuItem value="4 Person">4 Person</MenuItem>
-                                                                <MenuItem value="6 Person">6 Person</MenuItem>
-                                                                <MenuItem value="8 Person">8 Person</MenuItem>
-                                                                <MenuItem value="10 Person">10 Person</MenuItem>
+                                                                <MenuItem value="2">2 Person</MenuItem>
+                                                                <MenuItem value="4">4 Person</MenuItem>
+                                                                <MenuItem value="6">6 Person</MenuItem>
+                                                                <MenuItem value="8">8 Person</MenuItem>
+                                                                <MenuItem value="10">10 Person</MenuItem>
                                                             </Select>
                                                         </FormControl>
                                                     </Grid>
@@ -418,3 +440,75 @@ const NewFloor = ({ floorInfo, floorsdata, tablesData }) => {
 };
 
 export default NewFloor;
+
+const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) => {
+    // Determine text color based on reservation status
+    const getTextColor = () => {
+        if (fill === '#d1fae5') return '#059669';
+        if (fill === '#cfe7ff') return '#3b82f6';
+        return '#6b7280';
+    };
+
+    return (
+        <Box
+            onClick={onClick}
+            sx={{
+                // width,
+                // height,
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                cursor: 'move',
+                transition: 'all 0.2s',
+                '&:hover': {
+                    transform: 'scale(1.02)',
+                },
+            }}
+        >
+            {data.capacity == 8 ? (
+                <Table2Icon
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            ) : (
+                <Table1Icon
+                    style={{
+                        width: '20%',
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            )}
+
+            <Box
+                sx={{
+                    position: 'absolute',
+                    zIndex: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor() }}>
+                    {data.table_no}
+                </Typography>
+                {/* {reservation && (
+                    <>
+                        <Typography variant="caption" sx={{ color: getTextColor(), fontWeight: 'medium' }}>
+                            #{reservation.id}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.65rem' }}>
+                            {reservation.customer}
+                        </Typography>
+                    </>
+                )} */}
+            </Box>
+        </Box>
+    );
+};

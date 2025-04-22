@@ -69,7 +69,7 @@ const TableSetting = ({ floorsdata, tablesData }) => {
                     variant="outlined"
                     fullWidth
                     startIcon={<Add />}
-                    onClick={() => router.visit('/add/newfloor')}
+                    onClick={() => router.visit(route('floors.createOrEdit'))}
                     sx={{
                         mb: 2,
                         py: 1.5,

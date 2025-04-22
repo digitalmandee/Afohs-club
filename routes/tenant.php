@@ -64,15 +64,6 @@ Route::middleware([
             //     return Inertia::render('App/Table/Dashboard');
             // })->name('table.management');
 
-            Route::get('/add/newfloor', function () {
-                return Inertia::render('App/Table/NewFloor');
-            });
-
-
-
-
-
-
             // Inventory Category
             Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
             Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
@@ -92,8 +83,10 @@ Route::middleware([
             // Combined create/edit route
             Route::get('/add/newfloor/{id?}', [FloorController::class, 'createOrEdit'])->name('floors.createOrEdit');
 
+            Route::get('/floors/get-floors', [FloorController::class, 'getFloors'])->name('floors.getFloors');
+
             // End of floors routes
-          
+
             // Inventory Items
             Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
             Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');

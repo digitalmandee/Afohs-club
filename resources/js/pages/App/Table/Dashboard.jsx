@@ -4,8 +4,9 @@ import Table1Icon from '@/components/App/Icons/Table1';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { KeyboardArrowDown, Settings } from '@mui/icons-material';
 import { Box, Button, FormControl, MenuItem, Modal, Select, Typography } from '@mui/material';
+import axios from 'axios';
 import update from 'immutability-helper';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import AddReservation from './Action';
@@ -16,11 +17,11 @@ const ItemTypes = {
 };
 
 // DraggableTable component
-const DraggableTable = ({ id, tableNumber, width, height, tableIcon: TableComponent, fill, reservation, index, moveTable, onClick }) => {
+const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) => {
     // Set up drag functionality
     const [{ isDragging }, drag] = useDrag(() => ({
         type: ItemTypes.TABLE,
-        item: { id, index },
+        item: { id: data.id, index },
         collect: (monitor) => ({
             isDragging: monitor.isDragging(),
         }),
@@ -31,14 +32,14 @@ const DraggableTable = ({ id, tableNumber, width, height, tableIcon: TableCompon
         () => ({
             accept: ItemTypes.TABLE,
             hover: (draggedItem) => {
-                if (draggedItem.id !== id) {
+                if (draggedItem.id !== data.id) {
                     moveTable(draggedItem.index, index);
                     // Update the index in the dragged item to reflect its new position
                     draggedItem.index = index;
                 }
             },
         }),
-        [id, index, moveTable],
+        [data.id, index, moveTable],
     );
 
     // Determine text color based on reservation status
@@ -53,8 +54,8 @@ const DraggableTable = ({ id, tableNumber, width, height, tableIcon: TableCompon
             onClick={onClick}
             ref={(node) => drag(drop(node))}
             sx={{
-                width,
-                height,
+                // width,
+                // height,
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
@@ -68,13 +69,24 @@ const DraggableTable = ({ id, tableNumber, width, height, tableIcon: TableCompon
                 },
             }}
         >
-            <TableComponent
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    bgcolor: fill,
-                }}
-            />
+            {data.capacity == 8 ? (
+                <Table2Icon
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            ) : (
+                <Table1Icon
+                    style={{
+                        width: '20%',
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            )}
+
             <Box
                 sx={{
                     position: 'absolute',
@@ -86,9 +98,9 @@ const DraggableTable = ({ id, tableNumber, width, height, tableIcon: TableCompon
                 }}
             >
                 <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor() }}>
-                    {tableNumber}
+                    {data.table_no}
                 </Typography>
-                {reservation && (
+                {/* {reservation && (
                     <>
                         <Typography variant="caption" sx={{ color: getTextColor(), fontWeight: 'medium' }}>
                             #{reservation.id}
@@ -97,7 +109,7 @@ const DraggableTable = ({ id, tableNumber, width, height, tableIcon: TableCompon
                             {reservation.customer}
                         </Typography>
                     </>
-                )}
+                )} */}
             </Box>
         </Box>
     );
@@ -107,15 +119,18 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const TableManagement = ({ floorsdata, tablesData }) => {
-    console.log(floorsdata[0].created_at);
-
     const [open, setOpen] = useState(false);
     const [selectedFloor, setSelectedFloor] = useState(1);
     const today = new Date();
-    const [selectedDate, setSelectedDate] = useState(today.getDate());
+    const [selectedDate, setSelectedDate] = useState({
+        date: today.getDate(),
+        hasReservations: false,
+        full_date: today.toISOString(),
+    });
     const [openSettings, setOpenSettings] = useState(false);
     const [openReservation, setOpenReservation] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
+    const [activefloor, setActiveFloor] = useState(null);
     const [tables, setTables] = useState([
         // First row
         {
@@ -261,8 +276,8 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     const handleOpenSettings = () => setOpenSettings(true);
     const handleCloseSettings = () => setOpenSettings(false);
 
-    const handleFloorChange = (event, newValue) => {
-        setSelectedFloor(newValue);
+    const handleFloorChange = (event) => {
+        setSelectedFloor(event.target.value);
     };
 
     const handleDateClick = (date) => {
@@ -302,21 +317,30 @@ const TableManagement = ({ floorsdata, tablesData }) => {
         { id: 2, name: 'Floor 2', area: 'Indoor Area', capacity: '50-Person' },
     ];
 
-    const [selectedValue, setSelectedValue] = useState('');
-
-    const handleChange = (event) => {
-        setSelectedValue(event.target.value);
-    };
-    console.log(selectedDate);
-
     // selectedDate is like "2", convert to number for comparison
-    const selectedDay = parseInt(selectedDate, 10);
+    const selectedDay = parseInt(selectedDate.date, 10);
 
     // floorsdata is an array of objects from backend
     const matchedFloors = floorsdata.filter((floor) => {
         const floorDate = new Date(floor.created_at).getDate();
-        return floorDate === selectedDay;
+        return floorDate <= selectedDay;
     });
+
+    useEffect(() => {
+        if (selectedDate.full_date) {
+            axios
+                .get(route('floors.getFloors'), {
+                    params: {
+                        date: selectedDate.full_date,
+                        floor: selectedFloor,
+                    },
+                })
+                .then((res) => {
+                    console.log(res.data.floor);
+                    setActiveFloor(res.data.floor);
+                });
+        }
+    }, [selectedDate, selectedFloor]);
 
     return (
         <>
@@ -384,9 +408,9 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                     </InputLabel> */}
                                     <Select
                                         labelId="dropdown-label"
-                                        value={selectedValue}
+                                        value={selectedFloor}
                                         label="Choose Option"
-                                        onChange={handleChange}
+                                        onChange={handleFloorChange}
                                         sx={{
                                             border: '1px solid #3F4E4F',
                                             color: '#3F4E4F',
@@ -405,8 +429,6 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                         {matchedFloors.length > 0 ? (
                                             matchedFloors.map((floor, index) => {
                                                 // Get tables for the current floor
-                                                const floorTables = tablesData.filter((table) => table.floor_id === floor.id);
-
                                                 return (
                                                     <MenuItem key={floor.id} value={floor.id}>
                                                         {floor.name}
@@ -492,8 +514,8 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                         color: '#121212',
                                     }}
                                 >
-                                    {/* May 2024 */}
-                                    date:{selectedDate}
+                                    May 2024
+                                    {/* date:{selectedDate} */}
                                 </Typography>
                                 <KeyboardArrowDown fontSize="small" sx={{ ml: 0.5 }} />
                             </Box>
@@ -501,7 +523,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                             {days.map((day, index) => (
                                 <Box
                                     key={index}
-                                    onClick={() => handleDateClick(day.date)}
+                                    onClick={() => handleDateClick(day)}
                                     sx={{
                                         height: '120px',
                                         py: 3,
@@ -509,10 +531,10 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                         textAlign: 'center',
                                         justifyContent: 'center',
                                         cursor: 'pointer',
-                                        bgcolor: selectedDate === day.date ? '#B0DEFF' : '#FFFFFF',
-                                        border: selectedDate === day.date ? '1px solid #063455' : '1px solid #E3E3E3',
+                                        bgcolor: selectedDate.date === day.date ? '#B0DEFF' : '#FFFFFF',
+                                        border: selectedDate.date === day.date ? '1px solid #063455' : '1px solid #E3E3E3',
                                         '&:hover': {
-                                            bgcolor: selectedDate === day.date ? '#B0DEFF' : '#FFFFFF',
+                                            bgcolor: selectedDate.date === day.date ? '#B0DEFF' : '#FFFFFF',
                                         },
                                     }}
                                 >
@@ -633,7 +655,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                                     fontWeight: 'medium',
                                                 }}
                                             >
-                                                Floor 1 • Indoor Area
+                                                {activefloor?.name}
                                             </Typography>
                                         </Box>
                                         <Typography variant="body2" sx={{ color: '#333333' }}>
@@ -641,45 +663,6 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                         </Typography>
                                     </Box>
                                 </Box>
-                            </Box>
-                            <Box></Box>
-                            <Box>
-                                {matchedFloors.length > 0 ? (
-                                    matchedFloors.map((floor, index) => {
-                                        // Get tables for the current floor
-                                        const floorTables = tablesData.filter((table) => table.floor_id === floor.id);
-
-                                        return (
-                                            <div key={index} className="mb-6 rounded border p-4 shadow">
-                                                <h3 className="text-lg font-bold">Floor: {floor.name}</h3>
-                                                <h4 className="text-sm">Area: {floor.area}</h4>
-                                                <p className="text-sm text-gray-500">Created At: {new Date(floor.created_at).toLocaleString()}</p>
-
-                                                {/* Table list */}
-                                                {floorTables.length > 0 ? (
-                                                    <div className="mt-4 space-y-2">
-                                                        {floorTables.map((table, tIndex) => (
-                                                            <>
-                                                                <div key={tIndex} className="rounded border bg-gray-100 p-2">
-                                                                    <p>
-                                                                        <strong>Table Name:</strong> {table.table_no}
-                                                                    </p>
-                                                                    <p>
-                                                                        <strong>Capacity:</strong> {table.capacity}
-                                                                    </p>
-                                                                </div>
-                                                            </>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <p className="mt-2 text-gray-400 italic">No tables for this floor.</p>
-                                                )}
-                                            </div>
-                                        );
-                                    })
-                                ) : (
-                                    <p className="text-gray-500 italic">No matching floors for selected date: {selectedDate}</p>
-                                )}
                             </Box>
                             {/* Floor Plan */}
                             <DndProvider backend={HTML5Backend}>
@@ -702,98 +685,26 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                             left: 0,
                                             right: 0,
                                             display: 'flex',
+                                            flexWrap: 'wrap',
                                             justifyContent: 'space-around',
                                             width: '100%',
-                                            gap: '10px',
+                                            gap: '30px 15px',
                                         }}
                                     >
-                                        {firstRowTables.map((table, index) => (
-                                            <DraggableTable
-                                                key={table.id}
-                                                id={table.id}
-                                                index={index}
-                                                tableNumber={table.tableNumber}
-                                                width={table.width}
-                                                height={table.height}
-                                                tableIcon={table.tableIcon}
-                                                fill={table.fill}
-                                                reservation={table.reservation}
-                                                moveTable={moveTable}
-                                                onClick={() => handleOpenReservation(table)}
-                                            />
-                                        ))}
+                                        {activefloor &&
+                                            activefloor?.tables.map((table, index) => (
+                                                <DraggableTable
+                                                    index={index}
+                                                    data={table}
+                                                    // width={table.width}
+                                                    // height={table.height}
+                                                    // fill={table.fill}
+                                                    // reservation={table.reservation}
+                                                    moveTable={moveTable}
+                                                    onClick={() => handleOpenReservation(table)}
+                                                />
+                                            ))}
                                     </Box>
-
-                                    {/* Second row of tables */}
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 190,
-                                            left: 0,
-                                            right: 0,
-                                            display: 'flex',
-                                            justifyContent: 'space-around',
-                                            width: '80%',
-                                        }}
-                                    >
-                                        {secondRowTables.map((table, index) => (
-                                            <DraggableTable
-                                                key={table.id}
-                                                id={table.id}
-                                                index={index + firstRowTables.length}
-                                                tableNumber={table.tableNumber}
-                                                width={table.width}
-                                                height={table.height}
-                                                tableIcon={table.tableIcon}
-                                                fill={table.fill}
-                                                reservation={table.reservation}
-                                                moveTable={moveTable}
-                                                onClick={() => handleOpenReservation(table)}
-                                            />
-                                        ))}
-                                    </Box>
-
-                                    {/* Third row of tables */}
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 360,
-                                            left: 0,
-                                            right: 0,
-                                            display: 'flex',
-                                            justifyContent: 'space-around',
-                                            width: '80%',
-                                        }}
-                                    >
-                                        {thirdRowTables.map((table, index) => (
-                                            <DraggableTable
-                                                key={table.id}
-                                                id={table.id}
-                                                index={index + firstRowTables.length + secondRowTables.length}
-                                                tableNumber={table.tableNumber}
-                                                width={table.width}
-                                                height={table.height}
-                                                tableIcon={table.tableIcon}
-                                                fill={table.fill}
-                                                reservation={table.reservation}
-                                                moveTable={moveTable}
-                                                onClick={() => handleOpenReservation(table)}
-                                            />
-                                        ))}
-                                    </Box>
-
-                                    {/* Bar/Counter */}
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            right: 40,
-                                            top: 380,
-                                            width: 30,
-                                            height: 150,
-                                            bgcolor: '#e5e7eb',
-                                            borderRadius: 1,
-                                        }}
-                                    />
                                 </Box>
                                 <Modal open={openReservation} onClose={handleCloseReservation}>
                                     <Box

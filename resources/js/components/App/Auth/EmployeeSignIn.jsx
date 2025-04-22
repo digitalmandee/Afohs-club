@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
-import { ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from '@mui/icons-material';
-import { Box, Button, Link, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
+import { Box, Button, Link, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 
 const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors, transform }) => {
@@ -27,8 +27,6 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
 
         post(route('login'), {
             onSuccess: () => {
-                console.log('yes');
-
                 router.visit(route('dashboard'));
             },
             onError: (errors) => {
@@ -70,67 +68,11 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                         fontWeight: 500,
                         color: '#3F4E4F',
                         fontSize: '30px',
-                        mb: 0.5,
+                        mb: 3,
                     }}
                 >
                     Employee Sign In
                 </Typography>
-
-                <Typography
-                    sx={{
-                        color: '#7F7F7F',
-                        fontSize: '16px',
-                        mb: 3,
-                        mt: 1,
-                    }}
-                >
-                    Employee of{' '}
-                    <Box
-                        component="span"
-                        sx={{
-                            color: '#063455',
-                            fontWeight: 500,
-                            fontSize: '16px',
-                        }}
-                    >
-                        Imaji Coffee Shop (IMAJI101010)
-                    </Box>
-                </Typography>
-
-                {/* Account Selection */}
-                <Box sx={{ mb: 3 }}>
-                    <Typography
-                        sx={{
-                            color: '#121212',
-                            mb: 1,
-                            fontSize: '14px',
-                        }}
-                    >
-                        Choose your account to start your shift
-                    </Typography>
-                    <Select
-                        fullWidth
-                        defaultValue="kasa"
-                        sx={{
-                            height: 56,
-                            width: '100%',
-                            '.MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#121212',
-                            },
-                        }}
-                        IconComponent={KeyboardArrowDownIcon}
-                    >
-                        <MenuItem
-                            sx={{
-                                fontSize: '14px',
-                                color: '#121212',
-                            }}
-                            value="kasa"
-                        >
-                            Kasa Aksa (10:00 am - 15:00 pm)
-                        </MenuItem>
-                    </Select>
-                </Box>
 
                 {/* PIN Entry */}
                 <Box sx={{ mb: 3 }}>
@@ -240,6 +182,9 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                             },
                             px: 3,
                         }}
+                        disabled={processing}
+                        loading={processing}
+                        loadingPosition="start"
                         onClick={handleSignIn}
                     >
                         Sign In
