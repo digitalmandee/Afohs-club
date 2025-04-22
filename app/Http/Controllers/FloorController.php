@@ -12,9 +12,11 @@ class FloorController extends Controller
     public function index()
     {
         $floors = Floor::all();
-        // dd('Rendering NewFloor');
+        $tables = Table::with('floor')->get();
+        // dd($floors);
         return Inertia::render('App/Table/NewFloor', [
             'floorsdata' => $floors,
+            'tablesData' => $tables,
         ]);
     }
 
@@ -49,6 +51,7 @@ class FloorController extends Controller
                 'name' => $floorData['name'],
                 'area' => $floorData['area'],
             ]);
+            // dd($floor);
 
             foreach ($request->tables as $tableData) {
                 $floor->tables()->create([
@@ -81,15 +84,38 @@ class FloorController extends Controller
         return redirect()->back(); // ✅ Fix: send an Inertia-friendly response
     }
 
-
-    public function edit($id)
+    public function createOrEdit($id = null)
     {
-        $floor = Floor::findOrFail($id);
+        $floor = $id ? Floor::with('tables')->findOrFail($id) : null;
+        $floors = Floor::all();
+        $tables = Table::with('floor')->get();
 
         return Inertia::render('App/Table/NewFloor', [
             'floor' => $floor,
+            'floorsdata' => $floors,
+            'tablesData' => $tables,
         ]);
     }
+    public function edit($id)
+    {
+        $floor = Floor::with('tables')->findOrFail($id);
+
+        return Inertia::render('App/Table/NewFloor', [
+            'floorInfo' => $floor
+        ]);
+    }
+
+
+
+
+    // public function edit($id)
+    // {
+    //     $floor = Floor::findOrFail($id);
+
+    //     return Inertia::render('App/Table/NewFloor', [
+    //         'floor' => $floor,
+    //     ]);
+    // }
 
     public function update(Request $request, $id)
     {

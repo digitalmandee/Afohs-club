@@ -22,6 +22,14 @@ const TableSetting = ({ floorsdata }) => {
         );
     };
 
+    // Sort floorsdata in descending order by id (or created_at)
+    const sortedFloors = [...floorsdata].sort((a, b) => {
+        // Sort by id (descending)
+        return b.id - a.id;
+        // Alternatively, if sorting by created_at:
+        // return new Date(b.created_at) - new Date(a.created_at);
+    });
+
     return (
         <Box
             sx={{
@@ -31,6 +39,8 @@ const TableSetting = ({ floorsdata }) => {
                 mx: 'auto',
                 p: 1,
                 mt: 1,
+                display: 'flex',
+                flexDirection: 'column',
             }}
         >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -42,7 +52,15 @@ const TableSetting = ({ floorsdata }) => {
                 </Typography>
             </Box>
 
-            <Box sx={{ p: 1.5, mt: 1 }}>
+            <Box
+                sx={{
+                    p: 1.5,
+                    mt: 1,
+                    flexGrow: 1,
+                    overflowY: 'auto',
+                    maxHeight: 'calc(100vh - 120px)', // Adjust based on header/button height
+                }}
+            >
                 <Typography variant="body2" sx={{ mb: 1.5, color: '#7F7F7F' }}>
                     Floor Plan List
                 </Typography>
@@ -72,7 +90,7 @@ const TableSetting = ({ floorsdata }) => {
                     Add New Floor
                 </Button>
 
-                {floorsdata?.map((floor, index) => (
+                {sortedFloors?.map((floor, index) => (
                     <Paper
                         key={floor.id}
                         elevation={0}
@@ -121,7 +139,12 @@ const TableSetting = ({ floorsdata }) => {
                             />
                         )}
 
-                        <img src="/assets/edit.png" alt="Edit" style={{ width: 20, height: 20, marginLeft: 15 }} />
+                        <img
+                            src="/assets/edit.png"
+                            alt="Edit"
+                            style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }}
+                            onClick={() => router.visit(`/floors/${floor.id}/edit`)}
+                        />
                     </Paper>
                 ))}
             </Box>

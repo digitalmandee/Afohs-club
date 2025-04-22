@@ -3,22 +3,52 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
 import { Add, ArrowBack, Delete, ExpandMore } from '@mui/icons-material';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
+import {
+    Alert,
+    Box,
+    Button,
+    Container,
+    FormControl,
+    Grid,
+    IconButton,
+    MenuItem,
+    Paper,
+    Select,
+    Snackbar,
+    TextField,
+    Typography,
+} from '@mui/material';
 import { useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewFloor = () => {
+const NewFloor = ({ floorInfo }) => {
     const [open, setOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(true);
     const [isFloorExpanded, setIsFloorExpanded] = useState(true);
     const [isTableExpanded, setIsTableExpanded] = useState(true);
+    const [duplicateError, setDuplicateError] = useState(false);
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        severity: 'success', // 'success' | 'error' | 'info' | 'warning'
+    });
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        floors: [{ name: '', area: '' }],
-        tables: [{ table_no: '', capacity: '2 Person' }],
+        floors: floorInfo ? [{ name: floorInfo.name, area: floorInfo.area }] : [{ name: '', area: '' }],
+        tables:
+            floorInfo && floorInfo.tables && floorInfo.tables.length > 0
+                ? floorInfo.tables.map((t) => ({
+                      table_no: t.table_no,
+                      capacity: t.capacity,
+                  }))
+                : [{ table_no: '', capacity: '2 Person' }],
     });
+    // Snackbar popup handle
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
+    };
 
     // Handle input changes for floors
     const handleFloorChange = (index, key, value) => {
@@ -32,7 +62,6 @@ const NewFloor = () => {
         const updatedTables = [...data.tables];
         updatedTables[index][key] = value;
         setData('tables', updatedTables);
-        console.log(data.tables);
     };
     // remove table
     const removeTable = (index) => {
@@ -65,17 +94,39 @@ const NewFloor = () => {
         }
 
         if (hasDuplicateTableNumbers) {
-            alert('Table numbers must be unique.');
+            setDuplicateError(true);
             return;
         }
-        console.log('Data to be sent:', data);
-        router.post(route('floors.store'), data, {
-            onSuccess: () => {
-                console.log('Floor saved!');
-                setModalOpen(false);
-                router.visit(route('table.management'));
-            },
-        });
+
+        // console.log('Data to be sent:', data);
+
+        if (data.id) {
+            // Update existing floor
+            router.put(route('floors.update', data.id), data, {
+                onSuccess: () => {
+                    reset();
+                    setModalOpen(false);
+                    setSnackbar({ open: true, message: 'Floor updated successfully!', severity: 'success' });
+                    router.visit(route('table.management'));
+                },
+                onError: () => {
+                    setSnackbar({ open: true, message: 'Failed to update floor.', severity: 'error' });
+                },
+            });
+        } else {
+            // Create new floor
+            router.post(route('floors.store'), data, {
+                onSuccess: () => {
+                    reset();
+                    setModalOpen(false);
+                    setSnackbar({ open: true, message: 'Floor created successfully!', severity: 'success' });
+                    router.visit(route('table.management'));
+                },
+                onError: () => {
+                    setSnackbar({ open: true, message: 'Failed to create floor.', severity: 'error' });
+                },
+            });
+        }
     };
 
     return (
@@ -261,7 +312,7 @@ const NewFloor = () => {
                                             mb: 2,
                                         }}
                                     >
-                                        <Typography variant="subtitle2">Table List</Typography>
+                                        <Typography variant="subtitle2">Table List ({data.tables.length})</Typography>
                                         <IconButton size="small" onClick={() => setIsTableExpanded(!isTableExpanded)}>
                                             <ExpandMore
                                                 fontSize="small"
@@ -315,6 +366,12 @@ const NewFloor = () => {
                     </Box>
                 </Container>
             </div>
+
+            <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </>
     );
 };

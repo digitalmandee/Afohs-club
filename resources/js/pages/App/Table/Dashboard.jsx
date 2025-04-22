@@ -107,9 +107,6 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const TableManagement = ({ floorsdata, tablesData }) => {
-    // console.log('tablesData', tablesData);
-    // console.log('floorsdata', floorsdata);
-
     const [open, setOpen] = useState(false);
     const [selectedFloor, setSelectedFloor] = useState(1);
     const [selectedDate, setSelectedDate] = useState(7);
