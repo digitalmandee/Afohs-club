@@ -485,7 +485,7 @@ const AllOrder = () => {
                             sx={{
                                 width: 320,
                                 borderRadius: 2,
-                                p: 2,
+                                p: 1,
                                 display: "flex",
                                 flexDirection: "column",
                                 bgcolor: '#FBFBFB'
@@ -497,6 +497,7 @@ const AllOrder = () => {
                                     display: "flex",
                                     justifyContent: "space-between",
                                     alignItems: "center",
+                                    mt:1,
                                     mb: 2
                                 }}
                             >

@@ -96,6 +96,14 @@ Route::get('/customers/list', function () {
     return Inertia::render('Member/Customer');
 });
 
+Route::get('/admin/login', function () {
+    return Inertia::render('AdminAuth/Login');
+});
+
+Route::get('/admin/dashboard', function () {
+    return Inertia::render('AdminDashboard/Dashboard');
+});
+
 // Route::get('/dashboard', function () {
 //     return Inertia::render('Dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');

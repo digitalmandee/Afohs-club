@@ -44,7 +44,7 @@ const OrderDetail = () => {
         <Box sx={{
             bgcolor: '#FFFFFF',
             mt: 2,
-            mx: -2,
+            mx: -1,
             borderRadius: '20px',
             border: '1px solid #E3E3E3'
         }}>
