@@ -27,7 +27,7 @@ Email: superadmin@gmail.com
 Password: 12345678
 
 Tenant (Afohs):
-id: 12345678
+ID: 12345678
 URL: http://afohs.localhost:8000
 Login URL: http://afohs.localhost:8000/login
 Email: afohs@gmail.com
@@ -41,7 +41,12 @@ php artisan serve
 &&
 npm run dev
 
-```
-
 Visit http://localhost:8000/ in your browser to access the application.
-```
+
+# Details
+
+- Use for routes located in: routes/web/tenant.php
+- Include all pages under: resources/js/pages/App/
+  e.g., resources/js/pages/App/Dashboard.jsx
+- Include all components under: resources/js/components/App/
+  e.g., resources/js/components/App/SideBar
