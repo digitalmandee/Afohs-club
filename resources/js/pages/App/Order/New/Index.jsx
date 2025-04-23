@@ -1,12 +1,10 @@
-import FoodIcon from '@/Components/App/Icons/Food';
-import ShopIcon from '@/Components/App/Icons/ShoppingBag';
-import SofaIcon from '@/Components/App/Icons/Sofa';
-import SideNav from '@/Components/App/SideBar/SideNav';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import FoodIcon from '@/components/App/Icons/Food';
+import ShopIcon from '@/components/App/Icons/ShoppingBag';
+import SofaIcon from '@/components/App/Icons/Sofa';
+import SideNav from '@/components/App/SideBar/SideNav';
 import {
     Box,
     Button,
-    IconButton,
     List,
     ListItem,
     ListItemSecondaryAction,
@@ -85,13 +83,15 @@ const NewOrderDialog = ({ onClose }) => {
                 >
                     {/* Select Week Panel - Only shown when reservation is selected */}
                     {orderType === 'reservation' && (
-                        <Box sx={{ width: '240px', flexShrink: 0 }}>
+                        <Box sx={{ width: '320px', flexShrink: 0, mt: 35 }}>
                             <Paper
-                                elevation={2}
+                                elevation={5}
                                 sx={{
                                     width: '100%',
                                     borderRadius: 1,
                                     overflow: 'hidden',
+                                    px: 2,
+                                    py: 1,
                                 }}
                             >
                                 {/* Header */}
@@ -100,7 +100,7 @@ const NewOrderDialog = ({ onClose }) => {
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
-                                        px: 2.5,
+                                        // px: 1,
                                         py: 2,
                                     }}
                                 >
@@ -108,14 +108,23 @@ const NewOrderDialog = ({ onClose }) => {
                                         variant="h6"
                                         sx={{
                                             fontWeight: 'medium',
-                                            fontSize: '1rem',
+                                            fontSize: '20px',
+                                            color: '#121212',
                                         }}
                                     >
                                         Select Week
                                     </Typography>
-                                    <IconButton size="small">
+                                    {/* <IconButton size="small">
                                         <HelpOutlineIcon fontSize="small" />
-                                    </IconButton>
+                                    </IconButton> */}
+                                    <img
+                                        src="/assets/angle-right-circle.png"
+                                        alt=""
+                                        style={{
+                                            height: 20,
+                                            width: 20,
+                                        }}
+                                    />
                                 </Box>
 
                                 {/* Week List */}
@@ -128,11 +137,17 @@ const NewOrderDialog = ({ onClose }) => {
                                             sx={{
                                                 px: 2.5,
                                                 py: 1.5,
-                                                bgcolor: selectedWeek === week.id ? '#e3f2fd' : 'transparent',
-                                                borderTop: '1px solid #f0f0f0',
+                                                borderRadius: '4px',
+                                                bgcolor: selectedWeek === week.id ? '#B0DEFF' : 'transparent',
+
+                                                border: selectedWeek === week.id ? '1px solid #063455' : '1px solid #E3E3E3',
                                                 cursor: 'pointer',
+                                                mb: 1.5,
+                                                '&:last-child': {
+                                                    mb: 0,
+                                                },
                                                 '&:hover': {
-                                                    bgcolor: selectedWeek === week.id ? '#e3f2fd' : '#f5f5f5',
+                                                    bgcolor: selectedWeek === week.id ? '#B0DEFF' : '#FFFFFF',
                                                 },
                                             }}
                                         >
@@ -181,12 +196,12 @@ const NewOrderDialog = ({ onClose }) => {
                                         fullWidth
                                         variant="contained"
                                         sx={{
-                                            bgcolor: '#0c3b5c',
+                                            bgcolor: '#063455',
                                             color: 'white',
                                             py: 1.5,
                                             textTransform: 'none',
                                             '&:hover': {
-                                                bgcolor: '#072a42',
+                                                bgcolor: '#063455',
                                             },
                                         }}
                                     >

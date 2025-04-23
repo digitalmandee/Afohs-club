@@ -50,7 +50,6 @@ Route::middleware([
                 return Inertia::render('App/Order/New/Index');
             });
 
-            Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
 
             Route::get('/transaction', function () {
                 return Inertia::render('App/Transaction/Dashboard');
@@ -59,6 +58,29 @@ Route::middleware([
             Route::get('/settings', function () {
                 return Inertia::render('App/Settings/Dashboard');
             });
+
+            Route::get('/kitchen', function () {
+                return Inertia::render('App/Kitchen/Dashboard');
+            });
+
+            Route::get('/members', function () {
+                return Inertia::render('App/Member/Dashboard');
+            });
+
+            Route::get('/add/information', function () {
+                return Inertia::render('App/Member/AddInfo');
+            });
+
+            Route::get('/customers/list', function () {
+                return Inertia::render('App/Member/Customer');
+            });
+
+
+            Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+
+            Route::get('/add/product', function () {
+                return Inertia::render('App/Inventory/Product');
+            })->name('product.create');
 
             // Route::get('/table/management', function () {
             //     return Inertia::render('App/Table/Dashboard');

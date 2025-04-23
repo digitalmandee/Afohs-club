@@ -2,22 +2,23 @@
 
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
-import { ArrowBack, ArrowForward, ContentCopy, KeyboardArrowUp, Search } from '@mui/icons-material';
-import CloseIcon from '@mui/icons-material/Close';
-import { Avatar, Badge, Box, Button, Divider, Grid, IconButton, InputAdornment, Modal, Paper, Slide, TextField, Typography } from '@mui/material';
+import { ArrowBack, Search } from '@mui/icons-material';
+import { Avatar, Badge, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
-import PaymentPage from './Payment';
+import OrderDetail from './Detail';
+import OrderSaved from './Saved';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AllOrder = () => {
     const [open, setOpen] = useState(false);
-    const [showPayment, setShowPayment] = useState(false);
+    // const [showPayment, setShowPayment] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('All Menus');
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [viewMode, setViewMode] = useState('grid');
+    const [activeView, setActiveView] = useState('orderSaved');
 
     const categories = [
         { id: 'all', name: 'All Menus', icon: '' },
@@ -422,9 +423,10 @@ const AllOrder = () => {
                                 p: 2,
                                 display: 'flex',
                                 flexDirection: 'column',
+                                bgcolor: '#FBFBFB',
                             }}
                         >
-                            {/* Order Detail Header */}
+                            {/* Header with toggle buttons */}
                             <Box
                                 sx={{
                                     display: 'flex',
@@ -433,303 +435,98 @@ const AllOrder = () => {
                                     mb: 2,
                                 }}
                             >
-                                <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                                    Order Detail
-                                </Typography>
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    sx={{
-                                        borderRadius: 5,
-                                        textTransform: 'none',
-                                        borderColor: '#0c3b5c',
-                                        color: '#0c3b5c',
-                                    }}
-                                >
-                                    Order Saved
-                                    <Badge badgeContent="3" color="primary" sx={{ ml: 2, mr: 2 }} />
-                                </Button>
-                            </Box>
-
-                            {/* Order ID */}
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    mb: 1,
-                                }}
-                            >
-                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                    Order Id:
-                                </Typography>
-                                <Typography
-                                    variant="body2"
-                                    sx={{
-                                        fontWeight: 500,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    #001
-                                    <IconButton size="small" sx={{ ml: 0.5, p: 0.5 }}>
-                                        <ContentCopy fontSize="small" />
-                                    </IconButton>
-                                </Typography>
-                            </Box>
-
-                            {/* Customer Info */}
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    mb: 3,
-                                }}
-                            >
-                                <Avatar
-                                    sx={{
-                                        bgcolor: '#1976d2',
-                                        width: 36,
-                                        height: 36,
-                                        mr: 1,
-                                    }}
-                                >
-                                    T2
-                                </Avatar>
-                                <Box sx={{ mr: 'auto' }}>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Customer Name
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                        Ravi Kamil
-                                    </Typography>
-                                </Box>
-                                <IconButton size="small">
-                                    <CloseIcon fontSize="small" />
-                                </IconButton>
-                            </Box>
-
-                            {/* Empty State */}
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    py: 4,
-                                    flex: 1,
-                                }}
-                            >
-                                <Avatar
-                                    sx={{
-                                        width: 80,
-                                        height: 80,
-                                        bgcolor: '#f5f5f5',
-                                        mb: 2,
-                                    }}
-                                >
-                                    <Box component="img" src="/placeholder.svg?height=40&width=40" alt="Shopping bag" />
-                                </Avatar>
-                                <Typography variant="body2" color="text.secondary" textAlign="center">
-                                    No products have been selected yet
-                                </Typography>
-                            </Box>
-
-                            {/* Order Summary */}
-                            <Paper
-                                sx={{
-                                    borderRadius: 2,
-                                    overflow: 'hidden',
-                                    mt: 'auto',
-                                }}
-                            >
                                 <Box
                                     sx={{
-                                        bgcolor: '#e3f2fd',
-                                        p: 2,
                                         display: 'flex',
                                         justifyContent: 'space-between',
-                                        alignItems: 'center',
+                                        width: '100%',
                                     }}
                                 >
-                                    <Typography
-                                        variant="subtitle1"
+                                    {/* Order Detail Button */}
+                                    <Button
+                                        variant={activeView === 'orderDetail' ? 'outlined' : 'text'}
+                                        size="small"
+                                        onClick={() => setActiveView('orderDetail')}
                                         sx={{
-                                            fontWeight: 500,
+                                            borderRadius: 5,
+                                            textTransform: 'none',
+                                            borderColor: activeView === 'orderDetail' ? '#0c3b5c' : 'transparent',
                                             color: '#0c3b5c',
+                                            minWidth: 'auto',
+                                            px: 1.5,
+                                            fontSize: '16px',
                                         }}
                                     >
-                                        Order Summary
-                                    </Typography>
-                                    <IconButton size="small" sx={{ color: '#0c3b5c' }}>
-                                        <KeyboardArrowUp />
-                                    </IconButton>
+                                        Order Detail
+                                    </Button>
+
+                                    {/* Order Saved Button */}
+                                    <Button
+                                        variant={activeView === 'orderSaved' ? 'outlined' : 'text'}
+                                        size="small"
+                                        onClick={() => setActiveView('orderSaved')}
+                                        sx={{
+                                            borderRadius: 5,
+                                            textTransform: 'none',
+                                            borderColor: activeView === 'orderSaved' ? '#0c3b5c' : 'transparent',
+                                            color: '#0c3b5c',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            fontSize: '16px',
+                                        }}
+                                    >
+                                        Order Saved
+                                        <Badge badgeContent="3" color="primary" sx={{ ml: 3, mr: 1 }} />
+                                    </Button>
                                 </Box>
+                            </Box>
 
-                                <Divider sx={{ borderStyle: 'dashed' }} />
-
-                                <Box sx={{ bgcolor: '#e3f2fd', px: 2, py: 1 }}>
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            mb: 1,
-                                        }}
-                                    >
-                                        <Typography variant="body2" color="text.secondary">
-                                            Subtotal
-                                        </Typography>
-                                        <Typography variant="body2">Rs 0</Typography>
-                                    </Box>
-
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            mb: 1,
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Typography variant="body2" color="text.secondary">
-                                                Discount
-                                            </Typography>
-                                            <IconButton size="small" sx={{ ml: 0.5, p: 0.5 }}>
-                                                <ContentCopy fontSize="small" />
-                                            </IconButton>
-                                        </Box>
-                                        <Typography variant="body2">Rs 0</Typography>
-                                    </Box>
-
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            mb: 1,
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Typography variant="body2" color="text.secondary">
-                                                Tax 12%
-                                            </Typography>
-                                            <IconButton size="small" sx={{ ml: 0.5, p: 0.5 }}>
-                                                <ContentCopy fontSize="small" />
-                                            </IconButton>
-                                        </Box>
-                                        <Typography variant="body2">Rs 0</Typography>
-                                    </Box>
-
-                                    <Divider sx={{ borderStyle: 'dashed', my: 1 }} />
-
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            mb: 2,
-                                        }}
-                                    >
-                                        <Typography
-                                            variant="subtitle1"
-                                            sx={{
-                                                fontWeight: 500,
-                                                color: '#0c3b5c',
-                                            }}
-                                        >
-                                            Total Bill
-                                        </Typography>
-                                        <Typography
-                                            variant="subtitle1"
-                                            sx={{
-                                                fontWeight: 500,
-                                                color: '#0c3b5c',
-                                            }}
-                                        >
-                                            Rs 0
-                                        </Typography>
-                                    </Box>
-
-                                    <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
-                                        <Button
-                                            variant="outlined"
-                                            fullWidth
-                                            sx={{
-                                                borderColor: '#0c3b5c',
-                                                color: '#0c3b5c',
-                                                textTransform: 'none',
-                                            }}
-                                        >
-                                            Save Order
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            fullWidth
-                                            endIcon={<ArrowForward />}
-                                            sx={{
-                                                bgcolor: '#0c3b5c',
-                                                textTransform: 'none',
-                                                '&:hover': {
-                                                    bgcolor: '#072a42',
-                                                },
-                                            }}
-                                            onClick={() => setShowPayment(true)}
-                                        >
-                                            Payment
-                                        </Button>
-                                    </Box>
-                                </Box>
-                            </Paper>
+                            {/* Conditional rendering based on active view */}
+                            {activeView === 'orderDetail' ? <OrderDetail /> : <OrderSaved />}
                         </Paper>
                     </Box>
                 </Box>
 
                 {/* Payment Modal */}
-                <Modal
+                {/* <Modal
                     open={showPayment}
                     onClose={() => setShowPayment(false)}
                     aria-labelledby="payment-modal-title"
                     aria-describedby="payment-modal-description"
                     closeAfterTransition
                     sx={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
+                        display: "flex",
+                        justifyContent: "flex-end",
                     }}
                 >
-                    <Slide direction="left" in={showPayment} mountOnEnter unmountOnExit>
+                    <Slide
+                        direction="left"
+                        in={showPayment}
+                        mountOnEnter
+                        unmountOnExit
+                    >
                         <Box
                             sx={{
-                                position: 'fixed',
-                                top: '10px',
-                                bottom: '10px',
+                                position: "fixed",
+                                top: "10px",
+                                bottom: "10px",
                                 right: 10,
-                                width: { xs: '100%', sm: 900 },
-                                bgcolor: '#fff',
+                                width: { xs: "100%", sm: 900 },
+                                bgcolor: "#fff",
                                 boxShadow: 4,
                                 zIndex: 1300,
-                                overflowY: 'auto',
+                                overflowY: "auto",
                                 borderRadius: 1,
-                                scrollbarWidth: 'none', // Firefox
-                                '&::-webkit-scrollbar': {
-                                    display: 'none', // Chrome, Safari, Edge
+                                scrollbarWidth: "none",
+                                "&::-webkit-scrollbar": {
+                                    display: "none",
                                 },
                             }}
                         >
-                            {/* Your PaymentPage component inside the modal */}
                             <PaymentPage />
                         </Box>
                     </Slide>
-                </Modal>
+                </Modal> */}
             </div>
         </>
     );

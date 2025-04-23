@@ -3,6 +3,7 @@
 import AddMenu from '@/components/App/Inventory/AddMenu';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
+import { router } from '@inertiajs/react';
 import {
     Add as AddIcon,
     ArrowDownward as ArrowDownwardIcon,
@@ -461,7 +462,7 @@ export default function CoffeeShop({ productLists }) {
                                 <Button
                                     variant="contained"
                                     startIcon={<AddIcon />}
-                                    onClick={handleAddMenuOpen}
+                                    onClick={() => router.visit(route('product.create'))}
                                     sx={{
                                         borderRadius: 1,
                                         backgroundColor: '#003B5C',

@@ -28,6 +28,8 @@ import EmployeeProfileScreen from './Profile';
 // import NewOrderDialog from "./order";
 import { Modal, Slide } from '@mui/material';
 // import tableicon from "../assets/Table management.svg";
+import KitchenIcon from '@/components/App/Icons/KitchenManagement';
+import MemberIcon from '@/components/App/Icons/Member';
 import TableIcon from '@/components/App/Icons/TableManagement';
 
 const drawerWidthOpen = 240; // Set open width to 240px
@@ -104,12 +106,23 @@ export default function SideNav({ open, setOpen }) {
     const menuItems = [
         { text: 'Dashboard', icon: <HomeIcon />, path: '/' },
         { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
+        { text: 'Inventory Category', icon: <InventoryIcon />, path: '/inventory/category' },
         { text: 'Transaction', icon: <PeopleIcon />, path: '/transaction' },
         { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
         {
             text: 'Table Management',
             icon: <TableIcon />,
             path: '/table/management',
+        },
+        {
+            text: 'Kitchen',
+            icon: <KitchenIcon />,
+            path: '/kitchen',
+        },
+        {
+            text: 'Members',
+            icon: <MemberIcon />,
+            path: '/members',
         },
     ];
 
