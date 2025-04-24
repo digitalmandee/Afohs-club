@@ -112,6 +112,10 @@ Route::middleware([
             // Inventory Items
             Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
             Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
+
+            Route::get('/admin/dashboard', function () {
+                return Inertia::render('App/Admin/Dashboard');
+            });
         });
         // End of Tenant Routes
 

@@ -21,10 +21,10 @@ import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
-import LoginActivityScreen from './Activity';
-import LogoutScreen from './Logout';
-import NotificationsPanel from './Notification';
-import EmployeeProfileScreen from './Profile';
+// import LoginActivityScreen from './Activity';
+// import LogoutScreen from './Logout';
+// import NotificationsPanel from './Notification';
+// import EmployeeProfileScreen from './Profile';
 // import NewOrderDialog from "./order";
 import { Modal, Slide } from '@mui/material';
 // import tableicon from "../assets/Table management.svg";
@@ -105,25 +105,7 @@ export default function SideNav({ open, setOpen }) {
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
         { text: 'Dashboard', icon: <HomeIcon />, path: '/' },
-        { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
-        { text: 'Inventory Category', icon: <InventoryIcon />, path: '/inventory/category' },
-        { text: 'Transaction', icon: <PeopleIcon />, path: '/transaction' },
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-        {
-            text: 'Table Management',
-            icon: <TableIcon />,
-            path: '/table/management',
-        },
-        {
-            text: 'Kitchen',
-            icon: <KitchenIcon />,
-            path: '/kitchen',
-        },
-        {
-            text: 'Members',
-            icon: <MemberIcon />,
-            path: '/members',
-        },
+        { text: 'Room & Booking Event', icon: <InventoryIcon />, path: '' },
     ];
 
     return (
@@ -188,7 +170,7 @@ export default function SideNav({ open, setOpen }) {
                         >
                             <img src="/assets/bell-notification.png" alt="" style={{ width: 17, height: 19 }} />
                         </IconButton>
-                        <Modal open={showNotification} onClose={() => setShowNotification(false)} closeAfterTransition>
+                        {/* <Modal open={showNotification} onClose={() => setShowNotification(false)} closeAfterTransition>
                             <Slide direction="left" in={showNotification} mountOnEnter unmountOnExit>
                                 <Box
                                     sx={{
@@ -211,7 +193,7 @@ export default function SideNav({ open, setOpen }) {
                                     <NotificationsPanel onClose={() => setShowNotification(false)} />
                                 </Box>
                             </Slide>
-                        </Modal>
+                        </Modal> */}
 
                         {/* Vertical Divider */}
                         <Divider
@@ -251,7 +233,7 @@ export default function SideNav({ open, setOpen }) {
                                 <Typography sx={{ fontSize: '12px', color: '#666' }}>Admin</Typography>
                             </Box>
                         </Box>
-                        <Modal open={showProfile} onClose={() => setShowProfile(false)} aria-labelledby="profile-modal" sx={{ zIndex: 1300 }}>
+                        {/* <Modal open={showProfile} onClose={() => setShowProfile(false)} aria-labelledby="profile-modal" sx={{ zIndex: 1300 }}>
                             <Box
                                 sx={{
                                     position: 'fixed',
@@ -268,7 +250,7 @@ export default function SideNav({ open, setOpen }) {
                                     '&::-webkit-scrollbar': { display: 'none' },
                                 }}
                             >
-                                {/* Profile Modal Content */}
+                                
                                 {profileView === 'profile' ? (
                                     <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} />
                                 ) : profileView === 'loginActivity' ? (
@@ -277,7 +259,7 @@ export default function SideNav({ open, setOpen }) {
                                     <LogoutScreen setProfileView={setProfileView} />
                                 ) : null}
                             </Box>
-                        </Modal>
+                        </Modal> */}
                     </Box>
                 </Toolbar>
             </AppBar>
@@ -370,7 +352,7 @@ export default function SideNav({ open, setOpen }) {
                                         sx={{
                                             minHeight: 50,
                                             justifyContent: open ? 'initial' : 'center',
-                                            mx: 3,
+                                            mx: open ? 0.5 : 3,
                                             borderRadius: '12px',
                                             backgroundColor: isSelected ? '#333' : 'transparent',
                                             '&:hover': { backgroundColor: '#444' },
@@ -380,7 +362,8 @@ export default function SideNav({ open, setOpen }) {
                                             sx={{
                                                 minWidth: 0,
                                                 justifyContent: 'center',
-                                                mr: open ? 1 : 'auto',
+                                                mr: open ? 0.8 : 'auto',
+                                                ml: open ? -2 : 0,
                                                 '& svg': {
                                                     fill: isSelected ? 'orange' : '#fff',
                                                 },
