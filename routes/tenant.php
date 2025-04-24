@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\App\MembersController;
+use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
@@ -63,10 +65,6 @@ Route::middleware([
                 return Inertia::render('App/Kitchen/Dashboard');
             });
 
-            Route::get('/members', function () {
-                return Inertia::render('App/Member/Dashboard');
-            });
-
             Route::get('/add/information', function () {
                 return Inertia::render('App/Member/AddInfo');
             });
@@ -112,6 +110,10 @@ Route::middleware([
             // Inventory Items
             Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
             Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
+
+            // Members
+            Route::resource('member-types', MemberTypeController::class)->except('show', 'edit');
+            Route::resource('members', MembersController::class)->except('show', 'edit');
         });
         // End of Tenant Routes
 
