@@ -117,6 +117,21 @@ Route::middleware([
             Route::resource('address-types', AddressTypeController::class)->except('show', 'edit');
 
             Route::resource('members', MembersController::class)->except('show', 'edit');
+
+            // List member types
+            // Route::get('/member-types', [MemberTypeController::class, 'index'])->name('member.types.index');
+            // Route::resource('member-types', MemberTypeController::class)->except(['create']);
+
+            // Resource route for member-types
+            Route::resource('member-types', MemberTypeController::class)->except('show', 'edit');
+
+            // Members
+            Route::get('/member-types', [MemberTypeController::class, 'index'])->name('member.');
+            // Route::post('/member-types', [MemberTypeController::class, 'store'])->name('member.store');
+            Route::post('/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
+
+            Route::put('/member-types/{id}', [MemberTypeController::class, 'update'])->name('member.update');
+            Route::delete('/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
         });
         // End of Tenant Routes
 
