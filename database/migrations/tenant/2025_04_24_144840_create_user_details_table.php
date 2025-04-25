@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('city');
             $table->string('zip')->nullable();
             $table->string('address')->nullable();
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('status', ['active', 'inactive'])->default('inactive');
             $table->timestamps();
         });
     }

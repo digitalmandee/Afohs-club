@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\CategoryController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
@@ -113,6 +114,8 @@ Route::middleware([
 
             // Members
             Route::resource('member-types', MemberTypeController::class)->except('show', 'edit');
+            Route::resource('address-types', AddressTypeController::class)->except('show', 'edit');
+
             Route::resource('members', MembersController::class)->except('show', 'edit');
         });
         // End of Tenant Routes
