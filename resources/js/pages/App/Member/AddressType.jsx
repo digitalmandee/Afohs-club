@@ -24,24 +24,25 @@ import {
     useTheme,
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-export default function MemberType({ memberTypesList }) {
+export default function AddressType({ addressTypes }) {
     const [open, setOpen] = useState(false);
     const [openAddMenu, setOpenAddMenu] = useState(false);
-    const [editingMemberTypeId, setEditingMemberTypeId] = useState(null);
+    const [editingAddressTypeId, setEditingAddressTypeId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
     const [showError, setShowError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const [pendingDeleteMemberType, setPendingDeleteMemberType] = useState(null);
+    const [pendingDeleteAddressType, setPendingDeleteAddressType] = useState(null);
     const { flash } = usePage().props;
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const dialogContentRef = useRef(null);
 
     const { data, setData, post, reset, errors, processing } = useForm({
         name: '',
@@ -51,12 +52,12 @@ export default function MemberType({ memberTypesList }) {
     const handleAddMenuOpen = useCallback(() => {
         setOpenAddMenu(true);
         reset();
-        setEditingMemberTypeId(null);
+        setEditingAddressTypeId(null);
     }, [reset]);
 
     const handleAddMenuClose = useCallback(() => {
         setOpenAddMenu(false);
-        setEditingMemberTypeId(null);
+        setEditingAddressTypeId(null);
         reset();
         setShowError(false);
         setErrorMessage('');
@@ -76,7 +77,12 @@ export default function MemberType({ memberTypesList }) {
 
             // Basic frontend validation
             if (!data.name.trim()) {
-                setErrorMessage('Member type name is required.');
+                setErrorMessage('Address type name is required.');
+                setShowError(true);
+                return;
+            }
+            if (data.name.length > 255) {
+                setErrorMessage('Address type name must be 255 characters or less.');
                 setShowError(true);
                 return;
             }
@@ -84,75 +90,76 @@ export default function MemberType({ memberTypesList }) {
             const formData = new FormData();
             formData.append('name', data.name);
 
-            if (editingMemberTypeId) {
-                // Update existing member type
+            if (editingAddressTypeId) {
+                // Update existing address type
                 formData.append('_method', 'PUT');
-                router.post(route('member-types.update', editingMemberTypeId), formData, {
+                router.post(route('address-types.update', editingAddressTypeId), formData, {
                     forceFormData: true,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit(route('member-types.index'));
+                        router.visit(route('address-types.index'));
                     },
                     onError: (errors) => {
-                        setErrorMessage(errors.name || 'An error occurred while updating the member type.');
+                        setErrorMessage(errors.name || 'An error occurred while updating the address type.');
                         setShowError(true);
                     },
                 });
-                setSnackbar({ open: true, message: 'Successfully Updated Member Type', severity: 'success' });
+                setSnackbar({ open: true, message: 'Successfully Updated Address Type', severity: 'success' });
             } else {
-                // Create new member type
-                post(route('member-types.store'), {
+                // Create new address type
+                post(route('address-types.store'), {
                     data: formData,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit(route('member-types.index'));
+                        router.visit(route('address-types.index'));
                     },
                     onError: (errors) => {
-                        setErrorMessage(errors.name || errors.message || 'An error occurred while creating the member type.');
+                        setErrorMessage(errors.name || errors.message || 'An error occurred while creating the address type.');
                         setShowError(true);
                     },
                 });
-                setSnackbar({ open: true, message: 'Successfully Created Member Type', severity: 'success' });
+                setSnackbar({ open: true, message: 'Successfully Created Address Type', severity: 'success' });
             }
         },
-        [data, editingMemberTypeId, post, handleAddMenuClose],
+        [data, editingAddressTypeId, post, handleAddMenuClose],
     );
+
     const handleEdit = useCallback(
-        (memberType) => {
+        (addressType) => {
             setData({
-                name: memberType.name,
+                name: addressType.name,
             });
-            setEditingMemberTypeId(memberType.id);
+            setEditingAddressTypeId(addressType.id);
             setOpenAddMenu(true);
         },
         [setData],
     );
 
-    const handleDeleteClick = useCallback((memberType) => {
-        setPendingDeleteMemberType(memberType);
+    const handleDeleteClick = useCallback((addressType) => {
+        setPendingDeleteAddressType(addressType);
     }, []);
 
     const handleConfirmDelete = useCallback(() => {
-        if (pendingDeleteMemberType) {
-            router.delete(route('member-types.destroy', pendingDeleteMemberType.id), {
+        if (pendingDeleteAddressType) {
+            router.delete(route('address-types.destroy', pendingDeleteAddressType.id), {
                 onSuccess: () => {
                     setShowDeleteSuccess(true);
-                    setPendingDeleteMemberType(null);
-                    router.visit(route('member-types.index'));
+                    setPendingDeleteAddressType(null);
+                    router.visit(route('address-types.index'));
                 },
                 onError: (errors) => {
-                    setErrorMessage(errors.message || 'An error occurred while deleting the member type.');
+                    setErrorMessage(errors.message || 'An error occurred while deleting the address type.');
                     setShowError(true);
-                    setPendingDeleteMemberType(null);
+                    setPendingDeleteAddressType(null);
                 },
             });
         }
-    }, [pendingDeleteMemberType]);
+    }, [pendingDeleteAddressType]);
 
     const handleCancelDelete = useCallback(() => {
-        setPendingDeleteMemberType(null);
+        setPendingDeleteAddressType(null);
     }, []);
 
     const handleCloseConfirmation = () => {
@@ -178,8 +185,14 @@ export default function MemberType({ memberTypesList }) {
         }
     }, [flash]);
 
-    // console.log('memberTypesList:', memberTypesList);
-    const filteredMemberTypes = (memberTypesList || []).filter((memberType) => memberType.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    useEffect(() => {
+        if (openAddMenu && dialogContentRef.current) {
+            dialogContentRef.current.focus();
+        }
+    }, [openAddMenu]);
+
+    // console.log('addressTypes:', addressTypes);
+    const filteredAddressTypes = (addressTypes || []).filter((addressType) => addressType.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
         <>
@@ -190,15 +203,16 @@ export default function MemberType({ memberTypesList }) {
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
+                aria-hidden={openAddMenu ? 'true' : undefined}
             >
                 <div className="container-fluid bg-light py-4">
                     <div style={{ background: '#ffff', padding: '20px', borderRadius: '10px' }}>
                         <div className="d-flex align-items-center mb-4">
                             <Typography variant="h4" sx={{ mr: 2 }}>
-                                {filteredMemberTypes.length}
+                                {filteredAddressTypes.length}
                             </Typography>
                             <Typography variant="body1" color="#7F7F7F">
-                                Member Types
+                                Address Types
                             </Typography>
                             <TextField
                                 placeholder="Search"
@@ -230,17 +244,17 @@ export default function MemberType({ memberTypesList }) {
                                         '&:hover': { backgroundColor: '#002A41' },
                                     }}
                                 >
-                                    Add Member Type
+                                    Add Address Type
                                 </Button>
                             </Box>
                         </div>
 
-                        {filteredMemberTypes.length === 0 ? (
-                            <Typography>No member types found.</Typography>
+                        {filteredAddressTypes.length === 0 ? (
+                            <Typography>No address types found.</Typography>
                         ) : (
-                            filteredMemberTypes.map((memberType) => (
+                            filteredAddressTypes.map((addressType) => (
                                 <Card
-                                    key={memberType.id}
+                                    key={addressType.id}
                                     sx={{
                                         mb: 1,
                                         borderRadius: 1,
@@ -253,14 +267,14 @@ export default function MemberType({ memberTypesList }) {
                                         <Grid container alignItems="center" justifyContent="space-between">
                                             <Grid item xs={12} sm={9} md={9} sx={{ display: 'flex', alignItems: 'center' }}>
                                                 <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>
-                                                    {memberType.name}
+                                                    {addressType.name}
                                                 </Typography>
                                             </Grid>
                                             <Grid item>
-                                                <IconButton onClick={() => handleEdit(memberType)}>
+                                                <IconButton onClick={() => handleEdit(addressType)}>
                                                     <EditIcon />
                                                 </IconButton>
-                                                <IconButton onClick={() => handleDeleteClick(memberType)}>
+                                                <IconButton onClick={() => handleDeleteClick(addressType)}>
                                                     <DeleteIcon color="error" />
                                                 </IconButton>
                                             </Grid>
@@ -279,6 +293,7 @@ export default function MemberType({ memberTypesList }) {
                 onClose={handleAddMenuClose}
                 fullWidth
                 maxWidth="sm"
+                disableEnforceFocus
                 PaperProps={{
                     sx: {
                         borderRadius: 1,
@@ -293,22 +308,22 @@ export default function MemberType({ memberTypesList }) {
             >
                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h5" fontWeight="bold">
-                        {editingMemberTypeId ? 'Edit Member Type' : 'Add Member Type'}
+                        {editingAddressTypeId ? 'Edit Address Type' : 'Add Address Type'}
                     </Typography>
                     <IconButton onClick={handleAddMenuClose}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
-                <DialogContent sx={{ p: 0 }}>
+                <DialogContent sx={{ p: 0 }} tabIndex={-1} ref={dialogContentRef}>
                     <Box sx={{ px: 3, pb: 3 }}>
                         <Grid container spacing={3}>
                             <Grid item xs={12}>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
-                                    Member Type Name
+                                    Address Type Name
                                 </Typography>
                                 <TextField
                                     fullWidth
-                                    placeholder="Enter member type name"
+                                    placeholder="Enter address type name"
                                     name="name"
                                     value={data.name}
                                     onChange={handleInputChange}
@@ -338,11 +353,17 @@ export default function MemberType({ memberTypesList }) {
             </Dialog>
 
             {/* Delete Confirmation */}
-            <Dialog fullScreen={fullScreen} open={!!pendingDeleteMemberType} onClose={handleCancelDelete} aria-labelledby="delete-dialog-title">
+            <Dialog
+                fullScreen={fullScreen}
+                open={!!pendingDeleteAddressType}
+                onClose={handleCancelDelete}
+                aria-labelledby="delete-dialog-title"
+                disableEnforceFocus
+            >
                 <DialogTitle id="delete-dialog-title">Confirm Deletion</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to delete the member type "{pendingDeleteMemberType?.name || ''}"? This action cannot be undone.
+                        Are you sure you want to delete the address type "{pendingDeleteAddressType?.name || ''}"? This action cannot be undone.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
