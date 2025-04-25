@@ -17,6 +17,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -104,8 +105,8 @@ export default function SideNav({ open, setOpen }) {
     const [showOrder, setShowOrder] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: '/' },
-        { text: 'Room & Booking Event', icon: <InventoryIcon />, path: '' },
+        { text: 'Dashboard', icon: <HomeIcon />, path: '/admin/dashboard' },
+        { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/admin/booking/dashboard' },
     ];
 
     return (
