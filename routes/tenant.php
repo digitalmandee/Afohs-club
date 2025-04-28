@@ -129,6 +129,9 @@ Route::middleware([
             Route::get('members/create', [MembersController::class, 'index'])->name('members');
             Route::get('members/create', [MembersController::class, 'create'])->name('members.create');
 
+            Route::post('/customers', [MembersController::class, 'store'])->name('customers.store');
+            Route::put('/customers/{id}', [MembersController::class, 'update'])->name('customers.update');
+
             // Route::resource('members/create', MembersController::class)->except('show', 'edit');
         });
         // End of Tenant Routes

@@ -1,4 +1,5 @@
 import SideNav from '@/components/App/SideBar/SideNav';
+import { router } from '@inertiajs/react';
 import {
     Add as AddIcon,
     Apartment as ApartmentIcon,
@@ -30,7 +31,7 @@ import {
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 
-export default function AddCustomer() {
+export default function AddCustomer({ users, memberTypes }) {
     const drawerWidthOpen = 240;
     const drawerWidthClosed = 110;
 
@@ -199,6 +200,10 @@ export default function AddCustomer() {
     // State for success message
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+
+    // State for errors
+    const [errors, setErrors] = useState({});
+
     const [profileImage, setProfileImage] = useState(null);
 
     // State for order modal
@@ -213,6 +218,9 @@ export default function AddCustomer() {
     // State for dish category menu
     const [dishCategoryMenuAnchor, setDishCategoryMenuAnchor] = useState(null);
     const [selectedDish, setSelectedDish] = useState('');
+
+    // State for phone country code
+    const [phoneCountryCode, setPhoneCountryCode] = useState('+702');
 
     // Dishes data
     const dishes = ['Tea', 'Coffee', 'Chicken', 'Cake', 'Biryani', 'Burger', 'Pizza', 'Pasta'];
@@ -232,6 +240,7 @@ export default function AddCustomer() {
     const handleCloseAddForm = () => {
         setOpenAddForm(false);
         setShowAddressForm(false);
+        setErrors({});
     };
 
     // Handle input change in add/edit customer form
@@ -241,6 +250,10 @@ export default function AddCustomer() {
             ...newCustomer,
             [name]: value,
         });
+        // Clear error for the field when user starts typing
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: null }));
+        }
     };
 
     // Handle address input change
@@ -250,6 +263,11 @@ export default function AddCustomer() {
             ...newAddress,
             [name]: value,
         });
+    };
+
+    // Handle phone country code change
+    const handlePhoneCountryCodeChange = (e) => {
+        setPhoneCountryCode(e.target.value);
     };
 
     // Handle profile image upload
@@ -263,6 +281,10 @@ export default function AddCustomer() {
             };
 
             reader.readAsDataURL(file);
+            // Clear profilePic error if any
+            if (errors.profilePic) {
+                setErrors((prev) => ({ ...prev, profilePic: null }));
+            }
         }
     };
 
@@ -271,47 +293,115 @@ export default function AddCustomer() {
         setProfileImage(null);
     };
 
+    // Convert base64 to Blob for profile image
+    const base64ToBlob = (base64) => {
+        const byteString = atob(base64.split(',')[1]);
+        const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: mimeString });
+    };
+
     // Handle save customer
     const handleSaveCustomer = () => {
-        const updatedCustomer = {
-            ...newCustomer,
-            profilePic: profileImage || 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-        };
+        const formData = new FormData();
 
-        if (isEditMode && currentCustomerIndex !== null) {
-            // Update existing customer
-            const updatedCustomers = [...customers];
-            updatedCustomers[currentCustomerIndex] = updatedCustomer;
-            setCustomers(updatedCustomers);
-            setSuccessMessage('Customer updated successfully!');
-        } else {
-            // Add new customer
-            const customer = {
-                ...updatedCustomer,
-                id: `AFOHS-${Math.floor(10000 + Math.random() * 90000)}`,
-            };
-            setCustomers([customer, ...customers]);
-            setSuccessMessage('Customer added successfully!');
+        // Append customer fields
+        formData.append('name', newCustomer.name);
+        formData.append('email', newCustomer.email);
+        formData.append('phone', `${phoneCountryCode}${newCustomer.phone}`);
+        formData.append('type', newCustomer.type);
+        formData.append('address', newCustomer.address);
+        formData.append('customer_type', newCustomer.customerType);
+
+        // Append profile image if available
+        if (profileImage) {
+            const blob = base64ToBlob(profileImage);
+            formData.append('profile_pic', blob, 'profile.jpg');
         }
 
-        setShowSuccess(true);
-        setOpenAddForm(false);
+        // Append addresses as JSON
+        formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
-        // Reset form
-        setNewCustomer({
-            id: `MEMBER${Math.floor(100 + Math.random() * 900)}`,
-            name: '',
-            email: '',
-            phone: '',
-            type: 'Regular',
-            address: '',
-            customerType: 'Silver',
-            profilePic: null,
-            addresses: [],
-        });
-        setProfileImage(null);
-        setIsEditMode(false);
-        setCurrentCustomerIndex(null);
+        // Send request based on mode (create or update)
+        if (isEditMode && currentCustomerIndex !== null) {
+            // Update existing customer
+            formData.append('_method', 'PUT'); // Laravel expects this for PUT requests via FormData
+            router.post(route('customers.update', customers[currentCustomerIndex].id), formData, {
+                onSuccess: () => {
+                    const updatedCustomer = {
+                        ...newCustomer,
+                        id: customers[currentCustomerIndex].id,
+                        phone: `${phoneCountryCode}${newCustomer.phone}`,
+                        profilePic: profileImage || customers[currentCustomerIndex].profilePic,
+                    };
+                    const updatedCustomers = [...customers];
+                    updatedCustomers[currentCustomerIndex] = updatedCustomer;
+                    setCustomers(updatedCustomers);
+                    setSuccessMessage('Customer updated successfully!');
+                    setShowSuccess(true);
+                    setOpenAddForm(false);
+                    setNewCustomer({
+                        id: `MEMBER${Math.floor(100 + Math.random() * 900)}`,
+                        name: '',
+                        email: '',
+                        phone: '',
+                        type: 'Regular',
+                        address: '',
+                        customerType: 'Silver',
+                        profilePic: null,
+                        addresses: [],
+                    });
+                    setProfileImage(null);
+                    setIsEditMode(false);
+                    setCurrentCustomerIndex(null);
+                    setPhoneCountryCode('+702');
+                    setErrors({});
+                },
+                onError: (errors) => {
+                    setErrors(errors);
+                },
+            });
+        } else {
+            // Add new customer
+            router.post(route('customers.store'), formData, {
+                onSuccess: () => {
+                    const newCustomerData = {
+                        ...newCustomer,
+                        id: `AFOHS-${Math.floor(10000 + Math.random() * 90000)}`, // Temporary ID until backend returns actual ID
+                        phone: `${phoneCountryCode}${newCustomer.phone}`,
+                        profilePic:
+                            profileImage || 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
+                    };
+                    setCustomers([newCustomerData, ...customers]);
+                    setSuccessMessage('Customer added successfully!');
+                    setShowSuccess(true);
+                    setOpenAddForm(false);
+                    setNewCustomer({
+                        id: `MEMBER${Math.floor(100 + Math.random() * 900)}`,
+                        name: '',
+                        email: '',
+                        phone: '',
+                        type: 'Regular',
+                        address: '',
+                        customerType: 'Silver',
+                        profilePic: null,
+                        addresses: [],
+                    });
+                    setProfileImage(null);
+                    setIsEditMode(false);
+                    setCurrentCustomerIndex(null);
+                    setPhoneCountryCode('+702');
+                    setErrors({});
+                },
+                onError: (errors) => {
+                    setErrors(errors);
+                },
+            });
+        }
     };
 
     // Handle show address form
@@ -358,6 +448,14 @@ export default function AddCustomer() {
         setNewCustomer(updatedCustomer);
     };
 
+    // Get the last user id
+    const lastUserId =
+        users.data.length > 0
+            ? users.data[0].user_id // latest user first because of ->latest() in query
+            : 0; // if no user, start from 0
+
+    const newMemberId = lastUserId + 1;
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -383,7 +481,7 @@ export default function AddCustomer() {
                         <Grid item xs={12} md={6}>
                             <Box sx={{ p: 2, backgroundColor: '#F6F6F6', border: '1px solid #e0e0e0', borderRadius: '4px', mb: 2 }}>
                                 <Typography variant="body1">
-                                    Member Id: <strong>{newCustomer.id}</strong>
+                                    Member Id: <strong>MEMBER{newMemberId}</strong>
                                 </Typography>
                             </Box>
                             <Box style={{ display: 'flex', gap: '10px' }}>
@@ -419,6 +517,11 @@ export default function AddCustomer() {
                                                 />
                                             </label>
                                         </Box>
+                                    )}
+                                    {errors.profilePic && (
+                                        <Typography color="error" variant="caption">
+                                            {errors.profilePic}
+                                        </Typography>
                                     )}
                                 </Box>
                                 <Box style={{ display: 'flex', flexDirection: 'column' }}>
@@ -465,54 +568,45 @@ export default function AddCustomer() {
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                 Customer Type
                             </Typography>
-                            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                                <FormControlLabel
-                                    sx={{ border: '1px dashed #E3E3E3', p: 1 }}
-                                    control={
-                                        <Radio
-                                            checked={newCustomer.customerType === 'Silver'}
-                                            onChange={handleInputChange}
-                                            name="customerType"
-                                            value="Silver"
-                                        />
-                                    }
-                                    label={
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <img
-                                                src="https://img.icons8.com/ios-filled/50/000000/silver-medal.png"
-                                                width="24"
-                                                height="24"
-                                                alt="Silver"
-                                                style={{ marginRight: '8px' }}
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3, width: '100%' }}>
+                                {memberTypes.map((memberType, key) => (
+                                    <FormControlLabel
+                                        key={key}
+                                        sx={{
+                                            border: '1px dashed #E3E3E3',
+                                            p: 1,
+                                            minWidth: '150px',
+                                            flexBasis: 'calc(33.333% - 16px)',
+                                            boxSizing: 'border-box',
+                                        }}
+                                        control={
+                                            <Radio
+                                                checked={newCustomer.customerType === memberType.name}
+                                                onChange={handleInputChange}
+                                                name="customerType"
+                                                value={memberType.name}
                                             />
-                                            Silver
-                                        </Box>
-                                    }
-                                />
-                                <FormControlLabel
-                                    sx={{ border: '1px dashed #E3E3E3', p: 1 }}
-                                    control={
-                                        <Radio
-                                            checked={newCustomer.customerType === 'Gold'}
-                                            onChange={handleInputChange}
-                                            name="customerType"
-                                            value="Gold"
-                                        />
-                                    }
-                                    label={
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <img
-                                                src="https://img.icons8.com/ios-filled/50/FFD700/gold-medal.png"
-                                                width="24"
-                                                height="24"
-                                                alt="Gold"
-                                                style={{ marginRight: '8px' }}
-                                            />
-                                            Gold
-                                        </Box>
-                                    }
-                                />
+                                        }
+                                        label={
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <img
+                                                    src="https://img.icons8.com/ios-filled/50/FFD700/gold-medal.png"
+                                                    width="24"
+                                                    height="24"
+                                                    alt={memberType.name}
+                                                    style={{ marginRight: '8px' }}
+                                                />
+                                                {memberType.name}
+                                            </Box>
+                                        }
+                                    />
+                                ))}
                             </Box>
+                            {errors.customerType && (
+                                <Typography color="error" variant="caption">
+                                    {errors.customerType}
+                                </Typography>
+                            )}
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                 Customer Name
                             </Typography>
@@ -525,6 +619,8 @@ export default function AddCustomer() {
                                 margin="normal"
                                 variant="outlined"
                                 sx={{ mb: 2 }}
+                                error={!!errors.name}
+                                helperText={errors.name}
                             />
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={6}>
@@ -539,31 +635,35 @@ export default function AddCustomer() {
                                         onChange={handleInputChange}
                                         margin="normal"
                                         variant="outlined"
+                                        error={!!errors.email}
+                                        helperText={errors.email}
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Phone Number
                                     </Typography>
-                                    <TextField
-                                        fullWidth
-                                        placeholder="e.g. 123 456 7890"
-                                        name="phone"
-                                        value={newCustomer.phone}
-                                        onChange={handleInputChange}
-                                        margin="normal"
-                                        variant="outlined"
-                                        InputProps={{
-                                            startAdornment: (
-                                                <Select native value="+702" variant="standard" disableUnderline sx={{ mr: 1, width: '90px' }}>
-                                                    <option value="+702">+702</option>
-                                                    <option value="+1">+1</option>
-                                                    <option value="+44">+44</option>
-                                                    <option value="+91">+91</option>
-                                                </Select>
-                                            ),
-                                        }}
-                                    />
+                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                        <FormControl variant="outlined" margin="normal" sx={{ minWidth: '90px' }}>
+                                            <Select value={phoneCountryCode} onChange={handlePhoneCountryCodeChange} native>
+                                                <option value="+702">+702</option>
+                                                <option value="+1">+1</option>
+                                                <option value="+44">+44</option>
+                                                <option value="+91">+91</option>
+                                            </Select>
+                                        </FormControl>
+                                        <TextField
+                                            fullWidth
+                                            placeholder="e.g. 123 456 7890"
+                                            name="phone"
+                                            value={newCustomer.phone}
+                                            onChange={handleInputChange}
+                                            margin="normal"
+                                            variant="outlined"
+                                            error={!!errors.phone}
+                                            helperText={errors.phone}
+                                        />
+                                    </Box>
                                 </Grid>
                             </Grid>
 
@@ -611,6 +711,11 @@ export default function AddCustomer() {
                                             </ListItem>
                                         ))}
                                     </List>
+                                    {errors.addresses && (
+                                        <Typography color="error" variant="caption">
+                                            {errors.addresses}
+                                        </Typography>
+                                    )}
                                 </Box>
                             )}
                         </Grid>

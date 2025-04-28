@@ -26,6 +26,11 @@ class User extends Authenticatable
         'member_type_id',
         'phone_number',
         'profile_photo',
+        'addresses',
+    ];
+
+    protected $casts = [
+        'addresses' => 'array',
     ];
 
     /**
