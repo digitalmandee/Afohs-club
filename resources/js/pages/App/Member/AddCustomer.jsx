@@ -11,6 +11,7 @@ import {
     LocationOn as LocationOnIcon,
 } from '@mui/icons-material';
 import {
+    Alert,
     Box,
     Button,
     FormControl,
@@ -24,6 +25,7 @@ import {
     MenuItem,
     Radio,
     Select,
+    Snackbar,
     Switch,
     TextField,
     Typography,
@@ -31,161 +33,41 @@ import {
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 
-export default function AddCustomer({ users, memberTypes }) {
+export default function AddCustomer({ users, memberTypes, customer = null }) {
     const drawerWidthOpen = 240;
     const drawerWidthClosed = 110;
 
-    // State for drawer
     const [open, setOpen] = useState(false);
 
-    // State for customer list
-    const [customers, setCustomers] = useState([
-        {
-            id: 'AFOHS-12345',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            phone: '03434343534',
-            type: 'VIP',
-            address: 'Lahore, Pakistan',
-            customerType: 'Silver',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-                {
-                    type: 'Apartment',
-                    address: 'Jl Kayoon 24',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: false,
-                },
-                {
-                    type: 'Office',
-                    address: 'Jl Letjen South Parman 22, DKI Jakarta',
-                    city: 'Jakarta',
-                    province: 'Jakarta',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: false,
-                },
-            ],
-        },
-        {
-            id: 'AFOHS-12346',
-            name: 'Dianne Russell',
-            email: 'dianne.russell@mail.com',
-            phone: '(702) 555-0122',
-            type: 'Premium',
-            address: 'Lahore, Pakistan',
-            customerType: 'Gold',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-9WOBgZCgNYa1UDTjpD8AIo01bwat1M.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-            ],
-        },
-        {
-            id: 'AFOHS-12347',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            phone: '03434343534',
-            type: 'Regular',
-            address: 'Lahore, Pakistan',
-            customerType: 'Silver',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-            ],
-        },
-        {
-            id: 'AFOHS-12348',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            phone: '03434343534',
-            type: 'Premium',
-            address: 'Lahore, Pakistan',
-            customerType: 'Gold',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-            ],
-        },
-        {
-            id: 'AFOHS-12349',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            phone: '03434343534',
-            type: 'VIP',
-            address: 'Lahore, Pakistan',
-            customerType: 'Silver',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-            ],
-        },
-    ]);
+    const [customers, setCustomers] = useState([]); // Initialize empty for dynamic loading
 
-    // State for search
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredCustomers, setFilteredCustomers] = useState([...customers]);
 
-    // State for add/edit customer form
-    const [openAddForm, setOpenAddForm] = useState(false);
-    const [isEditMode, setIsEditMode] = useState(false);
+    const [openAddForm, setOpenAddForm] = useState(!!customer);
+    const [isEditMode, setIsEditMode] = useState(!!customer);
     const [currentCustomerIndex, setCurrentCustomerIndex] = useState(null);
+
     const [newCustomer, setNewCustomer] = useState({
-        id: 'MEMBER520',
-        name: '',
-        email: '',
-        phone: '',
-        type: 'Regular',
-        address: '',
-        customerType: 'Silver',
-        profilePic: null,
-        addresses: [],
+        id: customer?.id || `MEMBER${Math.floor(100 + Math.random() * 900)}`,
+        name: customer?.name || '',
+        email: customer?.email || '',
+        phone_number: customer?.phone_number || '',
+        type: customer?.type || 'Regular',
+        customer_type: customer?.memberType?.name || 'Silver',
+        profile_photo: customer?.profile_photo || null,
+        addresses:
+            customer?.userDetails?.map((detail) => ({
+                type: detail.address_type,
+                address: detail.address,
+                city: detail.city,
+                province: detail.state,
+                country: detail.country,
+                zipCode: detail.zip,
+                isMain: detail.status === 'active',
+            })) || [],
     });
 
-    // State for address form
     const [showAddressForm, setShowAddressForm] = useState(false);
     const [newAddress, setNewAddress] = useState({
         type: 'House',
@@ -197,35 +79,16 @@ export default function AddCustomer({ users, memberTypes }) {
         isMain: false,
     });
 
-    // State for success message
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
-
-    // State for errors
+    const [showError, setShowError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [errors, setErrors] = useState({});
 
-    const [profileImage, setProfileImage] = useState(null);
+    const [profileImage, setProfileImage] = useState(customer?.profile_photo || null);
 
-    // State for order modal
-    const [orderModalOpen, setOrderModalOpen] = useState(false);
-    const [currentOrder, setCurrentOrder] = useState({
-        customer: null,
-        dishCategory: '',
-        amount: '110.00',
-        favoriteItems: [],
-    });
-
-    // State for dish category menu
-    const [dishCategoryMenuAnchor, setDishCategoryMenuAnchor] = useState(null);
-    const [selectedDish, setSelectedDish] = useState('');
-
-    // State for phone country code
     const [phoneCountryCode, setPhoneCountryCode] = useState('+702');
 
-    // Dishes data
-    const dishes = ['Tea', 'Coffee', 'Chicken', 'Cake', 'Biryani', 'Burger', 'Pizza', 'Pasta'];
-
-    // Filter customers when search term changes
     useEffect(() => {
         const filtered = customers.filter(
             (customer) =>
@@ -236,27 +99,38 @@ export default function AddCustomer({ users, memberTypes }) {
         setFilteredCustomers(filtered);
     }, [searchTerm, customers]);
 
-    // Handle closing add/edit customer form
     const handleCloseAddForm = () => {
         setOpenAddForm(false);
         setShowAddressForm(false);
         setErrors({});
+        setShowError(false);
+        setErrorMessage('');
+        setIsEditMode(false);
+        setCurrentCustomerIndex(null);
+        setNewCustomer({
+            id: `MEMBER${Math.floor(100 + Math.random() * 900)}`,
+            name: '',
+            email: '',
+            phone_number: '',
+            type: 'Regular',
+            customer_type: 'Silver',
+            profile_photo: null,
+            addresses: [],
+        });
+        setProfileImage(null);
     };
 
-    // Handle input change in add/edit customer form
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewCustomer({
             ...newCustomer,
             [name]: value,
         });
-        // Clear error for the field when user starts typing
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: null }));
         }
     };
 
-    // Handle address input change
     const handleAddressInputChange = (e) => {
         const { name, value } = e.target;
         setNewAddress({
@@ -265,35 +139,28 @@ export default function AddCustomer({ users, memberTypes }) {
         });
     };
 
-    // Handle phone country code change
     const handlePhoneCountryCodeChange = (e) => {
         setPhoneCountryCode(e.target.value);
     };
 
-    // Handle profile image upload
     const handleImageUpload = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const reader = new FileReader();
-
             reader.onloadend = () => {
                 setProfileImage(reader.result);
             };
-
             reader.readAsDataURL(file);
-            // Clear profilePic error if any
-            if (errors.profilePic) {
-                setErrors((prev) => ({ ...prev, profilePic: null }));
+            if (errors.profile_photo) {
+                setErrors((prev) => ({ ...prev, profile_photo: null }));
             }
         }
     };
 
-    // Handle delete profile image
     const handleDeleteImage = () => {
         setProfileImage(null);
     };
 
-    // Convert base64 to Blob for profile image
     const base64ToBlob = (base64) => {
         const byteString = atob(base64.split(',')[1]);
         const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
@@ -305,106 +172,86 @@ export default function AddCustomer({ users, memberTypes }) {
         return new Blob([ab], { type: mimeString });
     };
 
-    // Handle save customer
     const handleSaveCustomer = () => {
-        const formData = new FormData();
+        // Client-side validation
+        if (!newCustomer.name || !newCustomer.email || !newCustomer.phone_number) {
+            setErrorMessage('Please fill in all required fields.');
+            setShowError(true);
+            return;
+        }
 
-        // Append customer fields
+        console.log('Addresses before validation:', newCustomer.addresses); // Debug log
+        if (newCustomer.addresses.length > 0) {
+            for (const addr of newCustomer.addresses) {
+                if (!addr.type || !addr.address || !addr.city || !addr.province || !addr.country || !addr.zipCode) {
+                    console.error('Invalid address:', addr); // Log the problematic address
+                    setErrorMessage('All address fields are required.');
+                    setShowError(true);
+                    return;
+                }
+            }
+        }
+
+        const formData = new FormData();
         formData.append('name', newCustomer.name);
         formData.append('email', newCustomer.email);
-        formData.append('phone', `${phoneCountryCode}${newCustomer.phone}`);
-        formData.append('type', newCustomer.type);
-        formData.append('address', newCustomer.address);
-        formData.append('customer_type', newCustomer.customerType);
-
-        // Append profile image if available
-        if (profileImage) {
+        formData.append('phone', `${phoneCountryCode}${newCustomer.phone_number}`);
+        formData.append('customer_type', newCustomer.customer_type);
+        formData.append('member_type_id', memberTypes.find((mt) => mt.name === newCustomer.customer_type)?.id || ''); // Add member_type_id
+        if (profileImage && profileImage.startsWith('data:image')) {
             const blob = base64ToBlob(profileImage);
             formData.append('profile_pic', blob, 'profile.jpg');
         }
-
-        // Append addresses as JSON
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
-        // Send request based on mode (create or update)
-        if (isEditMode && currentCustomerIndex !== null) {
-            // Update existing customer
-            formData.append('_method', 'PUT'); // Laravel expects this for PUT requests via FormData
-            router.post(route('customers.update', customers[currentCustomerIndex].id), formData, {
-                onSuccess: () => {
-                    const updatedCustomer = {
-                        ...newCustomer,
-                        id: customers[currentCustomerIndex].id,
-                        phone: `${phoneCountryCode}${newCustomer.phone}`,
-                        profilePic: profileImage || customers[currentCustomerIndex].profilePic,
-                    };
-                    const updatedCustomers = [...customers];
-                    updatedCustomers[currentCustomerIndex] = updatedCustomer;
-                    setCustomers(updatedCustomers);
-                    setSuccessMessage('Customer updated successfully!');
-                    setShowSuccess(true);
-                    setOpenAddForm(false);
-                    setNewCustomer({
-                        id: `MEMBER${Math.floor(100 + Math.random() * 900)}`,
-                        name: '',
-                        email: '',
-                        phone: '',
-                        type: 'Regular',
-                        address: '',
-                        customerType: 'Silver',
-                        profilePic: null,
-                        addresses: [],
-                    });
-                    setProfileImage(null);
-                    setIsEditMode(false);
-                    setCurrentCustomerIndex(null);
-                    setPhoneCountryCode('+702');
-                    setErrors({});
-                },
-                onError: (errors) => {
-                    setErrors(errors);
-                },
-            });
-        } else {
-            // Add new customer
-            router.post(route('customers.store'), formData, {
-                onSuccess: () => {
-                    const newCustomerData = {
-                        ...newCustomer,
-                        id: `AFOHS-${Math.floor(10000 + Math.random() * 90000)}`, // Temporary ID until backend returns actual ID
-                        phone: `${phoneCountryCode}${newCustomer.phone}`,
-                        profilePic:
-                            profileImage || 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-                    };
-                    setCustomers([newCustomerData, ...customers]);
-                    setSuccessMessage('Customer added successfully!');
-                    setShowSuccess(true);
-                    setOpenAddForm(false);
-                    setNewCustomer({
-                        id: `MEMBER${Math.floor(100 + Math.random() * 900)}`,
-                        name: '',
-                        email: '',
-                        phone: '',
-                        type: 'Regular',
-                        address: '',
-                        customerType: 'Silver',
-                        profilePic: null,
-                        addresses: [],
-                    });
-                    setProfileImage(null);
-                    setIsEditMode(false);
-                    setCurrentCustomerIndex(null);
-                    setPhoneCountryCode('+702');
-                    setErrors({});
-                },
-                onError: (errors) => {
-                    setErrors(errors);
-                },
-            });
+        // Log FormData entries for debugging
+        console.log('FormData entries:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
         }
+
+        const routeName = isEditMode ? 'members.update' : 'members.store';
+        const url = isEditMode ? route(routeName, newCustomer.id) : route(routeName);
+
+        router.post(url, formData, {
+            onSuccess: (page) => {
+                const returnedCustomer = page.props.customer || {
+                    ...newCustomer,
+                    id: page.props.customer?.id || newCustomer.id,
+                    user_id: page.props.customer?.user_id || newCustomer.id,
+                    phone_number: `${phoneCountryCode}${newCustomer.phone_number}`,
+                    profile_photo: profileImage || newCustomer.profile_photo,
+                    userDetails: newCustomer.addresses.map((addr) => ({
+                        address_type: addr.type,
+                        country: addr.country,
+                        state: addr.province,
+                        city: addr.city,
+                        zip: addr.zipCode,
+                        address: addr.address,
+                        status: addr.isMain ? 'active' : 'inactive',
+                    })),
+                };
+                if (isEditMode && currentCustomerIndex !== null) {
+                    const updatedCustomers = [...customers];
+                    updatedCustomers[currentCustomerIndex] = returnedCustomer;
+                    setCustomers(updatedCustomers);
+                } else {
+                    setCustomers([returnedCustomer, ...customers]);
+                }
+                setSuccessMessage(isEditMode ? 'Customer updated successfully!' : 'Customer added successfully!');
+                setShowSuccess(true);
+                handleCloseAddForm();
+            },
+            onError: (errors) => {
+                console.error('Validation errors:', errors);
+                setErrors(errors);
+                const errorMessages = Object.values(errors).filter(Boolean).join('; ');
+                setErrorMessage(errorMessages || 'Failed to add customer. Please check the form.');
+                setShowError(true);
+            },
+        });
     };
 
-    // Handle show address form
     const handleShowAddressForm = () => {
         setNewAddress({
             type: 'House',
@@ -418,19 +265,15 @@ export default function AddCustomer({ users, memberTypes }) {
         setShowAddressForm(true);
     };
 
-    // Handle save address
     const handleSaveAddress = () => {
+        console.log('Saving address:', newAddress);
         const updatedCustomer = { ...newCustomer };
-
-        // If this is the first address or marked as main, set it as main
         if (updatedCustomer.addresses.length === 0 || newAddress.isMain) {
-            // Set all existing addresses to not main
             updatedCustomer.addresses = updatedCustomer.addresses.map((addr) => ({
                 ...addr,
                 isMain: false,
             }));
         }
-
         updatedCustomer.addresses.push(newAddress);
         setNewCustomer(updatedCustomer);
         setShowAddressForm(false);
@@ -438,7 +281,6 @@ export default function AddCustomer({ users, memberTypes }) {
         setShowSuccess(true);
     };
 
-    // Handle set main address
     const handleSetMainAddress = (index) => {
         const updatedCustomer = { ...newCustomer };
         updatedCustomer.addresses = updatedCustomer.addresses.map((addr, i) => ({
@@ -448,18 +290,12 @@ export default function AddCustomer({ users, memberTypes }) {
         setNewCustomer(updatedCustomer);
     };
 
-    // Get the last user id
-    const lastUserId =
-        users.data.length > 0
-            ? users.data[0].user_id // latest user first because of ->latest() in query
-            : 0; // if no user, start from 0
-
+    const lastUserId = users.data.length > 0 ? users.data[0].user_id : 0;
     const newMemberId = lastUserId + 1;
 
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
-
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -475,7 +311,6 @@ export default function AddCustomer({ users, memberTypes }) {
                         {isEditMode ? 'Edit Customer Information' : 'Add Customer Information'}
                     </Typography>
                 </div>
-
                 <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '5px' }}>
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={6}>
@@ -518,21 +353,15 @@ export default function AddCustomer({ users, memberTypes }) {
                                             </label>
                                         </Box>
                                     )}
-                                    {errors.profilePic && (
+                                    {errors.profile_photo && (
                                         <Typography color="error" variant="caption">
-                                            {errors.profilePic}
+                                            {errors.profile_photo}
                                         </Typography>
                                     )}
                                 </Box>
                                 <Box style={{ display: 'flex', flexDirection: 'column' }}>
                                     {(isEditMode || profileImage) && (
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                gap: '5px',
-                                                padding: '5px',
-                                            }}
-                                        >
+                                        <div style={{ display: 'flex', gap: '5px', padding: '5px' }}>
                                             <label htmlFor="profile-image-upload-edit">
                                                 <Button size="small" sx={{ minWidth: 'auto', fontSize: '14px' }} component="span">
                                                     Choose Photo
@@ -581,9 +410,9 @@ export default function AddCustomer({ users, memberTypes }) {
                                         }}
                                         control={
                                             <Radio
-                                                checked={newCustomer.customerType === memberType.name}
+                                                checked={newCustomer.customer_type === memberType.name}
                                                 onChange={handleInputChange}
-                                                name="customerType"
+                                                name="customer_type"
                                                 value={memberType.name}
                                             />
                                         }
@@ -602,9 +431,9 @@ export default function AddCustomer({ users, memberTypes }) {
                                     />
                                 ))}
                             </Box>
-                            {errors.customerType && (
+                            {errors.customer_type && (
                                 <Typography color="error" variant="caption">
-                                    {errors.customerType}
+                                    {errors.customer_type}
                                 </Typography>
                             )}
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>
@@ -655,8 +484,8 @@ export default function AddCustomer({ users, memberTypes }) {
                                         <TextField
                                             fullWidth
                                             placeholder="e.g. 123 456 7890"
-                                            name="phone"
-                                            value={newCustomer.phone}
+                                            name="phone_number"
+                                            value={newCustomer.phone_number}
                                             onChange={handleInputChange}
                                             margin="normal"
                                             variant="outlined"
@@ -666,9 +495,7 @@ export default function AddCustomer({ users, memberTypes }) {
                                     </Box>
                                 </Grid>
                             </Grid>
-
-                            {/* Address List */}
-                            {isEditMode && newCustomer.addresses && newCustomer.addresses.length > 0 && (
+                            {newCustomer.addresses && newCustomer.addresses.length > 0 && (
                                 <Box sx={{ mt: 3 }}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Address ({newCustomer.addresses.length})
@@ -701,9 +528,7 @@ export default function AddCustomer({ users, memberTypes }) {
                                                     edge="end"
                                                     checked={address.isMain}
                                                     onChange={() => handleSetMainAddress(index)}
-                                                    inputProps={{
-                                                        'aria-labelledby': `address-switch-${index}`,
-                                                    }}
+                                                    inputProps={{ 'aria-labelledby': `address-switch-${index}` }}
                                                 />
                                                 <Typography variant="body2" color="primary" sx={{ ml: 1 }}>
                                                     {address.isMain ? 'Main Address' : ''}
@@ -719,9 +544,7 @@ export default function AddCustomer({ users, memberTypes }) {
                                 </Box>
                             )}
                         </Grid>
-
                         <Grid item xs={12} md={6}>
-                            {/* Add Address Button */}
                             {!showAddressForm && (
                                 <Box
                                     sx={{
@@ -748,8 +571,6 @@ export default function AddCustomer({ users, memberTypes }) {
                                     <KeyboardArrowRightIcon />
                                 </Box>
                             )}
-
-                            {/* Address Form */}
                             {showAddressForm && (
                                 <>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -793,7 +614,6 @@ export default function AddCustomer({ users, memberTypes }) {
                                             Office
                                         </Button>
                                     </Box>
-
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Country
                                     </Typography>
@@ -819,11 +639,10 @@ export default function AddCustomer({ users, memberTypes }) {
                                             <MenuItem value="Indonesia">Indonesia</MenuItem>
                                         </Select>
                                     </FormControl>
-
                                     <Grid container spacing={2}>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
-                                                Province / Street
+                                                Province / State
                                             </Typography>
                                             <FormControl fullWidth margin="normal" variant="outlined">
                                                 <Select
@@ -878,7 +697,6 @@ export default function AddCustomer({ users, memberTypes }) {
                                             </FormControl>
                                         </Grid>
                                     </Grid>
-
                                     <Grid container spacing={2}>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
@@ -910,7 +728,6 @@ export default function AddCustomer({ users, memberTypes }) {
                                             />
                                         </Grid>
                                     </Grid>
-
                                     <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
                                         Full Address / Street
                                     </Typography>
@@ -923,41 +740,6 @@ export default function AddCustomer({ users, memberTypes }) {
                                         margin="normal"
                                         variant="outlined"
                                     />
-
-                                    {newAddress.type === 'Apartment' && (
-                                        <>
-                                            <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
-                                                Apartment Details
-                                            </Typography>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="Apartment number, floor, etc."
-                                                name="apartmentDetails"
-                                                value={newAddress.apartmentDetails || ''}
-                                                onChange={handleAddressInputChange}
-                                                margin="normal"
-                                                variant="outlined"
-                                            />
-                                        </>
-                                    )}
-
-                                    {newAddress.type === 'Office' && (
-                                        <>
-                                            <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
-                                                Office Details
-                                            </Typography>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="Company name, office number, etc."
-                                                name="officeDetails"
-                                                value={newAddress.officeDetails || ''}
-                                                onChange={handleAddressInputChange}
-                                                margin="normal"
-                                                variant="outlined"
-                                            />
-                                        </>
-                                    )}
-
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                                         <Button variant="contained" onClick={handleSaveAddress} sx={{ backgroundColor: '#003366' }}>
                                             Save
@@ -965,7 +747,6 @@ export default function AddCustomer({ users, memberTypes }) {
                                     </Box>
                                 </>
                             )}
-
                             {!showAddressForm && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
                                     <Button variant="outlined" onClick={handleCloseAddForm}>
@@ -980,6 +761,16 @@ export default function AddCustomer({ users, memberTypes }) {
                     </Grid>
                 </div>
             </div>
+            <Snackbar open={showSuccess} autoHideDuration={6000} onClose={() => setShowSuccess(false)}>
+                <Alert onClose={() => setShowSuccess(false)} severity="success" sx={{ width: '100%' }}>
+                    {successMessage}
+                </Alert>
+            </Snackbar>
+            <Snackbar open={showError} autoHideDuration={6000} onClose={() => setShowError(false)}>
+                <Alert onClose={() => setShowError(false)} severity="error" sx={{ width: '100%' }}>
+                    {errorMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 }

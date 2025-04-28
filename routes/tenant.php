@@ -126,11 +126,21 @@ Route::middleware([
             Route::put('/members/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
             Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
             // users
-            Route::get('members/create', [MembersController::class, 'index'])->name('members');
-            Route::get('members/create', [MembersController::class, 'create'])->name('members.create');
+            // Route::get('members/create', [MembersController::class, 'index'])->name('members');
+            // Route::get('members/create', [MembersController::class, 'create'])->name('members.create');
+            // List all members (dashboard)
+            Route::get('/members', [MembersController::class, 'index'])->name('members.index');
 
-            Route::post('/customers', [MembersController::class, 'store'])->name('customers.store');
-            Route::put('/customers/{id}', [MembersController::class, 'update'])->name('customers.update');
+            // Show create form
+            Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
+
+            // Store new member
+            Route::post('/members', [MembersController::class, 'store'])->name('members.store');
+
+            // Update existing member
+            Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
+
+
 
             // Route::resource('members/create', MembersController::class)->except('show', 'edit');
         });
