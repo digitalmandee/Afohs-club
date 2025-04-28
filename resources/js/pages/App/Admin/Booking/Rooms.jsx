@@ -2,6 +2,7 @@ import React, { useState } from "react"
 import "bootstrap/dist/css/bootstrap.min.css"
 import { Container, Row, Col, Card, Button, Form, Badge, Modal } from "react-bootstrap"
 import { Box, Typography } from "@mui/material"
+import { router } from '@inertiajs/react';
 
 const availableRooms = [
     {
@@ -88,7 +89,11 @@ const AvailableRooms = () => {
                 <Box sx={{ padding: "20px", maxHeight: "calc(100vh - 120px)", overflowY: "auto" }}>
                     {availableRooms.map((room, index) => (
                         <div key={index} className="border rounded mb-3 p-3">
-                            <Row>
+                            <Row style={{
+                                cursor:'pointer',
+                            }}
+                            onClick={() => router.visit('/admin/room/booking')}
+                            >
                                 <Col xs={3}>
                                     <img
                                         src={room.image || "/placeholder.svg"}

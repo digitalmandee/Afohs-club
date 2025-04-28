@@ -124,6 +124,10 @@ Route::middleware([
             Route::get('/admin/booking/details', function () {
                 return Inertia::render('App/Admin/Booking/Detail');
             });
+
+            Route::get('/admin/room/booking', function () {
+                return Inertia::render('App/Admin/Booking/RoomBooking');
+            });
         });
         // End of Tenant Routes
 

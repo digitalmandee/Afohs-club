@@ -250,14 +250,14 @@ const OrderQueue = () => {
                                         height: 24,
                                     }}
                                 >
-                                    <ArrowBack onClick={() => router.visit('/dashboard')} />
+                                    <ArrowBack onClick={() => router.visit('/')} />
                                 </IconButton>
                                 <Typography
                                     variant="h5"
                                     className="ms-2"
                                     style={{
                                         color: '#3F4E4F',
-                                        fontSize: '46px',
+                                        fontSize: '30px',
                                         fontWeight: 500,
                                     }}
                                 >

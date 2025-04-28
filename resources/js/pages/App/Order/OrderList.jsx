@@ -187,7 +187,9 @@ const AllOrder = () => {
                         }}
                     >
                         <IconButton onClick={handleBackToAllOrders} sx={{ mr: 1 }}>
-                            <ArrowBack />
+                            <ArrowBack 
+                            onClick={ ()=> router.visit('/order/queue')}
+                            />
                         </IconButton>
                         {/* <Typography variant="h6" sx={{ fontWeight: 500 }}>
               All Order

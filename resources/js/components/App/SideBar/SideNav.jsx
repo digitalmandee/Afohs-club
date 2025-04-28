@@ -31,6 +31,7 @@ import { Modal, Slide } from '@mui/material';
 import KitchenIcon from '@/components/App/Icons/KitchenManagement';
 import MemberIcon from '@/components/App/Icons/Member';
 import TableIcon from '@/components/App/Icons/TableManagement';
+import CategoryIcon from '@mui/icons-material/Category';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -106,7 +107,7 @@ export default function SideNav({ open, setOpen }) {
     const menuItems = [
         { text: 'Dashboard', icon: <HomeIcon />, path: '/' },
         { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
-        { text: 'Inventory Category', icon: <InventoryIcon />, path: '/inventory/category' },
+        { text: 'Inventory Category', icon: <CategoryIcon />, path: '/inventory/category' },
         { text: 'Transaction', icon: <PeopleIcon />, path: '/transaction' },
         { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
         {
@@ -380,6 +381,7 @@ export default function SideNav({ open, setOpen }) {
                                             sx={{
                                                 minWidth: 0,
                                                 justifyContent: 'center',
+                                                ml: open ? -1 : 0,
                                                 mr: open ? 1 : 'auto',
                                                 '& svg': {
                                                     fill: isSelected ? 'orange' : '#fff',

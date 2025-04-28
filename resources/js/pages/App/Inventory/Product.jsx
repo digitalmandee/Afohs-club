@@ -19,6 +19,7 @@ import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -269,21 +270,27 @@ const AddProduct = ({ openMenu, onClose }) => {
                     marginTop: '5rem',
                 }}
             >
+                <Box sx={{ p: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+                <ArrowBackIcon sx={{ fontSize: 24, color: '#3F4E4F', cursor: 'pointer' }}
+                onClick={ () => router.visit('/inventory')}
+                />
+                    <Typography fontWeight="bold" sx={{
+                        fontSize:'30px',
+                        color:'#3F4E4F',
+                        marginLeft:3
+                    }}>
+                        Add Menu
+                    </Typography>
+                </Box>
                 <Box
                     sx={{
                         width: '650px',
                         margin: '0 auto',
                     }}
                 >
-                    <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="h5" fontWeight="bold">
-                            Add Product
-                        </Typography>
-                    </Box>
-
                     <DialogContent sx={{ p: 0 }}>
                         {/* Step Indicators */}
-                        <Box sx={{ px: 3, mb: 3, display: 'flex', alignItems: 'center' }}>
+                        <Box sx={{ px: 3, mb: 3, py: 1.5, display: 'flex', alignItems: 'center', bgcolor:'#F0F0F0' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Box
                                     sx={{
@@ -332,7 +339,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                             <Box sx={{ px: 3, pb: 3 }}>
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} md={6}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
                                             Product Name
                                         </Typography>
                                         <TextField
@@ -346,7 +353,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
                                             Menu Id (Optional)
                                         </Typography>
                                         <TextField
@@ -360,7 +367,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
                                             Categories
                                         </Typography>
                                         <TextField
@@ -386,7 +393,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </TextField>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
                                             Current Ready Stock
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
@@ -417,7 +424,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
                                             Minimal Stock
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
@@ -451,9 +458,9 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         <Box
                                             sx={{
                                                 p: 2,
-                                                border: '1px solid #e0e0e0',
+                                                border: '1px solid #063455',
                                                 borderRadius: 1,
-                                                backgroundColor: '#f5f5f5',
+                                                backgroundColor: '#D0E2F2',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'space-between',
@@ -464,7 +471,10 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                     <img src="/placeholder.svg" alt="Out of Stock" style={{ width: 40, height: 40 }} />
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="body1" fontWeight="bold">
+                                                    <Typography variant="body1" fontWeight="medium" sx={{
+                                                        color:'#121212',
+                                                        fontSize:'16px'
+                                                    }}>
                                                         Out of Stock Menu
                                                     </Typography>
                                                     <Typography variant="body2" color="text.secondary">
@@ -481,11 +491,14 @@ const AddProduct = ({ openMenu, onClose }) => {
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                            <Typography variant="body1" fontWeight="bold">
+                                            <Typography variant="body1" fontWeight="medium" sx={{
+                                                color:'#121212',
+                                                fontSize:'14px'
+                                            }}>
                                                 Select Order Type
                                             </Typography>
                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <Typography variant="body2" sx={{ mr: 1 }}>
+                                                <Typography variant="body2" sx={{ mr: 1, color:'#121212', fontSize:'14px' }}>
                                                     Select All
                                                 </Typography>
                                                 <Switch
@@ -523,7 +536,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
                                             Cost Of Goods Sold (COGS)
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
@@ -555,7 +568,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
                                             Base Price Selling
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
@@ -587,7 +600,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
                                             Profit Estimate
                                         </Typography>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -600,7 +613,9 @@ const AddProduct = ({ openMenu, onClose }) => {
                                     {/* Product Variant */}
                                     <Grid item xs={12}>
                                         <Box sx={{ mb: 2 }}>
-                                            <Typography variant="h6" fontWeight="bold">
+                                            <Typography variant="h6" fontWeight="medium" sx={{
+                                                color:'#121212', fontSize:'16px'
+                                            }}>
                                                 Product Variant
                                             </Typography>
                                         </Box>
@@ -975,7 +990,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                         )}
                     </DialogContent>
 
-                    <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
+                    <DialogActions sx={{ p: 3, justifyContent: 'flexend' }}>
                         {addMenuStep === 1 ? (
                             <>
                                 <Button
