@@ -113,18 +113,23 @@ Route::middleware([
             Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
 
             // Members
-            Route::resource('member-types', MemberTypeController::class)->except('show', 'edit');
             Route::resource('members', MembersController::class)->except('show', 'edit');
-            Route::get('/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
-            Route::post('/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
-            Route::put('/member-types/{id}', [MemberTypeController::class, 'update'])->name('member.update');
-            Route::delete('/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
+            Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
+            Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+            Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
+            Route::put('/members/member-types/{id}', [MemberTypeController::class, 'update'])->name('member.update');
+            Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
             // address
-            Route::resource('address-types', AddressTypeController::class)->except('show', 'edit');
-            Route::get('/address-types', [AddressTypeController::class, 'index'])->name('address-types.index');
-            Route::post('/address-types', [AddressTypeController::class, 'store'])->name('address-types.store');
-            Route::put('/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
-            Route::delete('/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
+            Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
+            Route::get('/members/address-types', [AddressTypeController::class, 'index'])->name('address-types.index');
+            Route::post('/members/address-types', [AddressTypeController::class, 'store'])->name('address-types.store');
+            Route::put('/members/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
+            Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
+            // users
+            Route::get('members/create', [MembersController::class, 'index'])->name('members');
+            Route::get('members/create', [MembersController::class, 'create'])->name('members.create');
+
+            // Route::resource('members/create', MembersController::class)->except('show', 'edit');
         });
         // End of Tenant Routes
 

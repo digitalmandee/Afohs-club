@@ -26,8 +26,9 @@ class MembersController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('App/Member/AddCustomer');
     }
+
 
     /**
      * Store a newly created resource in storage.
