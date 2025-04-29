@@ -93,6 +93,7 @@ class MembersController extends Controller
             }
 
             $customer->save();
+            $customer->assignRole('user');
 
             // Create addresses if provided
             if (!empty($validated['addresses'])) {

@@ -31,12 +31,14 @@ class PermissionsDatabaseSeeder extends Seeder
         // Create Roles
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $employeeRole = Role::firstOrCreate(['name' => 'employee']);
+        $waiterRole = Role::firstOrCreate(['name' => 'waiter']);
         $kitchenRole = Role::firstOrCreate(['name' => 'kitchen']);
         $userRole = Role::firstOrCreate(['name' => 'user']);
 
         // Assign Permissions to Roles
         $adminRole->syncPermissions($permissions);
         $employeeRole->syncPermissions(['dashboard', 'order']);
+        $waiterRole->syncPermissions(['dashboard', 'waiter']);
         $kitchenRole->syncPermissions(['dashboard', 'kitchen']);
         $userRole->syncPermissions(['dashboard']);
 
