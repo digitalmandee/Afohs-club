@@ -5,6 +5,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import SearchIcon from '@mui/icons-material/Search';
 import {
+    Autocomplete,
     Box,
     Button,
     FormControl,
@@ -13,36 +14,78 @@ import {
     IconButton,
     InputAdornment,
     InputBase,
+    InputLabel,
     MenuItem,
     Paper,
     Radio,
     RadioGroup,
+    Select,
     TextField,
     ToggleButton,
     ToggleButtonGroup,
     Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import axios from 'axios';
+import { useCallback, useState } from 'react';
 
-const DineDialog = ({ orderNo, memberTypes }) => {
-    const [orderType, setOrderType] = useState('dineIn');
-    // const [orderType, setOrderType] = useState<'dineIn' | 'takeaway' | 'reservation'>('dineIn');
-    const [seatingArea, setSeatingArea] = useState('indoor');
+const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
     const [filterOption, setFilterOption] = useState('all');
-    const [selectedTable, setSelectedTable] = useState('T8');
-    const [membershipType, setMembershipType] = useState('member');
+    const [selectedTable, setSelectedTable] = useState('');
+    const [formData, setFormData] = useState({ member: {} });
+    const [membershipType, setMembershipType] = useState(memberTypes[0]?.id ?? '');
     const [selectedWaiter, setSelectedWaiter] = useState('');
+    const [selectedFloor, setSelectedFloor] = useState(floorTables[0]?.id ?? '');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [members, setMembers] = useState([]);
+    const [waiters, setWaiters] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
 
-    const handleOrderTypeChange = (event, newOrderType) => {
-        if (newOrderType !== null) {
-            setOrderType(newOrderType);
+    // Search Members
+    const searchUser = useCallback(async (query, role, member_type) => {
+        if (!query) return []; // Don't make a request if the query is empty.
+        setSearchLoading(true);
+        if (member_type === '') {
+            alert('Please select membership type');
+            return [];
+        }
+        try {
+            const response = await axios.get(route('user.search'), {
+                params: { query, role, member_type },
+            });
+            if (response.data.success) {
+                return response.data.results;
+            } else {
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching search results:', error);
+            return [];
+        } finally {
+            setSearchLoading(false);
+        }
+    }, []);
+
+    const handleSearch = async (event, role) => {
+        const query = event?.target?.value;
+        if (query) {
+            const results = await searchUser(query, role, membershipType);
+            if (role === 'user') setMembers(results);
+            else setWaiters([]);
+        } else {
+            if (role === 'user') setMembers([]);
+            else setWaiters([]);
         }
     };
 
-    const handleSeatingAreaChange = (event, newSeatingArea) => {
-        if (newSeatingArea !== null) {
-            setSeatingArea(newSeatingArea);
-        }
+    const handleAutocompleteChange = (event, value, field) => {
+        setFormData({ ...formData, [field]: value });
+        // setErrors({ ...errors, [field]: '' }); // Clear error on change
+    };
+
+    const handleMembershipType = (value) => {
+        setMembershipType(value);
+        setFormData({ ...formData, member: {} });
+        setMembers([]);
     };
 
     const handleFilterOptionChange = (event, newFilterOption) => {
@@ -51,17 +94,13 @@ const DineDialog = ({ orderNo, memberTypes }) => {
         }
     };
 
-    const tables = [
-        { id: 'T8', capacity: 4, available: true },
-        { id: 'T9', capacity: 2, available: true },
-        { id: 'T10', capacity: 2, available: true },
-        { id: 'T11', capacity: 2, available: true },
-        { id: 'T12', capacity: 2, available: true },
-        { id: 'T2', capacity: 4, available: false },
-        { id: 'T5', capacity: 2, available: false },
-        { id: 'T6', capacity: 4, available: false },
-        { id: 'T7', capacity: 2, available: false },
-    ];
+    const currentFloor = floorTables.find((f) => f.id === selectedFloor);
+
+    const filteredTables = currentFloor?.tables?.filter((table) => {
+        if (filterOption === 'available' && !table.available) return false;
+        const keyword = searchTerm.toLowerCase();
+        return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
+    });
 
     return (
         <Box>
@@ -94,7 +133,7 @@ const DineDialog = ({ orderNo, memberTypes }) => {
             {/* Membership Type Selection */}
             <Box sx={{ px: 2, mb: 2 }}>
                 <FormControl component="fieldset">
-                    <RadioGroup row name="membership-type" value={membershipType} onChange={(e) => setMembershipType(e.target.value)}>
+                    <RadioGroup row name="membership-type" value={membershipType} onChange={(e) => handleMembershipType(e.target.value)}>
                         <Box
                             sx={{
                                 display: 'flex',
@@ -146,17 +185,39 @@ const DineDialog = ({ orderNo, memberTypes }) => {
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
                         Customer Name
                     </Typography>
-                    <TextField
+                    <Autocomplete
                         fullWidth
+                        freeSolo
                         size="small"
-                        placeholder="Entry name or scan member card"
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <QrCodeScannerIcon fontSize="small" />
-                                </InputAdornment>
-                            ),
-                        }}
+                        options={members}
+                        value={formData.member}
+                        getOptionLabel={(option) => option?.name || ''}
+                        onInputChange={(event, value) => handleSearch(event, 'user')}
+                        onChange={(event, value) => handleAutocompleteChange(event, value, 'member')}
+                        loading={searchLoading}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                fullWidth
+                                sx={{ p: 0 }}
+                                placeholder="Enter name or scan member card"
+                                variant="outlined"
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <QrCodeScannerIcon fontSize="small" />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        )}
+                        renderOption={(props, option) => (
+                            <li {...props}>
+                                <span>{option.name}</span>
+                                <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
+                            </li>
+                        )}
                     />
                 </Grid>
                 <Grid item xs={4}>
@@ -182,41 +243,24 @@ const DineDialog = ({ orderNo, memberTypes }) => {
 
             {/* Seating Area */}
             <Box sx={{ px: 2, mb: 2 }}>
-                <TextField
-                    select
+                <Autocomplete
                     fullWidth
+                    freeSolo
                     size="small"
-                    value={selectedWaiter}
-                    onChange={(e) => setSelectedWaiter(e.target.value)}
-                    displayEmpty
-                    sx={{
-                        backgroundColor: 'transparent',
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: 1,
-                            '& fieldset': {
-                                border: '1px solid #121212',
-                            },
-                            '&:hover fieldset': {
-                                borderColor: '#121212',
-                            },
-                            '&.Mui-focused fieldset': {
-                                borderColor: '#121212',
-                            },
-                        },
-                    }}
-                    InputProps={{
-                        notched: false,
-                    }}
-                    SelectProps={{
-                        displayEmpty: true,
-                        renderValue: (selected) => (selected === '' ? <span style={{ color: '#aaa' }}>Select Waiter</span> : selected),
-                    }}
-                >
-                    <MenuItem value="">Select Waiter</MenuItem>
-                    <MenuItem value="waiter1">Waiter 1</MenuItem>
-                    <MenuItem value="waiter2">Waiter 2</MenuItem>
-                    <MenuItem value="waiter3">Waiter 3</MenuItem>
-                </TextField>
+                    options={waiters}
+                    value={formData.waiter}
+                    getOptionLabel={(option) => option?.name || ''}
+                    onInputChange={(event, value) => handleSearch(event, 'waiter')}
+                    onChange={(event, value) => handleAutocompleteChange(event, value, 'waiter')}
+                    loading={searchLoading}
+                    renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Waiter" variant="outlined" />}
+                    renderOption={(props, option) => (
+                        <li {...props}>
+                            <span>{option.name}</span>
+                            <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
+                        </li>
+                    )}
+                />
             </Box>
 
             {/* Search and Filter */}
@@ -232,11 +276,29 @@ const DineDialog = ({ orderNo, memberTypes }) => {
                         boxShadow: 'none',
                     }}
                 >
-                    <InputBase sx={{ ml: 1, flex: 1 }} placeholder="Search" inputProps={{ 'aria-label': 'search tables' }} />
+                    <InputBase
+                        sx={{ ml: 1, flex: 1 }}
+                        placeholder="Search"
+                        inputProps={{ 'aria-label': 'search tables' }}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                     <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
                         <SearchIcon />
                     </IconButton>
                 </Paper>
+                {/* Select Floor */}
+                <FormControl sx={{ marginLeft: 1 }}>
+                    <InputLabel id="select-floor">Floor</InputLabel>
+                    <Select labelId="select-floor" id="floor" value={selectedFloor} label="Floor" onChange={(e) => setSelectedFloor(e.target.value)}>
+                        {floorTables.map((item, index) => (
+                            <MenuItem value={item.id} key={index}>
+                                {item.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+
                 <ToggleButtonGroup
                     value={filterOption}
                     exclusive
@@ -284,7 +346,7 @@ const DineDialog = ({ orderNo, memberTypes }) => {
             <Box sx={{ px: 2, mb: 2 }}>
                 <RadioGroup value={selectedTable} onChange={(e) => setSelectedTable(e.target.value)}>
                     <Grid container spacing={1}>
-                        {tables.map((table) => (
+                        {filteredTables.map((table) => (
                             <Grid item xs={6} key={table.id}>
                                 <Paper
                                     elevation={0}
@@ -304,7 +366,7 @@ const DineDialog = ({ orderNo, memberTypes }) => {
                                         }}
                                     >
                                         <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                                            {table.id}
+                                            {table.table_no}
                                         </Typography>
                                         <Box
                                             sx={{
@@ -327,7 +389,7 @@ const DineDialog = ({ orderNo, memberTypes }) => {
                                                 />
                                             ) : (
                                                 <Typography variant="caption" sx={{ color: '#063455' }}>
-                                                    {table.id.split('-')[0]} - Full
+                                                    {table.table_no.split('-')[0]} - Full
                                                 </Typography>
                                             )}
                                         </Box>

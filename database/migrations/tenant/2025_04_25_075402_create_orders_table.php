@@ -22,6 +22,7 @@ return new class extends Migration
             $table->bigInteger('down_payment')->nullable();
             $table->date('start_date')->nullable();
             $table->time('start_time')->nullable();
+            $table->enum('status', ['pending', 'in_progress', 'completed', 'cancelled', 'reserved', 'no_show'])->nullable();
             $table->timestamps();
         });
     }
