@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 
-const DineDialog = () => {
+const DineDialog = ({ orderNo, memberTypes }) => {
     const [orderType, setOrderType] = useState('dineIn');
     // const [orderType, setOrderType] = useState<'dineIn' | 'takeaway' | 'reservation'>('dineIn');
     const [seatingArea, setSeatingArea] = useState('indoor');
@@ -86,7 +86,7 @@ const DineDialog = () => {
                             marginLeft: 2,
                         }}
                     >
-                        #001
+                        #{orderNo}
                     </Typography>
                 </Box>
             </Box>
@@ -103,27 +103,11 @@ const DineDialog = () => {
                                 width: '100%',
                             }}
                         >
-                            {[
-                                { value: 'member', label: 'Member' },
-                                {
-                                    value: 'corporateMember',
-                                    label: 'Corporate Member',
-                                },
-                                {
-                                    value: 'appliedMember',
-                                    label: 'Applied Member',
-                                },
-                                {
-                                    value: 'affiliatedMember',
-                                    label: 'Affiliated Member',
-                                },
-                                { value: 'vipGuest', label: 'VIP Guest' },
-                                { value: 'employee', label: 'Employee' },
-                            ].map((option) => {
-                                const isSelected = membershipType === option.value;
+                            {memberTypes.map((option) => {
+                                const isSelected = membershipType === option.id;
                                 return (
                                     <Box
-                                        key={option.value}
+                                        key={option.id}
                                         sx={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -137,9 +121,9 @@ const DineDialog = () => {
                                         }}
                                     >
                                         <FormControlLabel
-                                            value={option.value}
+                                            value={option.id}
                                             control={<Radio size="small" />}
-                                            label={<Typography variant="body2">{option.label}</Typography>}
+                                            label={<Typography variant="body2">{option.name}</Typography>}
                                             sx={{
                                                 m: 0,
                                                 width: '100%',

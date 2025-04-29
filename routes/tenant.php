@@ -9,6 +9,7 @@ use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -49,9 +50,7 @@ Route::middleware([
                 return Inertia::render('App/Order/OrderList');
             });
 
-            Route::get('/new/order', function () {
-                return Inertia::render('App/Order/New/Index');
-            });
+            Route::get('/new/order', [OrderController::class, 'index'])->name('order.index');
 
 
             Route::get('/transaction', function () {
