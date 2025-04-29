@@ -2,10 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\App\MembersController;
+use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -46,9 +50,7 @@ Route::middleware([
                 return Inertia::render('App/Order/OrderList');
             });
 
-            Route::get('/new/order', function () {
-                return Inertia::render('App/Order/New/Index');
-            });
+            Route::get('/new/order', [OrderController::class, 'index'])->name('order.index');
 
 
             Route::get('/transaction', function () {
@@ -61,10 +63,6 @@ Route::middleware([
 
             Route::get('/kitchen', function () {
                 return Inertia::render('App/Kitchen/Dashboard');
-            });
-
-            Route::get('/members', function () {
-                return Inertia::render('App/Member/Dashboard');
             });
 
             Route::get('/add/information', function () {
@@ -128,6 +126,38 @@ Route::middleware([
             Route::get('/admin/room/booking', function () {
                 return Inertia::render('App/Admin/Booking/RoomBooking');
             });
+
+            // Members
+            Route::resource('members', MembersController::class)->except('show', 'edit');
+            Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
+            Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+            Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
+            Route::put('/members/member-types/{id}', [MemberTypeController::class, 'update'])->name('member.update');
+            Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
+            // address
+            Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
+            Route::get('/members/address-types', [AddressTypeController::class, 'index'])->name('address-types.index');
+            Route::post('/members/address-types', [AddressTypeController::class, 'store'])->name('address-types.store');
+            Route::put('/members/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
+            Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
+            // users
+            // Route::get('members/create', [MembersController::class, 'index'])->name('members');
+            // Route::get('members/create', [MembersController::class, 'create'])->name('members.create');
+            // List all members (dashboard)
+            Route::get('/members', [MembersController::class, 'index'])->name('members.index');
+
+            // Show create form
+            Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
+
+            // Store new member
+            Route::post('/members', [MembersController::class, 'store'])->name('members.store');
+
+            // Update existing member
+            Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
+
+
+
+            // Route::resource('members/create', MembersController::class)->except('show', 'edit');
         });
         // End of Tenant Routes
 
