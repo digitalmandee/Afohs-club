@@ -111,6 +111,22 @@ Route::middleware([
             Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
             Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
 
+            Route::get('/admin/dashboard', function () {
+                return Inertia::render('App/Admin/Dashboard');
+            });
+
+            Route::get('/admin/booking/dashboard', function () {
+                return Inertia::render('App/Admin/Booking/Dashboard');
+            });
+
+            Route::get('/admin/booking/details', function () {
+                return Inertia::render('App/Admin/Booking/Detail');
+            });
+
+            Route::get('/admin/room/booking', function () {
+                return Inertia::render('App/Admin/Booking/RoomBooking');
+            });
+
             // Members
             Route::resource('members', MembersController::class)->except('show', 'edit');
             Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
