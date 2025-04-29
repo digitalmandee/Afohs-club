@@ -64,4 +64,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserDetail::class)->where('status', 'active');
     }
+    // User.php
+    // public function userDetail()
+    // {
+    //     return $this->hasOne(UserDetail::class, 'user_id', 'id')->where('status', 'active');
+    // }
 }

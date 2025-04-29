@@ -19,10 +19,15 @@ class MembersController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        $users = User::with(['memberType', 'userDetail'])->latest()->paginate($limit);
+        $users = User::with(['memberType',])->latest()->paginate($limit);
+        $userDetail = User::with(['userDetail'])->latest()->paginate($limit);
 
-        return Inertia::render('App/Member/Dashboard', compact('users'));
+        return Inertia::render('App/Member/Dashboard', [
+            'users' => $users,
+            'userDetail' => $userDetail
+        ]);
     }
+
 
     public function create(Request $request)
     {

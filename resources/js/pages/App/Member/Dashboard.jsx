@@ -1,3 +1,4 @@
+// pages/CustomerLists.jsx or similar
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';
@@ -6,7 +7,6 @@ import {
     Avatar,
     Box,
     Button,
-    Grid,
     IconButton,
     InputAdornment,
     Menu,
@@ -22,164 +22,14 @@ import {
     Typography,
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const CustomerLists = () => {
-    // State for search
-    const [searchTerm, setSearchTerm] = useState('');
+const CustomerLists = ({ userDetail }) => {
     const [open, setOpen] = useState(false);
-
-    const [customers, setCustomers] = useState([
-        {
-            id: 'AFOHS-12345',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            phone: '03434343534',
-            type: 'VIP',
-            address: 'Lahore, Pakistan',
-            customerType: 'Silver',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-                {
-                    type: 'Apartment',
-                    address: 'Jl Kayoon 24',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: false,
-                },
-                {
-                    type: 'Office',
-                    address: 'Jl Letjen South Parman 22, DKI Jakarta',
-                    city: 'Jakarta',
-                    province: 'Jakarta',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: false,
-                },
-            ],
-        },
-        {
-            id: 'AFOHS-12346',
-            name: 'Dianne Russell',
-            email: 'dianne.russell@mail.com',
-            phone: '(702) 555-0122',
-            type: 'Premium',
-            address: 'Lahore, Pakistan',
-            customerType: 'Gold',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-9WOBgZCgNYa1UDTjpD8AIo01bwat1M.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-            ],
-        },
-        {
-            id: 'AFOHS-12347',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            phone: '03434343534',
-            type: 'Regular',
-            address: 'Lahore, Pakistan',
-            customerType: 'Silver',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-            ],
-        },
-        {
-            id: 'AFOHS-12348',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            phone: '03434343534',
-            type: 'Premium',
-            address: 'Lahore, Pakistan',
-            customerType: 'Gold',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-            ],
-        },
-        {
-            id: 'AFOHS-12349',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            phone: '03434343534',
-            type: 'VIP',
-            address: 'Lahore, Pakistan',
-            customerType: 'Silver',
-            profilePic: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png',
-            addresses: [
-                {
-                    type: 'House',
-                    address: 'Jl. Gubeng Kertajaya 5c / 45',
-                    city: 'Malang',
-                    province: 'East Java',
-                    country: 'Indonesia',
-                    zipCode: '10101',
-                    isMain: true,
-                },
-            ],
-        },
-    ]);
-    const [filteredCustomers, setFilteredCustomers] = useState([...customers]);
-
-    const handleOpenAddForm = () => {
-        setIsEditMode(false);
-        setNewCustomer({
-            id: `MEMBER${Math.floor(100 + Math.random() * 900)}`,
-            name: '',
-            email: '',
-            phone: '',
-            type: 'Regular',
-            address: '',
-            customerType: 'Silver',
-            profilePic: null,
-            addresses: [],
-        });
-        setProfileImage(null);
-        setOpenAddForm(true);
-    };
-    // State for success message
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-
-    // State for order modal
+    const [searchTerm, setSearchTerm] = useState('');
     const [orderModalOpen, setOrderModalOpen] = useState(false);
     const [currentOrder, setCurrentOrder] = useState({
         customer: null,
@@ -187,31 +37,13 @@ const CustomerLists = () => {
         amount: '110.00',
         favoriteItems: [],
     });
-
-    // State for dish category menu
     const [dishCategoryMenuAnchor, setDishCategoryMenuAnchor] = useState(null);
     const [selectedDish, setSelectedDish] = useState('');
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
-    // Dishes data
     const dishes = ['Tea', 'Coffee', 'Chicken', 'Cake', 'Biryani', 'Burger', 'Pizza', 'Pasta'];
 
-    // Filter customers when search term changes
-    useEffect(() => {
-        const filtered = customers.filter(
-            (customer) =>
-                customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                customer.type.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
-        setFilteredCustomers(filtered);
-    }, [searchTerm, customers]);
-
-    // Handle search input change
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-    };
-
-    // Handle create order
     const handleCreateOrder = (customer) => {
         setCurrentOrder({
             customer,
@@ -222,23 +54,19 @@ const CustomerLists = () => {
         setOrderModalOpen(true);
     };
 
-    // Handle close order modal
     const handleCloseOrderModal = () => {
         setOrderModalOpen(false);
         setDishCategoryMenuAnchor(null);
     };
 
-    // Handle open dish category menu
     const handleOpenDishCategoryMenu = (event) => {
         setDishCategoryMenuAnchor(event.currentTarget);
     };
 
-    // Handle close dish category menu
     const handleCloseDishCategoryMenu = () => {
         setDishCategoryMenuAnchor(null);
     };
 
-    // Handle select dish
     const handleSelectDish = (dish) => {
         setSelectedDish(dish);
         setCurrentOrder({
@@ -248,14 +76,12 @@ const CustomerLists = () => {
         setDishCategoryMenuAnchor(null);
     };
 
-    // Handle save order
     const handleSaveOrder = () => {
         setSuccessMessage('Order saved successfully!');
         setShowSuccess(true);
         setOrderModalOpen(false);
     };
 
-    // Handle close success message
     const handleCloseSuccess = () => {
         setShowSuccess(false);
     };
@@ -289,7 +115,7 @@ const CustomerLists = () => {
                                 variant="outlined"
                                 size="small"
                                 value={searchTerm}
-                                onChange={handleSearchChange}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -299,14 +125,6 @@ const CustomerLists = () => {
                                 }}
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
-                            {/* <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={handleOpenAddForm}
-                                style={{ backgroundColor: '#003366', color: 'white' }}
-                            >
-                                Add Customer
-                            </Button> */}
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
@@ -330,174 +148,197 @@ const CustomerLists = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredCustomers.map((customer, index) => (
-                                    <TableRow key={index} hover onClick={() => handleOpenAddForm(true, index)} style={{ cursor: 'pointer' }}>
-                                        <TableCell>{customer.id}</TableCell>
-                                        <TableCell>
-                                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                <Avatar src={customer.profilePic} alt={customer.name} style={{ marginRight: '10px' }} />
-                                                <div>
-                                                    <Typography variant="body1">{customer.name}</Typography>
-                                                    <Typography variant="body2" color="textSecondary">
-                                                        {customer.email}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="textSecondary">
-                                                        {customer.phone}
-                                                    </Typography>
+                                {userDetail?.data?.map((user, userIndex) =>
+                                    user.user_detail && user.user_detail.length > 0 ? (
+                                        user.user_detail.map((detail, index) => (
+                                            <TableRow key={`${userIndex}-${index}`}>
+                                                <TableCell>{user.user_id || 'N/A'}</TableCell>
+                                                <TableCell>
+                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                        {/* <p>{user.profile_photo}</p> */}
+                                                        <Avatar
+                                                            src={`http://localhost:8000${user.profile_photo}`}
+                                                            alt={user.name}
+                                                            style={{ marginRight: '10px' }}
+                                                        />
+                                                        {/* <img
+                                                            src={`http://localhost:8000${user.profile_photo}`}
+                                                            alt={user.name}
+                                                            style={{ width: '40px', height: '40px', borderRadius: '50%', marginRight: '10px' }}
+                                                        /> */}
+
+                                                        <div>
+                                                            <Typography variant="body1">{user.name || 'N/A'}</Typography>
+                                                            <Typography variant="body2" color="textSecondary">
+                                                                {user.email || 'N/A'}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="textSecondary">
+                                                                {user.phone || 'N/A'}
+                                                            </Typography>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{detail.address_type || 'N/A'}</TableCell>
+                                                <TableCell>
+                                                    {`${detail.address || ''}, ${detail.city || ''}, ${detail.state || ''}, ${detail.country || ''}, ${detail.zip || ''}`}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCreateOrder({
+                                                                ...user,
+                                                                profilePic: user.profile_photo,
+                                                            });
+                                                        }}
+                                                        style={{
+                                                            backgroundColor: '#063455',
+                                                            fontSize: '12px',
+                                                            borderRadius: '20px',
+                                                            color: 'white',
+                                                        }}
+                                                    >
+                                                        Order
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow key={userIndex}>
+                                            <TableCell>{user.user_id || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Avatar
+                                                        src={
+                                                            user.profile_photo
+                                                            // ||'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png'
+                                                        }
+                                                        alt={user.name}
+                                                        style={{ marginRight: '10px' }}
+                                                    />
+                                                    <div>
+                                                        <Typography variant="body1">{user.name || 'N/A'}</Typography>
+                                                        <Typography variant="body2" color="textSecondary">
+                                                            {user.email || 'N/A'}
+                                                        </Typography>
+                                                        <Typography variant="body2" color="textSecondary">
+                                                            {user.phone || 'N/A'}
+                                                        </Typography>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{customer.type}</TableCell>
-                                        <TableCell>{customer.address}</TableCell>
-                                        <TableCell>
-                                            <Button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleCreateOrder(customer);
-                                                }}
-                                                style={{
-                                                    backgroundColor: '#063455',
-                                                    fontSize: '12px',
-                                                    borderRadius: '20px',
-                                                    color: 'white',
-                                                }}
-                                            >
-                                                Order
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                            </TableCell>
+                                            <TableCell>N/A</TableCell>
+                                            <TableCell>No Address Found</TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleCreateOrder({
+                                                            ...user,
+                                                            profilePic: user.profile_photo,
+                                                        });
+                                                    }}
+                                                    style={{
+                                                        backgroundColor: '#063455',
+                                                        fontSize: '12px',
+                                                        borderRadius: '20px',
+                                                        color: 'white',
+                                                    }}
+                                                >
+                                                    Order
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ),
+                                )}
                             </TableBody>
                         </Table>
                     </Box>
-
-                    {/* Order Modal */}
-                    <Modal
-                        open={orderModalOpen}
-                        onClose={handleCloseOrderModal}
-                        aria-labelledby="order-modal-title"
-                        aria-describedby="order-modal-description"
-                    >
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                right: '0px',
-                                width: '500px',
-                                bgcolor: '#e3f2fd',
-                                borderRadius: '8px',
-                                boxShadow: 24,
-                                p: 4,
-                                height: '100vh',
-                                overfloswY: 'auto',
-                            }}
-                        >
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    {currentOrder.customer && (
-                                        <>
-                                            <Avatar
-                                                src={currentOrder.customer.profilePic}
-                                                alt={currentOrder.customer.name}
-                                                sx={{ width: 56, height: 56, mr: 2 }}
-                                            />
-                                            <Box>
-                                                <Typography variant="h6" component="h2">
-                                                    {currentOrder.customer.name}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    ID : {currentOrder.customer.id}
-                                                </Typography>
-                                            </Box>
-                                        </>
-                                    )}
-                                </Box>
-                                <IconButton onClick={handleCloseOrderModal}>
-                                    <CloseIcon />
-                                </IconButton>
-                            </Box>
-
-                            <Grid container spacing={2} sx={{ mt: 2 }}>
-                                <Grid item xs={6}>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Email
-                                    </Typography>
-                                    <Typography variant="body1">{currentOrder.customer ? currentOrder.customer.email : ''}</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Phone number
-                                    </Typography>
-                                    <Typography variant="body1">{currentOrder.customer ? currentOrder.customer.phone : ''}</Typography>
-                                </Grid>
-                            </Grid>
-
-                            <Box sx={{ mt: 3 }}>
-                                <Box
-                                    sx={{
-                                        p: 2,
-                                        border: '1px solid #e0e0e0',
-                                        borderRadius: '4px',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        cursor: 'pointer',
-                                        bgcolor: 'background.paper',
-                                    }}
-                                    onClick={handleOpenDishCategoryMenu}
-                                >
-                                    <Typography variant="body1">{selectedDish || 'Dish Category'}</Typography>
-                                    <KeyboardArrowRightIcon />
-                                </Box>
-                                <Menu anchorEl={dishCategoryMenuAnchor} open={Boolean(dishCategoryMenuAnchor)} onClose={handleCloseDishCategoryMenu}>
-                                    <MenuItem onClick={() => handleSelectDish('Tea')}>Tea</MenuItem>
-                                    <MenuItem onClick={() => handleSelectDish('Coffee')}>Coffee</MenuItem>
-                                    <MenuItem onClick={() => handleSelectDish('Chicken')}>Chicken</MenuItem>
-                                    <MenuItem onClick={() => handleSelectDish('Cake')}>Cake</MenuItem>
-                                </Menu>
-                            </Box>
-
-                            <Box sx={{ mt: 3 }}>
-                                <Typography variant="body1" sx={{ mb: 1 }}>
-                                    Amount
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    value={currentOrder.amount}
-                                    InputProps={{
-                                        readOnly: true,
-                                        startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
-                                    }}
-                                    variant="outlined"
-                                />
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                                <Button
-                                    variant="contained"
-                                    onClick={() => {
-                                        handleSaveOrder();
-                                        router.visit('/customers/list');
-                                    }}
-                                    sx={{ backgroundColor: '#003366' }}
-                                >
-                                    Save
-                                </Button>
-                            </Box>
-                        </Box>
-                    </Modal>
-
-                    {/* Success Snackbar */}
-                    <Snackbar
-                        open={showSuccess}
-                        autoHideDuration={3000}
-                        onClose={handleCloseSuccess}
-                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                    >
-                        <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
-                            {successMessage}
-                        </Alert>
-                    </Snackbar>
                 </div>
             </div>
+
+            {/* Order Modal */}
+            <Modal
+                open={orderModalOpen}
+                onClose={handleCloseOrderModal}
+                aria-labelledby="order-modal-title"
+                aria-describedby="order-modal-description"
+            >
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        right: '0px',
+                        width: '500px',
+                        bgcolor: '#e3f2fd',
+                        borderRadius: '8px',
+                        boxShadow: 24,
+                        p: 4,
+                        height: '100vh',
+                        overflowY: 'auto',
+                    }}
+                >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6">Create Order</Typography>
+                        <IconButton onClick={handleCloseOrderModal}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+                    {currentOrder.customer && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Avatar src={currentOrder.customer.profilePic} sx={{ width: 56, height: 56, mr: 2 }} />
+                            <Box>
+                                <Typography variant="subtitle1">{currentOrder.customer.name}</Typography>
+                                <Typography variant="body2">{currentOrder.customer.email}</Typography>
+                                <Typography variant="body2">{currentOrder.customer.phone}</Typography>
+                            </Box>
+                        </Box>
+                    )}
+
+                    <TextField
+                        label="Dish Category"
+                        value={currentOrder.dishCategory}
+                        onClick={handleOpenDishCategoryMenu}
+                        fullWidth
+                        InputProps={{
+                            endAdornment: <KeyboardArrowRightIcon />,
+                            readOnly: true,
+                        }}
+                        sx={{ mb: 2 }}
+                    />
+                    <Menu anchorEl={dishCategoryMenuAnchor} open={Boolean(dishCategoryMenuAnchor)} onClose={handleCloseDishCategoryMenu}>
+                        {dishes.map((dish) => (
+                            <MenuItem key={dish} onClick={() => handleSelectDish(dish)}>
+                                {dish}
+                            </MenuItem>
+                        ))}
+                    </Menu>
+
+                    <TextField
+                        label="Amount"
+                        type="number"
+                        fullWidth
+                        value={currentOrder.amount}
+                        onChange={(e) =>
+                            setCurrentOrder({
+                                ...currentOrder,
+                                amount: e.target.value,
+                            })
+                        }
+                        sx={{ mb: 2 }}
+                    />
+
+                    <Button variant="contained" fullWidth onClick={handleSaveOrder} style={{ backgroundColor: '#063455', color: 'white' }}>
+                        Save Order
+                    </Button>
+                </Box>
+            </Modal>
+
+            {/* Success Snackbar */}
+            <Snackbar open={showSuccess} autoHideDuration={3000} onClose={handleCloseSuccess}>
+                <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
+                    {successMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 };
