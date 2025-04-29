@@ -4,7 +4,6 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\AddressType;
-use App\Models\MemberType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,19 +14,17 @@ class AddressTypeController extends Controller
      */
     public function index()
     {
-        //
         $addressTypes = AddressType::all();
-
-        return Inertia::render('App/Member/Dashboard', compact('addressTypes'));
+        return Inertia::render('App/Member/AddressType', compact('addressTypes'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store a newly created resource in storage.
      */
-    public function create(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string|max:255|unique:address_types,name',
         ]);
 
         AddressType::create([
@@ -43,10 +40,11 @@ class AddressTypeController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string|max:255|unique:address_types,name,' . $id,
         ]);
 
-        AddressType::find($id)->update([
+        $addressType = AddressType::findOrFail($id);
+        $addressType->update([
             'name' => $request->name,
         ]);
 
@@ -58,8 +56,7 @@ class AddressTypeController extends Controller
      */
     public function destroy(string $id)
     {
-        $addressType = AddressType::find($id);
-
+        $addressType = AddressType::findOrFail($id);
         $addressType->delete();
 
         return redirect()->back()->with('success', 'Address Type deleted.');

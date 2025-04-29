@@ -14,19 +14,17 @@ class MemberTypeController extends Controller
      */
     public function index()
     {
-        //
-        $memberTypes = MemberType::all();
-
-        return Inertia::render('App/Member/Dashboard', compact('memberTypes'));
+        $memberTypesList = MemberType::all();
+        return Inertia::render('App/Member/MemberTypes', compact('memberTypesList'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store a newly created resource in storage.
      */
-    public function create(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string|max:255|unique:member_types,name',
         ]);
 
         MemberType::create([
@@ -42,10 +40,11 @@ class MemberTypeController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string|max:255|unique:member_types,name,' . $id,
         ]);
 
-        MemberType::find($id)->update([
+        $memberType = MemberType::findOrFail($id);
+        $memberType->update([
             'name' => $request->name,
         ]);
 
@@ -57,8 +56,7 @@ class MemberTypeController extends Controller
      */
     public function destroy(string $id)
     {
-        $memberType = MemberType::find($id);
-
+        $memberType = MemberType::findOrFail($id);
         $memberType->delete();
 
         return redirect()->back()->with('success', 'Member Type deleted.');

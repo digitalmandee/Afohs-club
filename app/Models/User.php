@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,7 +9,6 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
 
     /**
@@ -26,6 +24,12 @@ class User extends Authenticatable
         'member_type_id',
         'phone_number',
         'profile_photo',
+        'addresses',
+        'address',
+    ];
+
+    protected $casts = [
+        'addresses' => 'array',
     ];
 
     /**
@@ -58,6 +62,11 @@ class User extends Authenticatable
 
     public function userDetail()
     {
-        return $this->hasOne(UserDetail::class)->where('status', 'active');
+        return $this->hasMany(UserDetail::class)->where('status', 'active');
     }
+    // User.php
+    // public function userDetail()
+    // {
+    //     return $this->hasOne(UserDetail::class, 'user_id', 'id')->where('status', 'active');
+    // }
 }
