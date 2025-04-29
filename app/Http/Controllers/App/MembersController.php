@@ -19,14 +19,23 @@ class MembersController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        $users = User::with(['memberType',])->latest()->paginate($limit);
-        $userDetail = User::with(['userDetail'])->latest()->paginate($limit);
+        // Filter users who have the 'user' role
+        $users = User::with(['memberType'])
+            ->latest()
+            ->role('user') // Filter users with the 'user' role
+            ->paginate($limit);
+
+        $userDetail = User::with(['userDetail'])
+            ->latest()
+            ->role('user') // Filter users with the 'user' role
+            ->paginate($limit);
 
         return Inertia::render('App/Member/Dashboard', [
             'users' => $users,
             'userDetail' => $userDetail
         ]);
     }
+
 
 
     public function create(Request $request)
