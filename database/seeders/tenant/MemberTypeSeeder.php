@@ -14,7 +14,6 @@ class MemberTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        //
         MemberType::create(['name' => 'Silver']);
         MemberType::create(['name' => 'Gold']);
         MemberType::create(['name' => 'Corporate Member']);

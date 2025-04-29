@@ -23,7 +23,7 @@ import TakeAwayDialog from './Takeaway';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewOrderDialog = ({ onClose }) => {
+const NewOrder = ({ orderNo, memberTypes }) => {
     const [orderType, setOrderType] = useState('dineIn');
     const [open, setOpen] = useState(false);
     const [seatingArea, setSeatingArea] = useState('indoor');
@@ -333,7 +333,7 @@ const NewOrderDialog = ({ onClose }) => {
                                 </ToggleButton>
                             </ToggleButtonGroup>
                         </Box>
-                        {orderType === 'dineIn' && <DineDialog />}
+                        {orderType === 'dineIn' && <DineDialog orderNo={orderNo} memberTypes={memberTypes} />}
                         {orderType === 'takeaway' && <TakeAwayDialog />}
                         {orderType === 'reservation' && <ReservationDialog />}
                     </Paper>
@@ -343,4 +343,4 @@ const NewOrderDialog = ({ onClose }) => {
     );
 };
 
-export default NewOrderDialog;
+export default NewOrder;
