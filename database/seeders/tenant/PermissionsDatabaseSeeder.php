@@ -39,7 +39,7 @@ class PermissionsDatabaseSeeder extends Seeder
         // Assign Permissions to Roles
         $adminRole->syncPermissions($permissions);
         $employeeRole->syncPermissions(['dashboard', 'order']);
-        $waiterRole->syncPermissions(['dashboard', 'waiter']);
+        $waiterRole->syncPermissions(['dashboard', 'order']);
         $kitchenRole->syncPermissions(['dashboard', 'kitchen']);
         $userRole->syncPermissions(['dashboard']);
 
@@ -49,31 +49,31 @@ class PermissionsDatabaseSeeder extends Seeder
             'user_id' => 12345676,
             'password' => bcrypt('123456'),
             'member_type_id' => 1,
-            'phone' => '1234567890',
+            'phone_number' => '1234567890',
         ]);
         $user2 = User::factory()->create([
             'user_id' => 12345677,
             'password' => bcrypt('123456'),
             'member_type_id' => 2,
-            'phone' => '1234567890',
+            'phone_number' => '1234567890',
         ]);
         $user3 = User::factory()->create([
             'user_id' => 12345679,
             'password' => bcrypt('123456'),
             'member_type_id' => 3,
-            'phone' => '1234567890',
+            'phone_number' => '1234567890',
         ]);
         $user4 = User::factory()->create([
             'user_id' => 12345680,
             'password' => bcrypt('123456'),
             'member_type_id' => 4,
-            'phone' => '1234567890',
+            'phone_number' => '1234567890',
         ]);
         $user5 = User::factory()->create([
             'user_id' => 12345681,
             'password' => bcrypt('123456'),
             'member_type_id' => 5,
-            'phone' => '1234567890',
+            'phone_number' => '1234567890',
         ]);
 
         $user->assignRole('user');
