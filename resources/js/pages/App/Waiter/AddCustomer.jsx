@@ -38,15 +38,6 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
     });
 
     const [showAddressForm, setShowAddressForm] = useState(false);
-    const [newAddress, setNewAddress] = useState({
-        type: 'House',
-        address: '',
-        city: '',
-        province: '',
-        country: '',
-        zipCode: '',
-        isMain: false,
-    });
 
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
@@ -94,14 +85,6 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: null }));
         }
-    };
-
-    const handleAddressInputChange = (e) => {
-        const { name, value } = e.target;
-        setNewAddress({
-            ...newAddress,
-            [name]: value,
-        });
     };
 
     const handlePhoneCountryCodeChange = (e) => {
@@ -184,43 +167,6 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                 setShowError(true);
             },
         });
-    };
-
-    const handleShowAddressForm = () => {
-        setNewAddress({
-            type: 'House',
-            address: '',
-            city: '',
-            province: '',
-            country: '',
-            zipCode: '',
-            isMain: false,
-        });
-        setShowAddressForm(true);
-    };
-
-    const handleSaveAddress = () => {
-        const updatedCustomer = { ...newCustomer };
-        if (updatedCustomer.addresses.length === 0 || newAddress.isMain) {
-            updatedCustomer.addresses = updatedCustomer.addresses.map((addr) => ({
-                ...addr,
-                isMain: false,
-            }));
-        }
-        updatedCustomer.addresses.push(newAddress);
-        setNewCustomer(updatedCustomer);
-        setShowAddressForm(false);
-        setSuccessMessage('Address added successfully!');
-        setShowSuccess(true);
-    };
-
-    const handleSetMainAddress = (index) => {
-        const updatedCustomer = { ...newCustomer };
-        updatedCustomer.addresses = updatedCustomer.addresses.map((addr, i) => ({
-            ...addr,
-            isMain: i === index,
-        }));
-        setNewCustomer(updatedCustomer);
     };
 
     const lastUserId = users.data.length > 0 ? parseInt(users.data[0].user_id) : 0;
@@ -394,7 +340,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                             </Grid>
                         </Grid>
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 0 }}>
                                 <Button variant="contained" onClick={handleSaveCustomer} sx={{ backgroundColor: '#003366' }}>
                                     {isEditMode ? 'Save Changes' : 'Save'}
                                 </Button>
