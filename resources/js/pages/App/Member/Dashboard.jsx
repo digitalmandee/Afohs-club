@@ -27,7 +27,7 @@ import { useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const CustomerLists = ({ userDetail }) => {
+const CustomerLists = ({ userDetail, users }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -108,7 +108,7 @@ const CustomerLists = ({ userDetail }) => {
                             marginBottom: '20px',
                         }}
                     >
-                        <Typography variant="h5">70 Customer</Typography>
+                        <Typography variant="h5">{userDetail.data.length} Customers</Typography>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <TextField
                                 placeholder="Search name or membership type"
