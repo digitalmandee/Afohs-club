@@ -36,7 +36,7 @@ const NewFloor = ({ floorInfo }) => {
     });
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
-        floor: floorInfo ? { name: floorInfo.name || '', area: floorInfo.area || '' } : [{ name: '', area: '' }],
+        floor: floorInfo ? { name: floorInfo.name || '', area: floorInfo.area || '' } : { name: '', area: '' },
         tables:
             floorInfo && floorInfo.tables && floorInfo.tables.length > 0
                 ? floorInfo.tables.map((t) => ({
@@ -53,9 +53,7 @@ const NewFloor = ({ floorInfo }) => {
 
     // Handle input changes for floors
     const handleFloorChange = (key, value) => {
-        const updatedFloors = data.floor;
-        updatedFloors[key] = value;
-        setData('floor', updatedFloors);
+        setData('floor', { ...data.floor, [key]: value });
     };
 
     // Handle input changes for tables
@@ -83,7 +81,7 @@ const NewFloor = ({ floorInfo }) => {
     };
 
     const handleSaveFloorAndTable = () => {
-        const hasEmptyFields = data.floor.some((f) => !f.name.trim() || !f.area.trim()) || data.tables.some((t) => !t.table_no.trim());
+        const hasEmptyFields = !data.floor.name.trim() || !data.floor.area.trim() || data.tables.some((t) => !t.table_no.trim());
 
         const tableNumbers = data.tables.map((t) => t.table_no.trim());
         const hasDuplicateTableNumbers = new Set(tableNumbers).size !== tableNumbers.length;
@@ -114,6 +112,8 @@ const NewFloor = ({ floorInfo }) => {
                 },
             });
         } else {
+            console.log(data);
+
             // Create new floor
             router.post(route('floors.store'), data, {
                 onSuccess: () => {

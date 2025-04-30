@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Tenant\FloorDatabaseSeeder;
 use Database\Seeders\Tenant\MemberTypeSeeder;
 use Database\Seeders\Tenant\PermissionsDatabaseSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -16,9 +17,8 @@ class TenantDatabaseSeeder extends Seeder
     {
         $this->call([
             MemberTypeSeeder::class,
+            FloorDatabaseSeeder::class,
             PermissionsDatabaseSeeder::class
         ]);
-
-        //
     }
 }
