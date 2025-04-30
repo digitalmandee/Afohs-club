@@ -54,6 +54,12 @@ Route::middleware([
 
             Route::get('/new/order', [OrderController::class, 'index'])->name('order.index');
 
+            // for member and waiter
+            Route::get('/user/search', [OrderController::class, 'searchMember'])->name('user.search');
+
+            // get products
+            Route::get('/product/categories', [OrderController::class, 'getCategories'])->name('products.categories');
+            Route::get('/products/{category_id}', [OrderController::class, 'getProducts'])->name('products.bycategory');
 
             Route::get('/transaction', function () {
                 return Inertia::render('App/Transaction/Dashboard');

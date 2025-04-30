@@ -19,5 +19,6 @@ class Order extends Model
         'down_payment',
         'start_date',
         'start_time',
+        'status'
     ];
 }

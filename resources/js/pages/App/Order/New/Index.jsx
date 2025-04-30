@@ -23,12 +23,9 @@ import TakeAwayDialog from './Takeaway';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewOrder = ({ orderNo, memberTypes }) => {
+const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
     const [orderType, setOrderType] = useState('dineIn');
     const [open, setOpen] = useState(false);
-    const [seatingArea, setSeatingArea] = useState('indoor');
-    const [filterOption, setFilterOption] = useState('all');
-    const [selectedTable, setSelectedTable] = useState('T8');
     const [selectedWeek, setSelectedWeek] = useState(2);
 
     const weeks = [
@@ -48,18 +45,6 @@ const NewOrder = ({ orderNo, memberTypes }) => {
     const handleWeekChange = (weekId) => {
         setSelectedWeek(weekId);
     };
-
-    const tables = [
-        { id: 'T8', capacity: 4, available: true },
-        { id: 'T9', capacity: 2, available: true },
-        { id: 'T10', capacity: 2, available: true },
-        { id: 'T11', capacity: 2, available: true },
-        { id: 'T12', capacity: 2, available: true },
-        { id: 'T2', capacity: 4, available: false },
-        { id: 'T5', capacity: 2, available: false },
-        { id: 'T6', capacity: 4, available: false },
-        { id: 'T7', capacity: 2, available: false },
-    ];
 
     return (
         <>
@@ -333,7 +318,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                                 </ToggleButton>
                             </ToggleButtonGroup>
                         </Box>
-                        {orderType === 'dineIn' && <DineDialog orderNo={orderNo} memberTypes={memberTypes} />}
+                        {orderType === 'dineIn' && <DineDialog orderNo={orderNo} memberTypes={memberTypes} floorTables={floorTables} />}
                         {orderType === 'takeaway' && <TakeAwayDialog />}
                         {orderType === 'reservation' && <ReservationDialog />}
                     </Paper>
