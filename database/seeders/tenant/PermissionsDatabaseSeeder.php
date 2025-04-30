@@ -76,10 +76,25 @@ class PermissionsDatabaseSeeder extends Seeder
             'phone_number' => '1234567890',
         ]);
 
+        $waiter1 = User::factory()->create([
+            'user_id' => 12345682,
+            'password' => bcrypt('123456'),
+            'phone_number' => '1234567890',
+        ]);
+        $waiter2 = User::factory()->create([
+            'user_id' => 12345683,
+            'password' => bcrypt('123456'),
+            'phone_number' => '1234567890',
+        ]);
+
+
         $user->assignRole('user');
         $user2->assignRole('user');
         $user3->assignRole('user');
         $user4->assignRole('user');
         $user5->assignRole('user');
+
+        $waiter1->assignRole('waiter');
+        $waiter2->assignRole('waiter');
     }
 }

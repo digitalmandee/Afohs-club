@@ -21,4 +21,9 @@ class Order extends Model
         'start_time',
         'status'
     ];
+
+    public function orderTakings()
+    {
+        return $this->hasMany(OrderTaking::class);
+    }
 }

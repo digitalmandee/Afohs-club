@@ -70,7 +70,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
         if (query) {
             const results = await searchUser(query, role, membershipType);
             if (role === 'user') setMembers(results);
-            else setWaiters([]);
+            else setWaiters(results);
         } else {
             if (role === 'user') setMembers([]);
             else setWaiters([]);
