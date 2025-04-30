@@ -1,3 +1,4 @@
+// App/Member/EditCustomer.jsx
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import {
@@ -31,28 +32,31 @@ import {
     Typography,
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-export default function AddCustomer({ users, memberTypes, customer = null, addressTypes = [] }) {
+export default function EditCustomer({ customer, memberTypes, addressTypes = [] }) {
     const drawerWidthOpen = 240;
     const drawerWidthClosed = 110;
 
     const [open, setOpen] = useState(false);
+    const [showAddressForm, setShowAddressForm] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [showError, setShowError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [errors, setErrors] = useState({});
 
-    const [customers, setCustomers] = useState([]); // Initialize empty for dynamic loading
-
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filteredCustomers, setFilteredCustomers] = useState([...customers]);
-
-    const [openAddForm, setOpenAddForm] = useState(!!customer);
-    const [isEditMode, setIsEditMode] = useState(!!customer);
-    const [currentCustomerIndex, setCurrentCustomerIndex] = useState(null);
+    // Handle phone number (assume no country code in phone_number)
+    const phoneNumber = customer?.phone_number || '';
+    const defaultCountryCode = '+702';
+    const phoneCountryCodeFromData = phoneNumber.match(/^\+\d+/)?.[0] || defaultCountryCode;
+    const phoneNumberWithoutCode = phoneNumber.replace(/^\+\d+/, '') || phoneNumber;
 
     const [newCustomer, setNewCustomer] = useState({
-        id: customer?.id || `MEMBER${Math.floor(100 + Math.random() * 900)}`,
+        id: customer?.id || '',
         name: customer?.name || '',
         email: customer?.email || '',
-        phone_number: customer?.phone_number || '',
+        phone_number: phoneNumberWithoutCode,
         type: customer?.type || 'Regular',
         customer_type: customer?.memberType?.name || 'Silver',
         profile_photo: customer?.profile_photo || null,
@@ -68,7 +72,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
             })) || [],
     });
 
-    const [showAddressForm, setShowAddressForm] = useState(false);
     const [newAddress, setNewAddress] = useState({
         type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
         address: '',
@@ -79,45 +82,11 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
         isMain: false,
     });
 
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [showError, setShowError] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
-    const [errors, setErrors] = useState({});
-
-    const [profileImage, setProfileImage] = useState(customer?.profile_photo || null);
-
-    const [phoneCountryCode, setPhoneCountryCode] = useState('+702');
-
-    useEffect(() => {
-        const filtered = customers.filter(
-            (customer) =>
-                customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                customer.type.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
-        setFilteredCustomers(filtered);
-    }, [searchTerm, customers]);
+    const [profileImage, setProfileImage] = useState(customer?.profile_photo ? `http://localhost:8000${customer.profile_photo}` : null);
+    const [phoneCountryCode, setPhoneCountryCode] = useState(phoneCountryCodeFromData);
 
     const handleCloseAddForm = () => {
-        setOpenAddForm(false);
-        setShowAddressForm(false);
-        setErrors({});
-        setShowError(false);
-        setErrorMessage('');
-        setIsEditMode(false);
-        setCurrentCustomerIndex(null);
-        setNewCustomer({
-            id: `MEMBER${Math.floor(100 + Math.random() * 900)}`,
-            name: '',
-            email: '',
-            phone_number: '',
-            type: 'Regular',
-            customer_type: 'Silver',
-            profile_photo: null,
-            addresses: [],
-        });
-        setProfileImage(null);
+        router.get(route('members.index')); // Navigate back to customer list
     };
 
     const handleInputChange = (e) => {
@@ -159,6 +128,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
 
     const handleDeleteImage = () => {
         setProfileImage(null);
+        setNewCustomer({ ...newCustomer, profile_photo: null });
     };
 
     const base64ToBlob = (base64) => {
@@ -180,11 +150,9 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
             return;
         }
 
-        console.log('Addresses before validation:', newCustomer.addresses); // Debug log
         if (newCustomer.addresses.length > 0) {
             for (const addr of newCustomer.addresses) {
                 if (!addr.type || !addr.address || !addr.city || !addr.province || !addr.country || !addr.zipCode) {
-                    console.error('Invalid address:', addr); // Log the problematic address
                     setErrorMessage('All address fields are required.');
                     setShowError(true);
                     return;
@@ -197,56 +165,27 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
         formData.append('email', newCustomer.email);
         formData.append('phone', `${phoneCountryCode}${newCustomer.phone_number}`);
         formData.append('customer_type', newCustomer.customer_type);
-        formData.append('member_type_id', memberTypes.find((mt) => mt.name === newCustomer.customer_type)?.id || ''); // Add member_type_id
+        formData.append('member_type_id', memberTypes.find((mt) => mt.name === newCustomer.customer_type)?.id || '');
         if (profileImage && profileImage.startsWith('data:image')) {
             const blob = base64ToBlob(profileImage);
             formData.append('profile_pic', blob, 'profile.jpg');
+        } else if (!profileImage) {
+            formData.append('profile_pic', '');
         }
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
+        formData.append('_method', 'PUT'); // Spoof PUT request for Laravel
 
-        // Log FormData entries for debugging
-        console.log('FormData entries:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        const routeName = isEditMode ? 'members.update' : 'members.store';
-        const url = isEditMode ? route(routeName, newCustomer.id) : route(routeName);
-
-        router.post(url, formData, {
-            onSuccess: (page) => {
-                const returnedCustomer = page.props.customer || {
-                    ...newCustomer,
-                    id: page.props.customer?.id || newCustomer.id,
-                    user_id: page.props.customer?.user_id || newCustomer.id,
-                    phone_number: `${phoneCountryCode}${newCustomer.phone_number}`,
-                    profile_photo: profileImage || newCustomer.profile_photo,
-                    userDetails: newCustomer.addresses.map((addr) => ({
-                        address_type: addr.type,
-                        country: addr.country,
-                        state: addr.province,
-                        city: addr.city,
-                        zip: addr.zipCode,
-                        address: addr.address,
-                        status: addr.isMain ? 'active' : 'inactive',
-                    })),
-                };
-                if (isEditMode && currentCustomerIndex !== null) {
-                    const updatedCustomers = [...customers];
-                    updatedCustomers[currentCustomerIndex] = returnedCustomer;
-                    setCustomers(updatedCustomers);
-                } else {
-                    setCustomers([returnedCustomer, ...customers]);
-                }
-                setSuccessMessage(isEditMode ? 'Customer updated successfully!' : 'Customer added successfully!');
+        router.post(route('members.update', newCustomer.id), formData, {
+            onSuccess: () => {
+                setSuccessMessage('Customer updated successfully!');
                 setShowSuccess(true);
-                handleCloseAddForm();
+                setTimeout(() => router.get(route('members.index')), 2000); // Redirect after success
             },
             onError: (errors) => {
                 console.error('Validation errors:', errors);
                 setErrors(errors);
                 const errorMessages = Object.values(errors).filter(Boolean).join('; ');
-                setErrorMessage(errorMessages || 'Failed to add customer. Please check the form.');
+                setErrorMessage(errorMessages || 'Failed to update customer. Please check the form.');
                 setShowError(true);
             },
         });
@@ -266,7 +205,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     };
 
     const handleSaveAddress = () => {
-        console.log('Saving address:', newAddress);
         const updatedCustomer = { ...newCustomer };
         if (updatedCustomer.addresses.length === 0 || newAddress.isMain) {
             updatedCustomer.addresses = updatedCustomer.addresses.map((addr) => ({
@@ -290,9 +228,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
         setNewCustomer(updatedCustomer);
     };
 
-    const lastUserId = users.data.length > 0 ? users.data[0].user_id : 0;
-    const newMemberId = lastUserId + 1;
-
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -308,7 +243,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="h6" style={{ marginLeft: '10px' }}>
-                        {isEditMode ? 'Edit Customer Information' : 'Add Customer Information'}
+                        Edit Customer Information
                     </Typography>
                 </div>
                 <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '5px' }}>
@@ -316,7 +251,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                         <Grid item xs={12} md={6}>
                             <Box sx={{ p: 2, backgroundColor: '#F6F6F6', border: '1px solid #e0e0e0', borderRadius: '4px', mb: 2 }}>
                                 <Typography variant="body1">
-                                    Member Id: <strong>MEMBER{newMemberId}</strong>
+                                    Member Id: <strong>{customer?.user_id || 'N/A'}</strong>
                                 </Typography>
                             </Box>
                             <Box style={{ display: 'flex', gap: '10px' }}>
@@ -324,7 +259,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                     {profileImage ? (
                                         <div style={{ position: 'relative', width: '150px', height: '150px' }}>
                                             <img
-                                                src={profileImage || '/placeholder.svg'}
+                                                src={profileImage}
                                                 alt="Profile"
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
                                             />
@@ -360,7 +295,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                     )}
                                 </Box>
                                 <Box style={{ display: 'flex', flexDirection: 'column' }}>
-                                    {(isEditMode || profileImage) && (
+                                    {profileImage && (
                                         <div style={{ display: 'flex', gap: '5px', padding: '5px' }}>
                                             <label htmlFor="profile-image-upload-edit">
                                                 <Button size="small" sx={{ minWidth: 'auto', fontSize: '14px' }} component="span">
@@ -384,11 +319,9 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                             </Button>
                                         </div>
                                     )}
-                                    {!isEditMode && (
-                                        <Typography variant="body2" sx={{ mt: 1 }}>
-                                            Profile Picture
-                                        </Typography>
-                                    )}
+                                    <Typography variant="body2" sx={{ mt: 1 }}>
+                                        Profile Picture
+                                    </Typography>
                                     <Typography variant="caption" color="textSecondary">
                                         Click upload to change profile picture (4 MB max)
                                     </Typography>
@@ -410,9 +343,9 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                         }}
                                         control={
                                             <Radio
-                                                checked={newCustomer.customer_type === memberType.name}
+                                                checked={newCustomer.member_type === memberType.name}
                                                 onChange={handleInputChange}
-                                                name="customer_type"
+                                                name="member"
                                                 value={memberType.name}
                                             />
                                         }
@@ -474,11 +407,11 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         <FormControl variant="outlined" margin="normal" sx={{ minWidth: '90px' }}>
-                                            <Select value={phoneCountryCode} onChange={handlePhoneCountryCodeChange} native>
-                                                <option value="+702">+702</option>
-                                                <option value="+1">+1</option>
-                                                <option value="+44">+44</option>
-                                                <option value="+91">+91</option>
+                                            <Select value={phoneCountryCode} onChange={handlePhoneCountryCodeChange}>
+                                                <MenuItem value="+702">+702</MenuItem>
+                                                <MenuItem value="+1">+1</MenuItem>
+                                                <MenuItem value="+44">+44</MenuItem>
+                                                <MenuItem value="+91">+91</MenuItem>
                                             </Select>
                                         </FormControl>
                                         <TextField
@@ -632,7 +565,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                             <FormControl fullWidth margin="normal" variant="outlined">
                                                 <Select
                                                     displayEmpty
-                                                    value={newAddress.country}
+                                                    value={newAddress.province}
                                                     name="province"
                                                     onChange={handleAddressInputChange}
                                                     renderValue={(selected) => {
@@ -731,12 +664,9 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                 </>
                             )}
                             {!showAddressForm && (
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-                                    {/* <Button variant="outlined" onClick={handleCloseAddForm}>
-                                        Cancel
-                                    </Button> */}
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                                     <Button variant="contained" onClick={handleSaveCustomer} sx={{ backgroundColor: '#003366' }}>
-                                        {isEditMode ? 'Save Changes' : 'Save'}
+                                        Save Changes
                                     </Button>
                                 </Box>
                             )}

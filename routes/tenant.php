@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\App\MemberAddressController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\WaiterController;
@@ -151,6 +152,7 @@ Route::middleware([
             Route::get('/members', [MembersController::class, 'index'])->name('members.index');
             Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
             Route::post('/members', [MembersController::class, 'store'])->name('members.store');
+            Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
             Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
 
             // Waiter
