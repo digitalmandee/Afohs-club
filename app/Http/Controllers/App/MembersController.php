@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\AddressType;
 use App\Models\MemberType;
 use App\Models\User;
 use App\Models\UserDetail;
@@ -19,24 +20,21 @@ class MembersController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        // Filter users who have the 'user' role
         $users = User::with(['memberType'])
             ->latest()
-            ->role('user') // Filter users with the 'user' role
+            ->role('user')
             ->paginate($limit);
 
         $userDetail = User::with(['userDetail'])
             ->latest()
-            ->role('user') // Filter users with the 'user' role
+            ->role('user')
             ->paginate($limit);
 
         return Inertia::render('App/Member/Dashboard', [
             'users' => $users,
-            'userDetail' => $userDetail
+            'userDetail' => $userDetail,
         ]);
     }
-
-
 
     public function create(Request $request)
     {
@@ -45,10 +43,12 @@ class MembersController extends Controller
         $users = User::with(['memberType', 'userDetail'])->latest()->paginate($limit);
 
         $memberTypes = MemberType::all(['id', 'name']);
+        $addressTypes = AddressType::all(['id', 'name']);
 
         return Inertia::render('App/Member/AddCustomer', [
             'users' => $users,
             'memberTypes' => $memberTypes,
+            'addressTypes' => $addressTypes,
         ]);
     }
 
@@ -71,10 +71,9 @@ class MembersController extends Controller
                 'email' => 'required|email|max:255|unique:users,email',
                 'phone' => 'required|string|max:20',
                 'customer_type' => 'required|string|exists:member_types,name',
-                // 'member_type_id' => 'required|exists:member_types,id',
                 'profile_pic' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
-                'addresses.*.type' => 'required|string|in:House,Apartment,Office',
+                'addresses.*.type' => 'required|string|exists:address_types,name', // Validate against address_types table
                 'addresses.*.address' => 'required|string|max:255',
                 'addresses.*.city' => 'required|string|max:255',
                 'addresses.*.province' => 'required|string|max:255',
@@ -120,7 +119,7 @@ class MembersController extends Controller
                 }
             }
 
-            return redirect()->back()->with(['success' => 'Customer added successfully!',]);
+            return redirect()->back()->with(['success' => 'Customer added successfully!']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed: ' . json_encode($e->errors()));
             return redirect()->back()->withErrors($e->errors());
@@ -156,7 +155,7 @@ class MembersController extends Controller
                 'member_type_id' => 'required|exists:member_types,id',
                 'profile_pic' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
-                'addresses.*.type' => 'required|string|in:House,Apartment,Office',
+                'addresses.*.type' => 'required|string|exists:address_types,name', // Validate against address_types table
                 'addresses.*.address' => 'required|string|max:255',
                 'addresses.*.city' => 'required|string|max:255',
                 'addresses.*.province' => 'required|string|max:255',
@@ -192,7 +191,7 @@ class MembersController extends Controller
             if (!empty($validated['addresses'])) {
                 foreach ($validated['addresses'] as $address) {
                     UserDetail::create([
-                        'user_id' => $customer->user_id,
+                        'user_id' => $customer->id, // Fixed: Use $customer->id instead of user_id
                         'address_type' => $address['type'],
                         'country' => $address['country'],
                         'state' => $address['province'],
@@ -214,6 +213,7 @@ class MembersController extends Controller
                     'phone_number',
                     'member_type_id',
                     'profile_photo',
+                    'userDetails',
                 ]),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -232,10 +232,12 @@ class MembersController extends Controller
     {
         $customer = User::with(['memberType', 'userDetails'])->findOrFail($id);
         $memberTypes = MemberType::all(['id', 'name']);
+        $addressTypes = AddressType::all(['id', 'name']); // Pass address types
 
         return Inertia::render('App/Member/AddCustomer', [
             'customer' => $customer,
             'memberTypes' => $memberTypes,
+            'addressTypes' => $addressTypes,
         ]);
     }
 }

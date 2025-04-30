@@ -33,7 +33,7 @@ import {
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 
-export default function AddCustomer({ users, memberTypes, customer = null }) {
+export default function AddCustomer({ users, memberTypes, customer = null, addressTypes = [] }) {
     const drawerWidthOpen = 240;
     const drawerWidthClosed = 110;
 
@@ -70,7 +70,7 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
 
     const [showAddressForm, setShowAddressForm] = useState(false);
     const [newAddress, setNewAddress] = useState({
-        type: 'House',
+        type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
         address: '',
         city: '',
         province: '',
@@ -254,7 +254,7 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
 
     const handleShowAddressForm = () => {
         setNewAddress({
-            type: 'House',
+            type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
             address: '',
             city: '',
             province: '',
@@ -580,39 +580,24 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
                                         </IconButton>
                                     </Box>
                                     <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                                        <Button
-                                            variant={newAddress.type === 'House' ? 'contained' : 'outlined'}
-                                            onClick={() => setNewAddress({ ...newAddress, type: 'House' })}
-                                            sx={{
-                                                borderRadius: '20px',
-                                                backgroundColor: newAddress.type === 'House' ? '#1976d2' : 'transparent',
-                                                color: newAddress.type === 'House' ? 'white' : 'inherit',
-                                            }}
-                                        >
-                                            House
-                                        </Button>
-                                        <Button
-                                            variant={newAddress.type === 'Apartment' ? 'contained' : 'outlined'}
-                                            onClick={() => setNewAddress({ ...newAddress, type: 'Apartment' })}
-                                            sx={{
-                                                borderRadius: '20px',
-                                                backgroundColor: newAddress.type === 'Apartment' ? '#1976d2' : 'transparent',
-                                                color: newAddress.type === 'Apartment' ? 'white' : 'inherit',
-                                            }}
-                                        >
-                                            Apartment
-                                        </Button>
-                                        <Button
-                                            variant={newAddress.type === 'Office' ? 'contained' : 'outlined'}
-                                            onClick={() => setNewAddress({ ...newAddress, type: 'Office' })}
-                                            sx={{
-                                                borderRadius: '20px',
-                                                backgroundColor: newAddress.type === 'Office' ? '#1976d2' : 'transparent',
-                                                color: newAddress.type === 'Office' ? 'white' : 'inherit',
-                                            }}
-                                        >
-                                            Office
-                                        </Button>
+                                        {addressTypes.length > 0 ? (
+                                            addressTypes.map((type) => (
+                                                <Button
+                                                    key={type.id}
+                                                    variant={newAddress.type === type.name ? 'contained' : 'outlined'}
+                                                    onClick={() => setNewAddress({ ...newAddress, type: type.name })}
+                                                    sx={{
+                                                        borderRadius: '20px',
+                                                        backgroundColor: newAddress.type === type.name ? '#1976d2' : 'transparent',
+                                                        color: newAddress.type === type.name ? 'white' : 'inherit',
+                                                    }}
+                                                >
+                                                    {type.name}
+                                                </Button>
+                                            ))
+                                        ) : (
+                                            <Typography color="error">No address types available</Typography>
+                                        )}
                                     </Box>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Country
@@ -647,7 +632,7 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
                                             <FormControl fullWidth margin="normal" variant="outlined">
                                                 <Select
                                                     displayEmpty
-                                                    value={newAddress.province}
+                                                    value={newAddress.country}
                                                     name="province"
                                                     onChange={handleAddressInputChange}
                                                     renderValue={(selected) => {
@@ -740,18 +725,16 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
                                         margin="normal"
                                         variant="outlined"
                                     />
-                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                                        <Button variant="contained" onClick={handleSaveAddress} sx={{ backgroundColor: '#003366' }}>
-                                            Save
-                                        </Button>
-                                    </Box>
+                                    <Button variant="contained" onClick={handleSaveAddress} sx={{ backgroundColor: '#003366', mt: 2 }}>
+                                        Save Address
+                                    </Button>
                                 </>
                             )}
                             {!showAddressForm && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-                                    <Button variant="outlined" onClick={handleCloseAddForm}>
+                                    {/* <Button variant="outlined" onClick={handleCloseAddForm}>
                                         Cancel
-                                    </Button>
+                                    </Button> */}
                                     <Button variant="contained" onClick={handleSaveCustomer} sx={{ backgroundColor: '#003366' }}>
                                         {isEditMode ? 'Save Changes' : 'Save'}
                                     </Button>
