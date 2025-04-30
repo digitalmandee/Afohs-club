@@ -284,50 +284,6 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' }, // Chrome & Safari
                     }}
                 >
-
-                    {/* <List sx={{
-                        mt:2
-                    }}>
-                        {menuItems.map(({ text, icon, path }) => {
-                            const isSelected = url === path
-                            return (
-                                <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
-                                    <ListItemButton
-                                        onClick={() => router.visit(path)}
-                                        sx={{
-                                            minHeight: 50,
-                                            justifyContent: open ? 'initial' : 'center',
-                                            mx: open ? 0.5 : 3,
-                                            borderRadius: '12px',
-                                            backgroundColor: isSelected ? '#333' : 'transparent',
-                                            '&:hover': { backgroundColor: '#444' },
-                                        }}
-                                    >
-                                        <ListItemIcon
-                                            sx={{
-                                                minWidth: 0,
-                                                justifyContent: 'center',
-                                                mr: open ? 0.8 : 'auto',
-                                                ml: open ? -2 : 0,
-                                                '& svg': {
-                                                    fill: isSelected ? 'orange' : '#fff',
-                                                },
-                                            }}
-                                        >
-                                            {icon}
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={text}
-                                            sx={{
-                                                color: isSelected ? 'orange' : '#fff',
-                                                opacity: open ? 1 : 0,
-                                            }}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            )
-                        })}
-                    </List> */}
                     <List sx={{ mt: 2 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
@@ -398,9 +354,9 @@ export default function SideNav({ open, setOpen }) {
                                                             key={child.text}
                                                             disablePadding
                                                             sx={{
-                                                                mt:1,
+                                                                mt: 1,
                                                                 pl: 1,
-                                                                
+
                                                             }}
                                                         >
                                                             <ListItemButton
