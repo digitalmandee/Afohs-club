@@ -152,8 +152,8 @@ Route::middleware([
             Route::get('/members', [MembersController::class, 'index'])->name('members.index');
             Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
             Route::post('/members', [MembersController::class, 'store'])->name('members.store');
+            Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
             Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
-            // Route::get('//members/create', [MemberAddressController::class, 'index'])->name('MemberAddress');
 
             // Waiter
             // Waiter Dashboard

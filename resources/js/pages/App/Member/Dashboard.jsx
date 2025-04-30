@@ -1,4 +1,4 @@
-// pages/CustomerLists.jsx or similar
+// pages/CustomerLists.jsx
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';
@@ -27,7 +27,7 @@ import { useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const CustomerLists = ({ userDetail, users }) => {
+const CustomerLists = ({ userDetail, customer }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -84,6 +84,10 @@ const CustomerLists = ({ userDetail, users }) => {
 
     const handleCloseSuccess = () => {
         setShowSuccess(false);
+    };
+
+    const handleEditCustomer = (customerId) => {
+        router.get(route('members.edit', customerId));
     };
 
     return (
@@ -145,6 +149,7 @@ const CustomerLists = ({ userDetail, users }) => {
                                     <TableCell style={{ fontWeight: 'bold' }}>Type</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Address</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Create Order</TableCell>
+                                    <TableCell style={{ fontWeight: 'bold' }}>Edit</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -155,18 +160,11 @@ const CustomerLists = ({ userDetail, users }) => {
                                                 <TableCell>{user.user_id || 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        {/* <p>{user.profile_photo}</p> */}
                                                         <Avatar
                                                             src={`http://localhost:8000${user.profile_photo}`}
                                                             alt={user.name}
                                                             style={{ marginRight: '10px' }}
                                                         />
-                                                        {/* <img
-                                                            src={`http://localhost:8000${user.profile_photo}`}
-                                                            alt={user.name}
-                                                            style={{ width: '40px', height: '40px', borderRadius: '50%', marginRight: '10px' }}
-                                                        /> */}
-
                                                         <div>
                                                             <Typography variant="body1">{user.name || 'N/A'}</Typography>
                                                             <Typography variant="body2" color="textSecondary">
@@ -201,6 +199,22 @@ const CustomerLists = ({ userDetail, users }) => {
                                                         Order
                                                     </Button>
                                                 </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditCustomer(user.id);
+                                                        }}
+                                                        style={{
+                                                            backgroundColor: '#1976d2',
+                                                            fontSize: '12px',
+                                                            borderRadius: '20px',
+                                                            color: 'white',
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
@@ -208,14 +222,7 @@ const CustomerLists = ({ userDetail, users }) => {
                                             <TableCell>{user.user_id || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Avatar
-                                                        src={
-                                                            user.profile_photo
-                                                            // ||'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png'
-                                                        }
-                                                        alt={user.name}
-                                                        style={{ marginRight: '10px' }}
-                                                    />
+                                                    <Avatar src={user.profile_photo} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
                                                         <Typography variant="body1">{user.name || 'N/A'}</Typography>
                                                         <Typography variant="body2" color="textSecondary">
@@ -246,6 +253,22 @@ const CustomerLists = ({ userDetail, users }) => {
                                                     }}
                                                 >
                                                     Order
+                                                </Button>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEditCustomer(user.id);
+                                                    }}
+                                                    style={{
+                                                        backgroundColor: '#1976d2',
+                                                        fontSize: '12px',
+                                                        borderRadius: '20px',
+                                                        color: 'white',
+                                                    }}
+                                                >
+                                                    Edit
                                                 </Button>
                                             </TableCell>
                                         </TableRow>

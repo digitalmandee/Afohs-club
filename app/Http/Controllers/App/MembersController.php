@@ -231,10 +231,11 @@ class MembersController extends Controller
     public function edit(string $id)
     {
         $customer = User::with(['memberType', 'userDetails'])->findOrFail($id);
-        $memberTypes = MemberType::all(['id', 'name']);
-        $addressTypes = AddressType::all(['id', 'name']); // Pass address types
 
-        return Inertia::render('App/Member/AddCustomer', [
+        $memberTypes = MemberType::all(['id', 'name']);
+        $addressTypes = AddressType::all(['id', 'name']);
+
+        return Inertia::render('App/Member/EditCustomer', [
             'customer' => $customer,
             'memberTypes' => $memberTypes,
             'addressTypes' => $addressTypes,
