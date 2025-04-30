@@ -1,11 +1,14 @@
 import { router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import HomeIcon from '@mui/icons-material/Home';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { Avatar, Button } from '@mui/material';
+import { Avatar, Button, Collapse } from '@mui/material';
 import MuiAppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -22,16 +25,6 @@ import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
-// import LoginActivityScreen from './Activity';
-// import LogoutScreen from './Logout';
-// import NotificationsPanel from './Notification';
-// import EmployeeProfileScreen from './Profile';
-// import NewOrderDialog from "./order";
-import { Modal, Slide } from '@mui/material';
-// import tableicon from "../assets/Table management.svg";
-import KitchenIcon from '@/components/App/Icons/KitchenManagement';
-import MemberIcon from '@/components/App/Icons/Member';
-import TableIcon from '@/components/App/Icons/TableManagement';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -104,9 +97,41 @@ export default function SideNav({ open, setOpen }) {
     const [showProfile, setShowProfile] = React.useState(false);
     const [showOrder, setShowOrder] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
+
+    const [openDropdown, setOpenDropdown] = useState({});
+    const toggleDropdown = (text) => {
+        if (!open) return; // Prevent toggling if drawer is closed
+        setOpenDropdown((prev) => ({ ...prev, [text]: !prev[text] }));
+    };
+
+    // const menuItems = [
+    //     { text: 'Dashboard', icon: <HomeIcon />, path: '/admin/dashboard' },
+    //     { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/admin/booking/dashboard' },
+    // ];
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: '/admin/dashboard' },
-        { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/admin/booking/dashboard' },
+        {
+            text: 'Dashboard',
+            icon: <HomeIcon />,
+            path: '/admin/dashboard',
+        },
+        {
+            text: 'Room & Booking Event',
+            icon: <CalendarMonthIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: '/admin/booking/dashboard',
+                },
+                {
+                    text: 'Rooms',
+                    path: '/admin/booking/rooms',
+                },
+                {
+                    text: 'Events',
+                    path: '/admin/booking/events',
+                },
+            ],
+        },
     ];
 
     return (
@@ -171,30 +196,6 @@ export default function SideNav({ open, setOpen }) {
                         >
                             <img src="/assets/bell-notification.png" alt="" style={{ width: 17, height: 19 }} />
                         </IconButton>
-                        {/* <Modal open={showNotification} onClose={() => setShowNotification(false)} closeAfterTransition>
-                            <Slide direction="left" in={showNotification} mountOnEnter unmountOnExit>
-                                <Box
-                                    sx={{
-                                        position: 'fixed',
-                                        top: '10px',
-                                        bottom: '10px',
-                                        right: 10,
-                                        width: { xs: '100%', sm: 600 },
-                                        bgcolor: '#fff',
-                                        boxShadow: 4,
-                                        zIndex: 1300,
-                                        overflowY: 'auto',
-                                        borderRadius: 1,
-                                        scrollbarWidth: 'none', // Firefox
-                                        '&::-webkit-scrollbar': {
-                                            display: 'none', // Chrome, Safari, Edge
-                                        },
-                                    }}
-                                >
-                                    <NotificationsPanel onClose={() => setShowNotification(false)} />
-                                </Box>
-                            </Slide>
-                        </Modal> */}
 
                         {/* Vertical Divider */}
                         <Divider
@@ -234,33 +235,6 @@ export default function SideNav({ open, setOpen }) {
                                 <Typography sx={{ fontSize: '12px', color: '#666' }}>Admin</Typography>
                             </Box>
                         </Box>
-                        {/* <Modal open={showProfile} onClose={() => setShowProfile(false)} aria-labelledby="profile-modal" sx={{ zIndex: 1300 }}>
-                            <Box
-                                sx={{
-                                    position: 'fixed',
-                                    top: '10px',
-                                    bottom: '10px',
-                                    right: 10,
-                                    width: { xs: '100%', sm: 400 },
-                                    bgcolor: '#fff',
-                                    boxShadow: 4,
-                                    zIndex: 1300,
-                                    overflowY: 'auto',
-                                    borderRadius: 2,
-                                    scrollbarWidth: 'none',
-                                    '&::-webkit-scrollbar': { display: 'none' },
-                                }}
-                            >
-                                
-                                {profileView === 'profile' ? (
-                                    <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} />
-                                ) : profileView === 'loginActivity' ? (
-                                    <LoginActivityScreen setProfileView={setProfileView} />
-                                ) : profileView === 'logoutSuccess' ? (
-                                    <LogoutScreen setProfileView={setProfileView} />
-                                ) : null}
-                            </Box>
-                        </Modal> */}
                     </Box>
                 </Toolbar>
             </AppBar>
@@ -310,40 +284,10 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' }, // Chrome & Safari
                     }}
                 >
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            p: 1,
-                            mt: 2,
-                        }}
-                    >
-                        <Button
-                            variant="text"
-                            sx={{
-                                backgroundColor: '#0A2647',
-                                color: '#fff',
-                                '&:hover': { backgroundColor: '#09203F' },
-                                width: open ? '90%' : '100px',
-                                minWidth: '50px',
-                                height: '40px',
-                                fontSize: open ? '16px' : '12px',
-                                textTransform: 'none',
-                                overflow: 'hidden',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.3s ease-in-out',
-                            }}
-                            onClick={() => router.visit('/new/order')}
-                        >
-                            {open ? '+ New Order' : '+ New Order'}
-                        </Button>
-                    </Box>
 
-                    <List>
+                    {/* <List sx={{
+                        mt:2
+                    }}>
                         {menuItems.map(({ text, icon, path }) => {
                             const isSelected = url === path
                             return (
@@ -382,6 +326,110 @@ export default function SideNav({ open, setOpen }) {
                                     </ListItemButton>
                                 </ListItem>
                             )
+                        })}
+                    </List> */}
+                    <List sx={{ mt: 2 }}>
+                        {menuItems.map(({ text, icon, path, children }) => {
+                            const isDropdownOpen = openDropdown[text];
+                            const isSelected = url === path || (children && children.some(child => url === child.path));
+
+                            // Main ListItem (with or without dropdown)
+                            return (
+                                <Box key={text}>
+                                    <ListItem disablePadding sx={{ display: 'block', p: 0.5 }}>
+                                        <ListItemButton
+                                            onClick={() => {
+                                                if (children) {
+                                                    toggleDropdown(text);
+                                                } else {
+                                                    router.visit(path);
+                                                }
+                                            }}
+                                            sx={{
+                                                minHeight: 50,
+                                                justifyContent: open ? 'initial' : 'center',
+                                                mx: open ? 0.5 : 3,
+                                                borderRadius: '12px',
+                                                backgroundColor: isSelected ? '#333' : 'transparent',
+                                                '&:hover': { backgroundColor: '#444' },
+                                            }}
+                                        >
+                                            <ListItemIcon
+                                                sx={{
+                                                    minWidth: 0,
+                                                    justifyContent: 'center',
+                                                    mr: open ? 0.8 : 'auto',
+                                                    ml: open ? -2 : 0,
+                                                    '& svg': {
+                                                        fill: isSelected ? 'orange' : '#fff',
+                                                    },
+                                                }}
+                                            >
+                                                {icon}
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={text}
+                                                sx={{
+                                                    color: isSelected ? 'orange' : '#fff',
+                                                    opacity: open ? 1 : 0,
+                                                }}
+                                            />
+                                            {children && open && (
+                                                <KeyboardArrowRightIcon
+                                                    sx={{
+                                                        transform: isDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                                        transition: 'transform 0.2s',
+                                                        fill: '#fff',
+                                                        ml: 21.5,
+                                                    }}
+                                                />
+                                            )}
+                                        </ListItemButton>
+                                    </ListItem>
+
+                                    {/* Submenu Rendering */}
+                                    {children && open && isDropdownOpen && (
+                                        <Collapse in={isDropdownOpen} timeout="auto" unmountOnExit>
+                                            <List component="div" disablePadding>
+                                                {children.map((child) => {
+                                                    const isChildSelected = url === child.path;
+                                                    return (
+                                                        <ListItem
+                                                            key={child.text}
+                                                            disablePadding
+                                                            sx={{
+                                                                mt:1,
+                                                                pl: 1,
+                                                                
+                                                            }}
+                                                        >
+                                                            <ListItemButton
+                                                                onClick={() => router.visit(child.path)}
+                                                                sx={{
+                                                                    minHeight: 40,
+                                                                    justifyContent: 'initial',
+                                                                    mx: 3,
+                                                                    borderRadius: '12px',
+                                                                    backgroundColor: isChildSelected ? '#333' : 'transparent',
+                                                                    '&:hover': { backgroundColor: '#444' },
+                                                                }}
+                                                            >
+                                                                <ListItemText
+                                                                    primary={child.text}
+                                                                    sx={{
+                                                                        color: isChildSelected ? 'orange' : '#fff',
+                                                                        opacity: open ? 1 : 0,
+                                                                    }}
+                                                                />
+                                                            </ListItemButton>
+                                                        </ListItem>
+                                                    );
+                                                })}
+                                            </List>
+                                        </Collapse>
+                                    )}
+                                </Box>
+                            );
                         })}
                     </List>
                 </Box>
