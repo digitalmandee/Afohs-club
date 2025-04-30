@@ -63,9 +63,14 @@ class OrderController extends Controller
 
     public function getProducts($category_id)
     {
-        $products = Product::where('category_id', $category_id)->get();
+        $category = Category::find($category_id);
 
-        return response()->json(['success' => true, 'products' => $products], 200);
+        if ($category) {
+            $products = Product::where('category_id', $category_id)->get();
+            return response()->json(['success' => true, 'products' => $products], 200);
+        } else {
+            return response()->json(['success' => true, 'products' => []], 200);
+        }
     }
     public function getCategories()
     {

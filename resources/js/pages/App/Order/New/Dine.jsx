@@ -1,6 +1,5 @@
 'use client';
 
-import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import SearchIcon from '@mui/icons-material/Search';
@@ -28,7 +27,7 @@ import {
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 
-const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
+const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
     const [filterOption, setFilterOption] = useState('all');
     const [selectedTable, setSelectedTable] = useState('');
     const [formData, setFormData] = useState({ member: {} });
@@ -429,7 +428,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
                         },
                         textTransform: 'none',
                     }}
-                    onClick={() => router.visit('/all/order')}
+                    onClick={() => setShowProducts(true)}
                 >
                     Choose Menu
                 </Button>
