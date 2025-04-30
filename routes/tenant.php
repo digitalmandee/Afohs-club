@@ -6,6 +6,7 @@ use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\CategoryController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
+use App\Http\Controllers\App\WaiterController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
@@ -146,24 +147,20 @@ Route::middleware([
             Route::post('/members/address-types', [AddressTypeController::class, 'store'])->name('address-types.store');
             Route::put('/members/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
             Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
-            // users
-            // Route::get('members/create', [MembersController::class, 'index'])->name('members');
-            // Route::get('members/create', [MembersController::class, 'create'])->name('members.create');
-            // List all members (dashboard)
+            // member
             Route::get('/members', [MembersController::class, 'index'])->name('members.index');
-
-            // Show create form
             Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
-
-            // Store new member
             Route::post('/members', [MembersController::class, 'store'])->name('members.store');
-
-            // Update existing member
             Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
 
-
-
-            // Route::resource('members/create', MembersController::class)->except('show', 'edit');
+            // Waiter
+            // Waiter Dashboard
+            // routes/tenant.php
+            Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');
+            Route::get('/waiters/create', [WaiterController::class, 'create'])->name('waiters.create');
+            Route::post('/waiters', [WaiterController::class, 'store'])->name('waiters.store');
+            // Route::get('/waiters/{id}/edit', [WaiterController::class, 'edit'])->name('waiters.edit');
+            Route::put('/waiters/{id}', [WaiterController::class, 'update'])->name('waiters.update');
         });
         // End of Tenant Routes
 

@@ -13,26 +13,26 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class MembersController extends Controller
+class WaiterController extends Controller
 {
+
     public function index(Request $request)
     {
         $limit = $request->query('limit') ?? 10;
 
-        // Filter users who have the 'user' role
-        $users = User::with(['memberType'])
+        $users = User::role('waiter')
+            ->with('memberType')
             ->latest()
-            ->role('user') // Filter users with the 'user' role
             ->paginate($limit);
 
-        $userDetail = User::with(['userDetail'])
+        $userDetail = User::role('waiter')
+            ->with('userDetail')
             ->latest()
-            ->role('user') // Filter users with the 'user' role
             ->paginate($limit);
 
-        return Inertia::render('App/Member/Dashboard', [
+        return Inertia::render('App/Waiter/Dashboard', [
             'users' => $users,
-            'userDetail' => $userDetail
+            'userDetail' => $userDetail,
         ]);
     }
 
@@ -46,7 +46,7 @@ class MembersController extends Controller
 
         $memberTypes = MemberType::all(['id', 'name']);
 
-        return Inertia::render('App/Member/AddCustomer', [
+        return Inertia::render('App/Waiter/AddCustomer', [
             'users' => $users,
             'memberTypes' => $memberTypes,
         ]);
@@ -102,7 +102,7 @@ class MembersController extends Controller
             }
 
             $customer->save();
-            $customer->assignRole('user');
+            $customer->assignRole('waiter');
 
             // Create addresses if provided
             if (!empty($validated['addresses'])) {
@@ -233,7 +233,7 @@ class MembersController extends Controller
         $customer = User::with(['memberType', 'userDetails'])->findOrFail($id);
         $memberTypes = MemberType::all(['id', 'name']);
 
-        return Inertia::render('App/Member/AddCustomer', [
+        return Inertia::render('App/Waiter/AddCustomer', [
             'customer' => $customer,
             'memberTypes' => $memberTypes,
         ]);
