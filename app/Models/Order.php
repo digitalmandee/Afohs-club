@@ -20,10 +20,16 @@ class Order extends Model
         'start_date',
         'start_time',
         'status'
+
+
     ];
 
     public function orderTakings()
     {
         return $this->hasMany(OrderTaking::class);
+    }
+    public function table()
+    {
+        return $this->belongsTo(Table::class);
     }
 }

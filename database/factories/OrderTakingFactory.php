@@ -14,13 +14,11 @@ class OrderTakingFactory extends Factory
     {
         return [
             'order_id' => Order::factory(),
-            'order_item' => json_encode([
-                [
-                    'item' => $this->faker->word(),
-                    'qty' => $this->faker->numberBetween(1, 5),
-                    'price' => $this->faker->randomFloat(2, 10, 100),
-                ]
-            ]),
+            'order_item' => [
+                'item' => $this->faker->word(),
+                'qty' => $this->faker->numberBetween(1, 5),
+                'price' => $this->faker->randomFloat(2, 10, 100),
+            ],
             'status' => $this->faker->randomElement(['pending', 'completed', 'cancelled']),
         ];
     }
