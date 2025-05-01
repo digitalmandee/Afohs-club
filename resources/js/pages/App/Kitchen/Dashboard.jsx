@@ -314,7 +314,8 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                         <div style={{ padding: '12px' }}>
                                             {order.order_takings.map((item, idx) => {
                                                 const isEditable = order.status === 'in_progress';
-                                                const isCancelled = order.status === 'cancelled';
+                                                const isCancelled = item.status === 'cancelled';
+                                                const isActive = item.status === 'pending';
                                                 const isChecked = checkedItems[order.id]?.find((i) => i.id === item.id)?.checked || false;
 
                                                 return (
@@ -324,14 +325,15 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                                 variant="body1"
                                                                 style={{
                                                                     textDecoration: isCancelled ? 'line-through' : 'none',
-                                                                    color: isCancelled ? '#999' : undefined,
+                                                                    color: isCancelled ? 'red' : item.status === 'completed' ? 'green' : undefined,
                                                                 }}
                                                             >
-                                                                {item.order_item.item}
+                                                                {item.order_item.item} - {item.status}
                                                             </Typography>
+
                                                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                                                 <Typography variant="body2" style={{ marginRight: '8px' }}>
-                                                                    {item.order_item.qty}x {item.status}
+                                                                    {item.order_item.qty}x
                                                                 </Typography>
                                                                 <Checkbox
                                                                     disabled={!isEditable}
