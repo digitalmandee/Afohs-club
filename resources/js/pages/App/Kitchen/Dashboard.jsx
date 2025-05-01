@@ -146,10 +146,47 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     });
 
     const handleCheckboxChange = (orderId, itemId, checked) => {
+        // Update local state
         setCheckedItems((prev) => ({
             ...prev,
             [orderId]: prev[orderId].map((item) => (item.id === itemId ? { ...item, checked } : item)),
         }));
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('status', checked ? 'completed' : 'pending');
+
+        // Send POST request to update item status in the database
+        router.post(route('kitchen.item.update-status', { order: orderId, item: itemId }), formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setFilteredOrder((prev) =>
+                    prev.map((order) =>
+                        order.id === orderId
+                            ? {
+                                  ...order,
+                                  order_takings: order.order_takings.map((item) =>
+                                      item.id === itemId ? { ...item, status: checked ? 'completed' : 'pending' } : item,
+                                  ),
+                              }
+                            : order,
+                    ),
+                );
+            },
+            onError: (errors) => {
+                console.error('Item status update error:', errors);
+                setSnackbarMessage('Failed to update item status: ' + (errors.status || 'Unknown error'));
+                setSnackbarSeverity('error');
+                setSnackbarOpen(true);
+
+                // Revert local state on error to stay in sync with database
+                setCheckedItems((prev) => ({
+                    ...prev,
+                    [orderId]: prev[orderId].map((item) => (item.id === itemId ? { ...item, checked: !checked } : item)),
+                }));
+            },
+        });
     };
 
     const handleStatusChange = useCallback(
@@ -279,7 +316,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     #{order.id}
                                                 </Typography>
                                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Typography variant="body2">{order.start_time}</Typography>
+                                                    <Typography variant="body2">{order.order_time}</Typography>
                                                 </div>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center' }}>

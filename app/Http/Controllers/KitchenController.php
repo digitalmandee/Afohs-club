@@ -53,4 +53,24 @@ class KitchenController extends Controller
 
         return redirect()->back()->with('success', 'Order and item statuses updated successfully.');
     }
+
+    public function updateItemStatus(Request $request, $orderId, $itemId)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:pending,completed',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->with('error', 'Validation failed for item status.');
+        }
+
+        $orderTaking = OrderTaking::where('id', $itemId)
+            ->where('order_id', $orderId)
+            ->firstOrFail();
+
+        $orderTaking->status = $request->input('status');
+        $orderTaking->save();
+
+        return redirect()->back()->with('success', 'Item status updated successfully.');
+    }
 }
