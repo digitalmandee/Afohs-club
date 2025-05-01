@@ -25,27 +25,111 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
-    const [orderType, setOrderType] = useState('dineIn');
     const [open, setOpen] = useState(false);
-    const [selectedWeek, setSelectedWeek] = useState(2);
     const [showPorducts, setShowProducts] = useState(false);
+    const [showData, setShowData] = useState(false);
 
-    const weeks = [
-        { id: 1, label: 'Week 1', dateRange: '01 - 06 July' },
-        { id: 2, label: 'Week 2', dateRange: '07 - 13 July' },
-        { id: 3, label: 'Week 3', dateRange: '14 - 20 July' },
-        { id: 4, label: 'Week 4', dateRange: '21 - 27 July' },
-        { id: 5, label: 'Week 5', dateRange: '28 July - 03 August' },
-    ];
+    const [monthYear, setMonthYear] = useState(new Date());
 
-    const handleOrderTypeChange = (event, newOrderType) => {
-        if (newOrderType !== null) {
-            setOrderType(newOrderType);
+    const [orderDetails, setOrderDetails] = useState({
+        order_no: orderNo,
+        order_type: 'dineIn',
+        membership_type: memberTypes[0]?.id ?? '',
+        member: null,
+        person_count: 1,
+        waiter: null,
+        table: '',
+        floor: floorTables[0]?.id ?? '',
+        date: new Date(),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        order_items: [],
+        order_status: 'pending',
+    });
+
+    // select week and date
+    const [weeks, setWeeks] = useState([]);
+    const [selectedWeek, setSelectedWeek] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(null); // This will now hold a real Date object
+
+    // get weeks in month
+    const getWeeksInMonth = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const start = new Date(year, month, 1);
+        const end = new Date(year, month + 1, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let current = new Date(start);
+        const weeks = [];
+        let week = [];
+        let weekIndex = 1;
+
+        // Align to Sunday
+        current.setDate(current.getDate() - current.getDay());
+
+        while (current <= end || week.length > 0) {
+            const day = new Date(current);
+
+            const isInMonth = day.getMonth() === month;
+            const isFutureOrToday = day >= today;
+
+            if (isInMonth && isFutureOrToday) {
+                week.push(day);
+            } else {
+                week.push(null); // Push null to maintain day structure but mark invalid
+            }
+
+            if (week.length === 7) {
+                // Only include weeks with at least one valid day in current month
+                if (week.some((d) => d !== null)) {
+                    const filteredDays = week.map((d) => (d && d.getMonth() === month && d >= today ? d : null));
+                    const visibleDays = filteredDays.filter(Boolean);
+                    weeks.push({
+                        id: weekIndex++,
+                        label: `Week ${weeks.length + 1}`,
+                        dateRange: `${visibleDays[0].getDate().toString().padStart(2, '0')} ${visibleDays[0].toLocaleString('default', { month: 'short' })} - ${visibleDays.at(-1).getDate().toString().padStart(2, '0')} ${visibleDays.at(-1).toLocaleString('default', { month: 'short' })}`,
+                        days: filteredDays,
+                    });
+                }
+                week = [];
+            }
+
+            current.setDate(current.getDate() + 1);
+        }
+
+        return weeks;
+    };
+
+    // get weeks in month
+    useEffect(() => {
+        const newWeeks = getWeeksInMonth(new Date(monthYear));
+        setWeeks(newWeeks);
+        setSelectedWeek(newWeeks[1]?.id || null); // Default to Week 2, or Week 1
+    }, [monthYear]);
+
+    // change week
+    const handleWeekChange = (id) => {
+        setSelectedWeek(id);
+        const week = weeks.find((w) => w.id === id);
+        if (week) {
+            setSelectedDate(week.days[0]); // default select first day of week
         }
     };
 
-    const handleWeekChange = (weekId) => {
-        setSelectedWeek(weekId);
+    // change order details
+    const handleOrderDetailChange = (key, value) => {
+        setOrderDetails((prevOrderDetails) => ({
+            ...prevOrderDetails,
+            [key]: value,
+        }));
+    };
+
+    // change order type
+    const handleOrderTypeChange = (value) => {
+        if (value === null) return;
+        handleOrderDetailChange('order_type', value);
+        handleOrderDetailChange('member', '');
     };
 
     // slide to top when show products is change
@@ -74,14 +158,14 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                         sx={{
                             display: 'flex',
                             gap: 2,
-                            maxWidth: orderType === 'reservation' ? '1000px' : '732px',
+                            maxWidth: orderDetails.order_type === 'reservation' ? '1000px' : '732px',
                             mx: 'auto',
                             mt: 15,
                             mb: 5,
                         }}
                     >
                         {/* Select Week Panel - Only shown when reservation is selected */}
-                        {orderType === 'reservation' && (
+                        {orderDetails.order_type === 'reservation' && (
                             <Box sx={{ width: '320px', flexShrink: 0, mt: 35 }}>
                                 <Paper
                                     elevation={5}
@@ -113,9 +197,6 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                                         >
                                             Select Week
                                         </Typography>
-                                        {/* <IconButton size="small">
-                                        <HelpOutlineIcon fontSize="small" />
-                                    </IconButton> */}
                                         <img
                                             src="/assets/angle-right-circle.png"
                                             alt=""
@@ -128,65 +209,66 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
 
                                     {/* Week List */}
                                     <List disablePadding>
-                                        {weeks.map((week) => (
-                                            <ListItem
-                                                key={week.id}
-                                                disablePadding
-                                                onClick={() => handleWeekChange(week.id)}
-                                                sx={{
-                                                    px: 2.5,
-                                                    py: 1.5,
-                                                    borderRadius: '4px',
-                                                    bgcolor: selectedWeek === week.id ? '#B0DEFF' : 'transparent',
+                                        {weeks.length > 0 &&
+                                            weeks.map((week) => (
+                                                <ListItem
+                                                    key={week.id}
+                                                    disablePadding
+                                                    onClick={() => handleWeekChange(week.id)}
+                                                    sx={{
+                                                        px: 2.5,
+                                                        py: 1.5,
+                                                        borderRadius: '4px',
+                                                        bgcolor: selectedWeek === week.id ? '#B0DEFF' : 'transparent',
 
-                                                    border: selectedWeek === week.id ? '1px solid #063455' : '1px solid #E3E3E3',
-                                                    cursor: 'pointer',
-                                                    mb: 1.5,
-                                                    '&:last-child': {
-                                                        mb: 0,
-                                                    },
-                                                    '&:hover': {
-                                                        bgcolor: selectedWeek === week.id ? '#B0DEFF' : '#FFFFFF',
-                                                    },
-                                                }}
-                                            >
-                                                <ListItemText
-                                                    primary={
-                                                        <Typography
-                                                            variant="body1"
-                                                            sx={{
-                                                                fontWeight: 'medium',
-                                                            }}
-                                                        >
-                                                            {week.label}
-                                                        </Typography>
-                                                    }
-                                                    secondary={
-                                                        <Typography
-                                                            variant="body2"
-                                                            color="text.secondary"
-                                                            sx={{
-                                                                fontSize: '0.75rem',
-                                                            }}
-                                                        >
-                                                            {week.dateRange}
-                                                        </Typography>
-                                                    }
-                                                />
-                                                <ListItemSecondaryAction>
-                                                    <Radio
-                                                        checked={selectedWeek === week.id}
-                                                        onChange={() => handleWeekChange(week.id)}
-                                                        size="small"
-                                                        sx={{
-                                                            '&.Mui-checked': {
-                                                                color: '#1976d2',
-                                                            },
-                                                        }}
+                                                        border: selectedWeek === week.id ? '1px solid #063455' : '1px solid #E3E3E3',
+                                                        cursor: 'pointer',
+                                                        mb: 1.5,
+                                                        '&:last-child': {
+                                                            mb: 0,
+                                                        },
+                                                        '&:hover': {
+                                                            bgcolor: selectedWeek === week.id ? '#B0DEFF' : '#FFFFFF',
+                                                        },
+                                                    }}
+                                                >
+                                                    <ListItemText
+                                                        primary={
+                                                            <Typography
+                                                                variant="body1"
+                                                                sx={{
+                                                                    fontWeight: 'medium',
+                                                                }}
+                                                            >
+                                                                {week.label}
+                                                            </Typography>
+                                                        }
+                                                        secondary={
+                                                            <Typography
+                                                                variant="body2"
+                                                                color="text.secondary"
+                                                                sx={{
+                                                                    fontSize: '0.75rem',
+                                                                }}
+                                                            >
+                                                                {week.dateRange}
+                                                            </Typography>
+                                                        }
                                                     />
-                                                </ListItemSecondaryAction>
-                                            </ListItem>
-                                        ))}
+                                                    <ListItemSecondaryAction>
+                                                        <Radio
+                                                            checked={selectedWeek === week.id}
+                                                            onChange={() => handleWeekChange(week.id)}
+                                                            size="small"
+                                                            sx={{
+                                                                '&.Mui-checked': {
+                                                                    color: '#1976d2',
+                                                                },
+                                                            }}
+                                                        />
+                                                    </ListItemSecondaryAction>
+                                                </ListItem>
+                                            ))}
                                     </List>
 
                                     {/* Select Button */}
@@ -235,9 +317,9 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                                     Choose Order Type
                                 </Typography>
                                 <ToggleButtonGroup
-                                    value={orderType}
+                                    value={orderDetails.order_type}
                                     exclusive
-                                    onChange={handleOrderTypeChange}
+                                    onChange={(e, value) => handleOrderTypeChange(value)}
                                     aria-label="order type"
                                     sx={{
                                         width: '100%',
@@ -257,8 +339,8 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                                             flexDirection: 'column',
                                             textTransform: 'none',
                                             border: '1px solid #063455',
-                                            backgroundColor: orderType === 'dineIn' ? '#B0DEFF' : 'transparent',
-                                            color: orderType === 'dineIn' ? '#1976d2' : 'inherit',
+                                            backgroundColor: orderDetails.order_type === 'dineIn' ? '#B0DEFF' : 'transparent',
+                                            color: orderDetails.order_type === 'dineIn' ? '#1976d2' : 'inherit',
                                             '&.Mui-selected': {
                                                 backgroundColor: '#B0DEFF',
                                                 color: '#1976d2',
@@ -271,7 +353,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                                         <FoodIcon
                                             sx={{
                                                 mb: 0.5,
-                                                color: orderType === 'dineIn' ? '#063455' : 'inherit',
+                                                color: orderDetails.order_type === 'dineIn' ? '#063455' : 'inherit',
                                             }}
                                         />
                                         <Typography variant="body2">Dine In</Typography>
@@ -298,7 +380,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                                         <ShopIcon
                                             sx={{
                                                 mb: 0.5,
-                                                fill: orderType === 'takeaway' ? '#063455' : 'inherit',
+                                                fill: orderDetails.order_type === 'takeaway' ? '#063455' : 'inherit',
                                             }}
                                         />
                                         <Typography variant="body2">Takeaway</Typography>
@@ -325,21 +407,67 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                                         <SofaIcon
                                             sx={{
                                                 mb: 0.5,
-                                                fill: orderType === 'reservation' ? '#063455' : 'inherit',
+                                                fill: orderDetails.order_type === 'reservation' ? '#063455' : 'inherit',
                                             }}
                                         />
                                         <Typography variant="body2">Reservation</Typography>
                                     </ToggleButton>
                                 </ToggleButtonGroup>
                             </Box>
-                            {orderType === 'dineIn' && (
-                                <DineDialog orderNo={orderNo} memberTypes={memberTypes} floorTables={floorTables} setShowProducts={setShowProducts} />
+
+                            {/* =====  */}
+                            {orderDetails.order_type === 'dineIn' && (
+                                <DineDialog
+                                    memberTypes={memberTypes}
+                                    floorTables={floorTables}
+                                    setShowProducts={setShowProducts}
+                                    orderDetails={orderDetails}
+                                    handleOrderDetailChange={handleOrderDetailChange}
+                                />
                             )}
-                            {orderType === 'takeaway' && <TakeAwayDialog orderNo={orderNo} memberTypes={memberTypes} />}
-                            {orderType === 'reservation' && <ReservationDialog />}
+                            {orderDetails.order_type === 'takeaway' && (
+                                <TakeAwayDialog
+                                    setShowProducts={setShowProducts}
+                                    orderDetails={orderDetails}
+                                    handleOrderDetailChange={handleOrderDetailChange}
+                                />
+                            )}
+                            {orderDetails.order_type === 'reservation' && (
+                                <ReservationDialog
+                                    floorTables={floorTables}
+                                    setShowProducts={setShowProducts}
+                                    orderDetails={orderDetails}
+                                    handleOrderDetailChange={handleOrderDetailChange}
+                                    weeks={weeks}
+                                    selectedWeek={selectedWeek}
+                                    selectedDate={selectedDate}
+                                    setSelectedDate={setSelectedDate}
+                                    monthYear={monthYear}
+                                    setMonthYear={setMonthYear}
+                                />
+                            )}
                         </Paper>
                     </Box>
                 )}
+            </div>
+
+            <div
+                style={{
+                    position: 'fixed',
+                    bottom: '0',
+                    left: '0',
+                    backgroundColor: 'white',
+                    zIndex: '9999',
+                    maxWidth: '300px',
+                    overflow: 'auto',
+                    border: '1px solid #ccc',
+                }}
+            >
+                <div
+                    style={{ width: '40px', height: '40px', backgroundColor: 'red', borderRadius: '50%' }}
+                    onClick={() => setShowData(!showData)}
+                ></div>
+                {showData && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(orderDetails, null, 2)}</pre>}
             </div>
         </>
     );

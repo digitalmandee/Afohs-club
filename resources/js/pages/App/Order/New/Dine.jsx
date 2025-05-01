@@ -27,13 +27,8 @@ import {
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 
-const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
+const DineDialog = ({ memberTypes, floorTables, setShowProducts, orderDetails, handleOrderDetailChange }) => {
     const [filterOption, setFilterOption] = useState('all');
-    const [selectedTable, setSelectedTable] = useState('');
-    const [formData, setFormData] = useState({ member: {} });
-    const [membershipType, setMembershipType] = useState(memberTypes[0]?.id ?? '');
-    const [selectedWaiter, setSelectedWaiter] = useState('');
-    const [selectedFloor, setSelectedFloor] = useState(floorTables[0]?.id ?? '');
     const [searchTerm, setSearchTerm] = useState('');
     const [members, setMembers] = useState([]);
     const [waiters, setWaiters] = useState([]);
@@ -67,7 +62,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
     const handleSearch = async (event, role) => {
         const query = event?.target?.value;
         if (query) {
-            const results = await searchUser(query, role, membershipType);
+            const results = await searchUser(query, role, orderDetails.membership_type);
             if (role === 'user') setMembers(results);
             else setWaiters(results);
         } else {
@@ -77,13 +72,13 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
     };
 
     const handleAutocompleteChange = (event, value, field) => {
-        setFormData({ ...formData, [field]: value });
+        handleOrderDetailChange(field, value);
         // setErrors({ ...errors, [field]: '' }); // Clear error on change
     };
 
     const handleMembershipType = (value) => {
-        setMembershipType(value);
-        setFormData({ ...formData, member: {} });
+        handleOrderDetailChange('membership_type', value);
+        handleOrderDetailChange('member', {});
         setMembers([]);
     };
 
@@ -93,7 +88,12 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
         }
     };
 
-    const currentFloor = floorTables.find((f) => f.id === selectedFloor);
+    const handleFloorChange = (value) => {
+        handleOrderDetailChange('floor', value);
+        handleOrderDetailChange('table', '');
+    };
+
+    const currentFloor = floorTables.find((f) => f.id === orderDetails.floor);
 
     const filteredTables = currentFloor?.tables?.filter((table) => {
         if (filterOption === 'available' && !table.available) return false;
@@ -124,7 +124,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
                             marginLeft: 2,
                         }}
                     >
-                        #{orderNo}
+                        #{orderDetails.order_no}
                     </Typography>
                 </Box>
             </Box>
@@ -132,7 +132,12 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
             {/* Membership Type Selection */}
             <Box sx={{ px: 2, mb: 2 }}>
                 <FormControl component="fieldset">
-                    <RadioGroup row name="membership-type" value={membershipType} onChange={(e) => handleMembershipType(e.target.value)}>
+                    <RadioGroup
+                        row
+                        name="membership-type"
+                        value={orderDetails.membership_type}
+                        onChange={(e) => handleMembershipType(e.target.value)}
+                    >
                         <Box
                             sx={{
                                 display: 'flex',
@@ -142,7 +147,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
                             }}
                         >
                             {memberTypes.map((option) => {
-                                const isSelected = membershipType === option.id;
+                                const isSelected = orderDetails.membership_type === option.id;
                                 return (
                                     <Box
                                         key={option.id}
@@ -189,7 +194,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
                         freeSolo
                         size="small"
                         options={members}
-                        value={formData.member}
+                        value={orderDetails.member}
                         getOptionLabel={(option) => option?.name || ''}
                         onInputChange={(event, value) => handleSearch(event, 'user')}
                         onChange={(event, value) => handleAutocompleteChange(event, value, 'member')}
@@ -224,7 +229,14 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
                         Customer Qty
                     </Typography>
                     <Box sx={{ display: 'flex' }}>
-                        <TextField size="small" type="number" defaultValue="10" sx={{ width: '60%' }} />
+                        <TextField
+                            size="small"
+                            value={orderDetails.person_count}
+                            onChange={(e) => handleOrderDetailChange('person_count', e.target.value)}
+                            min={1}
+                            type="number"
+                            sx={{ width: '60%' }}
+                        />
                         <Button
                             variant="outlined"
                             sx={{
@@ -247,7 +259,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
                     freeSolo
                     size="small"
                     options={waiters}
-                    value={formData.waiter}
+                    value={orderDetails.waiter}
                     getOptionLabel={(option) => option?.name || ''}
                     onInputChange={(event, value) => handleSearch(event, 'waiter')}
                     onChange={(event, value) => handleAutocompleteChange(event, value, 'waiter')}
@@ -289,7 +301,13 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
                 {/* Select Floor */}
                 <FormControl sx={{ marginLeft: 1 }}>
                     <InputLabel id="select-floor">Floor</InputLabel>
-                    <Select labelId="select-floor" id="floor" value={selectedFloor} label="Floor" onChange={(e) => setSelectedFloor(e.target.value)}>
+                    <Select
+                        labelId="select-floor"
+                        id="floor"
+                        value={orderDetails.floor}
+                        label="Floor"
+                        onChange={(e) => handleFloorChange(e.target.value)}
+                    >
                         {floorTables.map((item, index) => (
                             <MenuItem value={item.id} key={index}>
                                 {item.name}
@@ -343,7 +361,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
 
             {/* Table Selection */}
             <Box sx={{ px: 2, mb: 2 }}>
-                <RadioGroup value={selectedTable} onChange={(e) => setSelectedTable(e.target.value)}>
+                <RadioGroup value={orderDetails.table} onChange={(e) => handleOrderDetailChange('table', e.target.value)}>
                     <Grid container spacing={1}>
                         {filteredTables.map((table) => (
                             <Grid item xs={6} key={table.id}>
@@ -351,8 +369,8 @@ const DineDialog = ({ orderNo, memberTypes, floorTables, setShowProducts }) => {
                                     elevation={0}
                                     sx={{
                                         p: 1.5,
-                                        bgcolor: table.id === selectedTable ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
-                                        border: table.id === selectedTable ? '1px solid #A27B5C' : '1px solid #e0e0e0',
+                                        bgcolor: table.id === orderDetails.table ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
+                                        border: table.id === orderDetails.table ? '1px solid #A27B5C' : '1px solid #e0e0e0',
                                         borderRadius: 1,
                                         opacity: table.available ? 1 : 0.7,
                                     }}
