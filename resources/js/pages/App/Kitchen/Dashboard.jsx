@@ -10,6 +10,7 @@ import {
     Print as PrintIcon,
 } from '@mui/icons-material';
 import {
+    Alert,
     Button,
     Checkbox,
     Chip,
@@ -22,26 +23,54 @@ import {
     MenuItem,
     Paper,
     Select,
+    Snackbar,
     Typography,
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const OrderManagement = ({ kitchenOrders }) => {
+const OrderManagement = ({ kitchenOrders, flash }) => {
     const [open, setOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('All Order');
+    const [checkedItems, setCheckedItems] = useState(
+        (kitchenOrders || []).reduce((acc, order) => {
+            acc[order.id] = order.order_takings.map((item) => ({
+                id: item.id,
+                checked: item.status === 'completed',
+            }));
+            return acc;
+        }, {}),
+    );
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-    // Filter states
     const [datePeriod, setDatePeriod] = useState('');
     const [fromDate, setFromDate] = useState('Jan 01, 2024');
     const [toDate, setToDate] = useState('August 01, 2024');
     const [statusFilters, setStatusFilters] = useState(['All']);
     const [orderTypeFilters, setOrderTypeFilters] = useState(['All']);
-    const [filteredOrder, setFilteredOrder] = useState([]);
+    const [filteredOrder, setFilteredOrder] = useState(kitchenOrders || []);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setSnackbarMessage(flash.success);
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+        } else if (flash?.error) {
+            setSnackbarMessage(flash.error);
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+        }
+    }, [flash]);
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
+    };
 
     const handleFilterOpen = () => {
         setFilterOpen(true);
@@ -51,7 +80,6 @@ const OrderManagement = ({ kitchenOrders }) => {
         setFilterOpen(false);
     };
 
-    // Modify the handleTabChange function to filter orders
     const handleTabChange = (tab) => {
         setActiveTab(tab);
     };
@@ -69,7 +97,6 @@ const OrderManagement = ({ kitchenOrders }) => {
                 : statusFilters.includes(status)
                   ? statusFilters.filter((s) => s !== status)
                   : [...statusFilters, status];
-
             setStatusFilters(newFilters.length ? newFilters : ['All']);
         }
     };
@@ -83,7 +110,6 @@ const OrderManagement = ({ kitchenOrders }) => {
                 : orderTypeFilters.includes(type)
                   ? orderTypeFilters.filter((t) => t !== type)
                   : [...orderTypeFilters, type];
-
             setOrderTypeFilters(newFilters.length ? newFilters : ['All']);
         }
     };
@@ -97,12 +123,9 @@ const OrderManagement = ({ kitchenOrders }) => {
     };
 
     const applyFilters = () => {
-        // Apply filter logic here
         handleFilterClose();
     };
 
-    // Filter tabs
-    // Filter tabs with dynamic counts
     const tabs = [
         { id: 'All Order', count: null },
         { id: 'New Order', count: kitchenOrders?.filter((o) => o.status === 'New Order').length || 0 },
@@ -111,16 +134,10 @@ const OrderManagement = ({ kitchenOrders }) => {
         { id: 'Refund', count: kitchenOrders?.filter((o) => o.status === 'Refund').length || 0 },
     ];
 
-    // Date period options
     const datePeriods = ['Yesterday', 'Last Week', 'Last Month', 'Last 3 Month', 'Last Year', 'Custom Date'];
-
-    // Status filter options
     const statusOptions = ['All', 'New Order', 'Refund', 'Process', 'Done'];
-
-    // Order type filter options
     const orderTypeOptions = ['All', 'Dine', 'Pickup', 'Delivery', 'Takeaway', 'Reservation'];
 
-    // Filter orders based on active tab
     const filteredOrders = (kitchenOrders || []).filter((order) => {
         if (activeTab === 'All Order') {
             return true;
@@ -129,30 +146,57 @@ const OrderManagement = ({ kitchenOrders }) => {
         }
     });
 
+    const handleCheckboxChange = (orderId, itemId, checked) => {
+        setCheckedItems((prev) => ({
+            ...prev,
+            [orderId]: prev[orderId].map((item) => (item.id === itemId ? { ...item, checked } : item)),
+        }));
+    };
+
     const handleStatusChange = useCallback(
-        (e, orderId, currentStatus) => {
+        (e, orderId) => {
             e.preventDefault();
 
-            let nextStatus = null;
-            if (currentStatus === 'pending') nextStatus = 'in_progress';
-            else if (currentStatus === 'in_progress') nextStatus = 'completed';
-            else return;
+            const order = kitchenOrders.find((o) => o.id === orderId);
+            const newOrderStatus = order.status === 'pending' ? 'in_progress' : 'completed';
+
+            const itemStatuses = checkedItems[orderId].map((item) => ({
+                id: item.id,
+                status: item.checked ? 'completed' : 'pending',
+            }));
 
             const formData = new FormData();
-            formData.append('status', nextStatus);
+            formData.append('status', newOrderStatus);
+            formData.append('items', JSON.stringify(itemStatuses));
 
-            router.post(route('kitchen.update', orderId), formData, {
+            router.post(route('kitchen.update-all', orderId), formData, {
                 forceFormData: true,
                 preserveScroll: true,
                 onSuccess: () => {
-                    setFilteredOrder((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: nextStatus } : order)));
+                    setFilteredOrder((prev) =>
+                        prev.map((order) =>
+                            order.id === orderId
+                                ? {
+                                      ...order,
+                                      status: newOrderStatus,
+                                      order_takings: order.order_takings.map((item) => {
+                                          const updatedItem = itemStatuses.find((i) => i.id === item.id);
+                                          return updatedItem ? { ...item, status: updatedItem.status } : item;
+                                      }),
+                                  }
+                                : order,
+                        ),
+                    );
                 },
                 onError: (errors) => {
                     console.error('Status update error:', errors);
+                    setSnackbarMessage('Failed to update statuses: ' + (errors.status || 'Unknown error'));
+                    setSnackbarSeverity('error');
+                    setSnackbarOpen(true);
                 },
             });
         },
-        [setFilteredOrder],
+        [checkedItems, setFilteredOrder, kitchenOrders],
     );
 
     return (
@@ -166,7 +210,6 @@ const OrderManagement = ({ kitchenOrders }) => {
                 }}
             >
                 <div className="container-fluid p-3">
-                    {/* Header with tabs and filter */}
                     <div
                         className="d-flex justify-content-between align-items-center mb-3 p-3"
                         style={{ backgroundColor: '#eeeeee', borderRadius: '10px' }}
@@ -206,242 +249,127 @@ const OrderManagement = ({ kitchenOrders }) => {
                         </Button>
                     </div>
 
-                    {/* Order cards grid */}
                     <div className="row m-1 p-2" style={{ backgroundColor: '#fbfbfb', borderRadius: '10px' }}>
-                        {filteredOrders.map((order, index) => {
+                        {filteredOrders.map((order) => {
                             const latestStatus = order.order_takings?.slice(-1)[0]?.status;
                             const orderTaking = order.order_takings?.slice(-1)[0];
 
                             return (
-                                <>
-                                    <div key={order.id} className="col-md-3 mb-3">
-                                        {/* {JSON.stringify(order.order_takings[0].status, null, 2)} */}
-
-                                        <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                                            {/* Order header */}
-                                            <div
-                                                style={{
-                                                    backgroundColor:
-                                                        order.status === 'completed'
-                                                            ? '#4CAF50'
-                                                            : order.status === 'pending'
-                                                              ? '#1565C0'
-                                                              : order.status === 'in_progress'
-                                                                ? '#003366'
-                                                                : '#00BCD4',
-                                                    color: 'white',
-                                                    padding: '12px',
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <div>
-                                                    <Typography variant="h6" style={{ fontWeight: 'bold' }}>
-                                                        #{order.id}
-                                                    </Typography>
-                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Typography variant="body2">{order.start_time}</Typography>
-                                                    </div>
-                                                </div>
-
+                                <div key={order.id} className="col-md-3 mb-3">
+                                    <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                                        <div
+                                            style={{
+                                                backgroundColor:
+                                                    order.status === 'completed'
+                                                        ? '#4CAF50'
+                                                        : order.status === 'pending'
+                                                          ? '#1565C0'
+                                                          : order.status === 'in_progress'
+                                                            ? '#003366'
+                                                            : '#00BCD4',
+                                                color: 'white',
+                                                padding: '12px',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                            }}
+                                        >
+                                            <div>
+                                                <Typography variant="h6" style={{ fontWeight: 'bold' }}>
+                                                    #{order.id}
+                                                </Typography>
                                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <div
-                                                        style={{
-                                                            backgroundColor: '#1976D2',
-                                                            width: '36px',
-                                                            height: '36px',
-                                                            borderRadius: '50%',
-                                                            display: 'flex',
-                                                            justifyContent: 'center',
-                                                            alignItems: 'center',
-                                                            marginRight: '8px',
-                                                        }}
-                                                    >
-                                                        <Typography variant="body2">{order.table_id}</Typography>
-                                                    </div>
-                                                    <IconButton size="small" style={{ color: 'white' }}>
-                                                        {orderTaking.status === 'DE' ? <DiningIcon /> : <DeliveryIcon />}
-                                                    </IconButton>
+                                                    <Typography variant="body2">{order.start_time}</Typography>
                                                 </div>
                                             </div>
+                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                <div
+                                                    style={{
+                                                        backgroundColor: '#1976D2',
+                                                        width: '36px',
+                                                        height: '36px',
+                                                        borderRadius: '50%',
+                                                        display: 'flex',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        marginRight: '8px',
+                                                    }}
+                                                >
+                                                    <Typography variant="body2">{order.table_id}</Typography>
+                                                </div>
+                                                <IconButton size="small" style={{ color: 'white' }}>
+                                                    {orderTaking.status === 'DE' ? <DiningIcon /> : <DeliveryIcon />}
+                                                </IconButton>
+                                            </div>
+                                        </div>
 
-                                            {/* Order items */}
-                                            <div style={{ padding: '12px' }}>
-                                                {order.order_takings.map((item, idx) => {
-                                                    const isEditable = order.status === 'in_progress';
-                                                    const isCancelled = order.status === 'cancelled';
+                                        <div style={{ padding: '12px' }}>
+                                            {order.order_takings.map((item, idx) => {
+                                                const isEditable = order.status === 'in_progress';
+                                                const isCancelled = order.status === 'cancelled';
+                                                const isChecked = checkedItems[order.id]?.find((i) => i.id === item.id)?.checked || false;
 
-                                                    return (
-                                                        <div key={idx} style={{ marginBottom: '8px' }}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                <Typography
-                                                                    variant="body1"
-                                                                    style={{
-                                                                        textDecoration: isCancelled ? 'line-through' : 'none',
-                                                                        color: isCancelled ? '#999' : undefined,
-                                                                    }}
-                                                                >
-                                                                    {item.order_item.item}
+                                                return (
+                                                    <div key={idx} style={{ marginBottom: '8px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <Typography
+                                                                variant="body1"
+                                                                style={{
+                                                                    textDecoration: isCancelled ? 'line-through' : 'none',
+                                                                    color: isCancelled ? '#999' : undefined,
+                                                                }}
+                                                            >
+                                                                {item.order_item.item}
+                                                            </Typography>
+                                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                <Typography variant="body2" style={{ marginRight: '8px' }}>
+                                                                    {item.order_item.qty}x {item.status}
                                                                 </Typography>
-                                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                                    <Typography variant="body2" style={{ marginRight: '8px' }}>
-                                                                        {item.order_item.qty}x
-                                                                    </Typography>
-                                                                    <Checkbox
-                                                                        disabled={!isEditable}
-                                                                        // checked={item.checked}
-                                                                        size="small"
-                                                                        style={{
-                                                                            color: item.checked ? '#1976D2' : undefined,
-                                                                            padding: '2px',
-                                                                        }}
-                                                                    />
-                                                                </div>
+                                                                <Checkbox
+                                                                    disabled={!isEditable}
+                                                                    checked={isChecked}
+                                                                    onChange={(e) => handleCheckboxChange(order.id, item.id, e.target.checked)}
+                                                                    size="small"
+                                                                    style={{
+                                                                        color: isChecked ? '#1976D2' : undefined,
+                                                                        padding: '2px',
+                                                                    }}
+                                                                />
                                                             </div>
                                                         </div>
-                                                    );
-                                                })}
-                                            </div>
-
-                                            {/* Order actions */}
-                                            <div
-                                                style={{
-                                                    borderTop: '1px solid #eee',
-                                                    padding: '8px',
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                }}
-                                            >
-                                                <IconButton size="small">
-                                                    <PrintIcon fontSize="small" />
-                                                </IconButton>
-
-                                                {['pending', 'in_progress'].includes(order.status) && (
-                                                    <Button
-                                                        variant="contained"
-                                                        fullWidth
-                                                        style={{
-                                                            marginLeft: '8px',
-                                                            backgroundColor: order.status === 'pending' ? '#1565C0' : '#003366',
-                                                            textTransform: 'none',
-                                                        }}
-                                                        onClick={(e) => handleStatusChange(e, order.id, order.status)}
-                                                    >
-                                                        {order.status === 'pending' ? 'Start' : 'Finish'}
-                                                    </Button>
-                                                )}
-
-                                                {/* {order.status === 'completed' && (
-                                                    <div style={{ display: 'flex', marginLeft: '8px' }}>
-                                                        <Button
-                                                            variant="outlined"
-                                                            style={{
-                                                                marginRight: '4px',
-                                                                textTransform: 'none',
-                                                                borderColor: '#e0e0e0',
-                                                                color: '#333',
-                                                            }}
-                                                        >
-                                                            Reject
-                                                        </Button>
-                                                        <Button
-                                                            variant="contained"
-                                                            style={{
-                                                                backgroundColor: '#00BCD4',
-                                                                textTransform: 'none',
-                                                                color: 'white',
-                                                            }}
-                                                        >
-                                                            Refund
-                                                        </Button>
                                                     </div>
-                                                )} */}
+                                                );
+                                            })}
+                                        </div>
 
-                                                {/* {order.status === 'pending' && (
-                                                    <Button
-                                                        variant="contained"
-                                                        fullWidth
-                                                        style={{
-                                                            marginLeft: '8px',
-                                                            backgroundColor: '#1565C0',
-                                                            textTransform: 'none',
-                                                        }}
-                                                    >
-                                                        Start
-                                                    </Button>
-                                                )}
-
-                                                {order.status === 'in_progress' && (
-                                                    <Button
-                                                        variant="contained"
-                                                        fullWidth
-                                                        style={{
-                                                            marginLeft: '8px',
-                                                            backgroundColor: '#003366',
-                                                            textTransform: 'none',
-                                                        }}
-                                                    >
-                                                        In Progress
-                                                    </Button>
-                                                )}
-                                                {order.status === 'completed' && (
-                                                    <Button
-                                                        variant="contained"
-                                                        fullWidth
-                                                        style={{
-                                                            marginLeft: '8px',
-                                                            backgroundColor: '#4CAF50',
-                                                            textTransform: 'none',
-                                                        }}
-                                                    >
-                                                        Finish
-                                                    </Button>
-                                                )}
-
-                                                {order.action === 'Print Receipt' && (
-                                                    <Button
-                                                        variant="text"
-                                                        startIcon={<PrintIcon />}
-                                                        style={{
-                                                            marginLeft: '8px',
-                                                            color: '#333',
-                                                            textTransform: 'none',
-                                                        }}
-                                                    >
-                                                        Print Receipt
-                                                    </Button>
-                                                )}
-
-                                                {order.action === 'Refund' && (
-                                                    <div style={{ display: 'flex', marginLeft: '8px' }}>
-                                                        <Button
-                                                            variant="outlined"
-                                                            style={{
-                                                                marginRight: '4px',
-                                                                textTransform: 'none',
-                                                                borderColor: '#e0e0e0',
-                                                                color: '#333',
-                                                            }}
-                                                        >
-                                                            Reject
-                                                        </Button>
-                                                        <Button
-                                                            variant="contained"
-                                                            style={{
-                                                                backgroundColor: '#00BCD4',
-                                                                textTransform: 'none',
-                                                                color: 'white',
-                                                            }}
-                                                        >
-                                                            Refund
-                                                        </Button>
-                                                    </div>
-                                                )} */}
-                                            </div>
-                                        </Paper>
-                                    </div>
-                                </>
+                                        <div
+                                            style={{
+                                                borderTop: '1px solid #eee',
+                                                padding: '8px',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                            }}
+                                        >
+                                            <IconButton size="small">
+                                                <PrintIcon fontSize="small" />
+                                            </IconButton>
+                                            {['pending', 'in_progress'].includes(order.status) && (
+                                                <Button
+                                                    variant="contained"
+                                                    fullWidth
+                                                    style={{
+                                                        marginLeft: '8px',
+                                                        backgroundColor: order.status === 'pending' ? '#1565C0' : '#003366',
+                                                        textTransform: 'none',
+                                                    }}
+                                                    onClick={(e) => handleStatusChange(e, order.id)}
+                                                >
+                                                    {order.status === 'pending' ? 'Start' : 'Finish'}
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </Paper>
+                                </div>
                             );
                         })}
                     </div>
@@ -478,9 +406,7 @@ const OrderManagement = ({ kitchenOrders }) => {
                                 <CloseIcon />
                             </IconButton>
                         </DialogTitle>
-
                         <DialogContent style={{ padding: '0 24px' }}>
-                            {/* Date Period */}
                             <div style={{ marginBottom: '24px' }}>
                                 <Typography variant="subtitle2" style={{ marginBottom: '12px' }}>
                                     Date Period
@@ -514,8 +440,6 @@ const OrderManagement = ({ kitchenOrders }) => {
                                     />
                                 </div>
                             </div>
-
-                            {/* Date Range */}
                             <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
                                 <div style={{ flex: 1 }}>
                                     <Typography variant="body2" style={{ marginBottom: '8px' }}>
@@ -542,8 +466,6 @@ const OrderManagement = ({ kitchenOrders }) => {
                                     </FormControl>
                                 </div>
                             </div>
-
-                            {/* Status */}
                             <div style={{ marginBottom: '24px' }}>
                                 <Typography variant="subtitle2" style={{ marginBottom: '12px' }}>
                                     Status
@@ -575,8 +497,6 @@ const OrderManagement = ({ kitchenOrders }) => {
                                     ))}
                                 </div>
                             </div>
-
-                            {/* Order Type */}
                             <div style={{ marginBottom: '24px' }}>
                                 <Typography variant="subtitle2" style={{ marginBottom: '12px' }}>
                                     Order Type
@@ -603,7 +523,6 @@ const OrderManagement = ({ kitchenOrders }) => {
                                 </div>
                             </div>
                         </DialogContent>
-
                         <DialogActions style={{ padding: '16px 24px', justifyContent: 'space-between' }}>
                             <Button onClick={handleFilterClose} style={{ color: '#666', textTransform: 'none' }}>
                                 Cancel
@@ -636,6 +555,16 @@ const OrderManagement = ({ kitchenOrders }) => {
                     </Dialog>
                 </div>
             </div>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 };
