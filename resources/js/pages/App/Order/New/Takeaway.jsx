@@ -1,10 +1,14 @@
+import { useOrderStore } from '@/stores/useOrderStore';
+import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import { Autocomplete, Box, Button, Grid, InputAdornment, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 
-const TakeAwayDialog = ({ setShowProducts, orderDetails, handleOrderDetailChange }) => {
+const TakeAwayDialog = () => {
+    const { orderDetails, handleOrderDetailChange } = useOrderStore();
+
     const [members, setMembers] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
 
@@ -145,7 +149,7 @@ const TakeAwayDialog = ({ setShowProducts, orderDetails, handleOrderDetailChange
                         },
                         textTransform: 'none',
                     }}
-                    onClick={() => setShowProducts(true)}
+                    onClick={() => router.visit(route('order.menu'))}
                 >
                     Choose Menu
                 </Button>

@@ -1,3 +1,5 @@
+import { useOrderStore } from '@/stores/useOrderStore';
+import { router } from '@inertiajs/react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -11,18 +13,9 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { useCallback, useState } from 'react';
 
-const ReservationDialog = ({
-    setShowProducts,
-    orderDetails,
-    handleOrderDetailChange,
-    weeks,
-    selectedWeek,
-    selectedDate,
-    setSelectedDate,
-    monthYear,
-    setMonthYear,
-}) => {
-    const [orderType, setOrderType] = useState('reservation');
+const ReservationDialog = () => {
+    const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
+
     const [paymentType, setPaymentType] = useState('percentage');
     const [selectedTime, setSelectedTime] = useState('10:00 am');
     const [customTime, setCustomTime] = useState(false);
@@ -173,7 +166,7 @@ const ReservationDialog = ({
                                     <TextField
                                         size="small"
                                         type="number"
-                                        value={orderDetails.customer_qty}
+                                        value={orderDetails.person_count}
                                         onChange={(e) => handleOrderDetailChange('person_count', e.target.value)}
                                         sx={{
                                             width: '60%',
@@ -511,7 +504,7 @@ const ReservationDialog = ({
                                 },
                                 textTransform: 'none',
                             }}
-                            onClick={() => setShowProducts(true)}
+                            onClick={() => router.visit(route('order.menu'))}
                         >
                             Choose Menu
                         </Button>

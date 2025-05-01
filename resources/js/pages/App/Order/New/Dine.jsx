@@ -1,5 +1,7 @@
 'use client';
 
+import { useOrderStore } from '@/stores/useOrderStore';
+import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import SearchIcon from '@mui/icons-material/Search';
@@ -27,7 +29,9 @@ import {
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 
-const DineDialog = ({ memberTypes, floorTables, setShowProducts, orderDetails, handleOrderDetailChange }) => {
+const DineDialog = ({ memberTypes, floorTables }) => {
+    const { orderDetails, handleOrderDetailChange } = useOrderStore();
+
     const [filterOption, setFilterOption] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [members, setMembers] = useState([]);
@@ -95,11 +99,13 @@ const DineDialog = ({ memberTypes, floorTables, setShowProducts, orderDetails, h
 
     const currentFloor = floorTables.find((f) => f.id === orderDetails.floor);
 
-    const filteredTables = currentFloor?.tables?.filter((table) => {
-        if (filterOption === 'available' && !table.available) return false;
-        const keyword = searchTerm.toLowerCase();
-        return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
-    });
+    const filteredTables = currentFloor?.tables?.length
+        ? currentFloor.tables.filter((table) => {
+              if (filterOption === 'available' && !table.available) return false;
+              const keyword = searchTerm.toLowerCase();
+              return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
+          })
+        : [];
 
     return (
         <Box>
@@ -363,57 +369,58 @@ const DineDialog = ({ memberTypes, floorTables, setShowProducts, orderDetails, h
             <Box sx={{ px: 2, mb: 2 }}>
                 <RadioGroup value={orderDetails.table} onChange={(e) => handleOrderDetailChange('table', e.target.value)}>
                     <Grid container spacing={1}>
-                        {filteredTables.map((table) => (
-                            <Grid item xs={6} key={table.id}>
-                                <Paper
-                                    elevation={0}
-                                    sx={{
-                                        p: 1.5,
-                                        bgcolor: table.id === orderDetails.table ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
-                                        border: table.id === orderDetails.table ? '1px solid #A27B5C' : '1px solid #e0e0e0',
-                                        borderRadius: 1,
-                                        opacity: table.available ? 1 : 0.7,
-                                    }}
-                                >
-                                    <Box
+                        {filteredTables.length > 0 &&
+                            filteredTables.map((table) => (
+                                <Grid item xs={6} key={table.id}>
+                                    <Paper
+                                        elevation={0}
                                         sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
+                                            p: 1.5,
+                                            bgcolor: table.id === orderDetails.table ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
+                                            border: table.id === orderDetails.table ? '1px solid #A27B5C' : '1px solid #e0e0e0',
+                                            borderRadius: 1,
+                                            opacity: table.available ? 1 : 0.7,
                                         }}
                                     >
-                                        <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                                            {table.table_no}
-                                        </Typography>
                                         <Box
                                             sx={{
                                                 display: 'flex',
+                                                justifyContent: 'space-between',
                                                 alignItems: 'center',
                                             }}
                                         >
-                                            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                {table.capacity} person
+                                            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                                                {table.table_no}
                                             </Typography>
-                                            {table.available ? (
-                                                <FormControlLabel
-                                                    value={table.id}
-                                                    control={<Radio size="small" />}
-                                                    label=""
-                                                    sx={{
-                                                        m: 0,
-                                                        color: '#063455',
-                                                    }}
-                                                />
-                                            ) : (
-                                                <Typography variant="caption" sx={{ color: '#063455' }}>
-                                                    {table.table_no.split('-')[0]} - Full
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                }}
+                                            >
+                                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                                    {table.capacity} person
                                                 </Typography>
-                                            )}
+                                                {table.available ? (
+                                                    <FormControlLabel
+                                                        value={table.id}
+                                                        control={<Radio size="small" />}
+                                                        label=""
+                                                        sx={{
+                                                            m: 0,
+                                                            color: '#063455',
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Typography variant="caption" sx={{ color: '#063455' }}>
+                                                        {table.table_no.split('-')[0]} - Full
+                                                    </Typography>
+                                                )}
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                </Paper>
-                            </Grid>
-                        ))}
+                                    </Paper>
+                                </Grid>
+                            ))}
                     </Grid>
                 </RadioGroup>
             </Box>
@@ -446,7 +453,7 @@ const DineDialog = ({ memberTypes, floorTables, setShowProducts, orderDetails, h
                         },
                         textTransform: 'none',
                     }}
-                    onClick={() => setShowProducts(true)}
+                    onClick={() => router.visit(route('order.menu'))}
                 >
                     Choose Menu
                 </Button>

@@ -31,6 +31,11 @@ class OrderController extends Controller
         return Inertia::render('App/Order/New/Index', compact('orderNo', 'memberTypes', 'floorTables'));
     }
 
+    public function orderMenu(Request $request)
+    {
+        return Inertia::render('App/Order/OrderMenu');
+    }
+
     // Get next order number
     private function getOrderNo()
     {

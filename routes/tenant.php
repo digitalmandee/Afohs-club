@@ -49,7 +49,8 @@ Route::middleware([
             });
 
             // Order Management
-            Route::get('/new/order', [OrderController::class, 'index'])->name('order.index');
+            Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
+            Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
             // for member and waiter
             Route::get('/user/search', [OrderController::class, 'searchMember'])->name('user.search');
             // get products

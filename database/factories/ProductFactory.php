@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -16,7 +17,7 @@ class ProductFactory extends Factory
             'menu_code' => $this->faker->bothify('MC-###'),
             'description' => $this->faker->paragraph(),
             'images' => [$this->faker->imageUrl()],
-            'category_id' => 1,
+            'category_id' => Category::factory(),
             'base_price' => $this->faker->randomFloat(2, 10, 100),
             'cost_of_goods_sold' => $this->faker->randomFloat(2, 5, 50),
             'current_stock' => $this->faker->numberBetween(0, 100),
