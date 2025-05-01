@@ -1,6 +1,7 @@
 'use client';
 
 import SideNav from '@/components/App/SideBar/SideNav';
+import { router } from '@inertiajs/react';
 import {
     Close as CloseIcon,
     DirectionsCar as DeliveryIcon,
@@ -10,6 +11,7 @@ import {
 } from '@mui/icons-material';
 import {
     Button,
+    Checkbox,
     Chip,
     Dialog,
     DialogActions,
@@ -23,7 +25,7 @@ import {
     Typography,
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -39,6 +41,7 @@ const OrderManagement = ({ kitchenOrders }) => {
     const [toDate, setToDate] = useState('August 01, 2024');
     const [statusFilters, setStatusFilters] = useState(['All']);
     const [orderTypeFilters, setOrderTypeFilters] = useState(['All']);
+    const [filteredOrder, setFilteredOrder] = useState([]);
 
     const handleFilterOpen = () => {
         setFilterOpen(true);
@@ -98,191 +101,6 @@ const OrderManagement = ({ kitchenOrders }) => {
         handleFilterClose();
     };
 
-    // Sample order data
-    const orders = [
-        {
-            id: '#009',
-            table: 'T9',
-            time: '00:04',
-            items: [
-                {
-                    name: 'Cappucino',
-                    quantity: 2,
-                    checked: false,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'Normal', topping: 'Boba' },
-                },
-                { name: 'Soda Beverage', quantity: 3, checked: false },
-                { name: 'French Toast Sugar', quantity: 3, checked: false },
-                { name: 'Chocolate Croissant', quantity: 2, checked: false },
-            ],
-            status: 'New Order',
-        },
-        {
-            id: '#008',
-            table: 'T1',
-            time: '02:02',
-            items: [
-                {
-                    name: 'Cappucino',
-                    quantity: 1,
-                    checked: false,
-                    details: { temperature: 'Ice', size: 'Regular', sugar: 'No' },
-                },
-                { name: 'Sandwich vegan', quantity: 1, checked: false },
-            ],
-            status: 'New Order',
-            action: 'Start',
-        },
-        {
-            id: '#008',
-            table: 'P1',
-            time: '00:04',
-            items: [
-                { name: 'Eggs Benedict Burger', quantity: 1, checked: false },
-                { name: 'Seafood Lunch', quantity: 3, checked: false },
-            ],
-            status: 'New Order',
-            action: 'Start',
-        },
-        {
-            id: '#006',
-            table: 'T8',
-            time: '08:10',
-            items: [
-                {
-                    name: 'Ristretto Bianco',
-                    quantity: 3,
-                    checked: true,
-                    details: { temperature: 'Hot', size: 'Medium', sugar: 'Normal' },
-                },
-                { name: 'Buttermilk waffle', quantity: 1, checked: false },
-                { name: 'French Toast Sugar', quantity: 1, checked: false },
-                { name: 'Chocolate Croissant', quantity: 1, checked: false },
-            ],
-            status: 'Process',
-            action: 'Finish',
-        },
-        {
-            id: '#005',
-            table: 'T4',
-            time: '08:15',
-            items: [
-                {
-                    name: 'Ristretto Bianco',
-                    quantity: 3,
-                    checked: true,
-                    details: { temperature: 'Hot', size: 'Medium', sugar: 'Normal' },
-                },
-                { name: 'Buttermilk waffle', quantity: 1, checked: true },
-                { name: 'French Toast Sugar', quantity: 1, checked: true },
-                { name: 'Chocolate Croissant', quantity: 1, checked: false },
-            ],
-            status: 'Process',
-        },
-        {
-            id: '#001',
-            table: 'T12',
-            time: '12:02',
-            items: [
-                {
-                    name: 'Vegan Iced Latte',
-                    quantity: 1,
-                    checked: true,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'No' },
-                },
-                { name: 'Sandwich vegan', quantity: 2, checked: true },
-            ],
-            status: 'Done',
-            action: 'Print Receipt',
-        },
-        {
-            id: '#002',
-            table: 'DE',
-            time: '12:02',
-            items: [
-                {
-                    name: 'Orange Juice',
-                    quantity: 1,
-                    checked: true,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'No' },
-                },
-                { name: 'Eggs Benedict Burger', quantity: 2, checked: true },
-            ],
-            status: 'Done',
-            action: 'Print Receipt',
-        },
-        {
-            id: '#001',
-            table: 'T2',
-            time: '02:02',
-            items: [
-                {
-                    name: 'Cappucino',
-                    quantity: 2,
-                    checked: true,
-                    details: { refund: { reason: 'Incorrect Order', amount: '$4.00' } },
-                },
-                { name: 'Soda Beverage', quantity: 3, checked: true },
-                { name: 'French Toast Sugar', quantity: 3, checked: true },
-                { name: 'Chocolate Croissant', quantity: 2, checked: false },
-            ],
-            status: 'Refund',
-            showMore: true,
-            action: 'Refund',
-        },
-        {
-            id: '#001',
-            table: 'T12',
-            time: '12:02',
-            items: [
-                {
-                    name: 'Vegan Iced Latte',
-                    quantity: 1,
-                    checked: true,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'No' },
-                },
-                { name: 'Sandwich vegan', quantity: 2, checked: true },
-            ],
-            status: 'Done',
-            action: 'Print Receipt',
-        },
-        {
-            id: '#001',
-            table: 'T2',
-            time: '12:02',
-            items: [
-                {
-                    name: 'Vegan Iced Latte',
-                    quantity: 1,
-                    checked: true,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'No' },
-                },
-                { name: 'Sandwich vegan', quantity: 2, checked: true },
-            ],
-            status: 'Done',
-            action: 'Print Receipt',
-        },
-        {
-            id: '#001',
-            table: 'T2',
-            time: '02:02',
-            items: [
-                {
-                    name: 'Cappucino',
-                    quantity: 2,
-                    checked: true,
-                    details: { refund: { reason: 'Customer Change Mind', amount: '$10.00' } },
-                },
-                { name: 'Soda Beverage', quantity: 3, checked: true },
-                { name: 'French Toast Sugar', quantity: 3, checked: true },
-                { name: 'Chocolate Croissant', quantity: 2, checked: false },
-            ],
-            status: 'Refund',
-            showMore: true,
-            action: 'Refund',
-        },
-    ];
-
     // Filter tabs
     // Filter tabs with dynamic counts
     const tabs = [
@@ -310,6 +128,32 @@ const OrderManagement = ({ kitchenOrders }) => {
             return order.status === activeTab;
         }
     });
+
+    const handleStatusChange = useCallback(
+        (e, orderId, currentStatus) => {
+            e.preventDefault();
+
+            let nextStatus = null;
+            if (currentStatus === 'pending') nextStatus = 'in_progress';
+            else if (currentStatus === 'in_progress') nextStatus = 'completed';
+            else return;
+
+            const formData = new FormData();
+            formData.append('status', nextStatus);
+
+            router.post(route('kitchen.update', orderId), formData, {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setFilteredOrder((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: nextStatus } : order)));
+                },
+                onError: (errors) => {
+                    console.error('Status update error:', errors);
+                },
+            });
+        },
+        [setFilteredOrder],
+    );
 
     return (
         <>
@@ -364,214 +208,270 @@ const OrderManagement = ({ kitchenOrders }) => {
 
                     {/* Order cards grid */}
                     <div className="row m-1 p-2" style={{ backgroundColor: '#fbfbfb', borderRadius: '10px' }}>
-                        {filteredOrders.map((order, index) => (
-                            <div key={index} className="col-md-3 mb-3">
-                                <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                                    {/* Order header */}
-                                    <div
-                                        style={{
-                                            backgroundColor:
-                                                order.status === 'Done'
-                                                    ? '#4CAF50'
-                                                    : order.status === 'Process'
-                                                      ? '#1565C0'
-                                                      : order.status === 'New Order'
-                                                        ? '#003366'
-                                                        : '#00BCD4',
-                                            color: 'white',
-                                            padding: '12px',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                        }}
-                                    >
-                                        <div>
-                                            <Typography variant="h6" style={{ fontWeight: 'bold' }}>
-                                                {order.id}
-                                            </Typography>
-                                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                <Typography variant="body2">{order.time}</Typography>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {filteredOrders.map((order, index) => {
+                            const orderTaking = order.order_takings?.slice(-1)[0];
+
+                            return (
+                                <>
+                                    <div key={order.id} className="col-md-3 mb-3">
+                                        {/* {JSON.stringify(order.order_takings[0].status, null, 2)} */}
+
+                                        <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                                            {/* Order header */}
                                             <div
                                                 style={{
-                                                    backgroundColor: '#1976D2',
-                                                    width: '36px',
-                                                    height: '36px',
-                                                    borderRadius: '50%',
+                                                    backgroundColor:
+                                                        order.status === 'completed'
+                                                            ? '#4CAF50'
+                                                            : order.status === 'pending'
+                                                              ? '#1565C0'
+                                                              : order.status === 'in_progress'
+                                                                ? '#003366'
+                                                                : '#00BCD4',
+                                                    color: 'white',
+                                                    padding: '12px',
                                                     display: 'flex',
-                                                    justifyContent: 'center',
+                                                    justifyContent: 'space-between',
                                                     alignItems: 'center',
-                                                    marginRight: '8px',
                                                 }}
                                             >
-                                                <Typography variant="body2">{order.table_id}</Typography>
-                                            </div>
-                                            <IconButton size="small" style={{ color: 'white' }}>
-                                                {order.status === 'DE' ? <DeliveryIcon /> : <DiningIcon />}
-                                            </IconButton>
-                                        </div>
-                                    </div>
-                                    {/* <div>
-                                        <p>{order.order_takings.id}</p>
-                                        {order.order_takings.map((item, idx) => (
-                                            <div>
-                                                <p>{item.order_item.item}</p>
-                                            </div>
-                                        ))}
-                                    </div> */}
-
-                                    {/* Order items */}
-                                    <div style={{ padding: '12px' }}>
-                                        {order.order_takings.map((item, idx) => (
-                                            <div key={idx} style={{ marginBottom: '8px' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <Typography variant="body1">{item.order_item.item}</Typography>
+                                                <div>
+                                                    <Typography variant="h6" style={{ fontWeight: 'bold' }}>
+                                                        #{order.id}
+                                                        {}
+                                                    </Typography>
                                                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Typography variant="body2" style={{ marginRight: '8px' }}>
-                                                            {item.order_item.qty}
-                                                        </Typography>
-                                                        {/* <Checkbox
-                                                            checked={item.checked}
-                                                            size="small"
-                                                            style={{
-                                                                color: item.checked ? '#1976D2' : undefined,
-                                                                padding: '2px',
-                                                            }}
-                                                        /> */}
+                                                        <Typography variant="body2">{order.start_time}</Typography>
                                                     </div>
                                                 </div>
 
-                                                {item.details && !item.details.refund && (
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
                                                     <div
                                                         style={{
-                                                            display: 'grid',
-                                                            gridTemplateColumns: '1fr 1fr',
-                                                            fontSize: '12px',
-                                                            color: '#666',
-                                                            marginTop: '4px',
+                                                            backgroundColor: '#1976D2',
+                                                            width: '36px',
+                                                            height: '36px',
+                                                            borderRadius: '50%',
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
+                                                            marginRight: '8px',
                                                         }}
                                                     >
-                                                        {Object.entries(item.details).map(([key, value]) => (
-                                                            <React.Fragment key={key}>
-                                                                <div>{key.charAt(0).toUpperCase() + key.slice(1)}</div>
-                                                                <div style={{ textAlign: 'right' }}>{value}</div>
-                                                            </React.Fragment>
-                                                        ))}
+                                                        <Typography variant="body2">{order.table_id}</Typography>
+                                                    </div>
+                                                    <IconButton size="small" style={{ color: 'white' }}>
+                                                        {orderTaking.status === 'DE' ? <DiningIcon /> : <DeliveryIcon />}
+                                                    </IconButton>
+                                                </div>
+                                            </div>
+
+                                            {/* Order items */}
+                                            <div style={{ padding: '12px' }}>
+                                                {order.order_takings.map((item, idx) => (
+                                                    <div key={idx} style={{ marginBottom: '8px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <Typography variant="body1">{item.order_item.item}</Typography>
+                                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                <Typography variant="body2" style={{ marginRight: '8px' }}>
+                                                                    {item.order_item.qty}x
+                                                                </Typography>
+                                                                <Checkbox
+                                                                    // checked={item.checked}
+                                                                    size="small"
+                                                                    style={{
+                                                                        color: item.checked ? '#1976D2' : undefined,
+                                                                        padding: '2px',
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* {item.details && !item.details.refund && (
+                                                            <div
+                                                                style={{
+                                                                    display: 'grid',
+                                                                    gridTemplateColumns: '1fr 1fr',
+                                                                    fontSize: '12px',
+                                                                    color: '#666',
+                                                                    marginTop: '4px',
+                                                                }}
+                                                            >
+                                                                {Object.entries(item.details).map(([key, value]) => (
+                                                                    <React.Fragment key={key}>
+                                                                        <div>{key.charAt(0).toUpperCase() + key.slice(1)}</div>
+                                                                        <div style={{ textAlign: 'right' }}>{value}</div>
+                                                                    </React.Fragment>
+                                                                ))}
+                                                            </div>
+                                                        )} */}
+
+                                                        {/* {item.details && item.details.refund && (
+                                                            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                                    <div>Reason</div>
+                                                                    <div>{item.details.refund.reason}</div>
+                                                                </div>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                                    <div>Refund Amount</div>
+                                                                    <div>{item.details.refund.amount}</div>
+                                                                </div>
+                                                            </div>
+                                                        )} */}
+                                                    </div>
+                                                ))}
+
+                                                {/* {order.showMore && (
+                                                    <Button
+                                                        variant="text"
+                                                        size="small"
+                                                        style={{ color: '#666', textTransform: 'none', padding: '0', fontSize: '12px' }}
+                                                    >
+                                                        Show More (2)
+                                                    </Button>
+                                                )} */}
+                                            </div>
+
+                                            {/* Order actions */}
+                                            <div
+                                                style={{
+                                                    borderTop: '1px solid #eee',
+                                                    padding: '8px',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                }}
+                                            >
+                                                <IconButton size="small">
+                                                    <PrintIcon fontSize="small" />
+                                                </IconButton>
+
+                                                {['pending', 'in_progress'].includes(order.status) && (
+                                                    <Button
+                                                        variant="contained"
+                                                        fullWidth
+                                                        style={{
+                                                            marginLeft: '8px',
+                                                            backgroundColor: order.status === 'pending' ? '#1565C0' : '#1976D2',
+                                                            textTransform: 'none',
+                                                        }}
+                                                        onClick={(e) => handleStatusChange(e, order.id, order.status)}
+                                                    >
+                                                        {order.status === 'pending' ? 'Start' : 'Finish'}
+                                                    </Button>
+                                                )}
+
+                                                {order.status === 'completed' && (
+                                                    <div style={{ display: 'flex', marginLeft: '8px' }}>
+                                                        <Button
+                                                            variant="outlined"
+                                                            style={{
+                                                                marginRight: '4px',
+                                                                textTransform: 'none',
+                                                                borderColor: '#e0e0e0',
+                                                                color: '#333',
+                                                            }}
+                                                        >
+                                                            Reject
+                                                        </Button>
+                                                        <Button
+                                                            variant="contained"
+                                                            style={{
+                                                                backgroundColor: '#00BCD4',
+                                                                textTransform: 'none',
+                                                                color: 'white',
+                                                            }}
+                                                        >
+                                                            Refund
+                                                        </Button>
                                                     </div>
                                                 )}
 
-                                                {item.details && item.details.refund && (
-                                                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <div>Reason</div>
-                                                            <div>{item.details.refund.reason}</div>
-                                                        </div>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <div>Refund Amount</div>
-                                                            <div>{item.details.refund.amount}</div>
-                                                        </div>
-                                                    </div>
+                                                {/* {order.status === 'pending' && (
+                                                    <Button
+                                                        variant="contained"
+                                                        fullWidth
+                                                        style={{
+                                                            marginLeft: '8px',
+                                                            backgroundColor: '#1565C0',
+                                                            textTransform: 'none',
+                                                        }}
+                                                    >
+                                                        Start
+                                                    </Button>
                                                 )}
+
+                                                {order.status === 'in_progress' && (
+                                                    <Button
+                                                        variant="contained"
+                                                        fullWidth
+                                                        style={{
+                                                            marginLeft: '8px',
+                                                            backgroundColor: '#003366',
+                                                            textTransform: 'none',
+                                                        }}
+                                                    >
+                                                        In Progress
+                                                    </Button>
+                                                )}
+                                                {order.status === 'completed' && (
+                                                    <Button
+                                                        variant="contained"
+                                                        fullWidth
+                                                        style={{
+                                                            marginLeft: '8px',
+                                                            backgroundColor: '#4CAF50',
+                                                            textTransform: 'none',
+                                                        }}
+                                                    >
+                                                        Finish
+                                                    </Button>
+                                                )}
+
+                                                {order.action === 'Print Receipt' && (
+                                                    <Button
+                                                        variant="text"
+                                                        startIcon={<PrintIcon />}
+                                                        style={{
+                                                            marginLeft: '8px',
+                                                            color: '#333',
+                                                            textTransform: 'none',
+                                                        }}
+                                                    >
+                                                        Print Receipt
+                                                    </Button>
+                                                )}
+
+                                                {order.action === 'Refund' && (
+                                                    <div style={{ display: 'flex', marginLeft: '8px' }}>
+                                                        <Button
+                                                            variant="outlined"
+                                                            style={{
+                                                                marginRight: '4px',
+                                                                textTransform: 'none',
+                                                                borderColor: '#e0e0e0',
+                                                                color: '#333',
+                                                            }}
+                                                        >
+                                                            Reject
+                                                        </Button>
+                                                        <Button
+                                                            variant="contained"
+                                                            style={{
+                                                                backgroundColor: '#00BCD4',
+                                                                textTransform: 'none',
+                                                                color: 'white',
+                                                            }}
+                                                        >
+                                                            Refund
+                                                        </Button>
+                                                    </div>
+                                                )} */}
                                             </div>
-                                        ))}
-
-                                        {order.showMore && (
-                                            <Button
-                                                variant="text"
-                                                size="small"
-                                                style={{ color: '#666', textTransform: 'none', padding: '0', fontSize: '12px' }}
-                                            >
-                                                Show More (2)
-                                            </Button>
-                                        )}
+                                        </Paper>
                                     </div>
-
-                                    {/* Order actions */}
-                                    <div
-                                        style={{
-                                            borderTop: '1px solid #eee',
-                                            padding: '8px',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                        }}
-                                    >
-                                        <IconButton size="small">
-                                            <PrintIcon fontSize="small" />
-                                        </IconButton>
-
-                                        {order.action === 'Start' && (
-                                            <Button
-                                                variant="contained"
-                                                fullWidth
-                                                style={{
-                                                    marginLeft: '8px',
-                                                    backgroundColor: '#003366',
-                                                    textTransform: 'none',
-                                                }}
-                                            >
-                                                Start
-                                            </Button>
-                                        )}
-
-                                        {order.action === 'Finish' && (
-                                            <Button
-                                                variant="contained"
-                                                fullWidth
-                                                style={{
-                                                    marginLeft: '8px',
-                                                    backgroundColor: '#1976D2',
-                                                    textTransform: 'none',
-                                                }}
-                                            >
-                                                Finish
-                                            </Button>
-                                        )}
-
-                                        {order.action === 'Print Receipt' && (
-                                            <Button
-                                                variant="text"
-                                                startIcon={<PrintIcon />}
-                                                style={{
-                                                    marginLeft: '8px',
-                                                    color: '#333',
-                                                    textTransform: 'none',
-                                                }}
-                                            >
-                                                Print Receipt
-                                            </Button>
-                                        )}
-
-                                        {order.action === 'Refund' && (
-                                            <div style={{ display: 'flex', marginLeft: '8px' }}>
-                                                <Button
-                                                    variant="outlined"
-                                                    style={{
-                                                        marginRight: '4px',
-                                                        textTransform: 'none',
-                                                        borderColor: '#e0e0e0',
-                                                        color: '#333',
-                                                    }}
-                                                >
-                                                    Reject
-                                                </Button>
-                                                <Button
-                                                    variant="contained"
-                                                    style={{
-                                                        backgroundColor: '#00BCD4',
-                                                        textTransform: 'none',
-                                                        color: 'white',
-                                                    }}
-                                                >
-                                                    Refund
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Paper>
-                            </div>
-                        ))}
+                                </>
+                            );
+                        })}
                     </div>
 
                     <Dialog
