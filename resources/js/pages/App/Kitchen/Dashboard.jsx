@@ -209,6 +209,7 @@ const OrderManagement = ({ kitchenOrders }) => {
                     {/* Order cards grid */}
                     <div className="row m-1 p-2" style={{ backgroundColor: '#fbfbfb', borderRadius: '10px' }}>
                         {filteredOrders.map((order, index) => {
+                            const latestStatus = order.order_takings?.slice(-1)[0]?.status;
                             const orderTaking = order.order_takings?.slice(-1)[0];
 
                             return (
@@ -238,7 +239,7 @@ const OrderManagement = ({ kitchenOrders }) => {
                                                 <div>
                                                     <Typography variant="h6" style={{ fontWeight: 'bold' }}>
                                                         #{order.id}
-                                                        {}
+                                                        {order.status}
                                                     </Typography>
                                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                                         <Typography variant="body2">{order.start_time}</Typography>
@@ -268,68 +269,40 @@ const OrderManagement = ({ kitchenOrders }) => {
 
                                             {/* Order items */}
                                             <div style={{ padding: '12px' }}>
-                                                {order.order_takings.map((item, idx) => (
-                                                    <div key={idx} style={{ marginBottom: '8px' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                            <Typography variant="body1">{item.order_item.item}</Typography>
-                                                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                                <Typography variant="body2" style={{ marginRight: '8px' }}>
-                                                                    {item.order_item.qty}x
-                                                                </Typography>
-                                                                <Checkbox
-                                                                    // checked={item.checked}
-                                                                    size="small"
+                                                {order.order_takings.map((item, idx) => {
+                                                    const isEditable = order.status === 'in_progress';
+                                                    const isCancelled = order.status === 'cancelled';
+
+                                                    return (
+                                                        <div key={idx} style={{ marginBottom: '8px' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <Typography
+                                                                    variant="body1"
                                                                     style={{
-                                                                        color: item.checked ? '#1976D2' : undefined,
-                                                                        padding: '2px',
+                                                                        textDecoration: isCancelled ? 'line-through' : 'none',
+                                                                        color: isCancelled ? '#999' : undefined,
                                                                     }}
-                                                                />
+                                                                >
+                                                                    {item.order_item.item}
+                                                                </Typography>
+                                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                    <Typography variant="body2" style={{ marginRight: '8px' }}>
+                                                                        {item.order_item.qty}x
+                                                                    </Typography>
+                                                                    <Checkbox
+                                                                        disabled={!isEditable}
+                                                                        // checked={item.checked}
+                                                                        size="small"
+                                                                        style={{
+                                                                            color: item.checked ? '#1976D2' : undefined,
+                                                                            padding: '2px',
+                                                                        }}
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
-
-                                                        {/* {item.details && !item.details.refund && (
-                                                            <div
-                                                                style={{
-                                                                    display: 'grid',
-                                                                    gridTemplateColumns: '1fr 1fr',
-                                                                    fontSize: '12px',
-                                                                    color: '#666',
-                                                                    marginTop: '4px',
-                                                                }}
-                                                            >
-                                                                {Object.entries(item.details).map(([key, value]) => (
-                                                                    <React.Fragment key={key}>
-                                                                        <div>{key.charAt(0).toUpperCase() + key.slice(1)}</div>
-                                                                        <div style={{ textAlign: 'right' }}>{value}</div>
-                                                                    </React.Fragment>
-                                                                ))}
-                                                            </div>
-                                                        )} */}
-
-                                                        {/* {item.details && item.details.refund && (
-                                                            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                                    <div>Reason</div>
-                                                                    <div>{item.details.refund.reason}</div>
-                                                                </div>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                                    <div>Refund Amount</div>
-                                                                    <div>{item.details.refund.amount}</div>
-                                                                </div>
-                                                            </div>
-                                                        )} */}
-                                                    </div>
-                                                ))}
-
-                                                {/* {order.showMore && (
-                                                    <Button
-                                                        variant="text"
-                                                        size="small"
-                                                        style={{ color: '#666', textTransform: 'none', padding: '0', fontSize: '12px' }}
-                                                    >
-                                                        Show More (2)
-                                                    </Button>
-                                                )} */}
+                                                    );
+                                                })}
                                             </div>
 
                                             {/* Order actions */}
