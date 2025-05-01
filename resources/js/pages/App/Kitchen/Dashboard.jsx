@@ -2,13 +2,11 @@
 
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
-import {
-    Close as CloseIcon,
-    DirectionsCar as DeliveryIcon,
-    LocalDining as DiningIcon,
-    FilterAlt as FilterIcon,
-    Print as PrintIcon,
-} from '@mui/icons-material';
+import { Close as CloseIcon, FilterAlt as FilterIcon, Print as PrintIcon } from '@mui/icons-material';
+import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining'; // delivery
+import RestaurantIcon from '@mui/icons-material/Restaurant'; // dine_in
+import TakeoutDiningIcon from '@mui/icons-material/TakeoutDining'; // take_away
+
 import {
     Alert,
     Button,
@@ -26,6 +24,7 @@ import {
     Snackbar,
     Typography,
 } from '@mui/material';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -128,10 +127,10 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
     const tabs = [
         { id: 'All Order', count: null },
-        { id: 'New Order', count: kitchenOrders?.filter((o) => o.status === 'New Order').length || 0 },
-        { id: 'Process', count: kitchenOrders?.filter((o) => o.status === 'Process').length || 0 },
-        { id: 'Done', count: kitchenOrders?.filter((o) => o.status === 'Done').length || 0 },
-        { id: 'Refund', count: kitchenOrders?.filter((o) => o.status === 'Refund').length || 0 },
+        { id: 'pending', count: kitchenOrders?.filter((o) => o.status === 'pending').length || 0 },
+        { id: 'in_progress', count: kitchenOrders?.filter((o) => o.status === 'in_progress').length || 0 },
+        { id: 'completed', count: kitchenOrders?.filter((o) => o.status === 'completed').length || 0 },
+        // { id: 'Refund', count: kitchenOrders?.filter((o) => o.status === 'Refund').length || 0 },
     ];
 
     const datePeriods = ['Yesterday', 'Last Week', 'Last Month', 'Last 3 Month', 'Last Year', 'Custom Date'];
@@ -230,7 +229,8 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                     }}
                                     onClick={() => handleTabChange(tab.id)}
                                 >
-                                    {tab.id} {tab.count !== null && `(${tab.count})`}
+                                    {tab.id.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                    {tab.count !== null && `(${tab.count})`}
                                 </Button>
                             ))}
                         </div>
@@ -251,7 +251,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
                     <div className="row m-1 p-2" style={{ backgroundColor: '#fbfbfb', borderRadius: '10px' }}>
                         {filteredOrders.map((order) => {
-                            const latestStatus = order.order_takings?.slice(-1)[0]?.status;
+                            // const latestStatus = order.order_takings?.slice(-1)[0]?.status;
                             const orderTaking = order.order_takings?.slice(-1)[0];
 
                             return (
@@ -285,7 +285,8 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                                 <div
                                                     style={{
-                                                        backgroundColor: '#1976D2',
+                                                        backgroundColor: '#ffff',
+                                                        color: '#000',
                                                         width: '36px',
                                                         height: '36px',
                                                         borderRadius: '50%',
@@ -298,7 +299,14 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     <Typography variant="body2">{order.table_id}</Typography>
                                                 </div>
                                                 <IconButton size="small" style={{ color: 'white' }}>
-                                                    {orderTaking.status === 'DE' ? <DiningIcon /> : <DeliveryIcon />}
+                                                    {/* {order.order_type === 'DE' ? <DiningIcon /> : <DeliveryIcon />} */}
+                                                    {order.order_type === 'dine_in' ? (
+                                                        <RestaurantIcon />
+                                                    ) : order.order_type === 'delivery' ? (
+                                                        <DeliveryDiningIcon />
+                                                    ) : order.order_type === 'take_away' ? (
+                                                        <TakeoutDiningIcon />
+                                                    ) : null}
                                                 </IconButton>
                                             </div>
                                         </div>

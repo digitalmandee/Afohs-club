@@ -164,8 +164,6 @@ Route::middleware([
             Route::put('/waiters/{id}', [WaiterController::class, 'update'])->name('waiters.update');
 
             Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen');
-            // Route::post('/kitchen/{id}/update-status', [KitchenController::class, 'updateStatus'])->name('kitchen.update');
-            // Route::post('/kitchen/{order}/update', [KitchenController::class, 'itemsupdate'])->name('kitchen.items.update');
             Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
         });
         // End of Tenant Routes

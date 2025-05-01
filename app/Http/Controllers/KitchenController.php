@@ -20,44 +20,7 @@ class KitchenController extends Controller
             'kitchenOrders' => $orders,
         ]);
     }
-    // public function updateStatus(Request $request, $id)
-    // {
-    //     $validated = $request->validate([
-    //         'status' => 'required|in:pending,in_progress,completed',
-    //     ]);
 
-    //     $order = Order::findOrFail($id);
-    //     $order->status = $validated['status'];
-    //     $order->save();
-
-    //     return back()->with('success', 'Order status updated.');
-    // }
-
-    // public function itemsupdate(Request $request, $orderId)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'items' => 'required|json',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return redirect()->back()->withErrors($validator)->with('error', 'Failed to update statuses.');
-    //     }
-
-    //     $items = json_decode($request->input('items'), true);
-
-    //     foreach ($items as $item) {
-    //         $orderTaking = OrderTaking::where('id', $item['id'])
-    //             ->where('order_id', $orderId)
-    //             ->first();
-
-    //         if ($orderTaking) {
-    //             $orderTaking->status = $item['status'];
-    //             $orderTaking->save();
-    //         }
-    //     }
-
-    //     return redirect()->back()->with('success', 'Statuses updated successfully.');
-    // }
     public function updateAll(Request $request, $orderId)
     {
         $validator = Validator::make($request->all(), [
