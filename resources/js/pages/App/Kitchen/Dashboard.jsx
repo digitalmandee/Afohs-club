@@ -239,7 +239,6 @@ const OrderManagement = ({ kitchenOrders }) => {
                                                 <div>
                                                     <Typography variant="h6" style={{ fontWeight: 'bold' }}>
                                                         #{order.id}
-                                                        {order.status}
                                                     </Typography>
                                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                                         <Typography variant="body2">{order.start_time}</Typography>
