@@ -351,7 +351,7 @@ const OrderManagement = ({ kitchenOrders }) => {
                                                         fullWidth
                                                         style={{
                                                             marginLeft: '8px',
-                                                            backgroundColor: order.status === 'pending' ? '#1565C0' : '#1976D2',
+                                                            backgroundColor: order.status === 'pending' ? '#1565C0' : '#003366',
                                                             textTransform: 'none',
                                                         }}
                                                         onClick={(e) => handleStatusChange(e, order.id, order.status)}
@@ -360,7 +360,7 @@ const OrderManagement = ({ kitchenOrders }) => {
                                                     </Button>
                                                 )}
 
-                                                {order.status === 'completed' && (
+                                                {/* {order.status === 'completed' && (
                                                     <div style={{ display: 'flex', marginLeft: '8px' }}>
                                                         <Button
                                                             variant="outlined"
@@ -384,7 +384,7 @@ const OrderManagement = ({ kitchenOrders }) => {
                                                             Refund
                                                         </Button>
                                                     </div>
-                                                )}
+                                                )} */}
 
                                                 {/* {order.status === 'pending' && (
                                                     <Button
