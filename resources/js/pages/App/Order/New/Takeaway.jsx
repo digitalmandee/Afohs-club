@@ -1,9 +1,56 @@
+import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { Box, Button, Grid, InputAdornment, TextField, Typography } from '@mui/material';
+import { Autocomplete, Box, Button, Grid, InputAdornment, TextField, Typography } from '@mui/material';
+import axios from 'axios';
+import { useCallback, useState } from 'react';
 
 const TakeAwayDialog = () => {
+    const { orderDetails, handleOrderDetailChange } = useOrderStore();
+
+    const [members, setMembers] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+
+    // Search Members
+    const searchUser = useCallback(async (query, role) => {
+        if (!query) return []; // Don't make a request if the query is empty.
+        setSearchLoading(true);
+
+        try {
+            const response = await axios.get(route('user.search'), {
+                params: { query, role },
+            });
+            if (response.data.success) {
+                return response.data.results;
+            } else {
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching search results:', error);
+            return [];
+        } finally {
+            setSearchLoading(false);
+        }
+    }, []);
+
+    const handleSearch = async (event, role) => {
+        const query = event?.target?.value;
+        if (query) {
+            const results = await searchUser(query, role);
+            if (role === 'user') setMembers(results);
+            else setWaiters(results);
+        } else {
+            if (role === 'user') setMembers([]);
+            else setWaiters([]);
+        }
+    };
+
+    const handleAutocompleteChange = (event, value, field) => {
+        handleOrderDetailChange(field, value);
+        // setErrors({ ...errors, [field]: '' }); // Clear error on change
+    };
+
     return (
         <Box>
             <Box sx={{ px: 2, mb: 2 }}>
@@ -27,7 +74,7 @@ const TakeAwayDialog = () => {
                             marginLeft: 2,
                         }}
                     >
-                        #001
+                        #{orderDetails.order_no}
                     </Typography>
                 </Box>
             </Box>
@@ -37,33 +84,39 @@ const TakeAwayDialog = () => {
                     <Typography variant="body2" sx={{ mb: 0.5, color: '#121212', fontSize: '14px' }}>
                         Customer Name
                     </Typography>
-                    <TextField
+                    <Autocomplete
                         fullWidth
+                        freeSolo
                         size="small"
-                        placeholder="Entry name or scan member card"
-                        sx={{
-                            width: '100%',
-                            '& .MuiOutlinedInput-root': {
-                                border: '1px solid #063455',
-                                borderRadius: '4px',
-                                '&:hover fieldset': {
-                                    border: 'none',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    border: 'none',
-                                },
-                            },
-                            '& .MuiOutlinedInput-notchedOutline': {
-                                border: 'none', // removes the default border
-                            },
-                        }}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <QrCodeScannerIcon fontSize="small" />
-                                </InputAdornment>
-                            ),
-                        }}
+                        options={members}
+                        value={orderDetails.member}
+                        getOptionLabel={(option) => option?.name || ''}
+                        onInputChange={(event, value) => handleSearch(event, 'user')}
+                        onChange={(event, value) => handleAutocompleteChange(event, value, 'member')}
+                        loading={searchLoading}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                fullWidth
+                                sx={{ p: 0 }}
+                                placeholder="Enter name or scan member card"
+                                variant="outlined"
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <QrCodeScannerIcon fontSize="small" />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        )}
+                        renderOption={(props, option) => (
+                            <li {...props}>
+                                <span>{option.name}</span>
+                                <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
+                            </li>
+                        )}
                     />
                 </Grid>
             </Grid>
@@ -96,7 +149,7 @@ const TakeAwayDialog = () => {
                         },
                         textTransform: 'none',
                     }}
-                    onClick={() => router.visit('/all/order')}
+                    onClick={() => router.visit(route('order.menu'))}
                 >
                     Choose Menu
                 </Button>

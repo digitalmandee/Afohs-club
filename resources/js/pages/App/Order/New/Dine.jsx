@@ -1,5 +1,6 @@
 'use client';
 
+import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
@@ -28,13 +29,10 @@ import {
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 
-const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
+const DineDialog = ({ memberTypes, floorTables }) => {
+    const { orderDetails, handleOrderDetailChange } = useOrderStore();
+
     const [filterOption, setFilterOption] = useState('all');
-    const [selectedTable, setSelectedTable] = useState('');
-    const [formData, setFormData] = useState({ member: {} });
-    const [membershipType, setMembershipType] = useState(memberTypes[0]?.id ?? '');
-    const [selectedWaiter, setSelectedWaiter] = useState('');
-    const [selectedFloor, setSelectedFloor] = useState(floorTables[0]?.id ?? '');
     const [searchTerm, setSearchTerm] = useState('');
     const [members, setMembers] = useState([]);
     const [waiters, setWaiters] = useState([]);
@@ -68,7 +66,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
     const handleSearch = async (event, role) => {
         const query = event?.target?.value;
         if (query) {
-            const results = await searchUser(query, role, membershipType);
+            const results = await searchUser(query, role, orderDetails.membership_type);
             if (role === 'user') setMembers(results);
             else setWaiters(results);
         } else {
@@ -78,13 +76,13 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
     };
 
     const handleAutocompleteChange = (event, value, field) => {
-        setFormData({ ...formData, [field]: value });
+        handleOrderDetailChange(field, value);
         // setErrors({ ...errors, [field]: '' }); // Clear error on change
     };
 
     const handleMembershipType = (value) => {
-        setMembershipType(value);
-        setFormData({ ...formData, member: {} });
+        handleOrderDetailChange('membership_type', value);
+        handleOrderDetailChange('member', {});
         setMembers([]);
     };
 
@@ -94,13 +92,20 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
         }
     };
 
-    const currentFloor = floorTables.find((f) => f.id === selectedFloor);
+    const handleFloorChange = (value) => {
+        handleOrderDetailChange('floor', value);
+        handleOrderDetailChange('table', '');
+    };
 
-    const filteredTables = currentFloor?.tables?.filter((table) => {
-        if (filterOption === 'available' && !table.available) return false;
-        const keyword = searchTerm.toLowerCase();
-        return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
-    });
+    const currentFloor = floorTables.find((f) => f.id === orderDetails.floor);
+
+    const filteredTables = currentFloor?.tables?.length
+        ? currentFloor.tables.filter((table) => {
+              if (filterOption === 'available' && !table.available) return false;
+              const keyword = searchTerm.toLowerCase();
+              return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
+          })
+        : [];
 
     return (
         <Box>
@@ -125,7 +130,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
                             marginLeft: 2,
                         }}
                     >
-                        #{orderNo}
+                        #{orderDetails.order_no}
                     </Typography>
                 </Box>
             </Box>
@@ -133,7 +138,12 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
             {/* Membership Type Selection */}
             <Box sx={{ px: 2, mb: 2 }}>
                 <FormControl component="fieldset">
-                    <RadioGroup row name="membership-type" value={membershipType} onChange={(e) => handleMembershipType(e.target.value)}>
+                    <RadioGroup
+                        row
+                        name="membership-type"
+                        value={orderDetails.membership_type}
+                        onChange={(e) => handleMembershipType(e.target.value)}
+                    >
                         <Box
                             sx={{
                                 display: 'flex',
@@ -143,7 +153,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
                             }}
                         >
                             {memberTypes.map((option) => {
-                                const isSelected = membershipType === option.id;
+                                const isSelected = orderDetails.membership_type === option.id;
                                 return (
                                     <Box
                                         key={option.id}
@@ -190,7 +200,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
                         freeSolo
                         size="small"
                         options={members}
-                        value={formData.member}
+                        value={orderDetails.member}
                         getOptionLabel={(option) => option?.name || ''}
                         onInputChange={(event, value) => handleSearch(event, 'user')}
                         onChange={(event, value) => handleAutocompleteChange(event, value, 'member')}
@@ -225,7 +235,14 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
                         Customer Qty
                     </Typography>
                     <Box sx={{ display: 'flex' }}>
-                        <TextField size="small" type="number" defaultValue="10" sx={{ width: '60%' }} />
+                        <TextField
+                            size="small"
+                            value={orderDetails.person_count}
+                            onChange={(e) => handleOrderDetailChange('person_count', e.target.value)}
+                            min={1}
+                            type="number"
+                            sx={{ width: '60%' }}
+                        />
                         <Button
                             variant="outlined"
                             sx={{
@@ -248,7 +265,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
                     freeSolo
                     size="small"
                     options={waiters}
-                    value={formData.waiter}
+                    value={orderDetails.waiter}
                     getOptionLabel={(option) => option?.name || ''}
                     onInputChange={(event, value) => handleSearch(event, 'waiter')}
                     onChange={(event, value) => handleAutocompleteChange(event, value, 'waiter')}
@@ -290,7 +307,13 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
                 {/* Select Floor */}
                 <FormControl sx={{ marginLeft: 1 }}>
                     <InputLabel id="select-floor">Floor</InputLabel>
-                    <Select labelId="select-floor" id="floor" value={selectedFloor} label="Floor" onChange={(e) => setSelectedFloor(e.target.value)}>
+                    <Select
+                        labelId="select-floor"
+                        id="floor"
+                        value={orderDetails.floor}
+                        label="Floor"
+                        onChange={(e) => handleFloorChange(e.target.value)}
+                    >
                         {floorTables.map((item, index) => (
                             <MenuItem value={item.id} key={index}>
                                 {item.name}
@@ -344,59 +367,60 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
 
             {/* Table Selection */}
             <Box sx={{ px: 2, mb: 2 }}>
-                <RadioGroup value={selectedTable} onChange={(e) => setSelectedTable(e.target.value)}>
+                <RadioGroup value={orderDetails.table} onChange={(e) => handleOrderDetailChange('table', e.target.value)}>
                     <Grid container spacing={1}>
-                        {filteredTables.map((table) => (
-                            <Grid item xs={6} key={table.id}>
-                                <Paper
-                                    elevation={0}
-                                    sx={{
-                                        p: 1.5,
-                                        bgcolor: table.id === selectedTable ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
-                                        border: table.id === selectedTable ? '1px solid #A27B5C' : '1px solid #e0e0e0',
-                                        borderRadius: 1,
-                                        opacity: table.available ? 1 : 0.7,
-                                    }}
-                                >
-                                    <Box
+                        {filteredTables.length > 0 &&
+                            filteredTables.map((table) => (
+                                <Grid item xs={6} key={table.id}>
+                                    <Paper
+                                        elevation={0}
                                         sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
+                                            p: 1.5,
+                                            bgcolor: table.id === orderDetails.table ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
+                                            border: table.id === orderDetails.table ? '1px solid #A27B5C' : '1px solid #e0e0e0',
+                                            borderRadius: 1,
+                                            opacity: table.available ? 1 : 0.7,
                                         }}
                                     >
-                                        <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                                            {table.table_no}
-                                        </Typography>
                                         <Box
                                             sx={{
                                                 display: 'flex',
+                                                justifyContent: 'space-between',
                                                 alignItems: 'center',
                                             }}
                                         >
-                                            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                {table.capacity} person
+                                            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                                                {table.table_no}
                                             </Typography>
-                                            {table.available ? (
-                                                <FormControlLabel
-                                                    value={table.id}
-                                                    control={<Radio size="small" />}
-                                                    label=""
-                                                    sx={{
-                                                        m: 0,
-                                                        color: '#063455',
-                                                    }}
-                                                />
-                                            ) : (
-                                                <Typography variant="caption" sx={{ color: '#063455' }}>
-                                                    {table.table_no.split('-')[0]} - Full
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                }}
+                                            >
+                                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                                    {table.capacity} person
                                                 </Typography>
-                                            )}
+                                                {table.available ? (
+                                                    <FormControlLabel
+                                                        value={table.id}
+                                                        control={<Radio size="small" />}
+                                                        label=""
+                                                        sx={{
+                                                            m: 0,
+                                                            color: '#063455',
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Typography variant="caption" sx={{ color: '#063455' }}>
+                                                        {table.table_no.split('-')[0]} - Full
+                                                    </Typography>
+                                                )}
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                </Paper>
-                            </Grid>
-                        ))}
+                                    </Paper>
+                                </Grid>
+                            ))}
                     </Grid>
                 </RadioGroup>
             </Box>
@@ -429,7 +453,7 @@ const DineDialog = ({ orderNo, memberTypes, floorTables }) => {
                         },
                         textTransform: 'none',
                     }}
-                    onClick={() => router.visit('/all/order')}
+                    onClick={() => router.visit(route('order.menu'))}
                 >
                     Choose Menu
                 </Button>

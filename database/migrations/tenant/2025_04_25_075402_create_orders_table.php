@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('order_type')->nullable();
             $table->integer('person_count')->default(0);
             $table->bigInteger('down_payment')->nullable();
+            $table->bigInteger('price')->default(0);
             $table->date('start_date')->nullable();
             $table->time('start_time')->nullable();
             $table->time('order_time')->nullable();

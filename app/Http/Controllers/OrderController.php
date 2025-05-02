@@ -36,6 +36,11 @@ class OrderController extends Controller
         ]);
     }
 
+    public function orderMenu(Request $request)
+    {
+        return Inertia::render('App/Order/OrderMenu');
+    }
+
     // Get next order number
     private function getOrderNo()
     {
@@ -66,11 +71,22 @@ class OrderController extends Controller
         return response()->json(['success' => true, 'results' => $results], 200);
     }
 
+    public function sendToKitchen(Request $request)
+    {
+        dd($request->all());
+    }
+
     public function getProducts($category_id)
     {
-        $products = Product::where('category_id', $category_id)->get();
+        $category = Category::find($category_id);
 
-        return response()->json(['success' => true, 'products' => $products], 200);
+        if ($category) {
+            $products = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id)->get();
+
+            return response()->json(['success' => true, 'products' => $products], 200);
+        } else {
+            return response()->json(['success' => true, 'products' => []], 200);
+        }
     }
     public function getCategories()
     {

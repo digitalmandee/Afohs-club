@@ -49,15 +49,13 @@ Route::middleware([
                 return Inertia::render('App/Order/Queue');
             });
 
-            Route::get('/all/order', function () {
-                return Inertia::render('App/Order/OrderList');
-            });
-
-            Route::get('/new/order', [OrderController::class, 'index'])->name('order.index');
-
+            // Order Management
+            Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
+            Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
             // for member and waiter
             Route::get('/user/search', [OrderController::class, 'searchMember'])->name('user.search');
-
+            // Send to kitchen order
+            Route::post('/order/send/kitchen', [OrderController::class, 'sendToKitchen'])->name('order.send-to-kitchen');
             // get products
             Route::get('/product/categories', [OrderController::class, 'getCategories'])->name('products.categories');
             Route::get('/products/{category_id}', [OrderController::class, 'getProducts'])->name('products.bycategory');

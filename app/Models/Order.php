@@ -17,6 +17,7 @@ class Order extends Model
         'order_type',
         'person_count',
         'down_payment',
+        'price',
         'start_date',
         'start_time',
         'status'
@@ -28,6 +29,7 @@ class Order extends Model
     {
         return $this->hasMany(OrderTaking::class);
     }
+
     public function table()
     {
         return $this->belongsTo(Table::class);
