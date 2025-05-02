@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Order;
-use App\Models\OrderTaking;
+use App\Models\OrderItem;
 use App\Models\User;
 use App\Models\Table;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -24,15 +24,15 @@ class OrderFactory extends Factory
             'down_payment' => $this->faker->optional()->numberBetween(100, 1000),
             'start_date' => $this->faker->optional()->date(),
             'start_time' => $this->faker->optional()->time(),
-            'order_time' => $this->faker->optional()->time(),
-            'status' => $this->faker->randomElement(['pending', 'in_progress', 'completed', 'cancelled', 'reserved', 'no_show', 'refund']),
+            'order_time' => $this->faker->optional()->dateTime(),
+            'status' => $this->faker->randomElement(['pending', 'in_progress', 'completed', 'cancelled', 'no_show', 'refund']),
         ];
     }
 
     public function configure()
     {
         return $this->afterCreating(function (Order $order) {
-            OrderTaking::factory()->count(3)->create(['order_id' => $order->id]);
+            OrderItem::factory()->count(3)->create(['order_id' => $order->id]);
         });
     }
 }

@@ -9,6 +9,6 @@ class OrderDatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        Order::factory()->count(5)->hasOrderTakings(3)->create();
+        Order::factory()->count(5)->hasOrderItems(3)->create();
     }
 }

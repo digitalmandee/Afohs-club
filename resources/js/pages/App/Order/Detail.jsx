@@ -33,7 +33,19 @@ const OrderDetail = ({ handleEditItem }) => {
     }, [orderDetails.order_items, orderDetails.cash_total]);
 
     const handleSendToKitchen = () => {
-        router.post(route('order.send-to-kitchen'), orderDetails);
+        const payload = {
+            ...orderDetails,
+            price: total,
+        };
+
+        router.post(route('order.send-to-kitchen'), payload, {
+            onSuccess: () => {
+                console.log('Order sent to kitchen successfully');
+            },
+            onError: (errors) => {
+                console.error('Validation errors:', errors);
+            },
+        });
     };
 
     return (

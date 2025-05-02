@@ -37,7 +37,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     const [activeTab, setActiveTab] = useState('All Order');
     const [checkedItems, setCheckedItems] = useState(
         (kitchenOrders || []).reduce((acc, order) => {
-            acc[order.id] = order.order_takings.map((item) => ({
+            acc[order.id] = order.order_items.map((item) => ({
                 id: item.id,
                 checked: item.status === 'completed',
             }));
@@ -66,8 +66,8 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     // Function to calculate total time from order_time and end_time
     const calculateTotalTime = (order_time, end_time) => {
         if (!order_time || !end_time) return '00:00:00';
-        const start = new Date(`1970-01-01T${order_time}Z`);
-        const end = new Date(`1970-01-01T${end_time}Z`);
+        const start = new Date(order_time);
+        const end = new Date(end_time);
         const diffSeconds = Math.floor((end - start) / 1000);
         return formatTime(diffSeconds);
     };
@@ -78,21 +78,21 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
             let seconds = 0;
             if (order.status === 'in_progress' && order.order_time) {
                 // Validate order_time format (HH:MM:SS)
-                const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
-                if (timeRegex.test(order.order_time)) {
-                    try {
-                        const startTime = new Date(`1970-01-01T${order.order_time}Z`);
-                        const currentTime = new Date();
-                        seconds = Math.floor((currentTime - startTime) / 1000);
-                        if (seconds < 0) seconds = 0; // Prevent negative time
-                    } catch (e) {
-                        console.error(`Invalid order_time for order ${order.id}: ${order.order_time}`, e);
-                        seconds = 0;
-                    }
-                } else {
-                    console.error(`Invalid order_time format for order ${order.id}: ${order.order_time}`);
+                // const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
+                // if (timeRegex.test(order.order_time)) {
+                try {
+                    const startTime = new Date(order.order_time);
+                    const currentTime = new Date();
+                    seconds = Math.floor((currentTime - startTime) / 1000);
+                    if (seconds < 0) seconds = 0; // Prevent negative time
+                } catch (e) {
+                    console.error(`Invalid order_time for order ${order.id}: ${order.order_time}`, e);
                     seconds = 0;
                 }
+                // } else {
+                //     console.error(`Invalid order_time format for order ${order.id}: ${order.order_time}`);
+                //     seconds = 0;
+                // }
             }
             acc[order.id] = {
                 running: order.status === 'in_progress',
@@ -123,17 +123,29 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         const interval = setInterval(() => {
             setTimers((prev) => {
                 const updated = { ...prev };
-                Object.keys(updated).forEach((orderId) => {
-                    if (updated[orderId].running) {
-                        updated[orderId].seconds += 1;
+                kitchenOrders.forEach((order) => {
+                    if (order.status === 'in_progress' && order.order_time) {
+                        try {
+                            const startTime = new Date(order.order_time);
+                            const currentTime = new Date();
+                            let seconds = Math.floor((currentTime - startTime) / 1000);
+                            if (seconds < 0) seconds = 0;
+
+                            updated[order.id] = {
+                                ...updated[order.id],
+                                seconds,
+                            };
+                        } catch (e) {
+                            console.error(`Invalid time for order ${order.id}`, e);
+                        }
                     }
                 });
                 return updated;
             });
-        }, 1000);
+        }, 1000); // Update every second
 
-        return () => clearInterval(interval);
-    }, []);
+        return () => clearInterval(interval); // Clean up on unmount
+    }, [kitchenOrders]);
 
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
@@ -230,7 +242,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                         order.id === orderId
                             ? {
                                   ...order,
-                                  order_takings: order.order_takings.map((item) =>
+                                  order_items: order.order_items.map((item) =>
                                       item.id === itemId ? { ...item, status: checked ? 'completed' : 'pending' } : item,
                                   ),
                               }
@@ -262,7 +274,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
             // Preserve cancelled status for items
             const itemStatuses = checkedItems[orderId].map((item) => {
-                const orderItem = order.order_takings.find((taking) => taking.id === item.id);
+                const orderItem = order.order_items.find((orderItem) => orderItem.id === item.id);
                 return {
                     id: item.id,
                     status: orderItem.status === 'cancelled' ? 'cancelled' : item.checked ? 'completed' : 'pending',
@@ -275,15 +287,14 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
             let formattedTime = null;
             if (newOrderStatus === 'in_progress') {
-                const now = new Date();
-                formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:13:25"
-                console.log('Sending order_time:', formattedTime); // Debug log
-                formData.append('order_time', formattedTime);
+                // formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:13:25"
+                // console.log('Sending order_time:', formattedTime); // Debug log
+                formData.append('order_time', new Date().toISOString());
             } else if (newOrderStatus === 'completed') {
-                const now = new Date();
-                formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:15:00"
-                console.log('Sending end_time:', formattedTime); // Debug log
-                formData.append('end_time', formattedTime);
+                // const now = new Date();
+                // formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:15:00"
+                // console.log('Sending end_time:', new Date().toISOString()); // Debug log
+                formData.append('end_time', new Date().toISOString());
             }
 
             router.post(route('kitchen.update-all', orderId), formData, {
@@ -298,7 +309,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                       status: newOrderStatus,
                                       order_time: newOrderStatus === 'in_progress' ? formattedTime : order.order_time,
                                       end_time: newOrderStatus === 'completed' ? formattedTime : order.end_time,
-                                      order_takings: order.order_takings.map((item) => {
+                                      order_items: order.order_items.map((item) => {
                                           const updatedItem = itemStatuses.find((i) => i.id === item.id);
                                           return updatedItem ? { ...item, status: updatedItem.status } : item;
                                       }),
@@ -387,7 +398,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
                     <div className="row m-1 p-2" style={{ backgroundColor: '#fbfbfb', borderRadius: '10px' }}>
                         {filteredOrders.map((order) => {
-                            const orderTaking = order.order_takings?.slice(-1)[0];
+                            const OrderItem = order.order_items?.slice(-1)[0];
 
                             return (
                                 <div key={order.id} className="col-md-3 mb-3">
@@ -453,7 +464,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                         </div>
 
                                         <div style={{ padding: '12px' }}>
-                                            {order.order_takings.map((item, idx) => {
+                                            {order.order_items.map((item, idx) => {
                                                 const isEditable = order.status === 'in_progress';
                                                 const isCancelled = item.status === 'cancelled';
                                                 const isActive = item.status === 'pending';
@@ -469,12 +480,12 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                                     color: isCancelled ? 'red' : item.status === 'completed' ? 'green' : undefined,
                                                                 }}
                                                             >
-                                                                {item.order_item.item}
+                                                                {item.order_item.name}
                                                             </Typography>
 
                                                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                                                 <Typography variant="body2" style={{ marginRight: '8px' }}>
-                                                                    {item.order_item.qty}x
+                                                                    {item.order_item.quantity}x
                                                                 </Typography>
                                                                 <Checkbox
                                                                     disabled={isCancelled || !isEditable}
