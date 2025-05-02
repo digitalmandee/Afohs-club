@@ -130,7 +130,6 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         { id: 'pending', count: kitchenOrders?.filter((o) => o.status === 'pending').length || 0 },
         { id: 'in_progress', count: kitchenOrders?.filter((o) => o.status === 'in_progress').length || 0 },
         { id: 'completed', count: kitchenOrders?.filter((o) => o.status === 'completed').length || 0 },
-        // { id: 'Refund', count: kitchenOrders?.filter((o) => o.status === 'Refund').length || 0 },
     ];
 
     const datePeriods = ['Yesterday', 'Last Week', 'Last Month', 'Last 3 Month', 'Last Year', 'Custom Date'];
@@ -146,17 +145,14 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     });
 
     const handleCheckboxChange = (orderId, itemId, checked) => {
-        // Update local state
         setCheckedItems((prev) => ({
             ...prev,
             [orderId]: prev[orderId].map((item) => (item.id === itemId ? { ...item, checked } : item)),
         }));
 
-        // Prepare form data
         const formData = new FormData();
         formData.append('status', checked ? 'completed' : 'pending');
 
-        // Send POST request to update item status in the database
         router.post(route('kitchen.item.update-status', { order: orderId, item: itemId }), formData, {
             forceFormData: true,
             preserveScroll: true,
@@ -180,7 +176,6 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                 setSnackbarSeverity('error');
                 setSnackbarOpen(true);
 
-                // Revert local state on error to stay in sync with database
                 setCheckedItems((prev) => ({
                     ...prev,
                     [orderId]: prev[orderId].map((item) => (item.id === itemId ? { ...item, checked: !checked } : item)),
@@ -205,6 +200,19 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
             formData.append('status', newOrderStatus);
             formData.append('items', JSON.stringify(itemStatuses));
 
+            let formattedTime = null;
+            if (newOrderStatus === 'in_progress') {
+                const now = new Date();
+                formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:13:25"
+                console.log('Sending order_time:', formattedTime); // Debug log
+                formData.append('order_time', formattedTime);
+            } else if (newOrderStatus === 'completed') {
+                const now = new Date();
+                formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:15:00"
+                console.log('Sending end_time:', formattedTime); // Debug log
+                formData.append('end_time', formattedTime);
+            }
+
             router.post(route('kitchen.update-all', orderId), formData, {
                 forceFormData: true,
                 preserveScroll: true,
@@ -215,6 +223,8 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                 ? {
                                       ...order,
                                       status: newOrderStatus,
+                                      order_time: newOrderStatus === 'in_progress' ? formattedTime : order.order_time,
+                                      end_time: newOrderStatus === 'completed' ? formattedTime : order.end_time,
                                       order_takings: order.order_takings.map((item) => {
                                           const updatedItem = itemStatuses.find((i) => i.id === item.id);
                                           return updatedItem ? { ...item, status: updatedItem.status } : item;
@@ -288,7 +298,6 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
                     <div className="row m-1 p-2" style={{ backgroundColor: '#fbfbfb', borderRadius: '10px' }}>
                         {filteredOrders.map((order) => {
-                            // const latestStatus = order.order_takings?.slice(-1)[0]?.status;
                             const orderTaking = order.order_takings?.slice(-1)[0];
 
                             return (
@@ -315,8 +324,9 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                 <Typography variant="h6" style={{ fontWeight: 'bold' }}>
                                                     #{order.id}
                                                 </Typography>
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Typography variant="body2">{order.order_time}</Typography>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <Typography variant="body2">Start: {order.order_time}</Typography>
+                                                    {order.end_time && <Typography variant="body2">End: {order.end_time}</Typography>}
                                                 </div>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -336,7 +346,6 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     <Typography variant="body2">{order.table_id}</Typography>
                                                 </div>
                                                 <IconButton size="small" style={{ color: 'white' }}>
-                                                    {/* {order.order_type === 'DE' ? <DiningIcon /> : <DeliveryIcon />} */}
                                                     {order.order_type === 'dine_in' ? (
                                                         <RestaurantIcon />
                                                     ) : order.order_type === 'delivery' ? (
@@ -431,7 +440,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                 borderRadius: '10px',
                                 position: 'fixed',
                                 right: '0px',
-                                margin: 0,
+                                margin: '0',
                                 width: '400px',
                                 maxHeight: '100vh',
                                 overflowY: 'auto',

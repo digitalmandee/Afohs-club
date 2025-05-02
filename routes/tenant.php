@@ -164,7 +164,6 @@ Route::middleware([
             Route::put('/waiters/{id}', [WaiterController::class, 'update'])->name('waiters.update');
 
             Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen');
-            // Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
             Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
             Route::post('/kitchen/{order}/item/{item}/update-status', [KitchenController::class, 'updateItemStatus'])->name('kitchen.item.update-status');
         });

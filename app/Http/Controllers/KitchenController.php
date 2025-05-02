@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderTaking;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class KitchenController extends Controller
@@ -23,18 +24,47 @@ class KitchenController extends Controller
 
     public function updateAll(Request $request, $orderId)
     {
+        // Log the full request payload for debugging
+        Log::info('KitchenController::updateAll received request:', [
+            'orderId' => $orderId,
+            'payload' => $request->all(),
+        ]);
+
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,in_progress,completed',
             'items' => 'required|json',
+            'order_time' => 'nullable|date_format:H:i:s', // Validate order_time if provided
+            'end_time' => 'nullable|date_format:H:i:s', // Validate end_time if provided
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validation failed for updateAll:', [
+                'errors' => $validator->errors()->all(),
+                'input' => $request->all(),
+            ]);
             return redirect()->back()->withErrors($validator)->with('error', 'Validation failed.');
         }
 
-        // Update overall order status
+        // Update overall order status, order_time, and end_time
         $order = Order::findOrFail($orderId);
         $order->status = $request->input('status');
+
+        if ($request->filled('order_time')) {
+            Log::info('Received order_time: ' . $request->input('order_time')); // Debug log
+            $order->order_time = $request->input('order_time');
+        } elseif ($request->input('status') === 'in_progress') {
+            $order->order_time = now()->format('H:i:s'); // Fallback to current time
+            Log::info('Using fallback order_time: ' . $order->order_time); // Debug log
+        }
+
+        if ($request->filled('end_time')) {
+            Log::info('Received end_time: ' . $request->input('end_time')); // Debug log
+            $order->end_time = $request->input('end_time');
+        } elseif ($request->input('status') === 'completed') {
+            $order->end_time = now()->format('H:i:s'); // Fallback to current time
+            Log::info('Using fallback end_time: ' . $order->end_time); // Debug log
+        }
+
         $order->save();
 
         // Update item-level statuses
@@ -50,6 +80,13 @@ class KitchenController extends Controller
                 $orderTaking->save();
             }
         }
+
+        Log::info('Order updated successfully:', [
+            'orderId' => $orderId,
+            'status' => $order->status,
+            'order_time' => $order->order_time,
+            'end_time' => $order->end_time,
+        ]);
 
         return redirect()->back()->with('success', 'Order and item statuses updated successfully.');
     }
