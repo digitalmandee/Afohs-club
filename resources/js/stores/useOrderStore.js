@@ -59,6 +59,9 @@ export const useOrderStore = create((set, get) => ({
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         order_items: [],
         order_status: 'pending',
+        payment_method: 'cash',
+        cash_total: 0,
+        customer_change: 0,
     },
 
     setInitialOrder: ({ orderNo, memberTypes, floorTables }) =>

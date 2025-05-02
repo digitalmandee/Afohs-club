@@ -1,9 +1,40 @@
 import { useOrderStore } from '@/stores/useOrderStore';
+import { router } from '@inertiajs/react';
 import { Close as CloseIcon, CreditCard as CreditCardIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, Paper, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, Paper, TextField, Typography } from '@mui/material';
+import { useEffect } from 'react';
 
-const OrderDetail = () => {
+const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
+
+    const subtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
+    const discount = 0;
+    const taxRate = 0.12;
+    const taxAmount = subtotal * taxRate;
+    const total = subtotal + taxAmount - discount;
+
+    const handleCashTotalChange = (e) => {
+        const value = parseFloat(e.target.value) || 0;
+        handleOrderDetailChange('cash_total', value.toFixed(2));
+        handleOrderDetailChange('customer_change', (value - total).toFixed(2));
+    };
+
+    // Automatically update customer change when order_items or cash_total changes
+    useEffect(() => {
+        const cash = parseFloat(orderDetails.cash_total || 0);
+        const calculatedSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
+        const tax = calculatedSubtotal * 0.12;
+        const finalTotal = calculatedSubtotal + tax;
+
+        if (cash > 0) {
+            const change = (cash - finalTotal).toFixed(2);
+            handleOrderDetailChange('customer_change', change);
+        }
+    }, [orderDetails.order_items, orderDetails.cash_total]);
+
+    const handleSendToKitchen = () => {
+        router.post(route('order.send-to-kitchen'), orderDetails);
+    };
 
     return (
         <>
@@ -109,53 +140,53 @@ const OrderDetail = () => {
                     {/* Order Items */}
                     <Box sx={{ mt: 1, p: 1 }}>
                         {/* Cappuccino */}
-                        <Box sx={{ mb: 2, borderBottom: '1px solid #E3E3E3' }}>
-                            <Box sx={{ display: 'flex', mb: 1 }}>
-                                <Avatar
-                                    src="/placeholder.svg?height=40&width=40"
-                                    variant="rounded"
-                                    sx={{ width: 36, height: 36, mr: 1.5, bgcolor: '#f8c291' }}
-                                />
-                                <Box sx={{ flexGrow: 1 }}>
-                                    <Typography variant="body2" fontWeight="medium">
-                                        Cappuccino
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Coffee & Beverage
-                                    </Typography>
+                        {orderDetails.order_items.length > 0 &&
+                            orderDetails.order_items.map((item, index) => (
+                                <Box
+                                    key={index}
+                                    onClick={() => handleEditItem(item, index)}
+                                    sx={{ mb: 2, borderBottom: '1px solid #E3E3E3', cursor: 'pointer' }}
+                                >
+                                    <Box sx={{ display: 'flex', mb: 1 }}>
+                                        <Avatar src={item.image} variant="rounded" sx={{ width: 36, height: 36, mr: 1.5, bgcolor: '#f8c291' }} />
+                                        <Box sx={{ flexGrow: 1 }}>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                {item.name}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {item.category}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ textAlign: 'right' }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Qty : {item.quantity} x Rs {item.price}
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                Rs. {item.total_price}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    {item.variants.length > 0 &&
+                                        item.variants.map((variant, variantIndex) => (
+                                            <Button
+                                                key={variantIndex}
+                                                sx={{
+                                                    border: '1px solid #e0e0e0 !important',
+                                                    borderRadius: '4px !important',
+                                                    mb: 2,
+                                                    mx: 0.5,
+                                                    minWidth: '2px',
+                                                    fontSize: '0.7rem',
+                                                    py: 0.5,
+                                                    px: 1.5,
+                                                    color: '#555',
+                                                }}
+                                            >
+                                                {variant.value}
+                                            </Button>
+                                        ))}
                                 </Box>
-                                <Box sx={{ textAlign: 'right' }}>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Qty : 1 x Rs 5.00
-                                    </Typography>
-                                    <Typography variant="body2" fontWeight="medium">
-                                        Rs. 5.00
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            <ToggleButtonGroup
-                                size="small"
-                                exclusive
-                                sx={{
-                                    '& .MuiToggleButtonGroup-grouped': {
-                                        border: '1px solid #e0e0e0 !important',
-                                        borderRadius: '4px !important',
-                                        mb: 2,
-                                        mx: 0.5,
-                                        fontSize: '0.7rem',
-                                        py: 0.5,
-                                        px: 1.5,
-                                        color: '#555',
-                                    },
-                                }}
-                            >
-                                <ToggleButton value="ice">Ice</ToggleButton>
-                                <ToggleButton value="hot">Hot</ToggleButton>
-                                <ToggleButton value="s">S</ToggleButton>
-                                <ToggleButton value="m">M</ToggleButton>
-                                <ToggleButton value="l">L</ToggleButton>
-                            </ToggleButtonGroup>
-                        </Box>
+                            ))}
                     </Box>
 
                     {/* Order Summary */}
@@ -164,7 +195,7 @@ const OrderDetail = () => {
                             <Typography variant="body2" color="text.secondary">
                                 Subtotal
                             </Typography>
-                            <Typography variant="body2">Rs 19.00</Typography>
+                            <Typography variant="body2">Rs {subtotal.toFixed(2)}</Typography>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                             <Typography variant="body2" color="text.secondary">
@@ -178,12 +209,26 @@ const OrderDetail = () => {
                             <Typography variant="body2" color="text.secondary">
                                 Tax 12%
                             </Typography>
-                            <Typography variant="body2">Rs 2.28</Typography>
+                            <Typography variant="body2">Rs {taxAmount.toFixed(2)}</Typography>
                         </Box>
                         <Divider sx={{ my: 1 }} />
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="subtitle2">Total</Typography>
-                            <Typography variant="subtitle2">Rs 16.72</Typography>
+                            <Typography variant="subtitle2">Rs {total.toFixed(2)}</Typography>
+                        </Box>
+                        <Divider sx={{ my: 2 }} />
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="subtitle2">
+                                <b>Cash Total</b>
+                            </Typography>
+                            <TextField
+                                variant="outlined"
+                                size="small"
+                                type="number"
+                                value={orderDetails.cash_total}
+                                onChange={handleCashTotalChange}
+                                sx={{ width: '50%' }}
+                            />
                         </Box>
                     </Box>
 
@@ -227,7 +272,7 @@ const OrderDetail = () => {
                                     Cash Total
                                 </Typography>
                                 <Typography variant="body2" fontWeight="medium" mt={0.5}>
-                                    Rs 20.00
+                                    Rs {orderDetails.cash_total}
                                 </Typography>
                             </Grid>
 
@@ -236,7 +281,7 @@ const OrderDetail = () => {
                                     Customer Change
                                 </Typography>
                                 <Typography variant="body2" fontWeight="medium" mt={0.5}>
-                                    Rs 3.28
+                                    Rs {parseFloat(orderDetails.customer_change || 0).toFixed(2)}
                                 </Typography>
                             </Grid>
                         </Grid>
@@ -257,6 +302,10 @@ const OrderDetail = () => {
                         </Button>
                         <Button
                             variant="outlined"
+                            disabled={
+                                parseFloat(orderDetails.cash_total || 0) < total || orderDetails.order_items.length == 0 || !orderDetails.member
+                            }
+                            onClick={handleSendToKitchen}
                             sx={{
                                 flex: 2,
                                 borderColor: '#e0e0e0',
@@ -269,6 +318,9 @@ const OrderDetail = () => {
                         <Button
                             variant="contained"
                             startIcon={<PrintIcon />}
+                            disabled={
+                                parseFloat(orderDetails.cash_total || 0) < total || orderDetails.order_items.length == 0 || !orderDetails.member
+                            }
                             sx={{
                                 flex: 2,
                                 bgcolor: '#0a3d62',

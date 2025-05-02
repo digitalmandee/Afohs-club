@@ -1,6 +1,7 @@
 'use client';
 
-import SideNav from '@/components/App/AdminSideBar/SideNav';
+import SideNav from '@/components/App/SideBar/SideNav';
+import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
 import { Avatar, Badge, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography } from '@mui/material';
@@ -14,12 +15,13 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const OrderMenu = () => {
+    const { orderDetails, handleOrderDetailChange } = useOrderStore();
+
     const [open, setOpen] = useState(false);
 
     // const [showPayment, setShowPayment] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(1);
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [viewMode, setViewMode] = useState('grid');
+    const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [activeView, setActiveView] = useState('orderDetail');
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
@@ -28,8 +30,55 @@ const OrderMenu = () => {
         setSelectedCategory(categoryId);
     };
 
-    const handleProductClick = (productId) => {
-        setSelectedProduct(productId);
+    const [variantPopupOpen, setVariantPopupOpen] = useState(false);
+    const [variantProduct, setVariantProduct] = useState(null);
+    const [initialEditItem, setInitialEditItem] = useState(null);
+
+    // This would be called when user clicks a product
+    const handleProductClick = (product) => {
+        if (product.current_stock === 0) return;
+
+        if (product.variants && product.variants.length > 0) {
+            setVariantProduct(product);
+            setVariantPopupOpen(true);
+        } else {
+            const item = {
+                id: product.id,
+                name: product.name,
+                price: parseFloat(product.base_price),
+                total_price: parseFloat(product.base_price),
+                quantity: 1,
+                category: product.category?.name || '',
+                variants: [],
+            };
+
+            handleOrderDetailChange('order_items', [...orderDetails.order_items, item]);
+        }
+    };
+
+    const handleVariantConfirm = (item) => {
+        let updatedItems = [...orderDetails.order_items];
+
+        if (editingItemIndex !== null) {
+            updatedItems[editingItemIndex] = item;
+        } else {
+            updatedItems.push(item);
+        }
+
+        handleOrderDetailChange('order_items', updatedItems);
+        setVariantPopupOpen(false);
+        setVariantProduct(null);
+        setEditingItemIndex(null);
+    };
+
+    const handleEditItem = (item, index) => {
+        const fullProduct = products.find((p) => p.id === item.id);
+        if (!fullProduct) return;
+
+        setVariantProduct(fullProduct);
+        setEditingItemIndex(index);
+        setVariantPopupOpen(true);
+        setInitialEditItem(item); // new state to pass into VariantSelector
     };
 
     useEffect(() => {
@@ -73,6 +122,21 @@ const OrderMenu = () => {
                             <ArrowBack />
                         </IconButton>
                     </Box>
+
+                    {variantPopupOpen && variantProduct && (
+                        <VariantSelector
+                            product={variantProduct}
+                            initialItem={initialEditItem}
+                            onClose={() => {
+                                setVariantPopupOpen(false);
+                                setEditingItemIndex(null);
+                                setInitialEditItem(null);
+                            }}
+                            onConfirm={handleVariantConfirm}
+                        />
+                    )}
+
+                    {/* <pre>{JSON.stringify(orderDetails, null, 2)}</pre> */}
 
                     {/* Main Content */}
                     <Box
@@ -236,60 +300,63 @@ const OrderMenu = () => {
                             >
                                 <Grid container spacing={2}>
                                     {products.length > 0 &&
-                                        products.map((product) => (
-                                            <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={product.id}>
-                                                <Paper
-                                                    elevation={0}
-                                                    onClick={() => handleProductClick(product.id)}
-                                                    sx={{
-                                                        p: 2,
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        border: '1px solid #eee',
-                                                        borderRadius: 2,
-                                                        height: '100%',
-                                                        cursor: 'pointer',
-                                                        '&:hover': {
-                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                                        },
-                                                    }}
-                                                >
-                                                    <Box
+                                        products.map((product, index) => (
+                                            <>
+                                                {/* {index === 0 && <pre>{JSON.stringify(product, null, 2)}</pre>} */}
+                                                <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={product.id}>
+                                                    <Paper
+                                                        elevation={0}
+                                                        onClick={() => handleProductClick(product)}
                                                         sx={{
-                                                            width: 80,
-                                                            height: 80,
-                                                            borderRadius: '50%',
-                                                            overflow: 'hidden',
-                                                            mb: 1.5,
+                                                            p: 2,
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            border: '1px solid #eee',
+                                                            borderRadius: 2,
+                                                            height: '100%',
+                                                            cursor: 'pointer',
+                                                            '&:hover': {
+                                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                            },
                                                         }}
                                                     >
                                                         <Box
-                                                            component="img"
-                                                            src={product.images[0]}
-                                                            alt={product.name}
                                                             sx={{
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                objectFit: 'cover',
+                                                                width: 80,
+                                                                height: 80,
+                                                                borderRadius: '50%',
+                                                                overflow: 'hidden',
+                                                                mb: 1.5,
                                                             }}
-                                                        />
-                                                    </Box>
-                                                    <Typography
-                                                        variant="body1"
-                                                        sx={{
-                                                            fontWeight: 500,
-                                                            mb: 0.5,
-                                                            textAlign: 'center',
-                                                        }}
-                                                    >
-                                                        {product.name}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-                                                        Rs {product.base_price}
-                                                    </Typography>
-                                                </Paper>
-                                            </Grid>
+                                                        >
+                                                            <Box
+                                                                component="img"
+                                                                src={product.images[0]}
+                                                                alt={product.name}
+                                                                sx={{
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    objectFit: 'cover',
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                        <Typography
+                                                            variant="body1"
+                                                            sx={{
+                                                                fontWeight: 500,
+                                                                mb: 0.5,
+                                                                textAlign: 'center',
+                                                            }}
+                                                        >
+                                                            {product.name}
+                                                        </Typography>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                                                            Rs {product.base_price}
+                                                        </Typography>
+                                                    </Paper>
+                                                </Grid>
+                                            </>
                                         ))}
                                 </Grid>
                             </Paper>
@@ -362,7 +429,7 @@ const OrderMenu = () => {
                             </Box>
 
                             {/* Conditional rendering based on active view */}
-                            {activeView === 'orderDetail' ? <OrderDetail /> : <OrderSaved />}
+                            {activeView === 'orderDetail' ? <OrderDetail handleEditItem={handleEditItem} /> : <OrderSaved />}
                         </Paper>
                     </Box>
                 </Box>
@@ -410,6 +477,120 @@ const OrderMenu = () => {
                 </Modal> */}
         </>
     );
+};
+
+const VariantSelector = ({ product, onConfirm, onClose, initialItem = null }) => {
+    const [selectedValues, setSelectedValues] = useState({});
+    const [quantity, setQuantity] = useState(initialItem?.quantity || 1);
+
+    useEffect(() => {
+        if (initialItem?.variants?.length) {
+            const initial = {};
+            for (const v of product.variants) {
+                const match = initialItem.variants.find((iv) => iv.id === v.id);
+                const option = v.values.find((opt) => opt.name === match?.value);
+                if (option) {
+                    initial[v.name] = option;
+                }
+            }
+            setSelectedValues(initial);
+        }
+    }, [initialItem, product]);
+
+    const handleConfirm = () => {
+        const selectedVariantItems = product.variants
+            .filter((variant) => selectedValues[variant.name])
+            .map((variant) => {
+                const selected = selectedValues[variant.name];
+                return {
+                    id: variant.id,
+                    name: variant.name,
+                    price: parseFloat(selected?.additional_price || 0),
+                    value: selected?.name || '',
+                };
+            });
+
+        const totalVariantPrice = selectedVariantItems.reduce((acc, v) => acc + v.price, 0);
+        const total_price = (parseFloat(product.base_price) + totalVariantPrice) * quantity;
+
+        const orderItem = {
+            id: product.id,
+            name: product.name,
+            price: parseFloat(product.base_price),
+            total_price,
+            quantity,
+            category: product.category?.name || '',
+            variants: selectedVariantItems,
+        };
+
+        onConfirm(orderItem);
+    };
+
+    return (
+        <div style={popupStyle}>
+            <h3>{product.name}</h3>
+
+            {product.variants.map((variant, idx) => (
+                <div key={idx}>
+                    <h4>{variant.name}</h4>
+                    <ul>
+                        {variant.values.map((v, idx2) => (
+                            <li key={idx2}>
+                                <button
+                                    style={{
+                                        marginBottom: '10px',
+                                        fontWeight: selectedValues[variant.name]?.name === v.name ? 'bold' : 'normal',
+                                        opacity: v.stock === 0 ? 0.5 : 1,
+                                    }}
+                                    disabled={v.stock === 0}
+                                    onClick={() =>
+                                        setSelectedValues({
+                                            ...selectedValues,
+                                            [variant.name]: v,
+                                        })
+                                    }
+                                >
+                                    {v.name} (+${v.additional_price}) — Stock: {v.stock}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ))}
+
+            <div style={{ marginTop: '10px' }}>
+                <label>
+                    Quantity:
+                    <input
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={(e) => setQuantity(parseInt(e.target.value))}
+                        style={{ marginLeft: '10px', width: '60px' }}
+                    />
+                </label>
+            </div>
+
+            <div style={{ marginTop: '20px' }}>
+                <button onClick={handleConfirm} disabled={Object.values(selectedValues).some((v) => !v || v.stock === 0)}>
+                    {initialItem ? 'Update' : 'Add'}
+                </button>
+                <button onClick={onClose} style={{ marginLeft: '10px' }}>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    );
+};
+const popupStyle = {
+    position: 'fixed',
+    top: '20%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    backgroundColor: '#fff',
+    padding: '20px',
+    border: '1px solid #ccc',
+    zIndex: 1000,
 };
 
 export default OrderMenu;

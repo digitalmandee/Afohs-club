@@ -66,12 +66,18 @@ class OrderController extends Controller
         return response()->json(['success' => true, 'results' => $results], 200);
     }
 
+    public function sendToKitchen(Request $request)
+    {
+        dd($request->all());
+    }
+
     public function getProducts($category_id)
     {
         $category = Category::find($category_id);
 
         if ($category) {
-            $products = Product::where('category_id', $category_id)->get();
+            $products = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id)->get();
+
             return response()->json(['success' => true, 'products' => $products], 200);
         } else {
             return response()->json(['success' => true, 'products' => []], 200);
