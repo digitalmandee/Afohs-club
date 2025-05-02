@@ -55,10 +55,53 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     const [filteredOrder, setFilteredOrder] = useState(kitchenOrders || []);
     const [loadingOrders, setLoadingOrders] = useState({}); // Track loading state per order
 
+    // Function to format seconds into HH:MM:SS
+    const formatTime = (seconds) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Function to calculate total time from order_time and end_time
+    const calculateTotalTime = (order_time, end_time) => {
+        if (!order_time || !end_time) return '00:00:00';
+        const start = new Date(`1970-01-01T${order_time}Z`);
+        const end = new Date(`1970-01-01T${end_time}Z`);
+        const diffSeconds = Math.floor((end - start) / 1000);
+        return formatTime(diffSeconds);
+    };
+
     // State to track timers for each order
     const [timers, setTimers] = useState(
         (kitchenOrders || []).reduce((acc, order) => {
-            acc[order.id] = { running: order.status === 'in_progress', seconds: 0, totalTime: '00:00:00' };
+            let seconds = 0;
+            if (order.status === 'in_progress' && order.order_time) {
+                // Validate order_time format (HH:MM:SS)
+                const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
+                if (timeRegex.test(order.order_time)) {
+                    try {
+                        const startTime = new Date(`1970-01-01T${order.order_time}Z`);
+                        const currentTime = new Date();
+                        seconds = Math.floor((currentTime - startTime) / 1000);
+                        if (seconds < 0) seconds = 0; // Prevent negative time
+                    } catch (e) {
+                        console.error(`Invalid order_time for order ${order.id}: ${order.order_time}`, e);
+                        seconds = 0;
+                    }
+                } else {
+                    console.error(`Invalid order_time format for order ${order.id}: ${order.order_time}`);
+                    seconds = 0;
+                }
+            }
+            acc[order.id] = {
+                running: order.status === 'in_progress',
+                seconds,
+                totalTime:
+                    order.status === 'completed' && order.order_time && order.end_time
+                        ? calculateTotalTime(order.order_time, order.end_time)
+                        : '00:00:00',
+            };
             return acc;
         }, {}),
     );
@@ -207,23 +250,6 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                 }));
             },
         });
-    };
-
-    // Function to format seconds into HH:MM:SS
-    const formatTime = (seconds) => {
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    // Function to calculate total time from order_time and end_time
-    const calculateTotalTime = (order_time, end_time) => {
-        if (!order_time || !end_time) return '00:00:00';
-        const start = new Date(`1970-01-01T${order_time}Z`);
-        const end = new Date(`1970-01-01T${end_time}Z`);
-        const diffSeconds = Math.floor((end - start) / 1000);
-        return formatTime(diffSeconds);
     };
 
     const handleStatusChange = useCallback(
@@ -443,7 +469,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                                     color: isCancelled ? 'red' : item.status === 'completed' ? 'green' : undefined,
                                                                 }}
                                                             >
-                                                                {item.order_item.item}-{item.status}
+                                                                {item.order_item.item}
                                                             </Typography>
 
                                                             <div style={{ display: 'flex', alignItems: 'center' }}>
