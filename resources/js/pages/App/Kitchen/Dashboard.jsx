@@ -234,10 +234,14 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
             const order = kitchenOrders.find((o) => o.id === orderId);
             const newOrderStatus = order.status === 'pending' ? 'in_progress' : 'completed';
 
-            const itemStatuses = checkedItems[orderId].map((item) => ({
-                id: item.id,
-                status: item.checked ? 'completed' : 'pending',
-            }));
+            // Preserve cancelled status for items
+            const itemStatuses = checkedItems[orderId].map((item) => {
+                const orderItem = order.order_takings.find((taking) => taking.id === item.id);
+                return {
+                    id: item.id,
+                    status: orderItem.status === 'cancelled' ? 'cancelled' : item.checked ? 'completed' : 'pending',
+                };
+            });
 
             const formData = new FormData();
             formData.append('status', newOrderStatus);
@@ -369,9 +373,11 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                         ? '#4CAF50'
                                                         : order.status === 'pending'
                                                           ? '#1565C0'
-                                                          : order.status === 'in_progress'
-                                                            ? '#003366'
-                                                            : '#00BCD4',
+                                                          : order.status === 'cancelled' && order.status === 'Refund'
+                                                            ? '#00BCD4'
+                                                            : order.status === 'in_progress'
+                                                              ? '#003366'
+                                                              : '#00BCD4',
                                                 color: 'white',
                                                 padding: '12px',
                                                 display: 'flex',
@@ -437,7 +443,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                                     color: isCancelled ? 'red' : item.status === 'completed' ? 'green' : undefined,
                                                                 }}
                                                             >
-                                                                {item.order_item.item} - {item.status}
+                                                                {item.order_item.item}-{item.status}
                                                             </Typography>
 
                                                             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -445,7 +451,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                                     {item.order_item.qty}x
                                                                 </Typography>
                                                                 <Checkbox
-                                                                    disabled={!isEditable}
+                                                                    disabled={isCancelled || !isEditable}
                                                                     checked={isChecked}
                                                                     onChange={(e) => handleCheckboxChange(order.id, item.id, e.target.checked)}
                                                                     size="small"
@@ -494,6 +500,33 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                         'Finish'
                                                     )}
                                                 </Button>
+                                            )}
+                                            {['cancelled', 'refund'].includes(order.status) && (
+                                                <>
+                                                    <div style={{ display: 'flex', marginLeft: '8px' }}>
+                                                        <Button
+                                                            variant="outlined"
+                                                            style={{
+                                                                marginRight: '4px',
+                                                                textTransform: 'none',
+                                                                borderColor: '#e0e0e0',
+                                                                color: '#333',
+                                                            }}
+                                                        >
+                                                            Reject
+                                                        </Button>
+                                                        <Button
+                                                            variant="contained"
+                                                            style={{
+                                                                backgroundColor: '#00BCD4',
+                                                                textTransform: 'none',
+                                                                color: 'white',
+                                                            }}
+                                                        >
+                                                            Refund
+                                                        </Button>
+                                                    </div>
+                                                </>
                                             )}
                                         </div>
                                     </Paper>
