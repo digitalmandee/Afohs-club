@@ -330,7 +330,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                 </Box>
             </div>
 
-            <div
+            {/* <div
                 style={{
                     position: 'fixed',
                     bottom: '0',
@@ -347,7 +347,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                     onClick={() => setShowData(!showData)}
                 ></div>
                 {showData && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(orderDetails, null, 2)}</pre>}
-            </div>
+            </div> */}
         </>
     );
 };

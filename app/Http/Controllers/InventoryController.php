@@ -47,7 +47,7 @@ class InventoryController extends Controller
             'profit' => 'required|numeric',
             'description' => 'required|string',
             'images' => 'nullable|array',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
         ]);
 
         // Create a new product
