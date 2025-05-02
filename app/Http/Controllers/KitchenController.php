@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Models\OrderTaking;
+use App\Models\OrderItem;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +14,7 @@ class KitchenController extends Controller
 {
     public function index()
     {
-        $orders = Order::with(['orderTakings', 'table'])
+        $orders = Order::with(['orderItems', 'table'])
             ->latest()
             ->get();
 
@@ -25,23 +26,22 @@ class KitchenController extends Controller
     public function updateAll(Request $request, $orderId)
     {
         // Log the full request payload for debugging
-        Log::info('KitchenController::updateAll received request:', [
-            'orderId' => $orderId,
-            'payload' => $request->all(),
-        ]);
-
+        // Log::info('KitchenController::updateAll received request:', [
+        //     'orderId' => $orderId,
+        //     'payload' => $request->all(),
+        // ]);
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,in_progress,completed',
             'items' => 'required|json',
-            'order_time' => 'nullable|date_format:H:i:s', // Validate order_time if provided
-            'end_time' => 'nullable|date_format:H:i:s', // Validate end_time if provided
+            'order_time' => 'nullable|date_format:Y-m-d\TH:i:s.v\Z', // Validate order_time if provided in the specified format
+            'end_time' => 'nullable|date_format:Y-m-d\TH:i:s.v\Z', // Validate end_time if provided in the specified format
         ]);
 
         if ($validator->fails()) {
-            Log::error('Validation failed for updateAll:', [
-                'errors' => $validator->errors()->all(),
-                'input' => $request->all(),
-            ]);
+            // Log::error('Validation failed for updateAll:', [
+            //     'errors' => $validator->errors()->all(),
+            //     'input' => $request->all(),
+            // ]);
             return redirect()->back()->withErrors($validator)->with('error', 'Validation failed.');
         }
 
@@ -50,19 +50,17 @@ class KitchenController extends Controller
         $order->status = $request->input('status');
 
         if ($request->filled('order_time')) {
-            Log::info('Received order_time: ' . $request->input('order_time')); // Debug log
-            $order->order_time = $request->input('order_time');
+            $orderTimeIso = $request->input('order_time');
+            $order->order_time = Carbon::parse($orderTimeIso)->format('Y-m-d H:i:s');
         } elseif ($request->input('status') === 'in_progress') {
-            $order->order_time = now()->format('H:i:s'); // Fallback to current time
-            Log::info('Using fallback order_time: ' . $order->order_time); // Debug log
+            $order->order_time = Carbon::now()->format('Y-m-d H:i:s');
         }
 
         if ($request->filled('end_time')) {
-            Log::info('Received end_time: ' . $request->input('end_time')); // Debug log
-            $order->end_time = $request->input('end_time');
+            $orderTimeIso = $request->input('end_time');
+            $order->end_time = Carbon::parse($orderTimeIso)->format('Y-m-d H:i:s');
         } elseif ($request->input('status') === 'completed') {
-            $order->end_time = now()->format('H:i:s'); // Fallback to current time
-            Log::info('Using fallback end_time: ' . $order->end_time); // Debug log
+            $order->end_time = Carbon::now()->format('Y-m-d H:i:s');
         }
 
         $order->save();
@@ -71,13 +69,13 @@ class KitchenController extends Controller
         $items = json_decode($request->input('items'), true);
 
         foreach ($items as $item) {
-            $orderTaking = OrderTaking::where('id', $item['id'])
+            $orderItem = OrderItem::where('id', $item['id'])
                 ->where('order_id', $orderId)
                 ->first();
 
-            if ($orderTaking) {
-                $orderTaking->status = $item['status'];
-                $orderTaking->save();
+            if ($orderItem) {
+                $orderItem->status = $item['status'];
+                $orderItem->save();
             }
         }
 
@@ -101,12 +99,12 @@ class KitchenController extends Controller
             return redirect()->back()->withErrors($validator)->with('error', 'Validation failed for item status.');
         }
 
-        $orderTaking = OrderTaking::where('id', $itemId)
+        $orderItem = OrderItem::where('id', $itemId)
             ->where('order_id', $orderId)
             ->firstOrFail();
 
-        $orderTaking->status = $request->input('status');
-        $orderTaking->save();
+        $orderItem->status = $request->input('status');
+        $orderItem->save();
 
         return redirect()->back()->with('success', 'Item status updated successfully.');
     }

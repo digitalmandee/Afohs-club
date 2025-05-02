@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->time('end_time')->nullable()->after('created_at'); // Adjust placement if needed
+            $table->timestamp('end_time')->nullable()->after('order_time'); // Adjust placement if needed
         });
     }
 

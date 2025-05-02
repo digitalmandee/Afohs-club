@@ -6,11 +6,13 @@ use App\Models\Category;
 use App\Models\Floor;
 use App\Models\MemberType;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
@@ -73,7 +75,42 @@ class OrderController extends Controller
 
     public function sendToKitchen(Request $request)
     {
-        dd($request->all());
+        $request->validate([
+            'member.id' => 'required|exists:users,id',
+            'order_items' => 'required|array',
+            'order_items.*.id' => 'required|exists:products,id',
+            'price' => 'required|numeric',
+        ]);
+
+        DB::beginTransaction();
+
+        $order = Order::create([
+            'order_number' => $this->getOrderNo(),
+            'user_id' => $request->member['id'],
+            'waiter_id' => $request->waiter['id'],
+            'table_id' => $request->table,
+            'order_type' => $request->order_type,
+            'person_count' => $request->person_count,
+            'date' => $request->date,
+            'time' => $request->time,
+            'down_payment' => $request->down_payment,
+            'price' => $request->price,
+            'cash_total' => $request->cash_total,
+            'customer_change' => $request->customer_change,
+            'status' => 'pending'
+        ]);
+
+        collect($request->order_items)->each(function ($item) use ($order) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'order_item' => $item,
+                'status' => 'pending',
+            ]);
+        });
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Order sent to kitchen.');
     }
 
     public function getProducts($category_id)

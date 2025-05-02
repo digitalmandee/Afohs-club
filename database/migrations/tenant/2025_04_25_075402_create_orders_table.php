@@ -19,12 +19,14 @@ return new class extends Migration
             $table->foreignId('table_id')->nullable()->constrained('tables');
             $table->string('order_type')->nullable();
             $table->integer('person_count')->default(0);
-            $table->bigInteger('down_payment')->nullable();
-            $table->bigInteger('price')->default(0);
+            $table->decimal('down_payment', 10, 2)->nullable();
+            $table->decimal('price', 10, 2)->default(0);
+            $table->decimal('cash_total', 10, 2)->default(0);
+            $table->decimal('customer_change', 10, 2)->default(0);
             $table->date('start_date')->nullable();
             $table->time('start_time')->nullable();
-            $table->time('order_time')->nullable();
-            $table->enum('status', ['pending', 'in_progress', 'completed', 'cancelled', 'reserved', 'no_show', 'refund'])->nullable();
+            $table->dateTime('order_time', 3)->nullable();
+            $table->enum('status', ['saved', 'pending', 'in_progress', 'completed', 'cancelled', 'no_show', 'refund'])->nullable();
             $table->timestamps();
         });
     }

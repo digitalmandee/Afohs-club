@@ -9,6 +9,8 @@ class Order extends Model
 {
     use HasFactory;
 
+    protected $dates = ['order_time'];
+
     protected $fillable = [
         'order_number',
         'user_id',
@@ -20,14 +22,14 @@ class Order extends Model
         'price',
         'start_date',
         'start_time',
+        'order_time',
+        'end_time',
         'status'
-
-
     ];
 
-    public function orderTakings()
+    public function orderItems()
     {
-        return $this->hasMany(OrderTaking::class);
+        return $this->hasMany(OrderItem::class);
     }
 
     public function table()
