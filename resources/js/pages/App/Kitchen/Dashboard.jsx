@@ -6,12 +6,13 @@ import { Close as CloseIcon, FilterAlt as FilterIcon, Print as PrintIcon } from 
 import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining'; // delivery
 import RestaurantIcon from '@mui/icons-material/Restaurant'; // dine_in
 import TakeoutDiningIcon from '@mui/icons-material/TakeoutDining'; // take_away
-
 import {
     Alert,
+    Box,
     Button,
     Checkbox,
     Chip,
+    CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
@@ -24,7 +25,6 @@ import {
     Snackbar,
     Typography,
 } from '@mui/material';
-
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -47,18 +47,18 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-
     const [datePeriod, setDatePeriod] = useState('');
     const [fromDate, setFromDate] = useState('Jan 01, 2024');
     const [toDate, setToDate] = useState('August 01, 2024');
     const [statusFilters, setStatusFilters] = useState(['All']);
     const [orderTypeFilters, setOrderTypeFilters] = useState(['All']);
     const [filteredOrder, setFilteredOrder] = useState(kitchenOrders || []);
+    const [loadingOrders, setLoadingOrders] = useState({}); // Track loading state per order
 
     // State to track timers for each order
     const [timers, setTimers] = useState(
         (kitchenOrders || []).reduce((acc, order) => {
-            acc[order.id] = { running: order.status === 'in_progress', seconds: 0, totalTime: null };
+            acc[order.id] = { running: order.status === 'in_progress', seconds: 0, totalTime: '00:00:00' };
             return acc;
         }, {}),
     );
@@ -229,6 +229,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     const handleStatusChange = useCallback(
         (e, orderId) => {
             e.preventDefault();
+            setLoadingOrders((prev) => ({ ...prev, [orderId]: true })); // Set loading for this order
 
             const order = kitchenOrders.find((o) => o.id === orderId);
             const newOrderStatus = order.status === 'pending' ? 'in_progress' : 'completed';
@@ -294,6 +295,9 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                     setSnackbarMessage('Failed to update statuses: ' + (errors.status || 'Unknown error'));
                     setSnackbarSeverity('error');
                     setSnackbarOpen(true);
+                },
+                onFinish: () => {
+                    setLoadingOrders((prev) => ({ ...prev, [orderId]: false })); // Reset loading for this order
                 },
             });
         },
@@ -380,13 +384,11 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     #{order.id}
                                                 </Typography>
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <Typography variant="body2">Start: {order.order_time}</Typography>
-                                                    {order.end_time && <Typography variant="body2">End: {order.end_time}</Typography>}
-                                                    {order.status === 'in_progress' && (
+                                                    {order.status !== 'completed' && (
                                                         <Typography variant="body2">Timer: {formatTime(timers[order.id]?.seconds || 0)}</Typography>
                                                     )}
                                                     {order.status === 'completed' && timers[order.id]?.totalTime && (
-                                                        <Typography variant="body2">Total Time: {timers[order.id].totalTime}</Typography>
+                                                        <Typography variant="body2">Timer: {timers[order.id].totalTime}</Typography>
                                                     )}
                                                 </div>
                                             </div>
@@ -474,6 +476,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                 <Button
                                                     variant="contained"
                                                     fullWidth
+                                                    disabled={loadingOrders[order.id] || false}
                                                     style={{
                                                         marginLeft: '8px',
                                                         backgroundColor: order.status === 'pending' ? '#1565C0' : '#003366',
@@ -481,7 +484,15 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     }}
                                                     onClick={(e) => handleStatusChange(e, order.id)}
                                                 >
-                                                    {order.status === 'pending' ? 'Start' : 'Finish'}
+                                                    {loadingOrders[order.id] ? (
+                                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                            <CircularProgress size={24} sx={{ color: '#fff' }} />
+                                                        </Box>
+                                                    ) : order.status === 'pending' ? (
+                                                        'Start'
+                                                    ) : (
+                                                        'Finish'
+                                                    )}
                                                 </Button>
                                             )}
                                         </div>
