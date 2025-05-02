@@ -28,7 +28,12 @@ class OrderController extends Controller
         // Get all active floors with their tables
         $floorTables = Floor::select('id', 'name')->where('status', 1)->with('tables:id,floor_id,table_no,capacity')->get();
 
-        return Inertia::render('App/Order/New/Index', compact('orderNo', 'memberTypes', 'floorTables'));
+        // return Inertia::render('App/Order/New/Index', compact('orderNo', 'memberTypes', ''));
+        return Inertia::render('App/Order/New/Index', [
+            'orderNo' => $orderNo,
+            'memberTypes' => $memberTypes,
+            'floorTables' => $floorTables,
+        ]);
     }
 
     public function orderMenu(Request $request)

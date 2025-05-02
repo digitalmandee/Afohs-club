@@ -1,17 +1,18 @@
 'use client';
 
 import SideNav from '@/components/App/SideBar/SideNav';
+import { router } from '@inertiajs/react';
+import { Close as CloseIcon, FilterAlt as FilterIcon, Print as PrintIcon } from '@mui/icons-material';
+import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining'; // delivery
+import RestaurantIcon from '@mui/icons-material/Restaurant'; // dine_in
+import TakeoutDiningIcon from '@mui/icons-material/TakeoutDining'; // take_away
 import {
-    Close as CloseIcon,
-    DirectionsCar as DeliveryIcon,
-    LocalDining as DiningIcon,
-    FilterAlt as FilterIcon,
-    Print as PrintIcon,
-} from '@mui/icons-material';
-import {
+    Alert,
+    Box,
     Button,
     Checkbox,
     Chip,
+    CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
@@ -21,25 +22,122 @@ import {
     MenuItem,
     Paper,
     Select,
+    Snackbar,
     Typography,
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import React, { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const OrderManagement = () => {
+const OrderManagement = ({ kitchenOrders, flash }) => {
     const [open, setOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('All Order');
-
-    // Filter states
+    const [checkedItems, setCheckedItems] = useState(
+        (kitchenOrders || []).reduce((acc, order) => {
+            acc[order.id] = order.order_takings.map((item) => ({
+                id: item.id,
+                checked: item.status === 'completed',
+            }));
+            return acc;
+        }, {}),
+    );
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [datePeriod, setDatePeriod] = useState('');
     const [fromDate, setFromDate] = useState('Jan 01, 2024');
     const [toDate, setToDate] = useState('August 01, 2024');
     const [statusFilters, setStatusFilters] = useState(['All']);
     const [orderTypeFilters, setOrderTypeFilters] = useState(['All']);
+    const [filteredOrder, setFilteredOrder] = useState(kitchenOrders || []);
+    const [loadingOrders, setLoadingOrders] = useState({}); // Track loading state per order
+
+    // Function to format seconds into HH:MM:SS
+    const formatTime = (seconds) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Function to calculate total time from order_time and end_time
+    const calculateTotalTime = (order_time, end_time) => {
+        if (!order_time || !end_time) return '00:00:00';
+        const start = new Date(`1970-01-01T${order_time}Z`);
+        const end = new Date(`1970-01-01T${end_time}Z`);
+        const diffSeconds = Math.floor((end - start) / 1000);
+        return formatTime(diffSeconds);
+    };
+
+    // State to track timers for each order
+    const [timers, setTimers] = useState(
+        (kitchenOrders || []).reduce((acc, order) => {
+            let seconds = 0;
+            if (order.status === 'in_progress' && order.order_time) {
+                // Validate order_time format (HH:MM:SS)
+                const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
+                if (timeRegex.test(order.order_time)) {
+                    try {
+                        const startTime = new Date(`1970-01-01T${order.order_time}Z`);
+                        const currentTime = new Date();
+                        seconds = Math.floor((currentTime - startTime) / 1000);
+                        if (seconds < 0) seconds = 0; // Prevent negative time
+                    } catch (e) {
+                        console.error(`Invalid order_time for order ${order.id}: ${order.order_time}`, e);
+                        seconds = 0;
+                    }
+                } else {
+                    console.error(`Invalid order_time format for order ${order.id}: ${order.order_time}`);
+                    seconds = 0;
+                }
+            }
+            acc[order.id] = {
+                running: order.status === 'in_progress',
+                seconds,
+                totalTime:
+                    order.status === 'completed' && order.order_time && order.end_time
+                        ? calculateTotalTime(order.order_time, order.end_time)
+                        : '00:00:00',
+            };
+            return acc;
+        }, {}),
+    );
+
+    useEffect(() => {
+        if (flash?.success) {
+            setSnackbarMessage(flash.success);
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+        } else if (flash?.error) {
+            setSnackbarMessage(flash.error);
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+        }
+    }, [flash]);
+
+    // Timer effect to update running timers
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTimers((prev) => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach((orderId) => {
+                    if (updated[orderId].running) {
+                        updated[orderId].seconds += 1;
+                    }
+                });
+                return updated;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
+    };
 
     const handleFilterOpen = () => {
         setFilterOpen(true);
@@ -49,7 +147,6 @@ const OrderManagement = () => {
         setFilterOpen(false);
     };
 
-    // Modify the handleTabChange function to filter orders
     const handleTabChange = (tab) => {
         setActiveTab(tab);
     };
@@ -67,7 +164,6 @@ const OrderManagement = () => {
                 : statusFilters.includes(status)
                   ? statusFilters.filter((s) => s !== status)
                   : [...statusFilters, status];
-
             setStatusFilters(newFilters.length ? newFilters : ['All']);
         }
     };
@@ -81,7 +177,6 @@ const OrderManagement = () => {
                 : orderTypeFilters.includes(type)
                   ? orderTypeFilters.filter((t) => t !== type)
                   : [...orderTypeFilters, type];
-
             setOrderTypeFilters(newFilters.length ? newFilters : ['All']);
         }
     };
@@ -95,221 +190,149 @@ const OrderManagement = () => {
     };
 
     const applyFilters = () => {
-        // Apply filter logic here
         handleFilterClose();
     };
 
-    // Sample order data
-    const orders = [
-        {
-            id: '#009',
-            table: 'T9',
-            time: '00:04',
-            items: [
-                {
-                    name: 'Cappucino',
-                    quantity: 2,
-                    checked: false,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'Normal', topping: 'Boba' },
-                },
-                { name: 'Soda Beverage', quantity: 3, checked: false },
-                { name: 'French Toast Sugar', quantity: 3, checked: false },
-                { name: 'Chocolate Croissant', quantity: 2, checked: false },
-            ],
-            status: 'New Order',
-        },
-        {
-            id: '#008',
-            table: 'T1',
-            time: '02:02',
-            items: [
-                {
-                    name: 'Cappucino',
-                    quantity: 1,
-                    checked: false,
-                    details: { temperature: 'Ice', size: 'Regular', sugar: 'No' },
-                },
-                { name: 'Sandwich vegan', quantity: 1, checked: false },
-            ],
-            status: 'New Order',
-            action: 'Start',
-        },
-        {
-            id: '#008',
-            table: 'P1',
-            time: '00:04',
-            items: [
-                { name: 'Eggs Benedict Burger', quantity: 1, checked: false },
-                { name: 'Seafood Lunch', quantity: 3, checked: false },
-            ],
-            status: 'New Order',
-            action: 'Start',
-        },
-        {
-            id: '#006',
-            table: 'T8',
-            time: '08:10',
-            items: [
-                {
-                    name: 'Ristretto Bianco',
-                    quantity: 3,
-                    checked: true,
-                    details: { temperature: 'Hot', size: 'Medium', sugar: 'Normal' },
-                },
-                { name: 'Buttermilk waffle', quantity: 1, checked: false },
-                { name: 'French Toast Sugar', quantity: 1, checked: false },
-                { name: 'Chocolate Croissant', quantity: 1, checked: false },
-            ],
-            status: 'Process',
-            action: 'Finish',
-        },
-        {
-            id: '#005',
-            table: 'T4',
-            time: '08:15',
-            items: [
-                {
-                    name: 'Ristretto Bianco',
-                    quantity: 3,
-                    checked: true,
-                    details: { temperature: 'Hot', size: 'Medium', sugar: 'Normal' },
-                },
-                { name: 'Buttermilk waffle', quantity: 1, checked: true },
-                { name: 'French Toast Sugar', quantity: 1, checked: true },
-                { name: 'Chocolate Croissant', quantity: 1, checked: false },
-            ],
-            status: 'Process',
-        },
-        {
-            id: '#001',
-            table: 'T12',
-            time: '12:02',
-            items: [
-                {
-                    name: 'Vegan Iced Latte',
-                    quantity: 1,
-                    checked: true,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'No' },
-                },
-                { name: 'Sandwich vegan', quantity: 2, checked: true },
-            ],
-            status: 'Done',
-            action: 'Print Receipt',
-        },
-        {
-            id: '#002',
-            table: 'DE',
-            time: '12:02',
-            items: [
-                {
-                    name: 'Orange Juice',
-                    quantity: 1,
-                    checked: true,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'No' },
-                },
-                { name: 'Eggs Benedict Burger', quantity: 2, checked: true },
-            ],
-            status: 'Done',
-            action: 'Print Receipt',
-        },
-        {
-            id: '#001',
-            table: 'T2',
-            time: '02:02',
-            items: [
-                {
-                    name: 'Cappucino',
-                    quantity: 2,
-                    checked: true,
-                    details: { refund: { reason: 'Incorrect Order', amount: '$4.00' } },
-                },
-                { name: 'Soda Beverage', quantity: 3, checked: true },
-                { name: 'French Toast Sugar', quantity: 3, checked: true },
-                { name: 'Chocolate Croissant', quantity: 2, checked: false },
-            ],
-            status: 'Refund',
-            showMore: true,
-            action: 'Refund',
-        },
-        {
-            id: '#001',
-            table: 'T12',
-            time: '12:02',
-            items: [
-                {
-                    name: 'Vegan Iced Latte',
-                    quantity: 1,
-                    checked: true,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'No' },
-                },
-                { name: 'Sandwich vegan', quantity: 2, checked: true },
-            ],
-            status: 'Done',
-            action: 'Print Receipt',
-        },
-        {
-            id: '#001',
-            table: 'T2',
-            time: '12:02',
-            items: [
-                {
-                    name: 'Vegan Iced Latte',
-                    quantity: 1,
-                    checked: true,
-                    details: { temperature: 'Ice', size: 'Large', sugar: 'No' },
-                },
-                { name: 'Sandwich vegan', quantity: 2, checked: true },
-            ],
-            status: 'Done',
-            action: 'Print Receipt',
-        },
-        {
-            id: '#001',
-            table: 'T2',
-            time: '02:02',
-            items: [
-                {
-                    name: 'Cappucino',
-                    quantity: 2,
-                    checked: true,
-                    details: { refund: { reason: 'Customer Change Mind', amount: '$10.00' } },
-                },
-                { name: 'Soda Beverage', quantity: 3, checked: true },
-                { name: 'French Toast Sugar', quantity: 3, checked: true },
-                { name: 'Chocolate Croissant', quantity: 2, checked: false },
-            ],
-            status: 'Refund',
-            showMore: true,
-            action: 'Refund',
-        },
-    ];
-
-    // Filter tabs
     const tabs = [
         { id: 'All Order', count: null },
-        { id: 'New Order', count: 3 },
-        { id: 'Process', count: 3 },
-        { id: 'Done', count: 3 },
-        { id: 'Refund', count: 3 },
+        { id: 'pending', count: kitchenOrders?.filter((o) => o.status === 'pending').length || 0 },
+        { id: 'in_progress', count: kitchenOrders?.filter((o) => o.status === 'in_progress').length || 0 },
+        { id: 'completed', count: kitchenOrders?.filter((o) => o.status === 'completed').length || 0 },
     ];
 
-    // Date period options
     const datePeriods = ['Yesterday', 'Last Week', 'Last Month', 'Last 3 Month', 'Last Year', 'Custom Date'];
-
-    // Status filter options
     const statusOptions = ['All', 'New Order', 'Refund', 'Process', 'Done'];
-
-    // Order type filter options
     const orderTypeOptions = ['All', 'Dine', 'Pickup', 'Delivery', 'Takeaway', 'Reservation'];
 
-    // Filter orders based on active tab
-    const filteredOrders = orders.filter((order) => {
+    const filteredOrders = (kitchenOrders || []).filter((order) => {
         if (activeTab === 'All Order') {
             return true;
         } else {
             return order.status === activeTab;
         }
     });
+
+    const handleCheckboxChange = (orderId, itemId, checked) => {
+        setCheckedItems((prev) => ({
+            ...prev,
+            [orderId]: prev[orderId].map((item) => (item.id === itemId ? { ...item, checked } : item)),
+        }));
+
+        const formData = new FormData();
+        formData.append('status', checked ? 'completed' : 'pending');
+
+        router.post(route('kitchen.item.update-status', { order: orderId, item: itemId }), formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setFilteredOrder((prev) =>
+                    prev.map((order) =>
+                        order.id === orderId
+                            ? {
+                                  ...order,
+                                  order_takings: order.order_takings.map((item) =>
+                                      item.id === itemId ? { ...item, status: checked ? 'completed' : 'pending' } : item,
+                                  ),
+                              }
+                            : order,
+                    ),
+                );
+            },
+            onError: (errors) => {
+                console.error('Item status update error:', errors);
+                setSnackbarMessage('Failed to update item status: ' + (errors.status || 'Unknown error'));
+                setSnackbarSeverity('error');
+                setSnackbarOpen(true);
+
+                setCheckedItems((prev) => ({
+                    ...prev,
+                    [orderId]: prev[orderId].map((item) => (item.id === itemId ? { ...item, checked: !checked } : item)),
+                }));
+            },
+        });
+    };
+
+    const handleStatusChange = useCallback(
+        (e, orderId) => {
+            e.preventDefault();
+            setLoadingOrders((prev) => ({ ...prev, [orderId]: true })); // Set loading for this order
+
+            const order = kitchenOrders.find((o) => o.id === orderId);
+            const newOrderStatus = order.status === 'pending' ? 'in_progress' : 'completed';
+
+            // Preserve cancelled status for items
+            const itemStatuses = checkedItems[orderId].map((item) => {
+                const orderItem = order.order_takings.find((taking) => taking.id === item.id);
+                return {
+                    id: item.id,
+                    status: orderItem.status === 'cancelled' ? 'cancelled' : item.checked ? 'completed' : 'pending',
+                };
+            });
+
+            const formData = new FormData();
+            formData.append('status', newOrderStatus);
+            formData.append('items', JSON.stringify(itemStatuses));
+
+            let formattedTime = null;
+            if (newOrderStatus === 'in_progress') {
+                const now = new Date();
+                formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:13:25"
+                console.log('Sending order_time:', formattedTime); // Debug log
+                formData.append('order_time', formattedTime);
+            } else if (newOrderStatus === 'completed') {
+                const now = new Date();
+                formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:15:00"
+                console.log('Sending end_time:', formattedTime); // Debug log
+                formData.append('end_time', formattedTime);
+            }
+
+            router.post(route('kitchen.update-all', orderId), formData, {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setFilteredOrder((prev) =>
+                        prev.map((order) =>
+                            order.id === orderId
+                                ? {
+                                      ...order,
+                                      status: newOrderStatus,
+                                      order_time: newOrderStatus === 'in_progress' ? formattedTime : order.order_time,
+                                      end_time: newOrderStatus === 'completed' ? formattedTime : order.end_time,
+                                      order_takings: order.order_takings.map((item) => {
+                                          const updatedItem = itemStatuses.find((i) => i.id === item.id);
+                                          return updatedItem ? { ...item, status: updatedItem.status } : item;
+                                      }),
+                                  }
+                                : order,
+                        ),
+                    );
+
+                    // Update timer state
+                    setTimers((prev) => {
+                        const updated = { ...prev };
+                        if (newOrderStatus === 'in_progress') {
+                            updated[orderId] = { running: true, seconds: 0, totalTime: null };
+                        } else if (newOrderStatus === 'completed') {
+                            const order = filteredOrder.find((o) => o.id === orderId);
+                            const totalTime = calculateTotalTime(order.order_time, formattedTime);
+                            updated[orderId] = { running: false, seconds: prev[orderId].seconds, totalTime };
+                        }
+                        return updated;
+                    });
+                },
+                onError: (errors) => {
+                    console.error('Status update error:', errors);
+                    setSnackbarMessage('Failed to update statuses: ' + (errors.status || 'Unknown error'));
+                    setSnackbarSeverity('error');
+                    setSnackbarOpen(true);
+                },
+                onFinish: () => {
+                    setLoadingOrders((prev) => ({ ...prev, [orderId]: false })); // Reset loading for this order
+                },
+            });
+        },
+        [checkedItems, setFilteredOrder, kitchenOrders, filteredOrder],
+    );
 
     return (
         <>
@@ -322,7 +345,6 @@ const OrderManagement = () => {
                 }}
             >
                 <div className="container-fluid p-3">
-                    {/* Header with tabs and filter */}
                     <div
                         className="d-flex justify-content-between align-items-center mb-3 p-3"
                         style={{ backgroundColor: '#eeeeee', borderRadius: '10px' }}
@@ -343,7 +365,8 @@ const OrderManagement = () => {
                                     }}
                                     onClick={() => handleTabChange(tab.id)}
                                 >
-                                    {tab.id} {tab.count !== null && `(${tab.count})`}
+                                    {tab.id.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                    {tab.count !== null && `(${tab.count})`}
                                 </Button>
                             ))}
                         </div>
@@ -362,217 +385,180 @@ const OrderManagement = () => {
                         </Button>
                     </div>
 
-                    {/* Order cards grid */}
                     <div className="row m-1 p-2" style={{ backgroundColor: '#fbfbfb', borderRadius: '10px' }}>
-                        {filteredOrders.map((order, index) => (
-                            <div key={index} className="col-md-3 mb-3">
-                                <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                                    {/* Order header */}
-                                    <div
-                                        style={{
-                                            backgroundColor:
-                                                order.status === 'Done'
-                                                    ? '#4CAF50'
-                                                    : order.status === 'Process'
-                                                      ? '#1565C0'
-                                                      : order.status === 'New Order'
-                                                        ? '#003366'
-                                                        : '#00BCD4',
-                                            color: 'white',
-                                            padding: '12px',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                        }}
-                                    >
-                                        <div>
-                                            <Typography variant="h6" style={{ fontWeight: 'bold' }}>
-                                                {order.id}
-                                            </Typography>
-                                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                <Typography variant="body2">{order.time}</Typography>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <div
-                                                style={{
-                                                    backgroundColor: order.table.startsWith('T')
-                                                        ? '#1976D2'
-                                                        : order.table === 'DE'
-                                                          ? '#2E7D32'
-                                                          : order.table === 'P1'
-                                                            ? '#0D47A1'
-                                                            : '#1976D2',
-                                                    width: '36px',
-                                                    height: '36px',
-                                                    borderRadius: '50%',
-                                                    display: 'flex',
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                    marginRight: '8px',
-                                                }}
-                                            >
-                                                <Typography variant="body2">{order.table}</Typography>
-                                            </div>
-                                            <IconButton size="small" style={{ color: 'white' }}>
-                                                {order.table === 'DE' ? <DeliveryIcon /> : <DiningIcon />}
-                                            </IconButton>
-                                        </div>
-                                    </div>
+                        {filteredOrders.map((order) => {
+                            const orderTaking = order.order_takings?.slice(-1)[0];
 
-                                    {/* Order items */}
-                                    <div style={{ padding: '12px' }}>
-                                        {order.items.map((item, idx) => (
-                                            <div key={idx} style={{ marginBottom: '8px' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <Typography variant="body1">{item.name}</Typography>
-                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Typography variant="body2" style={{ marginRight: '8px' }}>
-                                                            {item.quantity}x
-                                                        </Typography>
-                                                        <Checkbox
-                                                            checked={item.checked}
-                                                            size="small"
-                                                            style={{
-                                                                color: item.checked ? '#1976D2' : undefined,
-                                                                padding: '2px',
-                                                            }}
-                                                        />
-                                                    </div>
+                            return (
+                                <div key={order.id} className="col-md-3 mb-3">
+                                    <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                                        <div
+                                            style={{
+                                                backgroundColor:
+                                                    order.status === 'completed'
+                                                        ? '#4CAF50'
+                                                        : order.status === 'pending'
+                                                          ? '#1565C0'
+                                                          : order.status === 'cancelled' && order.status === 'Refund'
+                                                            ? '#00BCD4'
+                                                            : order.status === 'in_progress'
+                                                              ? '#003366'
+                                                              : '#00BCD4',
+                                                color: 'white',
+                                                padding: '12px',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                            }}
+                                        >
+                                            <div>
+                                                <Typography variant="h6" style={{ fontWeight: 'bold' }}>
+                                                    #{order.id}
+                                                </Typography>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    {order.status !== 'completed' && (
+                                                        <Typography variant="body2">Timer: {formatTime(timers[order.id]?.seconds || 0)}</Typography>
+                                                    )}
+                                                    {order.status === 'completed' && timers[order.id]?.totalTime && (
+                                                        <Typography variant="body2">Timer: {timers[order.id].totalTime}</Typography>
+                                                    )}
                                                 </div>
-
-                                                {/* Item details if available */}
-                                                {item.details && !item.details.refund && (
-                                                    <div
-                                                        style={{
-                                                            display: 'grid',
-                                                            gridTemplateColumns: '1fr 1fr',
-                                                            fontSize: '12px',
-                                                            color: '#666',
-                                                            marginTop: '4px',
-                                                        }}
-                                                    >
-                                                        {Object.entries(item.details).map(([key, value]) => (
-                                                            <React.Fragment key={key}>
-                                                                <div>{key.charAt(0).toUpperCase() + key.slice(1)}</div>
-                                                                <div style={{ textAlign: 'right' }}>{value}</div>
-                                                            </React.Fragment>
-                                                        ))}
-                                                    </div>
-                                                )}
-
-                                                {/* Refund details if available */}
-                                                {item.details && item.details.refund && (
-                                                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <div>Reason</div>
-                                                            <div>{item.details.refund.reason}</div>
-                                                        </div>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <div>Refund Amount</div>
-                                                            <div>{item.details.refund.amount}</div>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
-                                        ))}
-
-                                        {/* Show more button */}
-                                        {order.showMore && (
-                                            <Button
-                                                variant="text"
-                                                size="small"
-                                                style={{ color: '#666', textTransform: 'none', padding: '0', fontSize: '12px' }}
-                                            >
-                                                Show More (2)
-                                            </Button>
-                                        )}
-                                    </div>
-
-                                    {/* Order actions */}
-                                    <div
-                                        style={{
-                                            borderTop: '1px solid #eee',
-                                            padding: '8px',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                        }}
-                                    >
-                                        <IconButton size="small">
-                                            <PrintIcon fontSize="small" />
-                                        </IconButton>
-
-                                        {order.action === 'Start' && (
-                                            <Button
-                                                variant="contained"
-                                                fullWidth
-                                                style={{
-                                                    marginLeft: '8px',
-                                                    backgroundColor: '#003366',
-                                                    textTransform: 'none',
-                                                }}
-                                            >
-                                                Start
-                                            </Button>
-                                        )}
-
-                                        {order.action === 'Finish' && (
-                                            <Button
-                                                variant="contained"
-                                                fullWidth
-                                                style={{
-                                                    marginLeft: '8px',
-                                                    backgroundColor: '#1976D2',
-                                                    textTransform: 'none',
-                                                }}
-                                            >
-                                                Finish
-                                            </Button>
-                                        )}
-
-                                        {order.action === 'Print Receipt' && (
-                                            <Button
-                                                variant="text"
-                                                startIcon={<PrintIcon />}
-                                                style={{
-                                                    marginLeft: '8px',
-                                                    color: '#333',
-                                                    textTransform: 'none',
-                                                }}
-                                            >
-                                                Print Receipt
-                                            </Button>
-                                        )}
-
-                                        {order.action === 'Refund' && (
-                                            <div style={{ display: 'flex', marginLeft: '8px' }}>
-                                                <Button
-                                                    variant="outlined"
+                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                <div
                                                     style={{
-                                                        marginRight: '4px',
-                                                        textTransform: 'none',
-                                                        borderColor: '#e0e0e0',
-                                                        color: '#333',
+                                                        backgroundColor: '#ffff',
+                                                        color: '#000',
+                                                        width: '36px',
+                                                        height: '36px',
+                                                        borderRadius: '50%',
+                                                        display: 'flex',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        marginRight: '8px',
                                                     }}
                                                 >
-                                                    Reject
-                                                </Button>
+                                                    <Typography variant="body2">{order.table_id}</Typography>
+                                                </div>
+                                                <IconButton size="small" style={{ color: 'white' }}>
+                                                    {order.order_type === 'dine_in' ? (
+                                                        <RestaurantIcon />
+                                                    ) : order.order_type === 'delivery' ? (
+                                                        <DeliveryDiningIcon />
+                                                    ) : order.order_type === 'take_away' ? (
+                                                        <TakeoutDiningIcon />
+                                                    ) : null}
+                                                </IconButton>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ padding: '12px' }}>
+                                            {order.order_takings.map((item, idx) => {
+                                                const isEditable = order.status === 'in_progress';
+                                                const isCancelled = item.status === 'cancelled';
+                                                const isActive = item.status === 'pending';
+                                                const isChecked = checkedItems[order.id]?.find((i) => i.id === item.id)?.checked || false;
+
+                                                return (
+                                                    <div key={idx} style={{ marginBottom: '8px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <Typography
+                                                                variant="body1"
+                                                                style={{
+                                                                    textDecoration: isCancelled ? 'line-through' : 'none',
+                                                                    color: isCancelled ? 'red' : item.status === 'completed' ? 'green' : undefined,
+                                                                }}
+                                                            >
+                                                                {item.order_item.item}
+                                                            </Typography>
+
+                                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                <Typography variant="body2" style={{ marginRight: '8px' }}>
+                                                                    {item.order_item.qty}x
+                                                                </Typography>
+                                                                <Checkbox
+                                                                    disabled={isCancelled || !isEditable}
+                                                                    checked={isChecked}
+                                                                    onChange={(e) => handleCheckboxChange(order.id, item.id, e.target.checked)}
+                                                                    size="small"
+                                                                    style={{
+                                                                        color: isChecked ? '#1976D2' : undefined,
+                                                                        padding: '2px',
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div
+                                            style={{
+                                                borderTop: '1px solid #eee',
+                                                padding: '8px',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                            }}
+                                        >
+                                            <IconButton size="small">
+                                                <PrintIcon fontSize="small" />
+                                            </IconButton>
+                                            {['pending', 'in_progress'].includes(order.status) && (
                                                 <Button
                                                     variant="contained"
+                                                    fullWidth
+                                                    disabled={loadingOrders[order.id] || false}
                                                     style={{
-                                                        backgroundColor: '#00BCD4',
+                                                        marginLeft: '8px',
+                                                        backgroundColor: order.status === 'pending' ? '#1565C0' : '#003366',
                                                         textTransform: 'none',
-                                                        color: 'white',
                                                     }}
+                                                    onClick={(e) => handleStatusChange(e, order.id)}
                                                 >
-                                                    Refund
+                                                    {loadingOrders[order.id] ? (
+                                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                            <CircularProgress size={24} sx={{ color: '#fff' }} />
+                                                        </Box>
+                                                    ) : order.status === 'pending' ? (
+                                                        'Start'
+                                                    ) : (
+                                                        'Finish'
+                                                    )}
                                                 </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Paper>
-                            </div>
-                        ))}
+                                            )}
+                                            {['cancelled', 'refund'].includes(order.status) && (
+                                                <>
+                                                    <div style={{ display: 'flex', marginLeft: '8px' }}>
+                                                        <Button
+                                                            variant="outlined"
+                                                            style={{
+                                                                marginRight: '4px',
+                                                                textTransform: 'none',
+                                                                borderColor: '#e0e0e0',
+                                                                color: '#333',
+                                                            }}
+                                                        >
+                                                            Reject
+                                                        </Button>
+                                                        <Button
+                                                            variant="contained"
+                                                            style={{
+                                                                backgroundColor: '#00BCD4',
+                                                                textTransform: 'none',
+                                                                color: 'white',
+                                                            }}
+                                                        >
+                                                            Refund
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </Paper>
+                                </div>
+                            );
+                        })}
                     </div>
 
                     <Dialog
@@ -585,7 +571,7 @@ const OrderManagement = () => {
                                 borderRadius: '10px',
                                 position: 'fixed',
                                 right: '0px',
-                                margin: 0,
+                                margin: '0',
                                 width: '400px',
                                 maxHeight: '100vh',
                                 overflowY: 'auto',
@@ -607,9 +593,7 @@ const OrderManagement = () => {
                                 <CloseIcon />
                             </IconButton>
                         </DialogTitle>
-
                         <DialogContent style={{ padding: '0 24px' }}>
-                            {/* Date Period */}
                             <div style={{ marginBottom: '24px' }}>
                                 <Typography variant="subtitle2" style={{ marginBottom: '12px' }}>
                                     Date Period
@@ -643,8 +627,6 @@ const OrderManagement = () => {
                                     />
                                 </div>
                             </div>
-
-                            {/* Date Range */}
                             <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
                                 <div style={{ flex: 1 }}>
                                     <Typography variant="body2" style={{ marginBottom: '8px' }}>
@@ -671,8 +653,6 @@ const OrderManagement = () => {
                                     </FormControl>
                                 </div>
                             </div>
-
-                            {/* Status */}
                             <div style={{ marginBottom: '24px' }}>
                                 <Typography variant="subtitle2" style={{ marginBottom: '12px' }}>
                                     Status
@@ -704,8 +684,6 @@ const OrderManagement = () => {
                                     ))}
                                 </div>
                             </div>
-
-                            {/* Order Type */}
                             <div style={{ marginBottom: '24px' }}>
                                 <Typography variant="subtitle2" style={{ marginBottom: '12px' }}>
                                     Order Type
@@ -732,7 +710,6 @@ const OrderManagement = () => {
                                 </div>
                             </div>
                         </DialogContent>
-
                         <DialogActions style={{ padding: '16px 24px', justifyContent: 'space-between' }}>
                             <Button onClick={handleFilterClose} style={{ color: '#666', textTransform: 'none' }}>
                                 Cancel
@@ -765,6 +742,16 @@ const OrderManagement = () => {
                     </Dialog>
                 </div>
             </div>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 };

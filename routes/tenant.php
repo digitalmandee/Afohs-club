@@ -11,6 +11,7 @@ use App\Http\Controllers\App\WaiterController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -67,9 +68,9 @@ Route::middleware([
                 return Inertia::render('App/Settings/Dashboard');
             });
 
-            Route::get('/kitchen', function () {
-                return Inertia::render('App/Kitchen/Dashboard');
-            });
+            // Route::get('/kitchen', function () {
+            //     return Inertia::render('App/Kitchen/Dashboard');
+            // });
 
             Route::get('/add/information', function () {
                 return Inertia::render('App/Member/AddInfo');
@@ -155,12 +156,14 @@ Route::middleware([
 
             // Waiter
             // Waiter Dashboard
-            // routes/tenant.php
             Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');
             Route::get('/waiters/create', [WaiterController::class, 'create'])->name('waiters.create');
             Route::post('/waiters', [WaiterController::class, 'store'])->name('waiters.store');
-            // Route::get('/waiters/{id}/edit', [WaiterController::class, 'edit'])->name('waiters.edit');
             Route::put('/waiters/{id}', [WaiterController::class, 'update'])->name('waiters.update');
+
+            Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen');
+            Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
+            Route::post('/kitchen/{order}/item/{item}/update-status', [KitchenController::class, 'updateItemStatus'])->name('kitchen.item.update-status');
         });
         // End of Tenant Routes
 
