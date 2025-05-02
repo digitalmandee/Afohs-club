@@ -49,21 +49,14 @@ const RoomEventModal = ({ handleCloseAvailabilityModal, onFind }) => {
                 px: 2,
                 py: 1
             }}>
-                <Box sx={{ border: "none", paddingBottom: 0 }}>
+                <Box sx={{ px:2, pt:2 }}>
                     <Typography sx={{ fontSize: "24px", fontWeight: "bold" }}>Room/Event Availability</Typography>
-                    <Button
-                        variant="link"
-                        onClick={handleCloseAvailabilityModal}
-                        style={{ color: "#000", position: "absolute", right: "15px", top: "15px", padding: "0" }}
-                    >
-                        <span style={{ fontSize: "24px" }}>&times;</span>
-                    </Button>
                 </Box>
-                <Box sx={{ padding: "20px", maxHeight: "calc(100vh - 120px)", overflowY: "auto" }}>
+                <Box sx={{ padding: "20px", mt:2, maxHeight: "calc(100vh - 120px)", overflowY: "auto" }}>
                     <Row className="mb-3">
                         <Col>
                             <Form.Group>
-                                <Form.Label style={{ fontWeight: "500" }}>Check-In Date</Form.Label>
+                                <Form.Label style={{ fontWeight: 400, fontSize:'14px', color:'#121212' }}>Check-In Date</Form.Label>
                                 <Form.Control
                                     type="date"
                                     value={checkInDate}
@@ -74,7 +67,7 @@ const RoomEventModal = ({ handleCloseAvailabilityModal, onFind }) => {
                         </Col>
                         <Col>
                             <Form.Group>
-                                <Form.Label style={{ fontWeight: "500" }}>Check-Out Date</Form.Label>
+                                <Form.Label style={{ fontWeight: 400, fontSize:'14px', color:'#121212' }}>Check-Out Date</Form.Label>
                                 <Form.Control
                                     type="date"
                                     value={checkOutDate}
@@ -86,11 +79,11 @@ const RoomEventModal = ({ handleCloseAvailabilityModal, onFind }) => {
                     </Row>
 
                     <Form.Group className="mb-3">
-                        <Form.Label style={{ fontWeight: "500" }}>Person</Form.Label>
+                        <Form.Label style={{ fontWeight: 400, fontSize:'14px', color:'#121212' }}>Person</Form.Label>
                         <Form.Select
                             value={personType}
                             onChange={(e) => setPersonType(e.target.value)}
-                            style={{ height: "40px" }}
+                            style={{ height: "40px", fontSize:'14px' }}
                         >
                             <option>Add person</option>
                             <option>1 Person</option>
@@ -103,7 +96,7 @@ const RoomEventModal = ({ handleCloseAvailabilityModal, onFind }) => {
                     <div className="border rounded p-3 mb-4">
                         <div className="mb-3">
                             <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span style={{ fontWeight: "500" }}>Adult</span>
+                                <span style={{ fontWeight: 400, fontSize:'14px', color:'#121212' }}>Adult</span>
                                 <div className="d-flex align-items-center">
                                     <Button
                                         variant="light"
@@ -126,7 +119,7 @@ const RoomEventModal = ({ handleCloseAvailabilityModal, onFind }) => {
 
                         <div className="mb-3">
                             <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span style={{ fontWeight: "500" }}>Child</span>
+                                <span style={{ fontWeight: 400, fontSize:'14px', color:'#121212' }}>Child</span>
                                 <div className="d-flex align-items-center">
                                     <Button
                                         variant="light"
@@ -149,7 +142,7 @@ const RoomEventModal = ({ handleCloseAvailabilityModal, onFind }) => {
 
                         <div>
                             <div className="d-flex justify-content-between align-items-center">
-                                <span style={{ fontWeight: "500" }}>Infant</span>
+                                <span style={{ fontWeight: 400, fontSize:'14px', color:'#121212' }}>Infant</span>
                                 <div className="d-flex align-items-center">
                                     <Button
                                         variant="light"

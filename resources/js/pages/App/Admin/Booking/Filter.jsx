@@ -81,8 +81,10 @@ const BookingFilter = () => {
                 px:2,
                 py:1
             }}>
-                <Box sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="h6" fontWeight="medium">
+                <Box sx={{ px: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="h6" fontWeight="500" fontSize="32px" sx={{
+                        color:'#121212'
+                    }}>
                         Booking Filter
                     </Typography>
                     <IconButton onClick={handleClose} size="small">
@@ -92,7 +94,7 @@ const BookingFilter = () => {
 
                 <DialogContent sx={{ p: 2 }}>
                     {/* Room Type */}
-                    <Box sx={{ mb: 3 }}>
+                    <Box sx={{ mb: 3, px:2, py:2, border:'1px solid #E3E3E3' }}>
                         <Box
                             sx={{
                                 display: "flex",
@@ -171,7 +173,7 @@ const BookingFilter = () => {
                     </Box>
 
                     {/* Booking Status */}
-                    <Box sx={{ mb: 3 }}>
+                    <Box sx={{ mb: 3, px:2, py:2, border:'1px solid #E3E3E3' }}>
                         <Box
                             sx={{
                                 display: "flex",
@@ -237,7 +239,7 @@ const BookingFilter = () => {
                     </Box>
 
                     {/* Event by date */}
-                    <Box sx={{ mb: 3 }}>
+                    <Box sx={{ mb: 3, px:2, py:2, border:'1px solid #E3E3E3' }}>
                         <Box
                             sx={{
                                 display: "flex",
@@ -284,7 +286,9 @@ const BookingFilter = () => {
                     </Box>
 
                     {/* Date Range */}
-                    <Box>
+                    <Box sx={{
+                        px:2, py:2, border:'1px solid #E3E3E3'
+                    }}>
                         <Box
                             sx={{
                                 display: "flex",

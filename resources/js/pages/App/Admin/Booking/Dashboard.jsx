@@ -195,24 +195,31 @@ const BookingDashboard = () => {
                                         backgroundColor: "#3F4E4F",
                                         color: "white",
                                         border: "none",
-                                        borderRadius: "8px",
-                                        height: "100%",
+                                        borderRadius: "2px",
+                                        height: "150px",
                                     }}
                                 >
-                                    <Card.Body className="p-4">
-                                        <Box className="d-flex align-items-center gap-3 mb-3">
+                                    <Card.Body className="p-4" style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        height:'100%'
+                                    }}>
+                                        <Box className="d-flex align-items-center gap-3">
                                             <Box
                                                 sx={{
                                                     backgroundColor: "#202728",
                                                     borderRadius: "50%",
-                                                    width: 48,
-                                                    height: 48,
+                                                    width: 60,
+                                                    height: 60,
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "center",
                                                 }}
                                             >
-                                                <CreditCard style={{ color: "white" }} />
+                                                <img src="/assets/Frame.png" alt="" style={{
+                                                    width: 35,
+                                                    height: 35
+                                                }} />
                                             </Box>
                                             <Box>
                                                 <Typography sx={{ color: "#C6C6C6", fontSize: "14px" }}>Total Booking</Typography>
@@ -232,24 +239,29 @@ const BookingDashboard = () => {
                                         backgroundColor: "#3F4E4F",
                                         color: "white",
                                         border: "none",
-                                        borderRadius: "8px",
-                                        height: "100%",
+                                        borderRadius: "2px",
+                                        height: "150px",
                                     }}
                                 >
-                                    <Card.Body className="p-4">
-                                        <Box className="d-flex align-items-center gap-3 mb-3">
+                                    <Card.Body className="px-3 py-2" style={{
+                                        height:'100%'
+                                    }}>
+                                        <Box className="d-flex align-items-center gap-3">
                                             <Box
                                                 sx={{
                                                     backgroundColor: "#202728",
                                                     borderRadius: "50%",
-                                                    width: 48,
-                                                    height: 48,
+                                                    width: 45,
+                                                    height: 45,
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "center",
                                                 }}
                                             >
-                                                <CreditCard style={{ color: "white" }} />
+                                                <img src="/assets/receipt2.png" alt="" style={{
+                                                    width:25,
+                                                    height:25
+                                                }}/>
                                             </Box>
                                             <Box>
                                                 <Typography sx={{ color: "#C6C6C6", fontSize: "14px" }}>Total Room Booking</Typography>
@@ -258,7 +270,7 @@ const BookingDashboard = () => {
                                                 </Typography>
                                             </Box>
                                         </Box>
-                                        <hr className="border-top"></hr>
+                                        <hr className="border-top mt-2"></hr>
                                         <Row>
                                             <Col>
                                                 <Typography sx={{ color: "#C6C6C6", fontSize: "12px" }}>Available Room</Typography>
@@ -280,12 +292,14 @@ const BookingDashboard = () => {
                                         backgroundColor: "#3F4E4F",
                                         color: "white",
                                         border: "none",
-                                        borderRadius: "8px",
-                                        height: "100%",
+                                        borderRadius: "2px",
+                                        height: "150px",
                                     }}
                                 >
-                                    <Card.Body className="p-4">
-                                        <Box className="d-flex align-items-center gap-3 mb-3">
+                                    <Card.Body className="px-3 py-2" style={{
+                                        height:'100%'
+                                    }}>
+                                        <Box className="d-flex align-items-center gap-3">
                                             <Box
                                                 sx={{
                                                     backgroundColor: "#202728",
@@ -297,7 +311,10 @@ const BookingDashboard = () => {
                                                     justifyContent: "center",
                                                 }}
                                             >
-                                                <CreditCard style={{ color: "white" }} />
+                                                <img src="/assets/check.png" alt="" style={{
+                                                    width:25,
+                                                    height:25
+                                                }}/>
                                             </Box>
                                             <Box>
                                                 <Typography sx={{ color: "#C6C6C6", fontSize: "14px" }}>Total Event Booking</Typography>
@@ -306,7 +323,9 @@ const BookingDashboard = () => {
                                                 </Typography>
                                             </Box>
                                         </Box>
-                                        <hr className="border-top"></hr>
+                                        <hr className="border-top" style={{
+                                            marginTop:13
+                                        }}></hr>
                                         <Typography sx={{ color: "#C6C6C6", fontSize: "12px" }}>Available Event</Typography>
                                         <Typography variant="h6">2</Typography>
                                     </Card.Body>
@@ -317,12 +336,12 @@ const BookingDashboard = () => {
                         {/* Search and Filter */}
                         <Row className="mb-3 align-items-center">
                             <Col>
-                                <Typography variant="h6" component="h2" style={{ color: "#2c3e50", fontWeight: 600 }}>
+                                <Typography variant="h6" component="h2" style={{ color: "#000000", fontWeight: 500, fontSize:'24px' }}>
                                     Recently Booking
                                 </Typography>
                             </Col>
-                            <Col xs="auto" className="d-flex gap-2">
-                                <div style={{ position: "relative", width: "300px" }}>
+                            <Col xs="auto" className="d-flex gap-3">
+                                <div style={{ position: "relative", width: "400px", border:'1px solid #121212' }}>
                                     <Form.Control
                                         placeholder="Search"
                                         aria-label="Search"
@@ -353,8 +372,8 @@ const BookingDashboard = () => {
                                     variant="outline-secondary"
                                     className="d-flex align-items-center gap-1"
                                     style={{
-                                        border: "1px solid #ced4da",
-                                        borderRadius: "6px",
+                                        border: "1px solid #3F4E4F",
+                                        borderRadius: "0px",
                                         backgroundColor: 'transparent',
                                         color: "#495057",
                                     }}
@@ -384,10 +403,10 @@ const BookingDashboard = () => {
                                         <Col md={10}>
                                             <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                                                 <div>
-                                                    <Typography variant="h6" style={{ fontWeight: 600, fontSize: "1.1rem", color: "#333" }}>
+                                                    <Typography style={{ fontWeight: 500, fontSize: "20px", color: "#121212" }}>
                                                         {booking.type}
                                                     </Typography>
-                                                    <Typography variant="body2" style={{ color: "#7a7a7a", fontSize: "0.85rem" }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: "14px", fontWeight:400 }}>
                                                         Created on {booking.created}
                                                     </Typography>
                                                 </div>
@@ -403,7 +422,8 @@ const BookingDashboard = () => {
                                                         fontWeight: 500,
                                                         minWidth: "100px",
                                                         textAlign: "center",
-                                                        cursor: 'pointer'
+                                                        cursor: 'pointer',
+                                                        borderRadius:'0px'
                                                     }}
                                                 >
                                                     {booking.status}
@@ -413,34 +433,34 @@ const BookingDashboard = () => {
                                             {/* Booking Details */}
                                             <Row className="text-start mt-2">
                                                 <Col md={3} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#6c757d" }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize:'12px' }}>
                                                         Booking ID
                                                     </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 500 }}>
+                                                    <Typography variant="body1" style={{ fontWeight: 400, color:'#121212', fontSize:'12px' }}>
                                                         {booking.bookingId}
                                                     </Typography>
                                                 </Col>
                                                 <Col md={4} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#6c757d" }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize:'12px' }}>
                                                         Duration
                                                     </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 500 }}>
+                                                    <Typography variant="body1" style={{ fontWeight: 400, color:'#121212', fontSize:'12px' }}>
                                                         {booking.duration}
                                                     </Typography>
                                                 </Col>
                                                 <Col md={2} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#6c757d" }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize:'12px' }}>
                                                         Room
                                                     </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 500 }}>
+                                                    <Typography variant="body1" style={{ fontWeight: 400, color:'#121212', fontSize:'12px' }}>
                                                         {booking.rooms}
                                                     </Typography>
                                                 </Col>
                                                 <Col md={2} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#6c757d" }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize:'12px' }}>
                                                         Night
                                                     </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 500 }}>
+                                                    <Typography variant="body1" style={{ fontWeight: 400, color:'#121212', fontSize:'12px' }}>
                                                         {booking.nights}
                                                     </Typography>
                                                 </Col>

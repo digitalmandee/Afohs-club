@@ -199,7 +199,9 @@ const RoomBooking = () => {
                     marginTop: '5rem',
                 }}
             >
-                <Container fluid className="bg-light min-vh-100 p-0">
+                <Container fluid className="bg-light min-vh-100 p-0" style={{
+                    width:600
+                }}>
                     {/* Header */}
                     <div className="d-flex align-items-center p-4">
                         <IconButton style={{ color: "#555" }}>
