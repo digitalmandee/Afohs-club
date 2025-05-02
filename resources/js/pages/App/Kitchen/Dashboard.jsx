@@ -55,6 +55,14 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     const [orderTypeFilters, setOrderTypeFilters] = useState(['All']);
     const [filteredOrder, setFilteredOrder] = useState(kitchenOrders || []);
 
+    // State to track timers for each order
+    const [timers, setTimers] = useState(
+        (kitchenOrders || []).reduce((acc, order) => {
+            acc[order.id] = { running: order.status === 'in_progress', seconds: 0, totalTime: null };
+            return acc;
+        }, {}),
+    );
+
     useEffect(() => {
         if (flash?.success) {
             setSnackbarMessage(flash.success);
@@ -66,6 +74,23 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
             setSnackbarOpen(true);
         }
     }, [flash]);
+
+    // Timer effect to update running timers
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTimers((prev) => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach((orderId) => {
+                    if (updated[orderId].running) {
+                        updated[orderId].seconds += 1;
+                    }
+                });
+                return updated;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
@@ -184,6 +209,23 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         });
     };
 
+    // Function to format seconds into HH:MM:SS
+    const formatTime = (seconds) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Function to calculate total time from order_time and end_time
+    const calculateTotalTime = (order_time, end_time) => {
+        if (!order_time || !end_time) return '00:00:00';
+        const start = new Date(`1970-01-01T${order_time}Z`);
+        const end = new Date(`1970-01-01T${end_time}Z`);
+        const diffSeconds = Math.floor((end - start) / 1000);
+        return formatTime(diffSeconds);
+    };
+
     const handleStatusChange = useCallback(
         (e, orderId) => {
             e.preventDefault();
@@ -233,6 +275,19 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                 : order,
                         ),
                     );
+
+                    // Update timer state
+                    setTimers((prev) => {
+                        const updated = { ...prev };
+                        if (newOrderStatus === 'in_progress') {
+                            updated[orderId] = { running: true, seconds: 0, totalTime: null };
+                        } else if (newOrderStatus === 'completed') {
+                            const order = filteredOrder.find((o) => o.id === orderId);
+                            const totalTime = calculateTotalTime(order.order_time, formattedTime);
+                            updated[orderId] = { running: false, seconds: prev[orderId].seconds, totalTime };
+                        }
+                        return updated;
+                    });
                 },
                 onError: (errors) => {
                     console.error('Status update error:', errors);
@@ -242,7 +297,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                 },
             });
         },
-        [checkedItems, setFilteredOrder, kitchenOrders],
+        [checkedItems, setFilteredOrder, kitchenOrders, filteredOrder],
     );
 
     return (
@@ -327,6 +382,12 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                     <Typography variant="body2">Start: {order.order_time}</Typography>
                                                     {order.end_time && <Typography variant="body2">End: {order.end_time}</Typography>}
+                                                    {order.status === 'in_progress' && (
+                                                        <Typography variant="body2">Timer: {formatTime(timers[order.id]?.seconds || 0)}</Typography>
+                                                    )}
+                                                    {order.status === 'completed' && timers[order.id]?.totalTime && (
+                                                        <Typography variant="body2">Total Time: {timers[order.id].totalTime}</Typography>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center' }}>
