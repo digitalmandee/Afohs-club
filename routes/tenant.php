@@ -131,6 +131,10 @@ Route::middleware([
                 return Inertia::render('App/Admin/Booking/AddRoom');
             });
 
+            Route::get('/admin/rooms/manage', function () {
+                return Inertia::render('App/Admin/Booking/RoomManage');
+            });
+
             // Members
             Route::resource('members', MembersController::class)->except('show', 'edit');
             Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');

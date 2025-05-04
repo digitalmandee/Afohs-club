@@ -124,7 +124,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Rooms',
-                    path: '/admin/booking/rooms',
+                    path: '/admin/rooms/manage',
                 },
                 {
                     text: 'Events',
