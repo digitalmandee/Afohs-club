@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-            $table->string('invoice_no');
+            $table->bigInteger('invoice_no');
             $table->foreignId('user_id')->constrained();
             $table->foreignId('order_id')->nullable()->constrained();
             $table->decimal('amount', 10, 2);
-            $table->decimal('cash_total', 10, 2);
-            $table->decimal('customer_change', 10, 2);
-            $table->string('payment_method')->nullable();
+            $table->decimal('cash_total', 10, 2)->default(0);
+            $table->decimal('customer_change', 10, 2)->default(0);
+            $table->enum('payment_method', ['cash', 'card'])->nullable();
             $table->enum('status', ['paid', 'unpaid', 'refund', 'cancelled'])->default('unpaid');
             $table->timestamps();
         });
