@@ -13,6 +13,7 @@ use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -60,9 +61,6 @@ Route::middleware([
             Route::get('/product/categories', [OrderController::class, 'getCategories'])->name('products.categories');
             Route::get('/products/{category_id}', [OrderController::class, 'getProducts'])->name('products.bycategory');
 
-            Route::get('/transaction', function () {
-                return Inertia::render('App/Transaction/Dashboard');
-            });
 
             Route::get('/settings', function () {
                 return Inertia::render('App/Settings/Dashboard');
@@ -164,6 +162,12 @@ Route::middleware([
             Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen');
             Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
             Route::post('/kitchen/{order}/item/{item}/update-status', [KitchenController::class, 'updateItemStatus'])->name('kitchen.item.update-status');
+            // Transaction
+            Route::get('/transaction', [TransactionController::class, 'Index'])->name('transaction.invoice');
+
+            // Route::get('/transaction', function () {
+            //     return Inertia::render('App/Transaction/Dashboard');
+            // });
         });
         // End of Tenant Routes
 
