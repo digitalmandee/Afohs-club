@@ -205,6 +205,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         { id: 'pending', count: kitchenOrders?.filter((o) => o.status === 'pending').length || 0 },
         { id: 'in_progress', count: kitchenOrders?.filter((o) => o.status === 'in_progress').length || 0 },
         { id: 'completed', count: kitchenOrders?.filter((o) => o.status === 'completed').length || 0 },
+        { id: 'refund', count: kitchenOrders?.filter((o) => o.status === 'refund').length || 0 },
     ];
 
     const datePeriods = ['Yesterday', 'Last Week', 'Last Month', 'Last 3 Month', 'Last Year', 'Custom Date'];
