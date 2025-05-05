@@ -614,7 +614,7 @@ const trackingSteps = [
     },
 ];
 
-function TransactionDashboard() {
+function TransactionDashboard({ Invoices, totalOrders }) {
     const [open, setOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('all');
     const [openFilterModal, setOpenFilterModal] = useState(false);
@@ -808,46 +808,46 @@ function TransactionDashboard() {
           <div class="header">
             <div>${paymentOrderDetail.date}</div>
           </div>
-          
+
           <div class="order-id">
             <div>Order Id</div>
             <div><strong>${paymentOrderDetail.id}</strong></div>
           </div>
-          
+
           <div class="row">
             <div>Cashier</div>
             <div>${paymentOrderDetail.cashier}</div>
           </div>
-          
+
           <div class="row">
             <div>Working Time</div>
             <div>${paymentOrderDetail.workingTime}</div>
           </div>
-          
+
           <div class="divider"></div>
-          
+
           <div class="row">
             <div>Customer Name</div>
             <div>${paymentOrderDetail.customer}</div>
           </div>
-          
+
           <div class="row">
             <div>Member Id Card</div>
             <div>-</div>
           </div>
-          
+
           <div class="row">
             <div>Order Type</div>
             <div>Dine In</div>
           </div>
-          
+
           <div class="row">
             <div>Table Number</div>
             <div>${paymentOrderDetail.tableNumber}</div>
           </div>
-          
+
           <div class="divider"></div>
-          
+
           ${paymentOrderDetail.items
               .map(
                   (item) => `
@@ -861,35 +861,35 @@ function TransactionDashboard() {
           `,
               )
               .join('')}
-          
+
           <div class="divider"></div>
-          
+
           <div class="row">
             <div>Subtotal</div>
             <div>Rs ${paymentOrderDetail.subtotal.toFixed(2)}</div>
           </div>
-          
+
           <div class="row">
             <div>Discount</div>
             <div>Rs ${paymentOrderDetail.discount}</div>
           </div>
-          
+
           <div class="row">
             <div>Tax (12%)</div>
             <div>Rs ${paymentOrderDetail.tax.toFixed(2)}</div>
           </div>
-          
+
           <div class="divider"></div>
-          
+
           <div class="row total">
             <div>Total Amount</div>
             <div>Rs ${paymentOrderDetail.total.toFixed(2)}</div>
           </div>
-          
+
           <div class="footer">
             <p>Thanks for having our passion. Drop by again. If your orders aren't still visible, you're always welcome here!</p>
           </div>
-          
+
           <div class="logo">
             IMAJI Coffee.
           </div>
@@ -949,14 +949,14 @@ function TransactionDashboard() {
             <h2>Order Detail</h2>
             <div class="order-id">Order ID: ${orderDetail.id}</div>
           </div>
-          
+
           <div class="customer-info">
             <p><strong>Customer:</strong> ${orderDetail.customer}</p>
             <p><strong>Table:</strong> ${orderDetail.tableNumber}</p>
             <p><strong>Date:</strong> ${orderDetail.date}</p>
             <p><strong>Cashier:</strong> ${orderDetail.cashier}</p>
           </div>
-          
+
           <h3>Items</h3>
           ${orderDetail.items
               .map(
@@ -969,14 +969,14 @@ function TransactionDashboard() {
           `,
               )
               .join('')}
-          
+
           <div class="summary">
             <p>Subtotal: Rs ${orderDetail.subtotal.toFixed(2)}</p>
             <p>Discount: Rs ${orderDetail.discount.toFixed(2)}</p>
             <p>Tax (12%): Rs ${orderDetail.tax.toFixed(2)}</p>
             <p class="total">Total: Rs ${orderDetail.total.toFixed(2)}</p>
           </div>
-          
+
           <div class="payment">
             <p><strong>Payment Method:</strong> ${orderDetail.payment.method}</p>
             <p><strong>Amount Paid:</strong> Rs ${orderDetail.payment.amount.toFixed(2)}</p>
@@ -998,9 +998,9 @@ function TransactionDashboard() {
 
     const getStatusChipColor = (status) => {
         switch (status) {
-            case 'ready':
+            case 'pending':
                 return '#e3f2fd';
-            case 'done':
+            case 'completed':
                 return '#e8f5e9';
             case 'cancelled':
                 return '#ffebee';
@@ -1011,9 +1011,9 @@ function TransactionDashboard() {
 
     const getStatusChipTextColor = (status) => {
         switch (status) {
-            case 'ready':
+            case 'pending':
                 return '#0288d1';
-            case 'done':
+            case 'completed':
                 return '#388e3c';
             case 'cancelled':
                 return '#d32f2f';
@@ -1296,8 +1296,157 @@ function TransactionDashboard() {
 
                             {/* Main Content */}
                             <Grid container spacing={2}>
-                                {/* Orders List */}
                                 <Grid item xs={12}>
+                                    <pre>{JSON.stringify(Invoices, null, 2)}</pre>
+                                    {Invoices.map((invoice) => (
+                                        <div key={invoice.id}>
+                                            <p>Order ID: {invoice.order?.id}</p>
+                                            <p>Order Placed By: {invoice.order?.user?.name}</p>
+                                        </div>
+                                    ))}
+
+                                    {Invoices.map((order) => (
+                                        <Card
+                                            sx={{
+                                                ...styles.orderCard,
+                                                borderRadius: 0,
+                                                boxShadow: 'none',
+                                                border: '1px solid #E3E3E3',
+                                                transition: 'background-color 0.3s ease',
+                                                '&:hover': {
+                                                    backgroundColor: '#eeeeee',
+                                                    cursor: 'pointer',
+                                                },
+                                            }}
+                                            key={order.id}
+                                            onClick={() => handleOpenOrderDetail(order)}
+                                        >
+                                            <CardContent>
+                                                <Box display="flex" alignItems="center">
+                                                    <Avatar style={getAvatarStyle(order.order.order_type)}>{order.order.table_id}</Avatar>
+
+                                                    <Avatar
+                                                        style={{
+                                                            marginLeft: 8,
+                                                            backgroundColor: '#E3E3E3',
+                                                            width: 32,
+                                                            height: 32,
+                                                        }}
+                                                    >
+                                                        <RoomServiceIcon
+                                                            style={{
+                                                                color: '#000',
+                                                                fontSize: 20,
+                                                            }}
+                                                        />
+                                                    </Avatar>
+                                                    <Box ml={2} flex={1}>
+                                                        <Box display="flex" alignItems="center">
+                                                            <Typography
+                                                                variant="subtitle1"
+                                                                sx={{
+                                                                    fontWeight: 500,
+                                                                    fontSize: '18px',
+                                                                }}
+                                                            >
+                                                                {order.order?.user?.name}
+                                                            </Typography>
+                                                            {order.isVIP && (
+                                                                <Box
+                                                                    component="span"
+                                                                    ml={1}
+                                                                    display="inline-block"
+                                                                    width={16}
+                                                                    height={16}
+                                                                    borderRadius="50%"
+                                                                    bgcolor="#ffc107"
+                                                                />
+                                                            )}
+                                                        </Box>
+                                                        <Typography
+                                                            variant="body2"
+                                                            color="#7F7F7F"
+                                                            sx={{
+                                                                fontWeight: 400,
+                                                                fontSize: '14px',
+                                                            }}
+                                                        >
+                                                            {totalOrders} Items
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box textAlign="right">
+                                                        <Typography
+                                                            variant="subtitle1"
+                                                            fontWeight="bold"
+                                                            display="flex"
+                                                            gap="5px"
+                                                            alignItems="center"
+                                                            sx={{
+                                                                fontWeight: 500,
+                                                                fontSize: '20px',
+                                                            }}
+                                                        >
+                                                            <Typography
+                                                                color="#7F7F7F"
+                                                                sx={{
+                                                                    fontWeight: 400,
+                                                                    fontSize: '16px',
+                                                                }}
+                                                            >
+                                                                Rs{' '}
+                                                            </Typography>
+                                                            {order.amount}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                                <Box display="flex" alignItems="center" justifyContent="space-between" mt={1}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                                            #{order?.order.order_number}
+                                                        </Typography>
+
+                                                        <Chip
+                                                            label={
+                                                                order?.order.status === 'pending'
+                                                                    ? 'Pending'
+                                                                    : order?.status === 'in_progress'
+                                                                      ? 'In Progress'
+                                                                      : order?.status === 'completed'
+                                                                        ? '' // Don't show label if completed
+                                                                        : order?.status === 'cancelled'
+                                                                          ? 'Order Cancelled'
+                                                                          : 'Unknown' // Default if status is not recognized
+                                                            }
+                                                            size="small"
+                                                            style={{
+                                                                ...styles.statusChip,
+                                                                backgroundColor: getStatusChipColor(order?.order.status),
+                                                                color: getStatusChipTextColor(order?.order.status),
+                                                            }}
+                                                        />
+                                                    </Box>
+
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenPayment(order);
+                                                        }}
+                                                        sx={{
+                                                            borderRadius: '4px',
+                                                            fontSize: '12px',
+                                                            textTransform: 'none',
+                                                            backgroundColor: '#0a3d62',
+                                                            color: 'white',
+                                                        }}
+                                                    >
+                                                        Payment Now
+                                                    </Button>
+                                                </Box>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
                                     {orders.map((order) => (
                                         <Card
                                             sx={{

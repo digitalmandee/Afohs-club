@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Floor;
+use App\Models\Invoices;
 use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -73,6 +74,13 @@ class OrderController extends Controller
         return response()->json(['success' => true, 'results' => $results], 200);
     }
 
+    private function getInvoiceNo()
+    {
+        $invoicNo = Invoices::max('invoice_no');
+        $invoicNo = $invoicNo + 1;
+        return $invoicNo;
+    }
+
     public function sendToKitchen(Request $request)
     {
         $request->validate([
@@ -83,6 +91,7 @@ class OrderController extends Controller
         ]);
 
         DB::beginTransaction();
+
 
         $order = Order::create([
             'order_number' => $this->getOrderNo(),
@@ -107,6 +116,13 @@ class OrderController extends Controller
                 'status' => 'pending',
             ]);
         });
+        Invoices::create([
+            'invoice_no' => $this->getInvoiceNo(),
+            'user_id' => $request->member['id'],
+            'order_id' => $order->id,
+            'amount' => $request->price,
+            'status' => 'unpaid',
+        ]);
 
         DB::commit();
 
