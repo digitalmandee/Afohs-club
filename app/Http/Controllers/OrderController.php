@@ -103,9 +103,7 @@ class OrderController extends Controller
             'date' => $request->date,
             'time' => $request->time,
             'down_payment' => $request->down_payment,
-            'price' => $request->price,
-            'cash_total' => $request->cash_total,
-            'customer_change' => $request->customer_change,
+            'amount' => $request->price,
             'status' => 'pending'
         ]);
 
@@ -121,6 +119,9 @@ class OrderController extends Controller
             'user_id' => $request->member['id'],
             'order_id' => $order->id,
             'amount' => $request->price,
+            'tax' => $request->tax,
+            'discount' => $request->discount,
+            'total_price' => $request->total_price,
             'status' => 'unpaid',
         ]);
 

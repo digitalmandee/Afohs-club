@@ -20,9 +20,7 @@ return new class extends Migration
             $table->string('order_type')->nullable();
             $table->integer('person_count')->default(0);
             $table->decimal('down_payment', 10, 2)->nullable();
-            $table->decimal('price', 10, 2)->default(0);
-            $table->decimal('cash_total', 10, 2)->default(0);
-            $table->decimal('customer_change', 10, 2)->default(0);
+            $table->decimal('amount', 10, 2)->default(0);
             $table->date('start_date')->nullable();
             $table->time('start_time')->nullable();
             $table->dateTime('order_time', 3)->nullable();

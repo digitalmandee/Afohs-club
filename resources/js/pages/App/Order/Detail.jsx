@@ -36,7 +36,10 @@ const OrderDetail = ({ handleEditItem }) => {
     const handleSendToKitchen = () => {
         const payload = {
             ...orderDetails,
-            price: total,
+            price: subtotal,
+            tax: taxRate,
+            discount: discount,
+            total_price: total,
         };
 
         router.post(route('order.send-to-kitchen'), payload, {

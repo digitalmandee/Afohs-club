@@ -19,7 +19,7 @@ class Order extends Model
         'order_type',
         'person_count',
         'down_payment',
-        'price',
+        'amount',
         'start_date',
         'start_time',
         'order_time',
