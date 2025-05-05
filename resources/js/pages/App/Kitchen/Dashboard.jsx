@@ -476,7 +476,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     <div key={idx} style={{ marginBottom: '8px' }}>
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                             <Box sx={{ cursor: hasVariants ? 'pointer' : 'default' }}>
-                                                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                                <Box display="flex" justifyContent="space-between" alignItems="start">
                                                                     <Box display="flex" alignItems="center">
                                                                         <Typography
                                                                             onClick={() => hasVariants && handleToggle(item.id, variants)}
@@ -533,7 +533,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                                     </Grid>
                                                                 )}
                                                             </Box>
-                                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'top' }}>
                                                                 <Typography variant="body2" style={{ marginRight: '8px' }}>
                                                                     {item.order_item.quantity}x
                                                                 </Typography>
