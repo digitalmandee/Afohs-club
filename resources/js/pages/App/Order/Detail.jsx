@@ -2,6 +2,7 @@ import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { Close as CloseIcon, CreditCard as CreditCardIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
 import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, Paper, TextField, Typography } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 const OrderDetail = ({ handleEditItem }) => {
@@ -40,10 +41,10 @@ const OrderDetail = ({ handleEditItem }) => {
 
         router.post(route('order.send-to-kitchen'), payload, {
             onSuccess: () => {
-                console.log('Order sent to kitchen successfully');
+                enqueueSnackbar('Your order has been successfully sent to the kitchen!', { variant: 'success' });
             },
             onError: (errors) => {
-                console.error('Validation errors:', errors);
+                enqueueSnackbar('Something went wrong: ' + errors, { variant: 'error' });
             },
         });
     };
