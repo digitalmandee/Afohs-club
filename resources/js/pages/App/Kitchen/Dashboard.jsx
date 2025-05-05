@@ -2,7 +2,7 @@
 
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
-import { Close as CloseIcon, FilterAlt as FilterIcon, Print as PrintIcon } from '@mui/icons-material';
+import { Close as CloseIcon, FilterAlt as FilterIcon, KeyboardArrowDown, KeyboardArrowUp, Print as PrintIcon } from '@mui/icons-material';
 import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining'; // delivery
 import RestaurantIcon from '@mui/icons-material/Restaurant'; // dine_in
 import TakeoutDiningIcon from '@mui/icons-material/TakeoutDining'; // take_away
@@ -18,6 +18,7 @@ import {
     DialogContent,
     DialogTitle,
     FormControl,
+    Grid,
     IconButton,
     MenuItem,
     Paper,
@@ -54,6 +55,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     const [orderTypeFilters, setOrderTypeFilters] = useState(['All']);
     const [filteredOrder, setFilteredOrder] = useState(kitchenOrders || []);
     const [loadingOrders, setLoadingOrders] = useState({}); // Track loading state per order
+    const [expandedItems, setExpandedItems] = useState({}); // Track expanded state per item
 
     // Function to format seconds into HH:MM:SS
     const formatTime = (seconds) => {
@@ -77,9 +79,6 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         (kitchenOrders || []).reduce((acc, order) => {
             let seconds = 0;
             if (order.status === 'in_progress' && order.order_time) {
-                // Validate order_time format (HH:MM:SS)
-                // const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
-                // if (timeRegex.test(order.order_time)) {
                 try {
                     const startTime = new Date(order.order_time);
                     const currentTime = new Date();
@@ -89,10 +88,6 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                     console.error(`Invalid order_time for order ${order.id}: ${order.order_time}`, e);
                     seconds = 0;
                 }
-                // } else {
-                //     console.error(`Invalid order_time format for order ${order.id}: ${order.order_time}`);
-                //     seconds = 0;
-                // }
             }
             acc[order.id] = {
                 running: order.status === 'in_progress',
@@ -287,13 +282,8 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
             let formattedTime = null;
             if (newOrderStatus === 'in_progress') {
-                // formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:13:25"
-                // console.log('Sending order_time:', formattedTime); // Debug log
                 formData.append('order_time', new Date().toISOString());
             } else if (newOrderStatus === 'completed') {
-                // const now = new Date();
-                // formattedTime = now.toTimeString().slice(0, 8); // e.g., "12:15:00"
-                // console.log('Sending end_time:', new Date().toISOString()); // Debug log
                 formData.append('end_time', new Date().toISOString());
             }
 
@@ -344,6 +334,16 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         },
         [checkedItems, setFilteredOrder, kitchenOrders, filteredOrder],
     );
+
+    const handleToggle = (itemId, variants) => {
+        // Only toggle if variants exist and are non-empty
+        if (variants && Object.keys(variants).length > 0) {
+            setExpandedItems((prev) => ({
+                ...prev,
+                [itemId]: !prev[itemId],
+            }));
+        }
+    };
 
     return (
         <>
@@ -467,22 +467,71 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                             {order.order_items.map((item, idx) => {
                                                 const isEditable = order.status === 'in_progress';
                                                 const isCancelled = item.status === 'cancelled';
-                                                const isActive = item.status === 'pending';
                                                 const isChecked = checkedItems[order.id]?.find((i) => i.id === item.id)?.checked || false;
+                                                const variants = item.order_item?.variants || {};
+                                                const hasVariants = Object.keys(variants).length > 0;
 
                                                 return (
                                                     <div key={idx} style={{ marginBottom: '8px' }}>
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                            <Typography
-                                                                variant="body1"
-                                                                style={{
-                                                                    textDecoration: isCancelled ? 'line-through' : 'none',
-                                                                    color: isCancelled ? 'red' : item.status === 'completed' ? 'green' : undefined,
-                                                                }}
-                                                            >
-                                                                {item.order_item.name}
-                                                            </Typography>
+                                                            <Box sx={{ cursor: hasVariants ? 'pointer' : 'default' }}>
+                                                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                                    <Box display="flex" alignItems="center">
+                                                                        <Typography
+                                                                            onClick={() => hasVariants && handleToggle(item.id, variants)}
+                                                                            variant="body1"
+                                                                            sx={{
+                                                                                textDecoration: isCancelled ? 'line-through' : 'none',
+                                                                                color: isCancelled
+                                                                                    ? 'red'
+                                                                                    : item.status === 'completed'
+                                                                                      ? 'green'
+                                                                                      : 'inherit',
+                                                                            }}
+                                                                        >
+                                                                            {item.order_item.name}
+                                                                        </Typography>
+                                                                        {hasVariants && (
+                                                                            <IconButton
+                                                                                size="small"
+                                                                                onClick={() => handleToggle(item.id, variants)}
+                                                                                sx={{ ml: 1 }}
+                                                                            >
+                                                                                {expandedItems[item.id] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                                                                            </IconButton>
+                                                                        )}
+                                                                    </Box>
+                                                                </Box>
 
+                                                                {expandedItems[item.id] && hasVariants && (
+                                                                    <Grid container spacing={1} mt={1}>
+                                                                        <Grid item xs={6}>
+                                                                            <Typography variant="body2">Temperature</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={6}>
+                                                                            <Typography variant="body2">Ice</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={6}>
+                                                                            <Typography variant="body2">Size</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={6}>
+                                                                            <Typography variant="body2">Large</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={6}>
+                                                                            <Typography variant="body2">Sugar</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={6}>
+                                                                            <Typography variant="body2">Normal</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={6}>
+                                                                            <Typography variant="body2">Topping</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={6}>
+                                                                            <Typography variant="body2">Boba</Typography>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                )}
+                                                            </Box>
                                                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                                                 <Typography variant="body2" style={{ marginRight: '8px' }}>
                                                                     {item.order_item.quantity}x

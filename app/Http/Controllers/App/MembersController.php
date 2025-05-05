@@ -30,7 +30,7 @@ class MembersController extends Controller
             ->role('user')
             ->paginate($limit);
 
-        return Inertia::render('App/Member/Dashboard', [
+        return Inertia::render('App/Kitchen/Dashboard2', [
             'users' => $users,
             'userDetail' => $userDetail,
         ]);
