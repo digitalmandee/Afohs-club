@@ -132,6 +132,24 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
+        {
+            text: 'Employee Management',
+            icon: <CalendarMonthIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: '/admin/employee/dashboard',
+                },
+                {
+                    text: 'Department',
+                    path: '',
+                },
+                {
+                    text: 'Attendance',
+                    path: '',
+                },
+            ],
+        },
     ];
 
     return (
