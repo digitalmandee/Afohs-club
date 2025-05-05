@@ -127,12 +127,16 @@ Route::middleware([
                 return Inertia::render('App/Admin/Booking/RoomBooking');
             });
 
-            Route::get('/admin/booking/rooms', function () {
+            Route::get('/admin/booking/add/room', function () {
                 return Inertia::render('App/Admin/Booking/AddRoom');
             });
 
             Route::get('/admin/rooms/manage', function () {
                 return Inertia::render('App/Admin/Booking/RoomManage');
+            });
+
+            Route::get('/admin/events/manage', function () {
+                return Inertia::render('App/Admin/Booking/EventManage');
             });
 
             // Members

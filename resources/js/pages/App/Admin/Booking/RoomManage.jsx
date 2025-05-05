@@ -5,9 +5,7 @@ import { Search, FilterAlt, Add, CreditCard, Person, Bathroom, ArrowBack, Bed } 
 import { ThemeProvider, createTheme, Button, Box, Typography, Paper, IconButton, Grid } from "@mui/material"
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav'
-import RoomEventModal from "./RoomEvent"
-import BookingFilter from "./Filter"
-import AvailableRooms from "./Rooms"
+import RoomBookingFilter from "./BookingFilter"
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -202,13 +200,19 @@ const RoomScreen = () => {
       >
         <ThemeProvider theme={theme}>
           <style>{dialogStyles}</style>
-          <Container fluid className="p-4 bg-light">
+          <Container fluid className="p-4" style={{
+            backgroundColor:'#F6F6F6'
+          }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                <IconButton sx={{ mr: 1 }}>
+                <IconButton sx={{ mr: 1, color:'#3F4E4F' }}>
                   <ArrowBack />
                 </IconButton>
-                <Typography variant="h5" fontWeight="medium">
+                <Typography sx={{
+                  color:'#3F4E4F',
+                  fontSize:'30px',
+                  fontWeight:500
+                }}>
                   Rooms
                 </Typography>
               </Box>
@@ -225,6 +229,7 @@ const RoomScreen = () => {
                       bgcolor: "#FFFFFF",
                     },
                   }}
+                  onClick={ () => router.visit('/admin/booking/add/room?type=room')}
                 >
                   Add Room
                 </Button>
@@ -620,7 +625,7 @@ const RoomScreen = () => {
               </Card>
             ))}
 
-            {/* <Modal
+            <Modal
                             show={showFilter}
                             onHide={handleFilterClose}
                             dialogClassName="custom-dialog-right"
@@ -628,9 +633,9 @@ const RoomScreen = () => {
                             keyboard={true}
                         >
                             <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
-                                <BookingFilter />
+                                <RoomBookingFilter />
                             </Modal.Body>
-                        </Modal> */}
+                        </Modal>
 
             {/* Room/Event Availability Dialog */}
             {/* <Modal

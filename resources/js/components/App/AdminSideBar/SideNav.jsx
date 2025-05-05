@@ -128,7 +128,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Events',
-                    path: '/admin/booking/events',
+                    path: '/admin/events/manage',
                 },
             ],
         },

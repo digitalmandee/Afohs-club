@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { usePage } from '@inertiajs/react';
 import {
     Box,
     Typography,
@@ -14,6 +15,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav'
+import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -23,6 +25,17 @@ const RoomEventManager = () => {
     const [activeTab, setActiveTab] = useState('room'); // 'room' or 'events'
     const [photoUrl, setPhotoUrl] = useState(null);
     const fileInputRef = useRef(null);
+    const { url } = usePage();
+    const query = new URLSearchParams(url.split('?')[1]);
+    const type = query.get('type');
+
+    useEffect(() => {
+        if (type === 'event') {
+            setActiveTab('events');
+        } else {
+            setActiveTab('room');
+        }
+    }, [type]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -61,87 +74,18 @@ const RoomEventManager = () => {
             >
                 <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <IconButton sx={{ color: '#3F4E4F' }}>
+                        <IconButton
+                            sx={{ color: '#3F4E4F' }}
+                            onClick={() => window.history.back()}
+                        >
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, fontSize:'30px', color:'#3F4E4F' }}>
+                        <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, fontSize: '30px', color: '#3F4E4F' }}>
                             {activeTab === 'room' ? 'Add Room' : 'Add Event'}
                         </Typography>
                     </Box>
-                    <Box sx={{ maxWidth: 600, margin: '0 auto', border:'1px solid #E3E3E3', bgcolor:'#FFFFFF' }}>
+                    <Box sx={{ maxWidth: 600, margin: '0 auto', border: '1px solid #E3E3E3', bgcolor: '#FFFFFF' }}>
                         <Paper sx={{ p: 3 }}>
-                            {/* Tabs */}
-                            <Grid container sx={{ mb: 3 }}>
-                                <Grid item xs={6}>
-                                    <Box
-                                        onClick={() => handleTabChange('room')}
-                                        sx={{
-                                            p: 2,
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            backgroundColor: activeTab === 'room' ? '#a7d8fd' : 'white',
-                                            border: '1px solid #ddd',
-                                            borderRadius: '4px 0 0 4px',
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            gap: 1,
-                                            height: 80
-                                        }}
-                                    >
-                                        <Box component="span" sx={{
-                                            width: 24,
-                                            height: 24,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '2px solid #000',
-                                            borderRadius: '2px'
-                                        }}>
-                                            <Box component="span" sx={{
-                                                fontSize: '18px',
-                                                lineHeight: 1,
-                                                transform: 'rotate(45deg)',
-                                                display: 'inline-block',
-                                                width: '10px',
-                                                height: '10px',
-                                                borderRight: '2px solid #000',
-                                                borderBottom: '2px solid #000'
-                                            }}></Box>
-                                        </Box>
-                                        <Typography>Room</Typography>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Box
-                                        onClick={() => handleTabChange('events')}
-                                        sx={{
-                                            p: 2,
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            backgroundColor: activeTab === 'events' ? '#a7d8fd' : 'white',
-                                            border: '1px solid #ddd',
-                                            borderRadius: '0 4px 4px 0',
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            gap: 1,
-                                            height:80
-                                        }}
-                                    >
-                                        <Box component="span" sx={{
-                                            width: 24,
-                                            height: 24,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <CalendarTodayIcon sx={{ fontSize: 20 }} />
-                                        </Box>
-                                        <Typography>Events</Typography>
-                                    </Box>
-                                </Grid>
-                            </Grid>
 
                             {/* Photo Upload Section */}
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -234,7 +178,12 @@ const RoomEventManager = () => {
                                 // Room Form
                                 <Box>
                                     <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>Room Name</Typography>
+                                        <Typography sx={{
+                                            mb: 1,
+                                            color: '#121212',
+                                            fontWeight: 400,
+                                            fontSize: '14px'
+                                        }}>Room Name</Typography>
                                         <TextField
                                             fullWidth
                                             placeholder="e.g : Standard"
@@ -244,7 +193,12 @@ const RoomEventManager = () => {
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>No. of Beds</Typography>
+                                        <Typography sx={{
+                                            mb: 1,
+                                            color: '#121212',
+                                            fontWeight: 400,
+                                            fontSize: '14px'
+                                        }}>No. of Beds</Typography>
                                         <TextField
                                             fullWidth
                                             placeholder="e.g : 3"
@@ -254,7 +208,12 @@ const RoomEventManager = () => {
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>Max Capacity</Typography>
+                                        <Typography sx={{
+                                            mb: 1,
+                                            color: '#121212',
+                                            fontWeight: 400,
+                                            fontSize: '14px'
+                                        }}>Max Capacity</Typography>
                                         <TextField
                                             fullWidth
                                             placeholder="e.g : 2 Adults"
@@ -264,7 +223,12 @@ const RoomEventManager = () => {
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>Price Per Night</Typography>
+                                        <Typography sx={{
+                                            mb: 1,
+                                            color: '#121212',
+                                            fontWeight: 400,
+                                            fontSize: '14px'
+                                        }}>Price Per Night</Typography>
                                         <TextField
                                             fullWidth
                                             placeholder="e.g : 100$"
@@ -274,7 +238,12 @@ const RoomEventManager = () => {
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>No. of Bathroom</Typography>
+                                        <Typography sx={{
+                                            mb: 1,
+                                            color: '#121212',
+                                            fontWeight: 400,
+                                            fontSize: '14px'
+                                        }}>No. of Bathroom</Typography>
                                         <TextField
                                             fullWidth
                                             placeholder="e.g : 1"
