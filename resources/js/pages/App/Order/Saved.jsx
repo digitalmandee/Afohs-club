@@ -1,10 +1,17 @@
-import { Avatar, Box, Button, IconButton, List, ListItem, Typography } from '@mui/material';
-import { useState } from 'react';
+'use client';
+import { Avatar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, List, ListItem, Typography } from '@mui/material';
+import axios from 'axios';
+
+import { useEffect, useState } from 'react';
 import CancelOrder from '../Dashboard/DelModal';
 
 const OrderSaved = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isNotificationVisible, setIsNotificationVisible] = useState(false);
+    const [savedOrders, setSavedOrders] = useState([]);
+    const [isPopupOpen, setIsPopupOpen] = useState(false); // State for popup
+    const [selectedOrder, setSelectedOrder] = useState(null); // State for selected order
+
     const handleCancelOrder = () => {
         setIsModalVisible(false); // Close the cancel order modal
         setIsNotificationVisible(true); // Show the notification
@@ -15,29 +22,25 @@ const OrderSaved = () => {
         }, 3000);
     };
 
-    const savedOrders = [
-        {
-            id: '#001',
-            customer: 'Qafi Latif',
-            items: 4,
-            table: 'T2',
-            hasMembership: true,
-        },
-        {
-            id: '#001',
-            customer: 'Wade Warren',
-            items: 2,
-            table: 'T2',
-            hasMembership: true,
-        },
-        {
-            id: '#001',
-            customer: 'Qafi Latif',
-            items: 2,
-            table: 'T2',
-            hasMembership: true,
-        },
-    ];
+    const handleContinueOrderClick = (order) => {
+        setSelectedOrder(order); // Set the selected order
+        setIsPopupOpen(true); // Open the popup
+    };
+
+    const handleClosePopup = () => {
+        setIsPopupOpen(false); // Close the popup
+    };
+
+    useEffect(() => {
+        axios
+            .post(route('order.savedOrder'))
+            .then((response) => {
+                setSavedOrders(response.data.SavedOrders);
+            })
+            .catch((error) => {
+                console.error('Error fetching saved orders:', error);
+            });
+    }, []);
 
     return (
         <Box
@@ -81,8 +84,6 @@ const OrderSaved = () => {
                         key={index}
                         sx={{
                             px: 2,
-                            // py: 1,
-                            // borderBottom: index < savedOrders.length - 1 ? "1" : "none",
                         }}
                     >
                         <Box
@@ -103,7 +104,7 @@ const OrderSaved = () => {
                                         color: '#FFFFFF',
                                     }}
                                 >
-                                    {order.table}
+                                    {order.table_id}
                                 </Avatar>
                                 {isModalVisible && <CancelOrder onClose={() => setIsModalVisible(false)} onConfirm={handleCancelOrder} />}
                                 {isNotificationVisible && (
@@ -155,11 +156,9 @@ const OrderSaved = () => {
 
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                 <Typography variant="body1" sx={{ fontWeight: 500, mr: 1 }}>
-                                    {order.customer}
+                                    {order.user.name}
                                 </Typography>
-                                {/* {order.hasMembership && (
-                                <img src="./assets/Diamond" />
-                            )} */}
+
                                 <img
                                     src="/assets/Diamond.png"
                                     alt=""
@@ -169,10 +168,6 @@ const OrderSaved = () => {
                                     }}
                                 />
                             </Box>
-
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                {order.items} Items
-                            </Typography>
 
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Box
@@ -186,14 +181,11 @@ const OrderSaved = () => {
                                     }}
                                 >
                                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                        {order.id}
+                                        #{order.order_number}
                                     </Typography>
                                 </Box>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    {/* <IconButton size="small" sx={{ color: "#d32f2f", mr: 1 }}>
-                                    <Delete fontSize="small" />
-                                </IconButton> */}
                                     <img
                                         src="/assets/trash.png"
                                         alt=""
@@ -215,6 +207,7 @@ const OrderSaved = () => {
                                                 bgcolor: '#072a42',
                                             },
                                         }}
+                                        onClick={() => handleContinueOrderClick(order)}
                                     >
                                         Continue Order
                                     </Button>
@@ -224,6 +217,29 @@ const OrderSaved = () => {
                     </ListItem>
                 ))}
             </List>
+
+            {/* Popup Dialog */}
+            <Dialog open={isPopupOpen} onClose={handleClosePopup}>
+                <DialogTitle>Continue Order</DialogTitle>
+                <DialogContent>
+                    <Typography>Are you sure you want to continue with order #{selectedOrder?.order_number}?</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClosePopup} color="secondary">
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            // Add logic to continue the order
+                            handleClosePopup();
+                        }}
+                        color="primary"
+                        variant="contained"
+                    >
+                        Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

@@ -53,8 +53,8 @@ Route::middleware([
             // Order Management
             Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
             Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
-            // Route::get('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
             Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
+            Route::post('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
 
             // for member and waiter
             Route::get('/user/search', [OrderController::class, 'searchMember'])->name('user.search');
