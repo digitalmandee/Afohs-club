@@ -23,6 +23,7 @@ const ReservationDialog = () => {
     const [members, setMembers] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const [Form, setForm] = useState({});
 
     // Day Labels and Open Calendar
     const [anchorEl, setAnchorEl] = useState(null);
@@ -96,7 +97,28 @@ const ReservationDialog = () => {
         try {
             const response = await axios.post(route('order.reservation'), orderDetails);
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
-
+            // Reset unused Form state (preserved as per request)
+            setForm({
+                member: null,
+                date: '',
+                time: '',
+                custom_time: '',
+                person_count: '',
+                down_payment: '',
+                note: '',
+            });
+            // Reset orderDetails fields
+            handleOrderDetailChange('member', null);
+            handleOrderDetailChange('date', null);
+            handleOrderDetailChange('custom_time', '');
+            handleOrderDetailChange('person_count', '');
+            handleOrderDetailChange('down_payment', '');
+            handleOrderDetailChange('price', '');
+            // Reset local state
+            setSelectedTime('10:00 am');
+            setCustomTime(false);
+            setMembers([]);
+            setErrors({});
             router.visit(route('order.new')); // Redirect after success
         } catch (error) {
             if (error.response?.status === 422) {
