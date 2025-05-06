@@ -38,6 +38,14 @@ class OrderController extends Controller
             'floorTables' => $floorTables,
         ]);
     }
+    public function savedOrder()
+    {
+        $orders = Order::where('status', 'saved')->with('user:id,name')->get();
+
+        return response()->json([
+            'SavedOrders' => $orders,
+        ]);
+    }
 
     public function orderMenu(Request $request)
     {
@@ -92,7 +100,7 @@ class OrderController extends Controller
             'start_date' => Carbon::parse($request->date)->toDateString(),
             'start_time' => Carbon::createFromFormat('g:i A', $request->time)->format('H:i:s'),
             'down_payment' => $request->down_payment,
-            'status' => 'pending',
+            'status' => 'saved',
         ]);
 
 
