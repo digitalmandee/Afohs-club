@@ -11,15 +11,15 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $Invoice = Invoices::with(['user', 'order.user'])
-            ->latest()
-            ->get();
+        $Invoices = Invoices::with(['user', 'order.user'])->latest()->get();
         $totalOrders = Order::count();
 
-        return Inertia::render('App/Transaction/Dashboard', [
-            'Invoices' => $Invoice,
-            'totalOrders' => $totalOrders,
+        return Inertia::render('App/Transaction/Dashboard', compact('Invoices', 'totalOrders'));
+    }
 
-        ]);
+    public function PaymentOrderData($invoiceId)
+    {
+        $order = Invoices::where('id', $invoiceId)->with(['user:id,name', 'order', 'order.orderItems:id,order_id,order_item,status', 'order.table:id,table_no'])->firstOrFail();
+        return $order;
     }
 }

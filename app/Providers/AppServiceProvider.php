@@ -19,10 +19,12 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void
-{
-    Inertia::share([
-        'tenantAssetBase' => fn () => tenant_asset(''),
-    ]);
-}
-
+    {
+        Inertia::share([
+            'auth' => fn() => [
+                'user' => auth()->user(),
+            ],
+            'tenantAssetBase' => fn() => tenant_asset(''),
+        ]);
+    }
 }

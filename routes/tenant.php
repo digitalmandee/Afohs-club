@@ -162,8 +162,10 @@ Route::middleware([
             Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen');
             Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
             Route::post('/kitchen/{order}/item/{item}/update-status', [KitchenController::class, 'updateItemStatus'])->name('kitchen.item.update-status');
+
             // Transaction
             Route::get('/transaction', [TransactionController::class, 'Index'])->name('transaction.invoice');
+            Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('transaction.invoice');
 
             // Route::get('/transaction', function () {
             //     return Inertia::render('App/Transaction/Dashboard');
