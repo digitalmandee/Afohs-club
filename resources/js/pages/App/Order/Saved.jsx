@@ -1,5 +1,31 @@
 'use client';
-import { Avatar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, List, ListItem, Typography } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import {
+    Avatar,
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    InputBase,
+    InputLabel,
+    List,
+    ListItem,
+    MenuItem,
+    Paper,
+    Radio,
+    RadioGroup,
+    Select,
+    TextField,
+    ToggleButton,
+    ToggleButtonGroup,
+    Typography,
+} from '@mui/material';
 import axios from 'axios';
 
 import { useEffect, useState } from 'react';
@@ -11,6 +37,36 @@ const OrderSaved = () => {
     const [savedOrders, setSavedOrders] = useState([]);
     const [isPopupOpen, setIsPopupOpen] = useState(false); // State for popup
     const [selectedOrder, setSelectedOrder] = useState(null); // State for selected order
+    const [formData, setFormData] = useState({
+        waiter: '',
+        start_time: '',
+        start_date: '',
+    }); // State for form data
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterOption, setFilterOption] = useState('all');
+    const [orderDetails, setOrderDetails] = useState({
+        floor: '',
+        table: '',
+    });
+    const [floorTables, setFloorTables] = useState([]); // Replace with your actual data
+    const [filteredTables, setFilteredTables] = useState([]); // Replace with your actual data
+
+    const handleFloorChange = (value) => {
+        setOrderDetails((prev) => ({ ...prev, floor: value }));
+        // Add logic to filter tables based on the selected floor
+    };
+
+    const handleFilterOptionChange = (event, newValue) => {
+        if (newValue !== null) {
+            setFilterOption(newValue);
+            // Add logic to filter tables based on the selected filter option
+        }
+    };
+
+    const handleOrderDetailChange = (field, value) => {
+        setOrderDetails((prev) => ({ ...prev, [field]: value }));
+    };
 
     const handleCancelOrder = () => {
         setIsModalVisible(false); // Close the cancel order modal
@@ -29,6 +85,14 @@ const OrderSaved = () => {
 
     const handleClosePopup = () => {
         setIsPopupOpen(false); // Close the popup
+    };
+
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setFormData((prevData) => ({
+            ...prevData,
+            [name]: value,
+        }));
     };
 
     useEffect(() => {
@@ -75,7 +139,7 @@ const OrderSaved = () => {
                         marginLeft: 1,
                     }}
                 >
-                    3 Order
+                    {savedOrders.length} Order{savedOrders.length !== 1 ? 's' : ''}
                 </Typography>
             </Box>
             <List sx={{ p: 0 }}>
@@ -219,22 +283,206 @@ const OrderSaved = () => {
             </List>
 
             {/* Popup Dialog */}
-            <Dialog open={isPopupOpen} onClose={handleClosePopup}>
+            <Dialog
+                open={isPopupOpen}
+                onClose={handleClosePopup}
+                maxWidth="md" // Increased the maximum width to 'lg'
+                fullWidth // Ensures the dialog takes the full width of the maxWidth
+            >
                 <DialogTitle>Continue Order</DialogTitle>
                 <DialogContent>
-                    <Typography>Are you sure you want to continue with order #{selectedOrder?.order_number}?</Typography>
+                    <Typography sx={{ mb: 2 }}>Are you sure you want to continue with order #{selectedOrder?.order_number}?</Typography>
+
+                    {/* Select Waiter */}
+                    <TextField
+                        label="Select Waiter"
+                        name="waiter"
+                        value={formData.waiter}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        InputLabelProps={{
+                            shrink: true, // Ensures the label stays visible when the input is inactive
+                        }}
+                    />
+
+                    {/* Select Time */}
+                    <TextField
+                        label="Select Time"
+                        name="start_time"
+                        type="time"
+                        value={formData.start_time}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        InputLabelProps={{
+                            shrink: true, // Ensures the label stays visible when the input is inactive
+                        }}
+                    />
+
+                    {/* Select Date */}
+                    <TextField
+                        label="Select Date"
+                        name="start_date"
+                        type="date"
+                        value={formData.start_date}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="normal"
+                        InputLabelProps={{
+                            shrink: true, // Ensures the label stays visible when the input is inactive
+                        }}
+                    />
+
+                    {/* Search and Filter */}
+                    <Box sx={{ mb: 2, mt: 2, display: 'flex' }}>
+                        <Paper
+                            component="form"
+                            sx={{
+                                p: '2px 4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                flex: 1,
+                                border: '1px solid #ddd',
+                                boxShadow: 'none',
+                            }}
+                        >
+                            <InputBase
+                                sx={{ ml: 1, flex: 1 }}
+                                placeholder="Search"
+                                inputProps={{ 'aria-label': 'search tables' }}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+                                <SearchIcon />
+                            </IconButton>
+                        </Paper>
+                        <FormControl sx={{ marginLeft: 1, minWidth: 200 }}>
+                            {' '}
+                            {/* Adjust the minWidth as needed */}
+                            <InputLabel id="select-floor">Floor</InputLabel>
+                            <Select
+                                labelId="select-floor"
+                                id="floor"
+                                value={orderDetails.floor}
+                                label="Floor"
+                                onChange={(e) => handleFloorChange(e.target.value)}
+                            >
+                                {floorTables.map((item, index) => (
+                                    <MenuItem value={item.id} key={index}>
+                                        {item.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <ToggleButtonGroup
+                            value={filterOption}
+                            exclusive
+                            onChange={handleFilterOptionChange}
+                            aria-label="filter option"
+                            size="small"
+                            sx={{ ml: 1 }}
+                        >
+                            <ToggleButton
+                                value="all"
+                                aria-label="all"
+                                sx={{
+                                    textTransform: 'none',
+                                    minWidth: 100,
+                                    '&.Mui-selected': {
+                                        backgroundColor: '#063455',
+                                        color: 'white',
+                                        '&:hover': {
+                                            backgroundColor: '#063455',
+                                        },
+                                    },
+                                }}
+                            >
+                                All
+                            </ToggleButton>
+                            <ToggleButton
+                                value="available"
+                                aria-label="available"
+                                sx={{
+                                    textTransform: 'none',
+                                    minWidth: 100,
+                                    '&.Mui-selected': {
+                                        backgroundColor: '#063455',
+                                        color: 'white',
+                                        '&:hover': {
+                                            backgroundColor: '#063455',
+                                        },
+                                    },
+                                }}
+                            >
+                                Available
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                    </Box>
+
+                    {/* Table Selection */}
+                    <Box sx={{ mb: 2 }}>
+                        <RadioGroup value={orderDetails.table} onChange={(e) => handleOrderDetailChange('table', e.target.value)}>
+                            <Grid container spacing={1}>
+                                {[
+                                    { id: 1, table_no: 'T1', capacity: 4, available: true },
+                                    { id: 2, table_no: 'T2', capacity: 2, available: true },
+                                    { id: 3, table_no: 'T3', capacity: 6, available: true },
+                                ].map((table) => (
+                                    <Grid item xs={6} key={table.id}>
+                                        <Paper
+                                            elevation={0}
+                                            sx={{
+                                                p: 1.5,
+                                                bgcolor: table.id === orderDetails.table ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
+                                                border: table.id === orderDetails.table ? '1px solid #A27B5C' : '1px solid #e0e0e0',
+                                                borderRadius: 1,
+                                                opacity: table.available ? 1 : 0.7,
+                                            }}
+                                        >
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                                                    {table.table_no}
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                                        {table.capacity} person
+                                                    </Typography>
+                                                    {table.available ? (
+                                                        <FormControlLabel
+                                                            value={table.id}
+                                                            control={<Radio size="small" />}
+                                                            label=""
+                                                            sx={{ m: 0, color: '#063455' }}
+                                                        />
+                                                    ) : (
+                                                        <Typography variant="caption" sx={{ color: '#063455' }}>
+                                                            {table.table_no.split('-')[0]} - Full
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                        </Paper>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </RadioGroup>
+                    </Box>
                 </DialogContent>
+                {/* footer  */}
                 <DialogActions>
-                    <Button onClick={handleClosePopup} color="secondary">
+                    <Button onClick={handleClosePopup} color="primary">
                         Cancel
                     </Button>
                     <Button
                         onClick={() => {
-                            // Add logic to continue the order
+                            // Add logic to handle form submission
+                            console.log('Form Data:', formData);
                             handleClosePopup();
                         }}
                         color="primary"
-                        variant="contained"
                     >
                         Confirm
                     </Button>
