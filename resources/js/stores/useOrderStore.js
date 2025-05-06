@@ -1,6 +1,9 @@
+import dayjs from 'dayjs';
 import { create } from 'zustand';
 
-const getWeeksInMonth = (date) => {
+const getWeeksInMonth = (inputDate) => {
+    const date = new Date(inputDate);
+
     const year = date.getFullYear();
     const month = date.getMonth();
     const start = new Date(year, month, 1);
@@ -56,7 +59,7 @@ export const useOrderStore = create((set, get) => ({
         table: '',
         floor: '',
         date: new Date(),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: dayjs().format('HH:mm'),
         order_items: [],
         order_status: 'pending',
         payment_method: 'cash',

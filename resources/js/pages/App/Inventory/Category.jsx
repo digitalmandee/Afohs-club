@@ -1,6 +1,7 @@
 'use client';
 
 import SideNav from '@/Components/App/SideBar/SideNav';
+import { tenantAsset } from '@/helpers/asset';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
@@ -122,7 +123,7 @@ export default function Category({ categoriesList }) {
                         setShowError(true);
                     },
                 });
-                setSnackbar({ open: true, message: 'Successfully Create Category', severity: 'success' });
+                setSnackbar({ open: true, message: 'Category updated successfully!', severity: 'success' });
             } else {
                 post(route('inventory.category.store'), {
                     data: formData,
@@ -278,7 +279,7 @@ export default function Category({ categoriesList }) {
                                         <Grid item xs={12} sm={9} md={9} sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                 <img
-                                                    src={category.image ? `/storage/${category.image}` : '/placeholder.jpg'}
+                                                    src={category.image ? tenantAsset(category.image) : '/placeholder.jpg'}
                                                     alt={category.name}
                                                     style={{
                                                         width: '100%',
@@ -367,7 +368,7 @@ export default function Category({ categoriesList }) {
                                 {(data.image || data.existingImage) && (
                                     <Box sx={{ mb: 1, mt: 2 }}>
                                         <img
-                                            src={data.image ? URL.createObjectURL(data.image) : `/storage/${data.existingImage}`}
+                                            src={data.image ? URL.createObjectURL(data.image) : tenantAsset(data.existingImage)}
                                             alt="Preview"
                                             style={{ width: '100%', height: 100, objectFit: 'contain', borderRadius: 8 }}
                                         />
