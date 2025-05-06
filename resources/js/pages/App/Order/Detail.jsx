@@ -123,7 +123,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                                         <Avatar sx={{ width: 20, height: 20, mr: 0.5, fontSize: 10 }}>T</Avatar>
                                         <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                                            {orderDetails.waiter.name}
+                                            {orderDetails.waiter?.name || 'N/A'}
                                         </Typography>
                                     </Box>
                                 </Grid>
