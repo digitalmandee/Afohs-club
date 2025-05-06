@@ -19,7 +19,7 @@ class TransactionController extends Controller
 
     public function PaymentOrderData($invoiceId)
     {
-        $order = Invoices::where('id', $invoiceId)->with(['user:id,name', 'order', 'order.orderItems:id,order_id,order_item,status', 'order.table:id,table_no'])->firstOrFail();
+        $order = Invoices::where('id', $invoiceId)->with(['cashier:id,name', 'user:id,name', 'order', 'order.orderItems:id,order_id,order_item,status', 'order.table:id,table_no'])->firstOrFail();
         return $order;
     }
     public function OrderPayment(Request $request)
@@ -41,7 +41,7 @@ class TransactionController extends Controller
         }
 
         // Save payment
-        $invoice->paid_amount = $request->paid_amount;
+        $invoice->cashier_id = auth()->user()->id;
         $invoice->customer_change = $request->customer_changes;
         $invoice->payment_method = 'cash';
         $invoice->status = 'paid';

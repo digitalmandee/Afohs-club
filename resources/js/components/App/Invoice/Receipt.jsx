@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 // Receipt component for reuse
-const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, closeModal, printReceipt }) => {
+const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, closeModal }) => {
     const { auth } = usePage().props;
     const user = auth.user;
 
@@ -26,6 +26,123 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
     if (loading) {
         return <div>Loading...</div>; // Display loading state until data is fetched
     }
+
+    const handlePrintReceipt = (data) => {
+        if (!data) return;
+
+        const printWindow = window.open('', '_blank');
+
+        const content = `
+        <html>
+          <head>
+            <title>Receipt</title>
+            <style>
+              body { font-family: monospace; padding: 20px; max-width: 300px; margin: 0 auto; }
+              .header { text-align: center; margin-bottom: 10px; }
+              .order-id { border: 1px dashed #ccc; padding: 10px; text-align: center; margin: 15px 0; }
+              .divider { border-top: 1px dashed #ccc; margin: 10px 0; }
+              .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+              .total { font-weight: bold; margin-top: 10px; }
+              .footer { text-align: center; margin-top: 20px; font-size: 11px; }
+              .logo { font-weight: bold; font-size: 16px; text-align: center; margin-top: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>${data.order.start_date || ''}</div>
+            </div>
+    
+            <div class="order-id">
+              <div>Order Id</div>
+              <div><strong>${data.order.order_number}</strong></div>
+            </div>
+    
+            <div class="row">
+              <div>Cashier</div>
+              <div>${data.user.name}</div>
+            </div>
+    
+            <div class="divider"></div>
+    
+            <div class="row">
+              <div>Customer Name</div>
+              <div>${data.user.name}</div>
+            </div>
+    
+            <div class="row">
+              <div>Member Id Card</div>
+              <div>-</div>
+            </div>
+    
+            <div class="row">
+              <div>Order Type</div>
+              <div>${data.order.order_type}</div>
+            </div>
+    
+            <div class="row">
+              <div>Table Number</div>
+              <div>${data.order.table?.table_no ?? '-'}</div>
+            </div>
+    
+            <div class="divider"></div>
+    
+            ${data.order.order_items
+                .map(
+                    (item) => `
+              <div style="margin-bottom: 10px;">
+                <div><strong>${item.order_item.name}</strong></div>
+                <div class="row">
+                  <div>${item.order_item.quantity} x Rs ${item.order_item.price.toFixed(2)}</div>
+                  <div>Rs ${(item.order_item.quantity * item.order_item.price).toFixed(2)}</div>
+                </div>
+              </div>
+            `,
+                )
+                .join('')}
+    
+            <div class="divider"></div>
+    
+            <div class="row">
+              <div>Subtotal</div>
+              <div>Rs ${data.amount}</div>
+            </div>
+    
+            <div class="row">
+              <div>Discount</div>
+              <div>Rs ${data.discount}</div>
+            </div>
+    
+            <div class="row">
+              <div>Tax (12%)</div>
+              <div>Rs ${data.amount * 0.12}</div>
+            </div>
+    
+            <div class="divider"></div>
+    
+            <div class="row total">
+              <div>Total Amount</div>
+              <div>Rs ${data.total_price}</div>
+            </div>
+    
+            <div class="footer">
+              <p>Thanks for having our passion. Drop by again. If your orders aren't still visible, you're always welcome here!</p>
+            </div>
+    
+            <div class="logo">
+              IMAJI Coffee.
+            </div>
+          </body>
+        </html>
+        `;
+
+        printWindow.document.write(content);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
 
     return (
         <Box sx={styles.receiptContainer}>
@@ -160,7 +277,12 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                     >
                         Close
                     </Button>
-                    <Button variant="contained" startIcon={<PrintIcon />} onClick={printReceipt} sx={styles.printReceiptButton}>
+                    <Button
+                        variant="contained"
+                        startIcon={<PrintIcon />}
+                        onClick={() => handlePrintReceipt(paymentData)}
+                        sx={styles.printReceiptButton}
+                    >
                         Print Receipt
                     </Button>
                 </Box>

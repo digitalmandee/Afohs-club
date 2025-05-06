@@ -506,30 +506,11 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
                                                                 {expandedItems[item.id] && hasVariants && (
                                                                     <Grid container spacing={1} mt={1}>
-                                                                        <Grid item xs={6}>
-                                                                            <Typography variant="body2">Temperature</Typography>
-                                                                        </Grid>
-                                                                        <Grid item xs={6}>
-                                                                            <Typography variant="body2">Ice</Typography>
-                                                                        </Grid>
-                                                                        <Grid item xs={6}>
-                                                                            <Typography variant="body2">Size</Typography>
-                                                                        </Grid>
-                                                                        <Grid item xs={6}>
-                                                                            <Typography variant="body2">Large</Typography>
-                                                                        </Grid>
-                                                                        <Grid item xs={6}>
-                                                                            <Typography variant="body2">Sugar</Typography>
-                                                                        </Grid>
-                                                                        <Grid item xs={6}>
-                                                                            <Typography variant="body2">Normal</Typography>
-                                                                        </Grid>
-                                                                        <Grid item xs={6}>
-                                                                            <Typography variant="body2">Topping</Typography>
-                                                                        </Grid>
-                                                                        <Grid item xs={6}>
-                                                                            <Typography variant="body2">Boba</Typography>
-                                                                        </Grid>
+                                                                        {variants.map((variant, index) => (
+                                                                            <Grid item xs={6} key={index}>
+                                                                                <Typography variant="body2">{variant.value}</Typography>
+                                                                            </Grid>
+                                                                        ))}
                                                                     </Grid>
                                                                 )}
                                                             </Box>

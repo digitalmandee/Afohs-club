@@ -10,22 +10,24 @@ import { enqueueSnackbar } from 'notistack';
 import { useState } from 'react';
 import Receipt from './Receipt';
 
-const PaymentNow = ({
-    invoiceData,
-    openSuccessPayment,
-    openPaymentModal,
-    handleClosePayment,
-    activePaymentMethod,
-    handleBankSelection,
-    setAccountNumber,
-    setCardHolderName,
-    setCvvCode,
-    handlePaymentMethodChange,
-    invoiceId,
-}) => {
+const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleClosePayment }) => {
     // Payment state
     const [inputAmount, setInputAmount] = useState('0');
     const [customerChanges, setCustomerChanges] = useState('0');
+    const [activePaymentMethod, setActivePaymentMethod] = useState('cash');
+    const [selectedBank, setSelectedBank] = useState('bca');
+    // Bank transfer form state
+    const [accountNumber, setAccountNumber] = useState('');
+    const [cardHolderName, setCardHolderName] = useState('');
+    const [cvvCode, setCvvCode] = useState('');
+
+    const handlePaymentMethodChange = (method) => {
+        setActivePaymentMethod(method);
+    };
+
+    const handleBankSelection = (bank) => {
+        setSelectedBank(bank);
+    };
 
     const handleQuickAmountClick = (amount) => {
         setInputAmount(amount);
@@ -71,11 +73,11 @@ const PaymentNow = ({
 
     const handlePayNow = () => {
         if (inputAmount !== invoiceData.total_price) {
-            alert('Please enter the correct amount');
+            enqueueSnackbar('Please enter the correct amount', { variant: 'warning' });
         }
 
         const payload = {
-            invoice_id: invoiceId,
+            invoice_id: invoiceData?.id,
             paid_amount: inputAmount,
             customer_changes: customerChanges,
         };
@@ -96,21 +98,6 @@ const PaymentNow = ({
                 );
             },
         });
-        // axios
-        //     .post('/order-payment', payload)
-        //     .then((res) => {
-        //         console.log(res);
-
-        //         enqueueSnackbar('Payment successful', { variant: 'success' });
-        //     })
-        //     .catch((error) => {
-        //         console.log(error);
-
-        //         enqueueSnackbar('Something went wrong: ' + error.response.data.message, { variant: 'error' });
-        //     })
-        //     .finally(() => {
-        //         // setLoading(false);
-        //     });
     };
 
     return (
@@ -136,7 +123,7 @@ const PaymentNow = ({
         >
             <Box sx={{ display: 'flex', height: '100vh' }}>
                 {/* Left Side - Receipt */}
-                <Receipt invoiceId={invoiceId} openModal={openPaymentModal} showButtons={false} />
+                <Receipt invoiceId={invoiceData?.id} openModal={openPaymentModal} showButtons={false} />
 
                 {/* Right Side - Payment */}
                 <Box sx={{ flex: 1, p: 3 }}>
