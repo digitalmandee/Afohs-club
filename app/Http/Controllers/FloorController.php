@@ -108,6 +108,8 @@ class FloorController extends Controller
             'tables.*.capacity' => 'required|string|max:255',
         ]);
 
+        dd($request->all());
+
         // Check for duplicate table_no
         $tableNumbers = array_map(fn($table) => $table['table_no'], $request->tables);
         if (count($tableNumbers) !== count(array_unique($tableNumbers))) {
@@ -159,5 +161,12 @@ class FloorController extends Controller
         $floor->delete();
 
         return redirect()->route('table.management')->with('success', 'Floor deleted!');
+    }
+
+    public function floorAll()
+    {
+        $floorTables = Floor::select('id', 'name')->where('status', 1)->with('tables:id,floor_id,table_no,capacity')->get();
+
+        return response()->json(['success' => true, 'floors' => $floorTables]);
     }
 }
