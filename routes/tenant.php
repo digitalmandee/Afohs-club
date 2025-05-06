@@ -166,6 +166,7 @@ Route::middleware([
             // Transaction
             Route::get('/transaction', [TransactionController::class, 'Index'])->name('transaction.invoice');
             Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('transaction.invoice');
+            Route::post('/order-payment', [TransactionController::class, 'OrderPayment'])->name('order.payment');
 
             // Route::get('/transaction', function () {
             //     return Inertia::render('App/Transaction/Dashboard');

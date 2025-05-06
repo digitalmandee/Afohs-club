@@ -1,16 +1,13 @@
 'use client';
 
+import PaymentNow from '@/components/App/Invoice/PaymentNow';
+import Receipt from '@/components/App/Invoice/Receipt';
 import SideNav from '@/components/App/SideBar/SideNav';
-import { usePage } from '@inertiajs/react';
 import {
-    AccountBalance as AccountBalanceIcon,
-    ArrowForward as ArrowForwardIcon,
-    Backspace as BackspaceIcon,
     CheckCircle as CheckCircleIcon,
     Check as CheckIcon,
     Circle as CircleIcon,
     Close as CloseIcon,
-    CreditCard as CreditCardIcon,
     TwoWheeler as DeliveryIcon,
     Diamond as DiamondIcon,
     LocalDining as DiningIcon,
@@ -41,9 +38,8 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -323,39 +319,6 @@ const styles = {
         color: 'white',
         border: 'none',
     },
-    numpadButton: {
-        width: '100%',
-        height: '60px',
-        fontSize: '24px',
-        borderRadius: '4px',
-        border: '1px solid #e0e0e0',
-        backgroundColor: 'white',
-        color: '#333',
-        '&:hover': {
-            backgroundColor: '#f5f5f5',
-        },
-    },
-    quickAmountButton: {
-        borderRadius: '4px',
-        border: '1px solid #e0e0e0',
-        backgroundColor: 'white',
-        color: '#333',
-        padding: '8px 16px',
-        textTransform: 'none',
-        '&:hover': {
-            backgroundColor: '#f5f5f5',
-        },
-    },
-    payNowButton: {
-        backgroundColor: '#0a3d62',
-        color: 'white',
-        borderRadius: '4px',
-        padding: '12px 24px',
-        textTransform: 'none',
-        '&:hover': {
-            backgroundColor: '#083352',
-        },
-    },
     successIcon: {
         backgroundColor: '#4caf50',
         color: 'white',
@@ -367,147 +330,7 @@ const styles = {
         alignItems: 'center',
         margin: '0 auto 24px auto',
     },
-    paymentMethodTab: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '15px',
-        cursor: 'pointer',
-        borderBottom: '2px solid transparent',
-    },
-    activePaymentMethodTab: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '15px',
-        cursor: 'pointer',
-        borderBottom: '2px solid #0a3d62',
-        backgroundColor: '#e3f2fd',
-    },
-    bankButton: {
-        borderRadius: '4px',
-        border: '1px solid #e0e0e0',
-        backgroundColor: 'white',
-        color: '#333',
-        padding: '8px 16px',
-        margin: '4px',
-        textTransform: 'none',
-        '&:hover': {
-            backgroundColor: '#f5f5f5',
-        },
-    },
-    activeBankButton: {
-        borderRadius: '4px',
-        border: '1px solid #0a3d62',
-        backgroundColor: '#e3f2fd',
-        color: '#0a3d62',
-        padding: '8px 16px',
-        margin: '4px',
-        textTransform: 'none',
-    },
-    receiptContainer: {
-        width: '40%',
-        backgroundColor: '#f5f5f5',
-        padding: '20px',
-        borderRight: '1px solid #ddd',
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        overflowY: 'auto',
-        height: '100vh',
-    },
-    receiptHeader: {
-        textAlign: 'center',
-        marginBottom: '10px',
-    },
-    receiptOrderId: {
-        border: '1px dashed #ccc',
-        padding: '10px',
-        textAlign: 'center',
-        marginBottom: '15px',
-    },
-    receiptDivider: {
-        borderTop: '1px dashed #ccc',
-        margin: '10px 0',
-    },
-    receiptFooter: {
-        textAlign: 'center',
-        marginTop: '20px',
-        fontSize: '11px',
-    },
-    receiptLogo: {
-        fontWeight: 'bold',
-        fontSize: '16px',
-        textAlign: 'center',
-        marginTop: '10px',
-    },
-    receiptRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        marginBottom: '5px',
-    },
-    receiptTotal: {
-        fontWeight: 'bold',
-        marginTop: '10px',
-        borderTop: '1px dashed #ccc',
-        paddingTop: '10px',
-    },
 };
-
-// Sample data
-const orders = [
-    {
-        id: 1,
-        customer: 'Qafi Latif',
-        tableNumber: 'T2',
-        items: 4,
-        status: 'Ready to serve',
-        statusCode: 'ready',
-        amount: 47.0,
-        orderNumber: '001',
-        isVIP: true,
-        type: 'dine-in',
-    },
-    {
-        id: 2,
-        customer: 'Hamid Indra',
-        tableNumber: 'T3',
-        items: 4,
-        status: 'Order Done',
-        statusCode: 'done',
-        amount: 47.0,
-        orderNumber: '001',
-        isVIP: false,
-        type: 'dine-in',
-    },
-    {
-        id: 3,
-        customer: 'Miles Esther',
-        tableNumber: 'T4',
-        items: 4,
-        status: 'Order Done',
-        statusCode: 'done',
-        amount: 47.0,
-        orderNumber: '001',
-        isVIP: false,
-        type: 'dine-in',
-    },
-    {
-        id: 4,
-        customer: 'Miles Esther',
-        tableNumber: 'DE',
-        items: 4,
-        status: 'Order Cancelled',
-        statusCode: 'cancelled',
-        amount: 10.0,
-        orderNumber: '001',
-        isVIP: false,
-        type: 'delivery',
-    },
-];
 
 const orderDetail = {
     id: '#123',
@@ -686,12 +509,17 @@ function TransactionDashboard({ Invoices, totalOrders }) {
 
     const handleOpenPayment = (order) => {
         setSelectedOrder(order);
-        setOpenPaymentModal(true);
-        setOpenOrderDetailModal(false);
-        // Reset payment method to cash when opening payment modal
-        setActivePaymentMethod('cash');
-        setInputAmount('110.00');
-        setCustomerChanges((110 - paymentOrderDetail.total).toFixed(2));
+        if (order.status === 'paid') {
+            setOpenPaymentSuccessModal(true);
+        } else if (order.status === 'unpaid') {
+            setOpenPaymentModal(true);
+            setOpenOrderDetailModal(false);
+        }
+    };
+
+    const handleSuccessPayment = () => {
+        setOpenPaymentSuccessModal(true);
+        setOpenPaymentModal(false);
     };
 
     const handleClosePayment = () => {
@@ -1241,7 +1069,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                             >
                                                                 Rs{' '}
                                                             </Typography>
-                                                            {order.amount}
+                                                            {order.total_price}
                                                         </Typography>
                                                     </Box>
                                                 </Box>
@@ -1255,11 +1083,11 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                             label={
                                                                 order?.order.status === 'pending'
                                                                     ? 'Pending'
-                                                                    : order?.status === 'in_progress'
+                                                                    : order?.order?.status === 'in_progress'
                                                                       ? 'In Progress'
-                                                                      : order?.status === 'completed'
+                                                                      : order?.order?.status === 'completed'
                                                                         ? '' // Don't show label if completed
-                                                                        : order?.status === 'cancelled'
+                                                                        : order?.order?.status === 'cancelled'
                                                                           ? 'Order Cancelled'
                                                                           : 'Unknown' // Default if status is not recognized
                                                             }
@@ -1271,24 +1099,29 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                             }}
                                                         />
                                                     </Box>
-
-                                                    <Button
-                                                        size="small"
-                                                        variant="contained"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleOpenPayment(order);
-                                                        }}
-                                                        sx={{
-                                                            borderRadius: '4px',
-                                                            fontSize: '12px',
-                                                            textTransform: 'none',
-                                                            backgroundColor: '#0a3d62',
-                                                            color: 'white',
-                                                        }}
-                                                    >
-                                                        Payment Now
-                                                    </Button>
+                                                    <Box>
+                                                        <Button
+                                                            size="small"
+                                                            variant="contained"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleOpenPayment(order);
+                                                            }}
+                                                            sx={{
+                                                                borderRadius: '4px',
+                                                                fontSize: '12px',
+                                                                textTransform: 'none',
+                                                                backgroundColor: '#0a3d62',
+                                                                color: 'white',
+                                                            }}
+                                                        >
+                                                            {order.status === 'paid'
+                                                                ? 'Paid'
+                                                                : order.status == 'cancelled'
+                                                                  ? 'Cancelled'
+                                                                  : 'Payment Now'}
+                                                        </Button>
+                                                    </Box>
                                                 </Box>
                                             </CardContent>
                                         </Card>
@@ -2067,9 +1900,10 @@ function TransactionDashboard({ Invoices, totalOrders }) {
 
                     {/* Payment Modal */}
                     <PaymentNow
+                        invoiceData={selectedOrder}
+                        openSuccessPayment={handleSuccessPayment}
                         openPaymentModal={openPaymentModal}
                         handleClosePayment={handleClosePayment}
-                        paymentOrderDetail={paymentOrderDetail}
                         activePaymentMethod={activePaymentMethod}
                         handleBankSelection={handleBankSelection}
                         setAccountNumber={setAccountNumber}
@@ -2103,7 +1937,12 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                     >
                         <Box sx={{ display: 'flex', height: '100vh' }}>
                             {/* Left Side - Receipt */}
-                            <Receipt orderData={paymentOrderDetail} />
+                            <Receipt
+                                invoiceId={selectedOrder?.id}
+                                openModal={openPaymentSuccessModal}
+                                closeModal={handleClosePaymentSuccess}
+                                printReceipt={handlePrintReceipt}
+                            />
 
                             {/* Right Side - Success Message */}
                             <Box
@@ -2134,7 +1973,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             Total Amount
                                         </Typography>
                                         <Typography variant="h4" fontWeight="bold" color="#0a3d62" textAlign="center">
-                                            Rs {paymentOrderDetail.total.toFixed(2)}
+                                            Rs {selectedOrder?.total_price}
                                         </Typography>
                                     </Box>
 
@@ -2149,7 +1988,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             <Typography variant="subtitle2" color="text.secondary" mb={1}>
                                                 Cash
                                             </Typography>
-                                            <Typography variant="body1">Rs {paymentOrderDetail.payment.amount.toFixed(2)}</Typography>
+                                            <Typography variant="body1">Rs {selectedOrder?.paid_amount}</Typography>
                                         </Grid>
                                     </Grid>
 
@@ -2164,7 +2003,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 Customer Changes
                                             </Typography>
                                             <Typography variant="body1" fontWeight="medium">
-                                                Rs {paymentOrderDetail.payment.change.toFixed(2)}
+                                                Rs {selectedOrder?.customer_change}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -2241,552 +2080,3 @@ function TransactionDashboard({ Invoices, totalOrders }) {
     );
 }
 export default TransactionDashboard;
-
-const PaymentNow = ({
-    openPaymentModal,
-    handleClosePayment,
-    paymentOrderDetail,
-    activePaymentMethod,
-    handleBankSelection,
-    setAccountNumber,
-    setCardHolderName,
-    setCvvCode,
-    handlePayNow,
-    handlePaymentMethodChange,
-    invoiceId,
-}) => {
-    // State to manage fetched data and loading state
-    const [loading, setLoading] = useState(true);
-    const [paymentData, setPaymentData] = useState(null);
-
-    // Payment state
-    const [inputAmount, setInputAmount] = useState('0');
-    const [customerChanges, setCustomerChanges] = useState('0');
-
-    const handleQuickAmountClick = (amount) => {
-        setInputAmount(amount);
-        // Calculate customer changes
-        const total = paymentData.total_price;
-        setCustomerChanges((amount - total).toFixed(2));
-    };
-
-    const handleNumberClick = (number) => {
-        let newAmount;
-        if (inputAmount === paymentData.total_price) {
-            newAmount = number;
-        } else {
-            newAmount = inputAmount + number;
-        }
-        setInputAmount(newAmount);
-
-        // Calculate customer changes
-        const total = paymentData.total_price;
-        setCustomerChanges((Number.parseFloat(newAmount) - total).toFixed(2));
-    };
-
-    const handleDeleteClick = () => {
-        if (inputAmount.length > 1) {
-            const newAmount = inputAmount.slice(0, -1);
-            setInputAmount(newAmount);
-
-            // Calculate customer changes
-            const total = paymentData.total_price;
-            setCustomerChanges((Number.parseFloat(newAmount) - total).toFixed(2));
-        } else {
-            setInputAmount('0');
-            setCustomerChanges((0 - paymentData.total_price).toFixed(2));
-        }
-    };
-
-    const handleDecimalClick = () => {
-        if (!inputAmount.includes('.')) {
-            const newAmount = inputAmount + '.';
-            setInputAmount(newAmount);
-        }
-    };
-
-    // Fetch payment order data based on the invoiceId
-    useEffect(() => {
-        if (openPaymentModal && invoiceId) {
-            setLoading(true);
-            // Simulate an API call or fetch data logic
-            console.log('Fetching latest data for invoice ID:', invoiceId);
-            // Here you would fetch the latest payment data based on the invoiceId
-            // Example:
-            axios.get(`/payment-order-data/${invoiceId}`).then((response) => {
-                setInputAmount(0);
-                setCustomerChanges(0);
-                setPaymentData(response.data);
-                setLoading(false);
-            });
-        }
-    }, [openPaymentModal, invoiceId]); // Trigger on modal open and invoiceId change
-
-    if (loading) {
-        return <div>Loading...</div>; // Display loading state until data is fetched
-    }
-
-    return (
-        <Dialog
-            open={openPaymentModal}
-            onClose={handleClosePayment}
-            fullWidth
-            maxWidth="md"
-            PaperProps={{
-                style: {
-                    position: 'fixed',
-                    top: 0,
-                    right: 0,
-                    margin: 0,
-                    height: '100vh',
-                    maxHeight: '100vh',
-                    width: '100%',
-                    maxWidth: '800px',
-                    borderRadius: 0,
-                    overflow: 'auto',
-                },
-            }}
-        >
-            <Box sx={{ display: 'flex', height: '100vh' }}>
-                {/* Left Side - Receipt */}
-                <Receipt orderData={paymentData} showButtons={false} />
-
-                {/* Right Side - Payment */}
-                <Box sx={{ flex: 1, p: 3 }}>
-                    <Typography variant="h5" fontWeight="bold" mb={4}>
-                        Payment
-                    </Typography>
-
-                    {/* Payment Method Tabs */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            borderBottom: '1px solid #e0e0e0',
-                            mb: 3,
-                        }}
-                    >
-                        <Box
-                            sx={activePaymentMethod === 'cash' ? styles.activePaymentMethodTab : styles.paymentMethodTab}
-                            onClick={() => handlePaymentMethodChange('cash')}
-                        >
-                            <CreditCardIcon
-                                sx={{
-                                    fontSize: 24,
-                                    mb: 1,
-                                    color: activePaymentMethod === 'cash' ? '#0a3d62' : '#666',
-                                }}
-                            />
-                            <Typography variant="body1" fontWeight={activePaymentMethod === 'cash' ? 'medium' : 'normal'}>
-                                Cash
-                            </Typography>
-                        </Box>
-                        <Box
-                            sx={activePaymentMethod === 'bank' ? styles.activePaymentMethodTab : styles.paymentMethodTab}
-                            onClick={() => handlePaymentMethodChange('bank')}
-                        >
-                            <AccountBalanceIcon
-                                sx={{
-                                    fontSize: 24,
-                                    mb: 1,
-                                    color: activePaymentMethod === 'bank' ? '#0a3d62' : '#666',
-                                }}
-                            />
-                            <Typography variant="body1" fontWeight={activePaymentMethod === 'bank' ? 'medium' : 'normal'}>
-                                Bank Transfer
-                            </Typography>
-                        </Box>
-                    </Box>
-
-                    {/* Cash Payment Form */}
-                    {activePaymentMethod === 'cash' && (
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle1" mb={1}>
-                                    Input Amount
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    value={inputAmount}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Typography variant="body1">Rs</Typography>
-                                            </InputAdornment>
-                                        ),
-                                        readOnly: true,
-                                    }}
-                                    sx={{ mb: 2 }}
-                                />
-
-                                <Typography variant="subtitle1" mb={1}>
-                                    Customer Changes
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        mb: 3,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <Typography variant="h5" fontWeight="bold" color={Number.parseFloat(customerChanges) < 0 ? '#f44336' : '#333'}>
-                                        Rs {customerChanges}
-                                    </Typography>
-                                </Box>
-
-                                {/* Quick Amount Buttons */}
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        gap: 1,
-                                        mb: 3,
-                                        flexWrap: 'wrap',
-                                    }}
-                                >
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleQuickAmountClick(paymentOrderDetail.total.toString())}
-                                        sx={styles.quickAmountButton}
-                                    >
-                                        Exact money
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('10.00')} sx={styles.quickAmountButton}>
-                                        Rs 10.00
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('20.00')} sx={styles.quickAmountButton}>
-                                        Rs 20.00
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('50.00')} sx={styles.quickAmountButton}>
-                                        Rs 50.00
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('100.00')} sx={styles.quickAmountButton}>
-                                        Rs 100.00
-                                    </Button>
-                                </Box>
-
-                                {/* Numpad */}
-                                <Grid container spacing={1}>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('1')}>
-                                            1
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('2')}>
-                                            2
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('3')}>
-                                            3
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('4')}>
-                                            4
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('5')}>
-                                            5
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('6')}>
-                                            6
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('7')}>
-                                            7
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('8')}>
-                                            8
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('9')}>
-                                            9
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={handleDecimalClick}>
-                                            .
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('0')}>
-                                            0
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button
-                                            fullWidth
-                                            sx={{
-                                                ...styles.numpadButton,
-                                                backgroundColor: '#ffebee',
-                                                color: '#f44336',
-                                                '&:hover': {
-                                                    backgroundColor: '#ffcdd2',
-                                                },
-                                            }}
-                                            onClick={handleDeleteClick}
-                                        >
-                                            <BackspaceIcon />
-                                        </Button>
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-                        </Grid>
-                    )}
-
-                    {/* Bank Transfer Form */}
-                    {activePaymentMethod === 'bank' && (
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle1" mb={2}>
-                                    Choose Bank
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        gap: 1,
-                                        mb: 3,
-                                    }}
-                                >
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleBankSelection('bca')}
-                                        sx={selectedBank === 'bca' ? styles.activeBankButton : styles.bankButton}
-                                    >
-                                        BCA Bank
-                                    </Button>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleBankSelection('citi')}
-                                        sx={selectedBank === 'citi' ? styles.activeBankButton : styles.bankButton}
-                                    >
-                                        CITI Bank
-                                    </Button>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleBankSelection('hbl')}
-                                        sx={selectedBank === 'hbl' ? styles.activeBankButton : styles.bankButton}
-                                    >
-                                        HBL Bank
-                                    </Button>
-                                </Box>
-
-                                <Typography variant="subtitle1" mb={1}>
-                                    Account Number
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    placeholder="e.g. 222-29863902-2"
-                                    value={accountNumber}
-                                    onChange={(e) => setAccountNumber(e.target.value)}
-                                    sx={{ mb: 3 }}
-                                />
-
-                                <Typography variant="subtitle1" mb={1}>
-                                    Card Holder Name
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    placeholder="e.g. Zahid Ullah"
-                                    value={cardHolderName}
-                                    onChange={(e) => setCardHolderName(e.target.value)}
-                                    sx={{ mb: 3 }}
-                                />
-
-                                <Typography variant="subtitle1" mb={1}>
-                                    CVV Code
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    placeholder="e.g. 234"
-                                    value={cvvCode}
-                                    onChange={(e) => setCvvCode(e.target.value)}
-                                    sx={{ mb: 3 }}
-                                    type="password"
-                                />
-                            </Grid>
-                        </Grid>
-                    )}
-
-                    {/* Footer Buttons */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            mt: 4,
-                        }}
-                    >
-                        <Button
-                            variant="outlined"
-                            onClick={handleClosePayment}
-                            sx={{
-                                color: '#333',
-                                borderColor: '#ddd',
-                                textTransform: 'none',
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={handlePayNow} sx={styles.payNowButton}>
-                            Pay Now
-                        </Button>
-                    </Box>
-                </Box>
-            </Box>
-        </Dialog>
-    );
-};
-
-// Receipt component for reuse
-const Receipt = ({ orderData, showButtons = true }) => {
-    const { auth } = usePage().props;
-    const user = auth.user;
-
-    return (
-        <Box sx={styles.receiptContainer}>
-            <Box sx={styles.receiptHeader}>
-                <Typography variant="caption">{orderData.order.start_date}</Typography>
-            </Box>
-
-            <Box sx={styles.receiptOrderId}>
-                <Typography variant="caption" color="text.secondary">
-                    Order Id
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                    {orderData.order.order_number}
-                </Typography>
-            </Box>
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Cashier
-                </Typography>
-                <Typography variant="caption">{user.name}</Typography>
-            </Box>
-
-            <Box sx={styles.receiptDivider} />
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Customer Name
-                </Typography>
-                <Typography variant="caption">{orderData.user.name}</Typography>
-            </Box>
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Member Id Card
-                </Typography>
-                <Typography variant="caption">-</Typography>
-            </Box>
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Order Type
-                </Typography>
-                <Typography variant="caption">{orderData.order.order_type}</Typography>
-            </Box>
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Table Number
-                </Typography>
-                <Typography variant="caption">{orderData.order?.table?.table_no}</Typography>
-            </Box>
-
-            <Box sx={styles.receiptDivider} />
-
-            {orderData.order.order_items.map((item, index) => (
-                <Box key={index} mb={1.5}>
-                    <Typography variant="caption" fontWeight="medium">
-                        {item.order_item.name}
-                    </Typography>
-                    <Box sx={styles.receiptRow}>
-                        <Typography variant="caption" color="text.secondary">
-                            {item.order_item.quantity} x Rs {item.order_item.price}
-                        </Typography>
-                        <Typography variant="caption">Rs {item.order_item.price}</Typography>
-                    </Box>
-                </Box>
-            ))}
-
-            <Box sx={styles.receiptDivider} />
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Subtotal
-                </Typography>
-                <Typography variant="caption">Rs {orderData.amount}</Typography>
-            </Box>
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Discount
-                </Typography>
-                <Typography variant="caption">Rs {orderData.discount}</Typography>
-            </Box>
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Tax (12%)
-                </Typography>
-                <Typography variant="caption">Rs {(orderData.amount * 0.12).toFixed(2)}</Typography>
-            </Box>
-
-            <Box sx={styles.receiptDivider} />
-
-            <Box sx={styles.receiptTotal}>
-                <Typography variant="body2" fontWeight="bold" color="#0a3d62">
-                    Total Amount
-                </Typography>
-                <Typography variant="body2" fontWeight="bold" color="#0a3d62">
-                    Rs {orderData.total_price}
-                </Typography>
-            </Box>
-
-            <Box sx={styles.receiptFooter}>
-                <Typography variant="caption" fontSize="0.65rem">
-                    Thanks for having our passion. Drop by again. If your orders aren't still visible, you're always welcome here!
-                </Typography>
-            </Box>
-
-            <Box sx={styles.receiptLogo}>
-                <Typography variant="h6" fontWeight="bold" color="#0a3d62">
-                    IMAJI Coffee.
-                </Typography>
-            </Box>
-
-            {showButtons && (
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        mt: 3,
-                    }}
-                >
-                    <Button
-                        variant="outlined"
-                        onClick={handleClosePaymentSuccess}
-                        sx={{
-                            color: '#333',
-                            borderColor: '#ddd',
-                            textTransform: 'none',
-                        }}
-                    >
-                        Close
-                    </Button>
-                    <Button variant="contained" startIcon={<PrintIcon />} onClick={handlePrintReceipt} sx={styles.printReceiptButton}>
-                        Print Receipt
-                    </Button>
-                </Box>
-            )}
-        </Box>
-    );
-};
