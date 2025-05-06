@@ -53,6 +53,9 @@ Route::middleware([
             // Order Management
             Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
             Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
+            // Route::get('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
+            Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
+
             // for member and waiter
             Route::get('/user/search', [OrderController::class, 'searchMember'])->name('user.search');
             // Send to kitchen order
@@ -166,10 +169,6 @@ Route::middleware([
             // Transaction
             Route::get('/transaction', [TransactionController::class, 'Index'])->name('transaction.invoice');
             Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('transaction.invoice');
-
-            // Route::get('/transaction', function () {
-            //     return Inertia::render('App/Transaction/Dashboard');
-            // });
         });
         // End of Tenant Routes
 

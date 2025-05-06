@@ -80,7 +80,24 @@ class OrderController extends Controller
         $invoicNo = $invoicNo + 1;
         return $invoicNo;
     }
+    public function orderReservation(Request $request)
+    {
+        // dd($request->all());
 
+        $order = Order::create([
+            'order_number' => $this->getOrderNo(),
+            'user_id' => $request->member['id'],
+            'order_type' => $request->order_type,
+            'person_count' => $request->person_count,
+            'start_date' => Carbon::parse($request->date)->toDateString(),
+            'start_time' => Carbon::createFromFormat('g:i A', $request->time)->format('H:i:s'),
+            'down_payment' => $request->down_payment,
+            'status' => 'pending',
+        ]);
+
+
+        return response()->json(['message' => 'Order sent to kitchen.', 'order' => $order], 200);
+    }
     public function sendToKitchen(Request $request)
     {
         $request->validate([
@@ -100,8 +117,8 @@ class OrderController extends Controller
             'table_id' => $request->table,
             'order_type' => $request->order_type,
             'person_count' => $request->person_count,
-            'date' => $request->date,
-            'time' => $request->time,
+            'start_date' => $request->date,
+            'start_time' => $request->time,
             'down_payment' => $request->down_payment,
             'amount' => $request->price,
             'status' => 'pending'
