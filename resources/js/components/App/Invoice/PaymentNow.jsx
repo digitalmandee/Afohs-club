@@ -74,6 +74,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const handlePayNow = () => {
         if (inputAmount !== invoiceData.total_price) {
             enqueueSnackbar('Please enter the correct amount', { variant: 'warning' });
+            return;
         }
 
         const payload = {
