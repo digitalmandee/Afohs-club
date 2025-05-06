@@ -32,4 +32,8 @@ class Invoices extends Model
     {
         return $this->belongsTo(Order::class);
     }
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id', 'id');
+    }
 }
