@@ -50,5 +50,3 @@ Visit http://localhost:8000/ in your browser to access the application.
   e.g., resources/js/pages/App/Dashboard.jsx
 - Include all components under: resources/js/components/App/
   e.g., resources/js/components/App/SideBar
-
-  test

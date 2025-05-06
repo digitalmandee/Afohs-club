@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('invoice_no')->unique();
             $table->foreignId('user_id')->constrained();
-            $table->foreignId('cashier_id')->nullable()->constrained();
+            $table->foreignId('cashier_id')->nullable()->constrained('users');
             $table->foreignId('order_id')->nullable()->constrained();
             $table->decimal('amount', 10, 2);
             $table->decimal('tax', 10, 2)->default(0);
