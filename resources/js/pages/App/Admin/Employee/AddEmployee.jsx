@@ -15,8 +15,9 @@ import {
     FormControl,
     IconButton
 } from "@mui/material"
-import { Add, CalendarToday, ArrowBack } from "@mui/icons-material"
+import { Add, ArrowBack } from "@mui/icons-material"
 import SideNav from '@/components/App/AdminSideBar/SideNav'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { router } from "@inertiajs/react"
 
 const drawerWidthOpen = 240;
@@ -47,8 +48,8 @@ const EmployeeInformationForm = () => {
                         Add Employee
                     </h2>
                 </Box>
-                <Box sx={{ maxWidth: 600, mx: "auto", border: '1px solid #E3E3E3' }}>
-                    <Paper elevation={0} sx={{ p: 3, borderRadius: 1 }}>
+                <Box sx={{ maxWidth: 600, mx: "auto", px:2.5, border: '1px solid #E3E3E3', bgcolor:'#FFFFFF' }}>
+                    {/* <Paper elevation={0} sx={{ px: 3, borderRadius: 1 }}> */}
                         <Grid container spacing={2}>
                             {/* Employee ID */}
                             <Grid
@@ -58,12 +59,12 @@ const EmployeeInformationForm = () => {
                                     bgcolor: '#F6F6F6',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    mt: 2,
-                                    px: 2, // equal left and right padding
-                                    py: 1, // optional vertical padding for spacing
+                                    mt: 4,
+                                    ml: 2,
+                                    // py: 1,
                                 }}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom:'12px' }}>
                                     <Typography
                                         variant="body2"
                                         sx={{ color: "#7F7F7F", fontWeight: 400, fontSize: '16px' }}
@@ -113,7 +114,7 @@ const EmployeeInformationForm = () => {
                                             variant="caption"
                                             sx={{
                                                 color: "#7F7F7F",
-                                                fontWeight:400,
+                                                fontWeight: 400,
                                                 mt: 0.5,
                                                 fontSize: "14px",
                                             }}
@@ -130,8 +131,29 @@ const EmployeeInformationForm = () => {
                                     Employee Type
                                 </Typography>
                                 <RadioGroup row value={employeeType} onChange={(e) => setEmployeeType(e.target.value)}>
-                                    <FormControlLabel value="fullTime" control={<Radio />} label="Full Time" />
-                                    <FormControlLabel value="partTime" control={<Radio />} label="Part Time" />
+                                    {[
+                                        { value: "fullTime", label: "Full Time" },
+                                        { value: "partTime", label: "Part Time" }
+                                    ].map((option) => (
+                                        <Box
+                                            key={option.value}
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                border: "1px solid #E3E3E3",
+                                                borderRadius: "6px",
+                                                padding: "4px 8px",
+                                                marginRight: 2,
+                                            }}
+                                        >
+                                            <Typography sx={{ marginRight: 1, fontSize: "14px" }}>{option.label}</Typography>
+                                            <Radio
+                                                value={option.value}
+                                                checked={employeeType === option.value}
+                                                onChange={(e) => setEmployeeType(e.target.value)}
+                                            />
+                                        </Box>
+                                    ))}
                                 </RadioGroup>
                             </Grid>
 
@@ -140,7 +162,20 @@ const EmployeeInformationForm = () => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Employee Name
                                 </Typography>
-                                <TextField fullWidth placeholder="e.g. Dianne russel" />
+                                <TextField
+                                    fullWidth
+                                    placeholder="e.g. Dianne Russel"
+                                    InputProps={{
+                                        sx: {
+                                            height: 40,
+                                            '& input': {
+                                                height: 40,
+                                                padding: '0 14px',
+                                                boxSizing: 'border-box',
+                                            },
+                                        },
+                                    }}
+                                />
                             </Grid>
 
                             {/* Designation */}
@@ -151,6 +186,15 @@ const EmployeeInformationForm = () => {
                                 <FormControl fullWidth>
                                     <Select
                                         displayEmpty
+                                        sx={{
+                                            height: 40,
+                                            '& .MuiSelect-select': {
+                                                height: 40,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                padding: '0 14px',
+                                            },
+                                        }}
                                         renderValue={(selected) => {
                                             if (!selected) {
                                                 return <Typography sx={{ color: "#999" }}>e.g. HR</Typography>
@@ -188,6 +232,15 @@ const EmployeeInformationForm = () => {
                                 <FormControl fullWidth>
                                     <Select
                                         displayEmpty
+                                        sx={{
+                                            height: 40,
+                                            '& .MuiSelect-select': {
+                                                height: 40,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                padding: '0 14px',
+                                            },
+                                        }}
                                         renderValue={(selected) => {
                                             if (!selected) {
                                                 return <Typography sx={{ color: "#999" }}>e.g. HR Manager</Typography>
@@ -224,13 +277,16 @@ const EmployeeInformationForm = () => {
                                 </Typography>
                                 <TextField
                                     fullWidth
-                                    placeholder="Select date"
+                                    type="date"
                                     InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <CalendarToday fontSize="small" sx={{ color: "#999" }} />
-                                            </InputAdornment>
-                                        ),
+                                        sx: {
+                                            height: 40,
+                                            '& input': {
+                                                height: 40,
+                                                padding: '0 14px',
+                                                boxSizing: 'border-box',
+                                            },
+                                        },
                                     }}
                                 />
                             </Grid>
@@ -240,7 +296,18 @@ const EmployeeInformationForm = () => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Email
                                 </Typography>
-                                <TextField fullWidth placeholder="e.g. dianne@gmail.com" />
+                                <TextField fullWidth placeholder="e.g. dianne@gmail.com"
+                                    InputProps={{
+                                        sx: {
+                                            height: 40,
+                                            '& input': {
+                                                height: 40,
+                                                padding: '0 14px',
+                                                boxSizing: 'border-box',
+                                            },
+                                        },
+                                    }}
+                                />
                             </Grid>
 
                             {/* Contact Number */}
@@ -249,8 +316,28 @@ const EmployeeInformationForm = () => {
                                     Contact Number
                                 </Typography>
                                 <Box sx={{ display: "flex" }}>
-                                    <TextField sx={{ width: 70, mr: 1 }} defaultValue="+92" />
-                                    <TextField fullWidth placeholder="892 000 000 000" />
+                                    <TextField sx={{ width: 70, mr: 1 }} defaultValue="+92"
+                                        InputProps={{
+                                            sx: {
+                                                height: 40,
+                                                '& input': {
+                                                    height: 40,
+                                                    padding: '0 14px',
+                                                    boxSizing: 'border-box',
+                                                },
+                                            },
+                                        }}
+                                    />
+                                    <TextField fullWidth placeholder="892 000 000 000" InputProps={{
+                                        sx: {
+                                            height: 40,
+                                            '& input': {
+                                                height: 40,
+                                                padding: '0 14px',
+                                                boxSizing: 'border-box',
+                                            },
+                                        },
+                                    }} />
                                 </Box>
                             </Grid>
 
@@ -262,6 +349,15 @@ const EmployeeInformationForm = () => {
                                 <FormControl fullWidth>
                                     <Select
                                         displayEmpty
+                                        sx={{
+                                            height: 40,
+                                            '& .MuiSelect-select': {
+                                                height: 40,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                padding: '0 14px',
+                                            },
+                                        }}
                                         renderValue={(selected) => {
                                             if (!selected) {
                                                 return <Typography sx={{ color: "#999" }}>e.g. Active/Inactive</Typography>
@@ -295,7 +391,16 @@ const EmployeeInformationForm = () => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Salary
                                 </Typography>
-                                <TextField fullWidth placeholder="e.g. 10000" />
+                                <TextField fullWidth placeholder="e.g. 10000" InputProps={{
+                                    sx: {
+                                        height: 40,
+                                        '& input': {
+                                            height: 40,
+                                            padding: '0 14px',
+                                            boxSizing: 'border-box',
+                                        },
+                                    },
+                                }} />
                             </Grid>
 
                             {/* Action Buttons */}
@@ -316,7 +421,7 @@ const EmployeeInformationForm = () => {
                                 </Box>
                             </Grid>
                         </Grid>
-                    </Paper>
+                    {/* </Paper> */}
                 </Box>
             </div>
         </>

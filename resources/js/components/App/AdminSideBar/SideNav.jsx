@@ -134,7 +134,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Employee Management',
-            icon: <CalendarMonthIcon />,
+            icon: <PeopleIcon />,
             children: [
                 {
                     text: 'Dashboard',

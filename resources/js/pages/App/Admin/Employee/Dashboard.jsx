@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Card, CardContent, Box, InputBase, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination } from "@mui/material";
+import { Button, Card, CardContent, Box, InputBase, Modal, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination } from "@mui/material";
 import EventSeatIcon from "@mui/icons-material/EventSeat";
 import PeopleIcon from "@mui/icons-material/People";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -8,12 +8,18 @@ import SideNav from '@/components/App/AdminSideBar/SideNav'
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import { router } from '@inertiajs/react';
+import EmployeeDetail from "./Detail";
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const EmployeeDashboard = () => {
     const [open, setOpen] = useState(false);
+    const [openDetails, setOpenDetails] = useState(false);
+
+    const handleOpenDetails = () => setOpenDetails(true);
+    const handleCloseDetails = () => setOpenDetails(false);
+
     const employeeData = [
         {
             employee_id: "EMP001",
@@ -51,6 +57,7 @@ const EmployeeDashboard = () => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
+                    backgroundColor: '#F6F6F6'
                 }}
             >
                 <Box sx={{
@@ -70,7 +77,7 @@ const EmployeeDashboard = () => {
                             <Button
                                 style={{ color: "white", width: '180px', backgroundColor: "#0D2B4E", textTransform: "none", }}
                                 startIcon={<AddIcon />}
-                                onClick={ () => router.visit('/admin/add/employee')}
+                                onClick={() => router.visit('/admin/add/employee')}
                             >
                                 Add Employee
                             </Button>
@@ -149,6 +156,7 @@ const EmployeeDashboard = () => {
                                     borderRadius: "4px",
                                     width: "350px",
                                     padding: "4px 8px",
+                                    backgroundColor: '#FFFFFF'
                                 }}
                             >
                                 <SearchIcon style={{ color: "#121212", marginRight: "8px" }} />
@@ -161,7 +169,7 @@ const EmployeeDashboard = () => {
                             </div>
                             {/* View All Link */}
                             <div style={{ textDecoration: "underline", cursor: "pointer", color: "#063455", fontWeight: 500, fontSize: '16px' }}
-                            onClick={ () => router.visit('/admin/employee/list')}
+                                onClick={() => router.visit('/admin/employee/list')}
                             >
                                 View all
                             </div>
@@ -191,7 +199,13 @@ const EmployeeDashboard = () => {
                                         ) : (
                                             employeeData.map((employee, index) => (
                                                 <TableRow key={index}>
-                                                    <TableCell style={{ cursor: "pointer", fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
+                                                    <TableCell onClick={handleOpenDetails}
+                                                        style={{
+                                                            cursor: "pointer",
+                                                            fontWeight: 500,
+                                                            fontSize: '16px',
+                                                            color: '#6C6C6C'
+                                                        }}>
                                                         {employee.employee_id}
                                                     </TableCell>
                                                     <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>{employee.name}</TableCell>
@@ -206,6 +220,30 @@ const EmployeeDashboard = () => {
                                     </TableBody>
                                 </Table>
                             </TableContainer>
+                            <Modal
+                                open={openDetails}
+                                onClose={handleCloseDetails}
+                                aria-labelledby="employee-detail-modal"
+                                aria-describedby="employee-detail-description"
+                            >
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 15,
+                                        right: 10,
+                                        height: 'calc(100% - 30px)',
+                                        width: 900,
+                                        bgcolor: 'background.paper',
+                                        borderRadius: '2px',
+                                        // p: 3,
+                                        overflowY: 'auto',
+                                        outline: 'none',
+                                        border: 'none',
+                                    }}
+                                >
+                                    <EmployeeDetail />
+                                </Box>
+                            </Modal>
 
                             {/* Pagination */}
                             {/* <Box sx={{ display: "flex", justifyContent: "end", mt: 3, paddingBottom: "10px" }}>
