@@ -22,6 +22,7 @@ class PermissionsDatabaseSeeder extends Seeder
             'order',
             'kitchen',
             'user',
+            'admin'
         ];
 
         // Create Permissions
