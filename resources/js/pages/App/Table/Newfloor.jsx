@@ -40,10 +40,12 @@ const NewFloor = ({ floorInfo }) => {
         tables:
             floorInfo && floorInfo.tables && floorInfo.tables.length > 0
                 ? floorInfo.tables.map((t) => ({
+                      id: t.id,
+                      original_table_no: t.table_no,
                       table_no: t.table_no || '',
                       capacity: t.capacity || '2',
                   }))
-                : [{ table_no: '', capacity: '2' }],
+                : [],
     });
 
     // Snackbar popup handle
@@ -72,12 +74,40 @@ const NewFloor = ({ floorInfo }) => {
     };
 
     const addNewTable = () => {
-        setData('tables', [...data.tables, { table_no: '', capacity: '2' }]);
+        setData('tables', [
+            ...data.tables,
+            {
+                id: `new`,
+                original_table_no: '',
+                table_no: '',
+                capacity: '2',
+            },
+        ]);
     };
 
     const handleCloseModal = () => {
         setModalOpen(false);
         // router.visit(route('table.management'));
+    };
+
+    const processTableData = () => {
+        let updateCounter = 1;
+        return data.tables.map((table) => {
+            const idStr = String(table.id || ''); // ensure it's a string
+
+            if (idStr.startsWith('new')) {
+                return table; // Newly added table; already tagged
+            }
+
+            if (table.table_no !== table.original_table_no) {
+                return {
+                    ...table,
+                    id: `update-${idStr}`,
+                };
+            }
+
+            return table;
+        });
     };
 
     const handleSaveFloorAndTable = () => {
@@ -98,8 +128,14 @@ const NewFloor = ({ floorInfo }) => {
         }
 
         if (floorInfo && floorInfo.id) {
+            const updatedData = {
+                ...data,
+                tables: processTableData(),
+            };
+            console.log(updatedData);
+
             // Update existing floor
-            router.put(route('floors.update', floorInfo.id), data, {
+            router.put(route('floors.update', floorInfo.id), updatedData, {
                 onSuccess: () => {
                     reset();
                     setModalOpen(false);
@@ -242,7 +278,7 @@ const NewFloor = ({ floorInfo }) => {
                                         gap: '30px',
                                     }}
                                 >
-                                    {data && data?.tables.map((table, index) => <DraggableTable index={index} data={table} />)}
+                                    {data && data?.tables.map((table, index) => <DraggableTable key={index} index={index} data={table} />)}
                                 </Box>
                             </Box>
                         )}
@@ -496,16 +532,6 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
                 <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor() }}>
                     {data.table_no}
                 </Typography>
-                {/* {reservation && (
-                    <>
-                        <Typography variant="caption" sx={{ color: getTextColor(), fontWeight: 'medium' }}>
-                            #{reservation.id}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.65rem' }}>
-                            {reservation.customer}
-                        </Typography>
-                    </>
-                )} */}
             </Box>
         </Box>
     );
