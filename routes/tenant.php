@@ -14,6 +14,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -57,9 +58,13 @@ Route::middleware([
             Route::post('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
 
             // for member and waiter
-            Route::get('/user/search', [OrderController::class, 'searchMember'])->name('user.search');
+            Route::get('/user/search', [UserController::class, 'searchMember'])->name('user.search');
+            Route::get('/waiters/all', [UserController::class, 'waiters'])->name('waiters.all');
+            Route::get('/floor/all', [FloorController::class, 'floorAll'])->name('floor.all');
+
             // Send to kitchen order
             Route::post('/order/send/kitchen', [OrderController::class, 'sendToKitchen'])->name('order.send-to-kitchen');
+
             // get products
             Route::get('/product/categories', [OrderController::class, 'getCategories'])->name('products.categories');
             Route::get('/products/{category_id}', [OrderController::class, 'getProducts'])->name('products.bycategory');
@@ -170,7 +175,6 @@ Route::middleware([
             Route::get('/transaction', [TransactionController::class, 'Index'])->name('transaction.invoice');
             Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('transaction.invoice');
             Route::post('/order-payment', [TransactionController::class, 'OrderPayment'])->name('order.payment');
-
         });
         // End of Tenant Routes
 

@@ -1,6 +1,7 @@
 'use client';
 import SearchIcon from '@mui/icons-material/Search';
 import {
+    Autocomplete,
     Avatar,
     Box,
     Button,
@@ -41,19 +42,20 @@ const OrderSaved = () => {
         waiter: '',
         start_time: '',
         start_date: '',
+        floor: '',
+        table: '',
     }); // State for form data
+    const [waiters, setWaiters] = useState([]);
+    const [errors, setErrors] = useState({});
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOption, setFilterOption] = useState('all');
-    const [orderDetails, setOrderDetails] = useState({
-        floor: '',
-        table: '',
-    });
+
     const [floorTables, setFloorTables] = useState([]); // Replace with your actual data
-    const [filteredTables, setFilteredTables] = useState([]); // Replace with your actual data
 
     const handleFloorChange = (value) => {
-        setOrderDetails((prev) => ({ ...prev, floor: value }));
+        setFormData((prev) => ({ ...prev, floor: value }));
+        handleOrderDetailChange('table', '');
         // Add logic to filter tables based on the selected floor
     };
 
@@ -65,7 +67,7 @@ const OrderSaved = () => {
     };
 
     const handleOrderDetailChange = (field, value) => {
-        setOrderDetails((prev) => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleCancelOrder = () => {
@@ -79,6 +81,13 @@ const OrderSaved = () => {
     };
 
     const handleContinueOrderClick = (order) => {
+        setFormData((prev) => ({
+            ...prev,
+            start_time: order.start_time,
+            start_date: order.start_date,
+            floor: order.floor,
+            table: order.table,
+        }));
         setSelectedOrder(order); // Set the selected order
         setIsPopupOpen(true); // Open the popup
     };
@@ -95,6 +104,21 @@ const OrderSaved = () => {
         }));
     };
 
+    const handleConfirmOrder = () => {
+        const newErrors = {};
+        if (!formData.waiter?.id) newErrors['member.id'] = 'Please select a waiter.';
+        if (!formData.start_date) newErrors.date = 'Please select a date.';
+        if (!formData.start_time) newErrors.time = 'Please select a time.';
+        if (!formData.floor) newErrors.floor = 'Please select a floor.';
+        if (!formData.table) newErrors.table = 'Please select a table.';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            enqueueSnackbar('Please fix the errors in the form.', { variant: 'error' });
+            return;
+        }
+    };
+
     useEffect(() => {
         axios
             .post(route('order.savedOrder'))
@@ -104,7 +128,22 @@ const OrderSaved = () => {
             .catch((error) => {
                 console.error('Error fetching saved orders:', error);
             });
+        axios.get(route('waiters.all')).then((res) => setWaiters(res.data.waiters));
+        axios.get(route('floor.all')).then((res) => {
+            setFloorTables(res.data.floors);
+            setFormData((prev) => ({ ...prev, floor: res.data.floors[0]?.id }));
+        });
     }, []);
+
+    const currentFloor = floorTables.find((f) => f.id === formData.floor);
+
+    const filteredTables = currentFloor?.tables?.length
+        ? currentFloor.tables.filter((table) => {
+              if (filterOption === 'available' && !table.available) return false;
+              const keyword = searchTerm.toLowerCase();
+              return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
+          })
+        : [];
 
     return (
         <Box
@@ -294,45 +333,56 @@ const OrderSaved = () => {
                     <Typography sx={{ mb: 2 }}>Are you sure you want to continue with order #{selectedOrder?.order_number}?</Typography>
 
                     {/* Select Waiter */}
-                    <TextField
+                    <Autocomplete
                         label="Select Waiter"
-                        name="waiter"
+                        fullWidth
+                        freeSolo
+                        options={waiters}
                         value={formData.waiter}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        InputLabelProps={{
-                            shrink: true, // Ensures the label stays visible when the input is inactive
-                        }}
+                        getOptionLabel={(option) => option?.name || ''}
+                        // onInputChange={(event, value) => handleSearch(event, 'waiter')}
+                        onChange={(event, value) => handleOrderDetailChange('waiter', value)}
+                        renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} label="Select Waiter" variant="outlined" />}
+                        filterOptions={(options, state) =>
+                            options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))
+                        }
+                        renderOption={(props, option) => (
+                            <li {...props}>
+                                <span>{option.name}</span>
+                                <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
+                            </li>
+                        )}
                     />
 
-                    {/* Select Time */}
-                    <TextField
-                        label="Select Time"
-                        name="start_time"
-                        type="time"
-                        value={formData.start_time}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        InputLabelProps={{
-                            shrink: true, // Ensures the label stays visible when the input is inactive
-                        }}
-                    />
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        {/* Select Time */}
+                        <TextField
+                            label="Select Time"
+                            name="start_time"
+                            type="time"
+                            value={formData.start_time}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            InputLabelProps={{
+                                shrink: true, // Ensures the label stays visible when the input is inactive
+                            }}
+                        />
 
-                    {/* Select Date */}
-                    <TextField
-                        label="Select Date"
-                        name="start_date"
-                        type="date"
-                        value={formData.start_date}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="normal"
-                        InputLabelProps={{
-                            shrink: true, // Ensures the label stays visible when the input is inactive
-                        }}
-                    />
+                        {/* Select Date */}
+                        <TextField
+                            label="Select Date"
+                            name="start_date"
+                            type="date"
+                            value={formData.start_date}
+                            onChange={handleInputChange}
+                            fullWidth
+                            margin="normal"
+                            InputLabelProps={{
+                                shrink: true, // Ensures the label stays visible when the input is inactive
+                            }}
+                        />
+                    </Box>
 
                     {/* Search and Filter */}
                     <Box sx={{ mb: 2, mt: 2, display: 'flex' }}>
@@ -365,7 +415,7 @@ const OrderSaved = () => {
                             <Select
                                 labelId="select-floor"
                                 id="floor"
-                                value={orderDetails.floor}
+                                value={formData.floor}
                                 label="Floor"
                                 onChange={(e) => handleFloorChange(e.target.value)}
                             >
@@ -424,49 +474,60 @@ const OrderSaved = () => {
 
                     {/* Table Selection */}
                     <Box sx={{ mb: 2 }}>
-                        <RadioGroup value={orderDetails.table} onChange={(e) => handleOrderDetailChange('table', e.target.value)}>
+                        <RadioGroup value={formData.table} onChange={(e) => handleOrderDetailChange('table', e.target.value)}>
                             <Grid container spacing={1}>
-                                {[
-                                    { id: 1, table_no: 'T1', capacity: 4, available: true },
-                                    { id: 2, table_no: 'T2', capacity: 2, available: true },
-                                    { id: 3, table_no: 'T3', capacity: 6, available: true },
-                                ].map((table) => (
-                                    <Grid item xs={6} key={table.id}>
-                                        <Paper
-                                            elevation={0}
-                                            sx={{
-                                                p: 1.5,
-                                                bgcolor: table.id === orderDetails.table ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
-                                                border: table.id === orderDetails.table ? '1px solid #A27B5C' : '1px solid #e0e0e0',
-                                                borderRadius: 1,
-                                                opacity: table.available ? 1 : 0.7,
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                                                    {table.table_no}
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                        {table.capacity} person
+                                {filteredTables.length > 0 &&
+                                    filteredTables.map((table) => (
+                                        <Grid item xs={6} key={table.id}>
+                                            <Paper
+                                                elevation={0}
+                                                sx={{
+                                                    p: 1.5,
+                                                    bgcolor: table.id === formData.table ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
+                                                    border: table.id === formData.table ? '1px solid #A27B5C' : '1px solid #e0e0e0',
+                                                    borderRadius: 1,
+                                                    opacity: table.available ? 1 : 0.7,
+                                                }}
+                                            >
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                                                        {table.table_no}
                                                     </Typography>
-                                                    {table.available ? (
-                                                        <FormControlLabel
-                                                            value={table.id}
-                                                            control={<Radio size="small" />}
-                                                            label=""
-                                                            sx={{ m: 0, color: '#063455' }}
-                                                        />
-                                                    ) : (
-                                                        <Typography variant="caption" sx={{ color: '#063455' }}>
-                                                            {table.table_no.split('-')[0]} - Full
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                        }}
+                                                    >
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                                            {table.capacity} person
                                                         </Typography>
-                                                    )}
+                                                        {table.available ? (
+                                                            <FormControlLabel
+                                                                value={table.id}
+                                                                control={<Radio size="small" />}
+                                                                label=""
+                                                                sx={{
+                                                                    m: 0,
+                                                                    color: '#063455',
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <Typography variant="caption" sx={{ color: '#063455' }}>
+                                                                {table.table_no.split('-')[0]} - Full
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
                                                 </Box>
-                                            </Box>
-                                        </Paper>
-                                    </Grid>
-                                ))}
+                                            </Paper>
+                                        </Grid>
+                                    ))}
                             </Grid>
                         </RadioGroup>
                     </Box>
@@ -476,14 +537,7 @@ const OrderSaved = () => {
                     <Button onClick={handleClosePopup} color="primary">
                         Cancel
                     </Button>
-                    <Button
-                        onClick={() => {
-                            // Add logic to handle form submission
-                            console.log('Form Data:', formData);
-                            handleClosePopup();
-                        }}
-                        color="primary"
-                    >
+                    <Button onClick={handleConfirmOrder} color="primary">
                         Confirm
                     </Button>
                 </DialogActions>

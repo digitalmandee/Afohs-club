@@ -84,7 +84,7 @@ const ReservationDialog = () => {
         const newErrors = {};
         if (!orderDetails.member?.id) newErrors['member.id'] = 'Please select a member.';
         if (!orderDetails.date) newErrors.date = 'Please select a date.';
-        if (!selectedTime && !orderDetails.custom_time) newErrors.time = 'Please select a time.';
+        if (!selectedTime && !orderDetails.time) newErrors.time = 'Please select a time.';
         if (!orderDetails.person_count || orderDetails.person_count < 1) newErrors.person_count = 'Please enter a valid number of persons.';
         if (orderDetails.down_payment !== undefined && orderDetails.down_payment < 0) newErrors.down_payment = 'Please enter a valid down payment.';
 
@@ -408,34 +408,34 @@ const ReservationDialog = () => {
                             Select Time of Attendance
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            {['10:00 am', '13:00 pm', '14:00 pm', '18:00 pm', 'Custom'].map((time) => (
-                                <Box
-                                    key={time}
-                                    onClick={() => {
-                                        setSelectedTime(time.toLowerCase());
-                                        setCustomTime(time === 'Custom');
-                                        if (time !== 'Custom') {
-                                            handleOrderDetailChange('custom_time', '');
-                                        }
-                                    }}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        border: '1px solid #e0e0e0',
-                                        borderRadius: 1,
-                                        p: 1,
-                                        flex: 1,
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    <Radio
-                                        checked={selectedTime === time.toLowerCase() || (customTime && time === 'Custom')}
-                                        size="small"
-                                        sx={{ p: 0.5, mr: 0.5 }}
-                                    />
-                                    <Typography variant="body2">{time}</Typography>
-                                </Box>
-                            ))}
+                            {['10:00', '13:00', '14:00', '18:00', 'Custom'].map((time) => {
+                                const isCustom = time === 'Custom';
+                                const isSelected = isCustom ? customTime : orderDetails.time === time;
+
+                                return (
+                                    <Box
+                                        key={time}
+                                        onClick={() => {
+                                            const selected = isCustom ? '' : time;
+                                            setSelectedTime(time);
+                                            setCustomTime(isCustom);
+                                            handleOrderDetailChange('time', selected); // Always update orderDetails.time
+                                        }}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            border: '1px solid #e0e0e0',
+                                            borderRadius: 1,
+                                            p: 1,
+                                            flex: 1,
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        <Radio checked={isSelected} size="small" sx={{ p: 0.5, mr: 0.5 }} />
+                                        <Typography variant="body2">{isCustom ? 'Custom' : dayjs(time, 'HH:mm').format('hh:mm A')}</Typography>
+                                    </Box>
+                                );
+                            })}
                         </Box>
                         {errors.time && (
                             <Typography variant="caption" color="error" sx={{ mt: 1 }}>
@@ -453,8 +453,8 @@ const ReservationDialog = () => {
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <TimePicker
                                     label="Select Custom Time"
-                                    value={orderDetails.custom_time ? dayjs(orderDetails.custom_time, 'HH:mm') : null}
-                                    onChange={(newValue) => handleOrderDetailChange('custom_time', newValue ? newValue.format('HH:mm') : '')}
+                                    value={orderDetails.time ? dayjs(orderDetails.time, 'HH:mm') : null}
+                                    onChange={(newValue) => handleOrderDetailChange('time', newValue ? newValue.format('HH:mm') : '')}
                                     disabled={!customTime}
                                     renderInput={(params) => (
                                         <TextField

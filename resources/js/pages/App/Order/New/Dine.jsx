@@ -27,7 +27,7 @@ import {
     Typography,
 } from '@mui/material';
 import axios from 'axios';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const DineDialog = ({ memberTypes, floorTables }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
@@ -96,6 +96,10 @@ const DineDialog = ({ memberTypes, floorTables }) => {
         handleOrderDetailChange('floor', value);
         handleOrderDetailChange('table', '');
     };
+
+    useEffect(() => {
+        axios.get(route('waiters.all')).then((res) => setWaiters(res.data.waiters));
+    }, ['']);
 
     const currentFloor = floorTables.find((f) => f.id === orderDetails.floor);
 
@@ -267,10 +271,13 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                     options={waiters}
                     value={orderDetails.waiter}
                     getOptionLabel={(option) => option?.name || ''}
-                    onInputChange={(event, value) => handleSearch(event, 'waiter')}
+                    // onInputChange={(event, value) => handleSearch(event, 'waiter')}
                     onChange={(event, value) => handleAutocompleteChange(event, value, 'waiter')}
                     loading={searchLoading}
                     renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Waiter" variant="outlined" />}
+                    filterOptions={(options, state) =>
+                        options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))
+                    }
                     renderOption={(props, option) => (
                         <li {...props}>
                             <span>{option.name}</span>

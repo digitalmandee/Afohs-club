@@ -60,28 +60,6 @@ class OrderController extends Controller
         return $orderNo;
     }
 
-    // Search for members
-    public function searchMember(Request $request)
-    {
-        $query = $request->input('query');
-        $memberType = $request->input('member_type');
-        $roleType = $request->input('role', 'user');
-
-        $members = User::where('name', 'like', "%{$query}%")
-            ->whereHas('roles', function ($q) use ($roleType) {
-                $q->where('name', $roleType);
-            });
-
-        // Only apply member_type filter if role is 'user' and member_type is provided
-        if ($roleType === 'user' && !empty($memberType)) {
-            $members->where('member_type_id', $memberType);
-        }
-
-        $results = $members->select('id', 'name', 'email')->get();
-
-        return response()->json(['success' => true, 'results' => $results], 200);
-    }
-
     private function getInvoiceNo()
     {
         $invoicNo = Invoices::max('invoice_no');
@@ -98,14 +76,15 @@ class OrderController extends Controller
             'order_type' => $request->order_type,
             'person_count' => $request->person_count,
             'start_date' => Carbon::parse($request->date)->toDateString(),
-            'start_time' => Carbon::createFromFormat('g:i A', $request->time)->format('H:i:s'),
+            'start_time' => $request->time,
             'down_payment' => $request->down_payment,
             'status' => 'saved',
         ]);
 
 
-        return response()->json(['message' => 'Order sent to kitchen.', 'order' => $order], 200);
+        return response()->json(['message' => 'Order placed successfully.', 'order' => $order], 200);
     }
+
     public function sendToKitchen(Request $request)
     {
         $request->validate([
