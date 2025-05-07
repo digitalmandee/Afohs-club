@@ -6,6 +6,7 @@ use App\Models\Floor;
 use App\Models\Table;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class FloorController extends Controller
@@ -108,14 +109,6 @@ class FloorController extends Controller
             'tables.*.capacity' => 'required|string|max:255',
         ]);
 
-        dd($request->all());
-
-        // Check for duplicate table_no
-        $tableNumbers = array_map(fn($table) => $table['table_no'], $request->tables);
-        if (count($tableNumbers) !== count(array_unique($tableNumbers))) {
-            return back()->withErrors(['tables' => 'Duplicate table numbers are not allowed.']);
-        }
-
         $floor = Floor::findOrFail($id);
 
         // Update floor details
@@ -124,15 +117,37 @@ class FloorController extends Controller
             'area' => $request->floor['area'],
         ]);
 
-        // Delete existing tables
-        $floor->tables()->delete();
+        $existingTableIds = $floor->tables()->pluck('id')->toArray();
+        $requestTableIds = [];
 
-        // Create new tables
         foreach ($request->tables as $tableData) {
-            $floor->tables()->create([
-                'table_no' => $tableData['table_no'],
-                'capacity' => $tableData['capacity'],
-            ]);
+            $tableId = $tableData['id'] ?? null;
+
+            if ($tableId && str_starts_with($tableId, 'new')) {
+                // New table
+                $floor->tables()->create([
+                    'table_no' => $tableData['table_no'],
+                    'capacity' => $tableData['capacity'],
+                ]);
+            } elseif ($tableId && str_starts_with($tableId, 'update-')) {
+                // Updated existing table
+                $realId = (int) str_replace('update-', '', $tableId);
+                $requestTableIds[] = (int) $realId;
+
+                $floor->tables()->where('id', $realId)->update([
+                    'table_no' => $tableData['table_no'],
+                    'capacity' => $tableData['capacity'],
+                ]);
+            } elseif (is_numeric($tableId)) {
+                // Unchanged table
+                $requestTableIds[] = (int) $tableId;
+            }
+        }
+
+        // Optionally delete removed tables (i.e., present in DB but missing in request)
+        $toDelete = array_diff($existingTableIds, $requestTableIds);
+        if (!empty($toDelete)) {
+            $floor->tables()->whereIn('id', $toDelete)->delete();
         }
 
         return redirect()->route('table.management')->with('success', 'Floor and tables updated successfully!');
