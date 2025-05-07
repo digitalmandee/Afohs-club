@@ -104,7 +104,7 @@ class OrderController extends Controller
             'table_id' => $request->table,
             'order_type' => $request->order_type,
             'person_count' => $request->person_count,
-            'start_date' => $request->date,
+            'start_date' => Carbon::parse($request->date)->toDateString(),
             'start_time' => $request->time,
             'down_payment' => $request->down_payment,
             'amount' => $request->price,
