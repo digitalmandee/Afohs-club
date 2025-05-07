@@ -17,8 +17,8 @@ import { useCallback, useState } from 'react';
 const ReservationDialog = () => {
     const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
 
+    const [selectedTime, setSelectedTime] = useState('13:00');
     const [paymentType, setPaymentType] = useState('percentage');
-    const [selectedTime, setSelectedTime] = useState('10:00 am');
     const [customTime, setCustomTime] = useState(false);
     const [members, setMembers] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
@@ -115,7 +115,7 @@ const ReservationDialog = () => {
             handleOrderDetailChange('down_payment', '');
             handleOrderDetailChange('price', '');
             // Reset local state
-            setSelectedTime('10:00 am');
+            setSelectedTime('13:00');
             setCustomTime(false);
             setMembers([]);
             setErrors({});
@@ -130,6 +130,30 @@ const ReservationDialog = () => {
             }
         }
     };
+
+    function isValidTime(time) {
+        const date = new Date(`1970-01-01T${time}:00Z`);
+        return !isNaN(date.getTime());
+    }
+
+    function formatTime(time) {
+        const date = new Date(`1970-01-01T${time}:00Z`);
+        const options = { hour: '2-digit', minute: '2-digit', hour12: true };
+        return date.toLocaleString('en-US', options);
+    }
+
+    function parseTime(time) {
+        const [hours, minutes] = time.split(':').map((num) => parseInt(num, 10));
+
+        if (isNaN(hours) || isNaN(minutes)) {
+            return null; // Return null if the time is invalid
+        }
+
+        // Create a new Date object and set the hours and minutes
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        return date;
+    }
 
     return (
         <>
@@ -419,6 +443,8 @@ const ReservationDialog = () => {
                                             const selected = isCustom ? '' : time;
                                             setSelectedTime(time);
                                             setCustomTime(isCustom);
+                                            console.log(selected);
+
                                             handleOrderDetailChange('time', selected); // Always update orderDetails.time
                                         }}
                                         sx={{
@@ -432,7 +458,7 @@ const ReservationDialog = () => {
                                         }}
                                     >
                                         <Radio checked={isSelected} size="small" sx={{ p: 0.5, mr: 0.5 }} />
-                                        <Typography variant="body2">{isCustom ? 'Custom' : dayjs(time, 'HH:mm').format('hh:mm A')}</Typography>
+                                        <Typography variant="body2">{isCustom ? 'Custom' : isValidTime(time) ? formatTime(time) : time}</Typography>
                                     </Box>
                                 );
                             })}

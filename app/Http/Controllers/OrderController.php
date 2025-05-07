@@ -96,20 +96,25 @@ class OrderController extends Controller
 
         DB::beginTransaction();
 
-
-        $order = Order::create([
-            'order_number' => $this->getOrderNo(),
-            'user_id' => $request->member['id'],
-            'waiter_id' => $request->waiter['id'],
-            'table_id' => $request->table,
-            'order_type' => $request->order_type,
-            'person_count' => $request->person_count,
-            'start_date' => Carbon::parse($request->date)->toDateString(),
-            'start_time' => $request->time,
-            'down_payment' => $request->down_payment,
-            'amount' => $request->price,
-            'status' => 'pending'
-        ]);
+        // dd($request->all());
+        $order = Order::updateOrCreate(
+            [
+                'id' => $request->id,
+            ],
+            [
+                'order_number' => $request->id ? $request->order_no : $this->getOrderNo(),
+                'user_id' => $request->member['id'],
+                'waiter_id' => $request->waiter['id'] ?? null,
+                'table_id' => $request->table,
+                'order_type' => $request->order_type,
+                'person_count' => $request->person_count,
+                'start_date' => Carbon::parse($request->date)->toDateString(),
+                'start_time' => $request->time,
+                'down_payment' => $request->down_payment,
+                'amount' => $request->price,
+                'status' => 'pending',
+            ]
+        );
 
         collect($request->order_items)->each(function ($item) use ($order) {
             OrderItem::create([

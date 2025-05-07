@@ -29,21 +29,32 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
+import { useOrderStore } from '@/stores/useOrderStore';
+import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import CancelOrder from '../Dashboard/DelModal';
 
-const OrderSaved = () => {
+const OrderSaved = ({ setActiveView }) => {
+    const { setOrderDetails } = useOrderStore();
+
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isNotificationVisible, setIsNotificationVisible] = useState(false);
     const [savedOrders, setSavedOrders] = useState([]);
     const [isPopupOpen, setIsPopupOpen] = useState(false); // State for popup
     const [selectedOrder, setSelectedOrder] = useState(null); // State for selected order
     const [formData, setFormData] = useState({
+        id: '',
+        order_no: '',
+        order_type: '',
+        member: null,
+        person_count: 1,
         waiter: '',
-        start_time: '',
-        start_date: '',
+        date: '',
+        time: '',
         floor: '',
         table: '',
+        order_items: [],
+        order_status: 'pending',
     }); // State for form data
     const [waiters, setWaiters] = useState([]);
     const [errors, setErrors] = useState({});
@@ -83,8 +94,15 @@ const OrderSaved = () => {
     const handleContinueOrderClick = (order) => {
         setFormData((prev) => ({
             ...prev,
-            start_time: order.start_time,
-            start_date: order.start_date,
+            id: order.id,
+            order_no: order.order_number,
+            order_type: order.order_type,
+            member: order.user,
+            person_count: order.person_count,
+            order_items: [],
+            order_status: 'pending',
+            date: order.start_date,
+            time: order.start_time ? order.start_time.slice(0, 5) : '',
             floor: order.floor,
             table: order.table,
         }));
@@ -107,8 +125,8 @@ const OrderSaved = () => {
     const handleConfirmOrder = () => {
         const newErrors = {};
         if (!formData.waiter?.id) newErrors['member.id'] = 'Please select a waiter.';
-        if (!formData.start_date) newErrors.date = 'Please select a date.';
-        if (!formData.start_time) newErrors.time = 'Please select a time.';
+        if (!formData.date) newErrors.date = 'Please select a date.';
+        if (!formData.time) newErrors.time = 'Please select a time.';
         if (!formData.floor) newErrors.floor = 'Please select a floor.';
         if (!formData.table) newErrors.table = 'Please select a table.';
 
@@ -117,6 +135,10 @@ const OrderSaved = () => {
             enqueueSnackbar('Please fix the errors in the form.', { variant: 'error' });
             return;
         }
+
+        setOrderDetails(formData);
+        setIsPopupOpen(false);
+        setActiveView('orderDetail');
     };
 
     useEffect(() => {
@@ -358,9 +380,9 @@ const OrderSaved = () => {
                         {/* Select Time */}
                         <TextField
                             label="Select Time"
-                            name="start_time"
+                            name="time"
                             type="time"
-                            value={formData.start_time}
+                            value={formData.time}
                             onChange={handleInputChange}
                             fullWidth
                             margin="normal"
@@ -372,9 +394,9 @@ const OrderSaved = () => {
                         {/* Select Date */}
                         <TextField
                             label="Select Date"
-                            name="start_date"
+                            name="date"
                             type="date"
-                            value={formData.start_date}
+                            value={formData.date}
                             onChange={handleInputChange}
                             fullWidth
                             margin="normal"
