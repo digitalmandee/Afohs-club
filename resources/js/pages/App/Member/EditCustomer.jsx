@@ -1,4 +1,3 @@
-// App/Member/EditCustomer.jsx
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import {
@@ -45,12 +44,18 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
     const [showError, setShowError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [errors, setErrors] = useState({});
+    const [showData, setShowData] = useState(false);
+    const [currentAddressIndex, setCurrentAddressIndex] = useState(null);
 
-    // Handle phone number (assume no country code in phone_number)
+    // Extract phone number and country code
     const phoneNumber = customer?.phone_number || '';
-    const defaultCountryCode = '+702';
-    const phoneCountryCodeFromData = phoneNumber.match(/^\+\d+/)?.[0] || defaultCountryCode;
-    const phoneNumberWithoutCode = phoneNumber.replace(/^\+\d+/, '') || phoneNumber;
+    const phoneCountryCodeFromData = phoneNumber.match(/^\+\d+/)?.[0] || '+702';
+    const phoneNumberWithoutCode = phoneNumber.replace(/^\+\d+/, '').trim() || '';
+
+    const [phoneCountryCode, setPhoneCountryCode] = useState(phoneCountryCodeFromData);
+
+    // Extract member type name
+    const memberTypeName = customer?.member_type?.name || 'Silver';
 
     const [newCustomer, setNewCustomer] = useState({
         id: customer?.id || '',
@@ -58,42 +63,41 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
         email: customer?.email || '',
         phone_number: phoneNumberWithoutCode,
         type: customer?.type || 'Regular',
-        customer_type: customer?.memberType?.name || 'Silver',
+        customer_type: memberTypeName,
         profile_photo: customer?.profile_photo || null,
         addresses:
             customer?.userDetails?.map((detail) => ({
-                type: detail.address_type,
+                address_type: detail.address_type,
                 address: detail.address,
                 city: detail.city,
-                province: detail.state,
+                state: detail.state,
                 country: detail.country,
-                zipCode: detail.zip,
-                isMain: detail.status === 'active',
+                zip: detail.zip,
+                status: detail.status === 'active',
             })) || [],
     });
 
     const [newAddress, setNewAddress] = useState({
-        type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
+        address_type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
         address: '',
         city: '',
-        province: '',
+        state: '',
         country: '',
-        zipCode: '',
-        isMain: false,
+        zip: '',
+        status: false,
     });
 
     const [profileImage, setProfileImage] = useState(customer?.profile_photo ? `http://localhost:8000${customer.profile_photo}` : null);
-    const [phoneCountryCode, setPhoneCountryCode] = useState(phoneCountryCodeFromData);
 
     const handleCloseAddForm = () => {
-        router.get(route('members.index')); // Navigate back to customer list
+        router.get(route('members.index'));
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewCustomer((prev) => ({
             ...prev,
-            [name]: value, // Dynamically update the state based on the name attribute
+            [name]: value,
         }));
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: null }));
@@ -152,7 +156,7 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
 
         if (newCustomer.addresses.length > 0) {
             for (const addr of newCustomer.addresses) {
-                if (!addr.type || !addr.address || !addr.city || !addr.province || !addr.country || !addr.zipCode) {
+                if (!addr.address_type || !addr.address || !addr.city || !addr.state || !addr.country || !addr.zip) {
                     setErrorMessage('All address fields are required.');
                     setShowError(true);
                     return;
@@ -163,7 +167,9 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
         const formData = new FormData();
         formData.append('name', newCustomer.name);
         formData.append('email', newCustomer.email);
-        formData.append('phone', `${phoneCountryCode}${newCustomer.phone_number}`);
+        // Ensure phone number is concatenated correctly
+        const fullPhoneNumber = `${phoneCountryCode}${newCustomer.phone_number}`;
+        formData.append('phone', fullPhoneNumber);
         formData.append('customer_type', newCustomer.customer_type);
         formData.append('member_type_id', memberTypes.find((mt) => mt.name === newCustomer.customer_type)?.id || '');
         if (profileImage && profileImage.startsWith('data:image')) {
@@ -173,13 +179,13 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
             formData.append('profile_pic', '');
         }
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
-        formData.append('_method', 'PUT'); // Spoof PUT request for Laravel
+        formData.append('_method', 'PUT');
 
         router.post(route('members.update', newCustomer.id), formData, {
             onSuccess: () => {
                 setSuccessMessage('Customer updated successfully!');
                 setShowSuccess(true);
-                setTimeout(() => router.get(route('members.index')), 2000); // Redirect after success
+                setTimeout(() => router.get(route('members.index')), 2000);
             },
             onError: (errors) => {
                 console.error('Validation errors:', errors);
@@ -193,37 +199,54 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
 
     const handleShowAddressForm = () => {
         setNewAddress({
-            type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
+            address_type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
             address: '',
             city: '',
-            province: '',
+            state: '',
             country: '',
-            zipCode: '',
-            isMain: false,
+            zip: '',
+            status: false,
         });
+        setCurrentAddressIndex(null);
         setShowAddressForm(true);
     };
 
     const handleSaveAddress = () => {
+        // Validate address fields
+        if (!newAddress.address_type || !newAddress.address || !newAddress.city || !newAddress.state || !newAddress.country || !newAddress.zip) {
+            setErrorMessage('All address fields are required.');
+            setShowError(true);
+            return;
+        }
+
         const updatedCustomer = { ...newCustomer };
-        if (updatedCustomer.addresses.length === 0 || newAddress.isMain) {
+        if (newAddress.status) {
             updatedCustomer.addresses = updatedCustomer.addresses.map((addr) => ({
                 ...addr,
-                isMain: false,
+                status: false,
             }));
         }
-        updatedCustomer.addresses.push(newAddress);
+
+        if (currentAddressIndex !== null) {
+            // Update existing address
+            updatedCustomer.addresses[currentAddressIndex] = newAddress;
+        } else {
+            // Add new address
+            updatedCustomer.addresses.push(newAddress);
+        }
+
         setNewCustomer(updatedCustomer);
         setShowAddressForm(false);
-        setSuccessMessage('Address added successfully!');
+        setSuccessMessage(currentAddressIndex !== null ? 'Address updated successfully!' : 'Address added successfully!');
         setShowSuccess(true);
+        setCurrentAddressIndex(null);
     };
 
     const handleSetMainAddress = (index) => {
         const updatedCustomer = { ...newCustomer };
         updatedCustomer.addresses = updatedCustomer.addresses.map((addr, i) => ({
             ...addr,
-            isMain: i === index,
+            status: i === index,
         }));
         setNewCustomer(updatedCustomer);
     };
@@ -252,6 +275,9 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                             <Box sx={{ p: 2, backgroundColor: '#F6F6F6', border: '1px solid #e0e0e0', borderRadius: '4px', mb: 2 }}>
                                 <Typography variant="body1">
                                     Member Id: <strong>{customer?.user_id || 'N/A'}</strong>
+                                </Typography>
+                                <Typography variant="body1">
+                                    Member Type: <strong>{memberTypeName}</strong>
                                 </Typography>
                             </Box>
                             <Box style={{ display: 'flex', gap: '10px' }}>
@@ -343,11 +369,14 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                         }}
                                         control={
                                             <Radio
-                                                checked={newCustomer.member_type === memberType.name} // Ensure this comparison is correct
-                                                onChange={(e) => {
-                                                    handleInputChange(e);
+                                                checked={newCustomer.customer_type === memberType.name}
+                                                onChange={() => {
+                                                    setNewCustomer((prev) => ({
+                                                        ...prev,
+                                                        customer_type: memberType.name,
+                                                    }));
                                                 }}
-                                                name="member_type"
+                                                name="customer_type"
                                                 value={memberType.name}
                                             />
                                         }
@@ -407,6 +436,8 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Phone Number
                                     </Typography>
+                                    {newCustomer.phone_number}
+                                    {customer?.phone_number}
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         <FormControl variant="outlined" margin="normal" sx={{ minWidth: '90px' }}>
                                             <Select value={phoneCountryCode} onChange={handlePhoneCountryCodeChange}>
@@ -418,7 +449,7 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                         </FormControl>
                                         <TextField
                                             fullWidth
-                                            placeholder="e.g. 123 456 7890"
+                                            placeholder="e.g. 1234567890"
                                             name="phone_number"
                                             value={newCustomer.phone_number}
                                             onChange={handleInputChange}
@@ -430,7 +461,7 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                     </Box>
                                 </Grid>
                             </Grid>
-                            {newCustomer.addresses && newCustomer.addresses.length > 0 && (
+                            {newCustomer.addresses.length > 0 && (
                                 <Box sx={{ mt: 3 }}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Address ({newCustomer.addresses.length})
@@ -439,35 +470,46 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                         {newCustomer.addresses.map((address, index) => (
                                             <ListItem key={index}>
                                                 <ListItemIcon>
-                                                    {address.type === 'House' ? (
+                                                    {address.address_type === 'House' ? (
                                                         <HomeIcon />
-                                                    ) : address.type === 'Apartment' ? (
+                                                    ) : address.address_type === 'Apartment' ? (
                                                         <ApartmentIcon />
                                                     ) : (
                                                         <BusinessIcon />
                                                     )}
                                                 </ListItemIcon>
                                                 <ListItemText
-                                                    primary={address.type}
+                                                    primary={address.address_type}
                                                     secondary={
                                                         <>
                                                             <Typography component="span" variant="body2" color="text.primary">
                                                                 {address.address}
                                                             </Typography>
                                                             <br />
-                                                            {`${address.country}, ${address.province}, ${address.city}, ${address.zipCode}`}
+                                                            {`${address.country}, ${address.state}, ${address.city}, ${address.zip}`}
                                                         </>
                                                     }
                                                 />
                                                 <Switch
                                                     edge="end"
-                                                    checked={address.isMain}
+                                                    checked={address.status}
                                                     onChange={() => handleSetMainAddress(index)}
                                                     inputProps={{ 'aria-labelledby': `address-switch-${index}` }}
                                                 />
                                                 <Typography variant="body2" color="primary" sx={{ ml: 1 }}>
-                                                    {address.isMain ? 'Main Address' : ''}
+                                                    {address.status ? 'Main Address' : ''}
                                                 </Typography>
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    onClick={() => {
+                                                        setNewAddress(address);
+                                                        setCurrentAddressIndex(index);
+                                                        setShowAddressForm(true);
+                                                    }}
+                                                >
+                                                    Edit
+                                                </Button>
                                             </ListItem>
                                         ))}
                                     </List>
@@ -519,12 +561,12 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                             addressTypes.map((type) => (
                                                 <Button
                                                     key={type.id}
-                                                    variant={newAddress.type === type.name ? 'contained' : 'outlined'}
-                                                    onClick={() => setNewAddress({ ...newAddress, type: type.name })}
+                                                    variant={newAddress.address_type === type.name ? 'contained' : 'outlined'}
+                                                    onClick={() => setNewAddress({ ...newAddress, address_type: type.name })}
                                                     sx={{
                                                         borderRadius: '20px',
-                                                        backgroundColor: newAddress.type === type.name ? '#1976d2' : 'transparent',
-                                                        color: newAddress.type === type.name ? 'white' : 'inherit',
+                                                        backgroundColor: newAddress.address_type === type.name ? '#1976d2' : 'transparent',
+                                                        color: newAddress.address_type === type.name ? 'white' : 'inherit',
                                                     }}
                                                 >
                                                     {type.name}
@@ -567,8 +609,8 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                             <FormControl fullWidth margin="normal" variant="outlined">
                                                 <Select
                                                     displayEmpty
-                                                    value={newAddress.province}
-                                                    name="province"
+                                                    value={newAddress.state}
+                                                    name="state"
                                                     onChange={handleAddressInputChange}
                                                     renderValue={(selected) => {
                                                         if (!selected) {
@@ -625,8 +667,8 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                             <TextField
                                                 fullWidth
                                                 placeholder="e.g. 10101"
-                                                name="zipCode"
-                                                value={newAddress.zipCode}
+                                                name="zip"
+                                                value={newAddress.zip}
                                                 onChange={handleAddressInputChange}
                                                 margin="normal"
                                                 variant="outlined"
@@ -639,9 +681,9 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                             <FormControlLabel
                                                 control={
                                                     <Switch
-                                                        checked={newAddress.isMain}
-                                                        onChange={(e) => setNewAddress({ ...newAddress, isMain: e.target.checked })}
-                                                        name="isMain"
+                                                        checked={newAddress.status}
+                                                        onChange={(e) => setNewAddress({ ...newAddress, status: e.target.checked })}
+                                                        name="status"
                                                     />
                                                 }
                                                 label="Set as main address"
@@ -674,6 +716,24 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                             )}
                         </Grid>
                     </Grid>
+                    <div
+                        style={{
+                            position: 'fixed',
+                            bottom: '0',
+                            left: '0',
+                            backgroundColor: 'white',
+                            zIndex: '9999',
+                            maxWidth: '300px',
+                            overflow: 'auto',
+                            border: '1px solid #ccc',
+                        }}
+                    >
+                        {showData && <pre style={{ whiteSpace: 'pre-wrap', height: '540px' }}>{JSON.stringify(customer, null, 2)}</pre>}
+                        <div
+                            style={{ width: '40px', height: '40px', backgroundColor: 'red', borderRadius: '50%', cursor: 'pointer' }}
+                            onClick={() => setShowData(!showData)}
+                        ></div>
+                    </div>
                 </div>
             </div>
             <Snackbar open={showSuccess} autoHideDuration={6000} onClose={() => setShowSuccess(false)}>
