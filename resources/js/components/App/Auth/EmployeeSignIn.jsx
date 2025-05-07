@@ -23,19 +23,6 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
         }
     }, [currentIndex]);
 
-    //   const handlePinChange = (index, value) => {
-    //     if (value.length <= 1) {
-    //       const newPin = [...data.password]
-    //       newPin[index] = value || ""
-    //       setData((prevData) => ({ ...prevData, password: newPin }))
-
-    //       // Move to next input if value is entered
-    //       if (value && index < 5) {
-    //         setCurrentIndex(index + 1)
-    //       }
-    //     }
-    //   }
-
     const handlePinChange = (index, value) => {
         if (value.length <= 1) {
             const newPin = [...data.password];
@@ -151,12 +138,6 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                                     // Store ref to the input element
                                     inputRef={(el) => (inputRefs.current[index] = el)}
                                     onChange={(e) => handlePinChange(index, e.target.value)}
-                                    // Handle backspace to move to previous input
-                                    // onKeyDown={(e) => {
-                                    //     if (e.key === "Backspace" && !digit && index > 0) {
-                                    //         setCurrentIndex(index - 1)
-                                    //     }
-                                    // }}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Backspace') {
                                             if (digit) {

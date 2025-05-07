@@ -1,10 +1,8 @@
 import { router, usePage } from '@inertiajs/react';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HomeIcon from '@mui/icons-material/Home';
-import InventoryIcon from '@mui/icons-material/Inventory';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import PeopleIcon from '@mui/icons-material/People';
-import SettingsIcon from '@mui/icons-material/Settings';
 import { Avatar, Button } from '@mui/material';
 import MuiAppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -17,21 +15,10 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
-// import LoginActivityScreen from './Activity';
-// import LogoutScreen from './Logout';
-// import NotificationsPanel from './Notification';
-// import EmployeeProfileScreen from './Profile';
-// import NewOrderDialog from "./order";
-import { Modal, Slide } from '@mui/material';
-// import tableicon from "../assets/Table management.svg";
-import KitchenIcon from '@/components/App/Icons/KitchenManagement';
-import MemberIcon from '@/components/App/Icons/Member';
-import TableIcon from '@/components/App/Icons/TableManagement';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -171,32 +158,7 @@ export default function SideNav({ open, setOpen }) {
                         >
                             <img src="/assets/bell-notification.png" alt="" style={{ width: 17, height: 19 }} />
                         </IconButton>
-                        {/* <Modal open={showNotification} onClose={() => setShowNotification(false)} closeAfterTransition>
-                            <Slide direction="left" in={showNotification} mountOnEnter unmountOnExit>
-                                <Box
-                                    sx={{
-                                        position: 'fixed',
-                                        top: '10px',
-                                        bottom: '10px',
-                                        right: 10,
-                                        width: { xs: '100%', sm: 600 },
-                                        bgcolor: '#fff',
-                                        boxShadow: 4,
-                                        zIndex: 1300,
-                                        overflowY: 'auto',
-                                        borderRadius: 1,
-                                        scrollbarWidth: 'none', // Firefox
-                                        '&::-webkit-scrollbar': {
-                                            display: 'none', // Chrome, Safari, Edge
-                                        },
-                                    }}
-                                >
-                                    <NotificationsPanel onClose={() => setShowNotification(false)} />
-                                </Box>
-                            </Slide>
-                        </Modal> */}
 
-                        {/* Vertical Divider */}
                         <Divider
                             orientation="vertical"
                             flexItem
@@ -234,39 +196,14 @@ export default function SideNav({ open, setOpen }) {
                                 <Typography sx={{ fontSize: '12px', color: '#666' }}>Admin</Typography>
                             </Box>
                         </Box>
-                        {/* <Modal open={showProfile} onClose={() => setShowProfile(false)} aria-labelledby="profile-modal" sx={{ zIndex: 1300 }}>
-                            <Box
-                                sx={{
-                                    position: 'fixed',
-                                    top: '10px',
-                                    bottom: '10px',
-                                    right: 10,
-                                    width: { xs: '100%', sm: 400 },
-                                    bgcolor: '#fff',
-                                    boxShadow: 4,
-                                    zIndex: 1300,
-                                    overflowY: 'auto',
-                                    borderRadius: 2,
-                                    scrollbarWidth: 'none',
-                                    '&::-webkit-scrollbar': { display: 'none' },
-                                }}
-                            >
-                                
-                                {profileView === 'profile' ? (
-                                    <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} />
-                                ) : profileView === 'loginActivity' ? (
-                                    <LoginActivityScreen setProfileView={setProfileView} />
-                                ) : profileView === 'logoutSuccess' ? (
-                                    <LogoutScreen setProfileView={setProfileView} />
-                                ) : null}
-                            </Box>
-                        </Modal> */}
                     </Box>
                 </Toolbar>
             </AppBar>
 
             {/* Sidebar Drawer */}
-            <Drawer variant="permanent" open={open}
+            <Drawer
+                variant="permanent"
+                open={open}
                 sx={{
                     '& .MuiDrawer-paper': {
                         display: 'flex',
@@ -345,7 +282,7 @@ export default function SideNav({ open, setOpen }) {
 
                     <List>
                         {menuItems.map(({ text, icon, path }) => {
-                            const isSelected = url === path
+                            const isSelected = url === path;
                             return (
                                 <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
                                     <ListItemButton
@@ -381,7 +318,7 @@ export default function SideNav({ open, setOpen }) {
                                         />
                                     </ListItemButton>
                                 </ListItem>
-                            )
+                            );
                         })}
                     </List>
                 </Box>

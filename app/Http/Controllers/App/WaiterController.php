@@ -71,7 +71,6 @@ class WaiterController extends Controller
                 'email' => 'required|email|max:255|unique:users,email',
                 'phone' => 'required|string|max:20',
                 'customer_type' => 'required|string|exists:member_types,name',
-                // 'member_type_id' => 'required|exists:member_types,id',
                 'profile_pic' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
                 'addresses.*.type' => 'required|string|in:House,Apartment,Office',

@@ -25,11 +25,7 @@ class KitchenController extends Controller
 
     public function updateAll(Request $request, $orderId)
     {
-        // Log the full request payload for debugging
-        // Log::info('KitchenController::updateAll received request:', [
-        //     'orderId' => $orderId,
-        //     'payload' => $request->all(),
-        // ]);
+
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,in_progress,completed',
             'items' => 'required|json',
@@ -38,10 +34,7 @@ class KitchenController extends Controller
         ]);
 
         if ($validator->fails()) {
-            // Log::error('Validation failed for updateAll:', [
-            //     'errors' => $validator->errors()->all(),
-            //     'input' => $request->all(),
-            // ]);
+
             return redirect()->back()->withErrors($validator)->with('error', 'Validation failed.');
         }
 

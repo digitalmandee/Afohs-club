@@ -18,7 +18,6 @@ return new class extends Migration {
             $table->string('password');
             $table->string('phone_number')->nullable();
             $table->longText('profile_photo')->nullable();
-            // $table->string('tenant_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
