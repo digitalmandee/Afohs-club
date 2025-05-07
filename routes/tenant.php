@@ -128,6 +128,8 @@ Route::middleware([
                 return Inertia::render('App/Admin/Dashboard');
             });
 
+            //Admin Booking Routes
+
             Route::get('/admin/booking/dashboard', function () {
                 return Inertia::render('App/Admin/Booking/Dashboard');
             });
@@ -138,6 +140,31 @@ Route::middleware([
 
             Route::get('/admin/room/booking', function () {
                 return Inertia::render('App/Admin/Booking/RoomBooking');
+            });
+
+            Route::get('/admin/booking/add/room', function () {
+                return Inertia::render('App/Admin/Booking/AddRoom');
+            });
+
+            Route::get('/admin/rooms/manage', function () {
+                return Inertia::render('App/Admin/Booking/RoomManage');
+            });
+
+            Route::get('/admin/events/manage', function () {
+                return Inertia::render('App/Admin/Booking/EventManage');
+            });
+
+            //Admin Employee Routes
+            Route::get('/admin/employee/dashboard', function () {
+                return Inertia::render('App/Admin/Employee/Dashboard');
+            });
+
+            Route::get('/admin/add/employee', function () {
+                return Inertia::render('App/Admin/Employee/AddEmployee');
+            });
+
+            Route::get('/admin/employee/list', function () {
+                return Inertia::render('App/Admin/Employee/EmployeeList');
             });
 
             // Members
