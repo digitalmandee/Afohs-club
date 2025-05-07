@@ -541,8 +541,6 @@ function TransactionDashboard({ Invoices, totalOrders }) {
 
     const handleApplyFilters = () => {
         setOpenFilterModal(false);
-        // Here you would typically apply the filters to your data
-        console.log('Applied filters:', filters);
     };
 
     const toggleSection = (section) => {

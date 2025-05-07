@@ -112,8 +112,6 @@ const NewFloor = ({ floorInfo }) => {
                 },
             });
         } else {
-            console.log(data);
-
             // Create new floor
             router.post(route('floors.store'), data, {
                 onSuccess: () => {

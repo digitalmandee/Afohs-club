@@ -232,7 +232,6 @@ const AddProduct = ({ openMenu, onClose }) => {
             },
             onError: (errors) => {
                 enqueueSnackbar('Something went wrong', { variant: 'error' });
-                console.log(errors);
             },
         });
     };

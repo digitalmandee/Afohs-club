@@ -180,7 +180,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
             return;
         }
 
-        console.log('Addresses before validation:', newCustomer.addresses); // Debug log
         if (newCustomer.addresses.length > 0) {
             for (const addr of newCustomer.addresses) {
                 if (!addr.type || !addr.address || !addr.city || !addr.province || !addr.country || !addr.zipCode) {
@@ -203,12 +202,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
             formData.append('profile_pic', blob, 'profile.jpg');
         }
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
-
-        // Log FormData entries for debugging
-        console.log('FormData entries:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
 
         const routeName = isEditMode ? 'members.update' : 'members.store';
         const url = isEditMode ? route(routeName, newCustomer.id) : route(routeName);
@@ -266,7 +259,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     };
 
     const handleSaveAddress = () => {
-        console.log('Saving address:', newAddress);
         const updatedCustomer = { ...newCustomer };
         if (updatedCustomer.addresses.length === 0 || newAddress.isMain) {
             updatedCustomer.addresses = updatedCustomer.addresses.map((addr) => ({

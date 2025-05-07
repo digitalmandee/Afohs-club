@@ -191,7 +191,6 @@ export default function AddressType({ addressTypes }) {
         }
     }, [openAddMenu]);
 
-    // console.log('addressTypes:', addressTypes);
     const filteredAddressTypes = (addressTypes || []).filter((addressType) => addressType.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (

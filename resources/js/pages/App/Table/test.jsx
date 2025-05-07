@@ -105,8 +105,6 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const TableManagement = ({ floorsdata, tablesData }) => {
-    console.log(floorsdata[0].created_at);
-
     const [open, setOpen] = useState(false);
     const [selectedFloor, setSelectedFloor] = useState(1);
     const today = new Date();
@@ -305,7 +303,6 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     const handleChange = (event) => {
         setSelectedValue(event.target.value);
     };
-    console.log(selectedDate);
 
     // selectedDate is like "2", convert to number for comparison
     const selectedDay = parseInt(selectedDate, 10);

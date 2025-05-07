@@ -1,32 +1,15 @@
-"use client"
-import { useState } from "react"
-import {
-    Box,
-    Typography,
-    IconButton,
-    Chip,
-    TextField,
-    Button,
-    Dialog,
-    DialogContent,
-    DialogActions,
-    InputAdornment,
-    Collapse,
-} from "@mui/material"
-import {
-    Close as CloseIcon,
-    ExpandMore as ExpandMoreIcon,
-    ExpandLess as ExpandLessIcon,
-    CalendarToday as CalendarIcon,
-} from "@mui/icons-material"
+'use client';
+import { CalendarToday as CalendarIcon, Close as CloseIcon, ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import { Box, Button, Chip, Collapse, DialogActions, DialogContent, IconButton, InputAdornment, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
 
 const BookingFilter = () => {
-    const [open, setOpen] = useState(true)
-    const [roomType, setRoomType] = useState("deluxe")
-    const [bookingStatus, setBookingStatus] = useState("all")
-    const [eventDate, setEventDate] = useState("")
-    const [startDate, setStartDate] = useState("")
-    const [endDate, setEndDate] = useState("")
+    const [open, setOpen] = useState(true);
+    const [roomType, setRoomType] = useState('deluxe');
+    const [bookingStatus, setBookingStatus] = useState('all');
+    const [eventDate, setEventDate] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     // State to track which sections are expanded
     const [expanded, setExpanded] = useState({
@@ -34,54 +17,51 @@ const BookingFilter = () => {
         bookingStatus: true,
         eventDate: true,
         dateRange: true,
-    })
+    });
 
     const handleClose = () => {
-        setOpen(false)
-    }
+        setOpen(false);
+    };
 
     const handleRoomTypeChange = (type) => {
-        setRoomType(type)
-    }
+        setRoomType(type);
+    };
 
     const handleBookingStatusChange = (status) => {
-        setBookingStatus(status)
-    }
+        setBookingStatus(status);
+    };
 
     const handleResetFilter = () => {
-        setRoomType("deluxe")
-        setBookingStatus("all")
-        setEventDate("")
-        setStartDate("")
-        setEndDate("")
-    }
+        setRoomType('deluxe');
+        setBookingStatus('all');
+        setEventDate('');
+        setStartDate('');
+        setEndDate('');
+    };
 
     const handleApplyFilters = () => {
         // Apply filters logic here
-        console.log({
-            roomType,
-            bookingStatus,
-            eventDate,
-            dateRange: { startDate, endDate },
-        })
-        handleClose()
-    }
+
+        handleClose();
+    };
 
     // Toggle section expansion
     const toggleSection = (section) => {
         setExpanded({
             ...expanded,
             [section]: !expanded[section],
-        })
-    }
+        });
+    };
 
     return (
         <>
-            <Box sx={{
-                px:2,
-                py:1
-            }}>
-                <Box sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box
+                sx={{
+                    px: 2,
+                    py: 1,
+                }}
+            >
+                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" fontWeight="medium">
                         Booking Filter
                     </Typography>
@@ -95,74 +75,74 @@ const BookingFilter = () => {
                     <Box sx={{ mb: 3 }}>
                         <Box
                             sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
                                 mb: expanded.roomType ? 1.5 : 0,
-                                cursor: "pointer",
+                                cursor: 'pointer',
                             }}
-                            onClick={() => toggleSection("roomType")}
+                            onClick={() => toggleSection('roomType')}
                         >
                             <Typography variant="body1" fontWeight="medium">
                                 Room Type
                             </Typography>
                             {expanded.roomType ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
+                                <ExpandMoreIcon fontSize="small" sx={{ color: '#999' }} />
                             ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
+                                <ExpandLessIcon fontSize="small" sx={{ color: '#999' }} />
                             )}
                         </Box>
                         <Collapse in={expanded.roomType}>
-                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                                 <Chip
                                     label="Deluxe room"
-                                    onClick={() => handleRoomTypeChange("deluxe")}
+                                    onClick={() => handleRoomTypeChange('deluxe')}
                                     sx={{
-                                        bgcolor: roomType === "deluxe" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "deluxe" ? "white" : "#333",
+                                        bgcolor: roomType === 'deluxe' ? '#0a3d62' : '#e3f2fd',
+                                        color: roomType === 'deluxe' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: roomType === "deluxe" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "deluxe" ? "#0a3d62" : "#d0e8fd",
+                                        fontWeight: roomType === 'deluxe' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: roomType === 'deluxe' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
                                 <Chip
                                     label="Standard room"
-                                    onClick={() => handleRoomTypeChange("standard")}
+                                    onClick={() => handleRoomTypeChange('standard')}
                                     sx={{
-                                        bgcolor: roomType === "standard" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "standard" ? "white" : "#333",
+                                        bgcolor: roomType === 'standard' ? '#0a3d62' : '#e3f2fd',
+                                        color: roomType === 'standard' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: roomType === "standard" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "standard" ? "#0a3d62" : "#d0e8fd",
+                                        fontWeight: roomType === 'standard' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: roomType === 'standard' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
                                 <Chip
                                     label="Suit room"
-                                    onClick={() => handleRoomTypeChange("suit")}
+                                    onClick={() => handleRoomTypeChange('suit')}
                                     sx={{
-                                        bgcolor: roomType === "suit" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "suit" ? "white" : "#333",
+                                        bgcolor: roomType === 'suit' ? '#0a3d62' : '#e3f2fd',
+                                        color: roomType === 'suit' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: roomType === "suit" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "suit" ? "#0a3d62" : "#d0e8fd",
+                                        fontWeight: roomType === 'suit' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: roomType === 'suit' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
                                 <Chip
                                     label="Family room"
-                                    onClick={() => handleRoomTypeChange("family")}
+                                    onClick={() => handleRoomTypeChange('family')}
                                     sx={{
-                                        bgcolor: roomType === "family" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "family" ? "white" : "#333",
+                                        bgcolor: roomType === 'family' ? '#0a3d62' : '#e3f2fd',
+                                        color: roomType === 'family' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: roomType === "family" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "family" ? "#0a3d62" : "#d0e8fd",
+                                        fontWeight: roomType === 'family' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: roomType === 'family' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
@@ -174,61 +154,61 @@ const BookingFilter = () => {
                     <Box sx={{ mb: 3 }}>
                         <Box
                             sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
                                 mb: expanded.bookingStatus ? 1.5 : 0,
-                                cursor: "pointer",
+                                cursor: 'pointer',
                             }}
-                            onClick={() => toggleSection("bookingStatus")}
+                            onClick={() => toggleSection('bookingStatus')}
                         >
                             <Typography variant="body1" fontWeight="medium">
                                 Booking Status
                             </Typography>
                             {expanded.bookingStatus ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
+                                <ExpandMoreIcon fontSize="small" sx={{ color: '#999' }} />
                             ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
+                                <ExpandLessIcon fontSize="small" sx={{ color: '#999' }} />
                             )}
                         </Box>
                         <Collapse in={expanded.bookingStatus}>
-                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                                 <Chip
                                     label="All type"
-                                    onClick={() => handleBookingStatusChange("all")}
+                                    onClick={() => handleBookingStatusChange('all')}
                                     sx={{
-                                        bgcolor: bookingStatus === "all" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "all" ? "white" : "#333",
+                                        bgcolor: bookingStatus === 'all' ? '#0a3d62' : '#e3f2fd',
+                                        color: bookingStatus === 'all' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: bookingStatus === "all" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "all" ? "#0a3d62" : "#d0e8fd",
+                                        fontWeight: bookingStatus === 'all' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: bookingStatus === 'all' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
                                 <Chip
                                     label="Confirmed"
-                                    onClick={() => handleBookingStatusChange("confirmed")}
+                                    onClick={() => handleBookingStatusChange('confirmed')}
                                     sx={{
-                                        bgcolor: bookingStatus === "confirmed" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "confirmed" ? "white" : "#333",
+                                        bgcolor: bookingStatus === 'confirmed' ? '#0a3d62' : '#e3f2fd',
+                                        color: bookingStatus === 'confirmed' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: bookingStatus === "confirmed" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "confirmed" ? "#0a3d62" : "#d0e8fd",
+                                        fontWeight: bookingStatus === 'confirmed' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: bookingStatus === 'confirmed' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
                                 <Chip
                                     label="Pending"
-                                    onClick={() => handleBookingStatusChange("pending")}
+                                    onClick={() => handleBookingStatusChange('pending')}
                                     sx={{
-                                        bgcolor: bookingStatus === "pending" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "pending" ? "white" : "#333",
+                                        bgcolor: bookingStatus === 'pending' ? '#0a3d62' : '#e3f2fd',
+                                        color: bookingStatus === 'pending' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: bookingStatus === "pending" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "pending" ? "#0a3d62" : "#d0e8fd",
+                                        fontWeight: bookingStatus === 'pending' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: bookingStatus === 'pending' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
@@ -240,25 +220,25 @@ const BookingFilter = () => {
                     <Box sx={{ mb: 3 }}>
                         <Box
                             sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
                                 mb: expanded.eventDate ? 1.5 : 0,
-                                cursor: "pointer",
+                                cursor: 'pointer',
                             }}
-                            onClick={() => toggleSection("eventDate")}
+                            onClick={() => toggleSection('eventDate')}
                         >
                             <Typography variant="body1" fontWeight="medium">
                                 Event by date
                             </Typography>
                             {expanded.eventDate ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
+                                <ExpandMoreIcon fontSize="small" sx={{ color: '#999' }} />
                             ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
+                                <ExpandLessIcon fontSize="small" sx={{ color: '#999' }} />
                             )}
                         </Box>
                         <Collapse in={expanded.eventDate}>
-                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                 <Typography variant="body2" color="text.secondary">
                                     Date
                                 </Typography>
@@ -269,12 +249,12 @@ const BookingFilter = () => {
                                     InputProps={{
                                         endAdornment: (
                                             <InputAdornment position="end">
-                                                <CalendarIcon fontSize="small" sx={{ color: "#999" }} />
+                                                <CalendarIcon fontSize="small" sx={{ color: '#999' }} />
                                             </InputAdornment>
                                         ),
                                     }}
                                     sx={{
-                                        ".MuiOutlinedInput-root": {
+                                        '.MuiOutlinedInput-root': {
                                             borderRadius: 1,
                                         },
                                     }}
@@ -287,26 +267,26 @@ const BookingFilter = () => {
                     <Box>
                         <Box
                             sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
                                 mb: expanded.dateRange ? 1.5 : 0,
-                                cursor: "pointer",
+                                cursor: 'pointer',
                             }}
-                            onClick={() => toggleSection("dateRange")}
+                            onClick={() => toggleSection('dateRange')}
                         >
                             <Typography variant="body1" fontWeight="medium">
                                 Date Range
                             </Typography>
                             {expanded.dateRange ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
+                                <ExpandMoreIcon fontSize="small" sx={{ color: '#999' }} />
                             ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
+                                <ExpandLessIcon fontSize="small" sx={{ color: '#999' }} />
                             )}
                         </Box>
                         <Collapse in={expanded.dateRange}>
-                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         Start date
                                     </Typography>
@@ -317,18 +297,18 @@ const BookingFilter = () => {
                                         InputProps={{
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <CalendarIcon fontSize="small" sx={{ color: "#999" }} />
+                                                    <CalendarIcon fontSize="small" sx={{ color: '#999' }} />
                                                 </InputAdornment>
                                             ),
                                         }}
                                         sx={{
-                                            ".MuiOutlinedInput-root": {
+                                            '.MuiOutlinedInput-root': {
                                                 borderRadius: 1,
                                             },
                                         }}
                                     />
                                 </Box>
-                                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         End date
                                     </Typography>
@@ -339,12 +319,12 @@ const BookingFilter = () => {
                                         InputProps={{
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <CalendarIcon fontSize="small" sx={{ color: "#999" }} />
+                                                    <CalendarIcon fontSize="small" sx={{ color: '#999' }} />
                                                 </InputAdornment>
                                             ),
                                         }}
                                         sx={{
-                                            ".MuiOutlinedInput-root": {
+                                            '.MuiOutlinedInput-root': {
                                                 borderRadius: 1,
                                             },
                                         }}
@@ -355,19 +335,19 @@ const BookingFilter = () => {
                     </Box>
                 </DialogContent>
 
-                <DialogActions sx={{ p: 2, justifyContent: "flex-end" }}>
+                <DialogActions sx={{ p: 2, justifyContent: 'flex-end' }}>
                     <Button
                         variant="outlined"
                         onClick={handleResetFilter}
                         sx={{
-                            borderColor: "#ccc",
-                            color: "#333",
+                            borderColor: '#ccc',
+                            color: '#333',
                             borderRadius: 1,
-                            textTransform: "none",
+                            textTransform: 'none',
                             mr: 1,
-                            "&:hover": {
-                                borderColor: "#999",
-                                bgcolor: "rgba(0,0,0,0.04)",
+                            '&:hover': {
+                                borderColor: '#999',
+                                bgcolor: 'rgba(0,0,0,0.04)',
                             },
                         }}
                     >
@@ -377,12 +357,12 @@ const BookingFilter = () => {
                         variant="contained"
                         onClick={handleApplyFilters}
                         sx={{
-                            bgcolor: "#0a3d62",
-                            color: "white",
+                            bgcolor: '#0a3d62',
+                            color: 'white',
                             borderRadius: 1,
-                            textTransform: "none",
-                            "&:hover": {
-                                bgcolor: "#0c2461",
+                            textTransform: 'none',
+                            '&:hover': {
+                                bgcolor: '#0c2461',
                             },
                         }}
                     >
@@ -391,7 +371,7 @@ const BookingFilter = () => {
                 </DialogActions>
             </Box>
         </>
-    )
-}
+    );
+};
 
-export default BookingFilter
+export default BookingFilter;
