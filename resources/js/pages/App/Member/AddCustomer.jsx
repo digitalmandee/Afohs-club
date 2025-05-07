@@ -194,6 +194,8 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                 setSuccessMessage('Customer added successfully!');
                 setShowSuccess(true);
                 handleCloseAddForm();
+                // Redirect to the members page
+                router.visit(route('members.index'));
             },
             onError: (errors) => {
                 setErrors(errors);
