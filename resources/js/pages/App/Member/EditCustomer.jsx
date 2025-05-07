@@ -91,10 +91,10 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setNewCustomer({
-            ...newCustomer,
-            [name]: value,
-        });
+        setNewCustomer((prev) => ({
+            ...prev,
+            [name]: value, // Dynamically update the state based on the name attribute
+        }));
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: null }));
         }
@@ -343,9 +343,11 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                         }}
                                         control={
                                             <Radio
-                                                checked={newCustomer.member_type === memberType.name}
-                                                onChange={handleInputChange}
-                                                name="member"
+                                                checked={newCustomer.member_type === memberType.name} // Ensure this comparison is correct
+                                                onChange={(e) => {
+                                                    handleInputChange(e);
+                                                }}
+                                                name="member_type"
                                                 value={memberType.name}
                                             />
                                         }
