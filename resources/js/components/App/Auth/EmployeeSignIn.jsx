@@ -1,77 +1,65 @@
-"use client"
+'use client';
 
-import { router } from "@inertiajs/react"
-import { ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon } from "@mui/icons-material"
-import { Box, Button, Link, TextField, Typography } from "@mui/material"
-import { useState, useRef, useEffect } from "react"
+import { router } from '@inertiajs/react';
+import { ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
+import { Box, Button, Link, TextField, Typography } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
+import { useEffect, useRef, useState } from 'react';
 
 const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors, transform }) => {
-    const [currentIndex, setCurrentIndex] = useState(0)
+    const [currentIndex, setCurrentIndex] = useState(0);
     // Create refs for input fields
-    const inputRefs = useRef([])
+    const inputRefs = useRef([]);
 
     // Initialize refs array
     useEffect(() => {
-        inputRefs.current = inputRefs.current.slice(0, 6)
-    }, [])
+        inputRefs.current = inputRefs.current.slice(0, 6);
+    }, []);
 
     // Focus the input when currentIndex changes
     useEffect(() => {
         if (inputRefs.current[currentIndex]) {
-            inputRefs.current[currentIndex].focus()
+            inputRefs.current[currentIndex].focus();
         }
-    }, [currentIndex])
-
-    //   const handlePinChange = (index, value) => {
-    //     if (value.length <= 1) {
-    //       const newPin = [...data.password]
-    //       newPin[index] = value || ""
-    //       setData((prevData) => ({ ...prevData, password: newPin }))
-
-    //       // Move to next input if value is entered
-    //       if (value && index < 5) {
-    //         setCurrentIndex(index + 1)
-    //       }
-    //     }
-    //   }
+    }, [currentIndex]);
 
     const handlePinChange = (index, value) => {
         if (value.length <= 1) {
-            const newPin = [...data.password]
-            newPin[index] = value || ""
-            setData((prevData) => ({ ...prevData, password: newPin }))
+            const newPin = [...data.password];
+            newPin[index] = value || '';
+            setData((prevData) => ({ ...prevData, password: newPin }));
 
             if (value && index < 5) {
                 // Move to next input and focus
-                setCurrentIndex(index + 1)
-                inputRefs.current[index + 1]?.focus()
+                setCurrentIndex(index + 1);
+                inputRefs.current[index + 1]?.focus();
             }
         }
-    }
+    };
 
     const handleSignIn = () => {
         transform((data) => ({
             ...data,
-            password: data.password.join(""),
-        }))
+            password: data.password.join(''),
+        }));
 
-        post(route("login"), {
+        post(route('login'), {
             onSuccess: () => {
-                router.visit(route("dashboard"))
+                router.visit(route('dashboard'));
             },
             onError: (errors) => {
-                console.log(errors)
+                enqueueSnackbar('Login failed. Please check your credentials and try again.', { variant: 'error' });
             },
-        })
-    }
+        });
+    };
 
     return (
         <>
             {/* Logo */}
             <Box
                 sx={{
-                    display: "flex",
-                    justifyContent: "flex-start",
+                    display: 'flex',
+                    justifyContent: 'flex-start',
                     mb: 1,
                 }}
             >
@@ -96,8 +84,8 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                     variant="h5"
                     sx={{
                         fontWeight: 500,
-                        color: "#3F4E4F",
-                        fontSize: "30px",
+                        color: '#3F4E4F',
+                        fontSize: '30px',
                         mb: 3,
                     }}
                 >
@@ -108,19 +96,19 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                 <Box sx={{ mb: 3 }}>
                     <Typography
                         sx={{
-                            color: "#121212",
+                            color: '#121212',
                             mb: 1,
-                            fontSize: "14px",
+                            fontSize: '14px',
                         }}
                     >
                         Enter PIN
                     </Typography>
                     <Box
                         sx={{
-                            display: "flex",
+                            display: 'flex',
                             gap: 2,
-                            width: "100%",
-                            justifyContent: "space-between",
+                            width: '100%',
+                            justifyContent: 'space-between',
                         }}
                     >
                         {data.password &&
@@ -128,45 +116,39 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                                 <TextField
                                     key={index}
                                     variant="outlined"
-                                    type={"password"}
+                                    type={'password'}
                                     value={digit}
                                     inputProps={{
                                         maxLength: 1,
                                         style: {
-                                            textAlign: "center",
+                                            textAlign: 'center',
                                             // bgcolor:'black',
-                                            padding: "1rem",
-                                            fontSize: "1rem",
+                                            padding: '1rem',
+                                            fontSize: '1rem',
                                             // width:'200%'
                                         },
                                     }}
                                     sx={{
                                         width: 60,
                                         height: 70,
-                                        ".MuiOutlinedInput-notchedOutline": {
-                                            borderColor: "#063455",
+                                        '.MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#063455',
                                         },
                                     }}
                                     // Store ref to the input element
                                     inputRef={(el) => (inputRefs.current[index] = el)}
                                     onChange={(e) => handlePinChange(index, e.target.value)}
-                                    // Handle backspace to move to previous input
-                                    // onKeyDown={(e) => {
-                                    //     if (e.key === "Backspace" && !digit && index > 0) {
-                                    //         setCurrentIndex(index - 1)
-                                    //     }
-                                    // }}
                                     onKeyDown={(e) => {
-                                        if (e.key === "Backspace") {
+                                        if (e.key === 'Backspace') {
                                             if (digit) {
                                                 // Just clear the value
-                                                const newPin = [...data.password]
-                                                newPin[index] = ""
-                                                setData((prevData) => ({ ...prevData, password: newPin }))
+                                                const newPin = [...data.password];
+                                                newPin[index] = '';
+                                                setData((prevData) => ({ ...prevData, password: newPin }));
                                             } else if (index > 0) {
                                                 // Move to previous input and focus
-                                                setCurrentIndex(index - 1)
-                                                inputRefs.current[index - 1]?.focus()
+                                                setCurrentIndex(index - 1);
+                                                inputRefs.current[index - 1]?.focus();
                                             }
                                         }
                                     }}
@@ -174,7 +156,7 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                             ))}
                     </Box>
                     {errors.password && (
-                        <Typography variant="body2" sx={{ color: "red", mt: 1 }}>
+                        <Typography variant="body2" sx={{ color: 'red', mt: 1 }}>
                             {errors.password}
                         </Typography>
                     )}
@@ -182,12 +164,12 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                         href="#"
                         underline="hover"
                         sx={{
-                            color: "#129BFF",
-                            fontSize: "0.875rem",
+                            color: '#129BFF',
+                            fontSize: '0.875rem',
                             mt: 1.5,
-                            display: "inline-block",
+                            display: 'inline-block',
                         }}
-                        onClick={() => router.visit("/forget-pin")}
+                        onClick={() => router.visit('/forget-pin')}
                     >
                         Forgot Pin?
                     </Link>
@@ -196,26 +178,26 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                 {/* Navigation Buttons */}
                 <Box
                     sx={{
-                        display: "flex",
-                        width: "100%",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        width: '100%',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                     }}
                 >
                     <Button
                         startIcon={<ArrowBackIcon />}
                         sx={{
-                            borderRadius: "0",
-                            width: "215px",
-                            height: "48px",
-                            bgcolor: "#FFFFFF",
-                            color: "#121212",
-                            border: "1px solid #E3E3E3",
-                            "&:hover": {
-                                bgcolor: "rgba(0,0,0,0.04)",
+                            borderRadius: '0',
+                            width: '215px',
+                            height: '48px',
+                            bgcolor: '#FFFFFF',
+                            color: '#121212',
+                            border: '1px solid #E3E3E3',
+                            '&:hover': {
+                                bgcolor: 'rgba(0,0,0,0.04)',
                             },
                         }}
-                        onClick={() => router.visit("/")}
+                        onClick={() => router.visit('/')}
                     >
                         Back
                     </Button>
@@ -223,13 +205,13 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                         variant="contained"
                         endIcon={<ArrowForwardIcon />}
                         sx={{
-                            borderRadius: "0",
-                            width: "215px",
-                            height: "46px",
-                            color: "#FFFFFF",
-                            bgcolor: "#063455",
-                            "&:hover": {
-                                bgcolor: "#083654",
+                            borderRadius: '0',
+                            width: '215px',
+                            height: '46px',
+                            color: '#FFFFFF',
+                            bgcolor: '#063455',
+                            '&:hover': {
+                                bgcolor: '#083654',
                             },
                             px: 3,
                         }}
@@ -243,7 +225,7 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                 </Box>
             </Box>
         </>
-    )
-}
+    );
+};
 
-export default EmployeeSignIn
+export default EmployeeSignIn;

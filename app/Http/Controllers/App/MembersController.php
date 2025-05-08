@@ -147,33 +147,31 @@ class MembersController extends Controller
             Log::info('Raw update request data: ' . json_encode($request->all()));
             Log::info('Merged update addresses: ' . json_encode($addresses));
 
-            $validated = $request->validate([
+            $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255|unique:users,email,' . $customer->id,
-                'phone' => 'required|string|max:20',
+                'phone' => 'required|string',
                 'customer_type' => 'required|string|exists:member_types,name',
                 'member_type_id' => 'required|exists:member_types,id',
                 'profile_pic' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
-                'addresses.*.type' => 'required|string|exists:address_types,name', // Validate against address_types table
+                'addresses.*.address_type' => 'required|string|exists:address_types,name', // Validate against address_types table
                 'addresses.*.address' => 'required|string|max:255',
                 'addresses.*.city' => 'required|string|max:255',
-                'addresses.*.province' => 'required|string|max:255',
+                'addresses.*.state' => 'required|string|max:255',
                 'addresses.*.country' => 'required|string|max:255',
-                'addresses.*.zipCode' => 'required|string|max:20',
-                'addresses.*.isMain' => 'boolean',
+                'addresses.*.zip' => 'required|string|max:20',
+                // 'addresses.*.status' => 'boolean',
             ]);
 
-            Log::info('Validated update data: ' . json_encode($validated));
-
-            $memberType = MemberType::where('name', $validated['customer_type'])->first();
+            $memberType = MemberType::where('name', $request->customer_type)->first();
             if (!$memberType) {
                 return redirect()->back()->withErrors(['customer_type' => 'Selected customer type does not exist.']);
             }
 
-            $customer->name = $validated['name'];
-            $customer->email = $validated['email'];
-            $customer->phone_number = $validated['phone'];
+            $customer->name = $request->name;
+            $customer->email = $request->email;
+            $customer->phone_number = $request->phone;
             $customer->member_type_id = $memberType->id;
 
             if ($request->hasFile('profile_pic')) {
@@ -188,17 +186,17 @@ class MembersController extends Controller
 
             // Update addresses: Delete existing and recreate
             $customer->userDetails()->delete();
-            if (!empty($validated['addresses'])) {
-                foreach ($validated['addresses'] as $address) {
+            if (!empty($request->addresses)) {
+                foreach ($request->addresses as $address) {
                     UserDetail::create([
                         'user_id' => $customer->id, // Fixed: Use $customer->id instead of user_id
-                        'address_type' => $address['type'],
+                        'address_type' => $address['address_type'],
                         'country' => $address['country'],
-                        'state' => $address['province'],
+                        'state' => $address['state'],
                         'city' => $address['city'],
-                        'zip' => $address['zipCode'],
+                        'zip' => $address['zip'],
                         'address' => $address['address'],
-                        'status' => $address['isMain'] ? 'active' : 'inactive',
+                        'status' => $address['status'] ? 'active' : 'inactive',
                     ]);
                 }
             }

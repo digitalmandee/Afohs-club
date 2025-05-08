@@ -336,7 +336,6 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                     },
                 })
                 .then((res) => {
-                    console.log(res.data.floor);
                     setActiveFloor(res.data.floor);
                 });
         }

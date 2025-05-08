@@ -173,80 +173,33 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     };
 
     const handleSaveCustomer = () => {
-        // Client-side validation
+        // General validation for other fields
         if (!newCustomer.name || !newCustomer.email || !newCustomer.phone_number) {
             setErrorMessage('Please fill in all required fields.');
             setShowError(true);
             return;
         }
 
-        console.log('Addresses before validation:', newCustomer.addresses); // Debug log
-        if (newCustomer.addresses.length > 0) {
-            for (const addr of newCustomer.addresses) {
-                if (!addr.type || !addr.address || !addr.city || !addr.province || !addr.country || !addr.zipCode) {
-                    console.error('Invalid address:', addr); // Log the problematic address
-                    setErrorMessage('All address fields are required.');
-                    setShowError(true);
-                    return;
-                }
-            }
-        }
-
+        // Proceed with saving the customer
         const formData = new FormData();
         formData.append('name', newCustomer.name);
         formData.append('email', newCustomer.email);
         formData.append('phone', `${phoneCountryCode}${newCustomer.phone_number}`);
         formData.append('customer_type', newCustomer.customer_type);
-        formData.append('member_type_id', memberTypes.find((mt) => mt.name === newCustomer.customer_type)?.id || ''); // Add member_type_id
-        if (profileImage && profileImage.startsWith('data:image')) {
-            const blob = base64ToBlob(profileImage);
-            formData.append('profile_pic', blob, 'profile.jpg');
-        }
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
-        // Log FormData entries for debugging
-        console.log('FormData entries:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        const routeName = isEditMode ? 'members.update' : 'members.store';
-        const url = isEditMode ? route(routeName, newCustomer.id) : route(routeName);
-
-        router.post(url, formData, {
-            onSuccess: (page) => {
-                const returnedCustomer = page.props.customer || {
-                    ...newCustomer,
-                    id: page.props.customer?.id || newCustomer.id,
-                    user_id: page.props.customer?.user_id || newCustomer.id,
-                    phone_number: `${phoneCountryCode}${newCustomer.phone_number}`,
-                    profile_photo: profileImage || newCustomer.profile_photo,
-                    userDetails: newCustomer.addresses.map((addr) => ({
-                        address_type: addr.type,
-                        country: addr.country,
-                        state: addr.province,
-                        city: addr.city,
-                        zip: addr.zipCode,
-                        address: addr.address,
-                        status: addr.isMain ? 'active' : 'inactive',
-                    })),
-                };
-                if (isEditMode && currentCustomerIndex !== null) {
-                    const updatedCustomers = [...customers];
-                    updatedCustomers[currentCustomerIndex] = returnedCustomer;
-                    setCustomers(updatedCustomers);
-                } else {
-                    setCustomers([returnedCustomer, ...customers]);
-                }
-                setSuccessMessage(isEditMode ? 'Customer updated successfully!' : 'Customer added successfully!');
+        // Submit the form
+        router.post(route('members.store'), formData, {
+            onSuccess: () => {
+                setSuccessMessage('Customer added successfully!');
                 setShowSuccess(true);
                 handleCloseAddForm();
+                // Redirect to the members page
+                router.visit(route('members.index'));
             },
             onError: (errors) => {
-                console.error('Validation errors:', errors);
                 setErrors(errors);
-                const errorMessages = Object.values(errors).filter(Boolean).join('; ');
-                setErrorMessage(errorMessages || 'Failed to add customer. Please check the form.');
+                setErrorMessage('Failed to add customer. Please check the form.');
                 setShowError(true);
             },
         });
@@ -266,7 +219,13 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     };
 
     const handleSaveAddress = () => {
-        console.log('Saving address:', newAddress);
+        // Address-specific validation
+        if (!newAddress.type || !newAddress.address || !newAddress.city || !newAddress.province || !newAddress.country || !newAddress.zipCode) {
+            setErrorMessage('All address fields are required.');
+            setShowError(true);
+            return;
+        }
+
         const updatedCustomer = { ...newCustomer };
         if (updatedCustomer.addresses.length === 0 || newAddress.isMain) {
             updatedCustomer.addresses = updatedCustomer.addresses.map((addr) => ({
@@ -279,6 +238,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
         setShowAddressForm(false);
         setSuccessMessage('Address added successfully!');
         setShowSuccess(true);
+        router.get(route('members'));
     };
 
     const handleSetMainAddress = (index) => {
@@ -632,7 +592,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                             <FormControl fullWidth margin="normal" variant="outlined">
                                                 <Select
                                                     displayEmpty
-                                                    value={newAddress.country}
+                                                    value={newAddress.state}
                                                     name="province"
                                                     onChange={handleAddressInputChange}
                                                     renderValue={(selected) => {

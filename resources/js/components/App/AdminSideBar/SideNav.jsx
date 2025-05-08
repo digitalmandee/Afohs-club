@@ -1,9 +1,10 @@
 import { router, usePage } from '@inertiajs/react';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { useState } from 'react';
 import HomeIcon from '@mui/icons-material/Home';
-import InventoryIcon from '@mui/icons-material/Inventory';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import { Avatar, Button } from '@mui/material';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PeopleIcon from '@mui/icons-material/People';
@@ -20,7 +21,6 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -215,7 +215,6 @@ export default function SideNav({ open, setOpen }) {
                             <img src="/assets/bell-notification.png" alt="" style={{ width: 17, height: 19 }} />
                         </IconButton>
 
-                        {/* Vertical Divider */}
                         <Divider
                             orientation="vertical"
                             flexItem
@@ -258,7 +257,9 @@ export default function SideNav({ open, setOpen }) {
             </AppBar>
 
             {/* Sidebar Drawer */}
-            <Drawer variant="permanent" open={open}
+            <Drawer
+                variant="permanent"
+                open={open}
                 sx={{
                     '& .MuiDrawer-paper': {
                         display: 'flex',
@@ -306,7 +307,6 @@ export default function SideNav({ open, setOpen }) {
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
                             const isSelected = url === path || (children && children.some(child => url === child.path));
-
                             // Main ListItem (with or without dropdown)
                             return (
                                 <Box key={text}>
