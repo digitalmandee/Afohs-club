@@ -52,6 +52,9 @@ Route::middleware([
 
             Route::get('/new/order', [OrderController::class, 'index'])->name('order.index');
 
+            Route::get('/order/management', function () {
+                return Inertia::render('App/Order/Management/Dashboard');
+            });
 
             Route::get('/transaction', function () {
                 return Inertia::render('App/Transaction/Dashboard');
