@@ -1,13 +1,14 @@
 import React, { useState } from "react"
 import "bootstrap/dist/css/bootstrap.min.css"
-import { Container, Row, Col, Card, Button, Form, Badge, Modal } from "react-bootstrap"
-import { Search, FilterAlt, Add, CreditCard } from "@mui/icons-material"
-import { ThemeProvider, createTheme, Box, Typography } from "@mui/material"
+import { Container, Row, Col, Card, Form, Badge, Modal } from "react-bootstrap"
+import { Search, FilterAlt, Add, CreditCard, Person, Bathroom, ArrowBack, Bed } from "@mui/icons-material"
+import { ThemeProvider, createTheme, Button, Box, Typography, Paper, IconButton, Grid } from "@mui/material"
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav'
-import RoomEventModal from "./RoomEvent"
-import BookingFilter from "./Filter"
-import AvailableRooms from "./Rooms"
+import EventBookingFilter from "./EventFilter"
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PeopleIcon from '@mui/icons-material/People';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -115,19 +116,32 @@ const bookingsData = [
         nights: 1,
         status: "Confirmed",
     },
-    {
-        id: 3,
-        type: "Suit Room",
-        created: "March 25th 2025, 3:30 PM",
-        bookingId: "ROM0232",
-        duration: "March 25th 2025 to March 26th 2025",
-        rooms: 1,
-        nights: 1,
-        status: "Pending",
-    },
 ]
 
-const BookingDashboard = () => {
+const roomTypes = [
+    {
+        type: "Annual Gala",
+        image: "/assets/room-img.png",
+        area: "Main Hall",
+        capacity: 100,
+        time: "May 20, 10:00 AM",
+        price: 150,
+        badge: "Complete",
+        color: "#0B4837",
+    },
+    {
+        type: "Sports Night",
+        image: "/assets/room-img.png",
+        area: "Ground Area",
+        capacity: 80,
+        time: "March 25, 06:00 PM",
+        price: 150,
+        badge: "Upcoming",
+        color: "#129BFF",
+    },
+];
+
+const EventScreen = () => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("")
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false)
@@ -167,181 +181,153 @@ const BookingDashboard = () => {
             >
                 <ThemeProvider theme={theme}>
                     <style>{dialogStyles}</style>
-                    <Container fluid className="p-4 bg-light">
-                        <Row className="mb-4 align-items-center">
-                            <Col>
-                                <Typography style={{ color: "#3F4E4F", fontWeight: 500, fontSize: '30px' }}>
-                                    Dashboard
+                    <Container fluid className="p-4" style={{
+                        backgroundColor: '#F6F6F6'
+                    }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                                <IconButton sx={{ mr: 1, color: '#3F4E4F' }}
+                                >
+                                    <ArrowBack />
+                                </IconButton>
+                                <Typography sx={{
+                                    color: '#3F4E4F',
+                                    fontSize: '30px',
+                                    fontWeight: 500
+                                }}>
+                                    Events
                                 </Typography>
-                            </Col>
-                            <Col xs="auto" className="d-flex gap-2">
+                            </Box>
+                            <Box sx={{ display: "flex", gap: 2 }}>
                                 <Button
-                                    style={{
-                                        backgroundColor: "#063455",
-                                        borderColor: "#063455",
-                                        borderRadius: '0px'
+                                    variant="outlined"
+                                    startIcon={<Add />}
+                                    sx={{
+                                        border: "1px solid #063455",
+                                        color: "#333",
+                                        bgcolor: "white",
+                                        "&:hover": {
+                                            border: "1px solid #063455",
+                                            bgcolor: "#FFFFFF",
+                                        },
                                     }}
-                                    onClick={handleOpenBookingModal}>
+                                    onClick={() => router.visit('/admin/booking/add/room?type=event')}
+                                >
+                                    Add Event
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        bgcolor: "#063455",
+                                        "&:hover": {
+                                            bgcolor: "#063455",
+                                        },
+                                    }}
+                                >
                                     Booking
                                 </Button>
-                            </Col>
-                        </Row>
+                            </Box>
+                        </Box>
 
-                        <Row className="mb-4">
-                            {/* Total Booking */}
-                            <Col md={4}>
-                                <Card
-                                    style={{
-                                        backgroundColor: "#3F4E4F",
-                                        color: "white",
-                                        border: "none",
-                                        borderRadius: "2px",
-                                        height: "150px",
-                                    }}
-                                >
-                                    <Card.Body className="p-4" style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        height:'100%'
-                                    }}>
-                                        <Box className="d-flex align-items-center gap-3">
-                                            <Box
+                        <Box sx={{ mb: 2 }}>
+                            <Grid container spacing={2}>
+                                {roomTypes.map((room, index) => {
+                                    console.log("Room Color:", room.color);
+                                    return (
+                                        <Grid item xs={12} sm={6} key={index}>
+                                            <Paper
+                                                elevation={0}
                                                 sx={{
-                                                    backgroundColor: "#202728",
-                                                    borderRadius: "50%",
-                                                    width: 60,
-                                                    height: 60,
+                                                    borderRadius: 1,
+                                                    overflow: "hidden",
                                                     display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
+                                                    height: "100px",
+                                                    bgcolor: "#FFFFFF"
                                                 }}
                                             >
-                                                <img src="/assets/Frame.png" alt="" style={{
-                                                    width: 35,
-                                                    height: 35
-                                                }} />
-                                            </Box>
-                                            <Box>
-                                                <Typography sx={{ color: "#C6C6C6", fontSize: "14px" }}>Total Booking</Typography>
-                                                <Typography sx={{ fontSize: "24px" }} className="m-0">
-                                                    320
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
+                                                {/* Image */}
+                                                <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
+                                                    <img
+                                                        src="/assets/room-img.png"
+                                                        alt=""
+                                                        style={{ width: "117px", height: "77px" }}
+                                                    />
+                                                </Box>
 
-                            {/* Total Room Booking */}
-                            <Col md={4}>
-                                <Card
-                                    style={{
-                                        backgroundColor: "#3F4E4F",
-                                        color: "white",
-                                        border: "none",
-                                        borderRadius: "2px",
-                                        height: "150px",
-                                    }}
-                                >
-                                    <Card.Body className="px-3 py-2" style={{
-                                        height:'100%'
-                                    }}>
-                                        <Box className="d-flex align-items-center gap-3">
-                                            <Box
-                                                sx={{
-                                                    backgroundColor: "#202728",
-                                                    borderRadius: "50%",
-                                                    width: 45,
-                                                    height: 45,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                }}
-                                            >
-                                                <img src="/assets/receipt2.png" alt="" style={{
-                                                    width:25,
-                                                    height:25
-                                                }}/>
-                                            </Box>
-                                            <Box>
-                                                <Typography sx={{ color: "#C6C6C6", fontSize: "14px" }}>Total Room Booking</Typography>
-                                                <Typography sx={{ fontSize: "24px" }} className="m-0">
-                                                    320
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        <hr className="border-top mt-2"></hr>
-                                        <Row>
-                                            <Col>
-                                                <Typography sx={{ color: "#C6C6C6", fontSize: "12px" }}>Available Room</Typography>
-                                                <Typography variant="h6">280</Typography>
-                                            </Col>
-                                            <Col>
-                                                <Typography sx={{ color: "#C6C6C6", fontSize: "12px" }}>Total Room</Typography>
-                                                <Typography variant="h6">40</Typography>
-                                            </Col>
-                                        </Row>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
+                                                {/* Content */}
+                                                <Box sx={{ p: 2, width: "80%" }}>
+                                                    <Box
+                                                        sx={{
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            alignItems: "center",
+                                                            mt: -1
+                                                        }}
+                                                    >
+                                                        <Typography variant="h6" fontWeight="medium">
+                                                            {room.type}
+                                                        </Typography>
+                                                        <Badge
+                                                            style={{
+                                                                backgroundColor: room.color, // Make sure this is used
+                                                                color: "white",
+                                                                padding: "6px 14px",
+                                                                borderRadius: "0px",
+                                                                fontSize: "0.85rem",
+                                                                fontWeight: 500,
+                                                                minWidth: "100px",
+                                                                textAlign: "center",
+                                                                cursor: "pointer"
+                                                            }}
+                                                        >
+                                                            {room.badge}
+                                                        </Badge>
+                                                    </Box>
 
-                            {/* Total Event Booking */}
-                            <Col md={4}>
-                                <Card
-                                    style={{
-                                        backgroundColor: "#3F4E4F",
-                                        color: "white",
-                                        border: "none",
-                                        borderRadius: "2px",
-                                        height: "150px",
-                                    }}
-                                >
-                                    <Card.Body className="px-3 py-2" style={{
-                                        height:'100%'
-                                    }}>
-                                        <Box className="d-flex align-items-center gap-3">
-                                            <Box
-                                                sx={{
-                                                    backgroundColor: "#202728",
-                                                    borderRadius: "50%",
-                                                    width: 48,
-                                                    height: 48,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                }}
-                                            >
-                                                <img src="/assets/check.png" alt="" style={{
-                                                    width:25,
-                                                    height:25
-                                                }}/>
-                                            </Box>
-                                            <Box>
-                                                <Typography sx={{ color: "#C6C6C6", fontSize: "14px" }}>Total Event Booking</Typography>
-                                                <Typography variant="h5" className="m-0">
-                                                    320
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        <hr className="border-top" style={{
-                                            marginTop:13
-                                        }}></hr>
-                                        <Typography sx={{ color: "#C6C6C6", fontSize: "12px" }}>Available Event</Typography>
-                                        <Typography variant="h6">2</Typography>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        </Row>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
+                                                        <Box component="span" fontWeight="bold" color="text.primary">
+                                                            {room.price}$
+                                                        </Box>
+                                                        /per night
+                                                    </Typography>
+
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 4, mt: 2 }}>
+                                                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                                                            <LocationOnIcon fontSize="small" sx={{ color: "#666", mr: 0.5 }} />
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {room.area}
+                                                            </Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                                                            <PeopleIcon fontSize="small" sx={{ color: "#666", mr: 0.5 }} />
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {room.capacity} Capacity
+                                                            </Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                                                            <AccessTimeIcon fontSize="small" sx={{ color: "#666", mr: 0.5 }} />
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {room.time}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </Box>
+                                            </Paper>
+                                        </Grid>
+                                    );
+                                })}
+                            </Grid>
+                        </Box>
 
                         {/* Search and Filter */}
-                        <Row className="mb-3 align-items-center">
+                        <Row className="mb-3 mt-5 align-items-center">
                             <Col>
-                                <Typography variant="h6" component="h2" style={{ color: "#000000", fontWeight: 500, fontSize:'24px' }}>
+                                <Typography variant="h6" component="h2" style={{ color: "#000000", fontWeight: 500, fontSize: '24px' }}>
                                     Recently Booking
                                 </Typography>
                             </Col>
                             <Col xs="auto" className="d-flex gap-3">
-                                <div style={{ position: "relative", width: "400px", border:'1px solid #121212' }}>
+                                <div style={{ position: "relative", width: "400px", border: '1px solid #121212' }}>
                                     <Form.Control
                                         placeholder="Search"
                                         aria-label="Search"
@@ -406,7 +392,7 @@ const BookingDashboard = () => {
                                                     <Typography style={{ fontWeight: 500, fontSize: "20px", color: "#121212" }}>
                                                         {booking.type}
                                                     </Typography>
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: "14px", fontWeight:400 }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: "14px", fontWeight: 400 }}>
                                                         Created on {booking.created}
                                                     </Typography>
                                                 </div>
@@ -423,7 +409,7 @@ const BookingDashboard = () => {
                                                         minWidth: "100px",
                                                         textAlign: "center",
                                                         cursor: 'pointer',
-                                                        borderRadius:'0px'
+                                                        borderRadius: '0px'
                                                     }}
                                                 >
                                                     {booking.status}
@@ -433,34 +419,34 @@ const BookingDashboard = () => {
                                             {/* Booking Details */}
                                             <Row className="text-start mt-2">
                                                 <Col md={3} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize:'12px' }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: '12px' }}>
                                                         Booking ID
                                                     </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 400, color:'#121212', fontSize:'12px' }}>
+                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
                                                         {booking.bookingId}
                                                     </Typography>
                                                 </Col>
                                                 <Col md={4} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize:'12px' }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: '12px' }}>
                                                         Duration
                                                     </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 400, color:'#121212', fontSize:'12px' }}>
+                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
                                                         {booking.duration}
                                                     </Typography>
                                                 </Col>
                                                 <Col md={2} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize:'12px' }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: '12px' }}>
                                                         Room
                                                     </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 400, color:'#121212', fontSize:'12px' }}>
+                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
                                                         {booking.rooms}
                                                     </Typography>
                                                 </Col>
                                                 <Col md={2} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize:'12px' }}>
+                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: '12px' }}>
                                                         Night
                                                     </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 400, color:'#121212', fontSize:'12px' }}>
+                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
                                                         {booking.nights}
                                                     </Typography>
                                                 </Col>
@@ -479,22 +465,7 @@ const BookingDashboard = () => {
                             keyboard={true}
                         >
                             <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
-                                <BookingFilter />
-                            </Modal.Body>
-                        </Modal>
-
-                        {/* Room/Event Availability Dialog */}
-                        <Modal
-                            show={showAvailabilityModal}
-                            onHide={handleCloseAvailabilityModal}
-                            dialogClassName="custom-dialog-right"
-                        >
-                            <Modal.Body style={{ padding: 0, height: "100vh", overflowY: "auto" }}>
-                                {showAvailableRooms ? (
-                                    <AvailableRooms />
-                                ) : (
-                                    <RoomEventModal onFind={handleShowAvailableRooms} />
-                                )}
+                                <EventBookingFilter />
                             </Modal.Body>
                         </Modal>
                     </Container>
@@ -504,4 +475,4 @@ const BookingDashboard = () => {
     )
 }
 
-export default BookingDashboard
+export default EventScreen

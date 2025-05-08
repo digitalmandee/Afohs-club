@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useRef } from "react"
 import { Container, Button, Form, InputGroup, Modal, Card, Row, Col } from "react-bootstrap"
 import {
@@ -14,9 +12,10 @@ import {
     KeyboardArrowRight,
     Check,
 } from "@mui/icons-material"
-import { IconButton, Divider } from "@mui/material"
+import { IconButton, Divider, Box } from "@mui/material"
 import "bootstrap/dist/css/bootstrap.min.css"
 import SideNav from '@/components/App/AdminSideBar/SideNav'
+import { router } from "@inertiajs/react"
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -199,29 +198,45 @@ const RoomBooking = () => {
                     marginTop: '5rem',
                 }}
             >
-                <Container fluid className="bg-light min-vh-100 p-0">
-                    {/* Header */}
-                    <div className="d-flex align-items-center p-4">
-                        <IconButton style={{ color: "#555" }}>
-                            <ArrowBack />
-                        </IconButton>
-                        <h2 className="mb-0 ms-2 fw-normal" style={{ color: "#555" }}>
-                            {currentStep === 1 ? "Room booking" : paymentMethod === "cash" ? "Cash Payment" : "Bank Payment"}
-                        </h2>
-                    </div>
+                {/* Header */}
+                <Box sx={{ display: "flex", alignItems: "center", mt: 15, ml: 5 }}>
+                    <IconButton style={{ color: "#3F4E4F" }}
+                        onClick={() => router.visit('/admin/booking/dashboard')}
+                    >
+                        <ArrowBack />
+                    </IconButton>
+                    <h2 className="mb-0 fw-normal" style={{ color: "#3F4E4F", fontSize: '30px' }}>
+                        {currentStep === 1
+                            ? bookingType === "room"
+                                ? "Room Booking"
+                                : "Event Booking"
+                            : paymentMethod === "cash"
+                                ? "Cash Payment"
+                                : "Bank Payment"}
+                    </h2>
+                </Box>
 
-                    {/* Stepper */}
-                    <div className="mx-4 mb-4 p-3 bg-light rounded">
-                        <div className="d-flex align-items-center position-relative">
+                <Box sx={{
+                    margin: '0 auto',
+                    maxWidth: '600px',
+                    bgcolor: '#FFFFFF',
+                    borderRadius: '4px',
+                    marginTop: 5
+                }}>
+                    <div className="mx-4 mb-4 p-3" style={{
+                        backgroundColor: '#E7E7E7',
+                        borderRadius: '2px'
+                    }}>
+                        <div className="d-flex align-items-center justify-content-center position-relative">
                             {/* Line */}
                             <div
                                 className="position-absolute"
                                 style={{
                                     height: "2px",
-                                    backgroundColor: "#e9ecef",
-                                    width: "100%",
+                                    backgroundColor: "#FFFFFF",
+                                    width: "300px",
                                     top: "50%",
-                                    transform: "translateY(-50%)",
+                                    // transform: "translateY(-50%)",
                                     zIndex: 1,
                                 }}
                             ></div>
@@ -235,7 +250,11 @@ const RoomBooking = () => {
                                 >
                                     {currentStep > 1 ? <Check style={{ fontSize: "18px" }} /> : "1"}
                                 </div>
-                                <span className="ms-2 small">First Step</span>
+                                <span className="ms-2 small" style={{
+                                    color: '#121212',
+                                    fontSize: '14px',
+                                    fontWeight: 500
+                                }}>First Step</span>
                             </div>
 
                             {/* Spacer */}
@@ -250,7 +269,11 @@ const RoomBooking = () => {
                                 >
                                     2
                                 </div>
-                                <span className="ms-2 small">Final Step</span>
+                                <span className="ms-2 small" style={{
+                                    color: '#121212',
+                                    fontSize: '14px',
+                                    fontWeight: 500
+                                }}>Final Step</span>
                             </div>
                         </div>
                     </div>
@@ -259,27 +282,39 @@ const RoomBooking = () => {
                     <div className="mx-4 mb-4 p-4 bg-white rounded border">
                         {currentStep === 1 && (
                             <>
-                                <h6 className="mb-4">Choose booking Type</h6>
+                                <h6 className="mb-4" style={{
+                                    color: '#121212',
+                                    fontSize: '16px',
+                                }}>Choose Booking Type</h6>
                                 <Row className="mb-4 gx-3">
                                     <Col md={6} className="mb-3 mb-md-0">
                                         <div
-                                            className={`border rounded p-3 text-center ${bookingType === "room" ? "bg-info bg-opacity-10 border-info" : ""
-                                                }`}
+                                            className={`border rounded p-3 text-center`}
                                             onClick={() => handleBookingTypeSelect("room")}
-                                            style={{ cursor: "pointer" }}
+                                            style={{
+                                                cursor: "pointer",
+                                                backgroundColor: bookingType === "room" ? "#B0DEFF" : "transparent",
+                                                border: bookingType === "room" ? "1px solid #063455" : "1px solid #dee2e6", // default border color
+                                            }}
                                         >
                                             <div className="d-flex justify-content-center mb-2">
-                                                <EventNote style={{ color: "#555" }} />
+                                                <img src="/assets/room.png" alt="" style={{
+                                                    width: 24,
+                                                    height: 24
+                                                }} />
                                             </div>
                                             <div>Room</div>
                                         </div>
                                     </Col>
                                     <Col md={6}>
                                         <div
-                                            className={`border rounded p-3 text-center ${bookingType === "events" ? "bg-info bg-opacity-10 border-info" : ""
-                                                }`}
+                                            className={`border rounded p-3 text-center`}
                                             onClick={() => handleBookingTypeSelect("events")}
-                                            style={{ cursor: "pointer" }}
+                                            style={{
+                                                cursor: "pointer",
+                                                backgroundColor: bookingType === "events" ? "#B0DEFF" : "transparent",
+                                                border: bookingType === "events" ? "1px solid #063455" : "1px solid #dee2e6", // default border color
+                                            }}
                                         >
                                             <div className="d-flex justify-content-center mb-2">
                                                 <EventNote style={{ color: "#555" }} />
@@ -291,19 +326,31 @@ const RoomBooking = () => {
 
                                 <Form>
                                     <Form.Group className="mb-4">
-                                        <Form.Control
-                                            type="text"
-                                            value={`Booking ID : ${formData.bookingId}`}
-                                            disabled
-                                            className="bg-light border-0"
-                                            style={{ color: "#555" }}
-                                        />
+                                        <div
+                                            className="form-control"
+                                            style={{
+                                                backgroundColor: "#e9ecef", // matches disabled input bg
+                                                color: "#7F7F7F",
+                                                border: "none",
+                                                borderRadius: "4px",
+                                                padding: "0.375rem 0.75rem",
+                                                display: "flex",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <span style={{ color: "#7F7F7F" }}>Booking ID : </span>
+                                            <span style={{ color: "#063455", marginLeft: "4px", fontWeight: 700 }}>{formData.bookingId}</span>
+                                        </div>
                                     </Form.Group>
 
                                     <Row className="mb-3 gx-3">
                                         <Col md={6} className="mb-3 mb-md-0">
                                             <Form.Group>
-                                                <Form.Label className="small">Members ID</Form.Label>
+                                                <Form.Label className="small" style={{
+                                                    color: '#121212',
+                                                    fontSize: '14px',
+                                                    fontWeight: 400
+                                                }}>Members ID</Form.Label>
                                                 <Form.Control
                                                     type="text"
                                                     placeholder="e.g: MEM2025"
@@ -316,7 +363,11 @@ const RoomBooking = () => {
                                         </Col>
                                         <Col md={6}>
                                             <Form.Group>
-                                                <Form.Label className="small">Full Name</Form.Label>
+                                                <Form.Label className="small" style={{
+                                                    color: '#121212',
+                                                    fontSize: '14px',
+                                                    fontWeight: 400
+                                                }}>Full Name</Form.Label>
                                                 <Form.Control
                                                     type="text"
                                                     placeholder="e.g: Dianne"
@@ -332,7 +383,11 @@ const RoomBooking = () => {
                                     <Row className="mb-3 gx-3">
                                         <Col md={6} className="mb-3 mb-md-0">
                                             <Form.Group>
-                                                <Form.Label className="small">Contact Number</Form.Label>
+                                                <Form.Label className="small" style={{
+                                                    color: '#121212',
+                                                    fontSize: '14px',
+                                                    fontWeight: 400
+                                                }}>Contact Number</Form.Label>
                                                 <InputGroup>
                                                     <InputGroup.Text className="bg-white border">+92</InputGroup.Text>
                                                     <Form.Control
@@ -347,7 +402,11 @@ const RoomBooking = () => {
                                         </Col>
                                         <Col md={6}>
                                             <Form.Group>
-                                                <Form.Label className="small">Email ID</Form.Label>
+                                                <Form.Label className="small" style={{
+                                                    color: '#121212',
+                                                    fontSize: '14px',
+                                                    fontWeight: 400
+                                                }}>Email ID</Form.Label>
                                                 <Form.Control
                                                     type="email"
                                                     placeholder="diannerussell@gmail.com"
@@ -364,7 +423,11 @@ const RoomBooking = () => {
                                         <Row className="mb-3 gx-3">
                                             <Col md={6} className="mb-3 mb-md-0">
                                                 <Form.Group>
-                                                    <Form.Label className="small">{bookingType === "room" ? "Person" : "Rooms"}</Form.Label>
+                                                    <Form.Label className="small" style={{
+                                                        color: '#121212',
+                                                        fontSize: '14px',
+                                                        fontWeight: 400
+                                                    }}>{bookingType === "room" ? "Person" : "Rooms"}</Form.Label>
                                                     <InputGroup>
                                                         <Button
                                                             variant="outline-secondary"
@@ -391,7 +454,11 @@ const RoomBooking = () => {
                                             </Col>
                                             <Col md={6}>
                                                 <Form.Group>
-                                                    <Form.Label className="small">Total Payment</Form.Label>
+                                                    <Form.Label className="small" style={{
+                                                        color: '#121212',
+                                                        fontSize: '14px',
+                                                        fontWeight: 400
+                                                    }}>Total Payment</Form.Label>
                                                     <InputGroup>
                                                         <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
                                                         <Form.Control
@@ -411,7 +478,11 @@ const RoomBooking = () => {
                                             <Row className="mb-3 gx-3">
                                                 <Col md={6} className="mb-3 mb-md-0">
                                                     <Form.Group>
-                                                        <Form.Label className="small">Event Name</Form.Label>
+                                                        <Form.Label className="small" style={{
+                                                            color: '#121212',
+                                                            fontSize: '14px',
+                                                            fontWeight: 400
+                                                        }}>Event Name</Form.Label>
                                                         <Form.Control
                                                             type="text"
                                                             placeholder="e.g: Conference"
@@ -424,7 +495,11 @@ const RoomBooking = () => {
                                                 </Col>
                                                 <Col md={6}>
                                                     <Form.Group>
-                                                        <Form.Label className="small">Event Date</Form.Label>
+                                                        <Form.Label className="small" style={{
+                                                            color: '#121212',
+                                                            fontSize: '14px',
+                                                            fontWeight: 400
+                                                        }}>Event Date</Form.Label>
                                                         <Form.Control
                                                             type="date"
                                                             name="eventDate"
@@ -438,7 +513,11 @@ const RoomBooking = () => {
                                             <Row className="mb-3 gx-3">
                                                 <Col md={6} className="mb-3 mb-md-0">
                                                     <Form.Group>
-                                                        <Form.Label className="small">Event Time</Form.Label>
+                                                        <Form.Label className="small" style={{
+                                                            color: '#121212',
+                                                            fontSize: '14px',
+                                                            fontWeight: 400
+                                                        }}>Event Time</Form.Label>
                                                         <Form.Control
                                                             type="time"
                                                             name="eventTime"
@@ -450,7 +529,11 @@ const RoomBooking = () => {
                                                 </Col>
                                                 <Col md={6}>
                                                     <Form.Group>
-                                                        <Form.Label className="small">Total Payment</Form.Label>
+                                                        <Form.Label className="small" style={{
+                                                            color: '#121212',
+                                                            fontSize: '14px',
+                                                            fontWeight: 400
+                                                        }}>Total Payment</Form.Label>
                                                         <InputGroup>
                                                             <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
                                                             <Form.Control
@@ -487,30 +570,55 @@ const RoomBooking = () => {
 
                         {currentStep === 2 && (
                             <>
-                                <h6 className="mb-4">Choose Payment Method</h6>
+                                <h6 className="mb-4" style={{
+                                    color: '#121212',
+                                    fontWeight: 500,
+                                    fontSize: '20px'
+                                }}>Choose Payment Method</h6>
                                 <Row className="mb-4 gx-3">
                                     <Col md={6} className="mb-3 mb-md-0">
                                         <div
-                                            className={`border rounded p-3 text-center ${paymentMethod === "cash" ? "bg-info bg-opacity-10 border-info" : ""
-                                                }`}
+                                            className="border rounded p-3 text-center"
                                             onClick={() => handlePaymentMethodSelect("cash")}
-                                            style={{ cursor: "pointer" }}
+                                            style={{
+                                                cursor: "pointer",
+                                                backgroundColor: paymentMethod === "cash" ? "#B0DEFF" : "transparent",
+                                                border: paymentMethod === "cash" ? "1px solid #063455" : "1px solid #dee2e6",
+                                            }}
                                         >
                                             <div className="d-flex justify-content-center mb-2">
-                                                <CreditCard style={{ color: "#555" }} />
+                                                <img
+                                                    src="/assets/money-bills.png"
+                                                    alt=""
+                                                    style={{
+                                                        width: 24,
+                                                        height: 20,
+                                                    }}
+                                                />
                                             </div>
                                             <div>Cash</div>
                                         </div>
                                     </Col>
+
                                     <Col md={6}>
                                         <div
-                                            className={`border rounded p-3 text-center ${paymentMethod === "bank" ? "bg-info bg-opacity-10 border-info" : ""
-                                                }`}
+                                            className="border rounded p-3 text-center"
                                             onClick={() => handlePaymentMethodSelect("bank")}
-                                            style={{ cursor: "pointer" }}
+                                            style={{
+                                                cursor: "pointer",
+                                                backgroundColor: paymentMethod === "bank" ? "#B0DEFF" : "transparent",
+                                                border: paymentMethod === "bank" ? "1px solid #063455" : "1px solid #dee2e6",
+                                            }}
                                         >
                                             <div className="d-flex justify-content-center mb-2">
-                                                <AccountBalance style={{ color: "#555" }} />
+                                                <img
+                                                    src="/assets/credit-card-change.png"
+                                                    alt=""
+                                                    style={{
+                                                        width: 24,
+                                                        height: 20,
+                                                    }}
+                                                />
                                             </div>
                                             <div>Bank Transfer</div>
                                         </div>
@@ -522,7 +630,11 @@ const RoomBooking = () => {
                                         <Row className="mb-3 gx-3">
                                             <Col md={6} className="mb-3 mb-md-0">
                                                 <Form.Group>
-                                                    <Form.Label className="small">Input Amount</Form.Label>
+                                                    <Form.Label className="small" style={{
+                                                        color: '#121212',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px'
+                                                    }}>Input Amount</Form.Label>
                                                     <InputGroup>
                                                         <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
                                                         <Form.Control
@@ -537,7 +649,11 @@ const RoomBooking = () => {
                                             </Col>
                                             <Col md={6}>
                                                 <Form.Group>
-                                                    <Form.Label className="small">Customer Changes</Form.Label>
+                                                    <Form.Label className="small" style={{
+                                                        color: '#121212',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px'
+                                                    }}>Customer Changes</Form.Label>
                                                     <h4>Rs {formData.customerChange.toFixed(2)}</h4>
                                                 </Form.Group>
                                             </Col>
@@ -686,10 +802,7 @@ const RoomBooking = () => {
                             </>
                         )}
                     </div>
-
-                    {/* Success Modal */}
-
-                </Container>
+                </Box>
             </div>
         </>
     )

@@ -1,7 +1,7 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
-import { Close as CloseIcon, CreditCard as CreditCardIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, Paper, TextField, Typography } from '@mui/material';
+import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
+import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, Paper, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
@@ -13,12 +13,6 @@ const OrderDetail = ({ handleEditItem }) => {
     const taxRate = 0.12;
     const taxAmount = subtotal * taxRate;
     const total = subtotal + taxAmount - discount;
-
-    const handleCashTotalChange = (e) => {
-        const value = parseFloat(e.target.value) || 0;
-        handleOrderDetailChange('cash_total', value.toFixed(2));
-        handleOrderDetailChange('customer_change', (value - total).toFixed(2));
-    };
 
     // Automatically update customer change when order_items or cash_total changes
     useEffect(() => {
@@ -51,6 +45,12 @@ const OrderDetail = ({ handleEditItem }) => {
             },
         });
     };
+
+    function formatTime(time) {
+        const date = new Date(`1970-01-01T${time}:00Z`);
+        const options = { hour: '2-digit', minute: '2-digit', hour12: true };
+        return date.toLocaleString('en-US', options);
+    }
 
     return (
         <>
@@ -92,7 +92,9 @@ const OrderDetail = ({ handleEditItem }) => {
                                     </Box>
                                 </Box>
                                 <Box sx={{ display: 'flex', gap: 1 }}>
-                                    <Avatar sx={{ width: 28, height: 28, bgcolor: '#1976d2', fontSize: 12 }}>{orderDetails.table}</Avatar>
+                                    {orderDetails.table && (
+                                        <Avatar sx={{ width: 28, height: 28, bgcolor: '#1976d2', fontSize: 12 }}>{orderDetails.table}</Avatar>
+                                    )}
                                     <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                         <CloseIcon fontSize="small" />
                                     </IconButton>
@@ -132,7 +134,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                         Order Time
                                     </Typography>
                                     <Typography variant="body2" fontWeight="medium">
-                                        {orderDetails.time}
+                                        {formatTime(orderDetails.time)}
                                     </Typography>
                                 </Grid>
                             </Grid>
@@ -233,74 +235,6 @@ const OrderDetail = ({ handleEditItem }) => {
                             <Typography variant="subtitle2">Rs {total.toFixed(2)}</Typography>
                         </Box>
                         <Divider sx={{ my: 2 }} />
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="subtitle2">
-                                <b>Cash Total</b>
-                            </Typography>
-                            <TextField
-                                variant="outlined"
-                                size="small"
-                                type="number"
-                                value={orderDetails.cash_total}
-                                onChange={handleCashTotalChange}
-                                sx={{ width: '50%' }}
-                            />
-                        </Box>
-                    </Box>
-
-                    {/* Payment Info */}
-                    <Box
-                        sx={{
-                            border: '1px solid #E3E3E3',
-                            borderRadius: 1,
-                            overflow: 'hidden', // ensures borders align perfectly
-                        }}
-                    >
-                        <Grid container>
-                            <Grid
-                                item
-                                xs={4}
-                                sx={{
-                                    borderRight: '1px solid #E3E3E3',
-                                    p: 1.5,
-                                }}
-                            >
-                                <Typography variant="caption" color="text.secondary">
-                                    Payment
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                    <CreditCardIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="body2" fontWeight="medium">
-                                        Cash
-                                    </Typography>
-                                </Box>
-                            </Grid>
-
-                            <Grid
-                                item
-                                xs={4}
-                                sx={{
-                                    borderRight: '1px solid #E3E3E3',
-                                    p: 1.5,
-                                }}
-                            >
-                                <Typography variant="caption" color="text.secondary">
-                                    Cash Total
-                                </Typography>
-                                <Typography variant="body2" fontWeight="medium" mt={0.5}>
-                                    Rs {orderDetails.cash_total}
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={4} sx={{ p: 1.5 }}>
-                                <Typography variant="caption" color="text.secondary">
-                                    Customer Change
-                                </Typography>
-                                <Typography variant="body2" fontWeight="medium" mt={0.5}>
-                                    Rs {parseFloat(orderDetails.customer_change || 0).toFixed(2)}
-                                </Typography>
-                            </Grid>
-                        </Grid>
                     </Box>
 
                     {/* Action Buttons */}
@@ -318,9 +252,7 @@ const OrderDetail = ({ handleEditItem }) => {
                         </Button>
                         <Button
                             variant="outlined"
-                            disabled={
-                                parseFloat(orderDetails.cash_total || 0) < total || orderDetails.order_items.length == 0 || !orderDetails.member
-                            }
+                            disabled={orderDetails.order_items.length == 0 || !orderDetails.member}
                             onClick={handleSendToKitchen}
                             sx={{
                                 flex: 2,
@@ -334,9 +266,7 @@ const OrderDetail = ({ handleEditItem }) => {
                         <Button
                             variant="contained"
                             startIcon={<PrintIcon />}
-                            disabled={
-                                parseFloat(orderDetails.cash_total || 0) < total || orderDetails.order_items.length == 0 || !orderDetails.member
-                            }
+                            disabled={orderDetails.order_items.length == 0 || !orderDetails.member}
                             sx={{
                                 flex: 2,
                                 bgcolor: '#0a3d62',

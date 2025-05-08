@@ -19,8 +19,9 @@ import {
     ExpandLess as ExpandLessIcon,
     CalendarToday as CalendarIcon,
 } from "@mui/icons-material"
+// import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
-const BookingFilter = () => {
+const EventBookingFilter = () => {
     const [open, setOpen] = useState(true)
     const [roomType, setRoomType] = useState("deluxe")
     const [bookingStatus, setBookingStatus] = useState("all")
@@ -85,7 +86,7 @@ const BookingFilter = () => {
                     <Typography variant="h6" fontWeight="500" fontSize="32px" sx={{
                         color: '#121212'
                     }}>
-                        Booking Filter
+                        Event Booking Filter
                     </Typography>
                     <IconButton onClick={handleClose} size="small">
                         <CloseIcon />
@@ -106,7 +107,7 @@ const BookingFilter = () => {
                             onClick={() => toggleSection("roomType")}
                         >
                             <Typography variant="body1" fontWeight="medium">
-                                Room Type
+                                Event Type
                             </Typography>
                             {expanded.roomType ? (
                                 <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
@@ -117,7 +118,7 @@ const BookingFilter = () => {
                         <Collapse in={expanded.roomType}>
                             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                                 <Chip
-                                    label="Deluxe room"
+                                    label="All Type"
                                     onClick={() => handleRoomTypeChange("deluxe")}
                                     sx={{
                                         bgcolor: roomType === "deluxe" ? "#0a3d62" : "#e3f2fd",
@@ -130,7 +131,7 @@ const BookingFilter = () => {
                                     }}
                                 />
                                 <Chip
-                                    label="Standard room"
+                                    label="Annual Gala"
                                     onClick={() => handleRoomTypeChange("standard")}
                                     sx={{
                                         bgcolor: roomType === "standard" ? "#0a3d62" : "#e3f2fd",
@@ -143,7 +144,7 @@ const BookingFilter = () => {
                                     }}
                                 />
                                 <Chip
-                                    label="Suit room"
+                                    label="Sports Night"
                                     onClick={() => handleRoomTypeChange("suit")}
                                     sx={{
                                         bgcolor: roomType === "suit" ? "#0a3d62" : "#e3f2fd",
@@ -152,19 +153,6 @@ const BookingFilter = () => {
                                         fontWeight: roomType === "suit" ? 500 : 400,
                                         "&:hover": {
                                             bgcolor: roomType === "suit" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Family room"
-                                    onClick={() => handleRoomTypeChange("family")}
-                                    sx={{
-                                        bgcolor: roomType === "family" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "family" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "family" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "family" ? "#0a3d62" : "#d0e8fd",
                                         },
                                     }}
                                 />
@@ -185,7 +173,7 @@ const BookingFilter = () => {
                             onClick={() => toggleSection("bookingStatus")}
                         >
                             <Typography variant="body1" fontWeight="medium">
-                                Booking Status
+                                Event Booking Status
                             </Typography>
                             {expanded.bookingStatus ? (
                                 <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
@@ -231,53 +219,6 @@ const BookingFilter = () => {
                                         fontWeight: bookingStatus === "pending" ? 500 : 400,
                                         "&:hover": {
                                             bgcolor: bookingStatus === "pending" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                            </Box>
-                        </Collapse>
-                    </Box>
-
-                    {/* Event by date */}
-                    <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.eventDate ? 1.5 : 0,
-                                cursor: "pointer",
-                            }}
-                            onClick={() => toggleSection("eventDate")}
-                        >
-                            <Typography variant="body1" fontWeight="medium">
-                                Event by date
-                            </Typography>
-                            {expanded.eventDate ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
-                        </Box>
-                        <Collapse in={expanded.eventDate}>
-                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Date
-                                </Typography>
-                                <TextField
-                                    placeholder="Select date"
-                                    value={eventDate}
-                                    onChange={(e) => setEventDate(e.target.value)}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <CalendarIcon fontSize="small" sx={{ color: "#999" }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{
-                                        ".MuiOutlinedInput-root": {
-                                            borderRadius: 1,
                                         },
                                     }}
                                 />
@@ -388,4 +329,4 @@ const BookingFilter = () => {
     )
 }
 
-export default BookingFilter
+export default EventBookingFilter

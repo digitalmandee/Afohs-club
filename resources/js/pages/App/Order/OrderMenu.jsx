@@ -429,7 +429,11 @@ const OrderMenu = () => {
                             </Box>
 
                             {/* Conditional rendering based on active view */}
-                            {activeView === 'orderDetail' ? <OrderDetail handleEditItem={handleEditItem} /> : <OrderSaved />}
+                            {activeView === 'orderDetail' ? (
+                                <OrderDetail handleEditItem={handleEditItem} />
+                            ) : (
+                                <OrderSaved setActiveView={setActiveView} />
+                            )}
                         </Paper>
                     </Box>
                 </Box>

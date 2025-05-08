@@ -1,9 +1,15 @@
 import { router, usePage } from '@inertiajs/react';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { useState } from 'react';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { Avatar, Button } from '@mui/material';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import PeopleIcon from '@mui/icons-material/People';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { Avatar, Button, Collapse } from '@mui/material';
 import MuiAppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -91,9 +97,59 @@ export default function SideNav({ open, setOpen }) {
     const [showProfile, setShowProfile] = React.useState(false);
     const [showOrder, setShowOrder] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
+
+    const [openDropdown, setOpenDropdown] = useState({});
+    const toggleDropdown = (text) => {
+        if (!open) return; // Prevent toggling if drawer is closed
+        setOpenDropdown((prev) => ({ ...prev, [text]: !prev[text] }));
+    };
+
+    // const menuItems = [
+    //     { text: 'Dashboard', icon: <HomeIcon />, path: '/admin/dashboard' },
+    //     { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/admin/booking/dashboard' },
+    // ];
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: '/admin/dashboard' },
-        { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/admin/booking/dashboard' },
+        {
+            text: 'Dashboard',
+            icon: <HomeIcon />,
+            path: '/admin/dashboard',
+        },
+        {
+            text: 'Room & Booking Event',
+            icon: <CalendarMonthIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: '/admin/booking/dashboard',
+                },
+                {
+                    text: 'Rooms',
+                    path: '/admin/rooms/manage',
+                },
+                {
+                    text: 'Events',
+                    path: '/admin/events/manage',
+                },
+            ],
+        },
+        {
+            text: 'Employee Management',
+            icon: <PeopleIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: '/admin/employee/dashboard',
+                },
+                {
+                    text: 'Department',
+                    path: '',
+                },
+                {
+                    text: 'Attendance',
+                    path: '',
+                },
+            ],
+        },
     ];
 
     return (
@@ -247,77 +303,106 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' }, // Chrome & Safari
                     }}
                 >
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            p: 1,
-                            mt: 2,
-                        }}
-                    >
-                        <Button
-                            variant="text"
-                            sx={{
-                                backgroundColor: '#0A2647',
-                                color: '#fff',
-                                '&:hover': { backgroundColor: '#09203F' },
-                                width: open ? '90%' : '100px',
-                                minWidth: '50px',
-                                height: '40px',
-                                fontSize: open ? '16px' : '12px',
-                                textTransform: 'none',
-                                overflow: 'hidden',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.3s ease-in-out',
-                            }}
-                            onClick={() => router.visit('/new/order')}
-                        >
-                            {open ? '+ New Order' : '+ New Order'}
-                        </Button>
-                    </Box>
-
-                    <List>
-                        {menuItems.map(({ text, icon, path }) => {
-                            const isSelected = url === path;
+                    <List sx={{ mt: 2 }}>
+                        {menuItems.map(({ text, icon, path, children }) => {
+                            const isDropdownOpen = openDropdown[text];
+                            const isSelected = url === path || (children && children.some(child => url === child.path));
+                            // Main ListItem (with or without dropdown)
                             return (
-                                <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
-                                    <ListItemButton
-                                        onClick={() => router.visit(path)}
-                                        sx={{
-                                            minHeight: 50,
-                                            justifyContent: open ? 'initial' : 'center',
-                                            mx: open ? 0.5 : 3,
-                                            borderRadius: '12px',
-                                            backgroundColor: isSelected ? '#333' : 'transparent',
-                                            '&:hover': { backgroundColor: '#444' },
-                                        }}
-                                    >
-                                        <ListItemIcon
+                                <Box key={text}>
+                                    <ListItem disablePadding sx={{ display: 'block', p: 0.5 }}>
+                                        <ListItemButton
+                                            onClick={() => {
+                                                if (children) {
+                                                    toggleDropdown(text);
+                                                } else {
+                                                    router.visit(path);
+                                                }
+                                            }}
                                             sx={{
-                                                minWidth: 0,
-                                                justifyContent: 'center',
-                                                mr: open ? 0.8 : 'auto',
-                                                ml: open ? -2 : 0,
-                                                '& svg': {
-                                                    fill: isSelected ? 'orange' : '#fff',
-                                                },
+                                                minHeight: 50,
+                                                justifyContent: open ? 'initial' : 'center',
+                                                mx: open ? 0.5 : 3,
+                                                borderRadius: '12px',
+                                                backgroundColor: isSelected ? '#333' : 'transparent',
+                                                '&:hover': { backgroundColor: '#444' },
                                             }}
                                         >
-                                            {icon}
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={text}
-                                            sx={{
-                                                color: isSelected ? 'orange' : '#fff',
-                                                opacity: open ? 1 : 0,
-                                            }}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
+                                            <ListItemIcon
+                                                sx={{
+                                                    minWidth: 0,
+                                                    justifyContent: 'center',
+                                                    mr: open ? 0.8 : 'auto',
+                                                    ml: open ? -2 : 0,
+                                                    '& svg': {
+                                                        fill: isSelected ? 'orange' : '#fff',
+                                                    },
+                                                }}
+                                            >
+                                                {icon}
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={text}
+                                                sx={{
+                                                    color: isSelected ? 'orange' : '#fff',
+                                                    opacity: open ? 1 : 0,
+                                                }}
+                                            />
+                                            {children && open && (
+                                                <KeyboardArrowRightIcon
+                                                    sx={{
+                                                        transform: isDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                                        transition: 'transform 0.2s',
+                                                        fill: '#fff',
+                                                        ml: 21.5,
+                                                    }}
+                                                />
+                                            )}
+                                        </ListItemButton>
+                                    </ListItem>
+
+                                    {/* Submenu Rendering */}
+                                    {children && open && isDropdownOpen && (
+                                        <Collapse in={isDropdownOpen} timeout="auto" unmountOnExit>
+                                            <List component="div" disablePadding>
+                                                {children.map((child) => {
+                                                    const isChildSelected = url === child.path;
+                                                    return (
+                                                        <ListItem
+                                                            key={child.text}
+                                                            disablePadding
+                                                            sx={{
+                                                                mt: 1,
+                                                                pl: 1,
+
+                                                            }}
+                                                        >
+                                                            <ListItemButton
+                                                                onClick={() => router.visit(child.path)}
+                                                                sx={{
+                                                                    minHeight: 40,
+                                                                    justifyContent: 'initial',
+                                                                    mx: 3,
+                                                                    borderRadius: '12px',
+                                                                    backgroundColor: isChildSelected ? '#333' : 'transparent',
+                                                                    '&:hover': { backgroundColor: '#444' },
+                                                                }}
+                                                            >
+                                                                <ListItemText
+                                                                    primary={child.text}
+                                                                    sx={{
+                                                                        color: isChildSelected ? 'orange' : '#fff',
+                                                                        opacity: open ? 1 : 0,
+                                                                    }}
+                                                                />
+                                                            </ListItemButton>
+                                                        </ListItem>
+                                                    );
+                                                })}
+                                            </List>
+                                        </Collapse>
+                                    )}
+                                </Box>
                             );
                         })}
                     </List>

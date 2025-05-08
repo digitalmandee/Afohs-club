@@ -49,6 +49,8 @@ export const useOrderStore = create((set, get) => ({
     monthYear: new Date(),
     setMonthYear: (value) => set({ monthYear: value }),
 
+    setOrderDetails: (details) => set({ orderDetails: details }),
+
     orderDetails: {
         order_no: '',
         order_type: 'dineIn',
@@ -67,13 +69,34 @@ export const useOrderStore = create((set, get) => ({
         customer_change: 0,
     },
 
-    setInitialOrder: ({ orderNo, memberTypes, floorTables }) =>
+    resetOrderDetails: () => set({
+        orderDetails: {
+            order_no: '',
+            order_type: 'dineIn',
+            membership_type: '',
+            member: null,
+            person_count: 1,
+            waiter: null,
+            table: '',
+            floor: '',
+            date: new Date(),
+            time: dayjs().format('HH:mm'),
+            order_items: [],
+            order_status: 'pending',
+            payment_method: 'cash',
+            cash_total: 0,
+            customer_change: 0,
+        }
+    }),
+
+    setInitialOrder: ({ orderNo, memberTypes, floorTables, time }) =>
         set((state) => ({
             orderDetails: {
                 ...state.orderDetails,
                 order_no: orderNo,
                 membership_type: memberTypes[0]?.id ?? '',
                 floor: floorTables[0]?.id ?? '',
+                time: time ?? dayjs().format('HH:mm'),
             },
         })),
 
@@ -86,10 +109,14 @@ export const useOrderStore = create((set, get) => ({
         })),
 
     handleOrderTypeChange: (value) => {
-        const { orderDetails, handleOrderDetailChange } = get();
+        const { orderDetails, handleOrderDetailChange, resetOrderDetails } = get();
         if (value === null || value === orderDetails.order_type) return;
+
+        resetOrderDetails();
         handleOrderDetailChange('order_type', value);
-        handleOrderDetailChange('member', '');
+        if (value === 'reservation') {
+            handleOrderDetailChange('time', '13:00');
+        }
     },
 
     weeks: [],
@@ -113,3 +140,4 @@ export const useOrderStore = create((set, get) => ({
         }
     }
 }));
+

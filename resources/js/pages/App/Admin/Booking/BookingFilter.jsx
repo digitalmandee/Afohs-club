@@ -19,8 +19,9 @@ import {
     ExpandLess as ExpandLessIcon,
     CalendarToday as CalendarIcon,
 } from "@mui/icons-material"
+// import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
-const BookingFilter = () => {
+const RoomBookingFilter = () => {
     const [open, setOpen] = useState(true)
     const [roomType, setRoomType] = useState("deluxe")
     const [bookingStatus, setBookingStatus] = useState("all")
@@ -85,7 +86,7 @@ const BookingFilter = () => {
                     <Typography variant="h6" fontWeight="500" fontSize="32px" sx={{
                         color: '#121212'
                     }}>
-                        Booking Filter
+                        Room Booking Filter
                     </Typography>
                     <IconButton onClick={handleClose} size="small">
                         <CloseIcon />
@@ -238,53 +239,6 @@ const BookingFilter = () => {
                         </Collapse>
                     </Box>
 
-                    {/* Event by date */}
-                    <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.eventDate ? 1.5 : 0,
-                                cursor: "pointer",
-                            }}
-                            onClick={() => toggleSection("eventDate")}
-                        >
-                            <Typography variant="body1" fontWeight="medium">
-                                Event by date
-                            </Typography>
-                            {expanded.eventDate ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
-                        </Box>
-                        <Collapse in={expanded.eventDate}>
-                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Date
-                                </Typography>
-                                <TextField
-                                    placeholder="Select date"
-                                    value={eventDate}
-                                    onChange={(e) => setEventDate(e.target.value)}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <CalendarIcon fontSize="small" sx={{ color: "#999" }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{
-                                        ".MuiOutlinedInput-root": {
-                                            borderRadius: 1,
-                                        },
-                                    }}
-                                />
-                            </Box>
-                        </Collapse>
-                    </Box>
-
                     {/* Date Range */}
                     <Box sx={{ px: 2, py: 2, border: "1px solid #E3E3E3" }}>
                         <Box
@@ -388,4 +342,4 @@ const BookingFilter = () => {
     )
 }
 
-export default BookingFilter
+export default RoomBookingFilter

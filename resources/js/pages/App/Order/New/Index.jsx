@@ -16,6 +16,7 @@ import {
     ToggleButtonGroup,
     Typography,
 } from '@mui/material';
+import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import DineDialog from './Dine';
 import ReservationDialog from './Reservation';
@@ -25,18 +26,8 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
-    const {
-        orderDetails,
-        weeks,
-        initWeeks,
-        selectedWeek,
-        monthYear,
-        setMonthYear,
-        setInitialOrder,
-        handleOrderDetailChange,
-        handleOrderTypeChange,
-        handleWeekChange,
-    } = useOrderStore();
+    const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails } =
+        useOrderStore();
 
     const [open, setOpen] = useState(false);
     const [showData, setShowData] = useState(false);
@@ -47,7 +38,8 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
     }, [monthYear]);
 
     useEffect(() => {
-        setInitialOrder({ orderNo, memberTypes, floorTables });
+        resetOrderDetails();
+        setInitialOrder({ orderNo, memberTypes, floorTables, time: dayjs().format('HH:mm') });
     }, []);
 
     return (
