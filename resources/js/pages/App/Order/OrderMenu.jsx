@@ -1,6 +1,7 @@
 'use client';
 
 import SideNav from '@/components/App/SideBar/SideNav';
+import { tenantAsset } from '@/helpers/asset';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
@@ -181,7 +182,7 @@ const OrderMenu = () => {
                                     >
                                         {/* Skip image for first item */}
                                         <Avatar
-                                            src={category.image}
+                                            src={tenantAsset(category.image)}
                                             alt={category.name}
                                             sx={{
                                                 width: 40,
@@ -333,7 +334,7 @@ const OrderMenu = () => {
                                                         >
                                                             <Box
                                                                 component="img"
-                                                                src={product.images[0]}
+                                                                src={tenantAsset(product.images[0])}
                                                                 alt={product.name}
                                                                 sx={{
                                                                     width: '100%',
