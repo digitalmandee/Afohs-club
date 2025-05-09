@@ -1,14 +1,14 @@
-import React, { useState } from "react"
-import "bootstrap/dist/css/bootstrap.min.css"
-import { Container, Row, Col, Card, Form, Badge, Modal } from "react-bootstrap"
-import { Search, FilterAlt, Add, CreditCard, Person, Bathroom, ArrowBack, Bed } from "@mui/icons-material"
-import { ThemeProvider, createTheme, Button, Box, Typography, Paper, IconButton, Grid } from "@mui/material"
+import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
-import SideNav from '@/components/App/AdminSideBar/SideNav'
-import EventBookingFilter from "./EventFilter"
+import { Add, ArrowBack, FilterAlt, Search } from '@mui/icons-material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PeopleIcon from '@mui/icons-material/People';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { Box, Button, Grid, IconButton, Paper, ThemeProvider, Typography, createTheme } from '@mui/material';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { useState } from 'react';
+import { Badge, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap';
+import EventBookingFilter from './EventFilter';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -16,19 +16,19 @@ const drawerWidthClosed = 110;
 const theme = createTheme({
     palette: {
         primary: {
-            main: "#0e3c5f",
+            main: '#0e3c5f',
         },
         secondary: {
-            main: "#2c3e50",
+            main: '#2c3e50',
         },
         success: {
-            main: "#0e5f3c",
+            main: '#0e5f3c',
         },
         warning: {
-            main: "#5f0e0e",
+            main: '#5f0e0e',
         },
     },
-})
+});
 
 const dialogStyles = `
 .custom-dialog-right.modal-dialog {
@@ -98,64 +98,62 @@ const dialogStyles = `
 const bookingsData = [
     {
         id: 1,
-        type: "Deluxe Room",
-        created: "March 25th 2025, 3:30 PM",
-        bookingId: "ROM0232",
-        duration: "March 25th 2025 to March 26th 2025",
+        type: 'Deluxe Room',
+        created: 'March 25th 2025, 3:30 PM',
+        bookingId: 'ROM0232',
+        duration: 'March 25th 2025 to March 26th 2025',
         rooms: 2,
         nights: 1,
-        status: "Confirmed",
+        status: 'Confirmed',
     },
     {
         id: 2,
-        type: "Standard Room",
-        created: "March 25th 2025, 3:30 PM",
-        bookingId: "ROM0232",
-        duration: "March 25th 2025 to March 26th 2025",
+        type: 'Standard Room',
+        created: 'March 25th 2025, 3:30 PM',
+        bookingId: 'ROM0232',
+        duration: 'March 25th 2025 to March 26th 2025',
         rooms: 1,
         nights: 1,
-        status: "Confirmed",
+        status: 'Confirmed',
     },
-]
+];
 
 const roomTypes = [
     {
-        type: "Annual Gala",
-        image: "/assets/room-img.png",
-        area: "Main Hall",
+        type: 'Annual Gala',
+        image: '/assets/room-img.png',
+        area: 'Main Hall',
         capacity: 100,
-        time: "May 20, 10:00 AM",
+        time: 'May 20, 10:00 AM',
         price: 150,
-        badge: "Complete",
-        color: "#0B4837",
+        badge: 'Complete',
+        color: '#0B4837',
     },
     {
-        type: "Sports Night",
-        image: "/assets/room-img.png",
-        area: "Ground Area",
+        type: 'Sports Night',
+        image: '/assets/room-img.png',
+        area: 'Ground Area',
         capacity: 80,
-        time: "March 25, 06:00 PM",
+        time: 'March 25, 06:00 PM',
         price: 150,
-        badge: "Upcoming",
-        color: "#129BFF",
+        badge: 'Upcoming',
+        color: '#129BFF',
     },
 ];
 
 const EventScreen = () => {
     const [open, setOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("")
-    const [showAvailabilityModal, setShowAvailabilityModal] = useState(false)
-    const [showResultsModal, setShowResultsModal] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+    const [showResultsModal, setShowResultsModal] = useState(false);
     const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
 
-    const filteredBookings = bookingsData.filter((booking) =>
-        booking.type.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+    const filteredBookings = bookingsData.filter((booking) => booking.type.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const handleOpenBookingModal = () => {
-        setShowAvailabilityModal(true)
-    }
+        setShowAvailabilityModal(true);
+    };
 
     const handleCloseAvailabilityModal = () => {
         setShowAvailabilityModal(false);
@@ -181,46 +179,51 @@ const EventScreen = () => {
             >
                 <ThemeProvider theme={theme}>
                     <style>{dialogStyles}</style>
-                    <Container fluid className="p-4" style={{
-                        backgroundColor: '#F6F6F6'
-                    }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <IconButton sx={{ mr: 1, color: '#3F4E4F' }}
-                                >
+                    <Container
+                        fluid
+                        className="p-4"
+                        style={{
+                            backgroundColor: '#F6F6F6',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <IconButton sx={{ mr: 1, color: '#3F4E4F' }}>
                                     <ArrowBack />
                                 </IconButton>
-                                <Typography sx={{
-                                    color: '#3F4E4F',
-                                    fontSize: '30px',
-                                    fontWeight: 500
-                                }}>
+                                <Typography
+                                    sx={{
+                                        color: '#3F4E4F',
+                                        fontSize: '30px',
+                                        fontWeight: 500,
+                                    }}
+                                >
                                     Events
                                 </Typography>
                             </Box>
-                            <Box sx={{ display: "flex", gap: 2 }}>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Button
                                     variant="outlined"
                                     startIcon={<Add />}
                                     sx={{
-                                        border: "1px solid #063455",
-                                        color: "#333",
-                                        bgcolor: "white",
-                                        "&:hover": {
-                                            border: "1px solid #063455",
-                                            bgcolor: "#FFFFFF",
+                                        border: '1px solid #063455',
+                                        color: '#333',
+                                        bgcolor: 'white',
+                                        '&:hover': {
+                                            border: '1px solid #063455',
+                                            bgcolor: '#FFFFFF',
                                         },
                                     }}
-                                    onClick={() => router.visit('/admin/booking/add/room?type=event')}
+                                    onClick={() => router.visit('/booking/add/room?type=event')}
                                 >
                                     Add Event
                                 </Button>
                                 <Button
                                     variant="contained"
                                     sx={{
-                                        bgcolor: "#063455",
-                                        "&:hover": {
-                                            bgcolor: "#063455",
+                                        bgcolor: '#063455',
+                                        '&:hover': {
+                                            bgcolor: '#063455',
                                         },
                                     }}
                                 >
@@ -232,36 +235,32 @@ const EventScreen = () => {
                         <Box sx={{ mb: 2 }}>
                             <Grid container spacing={2}>
                                 {roomTypes.map((room, index) => {
-                                    console.log("Room Color:", room.color);
+                                    console.log('Room Color:', room.color);
                                     return (
                                         <Grid item xs={12} sm={6} key={index}>
                                             <Paper
                                                 elevation={0}
                                                 sx={{
                                                     borderRadius: 1,
-                                                    overflow: "hidden",
-                                                    display: "flex",
-                                                    height: "100px",
-                                                    bgcolor: "#FFFFFF"
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    height: '100px',
+                                                    bgcolor: '#FFFFFF',
                                                 }}
                                             >
                                                 {/* Image */}
-                                                <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
-                                                    <img
-                                                        src="/assets/room-img.png"
-                                                        alt=""
-                                                        style={{ width: "117px", height: "77px" }}
-                                                    />
+                                                <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                                                    <img src="/assets/room-img.png" alt="" style={{ width: '117px', height: '77px' }} />
                                                 </Box>
 
                                                 {/* Content */}
-                                                <Box sx={{ p: 2, width: "80%" }}>
+                                                <Box sx={{ p: 2, width: '80%' }}>
                                                     <Box
                                                         sx={{
-                                                            display: "flex",
-                                                            justifyContent: "space-between",
-                                                            alignItems: "center",
-                                                            mt: -1
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            mt: -1,
                                                         }}
                                                     >
                                                         <Typography variant="h6" fontWeight="medium">
@@ -270,14 +269,14 @@ const EventScreen = () => {
                                                         <Badge
                                                             style={{
                                                                 backgroundColor: room.color, // Make sure this is used
-                                                                color: "white",
-                                                                padding: "6px 14px",
-                                                                borderRadius: "0px",
-                                                                fontSize: "0.85rem",
+                                                                color: 'white',
+                                                                padding: '6px 14px',
+                                                                borderRadius: '0px',
+                                                                fontSize: '0.85rem',
                                                                 fontWeight: 500,
-                                                                minWidth: "100px",
-                                                                textAlign: "center",
-                                                                cursor: "pointer"
+                                                                minWidth: '100px',
+                                                                textAlign: 'center',
+                                                                cursor: 'pointer',
                                                             }}
                                                         >
                                                             {room.badge}
@@ -291,21 +290,21 @@ const EventScreen = () => {
                                                         /per night
                                                     </Typography>
 
-                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 4, mt: 2 }}>
-                                                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                                                            <LocationOnIcon fontSize="small" sx={{ color: "#666", mr: 0.5 }} />
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, mt: 2 }}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <LocationOnIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
                                                             <Typography variant="body2" color="text.secondary">
                                                                 {room.area}
                                                             </Typography>
                                                         </Box>
-                                                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                                                            <PeopleIcon fontSize="small" sx={{ color: "#666", mr: 0.5 }} />
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <PeopleIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
                                                             <Typography variant="body2" color="text.secondary">
                                                                 {room.capacity} Capacity
                                                             </Typography>
                                                         </Box>
-                                                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                                                            <AccessTimeIcon fontSize="small" sx={{ color: "#666", mr: 0.5 }} />
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <AccessTimeIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
                                                             <Typography variant="body2" color="text.secondary">
                                                                 {room.time}
                                                             </Typography>
@@ -320,36 +319,36 @@ const EventScreen = () => {
                         </Box>
 
                         {/* Search and Filter */}
-                        <Row className="mb-3 mt-5 align-items-center">
+                        <Row className="align-items-center mt-5 mb-3">
                             <Col>
-                                <Typography variant="h6" component="h2" style={{ color: "#000000", fontWeight: 500, fontSize: '24px' }}>
+                                <Typography variant="h6" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '24px' }}>
                                     Recently Booking
                                 </Typography>
                             </Col>
                             <Col xs="auto" className="d-flex gap-3">
-                                <div style={{ position: "relative", width: "400px", border: '1px solid #121212' }}>
+                                <div style={{ position: 'relative', width: '400px', border: '1px solid #121212' }}>
                                     <Form.Control
                                         placeholder="Search"
                                         aria-label="Search"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         style={{
-                                            paddingLeft: "2rem",
-                                            borderColor: "#ced4da",
-                                            borderRadius: "4px",
-                                            height: "38px",
-                                            fontSize: "0.9rem",
+                                            paddingLeft: '2rem',
+                                            borderColor: '#ced4da',
+                                            borderRadius: '4px',
+                                            height: '38px',
+                                            fontSize: '0.9rem',
                                         }}
                                     />
                                     <Search
                                         style={{
-                                            position: "absolute",
-                                            left: "8px",
-                                            top: "53%",
-                                            transform: "translateY(-50%)",
-                                            color: "#adb5bd",
-                                            fontSize: "1.5rem",
-                                            pointerEvents: "none",
+                                            position: 'absolute',
+                                            left: '8px',
+                                            top: '53%',
+                                            transform: 'translateY(-50%)',
+                                            color: '#adb5bd',
+                                            fontSize: '1.5rem',
+                                            pointerEvents: 'none',
                                         }}
                                     />
                                 </div>
@@ -358,10 +357,10 @@ const EventScreen = () => {
                                     variant="outline-secondary"
                                     className="d-flex align-items-center gap-1"
                                     style={{
-                                        border: "1px solid #3F4E4F",
-                                        borderRadius: "0px",
+                                        border: '1px solid #3F4E4F',
+                                        borderRadius: '0px',
                                         backgroundColor: 'transparent',
-                                        color: "#495057",
+                                        color: '#495057',
                                     }}
                                     onClick={handleFilterShow}
                                 >
@@ -370,7 +369,7 @@ const EventScreen = () => {
                             </Col>
                         </Row>
                         {filteredBookings.map((booking, index) => (
-                            <Card key={index} className="mb-2" style={{ border: "1px solid #e0e0e0" }}>
+                            <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }}>
                                 <Card.Body className="p-2">
                                     <Row>
                                         {/* Room Image */}
@@ -379,8 +378,8 @@ const EventScreen = () => {
                                                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
                                                 alt={booking.type}
                                                 style={{
-                                                    width: "100%",
-                                                    objectFit: "cover",
+                                                    width: '100%',
+                                                    objectFit: 'cover',
                                                 }}
                                             />
                                         </Col>
@@ -389,27 +388,27 @@ const EventScreen = () => {
                                         <Col md={10}>
                                             <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                                                 <div>
-                                                    <Typography style={{ fontWeight: 500, fontSize: "20px", color: "#121212" }}>
+                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>
                                                         {booking.type}
                                                     </Typography>
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: "14px", fontWeight: 400 }}>
+                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
                                                         Created on {booking.created}
                                                     </Typography>
                                                 </div>
                                                 <Badge
-                                                    onClick={() => router.visit('/admin/booking/details')}
+                                                    onClick={() => router.visit('/booking/details')}
                                                     bg=""
                                                     style={{
-                                                        backgroundColor: booking.status === "Confirmed" ? "#0e5f3c" : "#842029",
-                                                        color: "white",
-                                                        padding: "6px 14px",
-                                                        borderRadius: "6px",
-                                                        fontSize: "0.85rem",
+                                                        backgroundColor: booking.status === 'Confirmed' ? '#0e5f3c' : '#842029',
+                                                        color: 'white',
+                                                        padding: '6px 14px',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.85rem',
                                                         fontWeight: 500,
-                                                        minWidth: "100px",
-                                                        textAlign: "center",
+                                                        minWidth: '100px',
+                                                        textAlign: 'center',
                                                         cursor: 'pointer',
-                                                        borderRadius: '0px'
+                                                        borderRadius: '0px',
                                                     }}
                                                 >
                                                     {booking.status}
@@ -417,9 +416,9 @@ const EventScreen = () => {
                                             </div>
 
                                             {/* Booking Details */}
-                                            <Row className="text-start mt-2">
+                                            <Row className="mt-2 text-start">
                                                 <Col md={3} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: '12px' }}>
+                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
                                                         Booking ID
                                                     </Typography>
                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
@@ -427,7 +426,7 @@ const EventScreen = () => {
                                                     </Typography>
                                                 </Col>
                                                 <Col md={4} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: '12px' }}>
+                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
                                                         Duration
                                                     </Typography>
                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
@@ -435,7 +434,7 @@ const EventScreen = () => {
                                                     </Typography>
                                                 </Col>
                                                 <Col md={2} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: '12px' }}>
+                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
                                                         Room
                                                     </Typography>
                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
@@ -443,7 +442,7 @@ const EventScreen = () => {
                                                     </Typography>
                                                 </Col>
                                                 <Col md={2} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: "#7F7F7F", fontSize: '12px' }}>
+                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
                                                         Night
                                                     </Typography>
                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
@@ -457,13 +456,7 @@ const EventScreen = () => {
                             </Card>
                         ))}
 
-                        <Modal
-                            show={showFilter}
-                            onHide={handleFilterClose}
-                            dialogClassName="custom-dialog-right"
-                            backdrop={true}
-                            keyboard={true}
-                        >
+                        <Modal show={showFilter} onHide={handleFilterClose} dialogClassName="custom-dialog-right" backdrop={true} keyboard={true}>
                             <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
                                 <EventBookingFilter />
                             </Modal.Body>
@@ -472,7 +465,7 @@ const EventScreen = () => {
                 </ThemeProvider>
             </div>
         </>
-    )
-}
+    );
+};
 
-export default EventScreen
+export default EventScreen;

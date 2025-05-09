@@ -1,70 +1,107 @@
-import { Head, router } from '@inertiajs/react';
+import SideNav from '@/components/App/AdminSideBar/SideNav';
+import { router } from '@inertiajs/react';
+import AddIcon from '@mui/icons-material/Add';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
+const drawerWidthOpen = 240;
+const drawerWidthClosed = 110;
 
-const breadcrumbs = [
-    {
-        title: 'Tenants',
-        href: '/tenants',
-    },
-];
+const Index = ({ tenants }) => {
+    const [open, setOpen] = useState(false);
 
-export default function Index({ tenants }) {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Tenants" />
+        <>
+            <SideNav open={open} setOpen={setOpen} />
+            <div
+                style={{
+                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    transition: 'margin-left 0.3s ease-in-out',
+                    marginTop: '5rem',
+                    backgroundColor: '#F6F6F6',
+                    minHeight: '100vh',
+                    padding: '2rem',
+                }}
+            >
+                {/* Page Header */}
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: '#3F4E4F' }}>
+                        Tenant Management
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        sx={{
+                            backgroundColor: '#0D2B4E',
+                            textTransform: 'none',
+                            color: '#FFFFFF',
+                            '&:hover': {
+                                backgroundColor: '#063455',
+                            },
+                        }}
+                        onClick={() => router.visit(route('tenant.create'))}
+                    >
+                        Create Tenant
+                    </Button>
+                </Box>
 
-            <div>
-                <div className="flex justify-end p-4">
-                    <Button onClick={() => router.visit(route('tenant.create'))}>Create Tenant</Button>
-                </div>
-
-                <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-                    <table className="w-full text-left text-sm text-gray-500 rtl:text-right dark:text-gray-400">
-                        <thead className="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">
-                                    Name
-                                </th>
-                                <th scope="col" className="px-6 py-3">
-                                    Email
-                                </th>
-                                <th scope="col" className="px-6 py-3">
-                                    Domain
-                                </th>
-                                <th scope="col" className="px-6 py-3">
-                                    Action
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                {/* Tenant Table */}
+                <TableContainer
+                    component={Paper}
+                    sx={{
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 2,
+                        boxShadow: 'none',
+                        border: '1px solid #ccc',
+                    }}
+                >
+                    <Table>
+                        <TableHead sx={{ backgroundColor: '#E5E5EA' }}>
+                            <TableRow>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '16px' }}>Name</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '16px' }}>Email</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '16px' }}>Domain(s)</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '16px' }}>Action</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
                             {tenants.length === 0 ? (
-                                <tr className="border-b border-gray-200 odd:bg-white even:bg-gray-50 dark:border-gray-700 odd:dark:bg-gray-900 even:dark:bg-gray-800">
-                                    <td className="px-6 py-4 text-center" colSpan={4}>
+                                <TableRow>
+                                    <TableCell colSpan={4} align="center" sx={{ padding: '2rem' }}>
                                         No tenants found.
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ) : (
-                                tenants.map((tenant) => (
-                                    <tr className="border-b border-gray-200 odd:bg-white even:bg-gray-50 dark:border-gray-700 odd:dark:bg-gray-900 even:dark:bg-gray-800">
-                                        <th scope="row" className="px-6 py-4 font-medium whitespace-nowrap text-gray-900 dark:text-white">
-                                            {tenant.name}
-                                        </th>
-                                        <td className="px-6 py-4">{tenant.email}</td>
-                                        <td className="px-6 py-4">{tenant.domains.map((domain) => domain.domain).join(', ')}</td>
-                                        <td className="px-6 py-4">
-                                            <a href="#" className="font-medium text-blue-600 hover:underline dark:text-blue-500">
+                                tenants.map((tenant, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>{tenant.name}</TableCell>
+                                        <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>{tenant.email}</TableCell>
+                                        <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>
+                                            {tenant.domains.map((d) => d.domain).join(', ')}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                size="small"
+                                                variant="text"
+                                                sx={{
+                                                    textTransform: 'none',
+                                                    color: '#0D2B4E',
+                                                    fontWeight: 500,
+                                                }}
+                                                onClick={() => router.visit(route('tenant.edit', tenant.id))}
+                                            >
                                                 Edit
-                                            </a>
-                                        </td>
-                                    </tr>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
                                 ))
                             )}
-                        </tbody>
-                    </table>
-                </div>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
             </div>
-        </AppLayout>
+        </>
     );
-}
+};
+
+export default Index;

@@ -1,46 +1,32 @@
-import { useState } from "react"
-import {
-    Box,
-    Button,
-    Container,
-    Dialog,
-    DialogContent,
-    Grid,
-    IconButton,
-    InputAdornment,
-    Paper,
-    TextField,
-    Typography,
-    Divider,
-} from "@mui/material"
-import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
-import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight"
-import PriceChangeIcon from "@mui/icons-material/PriceChange"
-import "bootstrap/dist/css/bootstrap.min.css"
-import SideNav from '@/components/App/AdminSideBar/SideNav'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import { Box, Button, Container, Dialog, Divider, Grid, IconButton, InputAdornment, TextField, Typography } from '@mui/material';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const BookingDetail = () => {
     const [open, setOpen] = useState(false);
-    const [openPrice, setOpenPrice] = useState(false)
-    const [searchTerm, setSearchTerm] = useState("")
+    const [openPrice, setOpenPrice] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleClickOpen = () => {
-        setOpenPrice(true)
-    }
+        setOpenPrice(true);
+    };
 
     const handleClose = () => {
-        setOpenPrice(false)
-    }
+        setOpenPrice(false);
+    };
 
     const handleSearch = (e) => {
-        setSearchTerm(e.target.value)
+        setSearchTerm(e.target.value);
         // Add your search functionality here
-        console.log("Searching for:", e.target.value)
-    }
+        console.log('Searching for:', e.target.value);
+    };
 
     return (
         <>
@@ -50,38 +36,40 @@ const BookingDetail = () => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
-                    backgroundColor: '#F6F6F6'
+                    backgroundColor: '#F6F6F6',
                 }}
             >
                 <Container sx={{ px: 4, py: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mt: 4, }}>
-                        <IconButton edge="start" sx={{ mr: 1 }} 
-                        onClick={ () => router.visit('/admin/booking/dashboard')}
-                        >
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 4 }}>
+                        <IconButton edge="start" sx={{ mr: 1 }} onClick={() => router.visit('/booking/dashboard')}>
                             <ArrowBackIcon />
                         </IconButton>
                         <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '30px', color: '#3F4E4F' }}>
                             Booking Detail
                         </Typography>
                     </Box>
-                    <Box sx={{
-                        margin: '0 auto',
-                        maxWidth: '600px',
-                        bgcolor: '#FFFFFF',
-                        borderRadius: '4px'
-                    }}>
-                        <Box sx={{
-                            px: 2,
-                            py: 2
-                        }}>
-                            <Box sx={{ p: 2, bgcolor: "#F6F6F6", border: "1px solid #E3E3E3", borderRadius: '4px' }}>
-                                <Typography variant="body2" sx={{ color: "#7F7F7F", fontWeight: 400, fontSize: '16px' }}>
-                                    Booking ID: <span style={{ color: "#063455", fontWeight: 700, fontSize: '16px' }}>ROMG2323</span>
+                    <Box
+                        sx={{
+                            margin: '0 auto',
+                            maxWidth: '600px',
+                            bgcolor: '#FFFFFF',
+                            borderRadius: '4px',
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                px: 2,
+                                py: 2,
+                            }}
+                        >
+                            <Box sx={{ p: 2, bgcolor: '#F6F6F6', border: '1px solid #E3E3E3', borderRadius: '4px' }}>
+                                <Typography variant="body2" sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '16px' }}>
+                                    Booking ID: <span style={{ color: '#063455', fontWeight: 700, fontSize: '16px' }}>ROMG2323</span>
                                 </Typography>
                             </Box>
                             <Grid container spacing={3} sx={{ py: 2, px: 0.5 }}>
                                 <Grid item xs={3}>
-                                    <Typography variant="body2" sx={{ color: "#121212", mb: 2, fontSize: '14px', fontWeight: 400 }}>
+                                    <Typography variant="body2" sx={{ color: '#121212', mb: 2, fontSize: '14px', fontWeight: 400 }}>
                                         Check In
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: '#7F7F7F' }}>
@@ -89,7 +77,7 @@ const BookingDetail = () => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={3}>
-                                    <Typography variant="body2" sx={{ color: "#121212", mb: 2, fontSize: '14px', fontWeight: 400 }}>
+                                    <Typography variant="body2" sx={{ color: '#121212', mb: 2, fontSize: '14px', fontWeight: 400 }}>
                                         Check Out
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: '#7F7F7F' }}>
@@ -97,7 +85,7 @@ const BookingDetail = () => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={3}>
-                                    <Typography variant="body2" sx={{ color: "#121212", mb: 2, fontSize: '14px', fontWeight: 400 }}>
+                                    <Typography variant="body2" sx={{ color: '#121212', mb: 2, fontSize: '14px', fontWeight: 400 }}>
                                         Total Nights
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: '#7F7F7F' }}>
@@ -105,7 +93,7 @@ const BookingDetail = () => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={3}>
-                                    <Typography variant="body2" sx={{ color: "#121212", mb: 2, fontSize: '14px', fontWeight: 400 }}>
+                                    <Typography variant="body2" sx={{ color: '#121212', mb: 2, fontSize: '14px', fontWeight: 400 }}>
                                         Rooms
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: '#7F7F7F' }}>
@@ -116,7 +104,7 @@ const BookingDetail = () => {
 
                             <Grid container spacing={3} sx={{ py: 2, px: 0.5, pt: 0 }}>
                                 <Grid item xs={4}>
-                                    <Typography variant="body2" sx={{ color: "#121212", mb: 2, fontSize: '14px', fontWeight: 400 }}>
+                                    <Typography variant="body2" sx={{ color: '#121212', mb: 2, fontSize: '14px', fontWeight: 400 }}>
                                         Adults
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: '#7F7F7F' }}>
@@ -124,7 +112,7 @@ const BookingDetail = () => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={4}>
-                                    <Typography variant="body2" sx={{ color: "#121212", mb: 2, fontSize: '14px', fontWeight: 400 }}>
+                                    <Typography variant="body2" sx={{ color: '#121212', mb: 2, fontSize: '14px', fontWeight: 400 }}>
                                         Children
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: '#7F7F7F' }}>
@@ -132,7 +120,7 @@ const BookingDetail = () => {
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={4}>
-                                    <Typography variant="body2" sx={{ color: "#121212", mb: 2, fontSize: '14px', fontWeight: 400 }}>
+                                    <Typography variant="body2" sx={{ color: '#121212', mb: 2, fontSize: '14px', fontWeight: 400 }}>
                                         Infants
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: '#7F7F7F' }}>
@@ -143,15 +131,19 @@ const BookingDetail = () => {
                         </Box>
 
                         <Box sx={{ p: 2, pt: 0 }}>
-                            <Box sx={{ p: 2, bgcolor: "#F6F6F6", border: "1px solid #E3E3E3", borderRadius: '4px' }}>
+                            <Box sx={{ p: 2, bgcolor: '#F6F6F6', border: '1px solid #E3E3E3', borderRadius: '4px' }}>
                                 <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '16px', color: '#063455' }}>
                                     Customer Detail
                                 </Typography>
                             </Box>
-                            <Grid container spacing={2} sx={{
-                                px: 0.5,
-                                mt: 0
-                            }}>
+                            <Grid
+                                container
+                                spacing={2}
+                                sx={{
+                                    px: 0.5,
+                                    mt: 0,
+                                }}
+                            >
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#121212' }}>
                                         Customer Name
@@ -185,12 +177,12 @@ const BookingDetail = () => {
                                                     <Box
                                                         component="span"
                                                         sx={{
-                                                            borderRight: "1px solid #ccc",
+                                                            borderRight: '1px solid #ccc',
                                                             // borderRadius: "4px",
                                                             px: 1,
                                                             py: 1.1,
                                                             ml: -2,
-                                                            fontSize: "0.75rem",
+                                                            fontSize: '0.75rem',
                                                         }}
                                                     >
                                                         +92
@@ -208,33 +200,37 @@ const BookingDetail = () => {
                             sx={{
                                 mx: 2,
                                 mb: 2,
-                                border: "1px solid #E3E3E3",
-                                borderRadius: "4px",
-                                cursor: "pointer",
-                                bgcolor: '#F6F6F6'
+                                border: '1px solid #E3E3E3',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                bgcolor: '#F6F6F6',
                             }}
                             onClick={handleClickOpen}
                         >
                             <Box
                                 sx={{
                                     p: 2,
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
                                 }}
                             >
-                                <Box sx={{ display: "flex", alignItems: "center" }}>
-                                    <img src="/assets/price-tag.png" alt="" style={{
-                                        width: 32,
-                                        height: 32
-                                    }} />
-                                    <Box sx={{
-                                        ml: 2
-                                    }}>
-                                        <Typography sx={{ fontWeight: 500, fontSize: '16px', color: '#121212' }}>
-                                            Price Detail
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: "#7F7F7F" }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <img
+                                        src="/assets/price-tag.png"
+                                        alt=""
+                                        style={{
+                                            width: 32,
+                                            height: 32,
+                                        }}
+                                    />
+                                    <Box
+                                        sx={{
+                                            ml: 2,
+                                        }}
+                                    >
+                                        <Typography sx={{ fontWeight: 500, fontSize: '16px', color: '#121212' }}>Price Detail</Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '14px', color: '#7F7F7F' }}>
                                             View total price details
                                         </Typography>
                                     </Box>
@@ -243,17 +239,17 @@ const BookingDetail = () => {
                             </Box>
                         </Box>
 
-                        <Box sx={{ display: "flex", justifyContent: "end", gap: "10px", mt: 4, px: 2, pb: 4 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'end', gap: '10px', mt: 4, px: 2, pb: 4 }}>
                             <Button
                                 variant="outlined"
                                 sx={{
                                     px: 4,
-                                    borderColor: "#ccc",
-                                    color: "#333",
-                                    textTransform: "none",
-                                    "&:hover": {
-                                        borderColor: "#999",
-                                        backgroundColor: "transparent",
+                                    borderColor: '#ccc',
+                                    color: '#333',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        borderColor: '#999',
+                                        backgroundColor: 'transparent',
                                     },
                                 }}
                             >
@@ -263,11 +259,11 @@ const BookingDetail = () => {
                                 variant="contained"
                                 sx={{
                                     px: 4,
-                                    bgcolor: "#003366",
-                                    "&:hover": {
-                                        bgcolor: "#002244",
+                                    bgcolor: '#003366',
+                                    '&:hover': {
+                                        bgcolor: '#002244',
                                     },
-                                    textTransform: "none",
+                                    textTransform: 'none',
                                 }}
                             >
                                 Save Change
@@ -281,117 +277,139 @@ const BookingDetail = () => {
                             fullWidth
                             PaperProps={{
                                 sx: {
-                                    position: "absolute",
+                                    position: 'absolute',
                                     right: 10,
                                     top: 10,
                                     // bottom: 0,
                                     m: 0,
-                                    height: "calc(100% - 100px)",
+                                    height: 'calc(100% - 100px)',
                                     // maxHeight: "100%",
                                     borderRadius: 0,
                                 },
                             }}
                         >
-                            <Typography sx={{ px: 3, mt: 2, fontWeight: 500, fontSize: '32px', color: '#121212' }}>
-                                Price Detail
-                            </Typography>
+                            <Typography sx={{ px: 3, mt: 2, fontWeight: 500, fontSize: '32px', color: '#121212' }}>Price Detail</Typography>
                             <Box sx={{ px: 3, pt: 2 }}>
-                                <Box sx={{ p: 2, bgcolor: "#F6F6F6", border: '1px solid #E3E3E3', borderRadius: "4px" }}>
-                                    <Typography variant="body1" sx={{ color: "#666" }}>
-                                        Hotel : <span style={{ color: "#003366", fontWeight: "bold" }}>Afohs Club</span>
+                                <Box sx={{ p: 2, bgcolor: '#F6F6F6', border: '1px solid #E3E3E3', borderRadius: '4px' }}>
+                                    <Typography variant="body1" sx={{ color: '#666' }}>
+                                        Hotel : <span style={{ color: '#003366', fontWeight: 'bold' }}>Afohs Club</span>
                                     </Typography>
                                 </Box>
-                                <Box sx={{
-                                    pt: 2
-                                }}>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#121212' }}>
-                                        Sub Total
-                                    </Typography>
-
-                                    <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1 }}>
-                                        <Typography sx={{
-                                            fontWeight: 500,
-                                            fontSize: '14px',
-                                            color: '#121212'
-                                        }}>Room Price</Typography>
-                                        <Typography sx={{
-                                            fontWeight: 400,
-                                            fontSize: '14px',
-                                            color: '#121212'
-                                        }}>Rs 20,10</Typography>
-                                    </Box>
-
-                                    <Divider sx={{
+                                <Box
+                                    sx={{
                                         pt: 2,
-                                        borderBottomWidth: '2px', // controls thickness
-                                        borderColor: '#E3E3E3',
-                                    }} />
+                                    }}
+                                >
+                                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#121212' }}>Sub Total</Typography>
 
-                                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#121212', pt: 2 }}>
-                                        Extra
-                                    </Typography>
-
-                                    <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1 }}>
-                                        <Typography sx={{
-                                            fontWeight: 500,
-                                            fontSize: '14px',
-                                            color: '#121212'
-                                        }}>Service Fees</Typography>
-                                        <Typography sx={{
-                                            fontWeight: 500,
-                                            fontSize: '14px',
-                                            color: '#121212'
-                                        }}>Rs 100</Typography>
-                                    </Box>
-
-                                    <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1 }}>
-                                        <Typography sx={{
-                                            fontWeight: 500,
-                                            fontSize: '14px',
-                                            color: '#121212'
-                                        }}>Payment Charges</Typography>
-                                        <Typography sx={{
-                                            fontWeight: 500,
-                                            fontSize: '14px',
-                                            color: '#121212'
-                                        }}>Rs 100</Typography>
-                                    </Box>
-
-                                    <Divider sx={{
-                                        pt: 2,
-                                        borderBottomWidth: '2px', // controls thickness
-                                        borderColor: '#E3E3E3',
-                                    }} />
-
-                                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                                        <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#121212', pt: 2 }}>
-                                            Total
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1 }}>
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: '14px',
+                                                color: '#121212',
+                                            }}
+                                        >
+                                            Room Price
                                         </Typography>
-                                        <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#121212', pt: 2 }}>
-                                            Rs 5,110
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 400,
+                                                fontSize: '14px',
+                                                color: '#121212',
+                                            }}
+                                        >
+                                            Rs 20,10
                                         </Typography>
                                     </Box>
 
-                                    <Divider sx={{
-                                        pt: 2,
-                                        borderBottomWidth: '2px', // controls thickness
-                                        borderColor: '#E3E3E3',
-                                    }} />
+                                    <Divider
+                                        sx={{
+                                            pt: 2,
+                                            borderBottomWidth: '2px', // controls thickness
+                                            borderColor: '#E3E3E3',
+                                        }}
+                                    />
+
+                                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#121212', pt: 2 }}>Extra</Typography>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1 }}>
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: '14px',
+                                                color: '#121212',
+                                            }}
+                                        >
+                                            Service Fees
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: '14px',
+                                                color: '#121212',
+                                            }}
+                                        >
+                                            Rs 100
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1 }}>
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: '14px',
+                                                color: '#121212',
+                                            }}
+                                        >
+                                            Payment Charges
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: '14px',
+                                                color: '#121212',
+                                            }}
+                                        >
+                                            Rs 100
+                                        </Typography>
+                                    </Box>
+
+                                    <Divider
+                                        sx={{
+                                            pt: 2,
+                                            borderBottomWidth: '2px', // controls thickness
+                                            borderColor: '#E3E3E3',
+                                        }}
+                                    />
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#121212', pt: 2 }}>Total</Typography>
+                                        <Typography sx={{ fontWeight: 700, fontSize: '14px', color: '#121212', pt: 2 }}>Rs 5,110</Typography>
+                                    </Box>
+
+                                    <Divider
+                                        sx={{
+                                            pt: 2,
+                                            borderBottomWidth: '2px', // controls thickness
+                                            borderColor: '#E3E3E3',
+                                        }}
+                                    />
                                 </Box>
 
-                                <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 5 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 5 }}>
                                     <Button
                                         variant="outlined"
                                         onClick={handleClose}
                                         sx={{
                                             mr: 2,
                                             px: 4,
-                                            borderColor: "#ccc",
-                                            color: "#333",
-                                            textTransform: "none",
-                                            "&:hover": {
-                                                borderColor: "#999",
-                                                backgroundColor: "transparent",
+                                            borderColor: '#ccc',
+                                            color: '#333',
+                                            textTransform: 'none',
+                                            '&:hover': {
+                                                borderColor: '#999',
+                                                backgroundColor: 'transparent',
                                             },
                                         }}
                                     >
@@ -401,11 +419,11 @@ const BookingDetail = () => {
                                         variant="contained"
                                         sx={{
                                             px: 4,
-                                            bgcolor: "#003366",
-                                            "&:hover": {
-                                                bgcolor: "#002244",
+                                            bgcolor: '#003366',
+                                            '&:hover': {
+                                                bgcolor: '#002244',
                                             },
-                                            textTransform: "none",
+                                            textTransform: 'none',
                                         }}
                                     >
                                         Continue
@@ -415,9 +433,9 @@ const BookingDetail = () => {
                         </Dialog>
                     </Box>
                 </Container>
-            </div >
+            </div>
         </>
-    )
-}
+    );
+};
 
-export default BookingDetail
+export default BookingDetail;

@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import SideNav from '@/components/App/AdminSideBar/SideNav'
+import SideNav from '@/components/App/AdminSideBar/SideNav';
+import { useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -19,7 +19,7 @@ const Dashboard = () => {
                 <h1>Admin Dashboard</h1>
             </div>
         </>
-    )
-}
+    );
+};
 
-export default Dashboard
+export default Dashboard;
