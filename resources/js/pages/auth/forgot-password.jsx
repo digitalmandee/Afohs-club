@@ -1,12 +1,9 @@
-// Components
 import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { CircularProgress } from '@mui/material';
+import { Button, TextField, Typography, Box, Stack } from '@mui/material';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
 export default function ForgotPassword({ status }) {
@@ -16,47 +13,68 @@ export default function ForgotPassword({ status }) {
 
     const submit = (e) => {
         e.preventDefault();
-
         post(route('password.email'));
     };
 
     return (
-        <AuthLayout title="Forgot password" description="Enter your email to receive a password reset link">
+        <AuthLayout
+            title="Forgot password"
+            description="Enter your email to receive a password reset link"
+        >
             <Head title="Forgot password" />
 
-            {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
+            {status && (
+                <Typography
+                    variant="body2"
+                    textAlign="center"
+                    fontWeight={500}
+                    color="success.main"
+                    mb={2}
+                >
+                    {status}
+                </Typography>
+            )}
 
-            <div className="space-y-6">
+            <Stack spacing={4}>
                 <form onSubmit={submit}>
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
-                        <Input
+                    <Stack spacing={2}>
+                        <TextField
                             id="email"
+                            label="Email address"
                             type="email"
                             name="email"
                             autoComplete="off"
-                            value={data.email}
                             autoFocus
-                            onChange={(e) => setData('email', e.target.value)}
+                            fullWidth
                             placeholder="email@example.com"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            error={Boolean(errors.email)}
+                            helperText={errors.email}
                         />
+                    </Stack>
 
-                        <InputError message={errors.email} />
-                    </div>
-
-                    <div className="my-6 flex items-center justify-start">
-                        <Button className="w-full" disabled={processing}>
-                            {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                    <Box mt={4} display="flex" justifyContent="flex-start">
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={processing}
+                            fullWidth
+                        >
+                            {processing && (
+                                <CircularProgress size={18} sx={{ mr: 1 }} />
+                            )}
                             Email password reset link
                         </Button>
-                    </div>
+                    </Box>
                 </form>
 
-                <div className="text-muted-foreground space-x-1 text-center text-sm">
-                    <span>Or, return to</span>
+                <Typography variant="body2" color="text.secondary" textAlign="center">
+                    <span>Or, return to </span>
                     <TextLink href={route('login')}>log in</TextLink>
-                </div>
-            </div>
+                </Typography>
+            </Stack>
         </AuthLayout>
     );
 }
