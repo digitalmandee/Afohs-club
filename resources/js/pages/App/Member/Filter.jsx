@@ -79,7 +79,6 @@ const CustomerFilter = () => {
 
     // Apply filters
     const handleApply = () => {
-        console.log('Applied filters:', filters);
         handleClose();
     };
 

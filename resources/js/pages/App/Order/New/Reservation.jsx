@@ -1,42 +1,159 @@
+import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { Box, Button, Grid, IconButton, InputAdornment, Paper, Radio, TextField, Typography } from '@mui/material';
-import { useState } from 'react';
+import { Autocomplete, Box, Button, ClickAwayListener, Grid, InputAdornment, Paper, Popper, Radio, TextField, Typography } from '@mui/material';
+import { StaticDatePicker, TimePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import axios from 'axios';
+import dayjs from 'dayjs';
+import { enqueueSnackbar } from 'notistack';
+import { useCallback, useState } from 'react';
 
 const ReservationDialog = () => {
-    const [orderType, setOrderType] = useState('reservation');
+    const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
+
+    const [selectedTime, setSelectedTime] = useState('13:00');
     const [paymentType, setPaymentType] = useState('percentage');
-    const [selectedDate, setSelectedDate] = useState(7);
-    const [selectedTime, setSelectedTime] = useState('10:00 am');
     const [customTime, setCustomTime] = useState(false);
-    const [selectedWeek, setSelectedWeek] = useState(2);
+    const [members, setMembers] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [errors, setErrors] = useState({});
+    const [Form, setForm] = useState({});
 
-    const weeks = [
-        { id: 1, label: 'Week 1', dateRange: '01 - 06 July' },
-        { id: 2, label: 'Week 2', dateRange: '07 - 13 July' },
-        { id: 3, label: 'Week 3', dateRange: '14 - 20 July' },
-        { id: 4, label: 'Week 4', dateRange: '21 - 27 July' },
-        { id: 5, label: 'Week 5', dateRange: '28 July - 03 August' },
-    ];
+    // Day Labels and Open Calendar
+    const [anchorEl, setAnchorEl] = useState(null);
+    const dayLabels = ['Sun', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const weekDays = weeks.find((w) => w.id === selectedWeek)?.days ?? [];
 
-    const handleWeekChange = (weekId) => {
-        setSelectedWeek(weekId);
+    const handleClick = (event) => {
+        setAnchorEl(anchorEl ? null : event.currentTarget);
     };
 
-    const handleTimeChange = (event, newTime) => {
-        if (newTime) {
-            setSelectedTime(newTime);
-            setCustomTime(newTime === 'custom');
+    const handleDateChange = (newValue) => {
+        setMonthYear(newValue);
+        setAnchorEl(null);
+    };
+
+    const open = Boolean(anchorEl);
+    const id = open ? 'month-year-picker' : undefined;
+
+    // Search Members
+    const searchUser = useCallback(async (query, role) => {
+        if (!query) return [];
+        setSearchLoading(true);
+
+        try {
+            const response = await axios.get(route('user.search'), {
+                params: { query, role },
+            });
+            if (response.data.success) {
+                return response.data.results;
+            } else {
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching search results:', error);
+            return [];
+        } finally {
+            setSearchLoading(false);
+        }
+    }, []);
+
+    const handleSearch = async (event, role) => {
+        const query = event?.target?.value;
+        if (query) {
+            const results = await searchUser(query, role);
+            if (role === 'user') setMembers(results);
+        } else {
+            if (role === 'user') setMembers([]);
         }
     };
 
-    const handleOrderTypeChange = (newType) => {
-        setOrderType(newType);
+    const handleAutocompleteChange = (event, value, field) => {
+        handleOrderDetailChange(field, value);
+        setErrors({ ...errors, [field]: '' });
     };
+
+    const handleSaveOrder = async () => {
+        // Client-side validation
+        const newErrors = {};
+        if (!orderDetails.member?.id) newErrors['member.id'] = 'Please select a member.';
+        if (!orderDetails.date) newErrors.date = 'Please select a date.';
+        if (!selectedTime && !orderDetails.time) newErrors.time = 'Please select a time.';
+        if (!orderDetails.person_count || orderDetails.person_count < 1) newErrors.person_count = 'Please enter a valid number of persons.';
+        if (orderDetails.down_payment !== undefined && orderDetails.down_payment < 0) newErrors.down_payment = 'Please enter a valid down payment.';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            enqueueSnackbar('Please fix the errors in the form.', { variant: 'error' });
+            return;
+        }
+
+        try {
+            const response = await axios.post(route('order.reservation'), orderDetails);
+            enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
+            // Reset unused Form state (preserved as per request)
+            setForm({
+                member: null,
+                date: '',
+                time: '',
+                custom_time: '',
+                person_count: '',
+                down_payment: '',
+                note: '',
+            });
+            // Reset orderDetails fields
+            handleOrderDetailChange('member', null);
+            handleOrderDetailChange('date', null);
+            handleOrderDetailChange('custom_time', '');
+            handleOrderDetailChange('person_count', '');
+            handleOrderDetailChange('down_payment', '');
+            handleOrderDetailChange('price', '');
+            // Reset local state
+            setSelectedTime('13:00');
+            setCustomTime(false);
+            setMembers([]);
+            setErrors({});
+            router.visit(route('order.new')); // Redirect after success
+        } catch (error) {
+            if (error.response?.status === 422) {
+                setErrors(error.response.data.errors);
+                enqueueSnackbar('Validation error: Please fix the form fields.', { variant: 'error' });
+            } else {
+                console.error('Error saving order:', error);
+                enqueueSnackbar('Failed to save order. Please try again.', { variant: 'error' });
+            }
+        }
+    };
+
+    function isValidTime(time) {
+        const date = new Date(`1970-01-01T${time}:00Z`);
+        return !isNaN(date.getTime());
+    }
+
+    function formatTime(time) {
+        const date = new Date(`1970-01-01T${time}:00Z`);
+        const options = { hour: '2-digit', minute: '2-digit', hour12: true };
+        return date.toLocaleString('en-US', options);
+    }
+
+    function parseTime(time) {
+        const [hours, minutes] = time.split(':').map((num) => parseInt(num, 10));
+
+        if (isNaN(hours) || isNaN(minutes)) {
+            return null; // Return null if the time is invalid
+        }
+
+        // Create a new Date object and set the hours and minutes
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        return date;
+    }
 
     return (
         <>
@@ -67,7 +184,7 @@ const ReservationDialog = () => {
                                     Order id:
                                 </Typography>
                                 <Typography variant="body1" fontWeight="600" color="#063455">
-                                    #RSV001
+                                    #{orderDetails.order_no}
                                 </Typography>
                             </Box>
                         </Paper>
@@ -78,40 +195,46 @@ const ReservationDialog = () => {
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '14px', color: '#121212' }}>
                             Customer Name or Scan Member Card
                         </Typography>
-                        <TextField
+                        <Autocomplete
                             fullWidth
+                            freeSolo
                             size="small"
-                            placeholder="Entry name"
-                            variant="outlined"
-                            sx={{
-                                bgcolor: '#FFFFFF',
-                                '& .MuiOutlinedInput-root': {
-                                    '& fieldset': {
-                                        border: '1px solid #121212 !important',
-                                    },
-                                    '&:hover fieldset': {
-                                        border: '1px solid #121212 !important',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                        border: '1px solid #121212 !important',
-                                    },
-                                },
-                            }}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton edge="end">
-                                            <QrCodeScannerIcon fontSize="small" />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                            }}
+                            options={members}
+                            value={orderDetails.member || null} // Ensure value is null if member is not set
+                            getOptionLabel={(option) => (option && typeof option === 'object' ? option.name || '' : option || '')} // Handle null or string
+                            onInputChange={(event, value) => handleSearch(event, 'user')}
+                            onChange={(event, value) => handleAutocompleteChange(event, value, 'member')}
+                            loading={searchLoading}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    fullWidth
+                                    sx={{ p: 0 }}
+                                    placeholder="Enter name or scan member card"
+                                    variant="outlined"
+                                    error={!!errors['member.id']}
+                                    helperText={errors['member.id']}
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <QrCodeScannerIcon fontSize="small" />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            )}
+                            renderOption={(props, option) => (
+                                <li {...props}>
+                                    <span>{option.name}</span>
+                                    <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
+                                </li>
+                            )}
                         />
                     </Box>
 
                     {/* Customer Qty and Down Payment */}
                     <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
-                        {/* Customer Qty Grid */}
                         <Grid item xs={6}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <Typography variant="body2" sx={{ mb: 1, fontSize: '14px', color: '#121212' }}>
@@ -121,7 +244,10 @@ const ReservationDialog = () => {
                                     <TextField
                                         size="small"
                                         type="number"
-                                        defaultValue="10"
+                                        value={orderDetails.person_count}
+                                        onChange={(e) => handleOrderDetailChange('person_count', e.target.value)}
+                                        error={!!errors.person_count}
+                                        helperText={errors.person_count}
                                         sx={{
                                             width: '60%',
                                             '& .MuiOutlinedInput-root': {
@@ -149,17 +275,9 @@ const ReservationDialog = () => {
                                 </Box>
                             </Box>
                         </Grid>
-
-                        {/* Down Payment Grid */}
                         <Grid item xs={6}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        mb: 0.2,
-                                    }}
-                                >
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.2 }}>
                                     <Typography variant="body2" color="#121212">
                                         Down Payment
                                     </Typography>
@@ -178,7 +296,11 @@ const ReservationDialog = () => {
                                 <TextField
                                     fullWidth
                                     size="small"
-                                    defaultValue="10"
+                                    type="number"
+                                    value={orderDetails.down_payment}
+                                    onChange={(e) => handleOrderDetailChange('down_payment', e.target.value)}
+                                    error={!!errors.down_payment}
+                                    helperText={errors.down_payment}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: 0,
@@ -194,7 +316,7 @@ const ReservationDialog = () => {
                                             <InputAdornment
                                                 position="start"
                                                 sx={{
-                                                    m: 0, // Remove default margin from InputAdornment
+                                                    m: 0,
                                                     height: '200%',
                                                     display: 'flex',
                                                     alignItems: 'stretch',
@@ -227,88 +349,81 @@ const ReservationDialog = () => {
 
                     {/* Select Date */}
                     <Box sx={{ mb: 2 }}>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                mb: 1,
-                            }}
-                        >
-                            <Typography variant="body2" color="#121212">
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="body2" color="#121212" mb={1}>
                                 Select Date
                             </Typography>
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    cursor: 'pointer',
-                                }}
-                            >
+                            <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleClick}>
                                 <Typography variant="body2" color="#063455">
-                                    July 2024
+                                    {new Date(monthYear).toLocaleString('default', { month: 'long', year: 'numeric' })}
                                 </Typography>
-                                <KeyboardArrowDownIcon fontSize="small" />
+                                <KeyboardArrowDownIcon fontSize="small" sx={{ ml: 1 }} />
                             </Box>
+                            <Popper id={id} open={open} anchorEl={anchorEl} placement="bottom-start">
+                                <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
+                                    <Box sx={{ mt: 1, p: 2, bgcolor: '#fff', boxShadow: 3, borderRadius: 1 }}>
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <StaticDatePicker
+                                                views={['year', 'month']}
+                                                value={dayjs(monthYear)}
+                                                onChange={handleDateChange}
+                                                minDate={dayjs().add(1, 'day')}
+                                                maxDate={dayjs().add(5, 'year')}
+                                                disablePast={true}
+                                            />
+                                        </LocalizationProvider>
+                                    </Box>
+                                </ClickAwayListener>
+                            </Popper>
                         </Box>
-
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                mb: 1,
-                            }}
-                        >
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                             <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    bgcolor: '#B0DEFF',
-                                    p: 0.5,
-                                    borderRadius: 1,
-                                }}
+                                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#B0DEFF', p: 0.5, borderRadius: 1 }}
                             >
                                 <CalendarTodayIcon fontSize="small" sx={{ color: '#1976d2' }} />
                                 <Typography variant="caption" sx={{ ml: 0.5, color: '#1976d2' }}>
-                                    Week 2
+                                    {weeks.find((w) => w.id === selectedWeek)?.label}
                                 </Typography>
                             </Box>
                         </Box>
-
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                width: '100%',
-                                border: '1px solid #e0e0e0',
-                                borderRadius: 1,
-                                overflow: 'hidden',
-                            }}
-                        >
-                            {['Sun', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, index) => (
+                        <Box sx={{ display: 'flex', width: '100%', border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'hidden' }}>
+                            {weekDays.map((day, index) => (
                                 <Box
-                                    key={day}
+                                    key={index}
                                     sx={{
                                         flex: 1,
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',
                                         p: 1,
-                                        bgcolor: selectedDate === index + 7 ? '#B0DEFF' : '#FFFFFF',
-                                        cursor: 'pointer',
+                                        bgcolor: day && orderDetails.date?.toDateString() === day.toDateString() ? '#B0DEFF' : '#FFFFFF',
+                                        color: day ? '#121212' : '#C0C0C0',
+                                        cursor: day ? 'pointer' : 'not-allowed',
                                         borderRight: index < 6 ? '1px solid #063455' : '#E3E3E3',
                                     }}
-                                    onClick={() => setSelectedDate(index + 7)}
+                                    onClick={() => {
+                                        if (day) {
+                                            handleOrderDetailChange('date', day);
+                                        }
+                                    }}
                                 >
                                     <Typography variant="caption" color="text.secondary">
-                                        {day}
+                                        {dayLabels[index]}
                                     </Typography>
-                                    <Typography variant="body2" fontWeight={selectedDate === index + 7 ? 'medium' : 'normal'}>
-                                        {index + 7}
+                                    <Typography
+                                        variant="body2"
+                                        fontWeight={day && orderDetails.date?.toDateString() === day.toDateString() ? 'medium' : 'normal'}
+                                    >
+                                        {day ? day.getDate() : ''}
                                     </Typography>
                                 </Box>
                             ))}
                         </Box>
+                        {errors.date && (
+                            <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                {errors.date}
+                            </Typography>
+                        )}
                     </Box>
 
                     {/* Select Time of Attendance */}
@@ -317,32 +432,42 @@ const ReservationDialog = () => {
                             Select Time of Attendance
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            {['10:00 am', '13:00 pm', '14:00 pm', '18:00 pm', 'Custom'].map((time) => (
-                                <Box
-                                    key={time}
-                                    onClick={() => {
-                                        setSelectedTime(time.toLowerCase());
-                                        setCustomTime(time === 'Custom');
-                                    }}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        border: '1px solid #e0e0e0',
-                                        borderRadius: 1,
-                                        p: 1,
-                                        flex: 1,
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    <Radio
-                                        checked={selectedTime === time.toLowerCase() || (customTime && time === 'Custom')}
-                                        size="small"
-                                        sx={{ p: 0.5, mr: 0.5 }}
-                                    />
-                                    <Typography variant="body2">{time}</Typography>
-                                </Box>
-                            ))}
+                            {['10:00', '13:00', '14:00', '18:00', 'Custom'].map((time) => {
+                                const isCustom = time === 'Custom';
+                                const isSelected = isCustom ? customTime : orderDetails.time === time;
+
+                                return (
+                                    <Box
+                                        key={time}
+                                        onClick={() => {
+                                            const selected = isCustom ? '' : time;
+                                            setSelectedTime(time);
+                                            setCustomTime(isCustom);
+                                            console.log(selected);
+
+                                            handleOrderDetailChange('time', selected); // Always update orderDetails.time
+                                        }}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            border: '1px solid #e0e0e0',
+                                            borderRadius: 1,
+                                            p: 1,
+                                            flex: 1,
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        <Radio checked={isSelected} size="small" sx={{ p: 0.5, mr: 0.5 }} />
+                                        <Typography variant="body2">{isCustom ? 'Custom' : isValidTime(time) ? formatTime(time) : time}</Typography>
+                                    </Box>
+                                );
+                            })}
                         </Box>
+                        {errors.time && (
+                            <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                {errors.time}
+                            </Typography>
+                        )}
                     </Box>
 
                     {/* Custom Time Selection */}
@@ -351,26 +476,35 @@ const ReservationDialog = () => {
                             <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
                                 Select Custom Time
                             </Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Select time"
-                                sx={{
-                                    border: '1px solid #121212',
-                                }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <AccessTimeIcon fontSize="small" color="action" />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                disabled={!customTime}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <TimePicker
+                                    label="Select Custom Time"
+                                    value={orderDetails.time ? dayjs(orderDetails.time, 'HH:mm') : null}
+                                    onChange={(newValue) => handleOrderDetailChange('time', newValue ? newValue.format('HH:mm') : '')}
+                                    disabled={!customTime}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            fullWidth
+                                            size="small"
+                                            error={!!errors.time}
+                                            helperText={errors.time}
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <AccessTimeIcon fontSize="small" color="action" />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={6}>
                             <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
-                                Selected Custom Time
+                                Total Persons
                             </Typography>
                             <Box
                                 sx={{
@@ -383,26 +517,18 @@ const ReservationDialog = () => {
                                 }}
                             >
                                 <Typography variant="body1" fontWeight="medium">
-                                    23 Person
+                                    {orderDetails.person_count} Person
                                 </Typography>
                             </Box>
                         </Grid>
                     </Grid>
 
                     {/* Footer Buttons */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            gap: 1,
-                        }}
-                    >
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                         <Button
                             variant="text"
-                            sx={{
-                                color: '#666',
-                                textTransform: 'none',
-                            }}
+                            sx={{ color: '#666', textTransform: 'none' }}
+                            onClick={() => router.visit(route('order.cancel'))} // Optional: Define a cancel route
                         >
                             Cancel
                         </Button>
@@ -413,6 +539,7 @@ const ReservationDialog = () => {
                                 border: '1px solid #063455',
                                 color: '#333',
                             }}
+                            onClick={handleSaveOrder}
                         >
                             Save Order
                         </Button>
@@ -421,12 +548,10 @@ const ReservationDialog = () => {
                             endIcon={<ArrowForwardIcon />}
                             sx={{
                                 bgcolor: '#0c3b5c',
-                                '&:hover': {
-                                    bgcolor: '#072a42',
-                                },
+                                '&:hover': { bgcolor: '#072a42' },
                                 textTransform: 'none',
                             }}
-                            onClick={() => router.visit('/all/order')}
+                            onClick={() => router.visit(route('order.menu'))}
                         >
                             Choose Menu
                         </Button>

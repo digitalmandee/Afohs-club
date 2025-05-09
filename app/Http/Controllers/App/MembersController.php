@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Helpers\FileHelper;
 use App\Http\Controllers\Controller;
+use App\Models\AddressType;
 use App\Models\MemberType;
 use App\Models\User;
 use App\Models\UserDetail;
@@ -19,15 +21,10 @@ class MembersController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        $users = User::with(['memberType',])->latest()->paginate($limit);
-        $userDetail = User::with(['userDetail'])->latest()->paginate($limit);
+        $users = User::with(['memberType', 'userDetail'])->role('user')->latest()->paginate($limit);
 
-        return Inertia::render('App/Member/Dashboard', [
-            'users' => $users,
-            'userDetail' => $userDetail
-        ]);
+        return Inertia::render('App/Member/Dashboard', compact('users'));
     }
-
 
     public function create(Request $request)
     {
@@ -36,10 +33,12 @@ class MembersController extends Controller
         $users = User::with(['memberType', 'userDetail'])->latest()->paginate($limit);
 
         $memberTypes = MemberType::all(['id', 'name']);
+        $addressTypes = AddressType::all(['id', 'name']);
 
         return Inertia::render('App/Member/AddCustomer', [
             'users' => $users,
             'memberTypes' => $memberTypes,
+            'addressTypes' => $addressTypes,
         ]);
     }
 
@@ -62,10 +61,9 @@ class MembersController extends Controller
                 'email' => 'required|email|max:255|unique:users,email',
                 'phone' => 'required|string|max:20',
                 'customer_type' => 'required|string|exists:member_types,name',
-                // 'member_type_id' => 'required|exists:member_types,id',
-                'profile_pic' => 'nullable|image|max:4096',
+                'profile_photo' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
-                'addresses.*.type' => 'required|string|in:House,Apartment,Office',
+                'addresses.*.type' => 'required|string|exists:address_types,name', // Validate against address_types table
                 'addresses.*.address' => 'required|string|max:255',
                 'addresses.*.city' => 'required|string|max:255',
                 'addresses.*.province' => 'required|string|max:255',
@@ -87,9 +85,9 @@ class MembersController extends Controller
             $customer->password = Hash::make(Str::random(16));
             $customer->user_id = User::max('user_id') ? (string)(intval(User::max('user_id')) + 1) : '1';
 
-            if ($request->hasFile('profile_pic')) {
-                $path = $request->file('profile_pic')->store('profiles', 'public');
-                $customer->profile_photo = Storage::url($path);
+            if ($request->hasFile('profile_photo')) {
+                $path = FileHelper::saveImage($request->file('profile_photo'), 'profiles');
+                $customer->profile_photo = $path;
             }
 
             $customer->save();
@@ -111,7 +109,7 @@ class MembersController extends Controller
                 }
             }
 
-            return redirect()->back()->with(['success' => 'Customer added successfully!',]);
+            return redirect()->back()->with(['success' => 'Customer added successfully!']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed: ' . json_encode($e->errors()));
             return redirect()->back()->withErrors($e->errors());
@@ -136,61 +134,56 @@ class MembersController extends Controller
             }
             $request->merge(['addresses' => $addresses ?? []]);
 
-            Log::info('Raw update request data: ' . json_encode($request->all()));
-            Log::info('Merged update addresses: ' . json_encode($addresses));
-
-            $validated = $request->validate([
+            $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255|unique:users,email,' . $customer->id,
-                'phone' => 'required|string|max:20',
+                'phone' => 'required|string',
                 'customer_type' => 'required|string|exists:member_types,name',
                 'member_type_id' => 'required|exists:member_types,id',
                 'profile_pic' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
-                'addresses.*.type' => 'required|string|in:House,Apartment,Office',
+                'addresses.*.address_type' => 'required|string|exists:address_types,name', // Validate against address_types table
                 'addresses.*.address' => 'required|string|max:255',
                 'addresses.*.city' => 'required|string|max:255',
-                'addresses.*.province' => 'required|string|max:255',
+                'addresses.*.state' => 'required|string|max:255',
                 'addresses.*.country' => 'required|string|max:255',
-                'addresses.*.zipCode' => 'required|string|max:20',
-                'addresses.*.isMain' => 'boolean',
+                'addresses.*.zip' => 'required|string|max:20',
+                // 'addresses.*.status' => 'boolean',
             ]);
 
-            Log::info('Validated update data: ' . json_encode($validated));
-
-            $memberType = MemberType::where('name', $validated['customer_type'])->first();
+            $memberType = MemberType::where('name', $request->customer_type)->first();
             if (!$memberType) {
                 return redirect()->back()->withErrors(['customer_type' => 'Selected customer type does not exist.']);
             }
 
-            $customer->name = $validated['name'];
-            $customer->email = $validated['email'];
-            $customer->phone_number = $validated['phone'];
+            $customer->name = $request->name;
+            $customer->email = $request->email;
+            $customer->phone_number = $request->phone;
             $customer->member_type_id = $memberType->id;
 
             if ($request->hasFile('profile_pic')) {
                 if ($customer->profile_photo) {
-                    Storage::disk('public')->delete(str_replace('/storage/', '', $customer->profile_photo));
+                    Storage::disk('public')->delete($customer->profile_photo);
                 }
-                $path = $request->file('profile_pic')->store('profiles', 'public');
-                $customer->profile_photo = Storage::url($path);
+                $path = FileHelper::saveImage($request->file('profile_pic'), 'profiles');
+                $customer->profile_photo = $path;
             }
 
             $customer->save();
 
             // Update addresses: Delete existing and recreate
             $customer->userDetails()->delete();
-            if (!empty($validated['addresses'])) {
-                foreach ($validated['addresses'] as $address) {
+            if (!empty($request->addresses)) {
+                foreach ($request->addresses as $address) {
                     UserDetail::create([
-                        'user_id' => $customer->user_id,
-                        'address_type' => $address['type'],
+                        'user_id' => $customer->id, // Fixed: Use $customer->id instead of user_id
+                        'address_type' => $address['address_type'],
                         'country' => $address['country'],
-                        'state' => $address['province'],
+                        'state' => $address['state'],
                         'city' => $address['city'],
-                        'zip' => $address['zipCode'],
+                        'zip' => $address['zip'],
                         'address' => $address['address'],
-                        'status' => $address['isMain'] ? 'active' : 'inactive',
+                        'status' => $address['status'] ? 'active' : 'inactive',
                     ]);
                 }
             }
@@ -205,6 +198,7 @@ class MembersController extends Controller
                     'phone_number',
                     'member_type_id',
                     'profile_photo',
+                    'userDetails',
                 ]),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -222,11 +216,14 @@ class MembersController extends Controller
     public function edit(string $id)
     {
         $customer = User::with(['memberType', 'userDetails'])->findOrFail($id);
-        $memberTypes = MemberType::all(['id', 'name']);
 
-        return Inertia::render('App/Member/AddCustomer', [
+        $memberTypes = MemberType::all(['id', 'name']);
+        $addressTypes = AddressType::all(['id', 'name']);
+
+        return Inertia::render('App/Member/EditCustomer', [
             'customer' => $customer,
             'memberTypes' => $memberTypes,
+            'addressTypes' => $addressTypes,
         ]);
     }
 }

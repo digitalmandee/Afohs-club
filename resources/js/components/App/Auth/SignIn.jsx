@@ -1,6 +1,6 @@
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import BackspaceIcon from '@mui/icons-material/Backspace';
-import { Box, Button, Grid, Link, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Button, Link, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 
 const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
     const theme = useTheme();
@@ -26,20 +26,16 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
         <>
             <Box
                 sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    // maxWidth: "375px",
-                    // mx: "auto",
-                    height: "100vh",
+                    display: 'flex',
+                    flexDirection: 'column',
+
+                    height: '100vh',
                     px: 2,
-                    // pt: 4,
                     pb: 10,
-                    overflowY: "auto",
-                    "&::-webkit-scrollbar": {
-                        display: "none",
+                    overflowY: 'auto',
+                    '&::-webkit-scrollbar': {
+                        display: 'none',
                     },
-                    // msOverflowStyle: "none", // IE and Edge
-                    // scrollbarWidth: "none", // Firefox
                 }}
             >
                 <Box
@@ -113,7 +109,6 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                     fullWidth
                     endIcon={<ArrowForwardIcon />}
                     sx={{
-                        // mt: 1,
                         mb: 1,
                         py: 1.5,
                         backgroundColor: '#063455',
@@ -147,9 +142,9 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                 </Typography>
 
                 {/* Numeric keypad */}
-                <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     {/* Row 1: 1,2,3 */}
-                    <Box sx={{ display: "flex", width: "100%", mb: 1 }}>
+                    <Box sx={{ display: 'flex', width: '100%', mb: 1 }}>
                         {[1, 2, 3].map((number) => (
                             <Button
                                 key={number}
@@ -160,17 +155,17 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                                     py: 2,
                                     mx: 0.5,
                                     borderRadius: 0,
-                                    color: "#333",
-                                    fontSize: "20px",
+                                    color: '#333',
+                                    fontSize: '20px',
                                     fontWeight: 500,
-                                    backgroundColor: "#f5f5f5",
-                                    "&:hover": {
-                                        backgroundColor: "#e0e0e0",
+                                    backgroundColor: '#f5f5f5',
+                                    '&:hover': {
+                                        backgroundColor: '#e0e0e0',
                                     },
-                                    "&:first-of-type": {
+                                    '&:first-of-type': {
                                         ml: 0,
                                     },
-                                    "&:last-of-type": {
+                                    '&:last-of-type': {
                                         mr: 0,
                                     },
                                 }}
@@ -181,7 +176,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                     </Box>
 
                     {/* Row 2: 4,5,6 */}
-                    <Box sx={{ display: "flex", width: "100%", mb: 1 }}>
+                    <Box sx={{ display: 'flex', width: '100%', mb: 1 }}>
                         {[4, 5, 6].map((number) => (
                             <Button
                                 key={number}
@@ -192,17 +187,17 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                                     py: 2,
                                     mx: 0.5,
                                     borderRadius: 0,
-                                    color: "#333",
-                                    fontSize: "20px",
+                                    color: '#333',
+                                    fontSize: '20px',
                                     fontWeight: 500,
-                                    backgroundColor: "#f5f5f5",
-                                    "&:hover": {
-                                        backgroundColor: "#e0e0e0",
+                                    backgroundColor: '#f5f5f5',
+                                    '&:hover': {
+                                        backgroundColor: '#e0e0e0',
                                     },
-                                    "&:first-of-type": {
+                                    '&:first-of-type': {
                                         ml: 0,
                                     },
-                                    "&:last-of-type": {
+                                    '&:last-of-type': {
                                         mr: 0,
                                     },
                                 }}
@@ -213,7 +208,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                     </Box>
 
                     {/* Row 3: 7,8,9 */}
-                    <Box sx={{ display: "flex", width: "100%", mb: 1 }}>
+                    <Box sx={{ display: 'flex', width: '100%', mb: 1 }}>
                         {[7, 8, 9].map((number) => (
                             <Button
                                 key={number}
@@ -224,17 +219,17 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                                     py: 2,
                                     mx: 0.5,
                                     borderRadius: 0,
-                                    color: "#333",
-                                    fontSize: "20px",
+                                    color: '#333',
+                                    fontSize: '20px',
                                     fontWeight: 500,
-                                    backgroundColor: "#f5f5f5",
-                                    "&:hover": {
-                                        backgroundColor: "#e0e0e0",
+                                    backgroundColor: '#f5f5f5',
+                                    '&:hover': {
+                                        backgroundColor: '#e0e0e0',
                                     },
-                                    "&:first-of-type": {
+                                    '&:first-of-type': {
                                         ml: 0,
                                     },
-                                    "&:last-of-type": {
+                                    '&:last-of-type': {
                                         mr: 0,
                                     },
                                 }}
@@ -245,21 +240,21 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                     </Box>
 
                     {/* Row 4: .,0,backspace */}
-                    <Box sx={{ display: "flex", width: "100%" }}>
+                    <Box sx={{ display: 'flex', width: '100%' }}>
                         <Button
                             variant="text"
-                            onClick={() => handleNumberClick(".")}
+                            onClick={() => handleNumberClick('.')}
                             sx={{
                                 flex: 1,
                                 py: 2,
                                 mr: 0.5,
                                 borderRadius: 0,
-                                color: "#333",
-                                fontSize: "20px",
+                                color: '#333',
+                                fontSize: '20px',
                                 fontWeight: 500,
-                                backgroundColor: "#f5f5f5",
-                                "&:hover": {
-                                    backgroundColor: "#e0e0e0",
+                                backgroundColor: '#f5f5f5',
+                                '&:hover': {
+                                    backgroundColor: '#e0e0e0',
                                 },
                             }}
                         >
@@ -267,18 +262,18 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                         </Button>
                         <Button
                             variant="text"
-                            onClick={() => handleNumberClick("0")}
+                            onClick={() => handleNumberClick('0')}
                             sx={{
                                 flex: 1,
                                 py: 2,
                                 mx: 0.5,
                                 borderRadius: 0,
-                                color: "#333",
-                                fontSize: "20px",
+                                color: '#333',
+                                fontSize: '20px',
                                 fontWeight: 500,
-                                backgroundColor: "#f5f5f5",
-                                "&:hover": {
-                                    backgroundColor: "#e0e0e0",
+                                backgroundColor: '#f5f5f5',
+                                '&:hover': {
+                                    backgroundColor: '#e0e0e0',
                                 },
                             }}
                         >
@@ -292,11 +287,11 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                                 py: 2,
                                 ml: 0.5,
                                 borderRadius: 0,
-                                color: "#fff",
-                                fontSize: "20px",
-                                backgroundColor: "#ffcdd2",
-                                "&:hover": {
-                                    backgroundColor: "#ef9a9a",
+                                color: '#fff',
+                                fontSize: '20px',
+                                backgroundColor: '#ffcdd2',
+                                '&:hover': {
+                                    backgroundColor: '#ef9a9a',
                                 },
                             }}
                         >

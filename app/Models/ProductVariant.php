@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductVariant extends Model
 {
@@ -15,8 +16,14 @@ class ProductVariant extends Model
         'type',
     ];
 
-    public function values()
+    public function values(): HasMany
     {
-        return $this->hasMany(ProductVariantValue::class);
+        return $this->hasMany(ProductVariantValue::class)
+            ->select('product_variant_id', 'name', 'additional_price', 'stock', 'is_default');
+    }
+
+    public function getValuesAttribute()
+    {
+        return $this->values;
     }
 }

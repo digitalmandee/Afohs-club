@@ -1,14 +1,11 @@
 import { router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HomeIcon from '@mui/icons-material/Home';
-import InventoryIcon from '@mui/icons-material/Inventory';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PeopleIcon from '@mui/icons-material/People';
-import SettingsIcon from '@mui/icons-material/Settings';
-import { Avatar, Button, Collapse } from '@mui/material';
+import { Avatar, Collapse } from '@mui/material';
 import MuiAppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -20,11 +17,11 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
+import { useState } from 'react';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -215,7 +212,6 @@ export default function SideNav({ open, setOpen }) {
                             <img src="/assets/bell-notification.png" alt="" style={{ width: 17, height: 19 }} />
                         </IconButton>
 
-                        {/* Vertical Divider */}
                         <Divider
                             orientation="vertical"
                             flexItem
@@ -258,7 +254,9 @@ export default function SideNav({ open, setOpen }) {
             </AppBar>
 
             {/* Sidebar Drawer */}
-            <Drawer variant="permanent" open={open}
+            <Drawer
+                variant="permanent"
+                open={open}
                 sx={{
                     '& .MuiDrawer-paper': {
                         display: 'flex',
@@ -305,8 +303,7 @@ export default function SideNav({ open, setOpen }) {
                     <List sx={{ mt: 2 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
-                            const isSelected = url === path || (children && children.some(child => url === child.path));
-
+                            const isSelected = url === path || (children && children.some((child) => url === child.path));
                             // Main ListItem (with or without dropdown)
                             return (
                                 <Box key={text}>
@@ -374,7 +371,6 @@ export default function SideNav({ open, setOpen }) {
                                                             sx={{
                                                                 mt: 1,
                                                                 pl: 1,
-
                                                             }}
                                                         >
                                                             <ListItemButton
