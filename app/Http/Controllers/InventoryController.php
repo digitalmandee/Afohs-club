@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\Product;
+use App\Rules\KitchenRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -40,7 +41,7 @@ class InventoryController extends Controller
             'menu_code' => 'required|string|max:100',
             'category' => 'required|string|max:100',
             'kitchen' => 'required|array',
-            'kitchen.id' => 'required|exists:users,id|role:kitchen',
+            'kitchen.id' => ['required', 'exists:users,id', new KitchenRole()],
             'currentStock' => 'required|integer|min:0',
             'minimalStock' => 'required|integer|min:0',
             'orderTypes' => 'required|array|min:1',

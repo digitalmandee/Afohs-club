@@ -9,5 +9,5 @@ class KitchenDetail extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['kitchen_id', 'ip', 'port'];
+    protected $fillable = ['kitchen_id', 'printer_ip', 'printer_port'];
 }

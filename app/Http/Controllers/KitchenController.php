@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -14,14 +15,25 @@ class KitchenController extends Controller
 {
     public function index()
     {
-        $orders = Order::with(['orderItems', 'table'])
-            ->latest()
-            ->get();
+        $userId = Auth::id();
+
+        Log::info('User ID: ' . $userId);
+
+        $orders = Order::with([
+            'table:id,table_no', // Load only needed table fields
+            'orderItems' => function ($query) use ($userId) {
+                $query->where('kitchen_id', $userId)
+                    ->select('id', 'order_id', 'kitchen_id', 'order_item', 'status');
+            },
+        ])->whereHas('orderItems', function ($query) use ($userId) {
+            $query->where('kitchen_id', $userId);
+        })->latest()->get();
 
         return Inertia::render('App/Kitchen/Dashboard', [
             'kitchenOrders' => $orders,
         ]);
     }
+
 
     public function updateAll(Request $request, $orderId)
     {
