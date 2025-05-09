@@ -2,12 +2,8 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, Typography } from '@mui/material';
-import { Col, Container, Form, Row, Spinner } from 'react-bootstrap';
+import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mui/material'; // MUI components
+import { Col, Container, Row } from 'react-bootstrap'; // Bootstrap Grid System
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -49,11 +45,13 @@ const Register = () => {
                     <Container style={{ maxWidth: '700px', width: '100%' }}>
                         <Row className="align-items-center mb-4">
                             <Col>
-                                <Typography style={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>Tenant Registration</Typography>
+                                <Typography variant="h4" style={{ color: '#3F4E4F', fontWeight: 500 }}>
+                                    Tenant Registration
+                                </Typography>
                             </Col>
                         </Row>
-                        <div
-                            style={{
+                        <Box
+                            sx={{
                                 borderRadius: '20px',
                                 border: '1px solid #ccc',
                                 backgroundColor: '#fff',
@@ -61,91 +59,107 @@ const Register = () => {
                                 boxShadow: '0 0 10px rgba(0,0,0,0.05)',
                             }}
                         >
-                            <Form onSubmit={submit}>
-                                <Form.Group className="mb-3" controlId="name">
-                                    <Label>Name</Label>
-                                    <Input
+                            <form onSubmit={submit}>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField
+                                        label="Name"
                                         type="text"
                                         required
+                                        fullWidth
                                         autoFocus
                                         autoComplete="name"
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
                                         disabled={processing}
                                         placeholder="Full name"
+                                        error={!!errors.name}
+                                        helperText={errors.name}
+                                        variant="outlined"
                                     />
-                                    <InputError message={errors.name} />
-                                </Form.Group>
+                                </div>
 
-                                <Form.Group className="mb-3" controlId="email">
-                                    <Label>Email address</Label>
-                                    <Input
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField
+                                        label="Email address"
                                         type="email"
                                         required
+                                        fullWidth
                                         autoComplete="email"
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
                                         disabled={processing}
                                         placeholder="email@example.com"
+                                        error={!!errors.email}
+                                        helperText={errors.email}
+                                        variant="outlined"
                                     />
-                                    <InputError message={errors.email} />
-                                </Form.Group>
+                                </div>
 
-                                <Form.Group className="mb-3" controlId="domain_name">
-                                    <Label>Domain Name</Label>
-                                    <Input
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField
+                                        label="Domain Name"
                                         type="text"
                                         required
+                                        fullWidth
                                         autoComplete="domain_name"
                                         value={data.domain_name}
                                         onChange={(e) => setData('domain_name', e.target.value)}
                                         disabled={processing}
                                         placeholder="example"
+                                        error={!!errors.domain_name}
+                                        helperText={errors.domain_name}
+                                        variant="outlined"
                                     />
-                                    <InputError message={errors.domain_name} />
-                                </Form.Group>
+                                </div>
 
-                                <Form.Group className="mb-3" controlId="password">
-                                    <Label>Password</Label>
-                                    <Input
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField
+                                        label="Password"
                                         type="password"
                                         required
+                                        fullWidth
                                         autoComplete="new-password"
                                         value={data.password}
                                         onChange={(e) => setData('password', e.target.value)}
                                         disabled={processing}
                                         placeholder="Password"
+                                        error={!!errors.password}
+                                        helperText={errors.password}
+                                        variant="outlined"
                                     />
-                                    <InputError message={errors.password} />
-                                </Form.Group>
+                                </div>
 
-                                <Form.Group className="mb-4" controlId="password_confirmation">
-                                    <Label>Confirm Password</Label>
-                                    <Input
+                                <div style={{ marginBottom: '2rem' }}>
+                                    <TextField
+                                        label="Confirm Password"
                                         type="password"
                                         required
+                                        fullWidth
                                         autoComplete="new-password"
                                         value={data.password_confirmation}
                                         onChange={(e) => setData('password_confirmation', e.target.value)}
                                         disabled={processing}
                                         placeholder="Confirm password"
+                                        error={!!errors.password_confirmation}
+                                        helperText={errors.password_confirmation}
+                                        variant="outlined"
                                     />
-                                    <InputError message={errors.password_confirmation} />
-                                </Form.Group>
+                                </div>
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <Button type="submit" disabled={processing}>
-                                        {processing && <Spinner animation="border" role="status" size="sm" className="me-2" />}
+                                    <Button type="submit" variant="contained" color="primary" disabled={processing} fullWidth>
+                                        {processing && <CircularProgress size={24} style={{ marginRight: '10px' }} />}
                                         Create Tenant
                                     </Button>
-                                    {recentlySuccessful && (
-                                        <Alert variant="success" style={{ padding: '0.25rem 0.75rem', marginBottom: 0 }}>
-                                            Tenant created successfully.
-                                        </Alert>
-                                    )}
                                 </div>
-                            </Form>
-                        </div>
+
+                                {recentlySuccessful && (
+                                    <Alert variant="filled" severity="success" style={{ marginTop: '1rem' }}>
+                                        Tenant created successfully.
+                                    </Alert>
+                                )}
+                            </form>
+                        </Box>
                     </Container>
                 </div>
             </div>
