@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\Product;
+use App\Rules\KitchenRole;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
@@ -38,6 +40,8 @@ class InventoryController extends Controller
             'name' => 'required|string|max:255',
             'menu_code' => 'required|string|max:100',
             'category' => 'required|string|max:100',
+            'kitchen' => 'required|array',
+            'kitchen.id' => ['required', 'exists:users,id', new KitchenRole()],
             'currentStock' => 'required|integer|min:0',
             'minimalStock' => 'required|integer|min:0',
             'orderTypes' => 'required|array|min:1',
@@ -50,6 +54,7 @@ class InventoryController extends Controller
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
         ]);
 
+        DB::beginTransaction();
         // Create a new product
         // Handle image uploads (if any)
         $imagePaths = [];
@@ -68,6 +73,7 @@ class InventoryController extends Controller
             'name' => $request->input('name'),
             'menu_code' => $request->input('menu_code'),
             'category_id' => $request->input('category'),
+            'kitchen_id' => $request->input('kitchen.id'),
             'current_stock' => $request->input('currentStock'),
             'minimal_stock' => $request->input('minimalStock'),
             'available_order_types' => $request->input('orderTypes'),
@@ -101,6 +107,7 @@ class InventoryController extends Controller
             }
         }
 
+        DB::commit();
         // Optionally return a response
         return redirect()->back()->with('success', 'Product created.');
     }

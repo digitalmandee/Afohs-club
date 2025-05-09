@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('kitchen_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('kitchen_id')->constrained('users')->onDelete('cascade');
-            $table->string('ip')->nullable();
-            $table->string('port')->nullable();
+            $table->string('printer_ip')->nullable();
+            $table->string('printer_port')->nullable();
             $table->timestamps();
         });
     }

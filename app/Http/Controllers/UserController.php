@@ -32,4 +32,10 @@ class UserController extends Controller
 
         return response()->json(['success' => true, 'waiters' => $waiters], 200);
     }
+    public function kitchens()
+    {
+        $kitchens = User::role('kitchen')->select('id', 'name', 'email')->get();
+
+        return response()->json(['success' => true, 'kitchens' => $kitchens], 200);
+    }
 }
