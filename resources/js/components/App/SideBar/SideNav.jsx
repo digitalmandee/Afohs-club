@@ -32,7 +32,7 @@ import MemberIcon from '@/components/App/Icons/Member';
 import TableIcon from '@/components/App/Icons/TableManagement';
 import CategoryIcon from '@mui/icons-material/Category';
 import AddressType from '../Icons/AddressType';
-import { MdManageHistory } from "react-icons/md";
+import { MdManageHistory } from 'react-icons/md';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -125,21 +125,7 @@ export default function SideNav({ open, setOpen }) {
             icon: <MdManageHistory />,
             path: '/order/management',
         },
-        {
-            text: 'Members',
-            icon: <MemberIcon />,
-            path: '/members',
-        },
-        {
-            text: 'Members Types',
-            icon: <MemberIcon />,
-            path: '/members/member-types',
-        },
-        {
-            text: 'Address Type',
-            icon: <AddressType />,
-            path: '/members/address-types',
-        },
+
         { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
     ];
 
@@ -286,13 +272,7 @@ export default function SideNav({ open, setOpen }) {
                                 }}
                             >
                                 {/* Profile Modal Content */}
-                                {profileView === 'profile' ? (
-                                    <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} />
-                                ) : profileView === 'loginActivity' ? (
-                                    <LoginActivityScreen setProfileView={setProfileView} />
-                                ) : profileView === 'logoutSuccess' ? (
-                                    <LogoutScreen setProfileView={setProfileView} />
-                                ) : null}
+                                {profileView === 'profile' ? <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} /> : profileView === 'loginActivity' ? <LoginActivityScreen setProfileView={setProfileView} /> : profileView === 'logoutSuccess' ? <LogoutScreen setProfileView={setProfileView} /> : null}
                             </Box>
                         </Modal>
                     </Box>
@@ -300,7 +280,9 @@ export default function SideNav({ open, setOpen }) {
             </AppBar>
 
             {/* Sidebar Drawer */}
-            <Drawer variant="permanent" open={open}
+            <Drawer
+                variant="permanent"
+                open={open}
                 sx={{
                     '& .MuiDrawer-paper': {
                         display: 'flex',
@@ -379,7 +361,7 @@ export default function SideNav({ open, setOpen }) {
 
                     <List>
                         {menuItems.map(({ text, icon, path }) => {
-                            const isSelected = url === path
+                            const isSelected = url === path;
                             return (
                                 <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
                                     <ListItemButton
@@ -415,7 +397,7 @@ export default function SideNav({ open, setOpen }) {
                                         />
                                     </ListItemButton>
                                 </ListItem>
-                            )
+                            );
                         })}
                     </List>
                 </Box>
