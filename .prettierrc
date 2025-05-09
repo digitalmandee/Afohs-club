@@ -1,12 +1,10 @@
 {
     "semi": true,
     "singleQuote": true,
+    "tabWidth": 4,
+    "printWidth": 6000,
     "singleAttributePerLine": false,
     "htmlWhitespaceSensitivity": "css",
-    "printWidth": 6000,
-    "plugins": [""],
-    "tailwindFunctions": ["clsx", "cn"],
-    "tabWidth": 4,
     "overrides": [
         {
             "files": "**/*.yml",

@@ -3,19 +3,8 @@
     "style": "default",
     "rsc": false,
     "tsx": true,
-    "tailwind": {
-        "config": "tailwind.config.js",
-        "css": "resources/css/app.css",
-        "baseColor": "neutral",
-        "cssVariables": true,
-        "prefix": ""
-    },
     "aliases": {
-        "components": "@/components",
-        "utils": "@/lib/utils",
-        "ui": "@/components/ui",
-        "lib": "@/lib",
-        "hooks": "@/hooks"
+        "components": "@/components"
     },
     "iconLibrary": "lucide"
 }
