@@ -1,6 +1,7 @@
 'use client';
 
 import SideNav from '@/components/App/SideBar/SideNav';
+import { tenantAsset } from '@/helpers/asset';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
@@ -48,6 +49,7 @@ const OrderMenu = () => {
                 price: parseFloat(product.base_price),
                 total_price: parseFloat(product.base_price),
                 quantity: 1,
+                kitchen_id: product.kitchen_id,
                 category: product.category?.name || '',
                 variants: [],
             };
@@ -180,7 +182,7 @@ const OrderMenu = () => {
                                     >
                                         {/* Skip image for first item */}
                                         <Avatar
-                                            src={category.image}
+                                            src={tenantAsset(category.image)}
                                             alt={category.name}
                                             sx={{
                                                 width: 40,
@@ -332,7 +334,7 @@ const OrderMenu = () => {
                                                         >
                                                             <Box
                                                                 component="img"
-                                                                src={product.images[0]}
+                                                                src={tenantAsset(product.images[0])}
                                                                 alt={product.name}
                                                                 sx={{
                                                                     width: '100%',
@@ -521,6 +523,7 @@ const VariantSelector = ({ product, onConfirm, onClose, initialItem = null }) =>
             id: product.id,
             name: product.name,
             price: parseFloat(product.base_price),
+            kitchen_id: product.kitchen_id,
             total_price,
             quantity,
             category: product.category?.name || '',

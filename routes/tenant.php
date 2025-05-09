@@ -60,6 +60,7 @@ Route::middleware([
             // for member and waiter
             Route::get('/user/search', [UserController::class, 'searchMember'])->name('user.search');
             Route::get('/waiters/all', [UserController::class, 'waiters'])->name('waiters.all');
+            Route::get('/kitchens/all', [UserController::class, 'kitchens'])->name('kitchens.all');
             Route::get('/floor/all', [FloorController::class, 'floorAll'])->name('floor.all');
 
             Route::get('/order/management', function () {
@@ -88,23 +89,6 @@ Route::middleware([
                 return Inertia::render('App/Member/Customer');
             });
 
-
-            Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-
-            Route::get('/add/product', function () {
-                return Inertia::render('App/Inventory/Product');
-            })->name('product.create');
-
-            // Route::get('/table/management', function () {
-            //     return Inertia::render('App/Table/Dashboard');
-            // })->name('table.management');
-
-            // Inventory Category
-            Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
-            Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
-            Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
-            Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
-
             // Floors & Table Routes
             Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
             Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
@@ -122,7 +106,17 @@ Route::middleware([
 
             // End of floors routes
 
+            // Inventory Category
+            Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
+            Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
+            Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
+            Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
+
             // Inventory Items
+            Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+            Route::get('/add/product', function () {
+                return Inertia::render('App/Inventory/Product');
+            })->name('product.create');
             Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
             Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
 
