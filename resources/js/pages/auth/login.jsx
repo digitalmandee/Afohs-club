@@ -1,8 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
 import AuthLayout from '@/layouts/auth-layout';
 
 import {
@@ -12,6 +10,7 @@ import {
   Button,
   Typography,
   Box,
+  Link,
 } from '@mui/material';
 
 export default function Login({ status, canResetPassword }) {
@@ -63,13 +62,13 @@ export default function Login({ status, canResetPassword }) {
               Password
             </Typography>
             {canResetPassword && (
-              <TextLink
+              <Link
                 href={route('password.request')}
                 tabIndex={5}
                 style={{ fontSize: '0.875rem' }}
               >
                 Forgot password?
-              </TextLink>
+              </Link>
             )}
           </Box>
           <TextField
@@ -127,3 +126,4 @@ export default function Login({ status, canResetPassword }) {
     </AuthLayout>
   );
 }
+

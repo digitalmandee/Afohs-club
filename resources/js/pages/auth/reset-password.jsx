@@ -1,7 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Button, TextField, Typography, CircularProgress, Stack } from '@mui/material';
+import { Button, TextField, CircularProgress, Stack } from '@mui/material';
 
-import InputError from '@/components/input-error';
 import AuthLayout from '@/layouts/auth-layout';
 
 export default function ResetPassword({ token, email }) {

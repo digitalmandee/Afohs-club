@@ -2,7 +2,6 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
-import HeadingSmall from '@/components/heading-small';
 import { Alert, Box, Button, TextField, Typography } from '@mui/material'; // MUI components
 import { Col, Container, Row } from 'react-bootstrap'; // Bootstrap Grid System
 
@@ -71,7 +70,10 @@ const Password = () => {
                             boxShadow: '0 0 10px rgba(0,0,0,0.05)',
                         }}
                     >
-                        <HeadingSmall title="Update Password" description="Ensure your account is using a long, random password to stay secure." />
+                        <header>
+                            <h3>Update Password</h3>
+                            <p>Ensure your account is using a long, random password to stay secure.</p>
+                        </header>
 
                         <form onSubmit={updatePassword} style={{ marginTop: '1.5rem' }}>
                             <div style={{ marginBottom: '1rem' }}>

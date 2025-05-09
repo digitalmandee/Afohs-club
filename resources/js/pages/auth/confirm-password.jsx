@@ -2,12 +2,10 @@ import { Head, useForm } from '@inertiajs/react';
 import {
     TextField,
     Button,
-    Typography,
     CircularProgress,
     Stack
 } from '@mui/material';
 
-import InputError from '@/components/input-error';
 import AuthLayout from '@/layouts/auth-layout';
 
 export default function ConfirmPassword() {

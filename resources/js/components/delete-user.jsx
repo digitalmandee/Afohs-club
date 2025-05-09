@@ -1,10 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
-import InputError from '@/components/input-error';
 import { Box, Button, Paper, TextField, Typography } from '@mui/material'; // MUI components
-
-import HeadingSmall from '@/components/heading-small';
 
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'; // MUI Dialog
 
@@ -45,7 +42,10 @@ const DeleteUser = () => {
 
     return (
         <Box sx={{ mb: 4 }}>
-            <HeadingSmall title="Delete account" description="Delete your account and all of its resources" />
+        <header>
+            <h3>Delete account</h3>
+            <p>Delete your account and all of its resources</p>
+        </header>
 
             {/* Warning Box */}
             <Paper sx={{ p: 4, borderRadius: 2, backgroundColor: '#f8d7da', borderColor: '#f5c6cb', boxShadow: 3 }}>
@@ -80,7 +80,7 @@ const DeleteUser = () => {
                             variant="outlined"
                             sx={{ mb: 2 }}
                         />
-                        <InputError message={errors.password} />
+                        {errors.password && <Typography variant="body2" color="error">{errors.password}</Typography>}
                         <DialogActions>
                             <Button onClick={closeModal} color="secondary">
                                 Cancel
@@ -102,3 +102,4 @@ const DeleteUser = () => {
 };
 
 export default DeleteUser;
+

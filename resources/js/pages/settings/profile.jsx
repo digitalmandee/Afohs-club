@@ -4,7 +4,6 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 import DeleteUser from '@/components/delete-user';
-import InputError from '@/components/input-error';
 import { Button, TextField, Typography } from '@mui/material'; // Using MUI Button
 import { Col, Form, Row } from 'react-bootstrap';
 
@@ -69,7 +68,7 @@ const Profile = ({ mustVerifyEmail, status }) => {
                                     variant="outlined"
                                     margin="normal"
                                 />
-                                <InputError message={errors.name} />
+                                {errors.name && <p style={{ color: 'red' }}>{errors.name}</p>}
                             </Form.Group>
 
                             <Form.Group className="mb-3">
@@ -87,7 +86,7 @@ const Profile = ({ mustVerifyEmail, status }) => {
                                     variant="outlined"
                                     margin="normal"
                                 />
-                                <InputError message={errors.email} />
+                                {errors.email && <p style={{ color: 'red' }}>{errors.email}</p>}
                             </Form.Group>
 
                             {mustVerifyEmail && auth.user.email_verified_at === null && (
@@ -142,3 +141,4 @@ const Profile = ({ mustVerifyEmail, status }) => {
 };
 
 export default Profile;
+

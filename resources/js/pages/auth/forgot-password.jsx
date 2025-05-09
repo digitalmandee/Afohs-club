@@ -1,9 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Link } from '@mui/material';
 import { Button, TextField, Typography, Box, Stack } from '@mui/material';
 
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
 import AuthLayout from '@/layouts/auth-layout';
 
 export default function ForgotPassword({ status }) {
@@ -72,9 +70,10 @@ export default function ForgotPassword({ status }) {
 
                 <Typography variant="body2" color="text.secondary" textAlign="center">
                     <span>Or, return to </span>
-                    <TextLink href={route('login')}>log in</TextLink>
+                    <Link href={route('login')}>log in</Link>
                 </Typography>
             </Stack>
         </AuthLayout>
     );
 }
+
