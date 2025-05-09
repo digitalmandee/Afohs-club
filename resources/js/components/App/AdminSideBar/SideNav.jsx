@@ -179,6 +179,11 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
+        {
+            text: 'Logout',
+            icon: <HomeIcon />,
+            path: route('logout'),
+        },
     ];
 
     return (
@@ -342,7 +347,9 @@ export default function SideNav({ open, setOpen }) {
                                     <ListItem disablePadding sx={{ display: 'block', p: 0.5 }}>
                                         <ListItemButton
                                             onClick={() => {
-                                                if (children) {
+                                                if (text === 'Logout') {
+                                                    router.post(route('logout'));
+                                                } else if (children) {
                                                     toggleDropdown(text);
                                                 } else {
                                                     router.visit(path);
