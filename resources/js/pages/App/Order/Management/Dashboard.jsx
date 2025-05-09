@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import SideNav from '@/components/App/SideBar/SideNav';
 import {
-    Dialog,
+    Drawer,
     DialogTitle,
     DialogContent,
     DialogActions,
@@ -23,6 +23,7 @@ import { Notifications } from "@mui/icons-material"
 import { AccessTime } from "@mui/icons-material"
 import EditOrderModal from './EditModal';
 import OrderFilter from './Filter';
+import CancelOrder from './Cancel';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -31,7 +32,10 @@ const Dashboard = () => {
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
-    const [showFilter, setShowFilter] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    const openFilter = () => setIsFilterOpen(true);
+    const closeFilter = () => setIsFilterOpen(false);
     const [orderItems, setOrderItems] = useState([
         { id: 1, name: "Cappuccino", quantity: 2, removed: false },
         { id: 2, name: "Soda Beverage", quantity: 3, removed: false },
@@ -39,6 +43,16 @@ const Dashboard = () => {
         { id: 4, name: "Chocolate Croissant", quantity: 1, removed: false },
         { id: 5, name: "French Toast Sugar", quantity: 2, removed: false },
     ]);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+
+    const handleOpenCancelModal = () => setShowCancelModal(true);
+    const handleCloseCancelModal = () => setShowCancelModal(false);
+
+    const handleConfirmCancel = () => {
+        // Do your cancel logic here (API call, state update, etc.)
+        console.log('Order cancelled');
+        setShowCancelModal(false);
+    };
     const handleFilterClose = () => setShowFilter(false);
     const handleFilterShow = () => setShowFilter(true);
 
@@ -154,7 +168,7 @@ const Dashboard = () => {
                                     textTransform: 'none',
                                     height: '40px'
                                 }}
-                                onClick={handleFilterShow}
+                                onClick={openFilter}
                             >
                                 Filter
                             </Button>
@@ -176,11 +190,11 @@ const Dashboard = () => {
                                     }}
                                 >
                                     {/* Header */}
-                                    <Box sx={{ bgcolor: "#003153", color: "white", p: 2, position: "relative" }}>
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                                    <Box sx={{ bgcolor: "#063455", color: "white", p: 2, position: "relative" }}>
+                                        <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px', color: '#FFFFFF' }}>
                                             {card.id}
                                         </Typography>
-                                        <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
+                                        <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px', color: '#FFFFFF' }}>
                                             {card.membership}{" "}
                                             <Typography component="span" variant="body2" sx={{ opacity: 0.8 }}>
                                                 ({card.type})
@@ -200,12 +214,15 @@ const Dashboard = () => {
                                             <AccessTime fontSize="small" sx={{ fontSize: 16, mr: 0.5 }} />
                                             <Typography variant="caption">{card.time}</Typography>
                                         </Box>
-                                        <Box sx={{ position: "absolute", top: 16, right: 16, display: "flex" }}>
-                                            <Avatar sx={{ bgcolor: "#1976d2", width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>
+                                        <Box sx={{ position: "absolute", top: 45, right: 16, display: "flex" }}>
+                                            <Avatar sx={{ bgcolor: "#1976D2", width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>
                                                 T2
                                             </Avatar>
-                                            <Avatar sx={{ bgcolor: "white", width: 36, height: 36, color: "#666" }}>
-                                                <Notifications fontSize="small" />
+                                            <Avatar sx={{ bgcolor: "#E3E3E3", width: 36, height: 36, color: "#666" }}>
+                                                <img src="/assets/food-tray.png" alt="" style={{
+                                                    width: 24,
+                                                    height: 24
+                                                }} />
                                             </Avatar>
                                         </Box>
                                     </Box>
@@ -213,9 +230,11 @@ const Dashboard = () => {
                                     {/* Order Items */}
                                     <List sx={{ py: 0 }}>
                                         {card.orderItems.slice(0, 4).map((item, index) => (
-                                            <ListItem key={index} divider={index < card.orderItems.length - 1} sx={{ py: 1.5, px: 2 }}>
-                                                <ListItemText primary={item.name} />
-                                                <Typography variant="body2" sx={{ color: "#666", fontWeight: 500 }}>
+                                            <ListItem key={index} divider={index < card.orderItems.length - 1} sx={{ py: 1, px: 2 }}>
+                                                <ListItemText sx={{
+                                                    color: '#121212', fontWeight: 500, fontSize: '14px'
+                                                }} primary={item.name} />
+                                                <Typography variant="body2" sx={{ color: "#121212", fontWeight: 500, fontSize: '14px' }}>
                                                     {item.quantity}x
                                                 </Typography>
                                             </ListItem>
@@ -237,6 +256,7 @@ const Dashboard = () => {
                                             variant="outlined"
                                             fullWidth
                                             sx={{ borderColor: "#003153", color: "#003153", textTransform: "none", py: 1 }}
+                                            onClick={handleOpenCancelModal}
                                         >
                                             Cancel
                                         </Button>
@@ -261,16 +281,22 @@ const Dashboard = () => {
                             </Grid>
                         ))}
                     </Grid>
-                    <Modal
-                        show={showFilter}
-                        onHide={handleFilterClose}
-                        backdrop={true}
-                        keyboard={true}
+                    {showCancelModal && (
+                        <CancelOrder
+                            onClose={handleCloseCancelModal}
+                            onConfirm={handleConfirmCancel}
+                        />
+                    )}
+                    <Drawer
+                        anchor="right"
+                        open={isFilterOpen}
+                        onClose={closeFilter}
+                        PaperProps={{
+                            sx: { width: 600, px: 2, top:15, right:15, height:416 } // Customize drawer width and padding
+                        }}
                     >
-                        <Modal.Body style={{ padding: 0, height: '416px', overflowY: 'auto' }}>
-                            <OrderFilter />
-                        </Modal.Body>
-                    </Modal>
+                        <OrderFilter onClose={closeFilter} />
+                    </Drawer>
                     <EditOrderModal
                         open={openModal}
                         onClose={() => setOpenModal(false)}
