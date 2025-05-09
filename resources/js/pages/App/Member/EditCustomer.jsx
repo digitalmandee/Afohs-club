@@ -441,7 +441,7 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         <FormControl variant="outlined" margin="normal" sx={{ minWidth: '90px' }}>
                                             <Select value={phoneCountryCode} onChange={handlePhoneCountryCodeChange}>
-                                                <MenuItem value="+702">+7023</MenuItem>
+                                                <MenuItem value="+702">+702</MenuItem>
                                                 <MenuItem value="+1">+1</MenuItem>
                                                 <MenuItem value="+44">+44</MenuItem>
                                                 <MenuItem value="+91">+91</MenuItem>
