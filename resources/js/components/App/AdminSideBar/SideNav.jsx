@@ -1,15 +1,11 @@
 import { router, usePage } from '@inertiajs/react';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import { useState } from 'react';
 import HomeIcon from '@mui/icons-material/Home';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import { Avatar, Button } from '@mui/material';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PeopleIcon from '@mui/icons-material/People';
-import SettingsIcon from '@mui/icons-material/Settings';
-import { Avatar, Button, Collapse } from '@mui/material';
+import { Avatar, Collapse } from '@mui/material';
 import MuiAppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -25,6 +21,7 @@ import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
+import { useState } from 'react';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -105,14 +102,14 @@ export default function SideNav({ open, setOpen }) {
     };
 
     // const menuItems = [
-    //     { text: 'Dashboard', icon: <HomeIcon />, path: '/admin/dashboard' },
-    //     { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/admin/booking/dashboard' },
+    //     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
+    //     { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/booking/dashboard' },
     // ];
     const menuItems = [
         {
             text: 'Dashboard',
             icon: <HomeIcon />,
-            path: '/admin/dashboard',
+            path: route('dashboard'),
         },
         {
             text: 'Room & Booking Event',
@@ -120,15 +117,15 @@ export default function SideNav({ open, setOpen }) {
             children: [
                 {
                     text: 'Dashboard',
-                    path: '/admin/booking/dashboard',
+                    path: route('rooms.dashboard'),
                 },
                 {
                     text: 'Rooms',
-                    path: '/admin/rooms/manage',
+                    path: route('rooms.manage'),
                 },
                 {
                     text: 'Events',
-                    path: '/admin/events/manage',
+                    path: route('events.manage'),
                 },
             ],
         },
@@ -138,7 +135,11 @@ export default function SideNav({ open, setOpen }) {
             children: [
                 {
                     text: 'Dashboard',
-                    path: '/admin/employee/dashboard',
+                    path: route('employee.dashboard'),
+                },
+                {
+                    text: 'Employee List',
+                    path: route('employee.employeeList'),
                 },
                 {
                     text: 'Department',
@@ -147,6 +148,34 @@ export default function SideNav({ open, setOpen }) {
                 {
                     text: 'Attendance',
                     path: '',
+                },
+            ],
+        },
+        {
+            text: 'Tenant',
+            icon: <PeopleIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: route('tenant.index'),
+                },
+                {
+                    text: 'Create Tenant',
+                    path: route('tenant.create'),
+                },
+            ],
+        },
+        {
+            text: 'Settings',
+            icon: <PeopleIcon />,
+            children: [
+                {
+                    text: 'Profile settings',
+                    path: '/settings/profile',
+                },
+                {
+                    text: 'Password',
+                    path: '/settings/password',
                 },
             ],
         },
@@ -306,7 +335,7 @@ export default function SideNav({ open, setOpen }) {
                     <List sx={{ mt: 2 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
-                            const isSelected = url === path || (children && children.some(child => url === child.path));
+                            const isSelected = url === path || (children && children.some((child) => url === child.path));
                             // Main ListItem (with or without dropdown)
                             return (
                                 <Box key={text}>
@@ -374,7 +403,6 @@ export default function SideNav({ open, setOpen }) {
                                                             sx={{
                                                                 mt: 1,
                                                                 pl: 1,
-
                                                             }}
                                                         >
                                                             <ListItemButton
