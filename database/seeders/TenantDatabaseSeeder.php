@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Database\Seeders\Tenant\FloorDatabaseSeeder;
+use Database\Seeders\Tenant\KitchenDatabaseSeeder;
 use Database\Seeders\Tenant\MemberTypeSeeder;
 use Database\Seeders\Tenant\OrderDatabaseSeeder;
 use Database\Seeders\Tenant\PermissionsDatabaseSeeder;
@@ -21,6 +22,7 @@ class TenantDatabaseSeeder extends Seeder
             MemberTypeSeeder::class,
             FloorDatabaseSeeder::class,
             PermissionsDatabaseSeeder::class,
+            KitchenDatabaseSeeder::class,
             ProductDatabaseSeeder::class,
             OrderDatabaseSeeder::class
         ]);
