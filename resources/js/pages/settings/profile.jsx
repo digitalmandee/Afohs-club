@@ -5,11 +5,8 @@ import { useState } from 'react';
 
 import DeleteUser from '@/components/delete-user';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Typography } from '@mui/material';
-import { Col, Row } from 'react-bootstrap';
+import { Button, TextField, Typography } from '@mui/material'; // Using MUI Button
+import { Col, Form, Row } from 'react-bootstrap';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -34,70 +31,94 @@ const Profile = ({ mustVerifyEmail, status }) => {
         <>
             <SideNav open={open} setOpen={setOpen} />
             <div
-                className="transition-all duration-300"
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     marginTop: '5rem',
+                    padding: '24px',
                 }}
             >
-                <div className="mx-auto max-w-2xl px-4 py-6">
+                <div style={{ maxWidth: '768px', margin: '0 auto' }}>
                     <Row className="align-items-center mb-4">
                         <Col>
-                            <Typography style={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>Profile Information</Typography>
+                            <Typography variant="h5" style={{ color: '#3F4E4F', fontWeight: 500 }}>
+                                Profile Information
+                            </Typography>
                         </Col>
                     </Row>
-                    <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
-                        <form onSubmit={submit} className="space-y-6">
-                            <div>
-                                <Label htmlFor="name">Name</Label>
-                                <Input
+
+                    <div
+                        style={{
+                            borderRadius: '16px',
+                            border: '1px solid #dee2e6',
+                            backgroundColor: '#ffffff',
+                            padding: '24px',
+                        }}
+                    >
+                        <Form onSubmit={submit}>
+                            <Form.Group className="mb-3">
+                                <Typography htmlFor="name">Name</Typography>
+                                <TextField
                                     id="name"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
+                                    fullWidth
                                     autoComplete="name"
                                     placeholder="Your full name"
                                     disabled={processing}
+                                    variant="outlined"
+                                    margin="normal"
                                 />
-                                <InputError className="mt-2" message={errors.name} />
-                            </div>
+                                <InputError message={errors.name} />
+                            </Form.Group>
 
-                            <div>
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
+                            <Form.Group className="mb-3">
+                                <Typography htmlFor="email">Email address</Typography>
+                                <TextField
                                     id="email"
                                     type="email"
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     required
+                                    fullWidth
                                     autoComplete="email"
                                     placeholder="your@email.com"
                                     disabled={processing}
+                                    variant="outlined"
+                                    margin="normal"
                                 />
-                                <InputError className="mt-2" message={errors.email} />
-                            </div>
+                                <InputError message={errors.email} />
+                            </Form.Group>
 
                             {mustVerifyEmail && auth.user.email_verified_at === null && (
-                                <div className="text-sm text-neutral-600 dark:text-neutral-400">
+                                <div style={{ fontSize: '14px', color: '#6c757d' }}>
                                     Your email address is unverified.{' '}
                                     <Link
                                         href={route('verification.send')}
                                         method="post"
                                         as="button"
-                                        className="text-blue-600 underline dark:text-blue-400"
+                                        style={{
+                                            color: '#0d6efd',
+                                            textDecoration: 'underline',
+                                            background: 'none',
+                                            border: 'none',
+                                            padding: 0,
+                                        }}
                                     >
                                         Click here to resend the verification email.
                                     </Link>
                                     {status === 'verification-link-sent' && (
-                                        <p className="mt-2 text-green-600 dark:text-green-400">
+                                        <p style={{ marginTop: '10px', color: '#198754' }}>
                                             A new verification link has been sent to your email address.
                                         </p>
                                     )}
                                 </div>
                             )}
 
-                            <div className="flex items-center gap-4">
-                                <Button disabled={processing}>Save</Button>
+                            <div className="d-flex align-items-center mt-3 gap-3">
+                                <Button variant="contained" disabled={processing}>
+                                    Save
+                                </Button>
                                 <Transition
                                     show={recentlySuccessful}
                                     enter="transition-opacity duration-300"
@@ -105,12 +126,13 @@ const Profile = ({ mustVerifyEmail, status }) => {
                                     leave="transition-opacity duration-300"
                                     leaveTo="opacity-0"
                                 >
-                                    <p className="text-sm text-green-600 dark:text-green-400">Saved</p>
+                                    <p style={{ fontSize: '14px', color: '#198754' }}>Saved</p>
                                 </Transition>
                             </div>
-                        </form>
+                        </Form>
                     </div>
-                    <div className="mt-8">
+
+                    <div style={{ marginTop: '32px' }}>
                         <DeleteUser />
                     </div>
                 </div>

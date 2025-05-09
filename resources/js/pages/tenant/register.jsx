@@ -1,15 +1,9 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Transition } from '@headlessui/react';
-import { Typography } from '@mui/material';
-import { Col, Row } from 'react-bootstrap';
+import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mui/material'; // MUI components
+import { Col, Container, Row } from 'react-bootstrap'; // Bootstrap Grid System
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -33,113 +27,140 @@ const Register = () => {
         <>
             <SideNav open={open} setOpen={setOpen} />
             <div
-                className="transition-all duration-300"
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    marginTop: '5rem',
+                    transition: 'all 0.3s ease',
                 }}
             >
-                <div className="mx-auto max-w-2xl px-4 py-6">
-                    <Row className="align-items-center mb-4">
-                        <Col>
-                            <Typography style={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>Tenant Registration</Typography>
-                        </Col>
-                    </Row>
-                    <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
-                        <form onSubmit={submit} className="space-y-6">
-                            <div>
-                                <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    autoComplete="name"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="Full name"
-                                />
-                                <InputError className="mt-2" message={errors.name} />
-                            </div>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minHeight: '100vh',
+                        paddingTop: '5rem', // optional, remove if perfect vertical center is needed
+                        paddingBottom: '2rem',
+                    }}
+                >
+                    <Container style={{ maxWidth: '700px', width: '100%' }}>
+                        <Row className="align-items-center mb-4">
+                            <Col>
+                                <Typography variant="h4" style={{ color: '#3F4E4F', fontWeight: 500 }}>
+                                    Tenant Registration
+                                </Typography>
+                            </Col>
+                        </Row>
+                        <Box
+                            sx={{
+                                borderRadius: '20px',
+                                border: '1px solid #ccc',
+                                backgroundColor: '#fff',
+                                padding: '2rem',
+                                boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+                            }}
+                        >
+                            <form onSubmit={submit}>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField
+                                        label="Name"
+                                        type="text"
+                                        required
+                                        fullWidth
+                                        autoFocus
+                                        autoComplete="name"
+                                        value={data.name}
+                                        onChange={(e) => setData('name', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="Full name"
+                                        error={!!errors.name}
+                                        helperText={errors.name}
+                                        variant="outlined"
+                                    />
+                                </div>
 
-                            <div>
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    required
-                                    autoComplete="email"
-                                    value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="email@example.com"
-                                />
-                                <InputError className="mt-2" message={errors.email} />
-                            </div>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField
+                                        label="Email address"
+                                        type="email"
+                                        required
+                                        fullWidth
+                                        autoComplete="email"
+                                        value={data.email}
+                                        onChange={(e) => setData('email', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="email@example.com"
+                                        error={!!errors.email}
+                                        helperText={errors.email}
+                                        variant="outlined"
+                                    />
+                                </div>
 
-                            <div>
-                                <Label htmlFor="domain_name">Domain Name</Label>
-                                <Input
-                                    id="domain_name"
-                                    type="text"
-                                    required
-                                    autoComplete="domain_name"
-                                    value={data.domain_name}
-                                    onChange={(e) => setData('domain_name', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="example"
-                                />
-                                <InputError className="mt-2" message={errors.domain_name} />
-                            </div>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField
+                                        label="Domain Name"
+                                        type="text"
+                                        required
+                                        fullWidth
+                                        autoComplete="domain_name"
+                                        value={data.domain_name}
+                                        onChange={(e) => setData('domain_name', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="example"
+                                        error={!!errors.domain_name}
+                                        helperText={errors.domain_name}
+                                        variant="outlined"
+                                    />
+                                </div>
 
-                            <div>
-                                <Label htmlFor="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    required
-                                    autoComplete="new-password"
-                                    value={data.password}
-                                    onChange={(e) => setData('password', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="Password"
-                                />
-                                <InputError className="mt-2" message={errors.password} />
-                            </div>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField
+                                        label="Password"
+                                        type="password"
+                                        required
+                                        fullWidth
+                                        autoComplete="new-password"
+                                        value={data.password}
+                                        onChange={(e) => setData('password', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="Password"
+                                        error={!!errors.password}
+                                        helperText={errors.password}
+                                        variant="outlined"
+                                    />
+                                </div>
 
-                            <div>
-                                <Label htmlFor="password_confirmation">Confirm Password</Label>
-                                <Input
-                                    id="password_confirmation"
-                                    type="password"
-                                    required
-                                    autoComplete="new-password"
-                                    value={data.password_confirmation}
-                                    onChange={(e) => setData('password_confirmation', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="Confirm password"
-                                />
-                                <InputError className="mt-2" message={errors.password_confirmation} />
-                            </div>
+                                <div style={{ marginBottom: '2rem' }}>
+                                    <TextField
+                                        label="Confirm Password"
+                                        type="password"
+                                        required
+                                        fullWidth
+                                        autoComplete="new-password"
+                                        value={data.password_confirmation}
+                                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="Confirm password"
+                                        error={!!errors.password_confirmation}
+                                        helperText={errors.password_confirmation}
+                                        variant="outlined"
+                                    />
+                                </div>
 
-                            <div className="flex items-center gap-4">
-                                <Button type="submit" disabled={processing}>
-                                    {processing && <LoaderCircle className="mr-2 inline h-4 w-4 animate-spin" />}
-                                    Create Tenant
-                                </Button>
-                                <Transition
-                                    show={recentlySuccessful}
-                                    enter="transition-opacity duration-300"
-                                    enterFrom="opacity-0"
-                                    leave="transition-opacity duration-300"
-                                    leaveTo="opacity-0"
-                                >
-                                    <p className="text-sm text-green-600 dark:text-green-400">Tenant created successfully.</p>
-                                </Transition>
-                            </div>
-                        </form>
-                    </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <Button type="submit" variant="contained" color="primary" disabled={processing} fullWidth>
+                                        {processing && <CircularProgress size={24} style={{ marginRight: '10px' }} />}
+                                        Create Tenant
+                                    </Button>
+                                </div>
+
+                                {recentlySuccessful && (
+                                    <Alert variant="filled" severity="success" style={{ marginTop: '1rem' }}>
+                                        Tenant created successfully.
+                                    </Alert>
+                                )}
+                            </form>
+                        </Box>
+                    </Container>
                 </div>
             </div>
         </>
