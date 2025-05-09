@@ -15,7 +15,20 @@ import {
     ShoppingBag as ShoppingBagIcon,
 } from '@mui/icons-material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Box, Button, DialogActions, DialogContent, Divider, Grid, IconButton, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import {
+    Autocomplete,
+    Box,
+    Button,
+    DialogActions,
+    DialogContent,
+    Divider,
+    Grid,
+    IconButton,
+    MenuItem,
+    Switch,
+    TextField,
+    Typography,
+} from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
@@ -29,6 +42,7 @@ const AddProduct = ({ openMenu, onClose }) => {
         name: '',
         menu_code: '',
         category: '',
+        kitchen: '',
         currentStock: '',
         minimalStock: '',
         outOfStock: false,
@@ -42,7 +56,9 @@ const AddProduct = ({ openMenu, onClose }) => {
     });
 
     const [categories, setCategories] = useState([]);
+    const [kitchens, setKitchens] = useState([]);
     const [addMenuStep, setAddMenuStep] = useState(1);
+    const [loadingKitchen, setLoadingKitchen] = useState(false);
     const [uploadedImages, setUploadedImages] = useState([]);
     const fileInputRef = useRef(null);
 
@@ -78,6 +94,7 @@ const AddProduct = ({ openMenu, onClose }) => {
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.menu_code.trim()) errors.push('Menu code is required');
         if (!menu.category) errors.push('Category is required');
+        if (!menu.kitchen) errors.push('Kitchen is required');
         if (!menu.currentStock || isNaN(menu.currentStock)) errors.push('Current stock must be a valid number');
         if (!menu.minimalStock || isNaN(menu.minimalStock)) errors.push('Minimal stock must be a valid number');
         if (!menu.orderTypes || menu.orderTypes.length === 0) errors.push('At least one order type must be selected');
@@ -251,10 +268,19 @@ const AddProduct = ({ openMenu, onClose }) => {
         }
     }, [data.cogs, data.basePrice]);
 
+    const fetchKitchens = () => {
+        setLoadingKitchen(true);
+        axios.get(route('kitchens.all')).then((response) => {
+            setKitchens(response.data.kitchens);
+            setLoadingKitchen(false);
+        });
+    };
+
     useEffect(() => {
         axios.get(route('inventory.categories')).then((response) => {
             setCategories(response.data.categories);
         });
+        fetchKitchens();
     }, []);
 
     // Render
@@ -365,31 +391,67 @@ const AddProduct = ({ openMenu, onClose }) => {
                                             size="small"
                                         />
                                     </Grid>
-                                    <Grid item xs={12}>
-                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
-                                            Categories
-                                        </Typography>
-                                        <TextField
-                                            select
-                                            fullWidth
-                                            placeholder="Choose category"
-                                            name="category"
-                                            value={data.category}
-                                            onChange={handleInputChange}
-                                            variant="outlined"
-                                            size="small"
-                                            SelectProps={{
-                                                displayEmpty: true,
-                                            }}
-                                        >
-                                            <MenuItem value="">Choose category</MenuItem>
-                                            {categories?.length > 0 &&
-                                                categories.map(({ id, name }) => (
-                                                    <MenuItem key={id} value={id}>
-                                                        {name}
-                                                    </MenuItem>
-                                                ))}
-                                        </TextField>
+                                    <Grid container item xs={12} spacing={3}>
+                                        <Grid item xs={12} md={6}>
+                                            <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                                Categories
+                                            </Typography>
+                                            <TextField
+                                                select
+                                                fullWidth
+                                                placeholder="Choose category"
+                                                name="category"
+                                                value={data.category}
+                                                onChange={handleInputChange}
+                                                variant="outlined"
+                                                size="small"
+                                                SelectProps={{
+                                                    displayEmpty: true,
+                                                }}
+                                            >
+                                                <MenuItem value="">Choose category</MenuItem>
+                                                {categories?.length > 0 &&
+                                                    categories.map(({ id, name }) => (
+                                                        <MenuItem key={id} value={id}>
+                                                            {name}
+                                                        </MenuItem>
+                                                    ))}
+                                            </TextField>
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                                Kitchen
+                                            </Typography>
+                                            <Autocomplete
+                                                fullWidth
+                                                freeSolo
+                                                size="small"
+                                                options={kitchens}
+                                                value={data.kitchen}
+                                                getOptionLabel={(option) => option?.name || ''}
+                                                onChange={(event, value) =>
+                                                    setData((prev) => ({
+                                                        ...prev,
+                                                        kitchen: value || null,
+                                                    }))
+                                                }
+                                                loading={loadingKitchen}
+                                                renderInput={(params) => (
+                                                    <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Kitchen" variant="outlined" />
+                                                )}
+                                                filterOptions={(options, state) =>
+                                                    options.filter((option) =>
+                                                        `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()),
+                                                    )
+                                                }
+                                                renderOption={(props, option) => (
+                                                    <li {...props}>
+                                                        <span>{option.name}</span>
+                                                        <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
+                                                    </li>
+                                                )}
+                                            />
+                                        </Grid>
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
@@ -521,6 +583,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                 const isSelected = data.orderTypes.includes(item.value);
                                                 return (
                                                     <Button
+                                                        key={index}
                                                         variant={isSelected ? 'contained' : 'outlined'}
                                                         onClick={() => handleOrderTypeToggle(item.value)}
                                                         sx={{
