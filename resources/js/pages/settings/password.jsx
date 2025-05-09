@@ -1,23 +1,15 @@
-import InputError from '@/components/input-error';
-import AppLayout from '@/layouts/app-layout';
-import SettingsLayout from '@/layouts/settings/layout';
-import { Transition } from '@headlessui/react';
-import { Head, useForm } from '@inertiajs/react';
-import { useRef } from 'react';
+import SideNav from '@/components/App/AdminSideBar/SideNav';
+import { useForm } from '@inertiajs/react';
+import { useRef, useState } from 'react';
 
-import HeadingSmall from '@/components/heading-small';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Alert, Box, Button, TextField, Typography } from '@mui/material'; // MUI components
+import { Col, Container, Row } from 'react-bootstrap'; // Bootstrap Grid System
 
-const breadcrumbs = [
-    {
-        title: 'Password settings',
-        href: '/settings/password',
-    },
-];
+const drawerWidthOpen = 240;
+const drawerWidthClosed = 110;
 
-export default function Password() {
+const Password = () => {
+    const [open, setOpen] = useState(false);
     const passwordInput = useRef(null);
     const currentPasswordInput = useRef(null);
 
@@ -38,7 +30,6 @@ export default function Password() {
                     reset('password', 'password_confirmation');
                     passwordInput.current?.focus();
                 }
-
                 if (errors.current_password) {
                     reset('current_password');
                     currentPasswordInput.current?.focus();
@@ -48,80 +39,106 @@ export default function Password() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Profile settings" />
+        <>
+            <SideNav open={open} setOpen={setOpen} />
+            <div
+                style={{
+                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    marginTop: '5rem',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '80vh',
+                }}
+            >
+                <Container style={{ maxWidth: '600px', padding: '2rem' }}>
+                    <Row className="align-items-center mb-4">
+                        <Col>
+                            <Typography variant="h4" style={{ color: '#3F4E4F', fontWeight: 500 }}>
+                                Password
+                            </Typography>
+                        </Col>
+                    </Row>
 
-            <SettingsLayout>
-                <div className="space-y-6">
-                    <HeadingSmall title="Update password" description="Ensure your account is using a long, random password to stay secure" />
+                    <Box
+                        sx={{
+                            borderRadius: '20px',
+                            border: '1px solid #ccc',
+                            backgroundColor: '#fff',
+                            padding: '2rem',
+                            boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+                        }}
+                    >
+                        <header>
+                            <h3>Update Password</h3>
+                            <p>Ensure your account is using a long, random password to stay secure.</p>
+                        </header>
 
-                    <form onSubmit={updatePassword} className="space-y-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="current_password">Current password</Label>
+                        <form onSubmit={updatePassword} style={{ marginTop: '1.5rem' }}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <TextField
+                                    id="current_password"
+                                    label="Current Password"
+                                    ref={currentPasswordInput}
+                                    type="password"
+                                    value={data.current_password}
+                                    onChange={(e) => setData('current_password', e.target.value)}
+                                    autoComplete="current-password"
+                                    fullWidth
+                                    error={!!errors.current_password}
+                                    helperText={errors.current_password}
+                                    variant="outlined"
+                                />
+                            </div>
 
-                            <Input
-                                id="current_password"
-                                ref={currentPasswordInput}
-                                value={data.current_password}
-                                onChange={(e) => setData('current_password', e.target.value)}
-                                type="password"
-                                className="mt-1 block w-full"
-                                autoComplete="current-password"
-                                placeholder="Current password"
-                            />
+                            <div style={{ marginBottom: '1rem' }}>
+                                <TextField
+                                    id="password"
+                                    label="New Password"
+                                    ref={passwordInput}
+                                    type="password"
+                                    value={data.password}
+                                    onChange={(e) => setData('password', e.target.value)}
+                                    autoComplete="new-password"
+                                    fullWidth
+                                    error={!!errors.password}
+                                    helperText={errors.password}
+                                    variant="outlined"
+                                />
+                            </div>
 
-                            <InputError message={errors.current_password} />
-                        </div>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <TextField
+                                    id="password_confirmation"
+                                    label="Confirm Password"
+                                    type="password"
+                                    value={data.password_confirmation}
+                                    onChange={(e) => setData('password_confirmation', e.target.value)}
+                                    autoComplete="new-password"
+                                    fullWidth
+                                    error={!!errors.password_confirmation}
+                                    helperText={errors.password_confirmation}
+                                    variant="outlined"
+                                />
+                            </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">New password</Label>
-
-                            <Input
-                                id="password"
-                                ref={passwordInput}
-                                value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
-                                type="password"
-                                className="mt-1 block w-full"
-                                autoComplete="new-password"
-                                placeholder="New password"
-                            />
-
-                            <InputError message={errors.password} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">Confirm password</Label>
-
-                            <Input
-                                id="password_confirmation"
-                                value={data.password_confirmation}
-                                onChange={(e) => setData('password_confirmation', e.target.value)}
-                                type="password"
-                                className="mt-1 block w-full"
-                                autoComplete="new-password"
-                                placeholder="Confirm password"
-                            />
-
-                            <InputError message={errors.password_confirmation} />
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save password</Button>
-
-                            <Transition
-                                show={recentlySuccessful}
-                                enter="transition ease-in-out"
-                                enterFrom="opacity-0"
-                                leave="transition ease-in-out"
-                                leaveTo="opacity-0"
-                            >
-                                <p className="text-sm text-neutral-600">Saved</p>
-                            </Transition>
-                        </div>
-                    </form>
-                </div>
-            </SettingsLayout>
-        </AppLayout>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <Button type="submit" variant="contained" color="primary" disabled={processing}>
+                                    Save Password
+                                </Button>
+                                {recentlySuccessful && (
+                                    <Alert variant="filled" severity="success" style={{ padding: '0.25rem 0.75rem', marginBottom: 0 }}>
+                                        Saved
+                                    </Alert>
+                                )}
+                            </div>
+                        </form>
+                    </Box>
+                </Container>
+            </div>
+        </>
     );
-}
+};
+
+export default Password;

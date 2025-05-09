@@ -1,10 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { Button, TextField, CircularProgress, Stack } from '@mui/material';
 
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
 export default function ResetPassword({ token, email }) {
@@ -23,62 +19,70 @@ export default function ResetPassword({ token, email }) {
     };
 
     return (
-        <AuthLayout title="Reset password" description="Please enter your new password below">
+        <AuthLayout
+            title="Reset password"
+            description="Please enter your new password below"
+        >
             <Head title="Reset password" />
 
             <form onSubmit={submit}>
-                <div className="grid gap-6">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            name="email"
-                            autoComplete="email"
-                            value={data.email}
-                            className="mt-1 block w-full"
-                            readOnly
-                            onChange={(e) => setData('email', e.target.value)}
-                        />
-                        <InputError message={errors.email} className="mt-2" />
-                    </div>
+                <Stack spacing={4}>
+                    <TextField
+                        id="email"
+                        label="Email"
+                        type="email"
+                        name="email"
+                        value={data.email}
+                        autoComplete="email"
+                        fullWidth
+                        InputProps={{ readOnly: true }}
+                        onChange={(e) => setData('email', e.target.value)}
+                        error={Boolean(errors.email)}
+                        helperText={errors.email}
+                    />
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            name="password"
-                            autoComplete="new-password"
-                            value={data.password}
-                            className="mt-1 block w-full"
-                            autoFocus
-                            onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Password"
-                        />
-                        <InputError message={errors.password} />
-                    </div>
+                    <TextField
+                        id="password"
+                        label="Password"
+                        type="password"
+                        name="password"
+                        autoComplete="new-password"
+                        fullWidth
+                        autoFocus
+                        value={data.password}
+                        onChange={(e) => setData('password', e.target.value)}
+                        placeholder="Password"
+                        error={Boolean(errors.password)}
+                        helperText={errors.password}
+                    />
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm password</Label>
-                        <Input
-                            id="password_confirmation"
-                            type="password"
-                            name="password_confirmation"
-                            autoComplete="new-password"
-                            value={data.password_confirmation}
-                            className="mt-1 block w-full"
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
-                            placeholder="Confirm password"
-                        />
-                        <InputError message={errors.password_confirmation} className="mt-2" />
-                    </div>
+                    <TextField
+                        id="password_confirmation"
+                        label="Confirm Password"
+                        type="password"
+                        name="password_confirmation"
+                        autoComplete="new-password"
+                        fullWidth
+                        value={data.password_confirmation}
+                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                        placeholder="Confirm password"
+                        error={Boolean(errors.password_confirmation)}
+                        helperText={errors.password_confirmation}
+                    />
 
-                    <Button type="submit" className="mt-4 w-full" disabled={processing}>
-                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        disabled={processing}
+                        fullWidth
+                    >
+                        {processing && (
+                            <CircularProgress size={18} sx={{ mr: 1 }} />
+                        )}
                         Reset password
                     </Button>
-                </div>
+                </Stack>
             </form>
         </AuthLayout>
     );

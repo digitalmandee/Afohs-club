@@ -102,14 +102,14 @@ export default function SideNav({ open, setOpen }) {
     };
 
     // const menuItems = [
-    //     { text: 'Dashboard', icon: <HomeIcon />, path: '/admin/dashboard' },
-    //     { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/admin/booking/dashboard' },
+    //     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
+    //     { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/booking/dashboard' },
     // ];
     const menuItems = [
         {
             text: 'Dashboard',
             icon: <HomeIcon />,
-            path: '/admin/dashboard',
+            path: route('dashboard'),
         },
         {
             text: 'Room & Booking Event',
@@ -117,15 +117,15 @@ export default function SideNav({ open, setOpen }) {
             children: [
                 {
                     text: 'Dashboard',
-                    path: '/admin/booking/dashboard',
+                    path: route('rooms.dashboard'),
                 },
                 {
                     text: 'Rooms',
-                    path: '/admin/rooms/manage',
+                    path: route('rooms.manage'),
                 },
                 {
                     text: 'Events',
-                    path: '/admin/events/manage',
+                    path: route('events.manage'),
                 },
             ],
         },
@@ -135,7 +135,11 @@ export default function SideNav({ open, setOpen }) {
             children: [
                 {
                     text: 'Dashboard',
-                    path: '/admin/employee/dashboard',
+                    path: route('employee.dashboard'),
+                },
+                {
+                    text: 'Employee List',
+                    path: route('employee.employeeList'),
                 },
                 {
                     text: 'Department',
@@ -146,6 +150,39 @@ export default function SideNav({ open, setOpen }) {
                     path: '',
                 },
             ],
+        },
+        {
+            text: 'Tenant',
+            icon: <PeopleIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: route('tenant.index'),
+                },
+                {
+                    text: 'Create Tenant',
+                    path: route('tenant.create'),
+                },
+            ],
+        },
+        {
+            text: 'Settings',
+            icon: <PeopleIcon />,
+            children: [
+                {
+                    text: 'Profile settings',
+                    path: '/settings/profile',
+                },
+                {
+                    text: 'Password',
+                    path: '/settings/password',
+                },
+            ],
+        },
+        {
+            text: 'Logout',
+            icon: <HomeIcon />,
+            path: route('logout'),
         },
     ];
 
@@ -310,7 +347,9 @@ export default function SideNav({ open, setOpen }) {
                                     <ListItem disablePadding sx={{ display: 'block', p: 0.5 }}>
                                         <ListItemButton
                                             onClick={() => {
-                                                if (children) {
+                                                if (text === 'Logout') {
+                                                    router.post(route('logout'));
+                                                } else if (children) {
                                                     toggleDropdown(text);
                                                 } else {
                                                     router.visit(path);

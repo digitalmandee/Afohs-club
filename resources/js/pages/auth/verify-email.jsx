@@ -1,9 +1,5 @@
-// Components
 import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
-
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
+import { CircularProgress, Button, Typography, Stack, Link as MuiLink } from '@mui/material';
 import AuthLayout from '@/layouts/auth-layout';
 
 export default function VerifyEmail({ status }) {
@@ -11,29 +7,48 @@ export default function VerifyEmail({ status }) {
 
     const submit = (e) => {
         e.preventDefault();
-
         post(route('verification.send'));
     };
 
     return (
-        <AuthLayout title="Verify email" description="Please verify your email address by clicking on the link we just emailed to you.">
+        <AuthLayout
+            title="Verify email"
+            description="Please verify your email address by clicking on the link we just emailed to you."
+        >
             <Head title="Email verification" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <Typography
+                    variant="body2"
+                    color="success.main"
+                    align="center"
+                    sx={{ mb: 2 }}
+                >
                     A new verification link has been sent to the email address you provided during registration.
-                </div>
+                </Typography>
             )}
 
-            <form onSubmit={submit} className="space-y-6 text-center">
-                <Button disabled={processing} variant="secondary">
-                    {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                    Resend verification email
-                </Button>
+            <form onSubmit={submit}>
+                <Stack spacing={3} alignItems="center">
+                    <Button
+                        type="submit"
+                        variant="outlined"
+                        disabled={processing}
+                        startIcon={processing && <CircularProgress size={16} />}
+                    >
+                        Resend verification email
+                    </Button>
 
-                <TextLink href={route('logout')} method="post" className="mx-auto block text-sm">
-                    Log out
-                </TextLink>
+                    <MuiLink
+                        component="button"
+                        variant="body2"
+                        onClick={() => {
+                            post(route('logout'), { method: 'post' });
+                        }}
+                    >
+                        Log out
+                    </MuiLink>
+                </Stack>
             </form>
         </AuthLayout>
     );
