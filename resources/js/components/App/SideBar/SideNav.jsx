@@ -17,6 +17,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import PaymentsIcon from '@mui/icons-material/Payments';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -25,14 +26,13 @@ import LoginActivityScreen from './Activity';
 import LogoutScreen from './Logout';
 import NotificationsPanel from './Notification';
 import EmployeeProfileScreen from './Profile';
-// import NewOrderDialog from "./order";
 import { Modal, Slide } from '@mui/material';
-// import tableicon from "../assets/Table management.svg";
 import KitchenIcon from '@/components/App/Icons/KitchenManagement';
 import MemberIcon from '@/components/App/Icons/Member';
 import TableIcon from '@/components/App/Icons/TableManagement';
 import CategoryIcon from '@mui/icons-material/Category';
 import AddressType from '../Icons/AddressType';
+import { MdManageHistory } from "react-icons/md";
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -109,8 +109,7 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Dashboard', icon: <HomeIcon />, path: '/' },
         { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
         { text: 'Inventory Category', icon: <CategoryIcon />, path: '/inventory/category' },
-        { text: 'Transaction', icon: <PeopleIcon />, path: '/transaction' },
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+        { text: 'Transaction', icon: <PaymentsIcon />, path: '/transaction' },
         {
             text: 'Table Management',
             icon: <TableIcon />,
@@ -120,6 +119,11 @@ export default function SideNav({ open, setOpen }) {
             text: 'Kitchen',
             icon: <KitchenIcon />,
             path: '/kitchen',
+        },
+        {
+            text: 'Order Management',
+            icon: <MdManageHistory />,
+            path: '/order/management',
         },
         {
             text: 'Members',
@@ -136,6 +140,7 @@ export default function SideNav({ open, setOpen }) {
             icon: <AddressType />,
             path: '/members/address-types',
         },
+        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
     ];
 
     return (
