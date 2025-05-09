@@ -1,4 +1,5 @@
 import SideNav from '@/components/App/SideBar/SideNav';
+import { tenantAsset } from '@/helpers/asset';
 import { router } from '@inertiajs/react';
 import {
     Add as AddIcon,
@@ -49,8 +50,9 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
 
     // Extract phone number and country code
     const phoneNumber = customer?.phone_number || '';
-    const phoneCountryCodeFromData = phoneNumber.match(/^\+\d+/)?.[0] || '+702';
-    const phoneNumberWithoutCode = phoneNumber.replace(/^\+\d+/, '').trim() || '';
+    const [phoneCountryCodeFromData, phoneNumberWithoutCode] = phoneNumber.includes('-')
+        ? phoneNumber.split('-')
+        : [phoneNumber.match(/^\+\d+/)?.[0] || '+702', phoneNumber.replace(/^\+\d+/, '').trim()];
 
     const [phoneCountryCode, setPhoneCountryCode] = useState(phoneCountryCodeFromData);
 
@@ -87,7 +89,7 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
         status: false,
     });
 
-    const [profileImage, setProfileImage] = useState(customer?.profile_photo ? `http://localhost:8000${customer.profile_photo}` : null);
+    const [profileImage, setProfileImage] = useState(customer?.profile_photo ? tenantAsset(customer.profile_photo) : null);
 
     const handleCloseAddForm = () => {
         router.get(route('members.index'));
@@ -168,7 +170,7 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
         formData.append('name', newCustomer.name);
         formData.append('email', newCustomer.email);
         // Ensure phone number is concatenated correctly
-        const fullPhoneNumber = `${phoneCountryCode}${newCustomer.phone_number}`;
+        const fullPhoneNumber = `${phoneCountryCode}-${newCustomer.phone_number}`;
         formData.append('phone', fullPhoneNumber);
         formData.append('customer_type', newCustomer.customer_type);
         formData.append('member_type_id', memberTypes.find((mt) => mt.name === newCustomer.customer_type)?.id || '');
@@ -436,8 +438,6 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Phone Number
                                     </Typography>
-                                    {newCustomer.phone_number}
-                                    {customer?.phone_number}
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         <FormControl variant="outlined" margin="normal" sx={{ minWidth: '90px' }}>
                                             <Select value={phoneCountryCode} onChange={handlePhoneCountryCodeChange}>

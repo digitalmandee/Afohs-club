@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Helpers\FileHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AddressType;
 use App\Models\MemberType;
@@ -20,20 +21,9 @@ class MembersController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        $users = User::with(['memberType'])
-            ->latest()
-            ->role('user')
-            ->paginate($limit);
+        $users = User::with(['memberType', 'userDetail'])->role('user')->latest()->paginate($limit);
 
-        $userDetail = User::with(['userDetail'])
-            ->latest()
-            ->role('user')
-            ->paginate($limit);
-
-        return Inertia::render('App/Member/Dashboard', [
-            'users' => $users,
-            'userDetail' => $userDetail,
-        ]);
+        return Inertia::render('App/Member/Dashboard', compact('users'));
     }
 
     public function create(Request $request)
@@ -71,7 +61,7 @@ class MembersController extends Controller
                 'email' => 'required|email|max:255|unique:users,email',
                 'phone' => 'required|string|max:20',
                 'customer_type' => 'required|string|exists:member_types,name',
-                'profile_pic' => 'nullable|image|max:4096',
+                'profile_photo' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
                 'addresses.*.type' => 'required|string|exists:address_types,name', // Validate against address_types table
                 'addresses.*.address' => 'required|string|max:255',
@@ -95,9 +85,9 @@ class MembersController extends Controller
             $customer->password = Hash::make(Str::random(16));
             $customer->user_id = User::max('user_id') ? (string)(intval(User::max('user_id')) + 1) : '1';
 
-            if ($request->hasFile('profile_pic')) {
-                $path = $request->file('profile_pic')->store('profiles', 'public');
-                $customer->profile_photo = Storage::url($path);
+            if ($request->hasFile('profile_photo')) {
+                $path = FileHelper::saveImage($request->file('profile_photo'), 'profiles');
+                $customer->profile_photo = $path;
             }
 
             $customer->save();
@@ -144,9 +134,6 @@ class MembersController extends Controller
             }
             $request->merge(['addresses' => $addresses ?? []]);
 
-            Log::info('Raw update request data: ' . json_encode($request->all()));
-            Log::info('Merged update addresses: ' . json_encode($addresses));
-
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255|unique:users,email,' . $customer->id,
@@ -176,10 +163,10 @@ class MembersController extends Controller
 
             if ($request->hasFile('profile_pic')) {
                 if ($customer->profile_photo) {
-                    Storage::disk('public')->delete(str_replace('/storage/', '', $customer->profile_photo));
+                    Storage::disk('public')->delete($customer->profile_photo);
                 }
-                $path = $request->file('profile_pic')->store('profiles', 'public');
-                $customer->profile_photo = Storage::url($path);
+                $path = FileHelper::saveImage($request->file('profile_pic'), 'profiles');
+                $customer->profile_photo = $path;
             }
 
             $customer->save();

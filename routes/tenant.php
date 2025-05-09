@@ -62,13 +62,15 @@ Route::middleware([
             Route::get('/waiters/all', [UserController::class, 'waiters'])->name('waiters.all');
             Route::get('/floor/all', [FloorController::class, 'floorAll'])->name('floor.all');
 
+            Route::get('/order/management', function () {
+                return Inertia::render('App/Order/Management/Dashboard');
+            });
             // Send to kitchen order
             Route::post('/order/send/kitchen', [OrderController::class, 'sendToKitchen'])->name('order.send-to-kitchen');
 
             // get products
             Route::get('/product/categories', [OrderController::class, 'getCategories'])->name('products.categories');
             Route::get('/products/{category_id}', [OrderController::class, 'getProducts'])->name('products.bycategory');
-
 
             Route::get('/settings', function () {
                 return Inertia::render('App/Settings/Dashboard');

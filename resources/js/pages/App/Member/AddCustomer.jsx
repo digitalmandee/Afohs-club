@@ -11,7 +11,6 @@ import {
     LocationOn as LocationOnIcon,
 } from '@mui/icons-material';
 import {
-    Alert,
     Box,
     Button,
     FormControl,
@@ -25,12 +24,12 @@ import {
     MenuItem,
     Radio,
     Select,
-    Snackbar,
     Switch,
     TextField,
     Typography,
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 export default function AddCustomer({ users, memberTypes, customer = null, addressTypes = [] }) {
@@ -79,10 +78,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
         isMain: false,
     });
 
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [showError, setShowError] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
     const [errors, setErrors] = useState({});
 
     const [profileImage, setProfileImage] = useState(customer?.profile_photo || null);
@@ -103,8 +98,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
         setOpenAddForm(false);
         setShowAddressForm(false);
         setErrors({});
-        setShowError(false);
-        setErrorMessage('');
         setIsEditMode(false);
         setCurrentCustomerIndex(null);
         setNewCustomer({
@@ -146,6 +139,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     const handleImageUpload = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            setNewCustomer((prev) => ({ ...prev, profile_photo: file }));
             const reader = new FileReader();
             reader.onloadend = () => {
                 setProfileImage(reader.result);
@@ -175,8 +169,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     const handleSaveCustomer = () => {
         // General validation for other fields
         if (!newCustomer.name || !newCustomer.email || !newCustomer.phone_number) {
-            setErrorMessage('Please fill in all required fields.');
-            setShowError(true);
+            enqueueSnackbar('Please fill in all required fields.', { variant: 'error' });
             return;
         }
 
@@ -184,23 +177,22 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
         const formData = new FormData();
         formData.append('name', newCustomer.name);
         formData.append('email', newCustomer.email);
-        formData.append('phone', `${phoneCountryCode}${newCustomer.phone_number}`);
+        formData.append('profile_photo', newCustomer.profile_photo);
+        formData.append('phone', `${phoneCountryCode}-${newCustomer.phone_number}`);
         formData.append('customer_type', newCustomer.customer_type);
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
         // Submit the form
         router.post(route('members.store'), formData, {
             onSuccess: () => {
-                setSuccessMessage('Customer added successfully!');
-                setShowSuccess(true);
+                enqueueSnackbar('Customer added successfully', { variant: 'success' });
                 handleCloseAddForm();
                 // Redirect to the members page
                 router.visit(route('members.index'));
             },
             onError: (errors) => {
                 setErrors(errors);
-                setErrorMessage('Failed to add customer. Please check the form.');
-                setShowError(true);
+                enqueueSnackbar('Failed to add customer. Please check the form.', { variant: 'error' });
             },
         });
     };
@@ -221,8 +213,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     const handleSaveAddress = () => {
         // Address-specific validation
         if (!newAddress.type || !newAddress.address || !newAddress.city || !newAddress.province || !newAddress.country || !newAddress.zipCode) {
-            setErrorMessage('All address fields are required.');
-            setShowError(true);
+            enqueueSnackbar('All address fields are required.', { variant: 'error' });
             return;
         }
 
@@ -236,8 +227,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
         updatedCustomer.addresses.push(newAddress);
         setNewCustomer(updatedCustomer);
         setShowAddressForm(false);
-        setSuccessMessage('Address added successfully!');
-        setShowSuccess(true);
+        enqueueSnackbar('Address added successfully!', { variant: 'success' });
         router.get(route('members'));
     };
 
@@ -704,16 +694,6 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                     </Grid>
                 </div>
             </div>
-            <Snackbar open={showSuccess} autoHideDuration={6000} onClose={() => setShowSuccess(false)}>
-                <Alert onClose={() => setShowSuccess(false)} severity="success" sx={{ width: '100%' }}>
-                    {successMessage}
-                </Alert>
-            </Snackbar>
-            <Snackbar open={showError} autoHideDuration={6000} onClose={() => setShowError(false)}>
-                <Alert onClose={() => setShowError(false)} severity="error" sx={{ width: '100%' }}>
-                    {errorMessage}
-                </Alert>
-            </Snackbar>
         </>
     );
 }

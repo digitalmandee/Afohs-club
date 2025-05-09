@@ -16,7 +16,7 @@ npm install
 
 # Set up database
 
-php artisan migrate --seed
+php artisan migrate --seed || php artisan migrate:fresh --seed
 
 ==================== 🌐 App Setup Complete ====================
 
