@@ -29,63 +29,13 @@ const CancelOrder = ({ onClose, onConfirm }) => {
             >
                 {/* Header */}
                 <Box sx={{ p: 3, pb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color:'#121212' }}>
                         Cancel Order
                     </Typography>
 
-                    <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: '#121212', fontWeight:700, fontSize:'20px', mt: 1 }}>
                         Are you sure, you want to cancel this order
                     </Typography>
-                </Box>
-
-                {/* Order Details */}
-                <Box sx={{ px: 3, pb: 3 }}>
-                    <Typography
-                        variant="subtitle2"
-                        sx={{
-                            fontWeight: 'bold',
-                            color: '#0e3151',
-                            fontSize: '0.75rem',
-                            mb: 1.5,
-                        }}
-                    >
-                        DINE IN ORDER
-                    </Typography>
-
-                    <Box
-                        sx={{
-                            bgcolor: '#f8f9fa',
-                            borderRadius: 1,
-                            p: 2,
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                                Annette Black
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: '#6b7280' }}>
-                                Revenue Lost{' '}
-                                <Box component="span" sx={{ color: '#ef4444' }}>
-                                    Rs 25,00
-                                </Box>
-                            </Typography>
-                        </Box>
-
-                        <Chip
-                            label="#Order002"
-                            size="small"
-                            sx={{
-                                bgcolor: '#f0f0f0',
-                                borderRadius: 1,
-                                fontSize: '0.75rem',
-                                fontWeight: 'medium',
-                                color: '#4b5563',
-                            }}
-                        />
-                    </Box>
                 </Box>
 
                 {/* Action Buttons */}

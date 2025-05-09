@@ -3,7 +3,6 @@ import { useState } from 'react';
 import CancelOrder from './DelModal';
 import NewSelfOrder from './NewOrder';
 import ReservationOrder from './Reserve';
-// import "./style.css"
 import { router } from '@inertiajs/react';
 import { Add } from '@mui/icons-material';
 import { Box, Button, Chip, Grid, IconButton, Modal, Paper, Typography } from '@mui/material';

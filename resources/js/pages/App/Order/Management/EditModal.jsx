@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -13,10 +14,11 @@ import {
     ListItemText
 } from "@mui/material";
 import { AccessTime, Notifications, Add } from "@mui/icons-material";
-
-// Example props: open, onClose, orderItems, setOrderItems
+import { router } from '@inertiajs/react';
+import { Snackbar, Alert } from '@mui/material';
 
 function EditOrderModal({ open, onClose, orderItems, setOrderItems }) {
+    const [showSuccess, setShowSuccess] = useState(false);
     const handleQuantityChange = (id, delta) => {
         setOrderItems(prev =>
             prev.map(item =>
@@ -35,13 +37,13 @@ function EditOrderModal({ open, onClose, orderItems, setOrderItems }) {
 
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogContent sx={{ p:0, width:'400px' }}>
+            <DialogContent sx={{ p: 0, width: '400px' }}>
                 <Paper elevation={1} sx={{ borderRadius: 1, overflow: "hidden" }}>
 
                     {/* Sticky Header */}
                     <Box
                         sx={{
-                            bgcolor: "#003153",
+                            bgcolor: "#063455",
                             color: "white",
                             p: 2,
                             position: "sticky",
@@ -49,12 +51,12 @@ function EditOrderModal({ open, onClose, orderItems, setOrderItems }) {
                             zIndex: 1,
                         }}
                     >
-                        <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px', color: '#FFFFFF' }}>
                             #003
                         </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 500, mb: 2, fontSize: '18px', color: '#FFFFFF' }}>
                             Applied{" "}
-                            <Typography component="span" variant="body2" sx={{ opacity: 0.8 }}>
+                            <Typography component="span" variant="body2" sx={{ opacity: 0.8, fontWeight: 500, fontSize: '18px' }}>
                                 (Member)
                             </Typography>
                         </Typography>
@@ -96,13 +98,16 @@ function EditOrderModal({ open, onClose, orderItems, setOrderItems }) {
                             </Avatar>
                             <Avatar
                                 sx={{
-                                    bgcolor: "white",
+                                    bgcolor: "#E3E3E3",
                                     width: 36,
                                     height: 36,
                                     color: "#666",
                                 }}
                             >
-                                <Notifications fontSize="small" />
+                                <img src="/assets/food-tray.png" alt="" style={{
+                                    width: 24,
+                                    height: 24
+                                }} />
                             </Avatar>
                         </Box>
                     </Box>
@@ -125,7 +130,7 @@ function EditOrderModal({ open, onClose, orderItems, setOrderItems }) {
                                     key={item.id}
                                     divider
                                     sx={{
-                                        py: 1.5,
+                                        py: 0,
                                         px: 2,
                                         ...(item.removed && {
                                             "& .MuiListItemText-primary": {
@@ -173,14 +178,17 @@ function EditOrderModal({ open, onClose, orderItems, setOrderItems }) {
                             <Button
                                 variant="outlined"
                                 fullWidth
-                                startIcon={<Add />}
+                                startIcon={<Add sx={{
+                                    color: '#063455'
+                                }} />}
                                 sx={{
-                                    borderColor: "#ccc",
-                                    color: "#666",
+                                    border: "1px solid #063455",
+                                    color: "#063455",
                                     textTransform: "none",
                                     py: 1,
                                     mb: 1,
                                 }}
+                                onClick={() => router.visit('/all/order')}
                             >
                                 Add Item
                             </Button>
@@ -207,7 +215,8 @@ function EditOrderModal({ open, onClose, orderItems, setOrderItems }) {
                             fullWidth
                             onClick={() => {
                                 // Save logic
-                                onClose();
+                                setShowSuccess(true); // Show the toast
+                                onClose(); // Close the drawer/modal
                             }}
                             sx={{
                                 bgcolor: "#003153",
@@ -218,10 +227,26 @@ function EditOrderModal({ open, onClose, orderItems, setOrderItems }) {
                         >
                             Save Change
                         </Button>
+                        <Snackbar
+                            open={showSuccess}
+                            autoHideDuration={5000}
+                            onClose={() => setShowSuccess(false)}
+                            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        >
+                            <Alert
+                                onClose={() => setShowSuccess(false)}
+                                severity="success"
+                                sx={{ width: '100%' }}
+                            >
+                                Order edit Successfully! <br />
+                                The order detail edit successfully
+                            </Alert>
+                        </Snackbar>
                     </Box>
                 </Paper>
             </DialogContent>
         </Dialog>
+
     );
 }
 
