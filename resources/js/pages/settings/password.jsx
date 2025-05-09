@@ -1,14 +1,10 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import InputError from '@/components/input-error';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Typography } from '@mui/material';
-import { Alert, Col, Container, Row } from 'react-bootstrap';
+import { Alert, Box, Button, TextField, Typography } from '@mui/material'; // MUI components
+import { Col, Container, Row } from 'react-bootstrap'; // Bootstrap Grid System
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -60,12 +56,14 @@ const Password = () => {
                 <Container style={{ maxWidth: '600px', padding: '2rem' }}>
                     <Row className="align-items-center mb-4">
                         <Col>
-                            <Typography style={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>Password</Typography>
+                            <Typography variant="h4" style={{ color: '#3F4E4F', fontWeight: 500 }}>
+                                Password
+                            </Typography>
                         </Col>
                     </Row>
 
-                    <div
-                        style={{
+                    <Box
+                        sx={{
                             borderRadius: '20px',
                             border: '1px solid #ccc',
                             backgroundColor: '#fff',
@@ -76,59 +74,65 @@ const Password = () => {
                         <HeadingSmall title="Update Password" description="Ensure your account is using a long, random password to stay secure." />
 
                         <form onSubmit={updatePassword} style={{ marginTop: '1.5rem' }}>
-                            <div className="mb-3">
-                                <Label htmlFor="current_password">Current Password</Label>
-                                <Input
+                            <div style={{ marginBottom: '1rem' }}>
+                                <TextField
                                     id="current_password"
+                                    label="Current Password"
                                     ref={currentPasswordInput}
                                     type="password"
                                     value={data.current_password}
                                     onChange={(e) => setData('current_password', e.target.value)}
                                     autoComplete="current-password"
-                                    placeholder="Current password"
+                                    fullWidth
+                                    error={!!errors.current_password}
+                                    helperText={errors.current_password}
+                                    variant="outlined"
                                 />
-                                <InputError message={errors.current_password} />
                             </div>
 
-                            <div className="mb-3">
-                                <Label htmlFor="password">New Password</Label>
-                                <Input
+                            <div style={{ marginBottom: '1rem' }}>
+                                <TextField
                                     id="password"
+                                    label="New Password"
                                     ref={passwordInput}
                                     type="password"
                                     value={data.password}
                                     onChange={(e) => setData('password', e.target.value)}
                                     autoComplete="new-password"
-                                    placeholder="New password"
+                                    fullWidth
+                                    error={!!errors.password}
+                                    helperText={errors.password}
+                                    variant="outlined"
                                 />
-                                <InputError message={errors.password} />
                             </div>
 
-                            <div className="mb-4">
-                                <Label htmlFor="password_confirmation">Confirm Password</Label>
-                                <Input
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <TextField
                                     id="password_confirmation"
+                                    label="Confirm Password"
                                     type="password"
                                     value={data.password_confirmation}
                                     onChange={(e) => setData('password_confirmation', e.target.value)}
                                     autoComplete="new-password"
-                                    placeholder="Confirm password"
+                                    fullWidth
+                                    error={!!errors.password_confirmation}
+                                    helperText={errors.password_confirmation}
+                                    variant="outlined"
                                 />
-                                <InputError message={errors.password_confirmation} />
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <Button type="submit" disabled={processing}>
+                                <Button type="submit" variant="contained" color="primary" disabled={processing}>
                                     Save Password
                                 </Button>
                                 {recentlySuccessful && (
-                                    <Alert variant="success" style={{ padding: '0.25rem 0.75rem', marginBottom: 0 }}>
+                                    <Alert variant="filled" severity="success" style={{ padding: '0.25rem 0.75rem', marginBottom: 0 }}>
                                         Saved
                                     </Alert>
                                 )}
                             </div>
                         </form>
-                    </div>
+                    </Box>
                 </Container>
             </div>
         </>
