@@ -11,7 +11,6 @@ import {
     LocationOn as LocationOnIcon,
 } from '@mui/icons-material';
 import {
-    Alert,
     Box,
     Button,
     FormControl,
@@ -25,15 +24,15 @@ import {
     MenuItem,
     Radio,
     Select,
-    Snackbar,
     Switch,
     TextField,
     Typography,
 } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
-export default function AddCustomer({ users, memberTypes, customer = null }) {
+export default function AddCustomer({ users, memberTypes, customer = null, addressTypes = [] }) {
     const drawerWidthOpen = 240;
     const drawerWidthClosed = 110;
 
@@ -70,7 +69,7 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
 
     const [showAddressForm, setShowAddressForm] = useState(false);
     const [newAddress, setNewAddress] = useState({
-        type: 'House',
+        type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
         address: '',
         city: '',
         province: '',
@@ -79,10 +78,6 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
         isMain: false,
     });
 
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [showError, setShowError] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
     const [errors, setErrors] = useState({});
 
     const [profileImage, setProfileImage] = useState(customer?.profile_photo || null);
@@ -103,8 +98,6 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
         setOpenAddForm(false);
         setShowAddressForm(false);
         setErrors({});
-        setShowError(false);
-        setErrorMessage('');
         setIsEditMode(false);
         setCurrentCustomerIndex(null);
         setNewCustomer({
@@ -146,6 +139,7 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
     const handleImageUpload = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            setNewCustomer((prev) => ({ ...prev, profile_photo: file }));
             const reader = new FileReader();
             reader.onloadend = () => {
                 setProfileImage(reader.result);
@@ -173,88 +167,39 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
     };
 
     const handleSaveCustomer = () => {
-        // Client-side validation
+        // General validation for other fields
         if (!newCustomer.name || !newCustomer.email || !newCustomer.phone_number) {
-            setErrorMessage('Please fill in all required fields.');
-            setShowError(true);
+            enqueueSnackbar('Please fill in all required fields.', { variant: 'error' });
             return;
         }
 
-        console.log('Addresses before validation:', newCustomer.addresses); // Debug log
-        if (newCustomer.addresses.length > 0) {
-            for (const addr of newCustomer.addresses) {
-                if (!addr.type || !addr.address || !addr.city || !addr.province || !addr.country || !addr.zipCode) {
-                    console.error('Invalid address:', addr); // Log the problematic address
-                    setErrorMessage('All address fields are required.');
-                    setShowError(true);
-                    return;
-                }
-            }
-        }
-
+        // Proceed with saving the customer
         const formData = new FormData();
         formData.append('name', newCustomer.name);
         formData.append('email', newCustomer.email);
-        formData.append('phone', `${phoneCountryCode}${newCustomer.phone_number}`);
+        formData.append('profile_photo', newCustomer.profile_photo);
+        formData.append('phone', `${phoneCountryCode}-${newCustomer.phone_number}`);
         formData.append('customer_type', newCustomer.customer_type);
-        formData.append('member_type_id', memberTypes.find((mt) => mt.name === newCustomer.customer_type)?.id || ''); // Add member_type_id
-        if (profileImage && profileImage.startsWith('data:image')) {
-            const blob = base64ToBlob(profileImage);
-            formData.append('profile_pic', blob, 'profile.jpg');
-        }
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
-        // Log FormData entries for debugging
-        console.log('FormData entries:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        const routeName = isEditMode ? 'members.update' : 'members.store';
-        const url = isEditMode ? route(routeName, newCustomer.id) : route(routeName);
-
-        router.post(url, formData, {
-            onSuccess: (page) => {
-                const returnedCustomer = page.props.customer || {
-                    ...newCustomer,
-                    id: page.props.customer?.id || newCustomer.id,
-                    user_id: page.props.customer?.user_id || newCustomer.id,
-                    phone_number: `${phoneCountryCode}${newCustomer.phone_number}`,
-                    profile_photo: profileImage || newCustomer.profile_photo,
-                    userDetails: newCustomer.addresses.map((addr) => ({
-                        address_type: addr.type,
-                        country: addr.country,
-                        state: addr.province,
-                        city: addr.city,
-                        zip: addr.zipCode,
-                        address: addr.address,
-                        status: addr.isMain ? 'active' : 'inactive',
-                    })),
-                };
-                if (isEditMode && currentCustomerIndex !== null) {
-                    const updatedCustomers = [...customers];
-                    updatedCustomers[currentCustomerIndex] = returnedCustomer;
-                    setCustomers(updatedCustomers);
-                } else {
-                    setCustomers([returnedCustomer, ...customers]);
-                }
-                setSuccessMessage(isEditMode ? 'Customer updated successfully!' : 'Customer added successfully!');
-                setShowSuccess(true);
+        // Submit the form
+        router.post(route('members.store'), formData, {
+            onSuccess: () => {
+                enqueueSnackbar('Customer added successfully', { variant: 'success' });
                 handleCloseAddForm();
+                // Redirect to the members page
+                router.visit(route('members.index'));
             },
             onError: (errors) => {
-                console.error('Validation errors:', errors);
                 setErrors(errors);
-                const errorMessages = Object.values(errors).filter(Boolean).join('; ');
-                setErrorMessage(errorMessages || 'Failed to add customer. Please check the form.');
-                setShowError(true);
+                enqueueSnackbar('Failed to add customer. Please check the form.', { variant: 'error' });
             },
         });
     };
 
     const handleShowAddressForm = () => {
         setNewAddress({
-            type: 'House',
+            type: addressTypes.length > 0 ? addressTypes[0].name : 'House',
             address: '',
             city: '',
             province: '',
@@ -266,7 +211,12 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
     };
 
     const handleSaveAddress = () => {
-        console.log('Saving address:', newAddress);
+        // Address-specific validation
+        if (!newAddress.type || !newAddress.address || !newAddress.city || !newAddress.province || !newAddress.country || !newAddress.zipCode) {
+            enqueueSnackbar('All address fields are required.', { variant: 'error' });
+            return;
+        }
+
         const updatedCustomer = { ...newCustomer };
         if (updatedCustomer.addresses.length === 0 || newAddress.isMain) {
             updatedCustomer.addresses = updatedCustomer.addresses.map((addr) => ({
@@ -277,8 +227,8 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
         updatedCustomer.addresses.push(newAddress);
         setNewCustomer(updatedCustomer);
         setShowAddressForm(false);
-        setSuccessMessage('Address added successfully!');
-        setShowSuccess(true);
+        enqueueSnackbar('Address added successfully!', { variant: 'success' });
+        router.get(route('members'));
     };
 
     const handleSetMainAddress = (index) => {
@@ -580,39 +530,24 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
                                         </IconButton>
                                     </Box>
                                     <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                                        <Button
-                                            variant={newAddress.type === 'House' ? 'contained' : 'outlined'}
-                                            onClick={() => setNewAddress({ ...newAddress, type: 'House' })}
-                                            sx={{
-                                                borderRadius: '20px',
-                                                backgroundColor: newAddress.type === 'House' ? '#1976d2' : 'transparent',
-                                                color: newAddress.type === 'House' ? 'white' : 'inherit',
-                                            }}
-                                        >
-                                            House
-                                        </Button>
-                                        <Button
-                                            variant={newAddress.type === 'Apartment' ? 'contained' : 'outlined'}
-                                            onClick={() => setNewAddress({ ...newAddress, type: 'Apartment' })}
-                                            sx={{
-                                                borderRadius: '20px',
-                                                backgroundColor: newAddress.type === 'Apartment' ? '#1976d2' : 'transparent',
-                                                color: newAddress.type === 'Apartment' ? 'white' : 'inherit',
-                                            }}
-                                        >
-                                            Apartment
-                                        </Button>
-                                        <Button
-                                            variant={newAddress.type === 'Office' ? 'contained' : 'outlined'}
-                                            onClick={() => setNewAddress({ ...newAddress, type: 'Office' })}
-                                            sx={{
-                                                borderRadius: '20px',
-                                                backgroundColor: newAddress.type === 'Office' ? '#1976d2' : 'transparent',
-                                                color: newAddress.type === 'Office' ? 'white' : 'inherit',
-                                            }}
-                                        >
-                                            Office
-                                        </Button>
+                                        {addressTypes.length > 0 ? (
+                                            addressTypes.map((type) => (
+                                                <Button
+                                                    key={type.id}
+                                                    variant={newAddress.type === type.name ? 'contained' : 'outlined'}
+                                                    onClick={() => setNewAddress({ ...newAddress, type: type.name })}
+                                                    sx={{
+                                                        borderRadius: '20px',
+                                                        backgroundColor: newAddress.type === type.name ? '#1976d2' : 'transparent',
+                                                        color: newAddress.type === type.name ? 'white' : 'inherit',
+                                                    }}
+                                                >
+                                                    {type.name}
+                                                </Button>
+                                            ))
+                                        ) : (
+                                            <Typography color="error">No address types available</Typography>
+                                        )}
                                     </Box>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Country
@@ -647,7 +582,7 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
                                             <FormControl fullWidth margin="normal" variant="outlined">
                                                 <Select
                                                     displayEmpty
-                                                    value={newAddress.province}
+                                                    value={newAddress.state}
                                                     name="province"
                                                     onChange={handleAddressInputChange}
                                                     renderValue={(selected) => {
@@ -740,18 +675,16 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
                                         margin="normal"
                                         variant="outlined"
                                     />
-                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                                        <Button variant="contained" onClick={handleSaveAddress} sx={{ backgroundColor: '#003366' }}>
-                                            Save
-                                        </Button>
-                                    </Box>
+                                    <Button variant="contained" onClick={handleSaveAddress} sx={{ backgroundColor: '#003366', mt: 2 }}>
+                                        Save Address
+                                    </Button>
                                 </>
                             )}
                             {!showAddressForm && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-                                    <Button variant="outlined" onClick={handleCloseAddForm}>
+                                    {/* <Button variant="outlined" onClick={handleCloseAddForm}>
                                         Cancel
-                                    </Button>
+                                    </Button> */}
                                     <Button variant="contained" onClick={handleSaveCustomer} sx={{ backgroundColor: '#003366' }}>
                                         {isEditMode ? 'Save Changes' : 'Save'}
                                     </Button>
@@ -761,16 +694,6 @@ export default function AddCustomer({ users, memberTypes, customer = null }) {
                     </Grid>
                 </div>
             </div>
-            <Snackbar open={showSuccess} autoHideDuration={6000} onClose={() => setShowSuccess(false)}>
-                <Alert onClose={() => setShowSuccess(false)} severity="success" sx={{ width: '100%' }}>
-                    {successMessage}
-                </Alert>
-            </Snackbar>
-            <Snackbar open={showError} autoHideDuration={6000} onClose={() => setShowError(false)}>
-                <Alert onClose={() => setShowError(false)} severity="error" sx={{ width: '100%' }}>
-                    {errorMessage}
-                </Alert>
-            </Snackbar>
         </>
     );
 }

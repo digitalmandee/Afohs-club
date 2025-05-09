@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Helpers\FileHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
@@ -38,7 +39,8 @@ class CategoryController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('categories', 'public');
+            $path = FileHelper::saveImage($request->file('image'), 'categories');
+            $validated['image'] = $path;
         }
 
         Category::create($validated);
@@ -58,7 +60,8 @@ class CategoryController extends Controller
             if ($category->image && Storage::disk('public')->exists($category->image)) {
                 Storage::disk('public')->delete($category->image);
             }
-            $validated['image'] = $request->file('image')->store('categories', 'public');
+            $path = FileHelper::saveImage($request->file('image'), 'categories');
+            $validated['image'] = $path;
         } elseif ($request->input('existingImage')) {
             $validated['image'] = $request->input('existingImage');
         } else {

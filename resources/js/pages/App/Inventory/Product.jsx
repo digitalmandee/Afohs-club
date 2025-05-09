@@ -14,12 +14,12 @@ import {
     LocalShipping as LocalShippingIcon,
     ShoppingBag as ShoppingBagIcon,
 } from '@mui/icons-material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, Button, DialogActions, DialogContent, Divider, Grid, IconButton, MenuItem, Switch, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -228,12 +228,10 @@ const AddProduct = ({ openMenu, onClose }) => {
                 enqueueSnackbar('Product added successfully', { variant: 'success' });
                 reset();
                 setUploadedImages([]);
-                setShowConfirmation(true);
                 router.visit(route('inventory.index'));
             },
             onError: (errors) => {
                 enqueueSnackbar('Something went wrong', { variant: 'error' });
-                console.log(errors);
             },
         });
     };
@@ -271,14 +269,15 @@ const AddProduct = ({ openMenu, onClose }) => {
                 }}
             >
                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                <ArrowBackIcon sx={{ fontSize: 24, color: '#3F4E4F', cursor: 'pointer' }}
-                onClick={ () => router.visit('/inventory')}
-                />
-                    <Typography fontWeight="bold" sx={{
-                        fontSize:'30px',
-                        color:'#3F4E4F',
-                        marginLeft:3
-                    }}>
+                    <ArrowBackIcon sx={{ fontSize: 24, color: '#3F4E4F', cursor: 'pointer' }} onClick={() => router.visit('/inventory')} />
+                    <Typography
+                        fontWeight="bold"
+                        sx={{
+                            fontSize: '30px',
+                            color: '#3F4E4F',
+                            marginLeft: 3,
+                        }}
+                    >
                         Add Menu
                     </Typography>
                 </Box>
@@ -290,7 +289,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                 >
                     <DialogContent sx={{ p: 0 }}>
                         {/* Step Indicators */}
-                        <Box sx={{ px: 3, mb: 3, py: 1.5, display: 'flex', alignItems: 'center', bgcolor:'#F0F0F0' }}>
+                        <Box sx={{ px: 3, mb: 3, py: 1.5, display: 'flex', alignItems: 'center', bgcolor: '#F0F0F0' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Box
                                     sx={{
@@ -339,7 +338,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                             <Box sx={{ px: 3, pb: 3 }}>
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} md={6}>
-                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Product Name
                                         </Typography>
                                         <TextField
@@ -353,7 +352,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
-                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Menu Id (Optional)
                                         </Typography>
                                         <TextField
@@ -367,7 +366,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Categories
                                         </Typography>
                                         <TextField
@@ -393,7 +392,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </TextField>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Current Ready Stock
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
@@ -424,7 +423,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Minimal Stock
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
@@ -471,10 +470,14 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                     <img src="/placeholder.svg" alt="Out of Stock" style={{ width: 40, height: 40 }} />
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="body1" fontWeight="medium" sx={{
-                                                        color:'#121212',
-                                                        fontSize:'16px'
-                                                    }}>
+                                                    <Typography
+                                                        variant="body1"
+                                                        fontWeight="medium"
+                                                        sx={{
+                                                            color: '#121212',
+                                                            fontSize: '16px',
+                                                        }}
+                                                    >
                                                         Out of Stock Menu
                                                     </Typography>
                                                     <Typography variant="body2" color="text.secondary">
@@ -491,14 +494,18 @@ const AddProduct = ({ openMenu, onClose }) => {
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                            <Typography variant="body1" fontWeight="medium" sx={{
-                                                color:'#121212',
-                                                fontSize:'14px'
-                                            }}>
+                                            <Typography
+                                                variant="body1"
+                                                fontWeight="medium"
+                                                sx={{
+                                                    color: '#121212',
+                                                    fontSize: '14px',
+                                                }}
+                                            >
                                                 Select Order Type
                                             </Typography>
                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <Typography variant="body2" sx={{ mr: 1, color:'#121212', fontSize:'14px' }}>
+                                                <Typography variant="body2" sx={{ mr: 1, color: '#121212', fontSize: '14px' }}>
                                                     Select All
                                                 </Typography>
                                                 <Switch
@@ -536,7 +543,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Cost Of Goods Sold (COGS)
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
@@ -568,7 +575,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Base Price Selling
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
@@ -600,7 +607,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Typography variant="body1" sx={{ mb: 1, color:'#121212', fontSize:'14px' }}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Profit Estimate
                                         </Typography>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -613,9 +620,14 @@ const AddProduct = ({ openMenu, onClose }) => {
                                     {/* Product Variant */}
                                     <Grid item xs={12}>
                                         <Box sx={{ mb: 2 }}>
-                                            <Typography variant="h6" fontWeight="medium" sx={{
-                                                color:'#121212', fontSize:'16px'
-                                            }}>
+                                            <Typography
+                                                variant="h6"
+                                                fontWeight="medium"
+                                                sx={{
+                                                    color: '#121212',
+                                                    fontSize: '16px',
+                                                }}
+                                            >
                                                 Product Variant
                                             </Typography>
                                         </Box>
@@ -640,29 +652,71 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                 {data.variants[item.name]?.active && (
                                                     <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                         {/* Loop through the items for both single and multiple variant types */}
+                                                        <Grid container sx={{ mb: 1 }}>
+                                                            <Grid item xs={5}>
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Variant Name
+                                                                </Typography>
+                                                            </Grid>
+                                                            <Grid item xs={3}>
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Additional Price
+                                                                </Typography>
+                                                            </Grid>
+                                                            <Grid item xs={3}>
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Stock
+                                                                </Typography>
+                                                            </Grid>
+                                                            <Grid item xs={2}></Grid>
+                                                        </Grid>
                                                         {data.variants[item.name]?.items?.map((topping, index) => (
-                                                            <Box
-                                                                key={index}
-                                                                sx={{
-                                                                    display: 'flex',
-                                                                    justifyContent: 'space-between',
-                                                                    mb: 1,
-                                                                    alignItems: 'center',
-                                                                }}
-                                                            >
-                                                                {/* Name field (editable for multiple, not editable for single) */}
-                                                                {item.type === 'single' ? (
-                                                                    <Typography sx={{ flex: 1, mr: 1 }}>{topping.name}</Typography>
-                                                                ) : (
+                                                            <Grid container sx={{ mb: 1 }} key={index}>
+                                                                <Grid item xs={5}>
+                                                                    {/* Name field (editable for multiple, not editable for single) */}
+                                                                    {item.type === 'single' ? (
+                                                                        <Typography sx={{ flex: 1, mr: 1 }}>{topping.name}</Typography>
+                                                                    ) : (
+                                                                        <TextField
+                                                                            size="small"
+                                                                            placeholder="Variant Name"
+                                                                            value={topping.name}
+                                                                            onChange={(e) => {
+                                                                                const value = e.target.value;
+                                                                                setData((prev) => {
+                                                                                    const items = [...prev.variants[item.name].items];
+                                                                                    items[index].name = value;
+                                                                                    return {
+                                                                                        ...prev,
+                                                                                        variants: {
+                                                                                            ...prev.variants,
+                                                                                            [item.name]: {
+                                                                                                ...prev.variants[item.name],
+                                                                                                items,
+                                                                                            },
+                                                                                        },
+                                                                                    };
+                                                                                });
+                                                                            }}
+                                                                            sx={{ flex: 1, mr: 1 }}
+                                                                        />
+                                                                    )}
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    {/* Price field */}
                                                                     <TextField
                                                                         size="small"
-                                                                        placeholder="Variant Name"
-                                                                        value={topping.name}
+                                                                        placeholder="Price"
+                                                                        type="number"
+                                                                        inputProps={{ min: 0 }}
+                                                                        value={topping.price}
                                                                         onChange={(e) => {
-                                                                            const value = e.target.value;
+                                                                            let value = parseFloat(e.target.value);
+                                                                            value = isNaN(value) ? '' : Math.max(0, value); // enforce minimum 0
+
                                                                             setData((prev) => {
                                                                                 const items = [...prev.variants[item.name].items];
-                                                                                items[index].name = value;
+                                                                                items[index].price = value;
                                                                                 return {
                                                                                     ...prev,
                                                                                     variants: {
@@ -675,148 +729,123 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                                                 };
                                                                             });
                                                                         }}
-                                                                        sx={{ flex: 1, mr: 1 }}
+                                                                        sx={{ width: 130, mr: 1 }}
                                                                     />
-                                                                )}
-                                                                {/* Price field */}
-                                                                <TextField
-                                                                    size="small"
-                                                                    placeholder="Price"
-                                                                    type="number"
-                                                                    inputProps={{ min: 0 }}
-                                                                    value={topping.price}
-                                                                    onChange={(e) => {
-                                                                        let value = parseFloat(e.target.value);
-                                                                        value = isNaN(value) ? '' : Math.max(0, value); // enforce minimum 0
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    <TextField
+                                                                        size="small"
+                                                                        placeholder="Stock"
+                                                                        type="number"
+                                                                        inputProps={{ min: 0 }}
+                                                                        value={topping.stock}
+                                                                        onChange={(e) => {
+                                                                            let value = parseInt(e.target.value);
+                                                                            value = isNaN(value) ? '' : Math.max(0, value); // enforce minimum 0
 
-                                                                        setData((prev) => {
-                                                                            const items = [...prev.variants[item.name].items];
-                                                                            items[index].price = value;
-                                                                            return {
-                                                                                ...prev,
-                                                                                variants: {
-                                                                                    ...prev.variants,
-                                                                                    [item.name]: {
-                                                                                        ...prev.variants[item.name],
-                                                                                        items,
+                                                                            setData((prev) => {
+                                                                                const items = [...prev.variants[item.name].items];
+                                                                                items[index].stock = value;
+                                                                                return {
+                                                                                    ...prev,
+                                                                                    variants: {
+                                                                                        ...prev.variants,
+                                                                                        [item.name]: {
+                                                                                            ...prev.variants[item.name],
+                                                                                            items,
+                                                                                        },
                                                                                     },
-                                                                                },
-                                                                            };
-                                                                        });
-                                                                    }}
-                                                                    sx={{ width: 120, mr: 1 }}
-                                                                />
-
-                                                                <TextField
-                                                                    size="small"
-                                                                    placeholder="Stock"
-                                                                    type="number"
-                                                                    inputProps={{ min: 0 }}
-                                                                    value={topping.stock}
-                                                                    onChange={(e) => {
-                                                                        let value = parseInt(e.target.value);
-                                                                        value = isNaN(value) ? '' : Math.max(0, value); // enforce minimum 0
-
-                                                                        setData((prev) => {
-                                                                            const items = [...prev.variants[item.name].items];
-                                                                            items[index].stock = value;
-                                                                            return {
-                                                                                ...prev,
-                                                                                variants: {
-                                                                                    ...prev.variants,
-                                                                                    [item.name]: {
-                                                                                        ...prev.variants[item.name],
-                                                                                        items,
-                                                                                    },
-                                                                                },
-                                                                            };
-                                                                        });
-                                                                    }}
-                                                                    sx={{ width: 80, mr: 1 }}
-                                                                />
-
-                                                                <IconButton
-                                                                    size="small"
-                                                                    sx={{ width: 40 }}
-                                                                    onClick={() => handleRemoveVariantItem(item.name, index)}
-                                                                    color="error"
-                                                                >
-                                                                    <CloseIcon fontSize="small" />
-                                                                </IconButton>
-                                                            </Box>
+                                                                                };
+                                                                            });
+                                                                        }}
+                                                                        sx={{ width: 130, mr: 1 }}
+                                                                    />
+                                                                </Grid>
+                                                                <Grid item xs={1}>
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        sx={{ width: 40 }}
+                                                                        onClick={() => handleRemoveVariantItem(item.name, index)}
+                                                                        color="error"
+                                                                    >
+                                                                        <CloseIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Grid>
+                                                            </Grid>
                                                         ))}
 
                                                         {/* Add new variant item for both single and multiple */}
                                                         {item.type === 'multiple' && (
                                                             <>
-                                                                <Box
-                                                                    sx={{
-                                                                        display: 'flex',
-                                                                        justifyContent: 'space-between',
-                                                                        mb: 1,
-                                                                        alignItems: 'center',
-                                                                    }}
-                                                                >
-                                                                    <TextField
-                                                                        placeholder="e.g. Oreo"
-                                                                        size="small"
-                                                                        value={data.variants[item.name]?.newItem?.name || ''}
-                                                                        onChange={(e) =>
-                                                                            handleNewVariantItemChange(item.name, 'name', e.target.value)
-                                                                        }
-                                                                        sx={{ flex: 1, mr: 1 }}
-                                                                    />
-                                                                    <Box sx={{ display: 'flex', width: 120, mr: 1 }}>
-                                                                        <Box
-                                                                            sx={{
-                                                                                display: 'flex',
-                                                                                alignItems: 'center',
-                                                                                justifyContent: 'center',
-                                                                                border: '1px solid #e0e0e0',
-                                                                                borderRight: 'none',
-                                                                                px: 1,
-                                                                                borderTopLeftRadius: 4,
-                                                                                borderBottomLeftRadius: 4,
-                                                                            }}
-                                                                        >
-                                                                            <Typography variant="body2">Rs</Typography>
+                                                                <Grid container sx={{ mb: 1 }}>
+                                                                    <Grid item xs={5}>
+                                                                        <TextField
+                                                                            placeholder="e.g. Oreo"
+                                                                            size="small"
+                                                                            value={data.variants[item.name]?.newItem?.name || ''}
+                                                                            onChange={(e) =>
+                                                                                handleNewVariantItemChange(item.name, 'name', e.target.value)
+                                                                            }
+                                                                            sx={{ flex: 1, mr: 1 }}
+                                                                        />
+                                                                    </Grid>
+                                                                    <Grid item xs={3}>
+                                                                        <Box sx={{ display: 'flex', width: 130, mr: 1 }}>
+                                                                            <Box
+                                                                                sx={{
+                                                                                    display: 'flex',
+                                                                                    alignItems: 'center',
+                                                                                    justifyContent: 'center',
+                                                                                    border: '1px solid #e0e0e0',
+                                                                                    borderRight: 'none',
+                                                                                    px: 1,
+                                                                                    borderTopLeftRadius: 4,
+                                                                                    borderBottomLeftRadius: 4,
+                                                                                }}
+                                                                            >
+                                                                                <Typography variant="body2">Rs</Typography>
+                                                                            </Box>
+                                                                            <TextField
+                                                                                type="number"
+                                                                                placeholder="10"
+                                                                                size="small"
+                                                                                value={data.variants[item.name]?.newItem?.price || ''}
+                                                                                onChange={(e) =>
+                                                                                    handleNewVariantItemChange(item.name, 'price', e.target.value)
+                                                                                }
+                                                                                fullWidth
+                                                                                inputProps={{
+                                                                                    min: 0,
+                                                                                }}
+                                                                            />
                                                                         </Box>
+                                                                    </Grid>
+                                                                    <Grid item xs={3}>
                                                                         <TextField
                                                                             type="number"
-                                                                            placeholder="10"
+                                                                            placeholder="0"
                                                                             size="small"
-                                                                            value={data.variants[item.name]?.newItem?.price || ''}
+                                                                            value={data.variants[item.name]?.newItem?.stock || ''}
                                                                             onChange={(e) =>
-                                                                                handleNewVariantItemChange(item.name, 'price', e.target.value)
+                                                                                handleNewVariantItemChange(item.name, 'stock', e.target.value)
                                                                             }
-                                                                            fullWidth
+                                                                            sx={{ width: 130, mr: 1 }}
                                                                             inputProps={{
                                                                                 min: 0,
                                                                             }}
                                                                         />
-                                                                    </Box>
-                                                                    <TextField
-                                                                        type="number"
-                                                                        placeholder="0"
-                                                                        size="small"
-                                                                        value={data.variants[item.name]?.newItem?.stock || ''}
-                                                                        onChange={(e) =>
-                                                                            handleNewVariantItemChange(item.name, 'stock', e.target.value)
-                                                                        }
-                                                                        sx={{ width: 80, mr: 1 }}
-                                                                        inputProps={{
-                                                                            min: 0,
-                                                                        }}
-                                                                    />
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        sx={{ width: 40 }}
-                                                                        onClick={() => handleAddVariantItem(item.name)}
-                                                                        color="primary"
-                                                                    >
-                                                                        <AddIcon fontSize="small" />
-                                                                    </IconButton>
-                                                                </Box>
+                                                                    </Grid>
+                                                                    <Grid item xs={1}>
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            sx={{ width: 40 }}
+                                                                            onClick={() => handleAddVariantItem(item.name)}
+                                                                            color="primary"
+                                                                        >
+                                                                            <AddIcon fontSize="small" />
+                                                                        </IconButton>
+                                                                    </Grid>
+                                                                </Grid>
 
                                                                 {/* Button to add new item */}
                                                                 <Button

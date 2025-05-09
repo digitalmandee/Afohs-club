@@ -178,7 +178,6 @@ export default function MemberType({ memberTypesList }) {
         }
     }, [flash]);
 
-    // console.log('memberTypesList:', memberTypesList);
     const filteredMemberTypes = (memberTypesList || []).filter((memberType) => memberType.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (

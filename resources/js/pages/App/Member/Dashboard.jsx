@@ -1,5 +1,6 @@
-// pages/CustomerLists.jsx or similar
+// pages/CustomerLists.jsx
 import SideNav from '@/components/App/SideBar/SideNav';
+import { tenantAsset } from '@/helpers/asset';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
@@ -27,7 +28,7 @@ import { useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const CustomerLists = ({ userDetail, users }) => {
+const CustomerLists = ({ users }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -86,6 +87,10 @@ const CustomerLists = ({ userDetail, users }) => {
         setShowSuccess(false);
     };
 
+    const handleEditCustomer = (customerId) => {
+        router.get(route('members.edit', customerId));
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -108,7 +113,7 @@ const CustomerLists = ({ userDetail, users }) => {
                             marginBottom: '20px',
                         }}
                     >
-                        <Typography variant="h5">{userDetail.data.length} Customers</Typography>
+                        <Typography variant="h5">{users.data.length} Customers</Typography>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <TextField
                                 placeholder="Search name or membership type"
@@ -145,77 +150,17 @@ const CustomerLists = ({ userDetail, users }) => {
                                     <TableCell style={{ fontWeight: 'bold' }}>Type</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Address</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Create Order</TableCell>
+                                    <TableCell style={{ fontWeight: 'bold' }}>Edit</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {userDetail?.data?.map((user, userIndex) =>
-                                    user.user_detail && user.user_detail.length > 0 ? (
-                                        user.user_detail.map((detail, index) => (
-                                            <TableRow key={`${userIndex}-${index}`}>
-                                                <TableCell>{user.user_id || 'N/A'}</TableCell>
-                                                <TableCell>
-                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        {/* <p>{user.profile_photo}</p> */}
-                                                        <Avatar
-                                                            src={`http://localhost:8000${user.profile_photo}`}
-                                                            alt={user.name}
-                                                            style={{ marginRight: '10px' }}
-                                                        />
-                                                        {/* <img
-                                                            src={`http://localhost:8000${user.profile_photo}`}
-                                                            alt={user.name}
-                                                            style={{ width: '40px', height: '40px', borderRadius: '50%', marginRight: '10px' }}
-                                                        /> */}
-
-                                                        <div>
-                                                            <Typography variant="body1">{user.name || 'N/A'}</Typography>
-                                                            <Typography variant="body2" color="textSecondary">
-                                                                {user.email || 'N/A'}
-                                                            </Typography>
-                                                            <Typography variant="body2" color="textSecondary">
-                                                                {user.phone || 'N/A'}
-                                                            </Typography>
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{detail.address_type || 'N/A'}</TableCell>
-                                                <TableCell>
-                                                    {`${detail.address || ''}, ${detail.city || ''}, ${detail.state || ''}, ${detail.country || ''}, ${detail.zip || ''}`}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleCreateOrder({
-                                                                ...user,
-                                                                profilePic: user.profile_photo,
-                                                            });
-                                                        }}
-                                                        style={{
-                                                            backgroundColor: '#063455',
-                                                            fontSize: '12px',
-                                                            borderRadius: '20px',
-                                                            color: 'white',
-                                                        }}
-                                                    >
-                                                        Order
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
+                                {users.data.length > 0 &&
+                                    users.data.map((user, userIndex) => (
                                         <TableRow key={userIndex}>
                                             <TableCell>{user.user_id || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Avatar
-                                                        src={
-                                                            user.profile_photo
-                                                            // ||'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Hnn6JyFbqTjwloItCmZtl1a4IypuX3.png'
-                                                        }
-                                                        alt={user.name}
-                                                        style={{ marginRight: '10px' }}
-                                                    />
+                                                    <Avatar src={tenantAsset(user.profile_photo)} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
                                                         <Typography variant="body1">{user.name || 'N/A'}</Typography>
                                                         <Typography variant="body2" color="textSecondary">
@@ -227,8 +172,16 @@ const CustomerLists = ({ userDetail, users }) => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>N/A</TableCell>
-                                            <TableCell>No Address Found</TableCell>
+                                            <TableCell>{user.user_detail?.address_type || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                {user.user_detail?.address ||
+                                                user.user_detail?.city ||
+                                                user.user_detail?.state ||
+                                                user.user_detail?.country ||
+                                                user.user_detail?.zip
+                                                    ? `${user.user_detail?.address || ''}, ${user.user_detail?.city || ''}, ${user.user_detail?.state || ''}, ${user.user_detail?.country || ''}, ${user.user_detail?.zip || ''}`
+                                                    : '----'}
+                                            </TableCell>
                                             <TableCell>
                                                 <Button
                                                     onClick={(e) => {
@@ -248,9 +201,24 @@ const CustomerLists = ({ userDetail, users }) => {
                                                     Order
                                                 </Button>
                                             </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEditCustomer(user.id);
+                                                    }}
+                                                    style={{
+                                                        backgroundColor: '#1976d2',
+                                                        fontSize: '12px',
+                                                        borderRadius: '20px',
+                                                        color: 'white',
+                                                    }}
+                                                >
+                                                    Edit
+                                                </Button>
+                                            </TableCell>
                                         </TableRow>
-                                    ),
-                                )}
+                                    ))}
                             </TableBody>
                         </Table>
                     </Box>

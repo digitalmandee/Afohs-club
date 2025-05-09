@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class User extends Authenticatable
 {
@@ -64,9 +65,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserDetail::class)->where('status', 'active');
     }
-    // User.php
-    // public function userDetail()
-    // {
-    //     return $this->hasOne(UserDetail::class, 'user_id', 'id')->where('status', 'active');
-    // }
+
+    public function userDetails()
+    {
+        return $this->hasMany(UserDetail::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

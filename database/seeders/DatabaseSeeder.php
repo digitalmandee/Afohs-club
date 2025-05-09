@@ -4,6 +4,11 @@ namespace Database\Seeders;
 
 use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\Tenant\FloorDatabaseSeeder;
+use Database\Seeders\Tenant\MemberTypeSeeder;
+use Database\Seeders\Tenant\OrderDatabaseSeeder;
+use Database\Seeders\Tenant\PermissionsDatabaseSeeder;
+use Database\Seeders\Tenant\ProductDatabaseSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 
@@ -11,6 +16,14 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call([
+            MemberTypeSeeder::class,
+            FloorDatabaseSeeder::class,
+            PermissionsDatabaseSeeder::class,
+            ProductDatabaseSeeder::class,
+            OrderDatabaseSeeder::class
+        ]);
+
         // Create Super Admin
         $superAdmin = User::factory()->create([
             'name' => 'Super Admin',

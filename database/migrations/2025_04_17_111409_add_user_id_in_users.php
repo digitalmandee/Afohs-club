@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->uuid('user_id')->unique()->after('id');
+            $table->uuid('user_id')->unique()->nullable()->after('id');
         });
     }
 

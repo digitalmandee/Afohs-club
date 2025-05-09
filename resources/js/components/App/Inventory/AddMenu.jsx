@@ -35,21 +35,6 @@ const AddMenu = ({ openMenu, onClose }) => {
         description: '',
         images: [],
     });
-    // const [newMenu, setNewMenu] = useState({
-    //     name: '',
-    //     menu_code: '',
-    //     category: '',
-    //     currentStock: '',
-    //     minimalStock: '',
-    //     outOfStock: false,
-    //     orderTypes: [],
-    //     cogs: '',
-    //     basePrice: '',
-    //     profit: '0.00',
-    //     variants: {},
-    //     description: '',
-    //     images: [],
-    // });
 
     const [categories, setCategories] = useState([]);
     const [addMenuStep, setAddMenuStep] = useState(1);
@@ -75,7 +60,6 @@ const AddMenu = ({ openMenu, onClose }) => {
         if (validationErrors.length > 0) {
             validationErrors.map((error, index) => enqueueSnackbar(error, { variant: 'error' }));
 
-            // setSnackbarList((prev) => [...prev, ...errorSnackbars]);
             return;
         }
 
@@ -94,7 +78,6 @@ const AddMenu = ({ openMenu, onClose }) => {
         if (!menu.cogs || isNaN(menu.cogs)) errors.push('COGS must be a valid number');
         if (!menu.basePrice || isNaN(menu.basePrice)) errors.push('Base price must be a valid number');
         if (!menu.profit || isNaN(menu.profit)) errors.push('Profit must be a valid number');
-        // if (!menu.variants || Object.keys(menu.variants).length === 0) errors.push('At least one variant must be added');
 
         return errors;
     };
@@ -243,7 +226,6 @@ const AddMenu = ({ openMenu, onClose }) => {
             },
             onError: (errors) => {
                 enqueueSnackbar('Something went wrong', { variant: 'error' });
-                console.log(errors);
             },
         });
     };
@@ -821,25 +803,6 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             )}
                                         </Box>
                                     ))}
-
-                                    {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Typography variant="body2" sx={{ mr: 1 }}>
-                                                Multiple Choice
-                                            </Typography>
-                                            <Tooltip title="Allow customers to select multiple toppings">
-                                                <IconButton size="small">
-                                                    <InfoIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Box>
-                                        <Switch
-                                            checked={data.toppings.multipleChoice}
-                                            onChange={handleMultipleChoiceToggle}
-                                            color="primary"
-                                            size="small"
-                                        />
-                                    </Box> */}
                                 </Grid>
                             </Grid>
                         </Box>
@@ -874,25 +837,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                                             />
                                         </Box>
                                     ))}
-                                {/* <Box
-                                    sx={{
-                                        width: 80,
-                                        height: 80,
-                                        borderRadius: 1,
-                                        border: '1px solid #e0e0e0',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        backgroundColor: '#f5f5f5',
-                                    }}
-                                >
-                                    <Typography variant="body2" fontWeight="bold">
-                                        Upload
-                                    </Typography>
-                                    <CloudUploadIcon fontSize="small" sx={{ mt: 0.5 }} />
-                                </Box> */}
+
                                 <Box
                                     sx={{
                                         width: 80,
