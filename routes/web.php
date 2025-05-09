@@ -63,8 +63,6 @@ if (in_array(request()->getHost(), $allowedDomains)) {
         Route::get('tenants', [TenantController::class, 'index'])->name('tenant.index');
         Route::get('tenant/register', [TenantController::class, 'create'])->name('tenant.create');
         Route::post('tenant/store', [TenantController::class, 'store'])->name('tenant.store');
-        // setttings route
-        // Route::post('/settings/profile', [TenantController::class, 'store'])->name('tenant.store');
     });
 
     require __DIR__ . '/settings.php';

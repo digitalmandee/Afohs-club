@@ -1,6 +1,5 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import InputError from '@/components/input-error';
-import { Transition } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Typography } from '@mui/material';
-import { Col, Row } from 'react-bootstrap';
+import { Alert, Col, Container, Row } from 'react-bootstrap';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -48,24 +47,36 @@ const Password = () => {
         <>
             <SideNav open={open} setOpen={setOpen} />
             <div
-                className="transition-all duration-300"
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     marginTop: '5rem',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '80vh',
                 }}
             >
-                <div className="mx-auto max-w-2xl px-4 py-6">
+                <Container style={{ maxWidth: '600px', padding: '2rem' }}>
                     <Row className="align-items-center mb-4">
                         <Col>
                             <Typography style={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>Password</Typography>
                         </Col>
                     </Row>
-                    {/* Card Wrapper */}
-                    <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
+
+                    <div
+                        style={{
+                            borderRadius: '20px',
+                            border: '1px solid #ccc',
+                            backgroundColor: '#fff',
+                            padding: '2rem',
+                            boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+                        }}
+                    >
                         <HeadingSmall title="Update Password" description="Ensure your account is using a long, random password to stay secure." />
 
-                        <form onSubmit={updatePassword} className="mt-6 space-y-6">
-                            <div>
+                        <form onSubmit={updatePassword} style={{ marginTop: '1.5rem' }}>
+                            <div className="mb-3">
                                 <Label htmlFor="current_password">Current Password</Label>
                                 <Input
                                     id="current_password"
@@ -76,10 +87,10 @@ const Password = () => {
                                     autoComplete="current-password"
                                     placeholder="Current password"
                                 />
-                                <InputError className="mt-2" message={errors.current_password} />
+                                <InputError message={errors.current_password} />
                             </div>
 
-                            <div>
+                            <div className="mb-3">
                                 <Label htmlFor="password">New Password</Label>
                                 <Input
                                     id="password"
@@ -90,10 +101,10 @@ const Password = () => {
                                     autoComplete="new-password"
                                     placeholder="New password"
                                 />
-                                <InputError className="mt-2" message={errors.password} />
+                                <InputError message={errors.password} />
                             </div>
 
-                            <div>
+                            <div className="mb-4">
                                 <Label htmlFor="password_confirmation">Confirm Password</Label>
                                 <Input
                                     id="password_confirmation"
@@ -103,24 +114,22 @@ const Password = () => {
                                     autoComplete="new-password"
                                     placeholder="Confirm password"
                                 />
-                                <InputError className="mt-2" message={errors.password_confirmation} />
+                                <InputError message={errors.password_confirmation} />
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <Button disabled={processing}>Save Password</Button>
-                                <Transition
-                                    show={recentlySuccessful}
-                                    enter="transition-opacity duration-300"
-                                    enterFrom="opacity-0"
-                                    leave="transition-opacity duration-300"
-                                    leaveTo="opacity-0"
-                                >
-                                    <p className="text-sm text-green-600 dark:text-green-400">Saved</p>
-                                </Transition>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <Button type="submit" disabled={processing}>
+                                    Save Password
+                                </Button>
+                                {recentlySuccessful && (
+                                    <Alert variant="success" style={{ padding: '0.25rem 0.75rem', marginBottom: 0 }}>
+                                        Saved
+                                    </Alert>
+                                )}
                             </div>
                         </form>
                     </div>
-                </div>
+                </Container>
             </div>
         </>
     );
