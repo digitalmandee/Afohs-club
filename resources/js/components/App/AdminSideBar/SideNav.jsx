@@ -22,6 +22,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState } from 'react';
+import MemberIcon from '@/components/App/Icons/Member';
+import AddressType from '../Icons/AddressType';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -164,6 +166,26 @@ export default function SideNav({ open, setOpen }) {
                     path: route('tenant.create'),
                 },
             ],
+        },
+        {
+            text: 'Members',
+            icon: <MemberIcon />,
+            path: '/members',
+        },
+        {
+            text: 'Waiter',
+            icon: <MemberIcon />,
+            path: '/waiters',
+        },
+        {
+            text: 'Members Types',
+            icon: <MemberIcon />,
+            path: '/members/member-types',
+        },
+        {
+            text: 'Address Type',
+            icon: <AddressType />,
+            path: '/members/address-types',
         },
         {
             text: 'Settings',

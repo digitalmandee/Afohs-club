@@ -125,21 +125,7 @@ export default function SideNav({ open, setOpen }) {
             icon: <MdManageHistory />,
             path: '/order/management',
         },
-        {
-            text: 'Members',
-            icon: <MemberIcon />,
-            path: '/members',
-        },
-        {
-            text: 'Members Types',
-            icon: <MemberIcon />,
-            path: '/members/member-types',
-        },
-        {
-            text: 'Address Type',
-            icon: <AddressType />,
-            path: '/members/address-types',
-        },
+
         { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
     ];
 
