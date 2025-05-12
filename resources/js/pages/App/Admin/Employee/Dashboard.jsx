@@ -6,22 +6,7 @@ import EventSeatIcon from '@mui/icons-material/EventSeat';
 import PeopleIcon from '@mui/icons-material/People';
 import PrintIcon from '@mui/icons-material/Print';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-    Box,
-    Button,
-    Card,
-    CircularProgress,
-    InputBase,
-    Modal,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography,
-} from '@mui/material';
+import { Box, Button, Card, CircularProgress, InputBase, Modal, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { useState } from 'react';
 import EmployeeDetail from './Detail';
 
@@ -93,11 +78,7 @@ const EmployeeDashboard = () => {
                             >
                                 Employee Management Dashboard
                             </Typography>
-                            <Button
-                                style={{ color: 'white', width: '180px', backgroundColor: '#0D2B4E', textTransform: 'none' }}
-                                startIcon={<AddIcon />}
-                                onClick={() => router.visit('/add/employee')}
-                            >
+                            <Button style={{ color: 'white', width: '180px', backgroundColor: '#0D2B4E', textTransform: 'none' }} startIcon={<AddIcon />} onClick={() => router.visit('/add/employee')}>
                                 Add Employee
                             </Button>
                         </div>
@@ -179,18 +160,10 @@ const EmployeeDashboard = () => {
                                 }}
                             >
                                 <SearchIcon style={{ color: '#121212', marginRight: '8px' }} />
-                                <InputBase
-                                    placeholder="Search employee member here"
-                                    fullWidth
-                                    sx={{ fontSize: '14px' }}
-                                    inputProps={{ style: { padding: 0 } }}
-                                />
+                                <InputBase placeholder="Search employee member here" fullWidth sx={{ fontSize: '14px' }} inputProps={{ style: { padding: 0 } }} />
                             </div>
                             {/* View All Link */}
-                            <div
-                                style={{ textDecoration: 'underline', cursor: 'pointer', color: '#063455', fontWeight: 500, fontSize: '16px' }}
-                                onClick={() => router.visit('/admin/employee/list')}
-                            >
+                            <div style={{ textDecoration: 'underline', cursor: 'pointer', color: '#063455', fontWeight: 500, fontSize: '16px' }} onClick={() => router.visit(route('employee.employeeList'))}>
                                 View all
                             </div>
                         </div>
@@ -240,36 +213,19 @@ const EmployeeDashboard = () => {
                                                     >
                                                         {employee.employee_id}
                                                     </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.name}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.departmentname}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.designation}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.joining_date}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.email}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.status}
-                                                    </TableCell>
+                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>{employee.name}</TableCell>
+                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>{employee.departmentname}</TableCell>
+                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>{employee.designation}</TableCell>
+                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>{employee.joining_date}</TableCell>
+                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>{employee.email}</TableCell>
+                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>{employee.status}</TableCell>
                                                 </TableRow>
                                             ))
                                         )}
                                     </TableBody>
                                 </Table>
                             </TableContainer>
-                            <Modal
-                                open={openDetails}
-                                onClose={handleCloseDetails}
-                                aria-labelledby="employee-detail-modal"
-                                aria-describedby="employee-detail-description"
-                            >
+                            <Modal open={openDetails} onClose={handleCloseDetails} aria-labelledby="employee-detail-modal" aria-describedby="employee-detail-description">
                                 <Box
                                     sx={{
                                         position: 'absolute',
