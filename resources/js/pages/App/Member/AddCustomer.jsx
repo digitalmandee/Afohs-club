@@ -1,4 +1,5 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
+
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Apartment as ApartmentIcon, ArrowBack as ArrowBackIcon, Business as BusinessIcon, Close as CloseIcon, Home as HomeIcon, KeyboardArrowRight as KeyboardArrowRightIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
 import { Box, Button, FormControl, FormControlLabel, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, MenuItem, Radio, Select, Switch, TextField, Typography } from '@mui/material';
@@ -223,9 +224,10 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <IconButton onClick={handleCloseAddForm}>
+                    <IconButton onClick={() => router.visit(route('members.index'))}>
                         <ArrowBackIcon />
                     </IconButton>
+
                     <Typography variant="h6" style={{ marginLeft: '10px' }}>
                         {isEditMode ? 'Edit Customer Information' : 'Add Customer Information'}
                     </Typography>

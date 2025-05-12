@@ -590,21 +590,6 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
                             )}
                         </Grid>
                     </Grid>
-                    <div
-                        style={{
-                            position: 'fixed',
-                            bottom: '0',
-                            left: '0',
-                            backgroundColor: 'white',
-                            zIndex: '9999',
-                            maxWidth: '300px',
-                            overflow: 'auto',
-                            border: '1px solid #ccc',
-                        }}
-                    >
-                        {showData && <pre style={{ whiteSpace: 'pre-wrap', height: '540px' }}>{JSON.stringify(customer, null, 2)}</pre>}
-                        <div style={{ width: '40px', height: '40px', backgroundColor: 'red', borderRadius: '50%', cursor: 'pointer' }} onClick={() => setShowData(!showData)}></div>
-                    </div>
                 </div>
             </div>
             <Snackbar open={showSuccess} autoHideDuration={6000} onClose={() => setShowSuccess(false)}>
