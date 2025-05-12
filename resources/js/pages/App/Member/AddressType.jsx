@@ -1,28 +1,8 @@
 'use client';
-
-import SideNav from '@/Components/App/SideBar/SideNav';
+import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon } from '@mui/icons-material';
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Grid,
-    IconButton,
-    InputAdornment,
-    Snackbar,
-    TextField,
-    Typography,
-    useMediaQuery,
-    useTheme,
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, IconButton, InputAdornment, Snackbar, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -265,9 +245,7 @@ export default function AddressType({ addressTypes }) {
                                     <CardContent sx={{ p: 3 }}>
                                         <Grid container alignItems="center" justifyContent="space-between">
                                             <Grid item xs={12} sm={9} md={9} sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>
-                                                    {addressType.name}
-                                                </Typography>
+                                                <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{addressType.name}</Typography>
                                             </Grid>
                                             <Grid item>
                                                 <IconButton onClick={() => handleEdit(addressType)}>
@@ -320,17 +298,7 @@ export default function AddressType({ addressTypes }) {
                                 <Typography variant="body1" sx={{ mb: 1 }}>
                                     Address Type Name
                                 </Typography>
-                                <TextField
-                                    fullWidth
-                                    placeholder="Enter address type name"
-                                    name="name"
-                                    value={data.name}
-                                    onChange={handleInputChange}
-                                    variant="outlined"
-                                    size="small"
-                                    error={!!errors.name}
-                                    helperText={errors.name}
-                                />
+                                <TextField fullWidth placeholder="Enter address type name" name="name" value={data.name} onChange={handleInputChange} variant="outlined" size="small" error={!!errors.name} helperText={errors.name} />
                             </Grid>
                         </Grid>
                     </Box>
@@ -352,18 +320,10 @@ export default function AddressType({ addressTypes }) {
             </Dialog>
 
             {/* Delete Confirmation */}
-            <Dialog
-                fullScreen={fullScreen}
-                open={!!pendingDeleteAddressType}
-                onClose={handleCancelDelete}
-                aria-labelledby="delete-dialog-title"
-                disableEnforceFocus
-            >
+            <Dialog fullScreen={fullScreen} open={!!pendingDeleteAddressType} onClose={handleCancelDelete} aria-labelledby="delete-dialog-title" disableEnforceFocus>
                 <DialogTitle id="delete-dialog-title">Confirm Deletion</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to delete the address type "{pendingDeleteAddressType?.name || ''}"? This action cannot be undone.
-                    </DialogContentText>
+                    <DialogContentText>Are you sure you want to delete the address type "{pendingDeleteAddressType?.name || ''}"? This action cannot be undone.</DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCancelDelete}>Cancel</Button>

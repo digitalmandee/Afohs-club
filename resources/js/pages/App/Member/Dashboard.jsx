@@ -1,27 +1,9 @@
 // pages/CustomerLists.jsx
-import SideNav from '@/components/App/SideBar/SideNav';
+import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';
-import {
-    Alert,
-    Avatar,
-    Box,
-    Button,
-    IconButton,
-    InputAdornment,
-    Menu,
-    MenuItem,
-    Modal,
-    Snackbar,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Alert, Avatar, Box, Button, IconButton, InputAdornment, Menu, MenuItem, Modal, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 
@@ -130,12 +112,7 @@ const CustomerLists = ({ users }) => {
                                 }}
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => router.get(route('members.create'))}
-                                style={{ backgroundColor: '#003366', color: 'white' }}
-                            >
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('members.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
                                 Add Customer
                             </Button>
                         </div>
@@ -173,15 +150,7 @@ const CustomerLists = ({ users }) => {
                                                 </div>
                                             </TableCell>
                                             <TableCell>{user.user_detail?.address_type || 'N/A'}</TableCell>
-                                            <TableCell>
-                                                {user.user_detail?.address ||
-                                                user.user_detail?.city ||
-                                                user.user_detail?.state ||
-                                                user.user_detail?.country ||
-                                                user.user_detail?.zip
-                                                    ? `${user.user_detail?.address || ''}, ${user.user_detail?.city || ''}, ${user.user_detail?.state || ''}, ${user.user_detail?.country || ''}, ${user.user_detail?.zip || ''}`
-                                                    : '----'}
-                                            </TableCell>
+                                            <TableCell>{user.user_detail?.address || user.user_detail?.city || user.user_detail?.state || user.user_detail?.country || user.user_detail?.zip ? `${user.user_detail?.address || ''}, ${user.user_detail?.city || ''}, ${user.user_detail?.state || ''}, ${user.user_detail?.country || ''}, ${user.user_detail?.zip || ''}` : '----'}</TableCell>
                                             <TableCell>
                                                 <Button
                                                     onClick={(e) => {
@@ -226,12 +195,7 @@ const CustomerLists = ({ users }) => {
             </div>
 
             {/* Order Modal */}
-            <Modal
-                open={orderModalOpen}
-                onClose={handleCloseOrderModal}
-                aria-labelledby="order-modal-title"
-                aria-describedby="order-modal-description"
-            >
+            <Modal open={orderModalOpen} onClose={handleCloseOrderModal} aria-labelledby="order-modal-title" aria-describedby="order-modal-description">
                 <Box
                     sx={{
                         position: 'absolute',
