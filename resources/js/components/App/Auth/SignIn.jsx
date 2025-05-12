@@ -28,10 +28,8 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
-
+                    justifyContent:'flex-start',
                     height: '100vh',
-                    px: 2,
-                    pb: 10,
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': {
                         display: 'none',
@@ -46,6 +44,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                         width: 150,
                         height: 114,
                         mb: 2,
+                        ml: -1
                     }}
                 />
                 <Typography
