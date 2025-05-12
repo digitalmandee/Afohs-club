@@ -92,6 +92,10 @@ if (in_array(request()->getHost(), $allowedDomains)) {
             return Inertia::render('App/Admin/Membership/Checkout');
         })->name('membership.checkout');
 
+        Route::get('/admin/all/members', function () {
+            return Inertia::render('App/Admin/Membership/Members');
+        })->name('membership.members');
+
         Route::get('/admin/membership/visit/detail', function () {
             return Inertia::render('App/Admin/Membership/Detail');
         })->name('membership.detail');

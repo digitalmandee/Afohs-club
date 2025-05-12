@@ -140,7 +140,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'All Memberships',
-                    path: route('membership.membertype'),
+                    path: route('membership.members'),
                 },
                 {
                     text: 'Members History',
@@ -152,7 +152,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Membership Type',
-                    path: route(''),
+                    path: route('membership.membertype'),
                 },
                 {
                     text: 'Finance',

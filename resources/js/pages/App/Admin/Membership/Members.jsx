@@ -1,4 +1,10 @@
 import { useState } from "react"
+import AddIcon from '@mui/icons-material/Add';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import EventSeatIcon from '@mui/icons-material/EventSeat';
+import PeopleIcon from '@mui/icons-material/People';
+import PrintIcon from '@mui/icons-material/Print';
+import SearchIcon from '@mui/icons-material/Search';
 import {
     Typography,
     Button,
@@ -26,7 +32,7 @@ import MembershipSuspensionDialog from "./Modal";
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = () => {
+const AllMembers = () => {
     // Modal state
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false)
@@ -132,92 +138,84 @@ const MembershipDashboard = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <div className="container-fluid p-0" style={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
+                <div className="container-fluid px-4" style={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center p-3">
-                        <div className="d-flex align-items-center">
-                            <IconButton>
-                                <ArrowBack />
-                            </IconButton>
-                            <Typography variant="h5" component="h1" style={{ marginLeft: "10px", fontWeight: 500, color: "#333" }}>
-                                Membership Dashboard
+                        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <Typography
+                                sx={{
+                                    fontWeight: 500,
+                                    fontSize: '30px',
+                                    color: '#3F4E4F',
+                                }}
+                            >
+                                All Members
                             </Typography>
                         </div>
-                        <Button
-                            variant="contained"
-                            startIcon={<span>+</span>}
-                            style={{
-                                backgroundColor: "#0a3d62",
-                                textTransform: "none",
-                                borderRadius: "4px",
-                                padding: "8px 16px",
-                            }}
-                            onClick={() => router.visit('/admin/add/personal/information')}
-                        >
-                            Add Member
-                        </Button>
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="row mx-2 mb-4">
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: "#3d4d57", color: "white", height: "100%" }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: "rgba(255,255,255,0.2)", margin: "0 auto" }}>
-                                            <People />
-                                        </Avatar>
+                    <div
+                        style={{
+                            display: 'flex',
+                            width: '100%',
+                            justifyContent: 'space-between',
+                            gap: '1rem',
+                            marginBottom: '24px',
+                        }}
+                    >
+                        {[
+                            { title: 'Total Employee', value: 320, icon: EventSeatIcon },
+                            { title: 'Total Present', value: 200, icon: PeopleIcon },
+                            { title: 'Total Absent', value: 120, icon: AssignmentIcon },
+                            { title: 'Late Arrival', value: 120, icon: PrintIcon },
+                        ].map((item, index) => (
+                            <div key={index} style={{ flex: 1 }}>
+                                <Card
+                                    style={{
+                                        backgroundColor: '#3F4E4F',
+                                        color: '#fff',
+                                        borderRadius: '2px',
+                                        height: '120px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '1rem',
+                                        boxShadow: 'none',
+                                        border: 'none',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            backgroundColor: '#1E2C2F',
+                                            borderRadius: '50%',
+                                            width: '50px',
+                                            height: '50px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginRight: '1rem',
+                                        }}
+                                    >
+                                        <item.icon style={{ color: '#fff', fontSize: '28px' }} />
                                     </div>
-                                    <Typography variant="body2" style={{ marginBottom: "8px" }}>
-                                        Total Membership
-                                    </Typography>
-                                    <Typography variant="h4" style={{ fontWeight: "bold" }}>
-                                        320
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: "#3d4d57", color: "white", height: "100%" }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: "rgba(255,255,255,0.2)", margin: "0 auto" }}>
-                                            <CreditCard />
-                                        </Avatar>
+                                    <div>
+                                        <Typography variant="body2" style={{ color: '#DDE6E8' }}>
+                                            {item.title}
+                                        </Typography>
+                                        <Typography variant="h6" style={{ fontWeight: 'bold', color: '#fff' }}>
+                                            {item.value}
+                                        </Typography>
                                     </div>
-                                    <Typography variant="body2" style={{ marginBottom: "8px" }}>
-                                        Total Payment
-                                    </Typography>
-                                    <Typography variant="h4" style={{ fontWeight: "bold" }}>
-                                        10,000
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: "#3d4d57", color: "white", height: "100%" }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: "rgba(255,255,255,0.2)", margin: "0 auto" }}>
-                                            <CreditCard />
-                                        </Avatar>
-                                    </div>
-                                    <Typography variant="body2" style={{ marginBottom: "8px" }}>
-                                        Current Balance
-                                    </Typography>
-                                    <Typography variant="h4" style={{ fontWeight: "bold" }}>
-                                        300,00
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
+                                </Card>
+                            </div>
+                        ))}
                     </div>
 
                     {/* Recently Joined Section */}
                     <div className="mx-3">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography variant="h6" style={{ fontWeight: "bold" }}>
-                                Recently Joined
+                                All Members
                             </Typography>
                             <div className="d-flex">
                                 <TextField
@@ -399,14 +397,10 @@ const MembershipDashboard = () => {
                             )}
                         </div>
                     )}
-                    <MembershipSuspensionDialog
-                        open={suspensionModalOpen}
-                        onClose={() => setSuspensionModalOpen(false)}
-                    />
                 </div>
             </div>
         </>
     )
 }
 
-export default MembershipDashboard
+export default AllMembers
