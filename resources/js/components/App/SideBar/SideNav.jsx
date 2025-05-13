@@ -100,31 +100,35 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url, component, props } = usePage();
+    const { auth } = usePage().props;
 
     const [showNotification, setShowNotification] = React.useState(false);
     const [showProfile, setShowProfile] = React.useState(false);
-    const [showOrder, setShowOrder] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: '/' },
-        { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
-        { text: 'Inventory Category', icon: <CategoryIcon />, path: '/inventory/category' },
-        { text: 'Transaction', icon: <PaymentsIcon />, path: '/transaction' },
+        { text: 'Dashboard', icon: <HomeIcon />, path: '/', permission: 'dashboard' },
+        { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory', permission: 'order' },
+        { text: 'Inventory Category', icon: <CategoryIcon />, path: '/inventory/category', permission: 'order' },
+        { text: 'Transaction', icon: <PaymentsIcon />, path: '/transaction', permission: 'order' },
         {
             text: 'Table Management',
             icon: <TableIcon />,
             path: '/table/management',
+            permission: 'order',
         },
         {
             text: 'Kitchen',
             icon: <KitchenIcon />,
             path: '/kitchen',
+            permission: 'kitchen',
         },
         {
             text: 'Order Management',
             icon: <MdManageHistory />,
             path: '/order/management',
+            permission: 'order',
         },
+
         {
             text: 'Order Management',
             icon: <MdManageHistory />,
@@ -153,6 +157,7 @@ export default function SideNav({ open, setOpen }) {
         },
 
         { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+
     ];
 
     return (
@@ -276,8 +281,8 @@ export default function SideNav({ open, setOpen }) {
                                 }}
                             />
                             <Box>
-                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>MALIK</Typography>
-                                <Typography sx={{ fontSize: '12px', color: '#666' }}>Admin</Typography>
+                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>{auth.user?.name}</Typography>
+                                <Typography sx={{ fontSize: '12px', color: '#666' }}>{auth?.role}</Typography>
                             </Box>
                         </Box>
                         <Modal open={showProfile} onClose={() => setShowProfile(false)} aria-labelledby="profile-modal" sx={{ zIndex: 1300 }}>
@@ -386,45 +391,47 @@ export default function SideNav({ open, setOpen }) {
                     </Box>
 
                     <List>
-                        {menuItems.map(({ text, icon, path }) => {
-                            const isSelected = url === path;
-                            return (
-                                <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
-                                    <ListItemButton
-                                        onClick={() => router.visit(path)}
-                                        sx={{
-                                            minHeight: 50,
-                                            justifyContent: open ? 'initial' : 'center',
-                                            mx: 3,
-                                            borderRadius: '12px',
-                                            backgroundColor: isSelected ? '#333' : 'transparent',
-                                            '&:hover': { backgroundColor: '#444' },
-                                        }}
-                                    >
-                                        <ListItemIcon
+                        {menuItems
+                            .filter((item) => auth.permissions.includes(item.permission))
+                            .map(({ text, icon, path }) => {
+                                const isSelected = url === path;
+                                return (
+                                    <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
+                                        <ListItemButton
+                                            onClick={() => router.visit(path)}
                                             sx={{
-                                                minWidth: 0,
-                                                justifyContent: 'center',
-                                                ml: open ? -1 : 0,
-                                                mr: open ? 1 : 'auto',
-                                                '& svg': {
-                                                    fill: isSelected ? 'orange' : '#fff',
-                                                },
+                                                minHeight: 50,
+                                                justifyContent: open ? 'initial' : 'center',
+                                                mx: 3,
+                                                borderRadius: '12px',
+                                                backgroundColor: isSelected ? '#333' : 'transparent',
+                                                '&:hover': { backgroundColor: '#444' },
                                             }}
                                         >
-                                            {icon}
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={text}
-                                            sx={{
-                                                color: isSelected ? 'orange' : '#fff',
-                                                opacity: open ? 1 : 0,
-                                            }}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            );
-                        })}
+                                            <ListItemIcon
+                                                sx={{
+                                                    minWidth: 0,
+                                                    justifyContent: 'center',
+                                                    ml: open ? -1 : 0,
+                                                    mr: open ? 1 : 'auto',
+                                                    '& svg': {
+                                                        fill: isSelected ? 'orange' : '#fff',
+                                                    },
+                                                }}
+                                            >
+                                                {icon}
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={text}
+                                                sx={{
+                                                    color: isSelected ? 'orange' : '#fff',
+                                                    opacity: open ? 1 : 0,
+                                                }}
+                                            />
+                                        </ListItemButton>
+                                    </ListItem>
+                                );
+                            })}
                     </List>
                 </Box>
             </Drawer>

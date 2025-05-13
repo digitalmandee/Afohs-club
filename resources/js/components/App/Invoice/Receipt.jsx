@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { Print as PrintIcon } from '@mui/icons-material';
-import { Box, Button, Typography } from '@mui/material';
+import { Avatar, Box, Button, Typography } from '@mui/material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 
@@ -44,10 +44,13 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
               .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
               .total { font-weight: bold; margin-top: 10px; }
               .footer { text-align: center; margin-top: 20px; font-size: 11px; }
-              .logo { font-weight: bold; font-size: 16px; text-align: center; margin-top: 10px; }
+              .logo { width: 80px; }
             </style>
           </head>
           <body>
+            <div class="header">
+              <div><img src='/assets/Logo.png' class="logo"/></div>
+            </div>
             <div class="header">
               <div>${data.order.start_date || ''}</div>
             </div>
@@ -131,6 +134,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
             <div class="logo">
               IMAJI Coffee.
             </div>
+
           </body>
         </html>
         `;
@@ -151,6 +155,9 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 {/* <Typography variant="h6" fontWeight="bold" color="#0a3d62">
                     IMAJI Coffee.
                 </Typography> */}
+            </Box>
+            <Box sx={styles.receiptHeader}>
+                <img src={'/assets/Logo.png'} style={styles.receiptLogo} />
             </Box>
             <Box sx={styles.receiptHeader}>
                 <Typography variant="caption">{paymentData.order.start_date}</Typography>
@@ -319,10 +326,7 @@ const styles = {
         fontSize: '11px',
     },
     receiptLogo: {
-        fontWeight: 'bold',
-        fontSize: '16px',
-        textAlign: 'center',
-        marginTop: '10px',
+        width: '80px',
     },
     receiptRow: {
         display: 'flex',
