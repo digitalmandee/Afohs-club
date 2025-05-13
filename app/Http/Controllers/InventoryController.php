@@ -111,6 +111,13 @@ class InventoryController extends Controller
         // Optionally return a response
         return redirect()->back()->with('success', 'Product created.');
     }
+    // Get Single Product
+
+    public function getProduct($id)
+    {
+        $product = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->find($id);
+        return response()->json(['success' => true, 'product' => $product], 200);
+    }
 
     /**
      * Display the specified resource.

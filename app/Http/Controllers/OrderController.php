@@ -219,6 +219,65 @@ class OrderController extends Controller
         $printer->text("--------------------------------\n");
     }
 
+    // update Order
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'subtotal' => 'required|numeric',
+            'discount' => 'required|numeric',
+            'total_price' => 'required|numeric',
+            'updated_items' => 'nullable|array',
+            'new_items' => 'nullable|array',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $order = Order::findOrFail($id);
+
+            // Update order base amount
+            $order->update([
+                'amount' => $validated['subtotal'],
+            ]);
+
+            // Update existing order items
+            foreach ($validated['updated_items'] ?? [] as $itemData) {
+                $itemId = (int) str_replace('update-', '', $itemData['id']);
+                $order->orderItems()->where('id', $itemId)->update([
+                    'order_item' => $itemData['order_item'],
+                    'status'     => $itemData['status'],
+                ]);
+            }
+
+            // Add new order items
+            foreach ($validated['new_items'] ?? [] as $itemData) {
+                $order->orderItems()->create([
+                    'kitchen_id' => $itemData['order_item']['kitchen_id'] ?? null,
+                    'order_item' => $itemData['order_item'],
+                    'status'     => 'pending',
+                ]);
+            }
+
+            // Update related invoice
+            $order->invoice?->update([
+                'amount'      => $validated['subtotal'],
+                'total_price' => $validated['total_price'],
+                // 'discount'  => $validated['discount'],
+                // 'tax'       => $validated['tax_amount'] ?? 0,
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Order updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->withErrors(['error' => 'Failed to update order.']);
+        }
+    }
+
+
 
     public function getProducts($category_id)
     {

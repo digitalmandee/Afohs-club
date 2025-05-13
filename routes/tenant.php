@@ -82,6 +82,7 @@ Route::middleware([
             // Order Management
             Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
             Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
+            Route::post('/order/{id}', [OrderController::class, 'update'])->name('orders.update');
             Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
             Route::post('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
 
@@ -145,6 +146,8 @@ Route::middleware([
             })->name('product.create');
             Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
             Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
+            // 
+            Route::get('/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
 
 
 

@@ -6,6 +6,9 @@ import { useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
 import OrderFilter from './Filter';
+import axios from 'axios';
+import { router } from '@inertiajs/react';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -29,6 +32,42 @@ const Dashboard = ({ orders }) => {
         console.log('Order cancelled');
         setShowCancelModal(false);
     };
+
+    const onSave = () => {
+        const updatedItems = orderItems.filter((item) => typeof item.id === 'string' && item.id.startsWith('update-'));
+        const newItems = orderItems.filter((item) => item.id === 'new');
+
+        const subtotal = orderItems.reduce((total, item) => total + (item.total_price || 0), 0);
+        const discount = 0;
+        const taxRate = 0.12;
+        const taxAmount = subtotal * taxRate;
+        const total = subtotal + taxAmount - discount;
+
+        const payload = {
+            updated_items: updatedItems,
+            new_items: newItems,
+            subtotal,
+            discount,
+            tax_rate: taxRate,
+            total_price: total,
+        };
+
+        return new Promise((resolve, reject) => {
+            router.post(route('orders.update', { id: selectedCard.id }), payload, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    enqueueSnackbar('Order updated successfully!', { variant: 'success' });
+                    setOpenModal(false);
+                    resolve(); // <-- resolve the promise
+                },
+                onError: (errors) => {
+                    enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+                    reject(errors); // <-- reject the promise
+                },
+            });
+        });
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -227,11 +266,7 @@ const Dashboard = ({ orders }) => {
                         order={selectedCard}
                         orderItems={orderItems}
                         setOrderItems={setOrderItems}
-                        onSave={() => {
-                            // Optionally update parent state here
-                            console.log('Saved order changes:', orderItems);
-                            setOpenModal(false);
-                        }}
+                        onSave={() => onSave()}
                     />
                 </Box>
             </div>

@@ -9,7 +9,7 @@ import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 
-const AddItems = ({ setOrderItems, orderItems }) => {
+const AddItems = ({ setOrderItems, orderItems, setShowAddItem }) => {
     // const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [open, setOpen] = useState(false);
@@ -37,6 +37,8 @@ const AddItems = ({ setOrderItems, orderItems }) => {
             setVariantProduct(product);
             setVariantPopupOpen(true);
         } else {
+            console.log(product);
+
             const item = {
                 id: product.id,
                 name: product.name,
@@ -102,16 +104,14 @@ const AddItems = ({ setOrderItems, orderItems }) => {
                     <Box
                         sx={{
                             py: 1,
-                            // px: 3,
+                            px: 3,
                             display: 'flex',
                             alignItems: 'center',
-                            // borderBottom: "1px solid #e0e0e0",
-                            // bgcolor: "white",
                         }}
                     >
-                        <IconButton onClick={() => router.visit(route('order.new'))} sx={{ mr: 1 }}>
-                            <ArrowBack />
-                        </IconButton>
+                        <Button variant="outlined" size="small" onClick={() => setShowAddItem(false)} sx={{ textTransform: 'none' }}>
+                            Close Add Item
+                        </Button>
                     </Box>
 
                     {variantPopupOpen && variantProduct && (
