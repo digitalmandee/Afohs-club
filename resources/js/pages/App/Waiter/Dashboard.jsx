@@ -1,5 +1,6 @@
 // pages/CustomerLists.jsx or similar
-import SideNav from '@/components/App/AdminSideBar/SideNav';
+import SideNav from '@/components/App/Sidebar/SideNav';
+
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Alert, Avatar, Box, Button, IconButton, InputAdornment, Menu, MenuItem, Modal, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
@@ -108,7 +109,7 @@ const WaiterDashboard = ({ userDetail, users }) => {
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
                             <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('waiters.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
-                                Add Customer
+                                Add Waiter
                             </Button>
                         </div>
                     </div>

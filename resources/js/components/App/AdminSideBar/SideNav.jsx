@@ -167,26 +167,7 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
-        {
-            text: 'Members',
-            icon: <MemberIcon />,
-            path: '/members',
-        },
-        {
-            text: 'Waiter',
-            icon: <MemberIcon />,
-            path: '/waiters',
-        },
-        {
-            text: 'Members Types',
-            icon: <MemberIcon />,
-            path: '/members/member-types',
-        },
-        {
-            text: 'Address Type',
-            icon: <AddressType />,
-            path: '/members/address-types',
-        },
+
         {
             text: 'Settings',
             icon: <PeopleIcon />,
@@ -201,11 +182,11 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
-        {
-            text: 'Logout',
-            icon: <HomeIcon />,
-            path: route('logout'),
-        },
+        // {
+        //     text: 'Logout',
+        //     icon: <HomeIcon />,
+        //     path: route('logout'),
+        // },
     ];
 
     return (
