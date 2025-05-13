@@ -6,6 +6,7 @@ use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\WaiterController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\UserMemberController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -103,6 +104,9 @@ if (in_array(request()->getHost(), $allowedDomains)) {
         Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
         Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
         Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
+        // UserMember routes
+        Route::get('/user-member', [UserMemberController::class, 'index'])->name('usermember');
+        Route::post('/user-member/store', [UserMemberController::class, 'store'])->name('usermember.store');
     });
 
     require __DIR__ . '/settings.php';

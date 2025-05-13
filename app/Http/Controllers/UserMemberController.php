@@ -24,6 +24,6 @@ class UserMemberController extends Controller
 
         UserMember::create($validated);
 
-        return redirect()->back()->with('success', 'User member added successfully.');
+        return response()->json(['message' => 'User member created successfully.'], 201);
     }
 }
