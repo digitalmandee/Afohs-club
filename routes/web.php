@@ -65,17 +65,21 @@ if (in_array(request()->getHost(), $allowedDomains)) {
             return Inertia::render('App/Admin/Employee/EmployeeList');
         })->name('employee.employeeList');
         // member
-        // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
-        // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
-        // Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
+        Route::get('/members', [MembersController::class, 'index'])->name('members.index');
+        Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
+        Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
+        // Membership routes
+        Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
+        Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+
 
         //Membership Booking Routes
-        Route::get('/membership/booking/dashboard', function () {
-            return Inertia::render('App/Admin/Membership/Dashboard');
-        })->name('membership.dashboard');
+        // Route::get('/membership/booking/dashboard', function () {
+        //     return Inertia::render('App/Admin/Membership/Dashboard');
+        // })->name('membership.dashboard');
 
         Route::get('/admin/add/personal/information', function () {
-            return Inertia::render('App/Admin/Membership/AddForm-1');
+            return Inertia::render('App/Admin/Membership/MembershipForm');
         })->name('membership.add');
 
         Route::get('/admin/add/contact/information', function () {

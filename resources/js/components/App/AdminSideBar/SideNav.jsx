@@ -184,6 +184,11 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
+        {
+            text: 'Members Types',
+            icon: <MemberIcon />,
+            path: '/members/member-types',
+        },
 
         {
             text: 'Tenant',

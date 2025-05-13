@@ -1,136 +1,117 @@
-import { useState } from "react"
-import {
-    Box,
-    Button,
-    Container,
-    FormControl,
-    Grid,
-    IconButton,
-    MenuItem,
-    Radio,
-    Select,
-    TextField,
-    Typography,
-} from "@mui/material"
-import ArrowBackIcon from "@mui/icons-material/ArrowBack"
-import CheckCircleIcon from "@mui/icons-material/CheckCircle"
-import AddIcon from "@mui/icons-material/Add"
-import ChevronRightIcon from "@mui/icons-material/ChevronRight"
-import DeleteIcon from "@mui/icons-material/Delete"
-import "bootstrap/dist/css/bootstrap.min.css"
+import { useState } from 'react';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AddIcon from '@mui/icons-material/Add';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DeleteIcon from '@mui/icons-material/Delete';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipForm = () => {
+const AddForm3 = ({ onSubmit, onBack }) => {
     const [open, setOpen] = useState(false);
-    const [memberType, setMemberType] = useState("Member")
-    const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false)
-    const [familyMembers, setFamilyMembers] = useState([])
+    const [memberType, setMemberType] = useState('Member');
+    const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
+    const [familyMembers, setFamilyMembers] = useState([]);
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
-        fullName: "",
-        relation: "",
-        cnic: "",
-        phoneNumber: "",
-        membershipType: "",
-        membershipCategory: "",
-        startDate: "",
-        endDate: "",
+        fullName: '',
+        relation: '',
+        cnic: '',
+        phoneNumber: '',
+        membershipType: '',
+        membershipCategory: '',
+        startDate: '',
+        endDate: '',
         picture: null,
         picturePreview: null,
-    })
+    });
 
     const handleMemberTypeChange = (event) => {
-        setMemberType(event.target.value)
-    }
+        setMemberType(event.target.value);
+    };
 
     const handleFamilyMemberChange = (field, value) => {
         setCurrentFamilyMember({
             ...currentFamilyMember,
             [field]: value,
-        })
-    }
+        });
+    };
 
     const handleImageUpload = (event) => {
-        const file = event.target.files[0]
+        const file = event.target.files[0];
         if (file) {
-            const reader = new FileReader()
+            const reader = new FileReader();
             reader.onloadend = () => {
                 setCurrentFamilyMember({
                     ...currentFamilyMember,
                     picture: file,
                     picturePreview: reader.result,
-                })
-            }
-            reader.readAsDataURL(file)
+                });
+            };
+            reader.readAsDataURL(file);
         }
-    }
+    };
 
     const handleAddFamilyMember = () => {
-        setFamilyMembers([...familyMembers, currentFamilyMember])
+        setFamilyMembers([...familyMembers, currentFamilyMember]);
         setCurrentFamilyMember({
-            fullName: "",
-            relation: "",
-            cnic: "",
-            phoneNumber: "",
-            membershipType: "",
-            membershipCategory: "",
-            startDate: "",
-            endDate: "",
+            fullName: '',
+            relation: '',
+            cnic: '',
+            phoneNumber: '',
+            membershipType: '',
+            membershipCategory: '',
+            startDate: '',
+            endDate: '',
             picture: null,
             picturePreview: null,
-        })
-    }
+        });
+    };
 
     const handleDeleteFamilyMember = (index) => {
-        const updatedMembers = [...familyMembers]
-        updatedMembers.splice(index, 1)
-        setFamilyMembers(updatedMembers)
-    }
+        const updatedMembers = [...familyMembers];
+        updatedMembers.splice(index, 1);
+        setFamilyMembers(updatedMembers);
+    };
 
     const handleEditFamilyMember = (index) => {
-        setCurrentFamilyMember(familyMembers[index])
-        handleDeleteFamilyMember(index)
-    }
+        setCurrentFamilyMember(familyMembers[index]);
+        handleDeleteFamilyMember(index);
+    };
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
-            <div
-                style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
-                }}
-            >
-                <Container maxWidth="lg" sx={{ py: 4 }}>
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
+            <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
+                <div maxWidth="lg" sx={{ py: 4 }}>
                     {/* Header */}
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                        <IconButton sx={{ mr: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <IconButton onClick={onBack} sx={{ mr: 2 }}>
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ fontWeight: 500, color: "#333" }}>
+                        <Typography variant="h5" component="h1" sx={{ fontWeight: 500, color: '#333' }}>
                             Membership Information
                         </Typography>
                     </Box>
 
                     {/* Progress Bar */}
-                    <Box sx={{ mb: 3, p: 2, bgcolor: "#E7E7E7" }}>
-                        <Box sx={{ display: "flex", alignItems: "center", position: "relative" }}>
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Box sx={{ mb: 3, p: 2, bgcolor: '#E7E7E7' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Box
                                     sx={{
                                         width: 40,
                                         height: 40,
-                                        borderRadius: "50%",
-                                        bgcolor: "#3F4E4F",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        color: "white",
+                                        borderRadius: '50%',
+                                        bgcolor: '#3F4E4F',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
                                     }}
                                 >
                                     <CheckCircleIcon />
@@ -140,24 +121,24 @@ const MembershipForm = () => {
 
                             <Box
                                 sx={{
-                                    height: "2px",
-                                    bgcolor: "#063455",
+                                    height: '2px',
+                                    bgcolor: '#063455',
                                     flexGrow: 1,
                                     mx: 2,
                                 }}
                             />
 
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Box
                                     sx={{
                                         width: 40,
                                         height: 40,
-                                        borderRadius: "50%",
-                                        bgcolor: "#063455",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        color: "white",
+                                        borderRadius: '50%',
+                                        bgcolor: '#063455',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
                                     }}
                                 >
                                     <Typography>2</Typography>
@@ -168,15 +149,15 @@ const MembershipForm = () => {
                     </Box>
 
                     {/* Main Content */}
-                    <Box sx={{ p: 3, bgcolor: "#FFFFFF", border: "solid 1px #E3E3E3" }}>
+                    <Box sx={{ p: 3, bgcolor: '#FFFFFF', border: 'solid 1px #E3E3E3' }}>
                         <Grid container spacing={3}>
                             {/* Left Column - Membership Information */}
                             <Grid item xs={12} md={6}>
-                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: "#2c3e50" }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
                                         Membership Information
                                     </Typography>
-                                    <Box sx={{ borderBottom: "1px dashed #ccc", flexGrow: 1, ml: 2 }}></Box>
+                                    <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                 </Box>
 
                                 <Box sx={{ mb: 3 }}>
@@ -185,97 +166,71 @@ const MembershipForm = () => {
                                         <Grid item xs={6} sm={6}>
                                             <Box
                                                 sx={{
-                                                    border: "1px solid #ccc",
+                                                    border: '1px solid #ccc',
                                                     borderRadius: 1,
                                                     p: 1,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    bgcolor: memberType === "Member" ? "#fff" : "transparent",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    bgcolor: memberType === 'Member' ? '#fff' : 'transparent',
                                                 }}
                                             >
-                                                <Radio
-                                                    checked={memberType === "Member"}
-                                                    onChange={handleMemberTypeChange}
-                                                    value="Member"
-                                                    name="member-type"
-                                                    sx={{ color: "#1976d2" }}
-                                                />
+                                                <Radio checked={memberType === 'Member'} onChange={handleMemberTypeChange} value="Member" name="member-type" sx={{ color: '#1976d2' }} />
                                                 <Typography>Member</Typography>
                                             </Box>
                                         </Grid>
                                         <Grid item xs={6} sm={6}>
                                             <Box
                                                 sx={{
-                                                    border: "1px solid #ccc",
+                                                    border: '1px solid #ccc',
                                                     borderRadius: 1,
                                                     p: 1,
-                                                    display: "flex",
-                                                    alignItems: "center",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
                                                 }}
                                             >
-                                                <Radio
-                                                    checked={memberType === "Corporate Member"}
-                                                    onChange={handleMemberTypeChange}
-                                                    value="Corporate Member"
-                                                    name="member-type"
-                                                />
+                                                <Radio checked={memberType === 'Corporate Member'} onChange={handleMemberTypeChange} value="Corporate Member" name="member-type" />
                                                 <Typography>Corporate Member</Typography>
                                             </Box>
                                         </Grid>
                                         <Grid item xs={6} sm={6}>
                                             <Box
                                                 sx={{
-                                                    border: "1px solid #ccc",
+                                                    border: '1px solid #ccc',
                                                     borderRadius: 1,
                                                     p: 1,
-                                                    display: "flex",
-                                                    alignItems: "center",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
                                                 }}
                                             >
-                                                <Radio
-                                                    checked={memberType === "Applied Member"}
-                                                    onChange={handleMemberTypeChange}
-                                                    value="Applied Member"
-                                                    name="member-type"
-                                                />
+                                                <Radio checked={memberType === 'Applied Member'} onChange={handleMemberTypeChange} value="Applied Member" name="member-type" />
                                                 <Typography>Applied Member</Typography>
                                             </Box>
                                         </Grid>
                                         <Grid item xs={6} sm={6}>
                                             <Box
                                                 sx={{
-                                                    border: "1px solid #ccc",
+                                                    border: '1px solid #ccc',
                                                     borderRadius: 1,
                                                     p: 1,
-                                                    display: "flex",
-                                                    alignItems: "center",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
                                                 }}
                                             >
-                                                <Radio
-                                                    checked={memberType === "Affiliated Member"}
-                                                    onChange={handleMemberTypeChange}
-                                                    value="Affiliated Member"
-                                                    name="member-type"
-                                                />
+                                                <Radio checked={memberType === 'Affiliated Member'} onChange={handleMemberTypeChange} value="Affiliated Member" name="member-type" />
                                                 <Typography>Affiliated Member</Typography>
                                             </Box>
                                         </Grid>
                                         <Grid item xs={6} sm={6}>
                                             <Box
                                                 sx={{
-                                                    border: "1px solid #ccc",
+                                                    border: '1px solid #ccc',
                                                     borderRadius: 1,
                                                     p: 1,
-                                                    display: "flex",
-                                                    alignItems: "center",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
                                                 }}
                                             >
-                                                <Radio
-                                                    checked={memberType === "VIP Guest"}
-                                                    onChange={handleMemberTypeChange}
-                                                    value="VIP Guest"
-                                                    name="member-type"
-                                                />
+                                                <Radio checked={memberType === 'VIP Guest'} onChange={handleMemberTypeChange} value="VIP Guest" name="member-type" />
                                                 <Typography>VIP Guest</Typography>
                                             </Box>
                                         </Grid>
@@ -289,13 +244,13 @@ const MembershipForm = () => {
                                             displayEmpty
                                             renderValue={(selected) => {
                                                 if (!selected) {
-                                                    return <Typography sx={{ color: "#757575" }}>Choose Category</Typography>
+                                                    return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
                                                 }
-                                                return selected
+                                                return selected;
                                             }}
                                             sx={{
-                                                "& .MuiOutlinedInput-notchedOutline": {
-                                                    borderColor: "#ccc",
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: '#ccc',
                                                 },
                                             }}
                                         >
@@ -313,8 +268,8 @@ const MembershipForm = () => {
                                         placeholder="Enter membership number"
                                         variant="outlined"
                                         sx={{
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#ccc",
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#ccc',
                                             },
                                         }}
                                     />
@@ -329,8 +284,8 @@ const MembershipForm = () => {
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
                                                 sx={{
-                                                    "& .MuiOutlinedInput-notchedOutline": {
-                                                        borderColor: "#ccc",
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#ccc',
                                                     },
                                                 }}
                                             />
@@ -344,13 +299,13 @@ const MembershipForm = () => {
                                                     displayEmpty
                                                     renderValue={(selected) => {
                                                         if (!selected) {
-                                                            return <Typography sx={{ color: "#757575" }}>Choose Category</Typography>
+                                                            return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
                                                         }
-                                                        return selected
+                                                        return selected;
                                                     }}
                                                     sx={{
-                                                        "& .MuiOutlinedInput-notchedOutline": {
-                                                            borderColor: "#ccc",
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
                                                         },
                                                     }}
                                                 >
@@ -371,8 +326,8 @@ const MembershipForm = () => {
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
                                                 sx={{
-                                                    "& .MuiOutlinedInput-notchedOutline": {
-                                                        borderColor: "#ccc",
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#ccc',
                                                     },
                                                 }}
                                             />
@@ -386,8 +341,8 @@ const MembershipForm = () => {
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
                                                 sx={{
-                                                    "& .MuiOutlinedInput-notchedOutline": {
-                                                        borderColor: "#ccc",
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#ccc',
                                                     },
                                                 }}
                                             />
@@ -404,8 +359,8 @@ const MembershipForm = () => {
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
                                                 sx={{
-                                                    "& .MuiOutlinedInput-notchedOutline": {
-                                                        borderColor: "#ccc",
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#ccc',
                                                     },
                                                 }}
                                             />
@@ -419,8 +374,8 @@ const MembershipForm = () => {
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
                                                 sx={{
-                                                    "& .MuiOutlinedInput-notchedOutline": {
-                                                        borderColor: "#ccc",
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#ccc',
                                                     },
                                                 }}
                                             />
@@ -432,22 +387,22 @@ const MembershipForm = () => {
                                     variant="contained"
                                     sx={{
                                         mt: 2,
-                                        bgcolor: showFamilyMemberForm ? "#90caf9" : "#e3f2fd",
-                                        color: "#000",
-                                        textTransform: "none",
-                                        "&:hover": {
-                                            bgcolor: "#90caf9",
+                                        bgcolor: showFamilyMemberForm ? '#90caf9' : '#e3f2fd',
+                                        color: '#000',
+                                        textTransform: 'none',
+                                        '&:hover': {
+                                            bgcolor: '#90caf9',
                                         },
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        width: "100%",
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        width: '100%',
                                         py: 1.5,
                                     }}
                                     onClick={() => setShowFamilyMemberForm(true)}
                                 >
-                                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                         <Typography sx={{ fontWeight: 500 }}>Add family Member</Typography>
-                                        <Typography variant="body2" sx={{ color: "#666" }}>
+                                        <Typography variant="body2" sx={{ color: '#666' }}>
                                             If you add family members then click
                                         </Typography>
                                     </Box>
@@ -458,11 +413,11 @@ const MembershipForm = () => {
                             {/* Right Column - Family Member Information */}
                             {showFamilyMemberForm && (
                                 <Grid item xs={12} md={6}>
-                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                                        <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: "#2c3e50" }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                        <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
                                             Family Member Information
                                         </Typography>
-                                        <Box sx={{ borderBottom: "1px dashed #ccc", flexGrow: 1, ml: 2 }}></Box>
+                                        <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                     </Box>
 
                                     <Box sx={{ mb: 3 }}>
@@ -475,57 +430,43 @@ const MembershipForm = () => {
                                                 readOnly: true,
                                             }}
                                             sx={{
-                                                "& .MuiOutlinedInput-notchedOutline": {
-                                                    borderColor: "#ccc",
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: '#ccc',
                                                 },
                                             }}
                                         />
                                     </Box>
 
-                                    <Box sx={{ mb: 3, display: "flex", gap: "10px" }}>
+                                    <Box sx={{ mb: 3, display: 'flex', gap: '10px' }}>
                                         <Box
                                             sx={{
-                                                border: "1px dashed #90caf9",
+                                                border: '1px dashed #90caf9',
                                                 borderRadius: 1,
                                                 p: 2,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                bgcolor: "#e3f2fd",
-                                                height: "100px",
-                                                width: "100px",
-                                                position: "relative",
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                bgcolor: '#e3f2fd',
+                                                height: '100px',
+                                                width: '100px',
+                                                position: 'relative',
                                             }}
                                         >
                                             {currentFamilyMember.picturePreview ? (
                                                 <>
-                                                    <img
-                                                        src={currentFamilyMember.picturePreview || "/placeholder.svg"}
-                                                        alt="Family member"
-                                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                                    />
-                                                    <Box sx={{ position: "absolute", top: 0, right: 0 }}>
-                                                        <IconButton
-                                                            size="small"
-                                                            sx={{ bgcolor: "white", "&:hover": { bgcolor: "#f5f5f5" } }}
-                                                            onClick={() => handleFamilyMemberChange("picturePreview", null)}
-                                                        >
+                                                    <img src={currentFamilyMember.picturePreview || '/placeholder.svg'} alt="Family member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
+                                                        <IconButton size="small" sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={() => handleFamilyMemberChange('picturePreview', null)}>
                                                             <DeleteIcon fontSize="small" />
                                                         </IconButton>
                                                     </Box>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <input
-                                                        accept="image/*"
-                                                        type="file"
-                                                        id="upload-family-picture"
-                                                        style={{ display: "none" }}
-                                                        onChange={handleImageUpload}
-                                                    />
+                                                    <input accept="image/*" type="file" id="upload-family-picture" style={{ display: 'none' }} onChange={handleImageUpload} />
                                                     <label htmlFor="upload-family-picture">
-                                                        <IconButton component="span" sx={{ color: "#90caf9" }}>
+                                                        <IconButton component="span" sx={{ color: '#90caf9' }}>
                                                             <AddIcon />
                                                         </IconButton>
                                                     </label>
@@ -534,11 +475,10 @@ const MembershipForm = () => {
                                         </Box>
                                         <box>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Family Member Picture</Typography>
-                                            <Typography variant="body2" sx={{ color: "#666", mt: 1 }}>
+                                            <Typography variant="body2" sx={{ color: '#666', mt: 1 }}>
                                                 Click upload to profile picture (4 MB max)
                                             </Typography>
                                         </box>
-
                                     </Box>
 
                                     <Grid container spacing={2}>
@@ -550,10 +490,10 @@ const MembershipForm = () => {
                                                     placeholder="Enter Full Name"
                                                     variant="outlined"
                                                     value={currentFamilyMember.fullName}
-                                                    onChange={(e) => handleFamilyMemberChange("fullName", e.target.value)}
+                                                    onChange={(e) => handleFamilyMemberChange('fullName', e.target.value)}
                                                     sx={{
-                                                        "& .MuiOutlinedInput-notchedOutline": {
-                                                            borderColor: "#ccc",
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
                                                         },
                                                     }}
                                                 />
@@ -566,16 +506,16 @@ const MembershipForm = () => {
                                                     <Select
                                                         displayEmpty
                                                         value={currentFamilyMember.relation}
-                                                        onChange={(e) => handleFamilyMemberChange("relation", e.target.value)}
+                                                        onChange={(e) => handleFamilyMemberChange('relation', e.target.value)}
                                                         renderValue={(selected) => {
                                                             if (!selected) {
-                                                                return <Typography sx={{ color: "#757575" }}>Choose Relation</Typography>
+                                                                return <Typography sx={{ color: '#757575' }}>Choose Relation</Typography>;
                                                             }
-                                                            return selected
+                                                            return selected;
                                                         }}
                                                         sx={{
-                                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                                borderColor: "#ccc",
+                                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                                borderColor: '#ccc',
                                                             },
                                                         }}
                                                     >
@@ -598,10 +538,10 @@ const MembershipForm = () => {
                                                     placeholder="Enter cnic number"
                                                     variant="outlined"
                                                     value={currentFamilyMember.cnic}
-                                                    onChange={(e) => handleFamilyMemberChange("cnic", e.target.value)}
+                                                    onChange={(e) => handleFamilyMemberChange('cnic', e.target.value)}
                                                     sx={{
-                                                        "& .MuiOutlinedInput-notchedOutline": {
-                                                            borderColor: "#ccc",
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
                                                         },
                                                     }}
                                                 />
@@ -615,10 +555,10 @@ const MembershipForm = () => {
                                                     placeholder="Enter Phone Number"
                                                     variant="outlined"
                                                     value={currentFamilyMember.phoneNumber}
-                                                    onChange={(e) => handleFamilyMemberChange("phoneNumber", e.target.value)}
+                                                    onChange={(e) => handleFamilyMemberChange('phoneNumber', e.target.value)}
                                                     sx={{
-                                                        "& .MuiOutlinedInput-notchedOutline": {
-                                                            borderColor: "#ccc",
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
                                                         },
                                                     }}
                                                 />
@@ -634,16 +574,16 @@ const MembershipForm = () => {
                                                     <Select
                                                         displayEmpty
                                                         value={currentFamilyMember.membershipType}
-                                                        onChange={(e) => handleFamilyMemberChange("membershipType", e.target.value)}
+                                                        onChange={(e) => handleFamilyMemberChange('membershipType', e.target.value)}
                                                         renderValue={(selected) => {
                                                             if (!selected) {
-                                                                return <Typography sx={{ color: "#757575" }}>Choose Type</Typography>
+                                                                return <Typography sx={{ color: '#757575' }}>Choose Type</Typography>;
                                                             }
-                                                            return selected
+                                                            return selected;
                                                         }}
                                                         sx={{
-                                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                                borderColor: "#ccc",
+                                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                                borderColor: '#ccc',
                                                             },
                                                         }}
                                                     >
@@ -661,16 +601,16 @@ const MembershipForm = () => {
                                                     <Select
                                                         displayEmpty
                                                         value={currentFamilyMember.membershipCategory}
-                                                        onChange={(e) => handleFamilyMemberChange("membershipCategory", e.target.value)}
+                                                        onChange={(e) => handleFamilyMemberChange('membershipCategory', e.target.value)}
                                                         renderValue={(selected) => {
                                                             if (!selected) {
-                                                                return <Typography sx={{ color: "#757575" }}>Choose Category</Typography>
+                                                                return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
                                                             }
-                                                            return selected
+                                                            return selected;
                                                         }}
                                                         sx={{
-                                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                                borderColor: "#ccc",
+                                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                                borderColor: '#ccc',
                                                             },
                                                         }}
                                                     >
@@ -696,10 +636,10 @@ const MembershipForm = () => {
                                                     placeholder="Select date"
                                                     variant="outlined"
                                                     value={currentFamilyMember.startDate}
-                                                    onChange={(e) => handleFamilyMemberChange("startDate", e.target.value)}
+                                                    onChange={(e) => handleFamilyMemberChange('startDate', e.target.value)}
                                                     sx={{
-                                                        "& .MuiOutlinedInput-notchedOutline": {
-                                                            borderColor: "#ccc",
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
                                                         },
                                                     }}
                                                 />
@@ -717,10 +657,10 @@ const MembershipForm = () => {
                                                     placeholder="Select date"
                                                     variant="outlined"
                                                     value={currentFamilyMember.endDate}
-                                                    onChange={(e) => handleFamilyMemberChange("endDate", e.target.value)}
+                                                    onChange={(e) => handleFamilyMemberChange('endDate', e.target.value)}
                                                     sx={{
-                                                        "& .MuiOutlinedInput-notchedOutline": {
-                                                            borderColor: "#ccc",
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
                                                         },
                                                     }}
                                                 />
@@ -732,35 +672,35 @@ const MembershipForm = () => {
                                         variant="contained"
                                         sx={{
                                             mt: 2,
-                                            bgcolor: "#f5f5f5",
-                                            color: "#000",
-                                            textTransform: "none",
-                                            "&:hover": {
-                                                bgcolor: "#e0e0e0",
+                                            bgcolor: '#f5f5f5',
+                                            color: '#000',
+                                            textTransform: 'none',
+                                            '&:hover': {
+                                                bgcolor: '#e0e0e0',
                                             },
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            width: "100%",
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            width: '100%',
                                             py: 1.5,
                                             borderRadius: 1,
                                         }}
                                         onClick={handleAddFamilyMember}
                                     >
-                                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                             <Typography sx={{ fontWeight: 500 }}>Add Another family Member</Typography>
-                                            <Typography variant="body2" sx={{ color: "#666" }}>
+                                            <Typography variant="body2" sx={{ color: '#666' }}>
                                                 If you add another family members then click
                                             </Typography>
                                         </Box>
                                         <ChevronRightIcon />
                                     </Button>
 
-                                    <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                                         <Button
                                             variant="outlined"
                                             sx={{
                                                 mr: 2,
-                                                textTransform: "none",
+                                                textTransform: 'none',
                                             }}
                                         >
                                             Cancel
@@ -768,24 +708,24 @@ const MembershipForm = () => {
                                         <Button
                                             variant="contained"
                                             sx={{
-                                                bgcolor: "#1e3a8a",
-                                                "&:hover": {
-                                                    bgcolor: "#152a60",
+                                                bgcolor: '#1e3a8a',
+                                                '&:hover': {
+                                                    bgcolor: '#152a60',
                                                 },
-                                                textTransform: "none",
+                                                textTransform: 'none',
                                             }}
                                         >
-                                            Save & Next
+                                            Save
                                         </Button>
                                     </Box>
                                 </Grid>
                             )}
                         </Grid>
                     </Box>
-                </Container>
+                </div>
             </div>
         </>
-    )
-}
+    );
+};
 
-export default MembershipForm
+export default AddForm3;
