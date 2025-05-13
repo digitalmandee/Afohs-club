@@ -19,9 +19,6 @@ export default function AppAuthLayout({ children }) {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    //   backgroundColor: "rgba(0, 0, 0, 0.3)",
-                    //   backdropFilter: "blur(1px)",
-                    //   zIndex: 1,
                 },
             }}
         >
@@ -73,41 +70,29 @@ export default function AppAuthLayout({ children }) {
             {/* Right side with login form */}
             <Box
                 sx={{
-                    width: { xs: '100%', md: '540px' },
+                    width: { xs: '100%', md: '500px' },
                     display: 'flex',
                     flexDirection: 'column',
-                    p: 1,
-                    //   m: { xs: 1, md: 1 },
-                    mt: { xs: 1, md: 1 },
-                    mb: { xs: 1, md: 1 },
-                    mr: { xs: 1, md: 1 },
+                    mt: { xs: 1, md: 2 },
+                    mb: { xs: 1, md: 2 },
+                    mr: { xs: 1, md: 10 },
                     zIndex: 1,
                 }}
             >
-                <Paper
-                    elevation={4}
-                    sx={{
-                        // p:2,
-                        borderRadius: 2,
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        backdropFilter: 'blur(10px)',
-                        overflow: 'hidden',
-                    }}
-                >
                     <Box
                         sx={{
                             width: '100%',
                             maxWidth: 540,
-                            p: 2,
-                            // bgcolor: 'white',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            p: 4,
                             borderRadius: 1,
                             boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
                             border: '1px solid #e0e0e0',
+                            overflow:'hidden'
                         }}
                     >
                         {children}
                     </Box>
-                </Paper>
             </Box>
         </Box>
     );
