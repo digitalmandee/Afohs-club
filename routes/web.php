@@ -100,9 +100,21 @@ if (in_array(request()->getHost(), $allowedDomains)) {
             return Inertia::render('App/Admin/Membership/Detail');
         })->name('membership.detail');
 
+        Route::get('/admin/membership/finance', function () {
+            return Inertia::render('App/Admin/Membership/Finance');
+        })->name('membership.finance');
+
         Route::get('/admin/membership/all.members', function () {
             return Inertia::render('App/Admin/Membership/MemberType');
         })->name('membership.membertype');
+
+        Route::get('/admin/membership/add/membertype', function () {
+            return Inertia::render('App/Admin/Membership/AddMember');
+        })->name('membership.addmembertype');
+
+        Route::get('/admin/membership/all/payments', function () {
+            return Inertia::render('App/Admin/Membership/AllPayment');
+        })->name('membership.allpayment');
 
         Route::get('/admin/membership/full/detail', function () {
             return Inertia::render('App/Admin/Membership/CompleteDetail');

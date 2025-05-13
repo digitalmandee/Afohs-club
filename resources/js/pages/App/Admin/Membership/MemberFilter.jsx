@@ -5,385 +5,535 @@ import {
     Typography,
     IconButton,
     Chip,
-    TextField,
     Button,
     Dialog,
-    DialogContent,
-    DialogActions,
-    InputAdornment,
     Collapse,
+    TextField,
+    InputAdornment
 } from "@mui/material"
 import {
+    CheckCircle as CheckCircleIcon,
+    Check as CheckIcon,
+    Circle as CircleIcon,
     Close as CloseIcon,
-    ExpandMore as ExpandMoreIcon,
-    ExpandLess as ExpandLessIcon,
-    CalendarToday as CalendarIcon,
-} from "@mui/icons-material"
+    TwoWheeler as DeliveryIcon,
+    Diamond as DiamondIcon,
+    LocalDining as DiningIcon,
+    FilterAlt as FilterIcon,
+    KeyboardArrowDown as KeyboardArrowDownIcon,
+    Receipt as ReceiptIcon,
+    EventSeat as ReservationIcon,
+    Restaurant as RestaurantIcon,
+    Search as SearchIcon,
+    TakeoutDining as TakeoutIcon,
+} from '@mui/icons-material';
 
-const MemberFilter = () => {
-    const [open, setOpen] = useState(true)
-    const [roomType, setRoomType] = useState("deluxe")
-    const [bookingStatus, setBookingStatus] = useState("all")
-    const [eventDate, setEventDate] = useState("")
-    const [startDate, setStartDate] = useState("")
-    const [endDate, setEndDate] = useState("")
+const styles = {
+    root: {
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        fontFamily: 'Arial, sans-serif',
+    },
+    tabButton: {
+        borderRadius: '20px',
+        margin: '0 5px',
+        textTransform: 'none',
+        fontWeight: 'normal',
+        padding: '6px 16px',
+        border: '1px solid #00274D',
+        color: '#00274D',
+    },
+    activeTabButton: {
+        backgroundColor: '#0a3d62',
+        color: 'white',
+        borderRadius: '20px',
+        margin: '0 5px',
+        textTransform: 'none',
+        fontWeight: 'normal',
+        padding: '6px 16px',
+    },
 
-    // State to track which sections are expanded
-    const [expanded, setExpanded] = useState({
-        roomType: true,
-        bookingStatus: true,
-        eventDate: true,
-        dateRange: true,
-    })
+};
 
-    const handleClose = () => {
-        setOpen(false)
-    }
+const MemberFilter = ({ open, onClose }) => {
+    const [expandedSections, setExpandedSections] = useState({
+        sorting: true,
+        orderType: true,
+        memberStatus: true,
+        orderStatus: true,
+    });
 
-    const handleRoomTypeChange = (type) => {
-        setRoomType(type)
-    }
+    const [filters, setFilters] = useState({
+        sort: 'asc',
+        orderType: 'all',
+        memberStatus: 'all',
+        orderStatus: 'all',
+    });
 
-    const handleBookingStatusChange = (status) => {
-        setBookingStatus(status)
-    }
+    const toggleSection = (section) => {
+        setExpandedSections((prev) => ({
+            ...prev,
+            [section]: !prev[section],
+        }));
+    };
 
-    const handleResetFilter = () => {
-        setRoomType("deluxe")
-        setBookingStatus("all")
-        setEventDate("")
-        setStartDate("")
-        setEndDate("")
-    }
+    const handleFilterChange = (key, value) => {
+        setFilters((prev) => ({
+            ...prev,
+            [key]: value,
+        }));
+    };
+
+    const handleResetFilters = () => {
+        setFilters({
+            sort: 'asc',
+            orderType: 'all',
+            memberStatus: 'all',
+            orderStatus: 'all',
+        });
+    };
 
     const handleApplyFilters = () => {
-        // Apply filters logic here
-        console.log({
-            roomType,
-            bookingStatus,
-            eventDate,
-            dateRange: { startDate, endDate },
-        })
-        handleClose()
-    }
-
-    // Toggle section expansion
-    const toggleSection = (section) => {
-        setExpanded({
-            ...expanded,
-            [section]: !expanded[section],
-        })
-    }
+        setOpenFilterModal(false);
+    };
 
     return (
         <>
-            <Box sx={{
-                px: 2,
-                py: 1
-            }}>
-                <Box sx={{ px: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="h6" fontWeight="500" fontSize="32px" sx={{
-                        color: '#121212'
-                    }}>
-                        Booking Filter
-                    </Typography>
-                    <IconButton onClick={handleClose} size="small">
-                        <CloseIcon />
-                    </IconButton>
-                </Box>
-
-                <DialogContent sx={{ p: 2 }}>
-                    {/* Room Type */}
-                    <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.roomType ? 1.5 : 0,
-                                cursor: "pointer",
-                            }}
-                            onClick={() => toggleSection("roomType")}
-                        >
-                            <Typography variant="body1" fontWeight="medium">
-                                Room Type
-                            </Typography>
-                            {expanded.roomType ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
-                        </Box>
-                        <Collapse in={expanded.roomType}>
-                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                <Chip
-                                    label="Deluxe room"
-                                    onClick={() => handleRoomTypeChange("deluxe")}
-                                    sx={{
-                                        bgcolor: roomType === "deluxe" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "deluxe" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "deluxe" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "deluxe" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Standard room"
-                                    onClick={() => handleRoomTypeChange("standard")}
-                                    sx={{
-                                        bgcolor: roomType === "standard" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "standard" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "standard" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "standard" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Suit room"
-                                    onClick={() => handleRoomTypeChange("suit")}
-                                    sx={{
-                                        bgcolor: roomType === "suit" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "suit" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "suit" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "suit" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Family room"
-                                    onClick={() => handleRoomTypeChange("family")}
-                                    sx={{
-                                        bgcolor: roomType === "family" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "family" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "family" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "family" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                            </Box>
-                        </Collapse>
+            <Dialog
+                open={open}
+                onClose={onClose}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{
+                    style: {
+                        position: 'absolute',
+                        top: 0,
+                        right: 20,
+                        m: 0,
+                        width: '600px',
+                        borderRadius: 2,
+                        p: 2
+                    },
+                }}
+            >
+                <Box sx={{ p: 3 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography sx={{ color: '#121212', fontWeight: 500, fontSize: '32px' }}>
+                            Member Filter
+                        </Typography>
+                        <IconButton edge="end">
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
 
-                    {/* Booking Status */}
-                    <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
+                    {/* Sorting Section */}
+                    <Box
+                        className={styles.filterSection}
+                        sx={{
+                            mb: 3,
+                            border: '1px solid #eee',
+                            borderRadius: '8px',
+                            p: 2,
+                            backgroundColor: '#fff',
+                            boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
+                        }}
+                    >
                         <Box
+                            className={styles.filterHeader}
+                            onClick={() => toggleSection('sorting')}
                             sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.bookingStatus ? 1.5 : 0,
-                                cursor: "pointer",
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                cursor: 'pointer',
                             }}
-                            onClick={() => toggleSection("bookingStatus")}
                         >
-                            <Typography variant="body1" fontWeight="medium">
-                                Booking Status
-                            </Typography>
-                            {expanded.bookingStatus ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
+                            <Typography sx={{
+                                color: '#121212',
+                                fontWeight: 500,
+                                fontSize: '16px'
+                            }}>Sorting</Typography>
+                            <KeyboardArrowDownIcon
+                                sx={{
+                                    transform: expandedSections.sorting ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.3s ease',
+                                }}
+                            />
                         </Box>
-                        <Collapse in={expanded.bookingStatus}>
-                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                <Chip
-                                    label="All type"
-                                    onClick={() => handleBookingStatusChange("all")}
-                                    sx={{
-                                        bgcolor: bookingStatus === "all" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "all" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: bookingStatus === "all" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "all" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Confirmed"
-                                    onClick={() => handleBookingStatusChange("confirmed")}
-                                    sx={{
-                                        bgcolor: bookingStatus === "confirmed" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "confirmed" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: bookingStatus === "confirmed" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "confirmed" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Pending"
-                                    onClick={() => handleBookingStatusChange("pending")}
-                                    sx={{
-                                        bgcolor: bookingStatus === "pending" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "pending" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: bookingStatus === "pending" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "pending" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                            </Box>
-                        </Collapse>
-                    </Box>
 
-                    {/* Event by date */}
-                    <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.eventDate ? 1.5 : 0,
-                                cursor: "pointer",
-                            }}
-                            onClick={() => toggleSection("eventDate")}
-                        >
-                            <Typography variant="body1" fontWeight="medium">
-                                Event by date
-                            </Typography>
-                            {expanded.eventDate ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
-                        </Box>
-                        <Collapse in={expanded.eventDate}>
-                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Date
+                        <Collapse in={expandedSections.sorting}>
+                            <Box
+                                sx={{
+                                    mt: 2,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'baseline',
+                                }}
+                            >
+                                <Typography sx={{ mb: 1, color: '#121212', fontSize: '14px', fontWeight: 400 }}>
+                                    By Member Id
                                 </Typography>
-                                <TextField
-                                    placeholder="Select date"
-                                    value={eventDate}
-                                    onChange={(e) => setEventDate(e.target.value)}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <CalendarIcon fontSize="small" sx={{ color: "#999" }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{
-                                        ".MuiOutlinedInput-root": {
-                                            borderRadius: 1,
+                                <Box display="flex" gap={2}>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => handleFilterChange('sort', 'asc')}
+                                        sx={{
+                                            backgroundColor: filters.sort === 'asc' ? '#063455' : '#B0DEFF',
+                                            color: filters.sort === 'asc' ? 'white' : 'black',
+                                            borderRadius: '20px',
+                                            textTransform: 'none',
+                                            fontWeight: 500,
+                                            minWidth: '130px',
+                                        }}
+                                        startIcon={
+                                            <span
+                                                style={{
+                                                    fontSize: '16px',
+                                                }}
+                                            >
+                                                ↑
+                                            </span>
+                                        }
+                                    >
+                                        Ascending
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => handleFilterChange('sort', 'desc')}
+                                        sx={{
+                                            backgroundColor: filters.sort === 'desc' ? '#063455' : '#B0DEFF',
+                                            color: filters.sort === 'desc' ? 'white' : 'black',
+                                            borderRadius: '20px',
+                                            textTransform: 'none',
+                                            fontWeight: 500,
+                                            minWidth: '130px',
+                                        }}
+                                        startIcon={
+                                            <span
+                                                style={{
+                                                    fontSize: '16px',
+                                                }}
+                                            >
+                                                ↓
+                                            </span>
+                                        }
+                                    >
+                                        Descending
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </Collapse>
+
+                        <Collapse in={expandedSections.sorting}>
+                            <Box
+                                sx={{
+                                    mt: 2,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'baseline',
+                                }}
+                            >
+                                <Typography sx={{ mb: 1, color: '#121212', fontSize: '14px', fontWeight: 400 }}>
+                                    By Member Name
+                                </Typography>
+                                <Box display="flex" gap={2}>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => handleFilterChange('sort', 'asc')}
+                                        sx={{
+                                            backgroundColor: filters.sort === 'asc' ? '#b3e5fc' : '#e3f2fd',
+                                            color: '#000',
+                                            borderRadius: '20px',
+                                            textTransform: 'none',
+                                            fontWeight: 500,
+                                            '&:hover': {
+                                                backgroundColor: '#b3e5fc',
+                                            },
+                                            minWidth: '130px',
+                                        }}
+                                        startIcon={
+                                            <span
+                                                style={{
+                                                    fontSize: '16px',
+                                                }}
+                                            >
+                                                ↑
+                                            </span>
+                                        }
+                                    >
+                                        Ascending
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => handleFilterChange('sort', 'desc')}
+                                        sx={{
+                                            backgroundColor: filters.sort === 'desc' ? '#b3e5fc' : '#e3f2fd',
+                                            color: '#000',
+                                            borderRadius: '20px',
+                                            textTransform: 'none',
+                                            fontWeight: 500,
+                                            '&:hover': {
+                                                backgroundColor: '#b3e5fc',
+                                            },
+                                            minWidth: '130px',
+                                        }}
+                                        startIcon={
+                                            <span
+                                                style={{
+                                                    fontSize: '16px',
+                                                }}
+                                            >
+                                                ↓
+                                            </span>
+                                        }
+                                    >
+                                        Descending
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </Collapse>
+                    </Box>
+
+                    {/* Order Type Section */}
+                    <Box
+                        className={styles.filterSection}
+                        sx={{
+                            mb: 3,
+                            border: '1px solid #eee',
+                            borderRadius: '8px',
+                            p: 2,
+                            backgroundColor: '#fff',
+                            boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
+                        }}
+                    >
+                        <Box
+                            className={styles.filterHeader}
+                            onClick={() => toggleSection('orderType')}
+                            sx={{
+                                p: 0,
+                                mb: 1,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Choose Status</Typography>
+                            <KeyboardArrowDownIcon
+                                sx={{
+                                    cursor: 'pointer',
+                                    transform: expandedSections.orderType ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.3s',
+                                }}
+                            />
+                        </Box>
+
+                        <Collapse in={expandedSections.orderType}>
+                            <Box sx={{ mb: 1 }}>
+                                <Box display="flex" flexWrap="wrap" gap={1}>
+                                    {[
+                                        {
+                                            label: 'All type',
+                                            value: 'all',
+                                            icon: null,
                                         },
+                                        {
+                                            label: 'Active',
+                                            value: 'dine-in',
+                                            icon: <DiningIcon />,
+                                        },
+                                        {
+                                            label: 'Expired',
+                                            value: 'pickup',
+                                            icon: <TakeoutIcon />,
+                                        },
+                                        {
+                                            label: 'Pending',
+                                            value: 'delivery',
+                                            icon: <DeliveryIcon />,
+                                        },
+                                    ].map((item) => (
+                                        <Chip
+                                            key={item.value}
+                                            label={item.label}
+                                            onClick={() => handleFilterChange('orderType', item.value)}
+                                            sx={{
+                                                backgroundColor: filters.orderType === item.value ? '#063455' : '#B0DEFF', // light blue for unselected
+                                                color: filters.orderType === item.value ? 'white' : 'black',
+                                                fontWeight: 500,
+                                                borderRadius: '16px', // more round
+                                                px: 2,
+                                                py: 0.5,
+                                                fontSize: '0.875rem',
+                                            }}
+                                        />
+                                    ))}
+                                </Box>
+                            </Box>
+                        </Collapse>
+                    </Box>
+                    {/* Order Status Section */}
+                    <Box
+                        className={styles.filterSection}
+                        sx={{
+                            mb: 3,
+                            border: '1px solid #eee',
+                            borderRadius: '8px',
+                            p: 2,
+                            backgroundColor: '#fff',
+                            boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
+                        }}
+                    >
+                        <Box
+                            className={styles.filterHeader}
+                            onClick={() => toggleSection('orderStatus')}
+                            sx={{
+                                p: 0,
+                                mb: 1,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Choose by type</Typography>
+                            <KeyboardArrowDownIcon
+                                sx={{
+                                    cursor: 'pointer',
+                                    transform: expandedSections.orderStatus ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.3s',
+                                }}
+                            />
+                        </Box>
+                        <Collapse in={expandedSections.orderStatus}>
+                            <Box sx={{ mb: 1 }}>
+                                <Box display="flex" flexWrap="wrap" gap={1}>
+                                    <Chip
+                                        label="All types"
+                                        onClick={() => handleFilterChange('orderStatus', 'all')}
+                                        sx={{
+                                            backgroundColor: filters.orderStatus === 'all' ? '#003049' : '#cce5ff',
+                                            color: filters.orderStatus === 'all' ? 'white' : 'black',
+                                            fontWeight: 500,
+                                            borderRadius: '20px',
+                                            px: 2,
+                                        }}
+                                    />
+                                    <Chip
+                                        label="VIP Members"
+                                        onClick={() => handleFilterChange('orderStatus', 'ready')}
+                                        sx={{
+                                            backgroundColor: filters.orderStatus === 'ready' ? '#003049' : '#cce5ff',
+                                            color: filters.orderStatus === 'ready' ? 'white' : 'black',
+                                            fontWeight: 500,
+                                            borderRadius: '20px',
+                                            px: 2,
+                                        }}
+                                    />
+                                    <Chip
+                                        label="Premium Members"
+                                        onClick={() => handleFilterChange('orderStatus', 'cooking')}
+                                        sx={{
+                                            backgroundColor: filters.orderStatus === 'cooking' ? '#003049' : '#cce5ff',
+                                            color: filters.orderStatus === 'cooking' ? 'white' : 'black',
+                                            fontWeight: 500,
+                                            borderRadius: '20px',
+                                            px: 2,
+                                        }}
+                                    />
+                                </Box>
+                            </Box>
+                        </Collapse>
+                    </Box>
+                    {/* Member Status Section */}
+                    <Box
+                        className={styles.filterSection}
+                        sx={{
+                            mb: 3,
+                            border: '1px solid #eee',
+                            borderRadius: '8px',
+                            p: 2,
+                            backgroundColor: '#fff',
+                            boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
+                        }}
+                    >
+                        <Box
+                            className={styles.filterHeader}
+                            onClick={() => toggleSection('memberStatus')}
+                            sx={{
+                                p: 0,
+                                mb: 1,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Check by date</Typography>
+                            <KeyboardArrowDownIcon
+                                sx={{
+                                    cursor: 'pointer',
+                                    transform: expandedSections.memberStatus ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.3s',
+                                }}
+                            />
+                        </Box>
+                        <Collapse in={expandedSections.memberStatus}>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    flexWrap: 'wrap',
+                                    gap: 2,
+                                    mt: 2,
+                                    px: 1
+                                }}
+                            >
+                                <Typography sx={{ fontWeight: 400, fontSize:'14px' }}>
+                                    Select your target date
+                                </Typography>
+
+                                <TextField
+                                    type="date"
+                                    value={filters.targetDate || ''}
+                                    onChange={(e) => handleFilterChange('targetDate', e.target.value)}
+                                    InputLabelProps={{
+                                        shrink: true,
                                     }}
+                                    sx={{ width: 220 }}
                                 />
                             </Box>
                         </Collapse>
                     </Box>
 
-                    {/* Date Range */}
-                    <Box sx={{ px: 2, py: 2, border: "1px solid #E3E3E3" }}>
-                        <Box
+                    {/* Footer Buttons */}
+                    <Box display="flex" justifyContent="flex-end" gap={1} mt={3}>
+                        <Button
+                            variant="outlined"
+                            onClick={handleResetFilters}
                             sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.dateRange ? 1.5 : 0,
-                                cursor: "pointer",
+                                color: '#333',
+                                borderColor: '#ddd',
+                                textTransform: 'none',
                             }}
-                            onClick={() => toggleSection("dateRange")}
                         >
-                            <Typography variant="body1" fontWeight="medium">
-                                Date Range
-                            </Typography>
-                            {expanded.dateRange ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
-                        </Box>
-
-                        <Collapse in={expanded.dateRange}>
-                            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                {/* Start Date */}
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ width: 80 }}>
-                                        Start date
-                                    </Typography>
-                                    <TextField
-                                        type="date"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        fullWidth
-                                        size="small"
-                                        sx={{ maxWidth: 300 }}
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                    />
-                                </Box>
-
-                                {/* End Date */}
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ width: 80 }}>
-                                        End date
-                                    </Typography>
-                                    <TextField
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        fullWidth
-                                        size="small"
-                                        sx={{ maxWidth: 300 }}
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                    />
-                                </Box>
-                            </Box>
-                        </Collapse>
+                            Reset Filter
+                        </Button>
+                        <Button
+                            variant="contained"
+                            onClick={handleApplyFilters}
+                            sx={{
+                                backgroundColor: '#0a3d62',
+                                color: 'white',
+                                textTransform: 'none',
+                                '&:hover': {
+                                    backgroundColor: '#083352',
+                                },
+                            }}
+                        >
+                            Apply Filters
+                        </Button>
                     </Box>
-                </DialogContent>
-
-                <DialogActions sx={{ p: 2, justifyContent: "flex-end" }}>
-                    <Button
-                        variant="outlined"
-                        onClick={handleResetFilter}
-                        sx={{
-                            borderColor: "#ccc",
-                            color: "#333",
-                            borderRadius: 1,
-                            textTransform: "none",
-                            mr: 1,
-                            "&:hover": {
-                                borderColor: "#999",
-                                bgcolor: "rgba(0,0,0,0.04)",
-                            },
-                        }}
-                    >
-                        Reset Filter
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleApplyFilters}
-                        sx={{
-                            bgcolor: "#0a3d62",
-                            color: "white",
-                            borderRadius: 1,
-                            textTransform: "none",
-                            "&:hover": {
-                                bgcolor: "#0c2461",
-                            },
-                        }}
-                    >
-                        Apply Filters
-                    </Button>
-                </DialogActions>
-            </Box>
+                </Box>
+            </Dialog>
         </>
     )
 }

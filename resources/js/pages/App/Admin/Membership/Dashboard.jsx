@@ -15,13 +15,20 @@ import {
     IconButton,
     Avatar,
     Box,
+    Alert,
+    Slide,
     InputAdornment,
+    Snackbar
 } from "@mui/material"
 import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard, Warning } from "@mui/icons-material"
 import "bootstrap/dist/css/bootstrap.min.css"
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import MembershipSuspensionDialog from "./Modal";
+import MembershipCancellationDialog from "./CancelModal";
+import MemberProfileModal from "./Profile";
+import MembershipCardComponent from "./UserCard";
+import MemberFilter from "./MemberFilter";
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -34,6 +41,12 @@ const MembershipDashboard = () => {
     const [selectedMember, setSelectedMember] = useState(null)
     const [modalType, setModalType] = useState("actions") // "actions" or "details"
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [showAlert, setShowAlert] = useState(false);
+    const [openProfileModal, setOpenProfileModal] = useState(false);
+    const [openCardModal, setOpenCardModal] = useState(false);
+    const [openFilterModal, setOpenFilterModal] = useState(false);
+    const [selectMember, setSelectMember] = useState(null);
     const [detailsData, setDetailsData] = useState({
         reason: "Violation of rules",
         duration: "30 Month",
@@ -62,14 +75,20 @@ const MembershipDashboard = () => {
     }
 
     const handleCancelMembership = () => {
-        // Logic to cancel membership would go here
-        handleCloseModal()
+        setCancelModalOpen(false);
+        setShowAlert(false);
+        setTimeout(() => {
+            setShowAlert(true);
+        }, 100);
     }
 
-    const handleSuspendMembership = () => {
-        // Logic to suspend membership would go here
-        handleCloseModal()
-    }
+    const handleConfirmSuspend = () => {
+        setSuspensionModalOpen(false);
+        setShowAlert(false);
+        setTimeout(() => {
+            setShowAlert(true);
+        }, 100);
+    };
 
     const showMemberDetails = (member, event) => {
         // You would typically fetch these details from an API
@@ -132,14 +151,14 @@ const MembershipDashboard = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <div className="container-fluid p-0" style={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
+                <div className="container-fluid p-4" style={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
                     {/* Header */}
-                    <div className="d-flex justify-content-between align-items-center p-3">
+                    <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
-                            <IconButton>
+                            {/* <IconButton>
                                 <ArrowBack />
-                            </IconButton>
-                            <Typography variant="h5" component="h1" style={{ marginLeft: "10px", fontWeight: 500, color: "#333" }}>
+                            </IconButton> */}
+                            <Typography sx={{ marginLeft: "10px", fontWeight: 500, color: "#3F4E4F", fontSize: '30px' }}>
                                 Membership Dashboard
                             </Typography>
                         </div>
@@ -147,10 +166,11 @@ const MembershipDashboard = () => {
                             variant="contained"
                             startIcon={<span>+</span>}
                             style={{
-                                backgroundColor: "#0a3d62",
+                                backgroundColor: "#063455",
                                 textTransform: "none",
                                 borderRadius: "4px",
-                                padding: "8px 16px",
+                                height: 40,
+                                width: 170
                             }}
                             onClick={() => router.visit('/admin/add/personal/information')}
                         >
@@ -159,53 +179,53 @@ const MembershipDashboard = () => {
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="row mx-2 mb-4">
+                    <div className="row mb-4 mt-5">
                         <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: "#3d4d57", color: "white", height: "100%" }}>
+                            <Card style={{ backgroundColor: "#3F4E4F", color: "white", height: "150px" }}>
                                 <CardContent className="text-center py-4">
                                     <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: "rgba(255,255,255,0.2)", margin: "0 auto" }}>
+                                        <Avatar style={{ backgroundColor: "#202728", margin: "0 auto" }}>
                                             <People />
                                         </Avatar>
                                     </div>
-                                    <Typography variant="body2" style={{ marginBottom: "8px" }}>
+                                    <Typography sx={{ mt: 1, marginBottom: "5px", fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
                                         Total Membership
                                     </Typography>
-                                    <Typography variant="h4" style={{ fontWeight: "bold" }}>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
                                         320
                                     </Typography>
                                 </CardContent>
                             </Card>
                         </div>
                         <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: "#3d4d57", color: "white", height: "100%" }}>
+                            <Card style={{ backgroundColor: "#3F4E4F", color: "white", height: "150px" }}>
                                 <CardContent className="text-center py-4">
                                     <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: "rgba(255,255,255,0.2)", margin: "0 auto" }}>
+                                        <Avatar style={{ backgroundColor: "#202728", margin: "0 auto" }}>
                                             <CreditCard />
                                         </Avatar>
                                     </div>
-                                    <Typography variant="body2" style={{ marginBottom: "8px" }}>
+                                    <Typography sx={{ mt: 1, marginBottom: "5px", fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
                                         Total Payment
                                     </Typography>
-                                    <Typography variant="h4" style={{ fontWeight: "bold" }}>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
                                         10,000
                                     </Typography>
                                 </CardContent>
                             </Card>
                         </div>
                         <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: "#3d4d57", color: "white", height: "100%" }}>
+                            <Card style={{ backgroundColor: "#3F4E4F", color: "white", height: "150px" }}>
                                 <CardContent className="text-center py-4">
                                     <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: "rgba(255,255,255,0.2)", margin: "0 auto" }}>
+                                        <Avatar style={{ backgroundColor: "#202728", margin: "0 auto" }}>
                                             <CreditCard />
                                         </Avatar>
                                     </div>
-                                    <Typography variant="body2" style={{ marginBottom: "8px" }}>
+                                    <Typography sx={{ mt: 1, marginBottom: "5px", fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
                                         Current Balance
                                     </Typography>
-                                    <Typography variant="h4" style={{ fontWeight: "bold" }}>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
                                         300,00
                                     </Typography>
                                 </CardContent>
@@ -214,9 +234,9 @@ const MembershipDashboard = () => {
                     </div>
 
                     {/* Recently Joined Section */}
-                    <div className="mx-3">
+                    <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <Typography variant="h6" style={{ fontWeight: "bold" }}>
+                            <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>
                                 Recently Joined
                             </Typography>
                             <div className="d-flex">
@@ -237,10 +257,13 @@ const MembershipDashboard = () => {
                                     variant="outlined"
                                     startIcon={<FilterAlt />}
                                     style={{
-                                        borderColor: "#ccc",
+                                        border: "1px solid #3F4E4F",
                                         color: "#333",
                                         textTransform: "none",
-                                        backgroundColor: "white",
+                                        backgroundColor: "transparent",
+                                    }}
+                                    onClick={() => {
+                                        setOpenFilterModal(true); // open the modal
                                     }}
                                 >
                                     Filter
@@ -252,39 +275,47 @@ const MembershipDashboard = () => {
                         <TableContainer component={Paper} style={{ boxShadow: "none" }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: "#e8e8e8" }}>
-                                        <TableCell>Membership ID</TableCell>
-                                        <TableCell>Member</TableCell>
-                                        <TableCell>Member Type</TableCell>
-                                        <TableCell>Status</TableCell>
-                                        <TableCell>Card</TableCell>
-                                        <TableCell>Invoice</TableCell>
-                                        <TableCell>Action</TableCell>
+                                    <TableRow style={{ backgroundColor: "#E5E5EA", height: '60px' }}>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Membership ID</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member Type</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Card</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {members.map((member) => (
                                         <TableRow key={member.id} style={{ borderBottom: "1px solid #eee" }}>
-                                            <TableCell>{member.id}</TableCell>
+                                            <TableCell
+                                                sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    setSelectMember(member); // save the clicked member
+                                                    setOpenProfileModal(true); // open the modal
+                                                }}
+                                            >
+                                                {member.id}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={member.avatar} alt={member.name} style={{ marginRight: "10px" }} />
                                                     <div>
-                                                        <Typography variant="body2" style={{ fontWeight: "bold" }}>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                             {member.name}
                                                         </Typography>
-                                                        <Typography variant="body2" color="textSecondary">
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                             {member.email}
                                                         </Typography>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{member.type}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
                                                         color:
-                                                            member.status === "Active" ? "#2e7d32" : member.status === "Suspend" ? "#ed6c02" : "#d32f2f",
+                                                            member.status === "Active" ? "#2e7d32" : member.status === "Suspend" ? "#FFA90B" : "#d32f2f",
                                                         fontWeight: "medium",
                                                         cursor: "pointer",
                                                     }}
@@ -292,24 +323,34 @@ const MembershipDashboard = () => {
                                                 >
                                                     {member.status}
                                                     {member.status === "Suspend" && (
-                                                        <Warning
-                                                            style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
-                                                        />
+                                                        // <Warning
+                                                        //     style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
+                                                        // />
+                                                        <img src="/assets/system-expired.png" alt="" style={{
+                                                            width: 25,
+                                                            height: 25,
+                                                            marginLeft: 2,
+                                                            marginBottom: 5
+                                                        }} />
                                                     )}
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                <Button variant="text" style={{ color: "#1976d2", textTransform: "none", padding: "0" }}>
+                                                <Button style={{ color: "#0C67AA", textDecoration: "underline", textTransform: "none" }}
+                                                    onClick={() => {
+                                                        setOpenCardModal(true); // open the modal
+                                                    }}
+                                                >
                                                     View
                                                 </Button>
                                             </TableCell>
                                             <TableCell>
                                                 {member.status === "Expired" || member.status === "Suspend" ? (
-                                                    <Button variant="text" style={{ color: "#1976d2", textTransform: "none", padding: "0" }}>
+                                                    <Button style={{ color: "#0C67AA", textDecoration: "underline", textTransform: "none" }}>
                                                         Send Remind
                                                     </Button>
                                                 ) : (
-                                                    <Button variant="text" style={{ color: "#1976d2", textTransform: "none", padding: "0" }}>
+                                                    <Button style={{ color: "#0C67AA", textDecoration: "underline", textTransform: "none" }}>
                                                         View
                                                     </Button>
                                                 )}
@@ -331,8 +372,8 @@ const MembershipDashboard = () => {
                         <div
                             style={{
                                 position: "absolute",
-                                top: `${modalPosition.top + -115}px`,
-                                left: modalType === "actions" ? `${modalPosition.left - 333}px` : `${modalPosition.left - 240}px`,
+                                top: `${modalPosition.top - 115}px`,
+                                left: `${modalPosition.left - 333}px`,
                                 backgroundColor: "white",
                                 borderRadius: "8px",
                                 boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
@@ -340,69 +381,104 @@ const MembershipDashboard = () => {
                             }}
                         >
                             <Box display="flex" justifyContent="flex-end">
-                                <IconButton size="small" onClick={handleCloseModal} style={{ padding: "4px" }}>
+                                <IconButton
+                                    size="small"
+                                    onClick={handleCloseModal}
+                                    style={{ padding: "4px" }}
+                                >
                                     ×
                                 </IconButton>
                             </Box>
 
-                            {modalType === "actions" ? (
-                                <div className="d-flex " style={{ gap: "10px", }}>
-                                    <Button
-                                        variant="outlined"
-                                        style={{
-                                            borderColor: "#1976d2",
-                                            color: "#1976d2",
-                                            textTransform: "none",
-                                            justifyContent: "center",
-                                            padding: "8px 16px",
-                                        }}
-                                        onClick={handleCancelMembership}
-                                    >
-                                        Cancel Membership
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        style={{
-                                            backgroundColor: "#0a3d62",
-                                            textTransform: "none",
-                                            justifyContent: "center",
-                                            padding: "8px 16px",
-                                        }}
-                                        // onClick={handleSuspendMembership}
-                                        onClick={() => {
-                                            handleCloseModal();
-                                            setTimeout(() => {
-                                                setSuspensionModalOpen(true);
-                                            }, 2000);
-                                        }}
-                                    >
-                                        Suspend Membership
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="d-flex flex-column" style={{ gap: "15px" }}>
-                                    <Typography variant="body1" style={{ color: "#555" }}>
-                                        <span style={{ marginRight: "10px" }}>Reason :</span>
-                                        <span style={{ color: "#333", fontWeight: "500" }}>{detailsData.reason}</span>
-                                    </Typography>
-                                    <Typography variant="body1" style={{ color: "#555" }}>
-                                        <span style={{ marginRight: "10px" }}>Duration :</span>
-                                        <span style={{ color: "#333", fontWeight: "500" }}>{detailsData.duration}</span>
-                                    </Typography>
-                                    <Typography variant="body1" style={{ color: "#555" }}>
-                                        <span style={{ marginRight: "10px" }}>From :</span>
-                                        <span style={{ color: "#333", fontWeight: "500" }}>{detailsData.fromDate}</span>
-                                        <span style={{ margin: "0 10px" }}>To :</span>
-                                        <span style={{ color: "#333", fontWeight: "500" }}>{detailsData.toDate}</span>
-                                    </Typography>
-                                </div>
-                            )}
+                            <div className="d-flex" style={{ gap: "10px" }}>
+                                <Button
+                                    variant="outlined"
+                                    style={{
+                                        borderColor: "#1976d2",
+                                        color: "#1976d2",
+                                        textTransform: "none",
+                                        justifyContent: "center",
+                                        padding: "8px 16px",
+                                    }}
+                                    onClick={() => {
+                                        handleCloseModal();
+                                        setTimeout(() => {
+                                            setCancelModalOpen(true);
+                                        }, 200);
+                                    }}
+                                >
+                                    Cancel Membership
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    style={{
+                                        backgroundColor: "#0a3d62",
+                                        textTransform: "none",
+                                        justifyContent: "center",
+                                        padding: "8px 16px",
+                                    }}
+                                    onClick={() => {
+                                        handleCloseModal();
+                                        setTimeout(() => {
+                                            setSuspensionModalOpen(true);
+                                        }, 200);
+                                    }}
+                                >
+                                    Suspend Membership
+                                </Button>
+                            </div>
                         </div>
                     )}
                     <MembershipSuspensionDialog
                         open={suspensionModalOpen}
                         onClose={() => setSuspensionModalOpen(false)}
+                        onConfirm={handleConfirmSuspend}
                     />
+                    <MembershipCancellationDialog
+                        open={cancelModalOpen}
+                        onClose={() => setCancelModalOpen(false)}
+                        onConfirm={handleCancelMembership}
+                    />
+                    <MemberProfileModal
+                        open={openProfileModal}
+                        onClose={() => setOpenProfileModal(false)}
+                        member={selectMember}
+                    />
+                    <MembershipCardComponent
+                        open={openCardModal}
+                        onClose={() => setOpenCardModal(false)}
+                    />
+                    <MemberFilter
+                        open={openFilterModal}
+                        onClose={() => setOpenFilterModal(false)}
+                    />
+                    {/* membership suspension alert */}
+                    <Snackbar
+                        open={showAlert}
+                        autoHideDuration={5000}
+                        onClose={() => setShowAlert(false)}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        TransitionComponent={(props) => <Slide {...props} direction="left" />}
+                    >
+                        <Alert onClose={() => setShowAlert(false)} severity="error" sx={{ width: '100%', fontWeight: 500, fontSize: '18px' }}>
+                            Membership successfully suspended!
+                            <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>This member card suspended successfully</Typography>
+                        </Alert>
+                    </Snackbar>
+
+                    {/* membership cancellation alert */}
+                    <Snackbar
+                        open={showAlert}
+                        autoHideDuration={5000}
+                        onClose={() => setShowAlert(false)}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        TransitionComponent={(props) => <Slide {...props} direction="left" />}
+                    >
+                        <Alert onClose={() => setShowAlert(false)} severity="error" sx={{ width: '100%', fontWeight: 500, fontSize: '18px' }}>
+                            Membership successfully cancelled!
+                            <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>This member card has been cancelled successfully</Typography>
+                        </Alert>
+                    </Snackbar>
                 </div>
             </div>
         </>

@@ -156,7 +156,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Finance',
-                    path: route(''),
+                    path: route('membership.finance'),
                 },
             ],
         },
