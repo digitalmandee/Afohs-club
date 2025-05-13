@@ -14,7 +14,7 @@ import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import { TiBusinessCard } from "react-icons/ti";
+import { TiBusinessCard } from 'react-icons/ti';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
@@ -134,7 +134,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Membership Booking',
-            icon: <TiBusinessCard style={{width:25, height:25}}/>,
+            icon: <TiBusinessCard style={{ width: 25, height: 25 }} />,
             children: [
                 {
                     text: 'Dashboard',
@@ -184,6 +184,7 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
+
         {
             text: 'Tenant',
             icon: <PeopleIcon />,
