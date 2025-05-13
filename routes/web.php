@@ -4,7 +4,9 @@ use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\WaiterController;
+use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\UserMemberController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -71,32 +73,16 @@ if (in_array(request()->getHost(), $allowedDomains)) {
         Route::get('tenants', [TenantController::class, 'index'])->name('tenant.index');
         Route::get('tenant/register', [TenantController::class, 'create'])->name('tenant.create');
         Route::post('tenant/store', [TenantController::class, 'store'])->name('tenant.store');
-        // Members types
-        Route::resource('members', MembersController::class)->except('show', 'edit');
-        Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
-        Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
-        Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
-        Route::put('/members/member-types/{id}', [MemberTypeController::class, 'update'])->name('member.update');
-        Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
-        // address
-        Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
-        Route::get('/members/address-types', [AddressTypeController::class, 'index'])->name('address-types.index');
-        Route::post('/members/address-types', [AddressTypeController::class, 'store'])->name('address-types.store');
-        Route::put('/members/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
-        Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
-        // member
-        Route::get('/members', [MembersController::class, 'index'])->name('members.index');
-        Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
-        Route::post('/members', [MembersController::class, 'store'])->name('members.store');
-        Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
-        Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
 
-        // Waiter
-        // Waiter Dashboard
-        Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');
-        Route::get('/waiters/create', [WaiterController::class, 'create'])->name('waiters.create');
-        Route::post('/waiters', [WaiterController::class, 'store'])->name('waiters.store');
-        Route::put('/waiters/{id}', [WaiterController::class, 'update'])->name('waiters.update');
+
+
+        // membership routes
+        Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
+        Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
+        Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
+        // UserMember routes
+        Route::get('/user-member', [UserMemberController::class, 'index'])->name('usermember');
+        Route::post('/user-member/store', [UserMemberController::class, 'store'])->name('usermember.store');
     });
 
     require __DIR__ . '/settings.php';

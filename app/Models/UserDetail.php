@@ -20,6 +20,22 @@ class UserDetail extends Model
         'zip',
         'address',
         'status',
+        'application_number',
+        'name_comments',
+        'guardian_name',
+        'guardian_membership',
+        'nationality',
+        'cnic_no',
+        'passport_no',
+        'gender',
+        'ntn',
+        'date_of_birth',
+        'education',
+        'membership_reason',
+    ];
+    protected $casts = [
+        'education' => 'array',
+        'date_of_birth' => 'date',
     ];
 
     public function user()

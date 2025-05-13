@@ -1,4 +1,5 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
+import SideNav from '@/components/App/Sidebar/SideNav';
+
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Alert, Box, Button, FormControl, Grid, IconButton, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material';

@@ -1,4 +1,4 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
+import SideNav from '@/components/App/Sidebar/SideNav';
 
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Apartment as ApartmentIcon, ArrowBack as ArrowBackIcon, Business as BusinessIcon, Close as CloseIcon, Home as HomeIcon, KeyboardArrowRight as KeyboardArrowRightIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
