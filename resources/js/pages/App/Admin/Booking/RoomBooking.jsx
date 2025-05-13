@@ -771,7 +771,7 @@ const RoomBooking = () => {
                                             <Form.Label className="small">Notes</Form.Label>
                                             <Form.Control
                                                 type="text"
-                                                placeholder="e.g. lunch at imaji coffee"
+                                                placeholder="e.g. lunch at afohs club."
                                                 name="notes"
                                                 value={formData.notes}
                                                 onChange={handleInputChange}

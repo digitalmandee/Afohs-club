@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { Print as PrintIcon } from '@mui/icons-material';
-import { Box, Button, Typography } from '@mui/material';
+import { Avatar, Box, Button, Typography } from '@mui/material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 
@@ -44,48 +44,51 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
               .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
               .total { font-weight: bold; margin-top: 10px; }
               .footer { text-align: center; margin-top: 20px; font-size: 11px; }
-              .logo { font-weight: bold; font-size: 16px; text-align: center; margin-top: 10px; }
+              .logo { width: 80px; }
             </style>
           </head>
           <body>
             <div class="header">
+              <div><img src='/assets/Logo.png' class="logo"/></div>
+            </div>
+            <div class="header">
               <div>${data.order.start_date || ''}</div>
             </div>
-    
+
             <div class="order-id">
               <div>Order Id</div>
               <div><strong>${data.order.order_number}</strong></div>
             </div>
-    
+
             <div class="row">
               <div>Cashier</div>
               <div>${data.user.name}</div>
             </div>
-    
+
             <div class="divider"></div>
-    
+
             <div class="row">
               <div>Customer Name</div>
               <div>${data.user.name}</div>
             </div>
-    
+
             <div class="row">
               <div>Member Id Card</div>
               <div>-</div>
             </div>
-    
+
             <div class="row">
               <div>Order Type</div>
               <div>${data.order.order_type}</div>
             </div>
-    
+
             <div class="row">
               <div>Table Number</div>
               <div>${data.order.table?.table_no ?? '-'}</div>
             </div>
-    
+
             <div class="divider"></div>
-    
+
             ${data.order.order_items
                 .map(
                     (item) => `
@@ -99,38 +102,39 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
             `,
                 )
                 .join('')}
-    
+
             <div class="divider"></div>
-    
+
             <div class="row">
               <div>Subtotal</div>
               <div>Rs ${data.amount}</div>
             </div>
-    
+
             <div class="row">
               <div>Discount</div>
               <div>Rs ${data.discount}</div>
             </div>
-    
+
             <div class="row">
               <div>Tax (12%)</div>
               <div>Rs ${data.amount * 0.12}</div>
             </div>
-    
+
             <div class="divider"></div>
-    
+
             <div class="row total">
               <div>Total Amount</div>
               <div>Rs ${data.total_price}</div>
             </div>
-    
+
             <div class="footer">
               <p>Thanks for having our passion. Drop by again. If your orders aren't still visible, you're always welcome here!</p>
             </div>
-    
+
             <div class="logo">
               IMAJI Coffee.
             </div>
+
           </body>
         </html>
         `;
@@ -146,6 +150,15 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
     return (
         <Box sx={styles.receiptContainer}>
+            <Box sx={styles.receiptLogo}>
+                <img src="/assets/slogo.png" alt="Sidebar Logo" style={{ width: '80px' }} />
+                {/* <Typography variant="h6" fontWeight="bold" color="#0a3d62">
+                    IMAJI Coffee.
+                </Typography> */}
+            </Box>
+            <Box sx={styles.receiptHeader}>
+                <img src={'/assets/Logo.png'} style={styles.receiptLogo} />
+            </Box>
             <Box sx={styles.receiptHeader}>
                 <Typography variant="caption">{paymentData.order.start_date}</Typography>
             </Box>
@@ -252,12 +265,6 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 </Typography>
             </Box>
 
-            <Box sx={styles.receiptLogo}>
-                <Typography variant="h6" fontWeight="bold" color="#0a3d62">
-                    IMAJI Coffee.
-                </Typography>
-            </Box>
-
             {showButtons && (
                 <Box
                     sx={{
@@ -277,12 +284,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                     >
                         Close
                     </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={<PrintIcon />}
-                        onClick={() => handlePrintReceipt(paymentData)}
-                        sx={styles.printReceiptButton}
-                    >
+                    <Button variant="contained" startIcon={<PrintIcon />} onClick={() => handlePrintReceipt(paymentData)} sx={styles.printReceiptButton}>
                         Print Receipt
                     </Button>
                 </Box>
@@ -324,10 +326,7 @@ const styles = {
         fontSize: '11px',
     },
     receiptLogo: {
-        fontWeight: 'bold',
-        fontSize: '16px',
-        textAlign: 'center',
-        marginTop: '10px',
+        width: '80px',
     },
     receiptRow: {
         display: 'flex',

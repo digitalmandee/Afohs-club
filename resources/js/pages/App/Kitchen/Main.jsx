@@ -1,6 +1,5 @@
-// pages/CustomerLists.jsx
-import SideNav from '@/components/App/Sidebar/SideNav';
-import { tenantAsset } from '@/helpers/asset';
+// pages/CustomerLists.jsx or similar
+import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Alert, Avatar, Box, Button, IconButton, InputAdornment, Menu, MenuItem, Modal, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
@@ -10,7 +9,7 @@ import { useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const CustomerLists = ({ users }) => {
+const MainDashboard = ({ userDetail, users }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -69,10 +68,6 @@ const CustomerLists = ({ users }) => {
         setShowSuccess(false);
     };
 
-    const handleEditCustomer = (customerId) => {
-        router.get(route('members.edit', customerId));
-    };
-
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -95,7 +90,7 @@ const CustomerLists = ({ users }) => {
                             marginBottom: '20px',
                         }}
                     >
-                        <Typography variant="h5">{users.data.length} Customers</Typography>
+                        <Typography variant="h5">{userDetail.data.length} Kitchen</Typography>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <TextField
                                 placeholder="Search name or membership type"
@@ -112,8 +107,8 @@ const CustomerLists = ({ users }) => {
                                 }}
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('members.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
-                                Add Customer
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('kitchens.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
+                                Add Kitchen
                             </Button>
                         </div>
                     </div>
@@ -123,71 +118,59 @@ const CustomerLists = ({ users }) => {
                             <TableHead style={{ backgroundColor: '#f0f0f0' }}>
                                 <TableRow>
                                     <TableCell style={{ fontWeight: 'bold' }}>Membership ID</TableCell>
-                                    <TableCell style={{ fontWeight: 'bold' }}>Members</TableCell>
-                                    <TableCell style={{ fontWeight: 'bold' }}>Type</TableCell>
-                                    <TableCell style={{ fontWeight: 'bold' }}>Address</TableCell>
-                                    <TableCell style={{ fontWeight: 'bold' }}>Create Order</TableCell>
-                                    <TableCell style={{ fontWeight: 'bold' }}>Edit</TableCell>
+                                    <TableCell style={{ fontWeight: 'bold' }}>Kitchen Name</TableCell>
+                                    <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
+                                    <TableCell style={{ fontWeight: 'bold' }}>Phone number</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {users.data.length > 0 &&
-                                    users.data.map((user, userIndex) => (
-                                        <TableRow key={userIndex}>
+                                {users?.data?.length > 0 ? (
+                                    users.data.map((user, index) => (
+                                        <TableRow key={`${user.user_id}-${index}`}>
                                             <TableCell>{user.user_id || 'N/A'}</TableCell>
                                             <TableCell>
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Avatar src={tenantAsset(user.profile_photo)} alt={user.name} style={{ marginRight: '10px' }} />
-                                                    <div>
-                                                        <Typography variant="body1">{user.name || 'N/A'}</Typography>
-                                                        <Typography variant="body2" color="textSecondary">
-                                                            {user.email || 'N/A'}
-                                                        </Typography>
-                                                        <Typography variant="body2" color="textSecondary">
-                                                            {user.phone || 'N/A'}
-                                                        </Typography>
-                                                    </div>
-                                                </div>
+                                                <Typography variant="body1">{user.name || 'N/A'}</Typography>
                                             </TableCell>
-                                            <TableCell>{user.user_detail?.address_type || 'N/A'}</TableCell>
-                                            <TableCell>{user.user_detail?.address || user.user_detail?.city || user.user_detail?.state || user.user_detail?.country || user.user_detail?.zip ? `${user.user_detail?.address || ''}, ${user.user_detail?.city || ''}, ${user.user_detail?.state || ''}, ${user.user_detail?.country || ''}, ${user.user_detail?.zip || ''}` : '----'}</TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleCreateOrder({
-                                                            ...user,
-                                                            profilePic: user.profile_photo,
-                                                        });
-                                                    }}
-                                                    style={{
-                                                        backgroundColor: '#063455',
-                                                        fontSize: '12px',
-                                                        borderRadius: '20px',
-                                                        color: 'white',
-                                                    }}
-                                                >
-                                                    Order
-                                                </Button>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleEditCustomer(user.id);
-                                                    }}
-                                                    style={{
-                                                        backgroundColor: '#1976d2',
-                                                        fontSize: '12px',
-                                                        borderRadius: '20px',
-                                                        color: 'white',
-                                                    }}
-                                                >
-                                                    Edit
-                                                </Button>
-                                            </TableCell>
+                                            <TableCell>{user.email || 'N/A'}</TableCell>
+                                            <TableCell>{user.phone_number || 'N/A'}</TableCell>
                                         </TableRow>
-                                    ))}
+                                    ))
+                                ) : (
+                                    <TableRow key="no-kitchen">
+                                        <TableCell colSpan={4}>
+                                            <Typography variant="body2">No kitchen details available.</Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+
+                                {/* {userDetail?.data?.length > 0 ? (
+                                    userDetail?.data?.map((user, userIndex) =>
+                                        user.user_detail && user.user_detail.length > 0 ? (
+                                            user.user_detail.map((detail, detailIndex) => (
+                                                <TableRow key={`${user.user_id}-${detailIndex}`}>
+                                                    <TableCell>{user.user_id || 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body1">{user.name || 'N/A'}</Typography>
+                                                    </TableCell>
+                                                    <TableCell>{user.email || 'N/A'}</TableCell>
+                                                    <TableCell>{user.phone_number || 'N/A'}</TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow key={`no-kitchen-${userIndex}`}>
+                                                <TableCell colSpan={4}>
+                                                    <Typography variant="body2">No kitchen details available.</Typography>
+                                                </TableCell>
+                                            </TableRow>
+                                        ),
+                                    )
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4}>
+                                            <Typography variant="body2">No customers found.</Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                )} */}
                             </TableBody>
                         </Table>
                     </Box>
@@ -275,4 +258,4 @@ const CustomerLists = ({ users }) => {
     );
 };
 
-export default CustomerLists;
+export default MainDashboard;

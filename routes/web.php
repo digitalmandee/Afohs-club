@@ -1,6 +1,12 @@
 <?php
 
+use App\Http\Controllers\App\AddressTypeController;
+use App\Http\Controllers\App\MembersController;
+use App\Http\Controllers\App\MemberTypeController;
+use App\Http\Controllers\App\WaiterController;
+use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\UserMemberController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -58,6 +64,10 @@ if (in_array(request()->getHost(), $allowedDomains)) {
         Route::get('/employee/list', function () {
             return Inertia::render('App/Admin/Employee/EmployeeList');
         })->name('employee.employeeList');
+        // member
+        // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
+        // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
+        // Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
 
         //Membership Booking Routes
         Route::get('/membership/booking/dashboard', function () {
@@ -112,6 +122,16 @@ if (in_array(request()->getHost(), $allowedDomains)) {
         Route::get('tenants', [TenantController::class, 'index'])->name('tenant.index');
         Route::get('tenant/register', [TenantController::class, 'create'])->name('tenant.create');
         Route::post('tenant/store', [TenantController::class, 'store'])->name('tenant.store');
+
+
+
+        // membership routes
+        Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
+        Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
+        Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
+        // UserMember routes
+        Route::get('/user-member', [UserMemberController::class, 'index'])->name('usermember');
+        Route::post('/user-member/store', [UserMemberController::class, 'store'])->name('usermember.store');
     });
 
     require __DIR__ . '/settings.php';

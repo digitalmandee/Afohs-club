@@ -1,26 +1,9 @@
 // pages/CustomerLists.jsx or similar
-import SideNav from '@/components/App/SideBar/SideNav';
+import SideNav from '@/components/App/Sidebar/SideNav';
+
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';
-import {
-    Alert,
-    Avatar,
-    Box,
-    Button,
-    IconButton,
-    InputAdornment,
-    Menu,
-    MenuItem,
-    Modal,
-    Snackbar,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Alert, Avatar, Box, Button, IconButton, InputAdornment, Menu, MenuItem, Modal, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 
@@ -125,13 +108,8 @@ const WaiterDashboard = ({ userDetail, users }) => {
                                 }}
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => router.get(route('waiters.create'))}
-                                style={{ backgroundColor: '#003366', color: 'white' }}
-                            >
-                                Add Customer
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('waiters.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
+                                Add Waiter
                             </Button>
                         </div>
                     </div>
@@ -201,12 +179,7 @@ const WaiterDashboard = ({ userDetail, users }) => {
             </div>
 
             {/* Order Modal */}
-            <Modal
-                open={orderModalOpen}
-                onClose={handleCloseOrderModal}
-                aria-labelledby="order-modal-title"
-                aria-describedby="order-modal-description"
-            >
+            <Modal open={orderModalOpen} onClose={handleCloseOrderModal} aria-labelledby="order-modal-title" aria-describedby="order-modal-description">
                 <Box
                     sx={{
                         position: 'absolute',

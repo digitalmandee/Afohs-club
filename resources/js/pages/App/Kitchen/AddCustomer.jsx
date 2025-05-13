@@ -1,12 +1,11 @@
-import SideNav from '@/components/App/Sidebar/SideNav';
-
+import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Alert, Box, Button, FormControl, Grid, IconButton, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 
-export default function AddWaiter({ users, memberTypes, customer = null }) {
+export default function AddKitchen({ users, memberTypes, customer = null }) {
     const drawerWidthOpen = 240;
     const drawerWidthClosed = 110;
 
@@ -147,21 +146,20 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
         }
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
-        const routeName = isEditMode ? 'members.update' : 'members.store';
         const method = isEditMode ? 'put' : 'post';
-        const url = isEditMode ? `/waiters/${newCustomer.id}` : '/waiters';
+        const url = isEditMode ? `/kitchens/${newCustomer.id}` : '/kitchens';
 
         router[method](url, formData, {
             onSuccess: () => {
-                setSuccessMessage(isEditMode ? 'Waiter updated successfully!' : 'Waiter added successfully!');
+                setSuccessMessage(isEditMode ? 'Kitchen updated successfully!' : 'Kitchen added successfully!');
                 setShowSuccess(true);
                 handleCloseAddForm();
-                router.visit('/waiters'); // Redirect to dashboard
+                router.visit('/kitchens'); // Redirect to dashboard
             },
             onError: (errors) => {
                 setErrors(errors);
                 const errorMessages = Object.values(errors).filter(Boolean).join('; ');
-                setErrorMessage(errorMessages || 'Failed to save waiter. Please check the form.');
+                setErrorMessage(errorMessages || 'Failed to save Kitchen. Please check the form.');
                 setShowError(true);
             },
         });
@@ -181,11 +179,11 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <IconButton onClick={() => router.visit('/waiters')}>
+                    <IconButton onClick={() => router.visit('/kitchens')}>
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="h6" style={{ marginLeft: '10px' }}>
-                        {isEditMode ? 'Edit Waiter Information' : 'Add Waiter Information'}
+                        {isEditMode ? 'Edit Kitchen Information' : 'Add Kitchen Information'}
                     </Typography>
                 </div>
                 <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '5px' }}>
@@ -193,7 +191,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                         <Grid item xs={12} md={6}>
                             <Box sx={{ p: 2, backgroundColor: '#F6F6F6', border: '1px solid #e0e0e0', borderRadius: '4px', mb: 2 }}>
                                 <Typography variant="body1">
-                                    Member Id: <strong>MEMBER{newMemberId}</strong>
+                                    Member Id: <strong>#{newMemberId}</strong>
                                 </Typography>
                             </Box>
                             <Box style={{ display: 'flex', gap: '10px' }}>
@@ -257,7 +255,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                                 </Typography>
                             )}
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                                Waiter Name
+                                Kitchen Name
                             </Typography>
                             <TextField fullWidth placeholder="e.g. Dianne Russell" name="name" value={newCustomer.name} onChange={handleInputChange} margin="normal" variant="outlined" sx={{ mb: 2 }} error={!!errors.name} helperText={errors.name} />
                             <Grid container spacing={2}>

@@ -23,6 +23,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState } from 'react';
+import MemberIcon from '@/components/App/Icons/Member';
+import AddressType from '../Icons/AddressType';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -196,6 +198,7 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
+
         {
             text: 'Settings',
             icon: <PeopleIcon />,
@@ -210,11 +213,11 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
-        {
-            text: 'Logout',
-            icon: <HomeIcon />,
-            path: route('logout'),
-        },
+        // {
+        //     text: 'Logout',
+        //     icon: <HomeIcon />,
+        //     path: route('logout'),
+        // },
     ];
 
     return (
