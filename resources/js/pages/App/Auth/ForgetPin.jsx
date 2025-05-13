@@ -52,8 +52,7 @@ const ForgetPin = () => {
                             lineHeight: 1.5,
                         }}
                     >
-                        AFOHS Club was established in Pakistan Air Force Falcon Complex. A total of 25.5 Kanal of land was demarcated by Air
-                        Headquarters in PAF Falcon Complex for the establishment of "Community Centre and Club".
+                        AFOHS Club was established in Pakistan Air Force Falcon Complex. A total of 25.5 Kanal of land was demarcated by Air Headquarters in PAF Falcon Complex for the establishment of "Community Centre and Club".
                     </Typography>
                     <Box
                         sx={{
@@ -171,7 +170,7 @@ const ForgetPin = () => {
                                         fontWeight: 500,
                                     }}
                                 >
-                                    Imaji Coffee Shop (IMAJI101010)
+                                    Afohs Club Shop (IMAJI101010)
                                 </Box>
                             </Box>
 

@@ -24,33 +24,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import StoreIcon from '@mui/icons-material/Store';
 import TakeoutDiningIcon from '@mui/icons-material/TakeoutDining';
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    Grid,
-    IconButton,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    MenuItem,
-    Select,
-    Snackbar,
-    styled,
-    Switch,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid, IconButton, List, ListItem, ListItemSecondaryAction, MenuItem, Select, Snackbar, styled, Switch, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useRef, useState } from 'react';
 
@@ -158,7 +132,7 @@ const SettingDashboard = () => {
 
     // Store Info State
     const [storeInfo, setStoreInfo] = useState({
-        name: 'Imaji Coffee Shop',
+        name: 'Afohs club Shop',
         email: 'imaji.coffee@gmail.com',
         phone1: '892 000 000 000',
         phone2: '892 000 000 000',
@@ -528,26 +502,14 @@ const SettingDashboard = () => {
                     </Grid>
 
                     {/* Success Message Snackbar */}
-                    <Snackbar
-                        open={!!successMessage}
-                        autoHideDuration={3000}
-                        onClose={handleCloseSnackbar}
-                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                    >
+                    <Snackbar open={!!successMessage} autoHideDuration={3000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
                         <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
                             {successMessage}
                         </Alert>
                     </Snackbar>
 
                     {/* Store Info Modal */}
-                    <StyledDialog
-                        open={activeModal === 'store-info'}
-                        onClose={handleCloseModal}
-                        maxWidth="md"
-                        fullWidth
-                        scroll="paper"
-                        TransitionProps={{ onEntering: undefined }}
-                    >
+                    <StyledDialog open={activeModal === 'store-info'} onClose={handleCloseModal} maxWidth="md" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                         <DialogTitle>
                             <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                 <CloseIcon />
@@ -605,13 +567,7 @@ const SettingDashboard = () => {
                                             <PhotoButton variant="text" color="error" onClick={handleDeleteImage} disabled={!storeImage}>
                                                 Delete
                                             </PhotoButton>
-                                            <input
-                                                type="file"
-                                                ref={fileInputRef}
-                                                onChange={handleImageUpload}
-                                                style={{ display: 'none' }}
-                                                accept="image/*"
-                                            />
+                                            <input type="file" ref={fileInputRef} onChange={handleImageUpload} style={{ display: 'none' }} accept="image/*" />
                                         </Box>
                                         <Typography variant="body2" color="textSecondary">
                                             Click upload to change store logo
@@ -628,27 +584,13 @@ const SettingDashboard = () => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Store Name
                                     </Typography>
-                                    <StyledTextField
-                                        fullWidth
-                                        name="name"
-                                        value={storeInfo.name}
-                                        onChange={handleChange}
-                                        variant="outlined"
-                                        size="small"
-                                    />
+                                    <StyledTextField fullWidth name="name" value={storeInfo.name} onChange={handleChange} variant="outlined" size="small" />
                                 </Grid>
                                 <Grid item xs={12} md={6}>
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Email
                                     </Typography>
-                                    <StyledTextField
-                                        fullWidth
-                                        name="email"
-                                        value={storeInfo.email}
-                                        onChange={handleChange}
-                                        variant="outlined"
-                                        size="small"
-                                    />
+                                    <StyledTextField fullWidth name="email" value={storeInfo.email} onChange={handleChange} variant="outlined" size="small" />
                                 </Grid>
 
                                 <Grid item xs={12} md={6}>
@@ -657,29 +599,14 @@ const SettingDashboard = () => {
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         <FormControl sx={{ width: '30%' }}>
-                                            <StyledSelect
-                                                value={storeInfo.countryCode1}
-                                                onChange={handleChange}
-                                                name="countryCode1"
-                                                displayEmpty
-                                                variant="outlined"
-                                                size="small"
-                                                IconComponent={KeyboardArrowDownIcon}
-                                            >
+                                            <StyledSelect value={storeInfo.countryCode1} onChange={handleChange} name="countryCode1" displayEmpty variant="outlined" size="small" IconComponent={KeyboardArrowDownIcon}>
                                                 <MenuItem value="+62">+62</MenuItem>
                                                 <MenuItem value="+1">+1</MenuItem>
                                                 <MenuItem value="+44">+44</MenuItem>
                                                 <MenuItem value="+81">+81</MenuItem>
                                             </StyledSelect>
                                         </FormControl>
-                                        <StyledTextField
-                                            fullWidth
-                                            name="phone1"
-                                            value={storeInfo.phone1}
-                                            onChange={handleChange}
-                                            variant="outlined"
-                                            size="small"
-                                        />
+                                        <StyledTextField fullWidth name="phone1" value={storeInfo.phone1} onChange={handleChange} variant="outlined" size="small" />
                                     </Box>
                                 </Grid>
                                 <Grid item xs={12} md={6}>
@@ -688,29 +615,14 @@ const SettingDashboard = () => {
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         <FormControl sx={{ width: '30%' }}>
-                                            <StyledSelect
-                                                value={storeInfo.countryCode2}
-                                                onChange={handleChange}
-                                                name="countryCode2"
-                                                displayEmpty
-                                                variant="outlined"
-                                                size="small"
-                                                IconComponent={KeyboardArrowDownIcon}
-                                            >
+                                            <StyledSelect value={storeInfo.countryCode2} onChange={handleChange} name="countryCode2" displayEmpty variant="outlined" size="small" IconComponent={KeyboardArrowDownIcon}>
                                                 <MenuItem value="+62">+62</MenuItem>
                                                 <MenuItem value="+1">+1</MenuItem>
                                                 <MenuItem value="+44">+44</MenuItem>
                                                 <MenuItem value="+81">+81</MenuItem>
                                             </StyledSelect>
                                         </FormControl>
-                                        <StyledTextField
-                                            fullWidth
-                                            name="phone2"
-                                            value={storeInfo.phone2}
-                                            onChange={handleChange}
-                                            variant="outlined"
-                                            size="small"
-                                        />
+                                        <StyledTextField fullWidth name="phone2" value={storeInfo.phone2} onChange={handleChange} variant="outlined" size="small" />
                                     </Box>
                                 </Grid>
 
@@ -735,12 +647,7 @@ const SettingDashboard = () => {
                                         Country
                                     </Typography>
                                     <FormControl fullWidth variant="outlined" size="small">
-                                        <StyledSelect
-                                            value={storeInfo.country}
-                                            onChange={handleChange}
-                                            name="country"
-                                            IconComponent={KeyboardArrowDownIcon}
-                                        >
+                                        <StyledSelect value={storeInfo.country} onChange={handleChange} name="country" IconComponent={KeyboardArrowDownIcon}>
                                             <MenuItem value="Indonesia">Indonesia</MenuItem>
                                             <MenuItem value="Malaysia">Malaysia</MenuItem>
                                             <MenuItem value="Singapore">Singapore</MenuItem>
@@ -753,12 +660,7 @@ const SettingDashboard = () => {
                                         Province / Street
                                     </Typography>
                                     <FormControl fullWidth variant="outlined" size="small">
-                                        <StyledSelect
-                                            value={storeInfo.province}
-                                            onChange={handleChange}
-                                            name="province"
-                                            IconComponent={KeyboardArrowDownIcon}
-                                        >
+                                        <StyledSelect value={storeInfo.province} onChange={handleChange} name="province" IconComponent={KeyboardArrowDownIcon}>
                                             <MenuItem value="Jakarta">Jakarta</MenuItem>
                                             <MenuItem value="Bali">Bali</MenuItem>
                                             <MenuItem value="Bandung">Bandung</MenuItem>
@@ -772,12 +674,7 @@ const SettingDashboard = () => {
                                         City
                                     </Typography>
                                     <FormControl fullWidth variant="outlined" size="small">
-                                        <StyledSelect
-                                            value={storeInfo.city}
-                                            onChange={handleChange}
-                                            name="city"
-                                            IconComponent={KeyboardArrowDownIcon}
-                                        >
+                                        <StyledSelect value={storeInfo.city} onChange={handleChange} name="city" IconComponent={KeyboardArrowDownIcon}>
                                             <MenuItem value="Jakarta">Jakarta</MenuItem>
                                             <MenuItem value="Denpasar">Denpasar</MenuItem>
                                             <MenuItem value="Bandung">Bandung</MenuItem>
@@ -789,30 +686,14 @@ const SettingDashboard = () => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Zip Code / Postal Code
                                     </Typography>
-                                    <StyledTextField
-                                        fullWidth
-                                        name="zipCode"
-                                        value={storeInfo.zipCode}
-                                        onChange={handleChange}
-                                        variant="outlined"
-                                        size="small"
-                                    />
+                                    <StyledTextField fullWidth name="zipCode" value={storeInfo.zipCode} onChange={handleChange} variant="outlined" size="small" />
                                 </Grid>
 
                                 <Grid item xs={12}>
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Full Address / Street
                                     </Typography>
-                                    <StyledTextField
-                                        fullWidth
-                                        name="fullAddress"
-                                        value={storeInfo.fullAddress}
-                                        onChange={handleChange}
-                                        variant="outlined"
-                                        size="small"
-                                        multiline
-                                        rows={2}
-                                    />
+                                    <StyledTextField fullWidth name="fullAddress" value={storeInfo.fullAddress} onChange={handleChange} variant="outlined" size="small" multiline rows={2} />
                                 </Grid>
                             </Grid>
                         </DialogContent>
@@ -823,14 +704,7 @@ const SettingDashboard = () => {
                     </StyledDialog>
 
                     {/* Notification Modal */}
-                    <StyledDialog
-                        open={activeModal === 'notification'}
-                        onClose={handleCloseModal}
-                        maxWidth="sm"
-                        fullWidth
-                        scroll="paper"
-                        TransitionProps={{ onEntering: undefined }}
-                    >
+                    <StyledDialog open={activeModal === 'notification'} onClose={handleCloseModal} maxWidth="sm" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                         <DialogTitle>
                             <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                 <CloseIcon />
@@ -862,12 +736,7 @@ const SettingDashboard = () => {
                                             alignItems: 'center',
                                         }}
                                     >
-                                        <Switch
-                                            edge="end"
-                                            checked={notifications.outOfStockMenu}
-                                            onChange={handleNotificationChange('outOfStockMenu')}
-                                            color="primary"
-                                        />
+                                        <Switch edge="end" checked={notifications.outOfStockMenu} onChange={handleNotificationChange('outOfStockMenu')} color="primary" />
                                         <ChevronRightIcon sx={{ ml: 1 }} />
                                     </ListItemSecondaryAction>
                                 </ListItem>
@@ -893,12 +762,7 @@ const SettingDashboard = () => {
                                             alignItems: 'center',
                                         }}
                                     >
-                                        <Switch
-                                            edge="end"
-                                            checked={notifications.stockMinimum}
-                                            onChange={handleNotificationChange('stockMinimum')}
-                                            color="primary"
-                                        />
+                                        <Switch edge="end" checked={notifications.stockMinimum} onChange={handleNotificationChange('stockMinimum')} color="primary" />
                                         <ChevronRightIcon sx={{ ml: 1 }} />
                                     </ListItemSecondaryAction>
                                 </ListItem>
@@ -924,12 +788,7 @@ const SettingDashboard = () => {
                                             alignItems: 'center',
                                         }}
                                     >
-                                        <Switch
-                                            edge="end"
-                                            checked={notifications.selfOrder}
-                                            onChange={handleNotificationChange('selfOrder')}
-                                            color="primary"
-                                        />
+                                        <Switch edge="end" checked={notifications.selfOrder} onChange={handleNotificationChange('selfOrder')} color="primary" />
                                         <ChevronRightIcon sx={{ ml: 1 }} />
                                     </ListItemSecondaryAction>
                                 </ListItem>
@@ -954,12 +813,7 @@ const SettingDashboard = () => {
                                             alignItems: 'center',
                                         }}
                                     >
-                                        <Switch
-                                            edge="end"
-                                            checked={notifications.orderFromMobileApp}
-                                            onChange={handleNotificationChange('orderFromMobileApp')}
-                                            color="primary"
-                                        />
+                                        <Switch edge="end" checked={notifications.orderFromMobileApp} onChange={handleNotificationChange('orderFromMobileApp')} color="primary" />
                                         <ChevronRightIcon sx={{ ml: 1 }} />
                                     </ListItemSecondaryAction>
                                 </ListItem>
@@ -971,14 +825,7 @@ const SettingDashboard = () => {
                     </StyledDialog>
 
                     {/* Order Type Modal (Dine In) */}
-                    <StyledDialog
-                        open={activeModal === 'dine-in'}
-                        onClose={handleCloseModal}
-                        maxWidth="md"
-                        fullWidth
-                        scroll="paper"
-                        TransitionProps={{ onEntering: undefined }}
-                    >
+                    <StyledDialog open={activeModal === 'dine-in'} onClose={handleCloseModal} maxWidth="md" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                         <DialogTitle>
                             <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                 <CloseIcon />
@@ -1700,14 +1547,7 @@ const SettingDashboard = () => {
                     </StyledDialog>
 
                     {/* Categories Menu Modal */}
-                    <StyledDialog
-                        open={activeModal === 'categories-menu'}
-                        onClose={handleCloseModal}
-                        maxWidth="sm"
-                        fullWidth
-                        scroll="paper"
-                        TransitionProps={{ onEntering: undefined }}
-                    >
+                    <StyledDialog open={activeModal === 'categories-menu'} onClose={handleCloseModal} maxWidth="sm" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                         <DialogTitle>
                             <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                 <CloseIcon />
@@ -1746,19 +1586,9 @@ const SettingDashboard = () => {
                                                 <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
                                                     {category.active ? 'Active' : 'Inactive'}
                                                 </Typography>
-                                                <Switch
-                                                    edge="end"
-                                                    checked={category.active}
-                                                    onChange={() => handleCategoryActiveChange(category.id)}
-                                                    color="primary"
-                                                />
+                                                <Switch edge="end" checked={category.active} onChange={() => handleCategoryActiveChange(category.id)} color="primary" />
                                             </Box>
-                                            <IconButton
-                                                edge="end"
-                                                aria-label="delete"
-                                                onClick={() => handleDeleteCategory(category.id)}
-                                                sx={{ color: 'error.main' }}
-                                            >
+                                            <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteCategory(category.id)} sx={{ color: 'error.main' }}>
                                                 <DeleteIcon />
                                             </IconButton>
                                             <IconButton edge="end" aria-label="edit" sx={{ color: 'primary.main' }}>
@@ -1780,14 +1610,7 @@ const SettingDashboard = () => {
                                             <Typography variant="body1" sx={{ mr: 2, width: '50px' }}>
                                                 Name
                                             </Typography>
-                                            <StyledTextField
-                                                fullWidth
-                                                size="small"
-                                                value={newCategoryName}
-                                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                                placeholder="e.g. Coffee"
-                                                variant="outlined"
-                                            />
+                                            <StyledTextField fullWidth size="small" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="e.g. Coffee" variant="outlined" />
                                             <IconButton
                                                 color="primary"
                                                 onClick={handleAddCategory}
@@ -1837,14 +1660,7 @@ const SettingDashboard = () => {
                     </StyledDialog>
 
                     {/* Payment Type Modal */}
-                    <StyledDialog
-                        open={activeModal === 'payment-type'}
-                        onClose={handleCloseModal}
-                        maxWidth="sm"
-                        fullWidth
-                        scroll="paper"
-                        TransitionProps={{ onEntering: undefined }}
-                    >
+                    <StyledDialog open={activeModal === 'payment-type'} onClose={handleCloseModal} maxWidth="sm" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                         <DialogTitle>
                             <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                 <CloseIcon />
@@ -1868,12 +1684,7 @@ const SettingDashboard = () => {
                                             {paymentType.name}
                                         </Typography>
                                         <ListItemSecondaryAction>
-                                            <Switch
-                                                edge="end"
-                                                checked={paymentType.active}
-                                                onChange={() => handlePaymentTypeActiveChange(paymentType.id)}
-                                                color="primary"
-                                            />
+                                            <Switch edge="end" checked={paymentType.active} onChange={() => handlePaymentTypeActiveChange(paymentType.id)} color="primary" />
                                         </ListItemSecondaryAction>
                                     </ListItem>
                                 ))}
@@ -1890,14 +1701,7 @@ const SettingDashboard = () => {
                                             <Typography variant="body1" sx={{ mr: 2, width: '50px' }}>
                                                 Name
                                             </Typography>
-                                            <StyledTextField
-                                                fullWidth
-                                                size="small"
-                                                value={newPaymentType}
-                                                onChange={(e) => setNewPaymentType(e.target.value)}
-                                                placeholder="e.g. e-wallet"
-                                                variant="outlined"
-                                            />
+                                            <StyledTextField fullWidth size="small" value={newPaymentType} onChange={(e) => setNewPaymentType(e.target.value)} placeholder="e.g. e-wallet" variant="outlined" />
                                             <IconButton
                                                 color="primary"
                                                 onClick={handleAddPaymentType}
@@ -1947,14 +1751,7 @@ const SettingDashboard = () => {
                     </StyledDialog>
 
                     {/* Bank Account Modal */}
-                    <StyledDialog
-                        open={activeModal === 'bank-account'}
-                        onClose={handleCloseModal}
-                        maxWidth="sm"
-                        fullWidth
-                        scroll="paper"
-                        TransitionProps={{ onEntering: undefined }}
-                    >
+                    <StyledDialog open={activeModal === 'bank-account'} onClose={handleCloseModal} maxWidth="sm" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                         <DialogTitle>
                             <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                 <CloseIcon />
@@ -1983,12 +1780,7 @@ const SettingDashboard = () => {
                                             </Typography>
                                         </Box>
                                         <ListItemSecondaryAction>
-                                            <Switch
-                                                edge="end"
-                                                checked={bankAccount.active}
-                                                onChange={() => handleBankAccountActiveChange(bankAccount.id)}
-                                                color="primary"
-                                            />
+                                            <Switch edge="end" checked={bankAccount.active} onChange={() => handleBankAccountActiveChange(bankAccount.id)} color="primary" />
                                         </ListItemSecondaryAction>
                                     </ListItem>
                                 ))}
@@ -2010,14 +1802,7 @@ const SettingDashboard = () => {
                                             <Typography variant="body2" sx={{ mr: 2, width: '100px' }}>
                                                 Bank Name
                                             </Typography>
-                                            <StyledTextField
-                                                fullWidth
-                                                size="small"
-                                                value={newBankName}
-                                                onChange={(e) => setNewBankName(e.target.value)}
-                                                placeholder="e.g. Sea Bank"
-                                                variant="outlined"
-                                            />
+                                            <StyledTextField fullWidth size="small" value={newBankName} onChange={(e) => setNewBankName(e.target.value)} placeholder="e.g. Sea Bank" variant="outlined" />
                                         </Box>
                                         <Box
                                             sx={{
@@ -2098,14 +1883,7 @@ const SettingDashboard = () => {
                     </StyledDialog>
 
                     {/* Floor & Area Data Modal */}
-                    <StyledDialog
-                        open={activeModal === 'floor-area-data'}
-                        onClose={handleCloseModal}
-                        maxWidth="sm"
-                        fullWidth
-                        scroll="paper"
-                        TransitionProps={{ onEntering: undefined }}
-                    >
+                    <StyledDialog open={activeModal === 'floor-area-data'} onClose={handleCloseModal} maxWidth="sm" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                         <DialogTitle>
                             <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                 <CloseIcon />
@@ -2195,14 +1973,7 @@ const SettingDashboard = () => {
                                                 >
                                                     Name
                                                 </Typography>
-                                                <StyledTextField
-                                                    fullWidth
-                                                    size="small"
-                                                    value={newFloorName}
-                                                    onChange={(e) => setNewFloorName(e.target.value)}
-                                                    placeholder="e.g. Floor 3"
-                                                    variant="outlined"
-                                                />
+                                                <StyledTextField fullWidth size="small" value={newFloorName} onChange={(e) => setNewFloorName(e.target.value)} placeholder="e.g. Floor 3" variant="outlined" />
                                             </Box>
                                             <Box
                                                 sx={{
@@ -2265,14 +2036,7 @@ const SettingDashboard = () => {
                     </StyledDialog>
 
                     {/* Printing Device Modal */}
-                    <StyledDialog
-                        open={activeModal === 'printing-device'}
-                        onClose={handleCloseModal}
-                        maxWidth="sm"
-                        fullWidth
-                        scroll="paper"
-                        TransitionProps={{ onEntering: undefined }}
-                    >
+                    <StyledDialog open={activeModal === 'printing-device'} onClose={handleCloseModal} maxWidth="sm" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                         <DialogTitle>
                             <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                 <CloseIcon />
@@ -2314,12 +2078,7 @@ const SettingDashboard = () => {
                                             </Box>
                                         </Box>
                                         <ListItemSecondaryAction>
-                                            <Switch
-                                                edge="end"
-                                                checked={device.active}
-                                                onChange={() => handlePrintingDeviceActiveChange(device.id)}
-                                                color="primary"
-                                            />
+                                            <Switch edge="end" checked={device.active} onChange={() => handlePrintingDeviceActiveChange(device.id)} color="primary" />
                                         </ListItemSecondaryAction>
                                     </ListItem>
                                 ))}
@@ -2345,29 +2104,9 @@ const SettingDashboard = () => {
 
                     {/* Other modals would be implemented similarly */}
                     {settingsOptions
-                        .filter(
-                            (option) =>
-                                ![
-                                    'store-info',
-                                    'notification',
-                                    'dine-in',
-                                    'categories-menu',
-                                    'payment-type',
-                                    'bank-account',
-                                    'floor-area-data',
-                                    'printing-device',
-                                ].includes(option.id),
-                        )
+                        .filter((option) => !['store-info', 'notification', 'dine-in', 'categories-menu', 'payment-type', 'bank-account', 'floor-area-data', 'printing-device'].includes(option.id))
                         .map((option) => (
-                            <StyledDialog
-                                key={option.id}
-                                open={activeModal === option.id}
-                                onClose={handleCloseModal}
-                                maxWidth="md"
-                                fullWidth
-                                scroll="paper"
-                                TransitionProps={{ onEntering: undefined }}
-                            >
+                            <StyledDialog key={option.id} open={activeModal === option.id} onClose={handleCloseModal} maxWidth="md" fullWidth scroll="paper" TransitionProps={{ onEntering: undefined }}>
                                 <DialogTitle>
                                     <IconButton edge="start" color="inherit" onClick={handleCloseModal} aria-label="close" sx={{ mr: 1 }}>
                                         <CloseIcon />

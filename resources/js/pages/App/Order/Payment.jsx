@@ -89,7 +89,7 @@ const PaymentPage = () => {
                             mb: 1,
                         }}
                     >
-                        IMAJI Coffee.
+                        Afohs Club.
                     </Typography>
 
                     {/* Date and Time */}
@@ -310,7 +310,7 @@ const PaymentPage = () => {
                             mt: 'auto',
                         }}
                     >
-                        IMAJI Coffee.
+                        Afohs club.
                     </Typography>
                 </Box>
 

@@ -1,5 +1,5 @@
 // pages/CustomerLists.jsx or similar
-import SideNav from '@/components/App/AdminSideBar/SideNav';
+import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Alert, Avatar, Box, Button, IconButton, InputAdornment, Menu, MenuItem, Modal, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
@@ -9,7 +9,7 @@ import { useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const WaiterDashboard = ({ userDetail, users }) => {
+const MainDashboard = ({ userDetail, users }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -90,7 +90,7 @@ const WaiterDashboard = ({ userDetail, users }) => {
                             marginBottom: '20px',
                         }}
                     >
-                        <Typography variant="h5">{userDetail.data.length} Waiter</Typography>
+                        <Typography variant="h5">{userDetail.data.length} Kitchen</Typography>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <TextField
                                 placeholder="Search name or membership type"
@@ -107,8 +107,8 @@ const WaiterDashboard = ({ userDetail, users }) => {
                                 }}
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('waiters.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
-                                Add Waiter
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('kitchens.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
+                                Add Kitchen
                             </Button>
                         </div>
                     </div>
@@ -118,7 +118,7 @@ const WaiterDashboard = ({ userDetail, users }) => {
                             <TableHead style={{ backgroundColor: '#f0f0f0' }}>
                                 <TableRow>
                                     <TableCell style={{ fontWeight: 'bold' }}>Membership ID</TableCell>
-                                    <TableCell style={{ fontWeight: 'bold' }}>Waiter Name</TableCell>
+                                    <TableCell style={{ fontWeight: 'bold' }}>Kitchen Name</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Phone number</TableCell>
                                 </TableRow>
@@ -136,9 +136,9 @@ const WaiterDashboard = ({ userDetail, users }) => {
                                         </TableRow>
                                     ))
                                 ) : (
-                                    <TableRow key="no-waiter">
+                                    <TableRow key="no-kitchen">
                                         <TableCell colSpan={4}>
-                                            <Typography variant="body2">No waiter details available.</Typography>
+                                            <Typography variant="body2">No kitchen details available.</Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -157,9 +157,9 @@ const WaiterDashboard = ({ userDetail, users }) => {
                                                 </TableRow>
                                             ))
                                         ) : (
-                                            <TableRow key={`no-waiter-${userIndex}`}>
+                                            <TableRow key={`no-kitchen-${userIndex}`}>
                                                 <TableCell colSpan={4}>
-                                                    <Typography variant="body2">No waiter details available.</Typography>
+                                                    <Typography variant="body2">No kitchen details available.</Typography>
                                                 </TableCell>
                                             </TableRow>
                                         ),
@@ -258,4 +258,4 @@ const WaiterDashboard = ({ userDetail, users }) => {
     );
 };
 
-export default WaiterDashboard;
+export default MainDashboard;
