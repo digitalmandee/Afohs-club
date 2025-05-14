@@ -6,10 +6,11 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const AddForm1 = ({ onNext }) => {
     const [memberImage, setMemberImage] = useState(null);
     const [showImageButtons, setShowImageButtons] = useState(false);
-    const [title, setTitle] = useState('');
-    const [gender, setGender] = useState('');
+    // const [title, setTitle] = useState('');
+    // const [gender, setGender] = useState('');
     const [titleOpen, setTitleOpen] = useState(false);
     const [genderOpen, setGenderOpen] = useState(false);
+    const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
     // const [formData, setFormData] = useState({
     //     coaAccount: '',
@@ -27,6 +28,9 @@ const AddForm1 = ({ onNext }) => {
     //     education: '',
     //     membershipReason: '',
     // });
+    const [title, setTitle] = useState('Mr');
+    const [gender, setGender] = useState('Male');
+
     const [formData, setFormData] = useState({
         coaAccount: 'COA123456',
         firstName: 'John',
@@ -39,12 +43,10 @@ const AddForm1 = ({ onNext }) => {
         cnicNo: '4210112345678',
         passportNo: 'AB1234567',
         ntn: '1234567-8',
-        dateOfBirth: '15/05/1990',
+        dateOfBirth: '1990-05-15', // Changed to YYYY-MM-DD and past date
         education: 'Bachelor’s in Computer Science, University of Karachi, 2012',
         membershipReason: 'Interested in networking opportunities and professional development through the organization.',
     });
-    // const [title, setTitle] = useState('Mr.');
-    // const [gender, setGender] = useState('Male');
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {
@@ -84,21 +86,53 @@ const AddForm1 = ({ onNext }) => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+
+        // Validate dateOfBirth
+        if (name === 'dateOfBirth') {
+            if (!value) {
+                setDateError('Date of Birth is required');
+                return;
+            }
+            const date = new Date(value);
+            const today = new Date();
+            if (isNaN(date.getTime())) {
+                setDateError('Please enter a valid date');
+            } else if (date > today) {
+                setDateError('Date of Birth cannot be in the future');
+            } else {
+                setDateError('');
+            }
+        }
     };
 
     const handleSubmit = () => {
         // Basic validation
-        if (!formData.coaAccount || !formData.firstName || !formData.lastName || !formData.fatherHusbandName || !formData.cnicNo || !formData.passportNo || !formData.dateOfBirth) {
-            alert('Please fill all required fields');
+        const missingFields = [];
+        if (!formData.coaAccount) missingFields.push('COA Account');
+        if (!formData.firstName) missingFields.push('First Name');
+        if (!formData.lastName) missingFields.push('Last Name');
+        if (!formData.fatherHusbandName) missingFields.push('Father/Husband Name');
+        if (!formData.cnicNo) missingFields.push('CNIC No');
+        if (!formData.passportNo) missingFields.push('Passport No');
+        if (!formData.dateOfBirth) missingFields.push('Date of Birth');
+
+        if (missingFields.length > 0) {
+            alert(`Please fill all required fields: ${missingFields.join(', ')}`);
             return;
         }
+
+        if (dateError) {
+            alert(dateError);
+            return;
+        }
+
         const dataToSave = {
             ...formData,
             title,
             gender,
             memberImage,
         };
-        console.log('dataToSave Data:', dataToSave); // Debug log
+        console.log('AddForm1 Data:', dataToSave); // Debug log
 
         onNext(dataToSave);
     };
@@ -291,10 +325,10 @@ const AddForm1 = ({ onNext }) => {
                                         }}
                                         IconComponent={() => <KeyboardArrowDown sx={{ position: 'absolute', right: 8, pointerEvents: 'none' }} />}
                                     >
-                                        <MenuItem value="Mr.">Mr.</MenuItem>
-                                        <MenuItem value="Mrs.">Mrs.</MenuItem>
-                                        <MenuItem value="Ms.">Ms.</MenuItem>
-                                        <MenuItem value="Dr.">Dr.</MenuItem>
+                                        <MenuItem value="Mr">Mr.</MenuItem>
+                                        <MenuItem value="Mrs">Mrs.</MenuItem>
+                                        <MenuItem value="Ms">Ms.</MenuItem>
+                                        <MenuItem value="Dr">Dr.</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -417,7 +451,7 @@ const AddForm1 = ({ onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Date of Birth*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="dd/mm/yyyy" size="small" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth type="date" InputLabelProps={{ shrink: true }} variant="outlined" size="small" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} error={!!dateError} helperText={dateError} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Education */}

@@ -71,6 +71,7 @@ if (in_array(request()->getHost(), $allowedDomains)) {
         // Membership routes
         Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
         Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+        Route::post('/membership/store', [MembershipController::class, 'store'])->middleware('auth');
 
 
         //Membership Booking Routes

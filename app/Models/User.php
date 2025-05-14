@@ -27,6 +27,9 @@ class User extends Authenticatable
         'profile_photo',
         'addresses',
         'address',
+        'first_name',
+        'middle_name',
+        'last_name',
     ];
 
     protected $casts = [

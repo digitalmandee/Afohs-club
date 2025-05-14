@@ -60,10 +60,10 @@ const MembershipDashboard = () => {
             permanent_city: formData.step2.permanentCity || '',
             permanent_country: formData.step2.permanentCountry || '',
             // AddForm3 fields
-            // member_type: data.memberType || '',
+            member_type: data.memberType || '', // Uncommented to include memberType
             membership_category: data.membershipCategory || '',
-            // membership_number: data.membershipNumber || '',
-            // membership_date: data.membershipDate || '',
+            membership_number: data.membershipNumber || '',
+            membership_date: data.membershipDate || '',
             card_status: data.cardStatus || '',
             card_issue_date: data.cardIssueDate || '',
             card_expiry_date: data.cardExpiryDate || '',
@@ -98,7 +98,7 @@ const MembershipDashboard = () => {
                 <div className="">
                     {step === 1 && <AddForm1 onNext={(data) => handleNext('step1', data)} />}
                     {step === 2 && <AddForm2 onNext={(data) => handleNext('step2', data)} onBack={() => setStep(1)} />}
-                    {step === 3 && <AddForm3 onNext={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} />}
+                    {step === 3 && <AddForm3 onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} />}
                 </div>
             </div>
         </>

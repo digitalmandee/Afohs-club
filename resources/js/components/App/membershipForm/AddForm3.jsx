@@ -5,6 +5,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit'; // Added EditIcon import
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
@@ -17,21 +18,59 @@ const AddForm3 = ({ onSubmit, onBack }) => {
     const [memberType, setMemberType] = useState('Member');
     const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
     const [familyMembers, setFamilyMembers] = useState([]);
+    // const [currentFamilyMember, setCurrentFamilyMember] = useState({
+    //     fullName: '',
+    //     relation: '',
+    //     cnic: '',
+    //     phoneNumber: '',
+    //     membershipType: '',
+    //     membershipCategory: '',
+    //     startDate: '',
+    //     endDate: '',
+    //     picture: null,
+    //     picturePreview: null,
+    // });
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
-        fullName: '',
-        relation: '',
-        cnic: '',
-        phoneNumber: '',
-        membershipType: '',
-        membershipCategory: '',
-        startDate: '',
-        endDate: '',
+        fullName: 'Ali Khan',
+        relation: 'Child',
+        cnic: '42101-1234567-1',
+        phoneNumber: '03121234567',
+        membershipType: 'Regular',
+        membershipCategory: 'Category 1',
+        startDate: '2024-01-01',
+        endDate: '2025-01-01',
         picture: null,
-        picturePreview: null,
+        picturePreview: '',
     });
+    // const [membershipData, setMembershipData] = useState({
+    //     membershipCategory: '',
+    //     membershipNumber: '',
+    //     membershipDate: '',
+    //     statusOfCard: '',
+    //     cardIssueDate: '',
+    //     cardExpiryDate: '',
+    //     fromDate: '',
+    //     toDate: '',
+    // });
+    const [membershipData, setMembershipData] = useState({
+        membershipCategory: 'Category 1',
+        membershipNumber: 'MEM-001122',
+        membershipDate: '2024-12-01',
+        statusOfCard: 'Active',
+        cardIssueDate: '2024-12-05',
+        cardExpiryDate: '2025-12-05',
+        fromDate: '2024-12-01',
+        toDate: '2025-12-01',
+    });
+    const [submitError, setSubmitError] = useState(''); // New state for submission errors
 
     const handleMemberTypeChange = (event) => {
         setMemberType(event.target.value);
+    };
+
+    const handleMembershipDataChange = (e) => {
+        const { name, value } = e.target;
+        setMembershipData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleFamilyMemberChange = (field, value) => {
@@ -57,6 +96,10 @@ const AddForm3 = ({ onSubmit, onBack }) => {
     };
 
     const handleAddFamilyMember = () => {
+        if (!currentFamilyMember.fullName || !currentFamilyMember.membershipType) {
+            alert('Please fill required family member fields: Full Name and Membership Type');
+            return;
+        }
         setFamilyMembers([...familyMembers, currentFamilyMember]);
         setCurrentFamilyMember({
             fullName: '',
@@ -70,6 +113,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
             picture: null,
             picturePreview: null,
         });
+        setShowFamilyMemberForm(false);
     };
 
     const handleDeleteFamilyMember = (index) => {
@@ -81,75 +125,130 @@ const AddForm3 = ({ onSubmit, onBack }) => {
     const handleEditFamilyMember = (index) => {
         setCurrentFamilyMember(familyMembers[index]);
         handleDeleteFamilyMember(index);
+        setShowFamilyMemberForm(true);
+    };
+
+    const handleSubmit = async () => {
+        const missingFields = [];
+        if (!membershipData.membershipNumber) missingFields.push('Membership Number');
+        if (!membershipData.membershipDate) missingFields.push('Membership Date');
+
+        if (missingFields.length > 0) {
+            alert(`Please fill all required fields: ${missingFields.join(', ')}`);
+            return;
+        }
+
+        const dataToSave = {
+            memberType,
+            ...membershipData,
+            familyMembers,
+        };
+        console.log('AddForm3 Data:', dataToSave);
+
+        try {
+            await onSubmit(dataToSave);
+            setSubmitError('');
+        } catch (error) {
+            console.error('Submission Error:', error);
+            const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data || 'An error occurred during submission');
+            setSubmitError(`Submission failed: ${errorMessage}. Please check the Personal Information form for errors (e.g., Date of Birth).`);
+        }
     };
 
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-                <div maxWidth="lg" sx={{ py: 4 }}>
+                <Container maxWidth="lg" sx={{ py: 4 }}>
                     {/* Header */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <IconButton onClick={onBack} sx={{ mr: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
+                        <IconButton onClick={onBack} sx={{ color: '#000' }}>
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>
                             Membership Information
                         </Typography>
                     </Box>
 
-                    {/* Progress Bar */}
-                    <Box sx={{ mb: 3, p: 2, bgcolor: '#E7E7E7' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Box
-                                    sx={{
-                                        width: 40,
-                                        height: 40,
-                                        borderRadius: '50%',
-                                        bgcolor: '#3F4E4F',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: 'white',
-                                    }}
-                                >
-                                    <CheckCircleIcon />
-                                </Box>
-                                <Typography sx={{ ml: 1, fontWeight: 500 }}>Personal Information</Typography>
-                            </Box>
-
+                    {/* Progress Steps */}
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            p: 2,
+                            mb: 3,
+                            backgroundColor: '#f0f0f0',
+                            borderRadius: '4px',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Box
                                 sx={{
-                                    height: '2px',
-                                    bgcolor: '#063455',
-                                    flexGrow: 1,
-                                    mx: 2,
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: '50%',
+                                    backgroundColor: '#2c3e50',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    mr: 2,
                                 }}
-                            />
-
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Box
-                                    sx={{
-                                        width: 40,
-                                        height: 40,
-                                        borderRadius: '50%',
-                                        bgcolor: '#063455',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: 'white',
-                                    }}
-                                >
-                                    <Typography>2</Typography>
-                                </Box>
-                                <Typography sx={{ ml: 1, fontWeight: 500 }}>Membership Information</Typography>
+                            >
+                                <CheckCircleIcon fontSize="small" />
                             </Box>
+                            <Typography sx={{ fontWeight: 500 }}>Personal Information</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Box
+                                sx={{
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: '50%',
+                                    backgroundColor: '#2c3e50',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    mr: 2,
+                                }}
+                            >
+                                <CheckCircleIcon fontSize="small" />
+                            </Box>
+                            <Typography sx={{ fontWeight: 500 }}>Contact Information</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Box
+                                sx={{
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: '50%',
+                                    backgroundColor: '#2c3e50',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    mr: 2,
+                                }}
+                            >
+                                3
+                            </Box>
+                            <Typography sx={{ fontWeight: 500 }}>Membership Information</Typography>
                         </Box>
                     </Box>
 
+                    {/* Submission Error Message */}
+                    {submitError && (
+                        <Box sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: '4px', border: '1px solid #ef5350' }}>
+                            <Typography variant="body2" sx={{ color: '#d32f2f' }}>
+                                {submitError}
+                            </Typography>
+                        </Box>
+                    )}
+
                     {/* Main Content */}
-                    <Box sx={{ p: 3, bgcolor: '#FFFFFF', border: 'solid 1px #E3E3E3' }}>
+                    <Box sx={{ p: 3, bgcolor: '#FFFFFF', border: '1px solid #e0e0e0' }}>
                         <Grid container spacing={3}>
                             {/* Left Column - Membership Information */}
                             <Grid item xs={12} md={6}>
@@ -241,6 +340,9 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category</Typography>
                                     <FormControl fullWidth variant="outlined">
                                         <Select
+                                            name="membershipCategory"
+                                            value={membershipData.membershipCategory}
+                                            onChange={handleMembershipDataChange}
                                             displayEmpty
                                             renderValue={(selected) => {
                                                 if (!selected) {
@@ -267,6 +369,9 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                         fullWidth
                                         placeholder="Enter membership number"
                                         variant="outlined"
+                                        name="membershipNumber"
+                                        value={membershipData.membershipNumber}
+                                        onChange={handleMembershipDataChange}
                                         sx={{
                                             '& .MuiOutlinedInput-notchedOutline': {
                                                 borderColor: '#ccc',
@@ -281,8 +386,13 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Date *</Typography>
                                             <TextField
                                                 fullWidth
+                                                type="date"
+                                                InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
+                                                name="membershipDate"
+                                                value={membershipData.membershipDate}
+                                                onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -296,10 +406,13 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
                                             <FormControl fullWidth variant="outlined">
                                                 <Select
+                                                    name="statusOfCard"
+                                                    value={membershipData.statusOfCard}
+                                                    onChange={handleMembershipDataChange}
                                                     displayEmpty
                                                     renderValue={(selected) => {
                                                         if (!selected) {
-                                                            return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
+                                                            return <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
                                                         }
                                                         return selected;
                                                     }}
@@ -320,11 +433,16 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                 <Grid container spacing={2}>
                                     <Grid item xs={6}>
                                         <Box sx={{ mb: 3 }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card issue date</Typography>
+                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
                                             <TextField
                                                 fullWidth
+                                                type="date"
+                                                InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
+                                                name="cardIssueDate"
+                                                value={membershipData.cardIssueDate}
+                                                onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -335,11 +453,16 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Box sx={{ mb: 3 }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card expiry date</Typography>
+                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
                                             <TextField
                                                 fullWidth
+                                                type="date"
+                                                InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
+                                                name="cardExpiryDate"
+                                                value={membershipData.cardExpiryDate}
+                                                onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -356,8 +479,13 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>From</Typography>
                                             <TextField
                                                 fullWidth
+                                                type="date"
+                                                InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
+                                                name="fromDate"
+                                                value={membershipData.fromDate}
+                                                onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -371,8 +499,13 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>To</Typography>
                                             <TextField
                                                 fullWidth
+                                                type="date"
+                                                InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
+                                                name="toDate"
+                                                value={membershipData.toDate}
+                                                onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -401,13 +534,46 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                     onClick={() => setShowFamilyMemberForm(true)}
                                 >
                                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                        <Typography sx={{ fontWeight: 500 }}>Add family Member</Typography>
+                                        <Typography sx={{ fontWeight: 500 }}>Add Family Member</Typography>
                                         <Typography variant="body2" sx={{ color: '#666' }}>
                                             If you add family members then click
                                         </Typography>
                                     </Box>
                                     <ChevronRightIcon />
                                 </Button>
+
+                                {/* Display Added Family Members */}
+                                {familyMembers.length > 0 && (
+                                    <Box sx={{ mt: 3 }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Added Family Members</Typography>
+                                        {familyMembers.map((member, index) => (
+                                            <Box
+                                                key={index}
+                                                sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    p: 1,
+                                                    border: '1px solid #ccc',
+                                                    borderRadius: 1,
+                                                    mb: 1,
+                                                }}
+                                            >
+                                                <Typography>
+                                                    {member.fullName} ({member.relation})
+                                                </Typography>
+                                                <Box>
+                                                    <IconButton size="small" onClick={() => handleEditFamilyMember(index)} sx={{ mr: 1 }}>
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton size="small" onClick={() => handleDeleteFamilyMember(index)}>
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Box>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                )}
                             </Grid>
 
                             {/* Right Column - Family Member Information */}
@@ -455,7 +621,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                         >
                                             {currentFamilyMember.picturePreview ? (
                                                 <>
-                                                    <img src={currentFamilyMember.picturePreview || '/placeholder.svg'} alt="Family member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <img src={currentFamilyMember.picturePreview} alt="Family member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
                                                         <IconButton size="small" sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={() => handleFamilyMemberChange('picturePreview', null)}>
                                                             <DeleteIcon fontSize="small" />
@@ -473,12 +639,12 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 </>
                                             )}
                                         </Box>
-                                        <box>
+                                        <Box>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Family Member Picture</Typography>
                                             <Typography variant="body2" sx={{ color: '#666', mt: 1 }}>
                                                 Click upload to profile picture (4 MB max)
                                             </Typography>
-                                        </box>
+                                        </Box>
                                     </Box>
 
                                     <Grid container spacing={2}>
@@ -687,7 +853,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                         onClick={handleAddFamilyMember}
                                     >
                                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                            <Typography sx={{ fontWeight: 500 }}>Add Another family Member</Typography>
+                                            <Typography sx={{ fontWeight: 500 }}>Add Another Family Member</Typography>
                                             <Typography variant="body2" sx={{ color: '#666' }}>
                                                 If you add another family members then click
                                             </Typography>
@@ -701,28 +867,33 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                             sx={{
                                                 mr: 2,
                                                 textTransform: 'none',
+                                                borderColor: '#ccc',
+                                                color: '#333',
+                                                '&:hover': { borderColor: '#999', backgroundColor: '#f5f5f5' },
                                             }}
+                                            onClick={() => setShowFamilyMemberForm(false)}
                                         >
                                             Cancel
                                         </Button>
                                         <Button
                                             variant="contained"
                                             sx={{
-                                                bgcolor: '#1e3a8a',
+                                                bgcolor: '#0c4b6e',
                                                 '&:hover': {
-                                                    bgcolor: '#152a60',
+                                                    bgcolor: '#083854',
                                                 },
                                                 textTransform: 'none',
                                             }}
+                                            onClick={handleSubmit}
                                         >
-                                            Save
+                                            Save & Submit
                                         </Button>
                                     </Box>
                                 </Grid>
                             )}
                         </Grid>
                     </Box>
-                </div>
+                </Container>
             </div>
         </>
     );

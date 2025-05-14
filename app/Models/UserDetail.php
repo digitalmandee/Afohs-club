@@ -32,6 +32,8 @@ class UserDetail extends Model
         'date_of_birth',
         'education',
         'membership_reason',
+        'coa_account',
+        'title',
     ];
     protected $casts = [
         'education' => 'array',

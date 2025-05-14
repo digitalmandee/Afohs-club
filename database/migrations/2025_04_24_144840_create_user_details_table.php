@@ -16,14 +16,14 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('address_type')->nullable();
             $table->string('country');
-            $table->string('state');
-            $table->string('city');
+            $table->string('state')->nullable();
+            $table->string('city')->nullable();
             $table->string('zip')->nullable();
             $table->string('address')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('inactive');
-            // $table->string('profile_picture')->nullable(); // Store image path or filename
-            // $table->string('coa_account')->nullable();
-            // $table->string('title')->nullable(); // e.g., Mr., Mrs., Dr.
+            $table->string('profile_picture')->nullable(); // Store image path or filename
+            $table->string('coa_account')->nullable();
+            $table->string('title')->nullable(); // e.g., Mr., Mrs., Dr.
             $table->string('application_number')->nullable();
             $table->text('name_comments')->nullable();
             $table->string('guardian_name')->nullable();

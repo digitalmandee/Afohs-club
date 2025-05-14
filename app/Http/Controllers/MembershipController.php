@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class MembershipController extends Controller
 {
@@ -24,6 +25,11 @@ class MembershipController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'coa_account' => 'nullable|string|max:255',
+            'title' => 'nullable|string|in:Mr,Mrs,Ms,dr,Female,Other',
+            'first_name' => 'nullable|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'application_number' => 'nullable|string|max:255',
             'name_comments' => 'nullable|string',
             'guardian_name' => 'nullable|string|max:255',
@@ -51,10 +57,10 @@ class MembershipController extends Controller
             'permanent_address' => 'nullable|string',
             'permanent_city' => 'nullable|string|max:255',
             'permanent_country' => 'nullable|string|max:255',
-            // 'member_type' => 'string|max:255', //change
+            'member_type' => 'string|max:255',
             'membership_category' => 'nullable|string|max:255',
-            'membership_number' => 'string|max:255', //change
-            'membership_date' => 'date', //change
+            'membership_number' => 'string|max:255',
+            'membership_date' => 'date',
             'card_status' => 'nullable|string|in:Active,Inactive',
             'card_issue_date' => 'nullable|date',
             'card_expiry_date' => 'nullable|date',
@@ -87,6 +93,9 @@ class MembershipController extends Controller
 
         // Create UserDetail record
         $userDetail = UserDetail::create([
+            'user_id' => Auth::id(),
+            // 'user_id' => 8,
+            'state' => 'Punjab', // <-- Add this!
             'application_number' => $validated['application_number'],
             'name_comments' => $validated['name_comments'],
             'guardian_name' => $validated['guardian_name'],
@@ -114,6 +123,7 @@ class MembershipController extends Controller
             'permanent_address' => $validated['permanent_address'],
             'permanent_city' => $validated['permanent_city'],
             'permanent_country' => $validated['permanent_country'],
+            'country' => $validated['current_country'], // Added to map current_country to country
             'member_type' => $validated['member_type'],
             'membership_category' => $validated['membership_category'],
             'membership_number' => $validated['membership_number'],
