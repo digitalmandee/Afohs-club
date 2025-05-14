@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class User extends Authenticatable
 {
@@ -18,22 +17,13 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
         'email',
-        'password',
-        'user_id',
         'member_type_id',
         'phone_number',
-        'profile_photo',
-        'addresses',
-        'address',
         'first_name',
         'middle_name',
         'last_name',
-    ];
-
-    protected $casts = [
-        'addresses' => 'array',
+        'password',
     ];
 
     /**
@@ -47,34 +37,28 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 
+    /**
+     * Get the member type associated with the user.
+     */
     public function memberType()
     {
         return $this->belongsTo(MemberType::class);
     }
 
+    /**
+     * Get the user's detail.
+     */
     public function userDetail()
     {
-        return $this->hasMany(UserDetail::class)->where('status', 'active');
-    }
-
-    public function userDetails()
-    {
-        return $this->hasMany(UserDetail::class);
-    }
-    public function user()
-    {
-        return $this->belongsTo(User::class);
+        return $this->hasOne(UserDetail::class);
     }
 }

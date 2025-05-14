@@ -30,11 +30,24 @@ const MembershipDashboard = () => {
 
     const handleFinalSubmit = (stepKey, data) => {
         setFormData((prev) => ({ ...prev, [stepKey]: data }));
+        // Transform familyMembers to match backend validation keys
+        const transformedFamilyMembers = (data.familyMembers || []).map((member) => ({
+            full_name: member.fullName || '',
+            relation: member.relation || '',
+            cnic: member.cnic || '',
+            phone_number: member.phoneNumber || '',
+            membership_type: member.membershipType || '',
+            membership_category: member.membershipCategory || '',
+            start_date: member.startDate || '',
+            end_date: member.endDate || '',
+            picture: member.picturePreview || '', // Base64 string
+        }));
+
         const fullData = {
-            application_number: '7171', // Hardcoded as shown in AddForm1
-            first_name: formData.step1.firstName || '', // Added
-            middle_name: formData.step1.middleName || '', // Added
-            last_name: formData.step1.lastName || '', // Added
+            application_number: '7171',
+            first_name: formData.step1.firstName || '',
+            middle_name: formData.step1.middleName || '',
+            last_name: formData.step1.lastName || '',
             name_comments: formData.step1.nameComments || '',
             guardian_name: formData.step1.fatherHusbandName || '',
             guardian_membership: formData.step1.fatherMembershipNo || '',
@@ -44,11 +57,10 @@ const MembershipDashboard = () => {
             gender: formData.step1.gender || '',
             ntn: formData.step1.ntn || '',
             date_of_birth: formData.step1.dateOfBirth || '',
-            education: formData.step1.education ? [formData.step1.education] : [], // Convert string to array
+            education: formData.step1.education ? [formData.step1.education] : [],
             membership_reason: formData.step1.membershipReason || '',
-            coa_account: formData.step1.coaAccount || '', // Added to ensure consistency
-            title: formData.step1.title || '', // Added to ensure consistency
-            // AddForm2 fields
+            coa_account: formData.step1.coaAccount || '',
+            title: formData.step1.title || '',
             mobile_number_a: formData.step2.mobileNumberA || '',
             mobile_number_b: formData.step2.mobileNumberB || '',
             mobile_number_c: formData.step2.mobileNumberC || '',
@@ -64,20 +76,20 @@ const MembershipDashboard = () => {
             permanent_address: formData.step2.permanentAddress || '',
             permanent_city: formData.step2.permanentCity || '',
             permanent_country: formData.step2.permanentCountry || '',
-            // AddForm3 fields
             member_type: data.memberType || '',
             membership_category: data.membershipCategory || '',
             membership_number: data.membershipNumber || '',
             membership_date: data.membershipDate || '',
-            card_status: data.cardStatus || '',
+            card_status: data.statusOfCard || '',
             card_issue_date: data.cardIssueDate || '',
             card_expiry_date: data.cardExpiryDate || '',
             from_date: data.fromDate || '',
             to_date: data.toDate || '',
-            family_members: data.familyMembers || [],
-            // Images (base64 strings)
+            family_members: transformedFamilyMembers,
             member_image: formData.step1.memberImage || null,
         };
+
+        console.log('Submitting fullData:', fullData);
 
         router.post('/membership/store', fullData, {
             onSuccess: () => {
