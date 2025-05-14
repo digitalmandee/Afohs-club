@@ -214,11 +214,11 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
-        // {
-        //     text: 'Logout',
-        //     icon: <HomeIcon />,
-        //     path: route('logout'),
-        // },
+        {
+            text: 'Logout',
+            icon: <HomeIcon />,
+            path: route('logout'),
+        },
     ];
 
     return (

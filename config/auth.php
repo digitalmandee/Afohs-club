@@ -40,6 +40,13 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'tenant' => [
+            'driver' => 'session',
+            'provider' => 'users', // or 'users' depending on your setup
+            'input_key' => 'user_id',
+            'storage_key' => 'user_id',
+            'remember' => false,
+        ],
     ],
 
     /*
@@ -64,7 +71,6 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
-
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',
