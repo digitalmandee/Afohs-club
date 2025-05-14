@@ -32,6 +32,9 @@ const MembershipDashboard = () => {
         setFormData((prev) => ({ ...prev, [stepKey]: data }));
         const fullData = {
             application_number: '7171', // Hardcoded as shown in AddForm1
+            first_name: formData.step1.firstName || '', // Added
+            middle_name: formData.step1.middleName || '', // Added
+            last_name: formData.step1.lastName || '', // Added
             name_comments: formData.step1.nameComments || '',
             guardian_name: formData.step1.fatherHusbandName || '',
             guardian_membership: formData.step1.fatherMembershipNo || '',
@@ -43,6 +46,8 @@ const MembershipDashboard = () => {
             date_of_birth: formData.step1.dateOfBirth || '',
             education: formData.step1.education ? [formData.step1.education] : [], // Convert string to array
             membership_reason: formData.step1.membershipReason || '',
+            coa_account: formData.step1.coaAccount || '', // Added to ensure consistency
+            title: formData.step1.title || '', // Added to ensure consistency
             // AddForm2 fields
             mobile_number_a: formData.step2.mobileNumberA || '',
             mobile_number_b: formData.step2.mobileNumberB || '',
@@ -60,7 +65,7 @@ const MembershipDashboard = () => {
             permanent_city: formData.step2.permanentCity || '',
             permanent_country: formData.step2.permanentCountry || '',
             // AddForm3 fields
-            member_type: data.memberType || '', // Uncommented to include memberType
+            member_type: data.memberType || '',
             membership_category: data.membershipCategory || '',
             membership_number: data.membershipNumber || '',
             membership_date: data.membershipDate || '',

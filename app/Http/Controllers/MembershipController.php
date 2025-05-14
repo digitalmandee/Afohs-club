@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\FamilyMember; // Assuming a FamilyMember model exists
 use Illuminate\Http\Request;
@@ -9,6 +10,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class MembershipController extends Controller
 {
@@ -79,6 +81,17 @@ class MembershipController extends Controller
             'member_image' => 'nullable|string', // Base64 image
         ]);
 
+        // Create a new user in the users table
+        $user = User::create([
+            'name' => trim("{$validated['first_name']} {$validated['middle_name']} {$validated['last_name']}"),
+            'email' => $validated['personal_email'],
+            'password' => Hash::make(Str::random(16)), // Generate a random password
+            'first_name' => $validated['first_name'],
+            'middle_name' => $validated['middle_name'],
+            'last_name' => $validated['last_name'],
+            'phone_number' => $validated['mobile_number_a'],
+        ]);
+
         // Handle member_image (base64 to file storage)
         $memberImagePath = null;
         if ($request->filled('member_image')) {
@@ -93,9 +106,10 @@ class MembershipController extends Controller
 
         // Create UserDetail record
         $userDetail = UserDetail::create([
-            'user_id' => Auth::id(),
-            // 'user_id' => 8,
-            'state' => 'Punjab', // <-- Add this!
+            'user_id' => $user->id, // Use the newly created user's ID
+            'coa_account' => $validated['coa_account'], // Added to save coa_account
+            'title' => $validated['title'], // Added to save title
+            'state' => 'Punjab',
             'application_number' => $validated['application_number'],
             'name_comments' => $validated['name_comments'],
             'guardian_name' => $validated['guardian_name'],
@@ -136,32 +150,32 @@ class MembershipController extends Controller
             'member_image' => $memberImagePath,
         ]);
 
-        // // Handle family members
-        // if (!empty($validated['family_members'])) {
-        //     foreach ($validated['family_members'] as $familyMemberData) {
-        //         $familyMemberImagePath = null;
-        //         if (!empty($familyMemberData['picture'])) {
-        //             $base64Image = preg_replace('/^data:image\/(png|jpg|jpeg);base64,/', '', $familyMemberData['picture']);
-        //             $imageData = base64_decode($base64Image);
-        //             $filename = 'family_member_images/' . Str::uuid() . '.jpg';
-        //             Storage::disk('public')->put($filename, $imageData);
-        //             $familyMemberImagePath = $filename;
-        //         }
+        // Handle family members (uncommented for completeness, as per your code)
+        if (!empty($validated['family_members'])) {
+            foreach ($validated['family_members'] as $familyMemberData) {
+                $familyMemberImagePath = null;
+                if (!empty($familyMemberData['picture'])) {
+                    $base64Image = preg_replace('/^data:image\/(png|jpg|jpeg);base64,/', '', $familyMemberData['picture']);
+                    $imageData = base64_decode($base64Image);
+                    $filename = 'family_member_images/' . Str::uuid() . '.jpg';
+                    Storage::disk('public')->put($filename, $imageData);
+                    $familyMemberImagePath = $filename;
+                }
 
-        //         FamilyMember::create([
-        //             'user_detail_id' => $userDetail->id,
-        //             'full_name' => $familyMemberData['full_name'],
-        //             'relation' => $familyMemberData['relation'],
-        //             'cnic' => $familyMemberData['cnic'],
-        //             'phone_number' => $familyMemberData['phone_number'],
-        //             'membership_type' => $familyMemberData['membership_type'],
-        //             'membership_category' => $familyMemberData['membership_category'],
-        //             'start_date' => $familyMemberData['start_date'],
-        //             'end_date' => $familyMemberData['end_date'],
-        //             'picture' => $familyMemberImagePath,
-        //         ]);
-        //     }
-        // }
+                FamilyMember::create([
+                    'user_detail_id' => $userDetail->id,
+                    'full_name' => $familyMemberData['full_name'],
+                    'relation' => $familyMemberData['relation'],
+                    'cnic' => $familyMemberData['cnic'],
+                    'phone_number' => $familyMemberData['phone_number'],
+                    'membership_type' => $familyMemberData['membership_type'],
+                    'membership_category' => $familyMemberData['membership_category'],
+                    'start_date' => $familyMemberData['start_date'],
+                    'end_date' => $familyMemberData['end_date'],
+                    'picture' => $familyMemberImagePath,
+                ]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Membership details submitted successfully.');
     }
