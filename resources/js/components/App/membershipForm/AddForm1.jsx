@@ -6,47 +6,47 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const AddForm1 = ({ onNext }) => {
     const [memberImage, setMemberImage] = useState(null);
     const [showImageButtons, setShowImageButtons] = useState(false);
-    // const [title, setTitle] = useState('');
-    // const [gender, setGender] = useState('');
+    const [title, setTitle] = useState('');
+    const [gender, setGender] = useState('');
     const [titleOpen, setTitleOpen] = useState(false);
     const [genderOpen, setGenderOpen] = useState(false);
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
-    // const [formData, setFormData] = useState({
-    //     coaAccount: '',
-    //     firstName: '',
-    //     middleName: '',
-    //     lastName: '',
-    //     nameComments: '',
-    //     fatherHusbandName: '',
-    //     fatherMembershipNo: '',
-    //     nationality: '',
-    //     cnicNo: '',
-    //     passportNo: '',
-    //     ntn: '',
-    //     dateOfBirth: '',
-    //     education: '',
-    //     membershipReason: '',
-    // });
-    const [title, setTitle] = useState('Mr');
-    const [gender, setGender] = useState('Male');
-
     const [formData, setFormData] = useState({
-        coaAccount: 'COA123456',
-        firstName: 'John',
-        middleName: 'William',
-        lastName: 'Doe',
-        nameComments: 'Preferred name: John W. Doe',
-        fatherHusbandName: 'Michael Doe',
-        fatherMembershipNo: 'MEM789',
-        nationality: 'Pakistan',
-        cnicNo: '4210112345678',
-        passportNo: 'AB1234567',
-        ntn: '1234567-8',
-        dateOfBirth: '1990-05-15', // Changed to YYYY-MM-DD and past date
-        education: 'Bachelor’s in Computer Science, University of Karachi, 2012',
-        membershipReason: 'Interested in networking opportunities and professional development through the organization.',
+        coaAccount: '',
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        nameComments: '',
+        fatherHusbandName: '',
+        fatherMembershipNo: '',
+        nationality: '',
+        cnicNo: '',
+        passportNo: '',
+        ntn: '',
+        dateOfBirth: '',
+        education: '',
+        membershipReason: '',
     });
+    // const [title, setTitle] = useState('Mr');
+    // const [gender, setGender] = useState('Male');
+
+    // const [formData, setFormData] = useState({
+    //     coaAccount: 'COA123456',
+    //     firstName: 'John',
+    //     middleName: 'William',
+    //     lastName: 'Doe',
+    //     nameComments: 'Preferred name: John W. Doe',
+    //     fatherHusbandName: 'Michael Doe',
+    //     fatherMembershipNo: 'MEM789',
+    //     nationality: 'Pakistan',
+    //     cnicNo: '4210112345678',
+    //     passportNo: 'AB1234567',
+    //     ntn: '1234567-8',
+    //     dateOfBirth: '1990-05-15', // Changed to YYYY-MM-DD and past date
+    //     education: 'Bachelor’s in Computer Science, University of Karachi, 2012',
+    //     membershipReason: 'Interested in networking opportunities and professional development through the organization.',
+    // });
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {

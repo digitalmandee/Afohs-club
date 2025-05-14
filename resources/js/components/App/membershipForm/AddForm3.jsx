@@ -18,50 +18,50 @@ const AddForm3 = ({ onSubmit, onBack }) => {
     const [memberType, setMemberType] = useState('Member');
     const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
     const [familyMembers, setFamilyMembers] = useState([]);
-    // const [currentFamilyMember, setCurrentFamilyMember] = useState({
-    //     fullName: '',
-    //     relation: '',
-    //     cnic: '',
-    //     phoneNumber: '',
-    //     membershipType: '',
-    //     membershipCategory: '',
-    //     startDate: '',
-    //     endDate: '',
-    //     picture: null,
-    //     picturePreview: null,
-    // });
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
-        fullName: 'Ali Khan',
-        relation: 'Child',
-        cnic: '42101-1234567-1',
-        phoneNumber: '03121234567',
-        membershipType: 'Regular',
-        membershipCategory: 'Category 1',
-        startDate: '2024-01-01',
-        endDate: '2025-01-01',
+        fullName: '',
+        relation: '',
+        cnic: '',
+        phoneNumber: '',
+        membershipType: '',
+        membershipCategory: '',
+        startDate: '',
+        endDate: '',
         picture: null,
-        picturePreview: '',
+        picturePreview: null,
     });
-    // const [membershipData, setMembershipData] = useState({
-    //     membershipCategory: '',
-    //     membershipNumber: '',
-    //     membershipDate: '',
-    //     statusOfCard: '',
-    //     cardIssueDate: '',
-    //     cardExpiryDate: '',
-    //     fromDate: '',
-    //     toDate: '',
+    // const [currentFamilyMember, setCurrentFamilyMember] = useState({
+    //     fullName: 'Ali Khan',
+    //     relation: 'Child',
+    //     cnic: '42101-1234567-1',
+    //     phoneNumber: '03121234567',
+    //     membershipType: 'Regular',
+    //     membershipCategory: 'Category 1',
+    //     startDate: '2024-01-01',
+    //     endDate: '2025-01-01',
+    //     picture: null,
+    //     picturePreview: '',
     // });
     const [membershipData, setMembershipData] = useState({
-        membershipCategory: 'Category 1',
-        membershipNumber: 'MEM-001122',
-        membershipDate: '2024-12-01',
-        statusOfCard: 'Active',
-        cardIssueDate: '2024-12-05',
-        cardExpiryDate: '2025-12-05',
-        fromDate: '2024-12-01',
-        toDate: '2025-12-01',
+        membershipCategory: '',
+        membershipNumber: '',
+        membershipDate: '',
+        statusOfCard: '',
+        cardIssueDate: '',
+        cardExpiryDate: '',
+        fromDate: '',
+        toDate: '',
     });
+    // const [membershipData, setMembershipData] = useState({
+    //     membershipCategory: 'Category 1',
+    //     membershipNumber: 'MEM-001122',
+    //     membershipDate: '2024-12-01',
+    //     statusOfCard: 'Active',
+    //     cardIssueDate: '2024-12-05',
+    //     cardExpiryDate: '2025-12-05',
+    //     fromDate: '2024-12-01',
+    //     toDate: '2025-12-01',
+    // });
     const [submitError, setSubmitError] = useState(''); // New state for submission errors
 
     const handleMemberTypeChange = (event) => {
