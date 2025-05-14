@@ -106,48 +106,48 @@ export default function SideNav({ open, setOpen }) {
     const [showProfile, setShowProfile] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: '/', permission: 'dashboard' },
-        { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory', permission: 'order' },
-        { text: 'Inventory Category', icon: <CategoryIcon />, path: '/inventory/category', permission: 'order' },
-        { text: 'Transaction', icon: <PaymentsIcon />, path: '/transaction', permission: 'order' },
+        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard'), permission: 'dashboard' },
+        { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index'), permission: 'order' },
+        { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category'), permission: 'order' },
+        { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index'), permission: 'order' },
         {
             text: 'Table Management',
             icon: <TableIcon />,
-            path: '/table/management',
+            path: route('table.management'),
             permission: 'order',
         },
         {
             text: 'Kitchen',
             icon: <KitchenIcon />,
-            path: '/kitchen',
+            path: route('kitchen.index'),
             permission: 'kitchen',
         },
         {
             text: 'Order Management',
             icon: <MdManageHistory />,
-            path: '/order/management',
+            path: route('order.management'),
             permission: 'order',
         },
         {
             text: 'Members',
             icon: <MemberIcon />,
-            path: '/members',
+            path: route('members.index'),
             permission: 'order',
         },
 
         {
             text: 'Members Types',
             icon: <MemberIcon />,
-            path: '/members/member-types',
+            path: route('member-types.index'),
             permission: 'order',
         },
         {
             text: 'Address Type',
             icon: <AddressType />,
-            path: '/members/address-types',
+            path: route('address-types.index'),
             permission: 'order',
         },
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings', permission: 'order' },
+        { text: 'Settings', icon: <SettingsIcon />, path: route('settings'), permission: 'order' },
     ];
 
     return (
@@ -374,7 +374,7 @@ export default function SideNav({ open, setOpen }) {
                                 justifyContent: 'center',
                                 transition: 'all 0.3s ease-in-out',
                             }}
-                            onClick={() => router.visit('/new/order')}
+                            onClick={() => router.visit(route('order.new'))}
                         >
                             {open ? '+ New Order' : '+ New Order'}
                         </Button>

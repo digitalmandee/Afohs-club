@@ -40,10 +40,9 @@ Route::group([
     Route::get('/', function () {
         return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
     });
-    // $allowedDomains = config('tenancy.central_domains');
-    // if (!in_array(request()->getHost(), $allowedDomains)) {
+
     Route::middleware(['auth', 'verified'])->group(function () {
-        Route::get('/test', function () {
+        Route::get('/', function () {
             return Inertia::render('App/Dashboard/Dashboardm');
         })->name('dashboard');
 

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class MembersController extends Controller
 {
@@ -21,7 +22,8 @@ class MembersController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        $users = User::with(['memberType', 'userDetail'])->role('user')->latest()->paginate($limit);
+        $users = User::with(['memberType', 'userDetail'])->role('user', 'web')->latest()->paginate($limit);
+
 
         return Inertia::render('App/Member/Dashboard', compact('users'));
     }
@@ -91,7 +93,7 @@ class MembersController extends Controller
             }
 
             $customer->save();
-            $customer->assignRole('user');
+            $customer->assignRole(Role::findByName('user', 'web'));
 
             // Create addresses if provided
             if (!empty($validated['addresses'])) {

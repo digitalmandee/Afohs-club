@@ -42,7 +42,7 @@ return [
         ],
         'tenant' => [
             'driver' => 'session',
-            'provider' => 'users', // or 'users' depending on your setup
+            'provider' => 'users',
             'input_key' => 'user_id',
             'storage_key' => 'user_id',
             'remember' => false,
