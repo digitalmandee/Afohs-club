@@ -174,11 +174,11 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Department',
-                    path: '',
+                    path: route('employee.departmentlist'),
                 },
                 {
                     text: 'Attendance',
-                    path: '',
+                    path: route('employee.attendance'),
                 },
             ],
         },
