@@ -67,6 +67,22 @@ if (in_array(request()->getHost(), $allowedDomains)) {
             return Inertia::render('App/Admin/Employee/Attendance');
         })->name('employee.attendance');
 
+        Route::get('/employee/attendance/add/leave/application', function () {
+            return Inertia::render('App/Admin/Employee/AddLeave');
+        })->name('employee.addleave');
+
+        Route::get('/employee/all/attendance', function () {
+            return Inertia::render('App/Admin/Employee/AllAttendance');
+        })->name('employee.allattendance');
+
+        Route::get('/employee/leave/category', function () {
+            return Inertia::render('App/Admin/Employee/Category');
+        })->name('employee.leavecategory');
+
+        Route::get('/employee/add/leave/category', function () {
+            return Inertia::render('App/Admin/Employee/LeaveCategory');
+        })->name('employee.addleavecategory');
+
         //Membership Booking Routes
         Route::get('/membership/booking/dashboard', function () {
             return Inertia::render('App/Admin/Membership/Dashboard');

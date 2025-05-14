@@ -325,43 +325,26 @@ const AttendanceFilter = ({ open, onClose }) => {
                             <Box sx={{ mb: 1 }}>
                                 <Box display="flex" flexWrap="wrap" gap={1}>
                                     {[
-                                        {
-                                            label: 'All type',
-                                            value: 'all',
-                                        },
-                                        {
-                                            label: 'Annual Leave',
-                                            value: 'dine-in',
-                                        },
-                                        {
-                                            label: 'Business Leave',
-                                            value: 'pickup',
-                                        },
-                                        {
-                                            label: 'Casual Leave',
-                                            value: 'delivery',
-                                        },
-                                        {
-                                            label: 'Sick Leave',
-                                            value: 'delivery',
-                                        },
-                                        {
-                                            label: 'Unpaid Leave',
-                                            value: 'delivery',
-                                        },
+                                        { label: 'All type', value: 'all' },
+                                        { label: 'Annual Leave', value: 'annual' },
+                                        { label: 'Business Leave', value: 'business' },
+                                        { label: 'Casual Leave', value: 'casual' },
+                                        { label: 'Sick Leave', value: 'sick' },
+                                        { label: 'Unpaid Leave', value: 'unpaid' },
                                     ].map((item) => (
                                         <Chip
                                             key={item.value}
                                             label={item.label}
                                             onClick={() => handleFilterChange('leaveType', item.value)}
                                             sx={{
-                                                backgroundColor: filters.leaveType === item.value ? '#063455' : '#B0DEFF', // light blue for unselected
+                                                backgroundColor: filters.leaveType === item.value ? '#063455' : '#B0DEFF',
                                                 color: filters.leaveType === item.value ? 'white' : 'black',
                                                 fontWeight: 500,
-                                                borderRadius: '16px', // more round
+                                                borderRadius: '16px',
                                                 px: 2,
                                                 py: 0.5,
                                                 fontSize: '0.875rem',
+                                                cursor: 'pointer',
                                             }}
                                         />
                                     ))}
@@ -392,7 +375,7 @@ const AttendanceFilter = ({ open, onClose }) => {
                                 alignItems: 'center',
                             }}
                         >
-                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Choose by type</Typography>
+                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Leave Management</Typography>
                             <KeyboardArrowDownIcon
                                 sx={{
                                     cursor: 'pointer',
@@ -405,7 +388,7 @@ const AttendanceFilter = ({ open, onClose }) => {
                             <Box sx={{ mb: 1 }}>
                                 <Box display="flex" flexWrap="wrap" gap={1}>
                                     <Chip
-                                        label="All types"
+                                        label="All Leaves"
                                         onClick={() => handleFilterChange('orderStatus', 'all')}
                                         sx={{
                                             backgroundColor: filters.orderStatus === 'all' ? '#003049' : '#cce5ff',
@@ -416,22 +399,11 @@ const AttendanceFilter = ({ open, onClose }) => {
                                         }}
                                     />
                                     <Chip
-                                        label="VIP Members"
+                                        label="Leave Reports"
                                         onClick={() => handleFilterChange('orderStatus', 'ready')}
                                         sx={{
                                             backgroundColor: filters.orderStatus === 'ready' ? '#003049' : '#cce5ff',
                                             color: filters.orderStatus === 'ready' ? 'white' : 'black',
-                                            fontWeight: 500,
-                                            borderRadius: '20px',
-                                            px: 2,
-                                        }}
-                                    />
-                                    <Chip
-                                        label="Premium Members"
-                                        onClick={() => handleFilterChange('orderStatus', 'cooking')}
-                                        sx={{
-                                            backgroundColor: filters.orderStatus === 'cooking' ? '#003049' : '#cce5ff',
-                                            color: filters.orderStatus === 'cooking' ? 'white' : 'black',
                                             fontWeight: 500,
                                             borderRadius: '20px',
                                             px: 2,
@@ -485,7 +457,7 @@ const AttendanceFilter = ({ open, onClose }) => {
                                     px: 1
                                 }}
                             >
-                                <Typography sx={{ fontWeight: 400, fontSize:'14px' }}>
+                                <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>
                                     Select your target date
                                 </Typography>
 

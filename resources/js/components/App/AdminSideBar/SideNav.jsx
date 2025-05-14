@@ -180,6 +180,10 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Attendance',
                     path: route('employee.attendance'),
                 },
+                {
+                    text: 'Leave Category',
+                    path: route('employee.leavecategory'),
+                },
             ],
         },
         {

@@ -31,11 +31,7 @@ const drawerWidthClosed = 110;
 
 const AttendanceDashboard = () => {
     const [open, setOpen] = useState(false);
-    const [openDetails, setOpenDetails] = useState(false);
     const [openFilter, setOpenFilter] = useState(false);
-
-    const handleOpenDetails = () => setOpenDetails(true);
-    const handleCloseDetails = () => setOpenDetails(false);
 
     const employeeData = [
         {
@@ -98,7 +94,7 @@ const AttendanceDashboard = () => {
                             <Button
                                 style={{ color: 'white', width: '180px', backgroundColor: '#063455', textTransform: 'none' }}
                                 startIcon={<AddIcon />}
-                                onClick={() => router.visit('/add/employee')}
+                                onClick={() => router.visit('/employee/attendance/add/leave/application')}
                             >
                                 Add New Application
                             </Button>
@@ -217,7 +213,7 @@ const AttendanceDashboard = () => {
                                     fontWeight: 500,
                                     fontSize: '18px',
                                 }}
-                            // onClick={() => router.visit('/admin/employee/list')}
+                            onClick={() => router.visit('/employee/all/attendance')}
                             >
                                 View all
                             </div>
