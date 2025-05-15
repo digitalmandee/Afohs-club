@@ -16,7 +16,7 @@ class ProductFactory extends Factory
             'name' => $this->faker->word(),
             'menu_code' => $this->faker->bothify('MC-###'),
             'description' => $this->faker->paragraph(),
-            'images' => [$this->faker->imageUrl()],
+            'images' => ['/assets/cimage.png'],
             'category_id' => Category::factory(),
             'base_price' => $this->faker->randomFloat(2, 10, 100),
             'cost_of_goods_sold' => $this->faker->randomFloat(2, 5, 50),

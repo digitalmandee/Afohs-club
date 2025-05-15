@@ -9,6 +9,7 @@ use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductVariantValue;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,10 +26,6 @@ class OrderController extends Controller
     {
         $orderNo = $this->getOrderNo();
         $memberTypes = MemberType::select('id', 'name')->get();
-
-        // Current date/time (or use provided start_date/time from frontend)
-        $startDate = $request->input('start_date', now()->toDateString());
-        $startTime = $request->input('start_time', now()->toTimeString());
 
         // Get all active floors with their tables
         $floorTables = Floor::select('id', 'name')->where('status', 1)->with('tables:id,floor_id,table_no,capacity')->get();
@@ -129,6 +126,32 @@ class OrderController extends Controller
             // Insert order items
             foreach ($groupedByKitchen as $kitchenId => $items) {
                 foreach ($items as $item) {
+                    $productData = $item;
+                    $productId = $productData['id'];
+                    $productQty = $item['quantity'] ?? 1;
+
+                    $product = Product::find($productId);
+
+                    if (!$product || $product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
+                        return redirect()->back()->withErrors(['Insufficient stock for product: ' . ($product->name ?? 'Unknown')]);
+                    }
+
+                    // Deduct stock for product
+                    $product->decrement('current_stock', $productQty);
+
+                    // Deduct variant stock if any are selected
+                    if (!empty($productData['variants'])) {
+                        foreach ($productData['variants'] as $variant) {
+                            $variantValue = ProductVariantValue::find($variant['id']);
+                            if (!$variantValue || $variantValue->stock < 0) {
+                                return redirect()->back()->withErrors(['Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown')]);
+                            }
+
+                            $variantValue->decrement('stock', 1);
+                        }
+                    }
+
+                    // Create order item (save original item JSON for reference)
                     OrderItem::create([
                         'order_id' => $order->id,
                         'kitchen_id' => $kitchenId,
@@ -137,6 +160,17 @@ class OrderController extends Controller
                     ]);
                 }
             }
+
+            // foreach ($groupedByKitchen as $kitchenId => $items) {
+            //     foreach ($items as $item) {
+            //         OrderItem::create([
+            //             'order_id' => $order->id,
+            //             'kitchen_id' => $kitchenId,
+            //             'order_item' => $item,
+            //             'status' => 'pending',
+            //         ]);
+            //     }
+            // }
 
             // Create invoice
             Invoices::create([

@@ -202,15 +202,12 @@ class InventoryController extends Controller
             'images' => $imagePaths,
         ]);
 
+
         // Handle variants if passed as an object
         if ($request->has('variants')) {
+            $submittedVariantIds = [];
+
             foreach ($request->input('variants') as $variant) {
-                // if (!$variant['active']) {
-                //     continue;
-                // }
-
-                Log::info($variant);
-
                 // Update or create the ProductVariant
                 $productVariant = ProductVariant::updateOrCreate(
                     ['id' => $variant['id'] ?? null, 'product_id' => $id], // Use id if available
@@ -221,14 +218,18 @@ class InventoryController extends Controller
                     ]
                 );
 
-                // Now update or create the ProductVariantValue records for each item in the variant
+                $submittedVariantIds[] = $productVariant->id;
+
+                // Track value IDs to preserve
+                $submittedValueIds = [];
+
                 foreach ($variant['items'] as $item) {
-                    if ($item['name'] === '') {
+                    if (empty($item['name'])) {
                         continue;
                     }
 
-                    ProductVariantValue::updateOrCreate(
-                        ['id' => $item['id'] ?? null], // Use id if available
+                    $variantValue = ProductVariantValue::updateOrCreate(
+                        ['id' => $item['id'] ?? null],
                         [
                             'product_variant_id' => $productVariant->id,
                             'name' => $item['name'],
@@ -237,9 +238,23 @@ class InventoryController extends Controller
                             'is_default' => false,
                         ]
                     );
+
+                    $submittedValueIds[] = $variantValue->id;
                 }
+
+                // 🧹 Delete ProductVariantValues not in submitted items
+                ProductVariantValue::where('product_variant_id', $productVariant->id)
+                    ->whereNotIn('id', $submittedValueIds)
+                    ->delete();
             }
+
+            // 🧹 Remove ProductVariants with no remaining values
+            ProductVariant::where('product_id', $id)
+                ->whereNotIn('id', $submittedVariantIds)
+                ->orWhereDoesntHave('values') // assuming the relation is called `values`
+                ->delete();
         }
+
 
         return redirect()->back()->with('success', 'Product updated.');
     }
