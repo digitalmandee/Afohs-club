@@ -61,6 +61,7 @@ class KitchenController extends Controller
 
         if ($request->filled('order_time')) {
             $orderTimeIso = $request->input('order_time');
+            Log::info('Order time ISO: ' . $orderTimeIso);
             $order->order_time = Carbon::parse($orderTimeIso)->format('Y-m-d H:i:s');
         } elseif ($request->input('status') === 'in_progress') {
             $order->order_time = Carbon::now()->format('Y-m-d H:i:s');
@@ -68,6 +69,7 @@ class KitchenController extends Controller
 
         if ($request->filled('end_time')) {
             $orderTimeIso = $request->input('end_time');
+            Log::info('Order time ISO: ' . $orderTimeIso);
             $order->end_time = Carbon::parse($orderTimeIso)->format('Y-m-d H:i:s');
         } elseif ($request->input('status') === 'completed') {
             $order->end_time = Carbon::now()->format('Y-m-d H:i:s');

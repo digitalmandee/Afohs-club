@@ -14,8 +14,6 @@ class AuthenticateTenant
     public function handle(Request $request, Closure $next, string $guard = 'tenant'): Response
     {
         if (!Auth::guard($guard)->check()) {
-            Log::info('User is not authenticated under tenant guard');
-
             if (!$request->expectsJson()) {
                 // Try to resolve tenant ID via the tenancy package
                 $tenantId = tenant('id') ?? $this->resolveFromPath($request);

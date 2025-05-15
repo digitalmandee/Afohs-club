@@ -31,7 +31,7 @@ Route::middleware(\App\Http\Middleware\RedirectIfTenantAuthenticated::class)->gr
     Route::post('reset-password', [NewPasswordController::class, 'store'])->name('tenant.password.store');
 });
 
-Route::middleware('auth:tennat')->group(function () {
+Route::middleware('auth:tenant')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)->name('tenant.verification.notice');
 
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)->middleware(['signed', 'throttle:6,1'])->name('tenant.verification.verify');

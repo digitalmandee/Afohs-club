@@ -128,12 +128,14 @@ Route::group([
         Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
 
         // Inventory Items
+        Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
+        Route::put('/inventory/{id}/update', [InventoryController::class, 'update'])->name('inventory.update');
         Route::get('/add/product', function () {
             return Inertia::render('App/Inventory/Product');
         })->name('product.create');
         Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
-        Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
         // 
         Route::get('/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
 

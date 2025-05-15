@@ -1,34 +1,8 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
-import {
-    Add as AddIcon,
-    Close as CloseIcon,
-    EventSeat as EventSeatIcon,
-    FormatBold as FormatBoldIcon,
-    FormatItalic as FormatItalicIcon,
-    FormatListBulleted,
-    FormatListNumbered,
-    InsertEmoticon as InsertEmoticonIcon,
-    Link as LinkIcon,
-    LocalMall as LocalMallIcon,
-    LocalShipping as LocalShippingIcon,
-    ShoppingBag as ShoppingBagIcon,
-} from '@mui/icons-material';
+import { Add as AddIcon, Close as CloseIcon, EventSeat as EventSeatIcon, FormatBold as FormatBoldIcon, FormatItalic as FormatItalicIcon, FormatListBulleted, FormatListNumbered, InsertEmoticon as InsertEmoticonIcon, Link as LinkIcon, LocalMall as LocalMallIcon, LocalShipping as LocalShippingIcon, ShoppingBag as ShoppingBagIcon } from '@mui/icons-material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import {
-    Autocomplete,
-    Box,
-    Button,
-    DialogActions,
-    DialogContent,
-    Divider,
-    Grid,
-    IconButton,
-    MenuItem,
-    Switch,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Autocomplete, Box, Button, DialogActions, DialogContent, Divider, Grid, IconButton, MenuItem, Switch, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
@@ -36,24 +10,42 @@ import { useEffect, useRef, useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
-const AddProduct = ({ openMenu, onClose }) => {
+const AddProduct = ({ product, id }) => {
+    console.log(product);
+
     const [open, setOpen] = useState(false);
-    const { data, setData, post, processing, errors, reset, transform } = useForm({
-        name: '',
-        menu_code: '',
-        category: '',
-        kitchen: '',
-        currentStock: '',
-        minimalStock: '',
-        outOfStock: false,
-        orderTypes: [],
-        cogs: '',
-        basePrice: '',
-        profit: '0.00',
-        variants: {},
-        description: '',
-        images: [],
-    });
+    const { data, setData, submit, processing, errors, reset, transform } = useForm(
+        id
+            ? { ...product }
+            : {
+                  name: '',
+                  menu_code: '',
+                  category_id: '',
+                  kitchen: '',
+                  current_stock: '',
+                  minimal_stock: '',
+                  outOfStock: false,
+                  available_order_types: [],
+                  cost_of_goods_sold: '',
+                  base_price: '',
+                  profit: '0.00',
+                  variants: [
+                      {
+                          name: 'Size',
+                          active: false,
+                          type: 'multiple',
+                          items: [
+                              { name: 'Small', additional_price: 0, stock: 0 },
+                              { name: 'Medium', additional_price: 0, stock: 0 },
+                              { name: 'Large', additional_price: 0, stock: 0 },
+                          ],
+                          newItem: { name: '', additional_price: '', stock: '' },
+                      },
+                  ],
+                  description: '',
+                  images: [],
+              },
+    );
 
     const [categories, setCategories] = useState([]);
     const [kitchens, setKitchens] = useState([]);
@@ -63,8 +55,6 @@ const AddProduct = ({ openMenu, onClose }) => {
     const fileInputRef = useRef(null);
 
     // Snackbar
-
-    const productVariants = [{ name: 'Size', type: 'multiple', values: ['Small', 'Medium', 'Large'] }];
 
     const orderTypes = [
         { value: 'dineIn', label: 'Dine In', icon: EventSeatIcon },
@@ -92,14 +82,14 @@ const AddProduct = ({ openMenu, onClose }) => {
         const errors = [];
 
         if (!menu.name.trim()) errors.push('Name is required');
-        if (!menu.menu_code.trim()) errors.push('Menu code is required');
-        if (!menu.category) errors.push('Category is required');
+        // if (!menu.menu_code.trim()) errors.push('Menu code is required');
+        if (!menu.category_id) errors.push('Category is required');
         if (!menu.kitchen) errors.push('Kitchen is required');
-        if (!menu.currentStock || isNaN(menu.currentStock)) errors.push('Current stock must be a valid number');
-        if (!menu.minimalStock || isNaN(menu.minimalStock)) errors.push('Minimal stock must be a valid number');
-        if (!menu.orderTypes || menu.orderTypes.length === 0) errors.push('At least one order type must be selected');
-        if (!menu.cogs || isNaN(menu.cogs)) errors.push('COGS must be a valid number');
-        if (!menu.basePrice || isNaN(menu.basePrice)) errors.push('Base price must be a valid number');
+        if (!menu.current_stock || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
+        if (!menu.minimal_stock || isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
+        if (!menu.available_order_types || menu.available_order_types.length === 0) errors.push('At least one order type must be selected');
+        if (!menu.cost_of_goods_sold || isNaN(menu.cost_of_goods_sold)) errors.push('COGS must be a valid number');
+        if (!menu.base_price || isNaN(menu.base_price)) errors.push('Base price must be a valid number');
         if (!menu.profit || isNaN(menu.profit)) errors.push('Profit must be a valid number');
         // if (!menu.variants || Object.keys(menu.variants).length === 0) errors.push('At least one variant must be added');
 
@@ -122,103 +112,113 @@ const AddProduct = ({ openMenu, onClose }) => {
     const handleOrderTypeToggle = (type) => {
         setData((prev) => ({
             ...prev,
-            orderTypes: prev.orderTypes.includes(type) ? prev.orderTypes.filter((t) => t !== type) : [...prev.orderTypes, type],
+            available_order_types: prev.available_order_types.includes(type) ? prev.available_order_types.filter((t) => t !== type) : [...prev.available_order_types, type],
         }));
     };
 
     const handleSelectAll = () => {
         setData((prev) => {
-            const allSelected = orderTypes.every((opt) => prev.orderTypes.includes(opt.value));
+            const allSelected = orderTypes.every((opt) => prev.available_order_types.includes(opt.value));
 
             return {
                 ...prev,
-                orderTypes: allSelected ? [] : orderTypes.map((opt) => opt.value),
+                available_order_types: allSelected ? [] : orderTypes.map((opt) => opt.value),
             };
         });
     };
 
     // Handle variant changes
-    const handleVariantToggle = (variantName) => {
+    const handleVariantToggle = (name) => {
         setData((prev) => {
-            const existing = prev.variants[variantName];
-            const isActive = existing?.active;
-
-            // Get the variant from the initial `productVariants` list to map values into items.
-            const variant = productVariants.find((v) => v.name === variantName);
-
-            // If `variant` is found in `productVariants`
-            if (!variant) return prev;
-
-            const newItems = variant.values.map((value) => ({ name: value, price: 0, stock: 0 })); // For "multiple" type, keep `items` empty initially.
-
-            return {
-                ...prev,
-                variants: {
-                    ...prev.variants,
-                    [variantName]: {
-                        active: !isActive,
-                        type: variant.type,
-                        items: newItems, // New items for active variant
-                        newItem: { name: '', price: '', stock: '' }, // Clear form for new item
-                    },
-                },
-            };
+            const updatedVariants = prev.variants.map((variant) => (variant.name === name ? { ...variant, active: !variant.active } : variant));
+            return { ...prev, variants: updatedVariants };
         });
     };
 
-    const handleNewVariantItemChange = (variantName, field, value) => {
+    const handleVariantNameChange = (variantIndex, value) => {
+        setData((prev) => {
+            const variants = [...prev.variants];
+            variants[variantIndex].name = value;
+            return { ...prev, variants };
+        });
+    };
+
+    const updateVariantItem = (variantIndex, itemIndex, field, value) => {
+        setData((prev) => {
+            const variants = [...prev.variants];
+            const items = [...variants[variantIndex].items];
+            items[itemIndex] = { ...items[itemIndex], [field]: value };
+            variants[variantIndex].items = items;
+            return { ...prev, variants };
+        });
+    };
+
+    const updateNewVariantField = (variantIndex, field, value) => {
+        setData((prev) => {
+            const variants = [...prev.variants];
+            const newItem = { ...(variants[variantIndex].newItem || {}) };
+            newItem[field] = value;
+            variants[variantIndex].newItem = newItem;
+            return { ...prev, variants };
+        });
+    };
+
+    const updateVariant = (variantName, updater) => {
+        setData((prev) => {
+            const index = prev.variants.findIndex((v) => v.name === variantName);
+            if (index === -1) return prev;
+
+            const updatedVariants = [...prev.variants];
+            updatedVariants[index] = updater(updatedVariants[index]);
+
+            return { ...prev, variants: updatedVariants };
+        });
+    };
+
+    const addVariantItem = (variantIndex) => {
+        setData((prev) => {
+            const variants = [...prev.variants];
+            const newItem = variants[variantIndex].newItem;
+
+            if (!newItem?.name) return prev; // Optionally require name
+
+            variants[variantIndex].items = [
+                ...(variants[variantIndex].items || []),
+                {
+                    name: newItem.name,
+                    additional_price: parseFloat(newItem.price) || 0,
+                    stock: parseInt(newItem.stock) || 0,
+                },
+            ];
+
+            variants[variantIndex].newItem = { name: '', additional_price: '', stock: '' }; // Clear form
+
+            return { ...prev, variants };
+        });
+    };
+
+    const removeVariantItem = (variantIndex, itemIndex) => {
+        setData((prev) => {
+            const variants = [...prev.variants];
+            variants[variantIndex].items = variants[variantIndex].items.filter((_, idx) => idx !== itemIndex);
+            return { ...prev, variants };
+        });
+    };
+
+    const handleAddNewVariant = () => {
         setData((prev) => ({
             ...prev,
-            variants: {
+            variants: [
                 ...prev.variants,
-                [variantName]: {
-                    ...prev.variants[variantName],
-                    newItem: {
-                        ...prev.variants[variantName].newItem,
-                        [field]: value,
-                    },
+                {
+                    name: 'New Variant',
+                    type: 'multiple', // or 'single' based on your logic/UI
+                    active: true,
+                    items: [],
+                    newItem: { name: '', additional_price: '', stock: '' },
                 },
-            },
+            ],
         }));
-    };
-
-    const handleAddVariantItem = (variantName) => {
-        setData((prev) => {
-            const variant = prev.variants[variantName];
-            const { name, price, stock } = variant.newItem;
-
-            if (!name || price === '' || stock === '') return prev; // Avoid empty entries
-
-            return {
-                ...prev,
-                variants: {
-                    ...prev.variants,
-                    [variantName]: {
-                        ...variant,
-                        items: [...variant.items, { name, price, stock }],
-                        newItem: { name: '', price: '', stock: '' }, // Clear form
-                    },
-                },
-            };
-        });
-    };
-
-    const handleRemoveVariantItem = (variantName, index) => {
-        setData((prev) => {
-            const updatedItems = [...prev.variants[variantName].items];
-            updatedItems.splice(index, 1);
-
-            return {
-                ...prev,
-                variants: {
-                    ...prev.variants,
-                    [variantName]: {
-                        ...prev.variants[variantName],
-                        items: updatedItems,
-                    },
-                },
-            };
-        });
     };
 
     // Handle image upload
@@ -240,7 +240,7 @@ const AddProduct = ({ openMenu, onClose }) => {
 
     // Save new menu
     const handleSaveMenu = () => {
-        post(route('inventory.store'), {
+        submit(id ? 'put' : 'post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
             onSuccess: (data) => {
                 enqueueSnackbar('Product added successfully', { variant: 'success' });
                 reset();
@@ -248,16 +248,18 @@ const AddProduct = ({ openMenu, onClose }) => {
                 router.visit(route('inventory.index'));
             },
             onError: (errors) => {
+                console.log(errors);
+
                 enqueueSnackbar('Something went wrong', { variant: 'error' });
             },
         });
     };
 
-    // Calculate profit when cogs or basePrice changes
+    // Calculate profit when cost_of_goods_sold or base_price changes
     useEffect(() => {
-        if (data.cogs && data.basePrice) {
-            const cogs = Number.parseFloat(data.cogs);
-            const basePrice = Number.parseFloat(data.basePrice);
+        if (data.cost_of_goods_sold && data.base_price) {
+            const cogs = Number.parseFloat(data.cost_of_goods_sold);
+            const basePrice = Number.parseFloat(data.base_price);
             if (!isNaN(cogs) && !isNaN(basePrice)) {
                 const profit = (basePrice - cogs).toFixed(2);
                 setData((prev) => ({
@@ -266,7 +268,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                 }));
             }
         }
-    }, [data.cogs, data.basePrice]);
+    }, [data.cost_of_goods_sold, data.base_price]);
 
     const fetchKitchens = () => {
         setLoadingKitchen(true);
@@ -275,11 +277,16 @@ const AddProduct = ({ openMenu, onClose }) => {
             setLoadingKitchen(false);
         });
     };
-
-    useEffect(() => {
+    const fetchCategories = () => {
         axios.get(route('inventory.categories')).then((response) => {
+            console.log(response.data);
+
             setCategories(response.data.categories);
         });
+    };
+
+    useEffect(() => {
+        fetchCategories();
         fetchKitchens();
     }, []);
 
@@ -295,7 +302,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                 }}
             >
                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                    <ArrowBackIcon sx={{ fontSize: 24, color: '#3F4E4F', cursor: 'pointer' }} onClick={() => router.visit('/inventory')} />
+                    <ArrowBackIcon sx={{ fontSize: 24, color: '#3F4E4F', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index'))} />
                     <Typography
                         fontWeight="bold"
                         sx={{
@@ -304,7 +311,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                             marginLeft: 3,
                         }}
                     >
-                        Add Menu
+                        {id ? 'Edit Menu' : 'Add Menu'}
                     </Typography>
                 </Box>
                 <Box
@@ -367,29 +374,13 @@ const AddProduct = ({ openMenu, onClose }) => {
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Product Name
                                         </Typography>
-                                        <TextField
-                                            fullWidth
-                                            placeholder="Cappucino"
-                                            name="name"
-                                            value={data.name}
-                                            onChange={handleInputChange}
-                                            variant="outlined"
-                                            size="small"
-                                        />
+                                        <TextField fullWidth placeholder="Cappucino" name="name" value={data.name} onChange={handleInputChange} variant="outlined" size="small" />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Menu Id (Optional)
                                         </Typography>
-                                        <TextField
-                                            fullWidth
-                                            placeholder="e.g. A001"
-                                            name="menu_code"
-                                            value={data.menu_code}
-                                            onChange={handleInputChange}
-                                            variant="outlined"
-                                            size="small"
-                                        />
+                                        <TextField fullWidth placeholder="e.g. A001" name="menu_code" value={data.menu_code} onChange={handleInputChange} variant="outlined" size="small" />
                                     </Grid>
                                     <Grid container item xs={12} spacing={3}>
                                         <Grid item xs={12} md={6}>
@@ -400,8 +391,8 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                 select
                                                 fullWidth
                                                 placeholder="Choose category"
-                                                name="category"
-                                                value={data.category}
+                                                name="category_id"
+                                                value={data.category_id}
                                                 onChange={handleInputChange}
                                                 variant="outlined"
                                                 size="small"
@@ -436,14 +427,8 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                     }))
                                                 }
                                                 loading={loadingKitchen}
-                                                renderInput={(params) => (
-                                                    <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Kitchen" variant="outlined" />
-                                                )}
-                                                filterOptions={(options, state) =>
-                                                    options.filter((option) =>
-                                                        `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()),
-                                                    )
-                                                }
+                                                renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Kitchen" variant="outlined" />}
+                                                filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
                                                 renderOption={(props, option) => (
                                                     <li {...props}>
                                                         <span>{option.name}</span>
@@ -458,16 +443,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                             Current Ready Stock
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="10"
-                                                name="currentStock"
-                                                value={data.currentStock}
-                                                onChange={handleInputChange}
-                                                variant="outlined"
-                                                size="small"
-                                                type="number"
-                                            />
+                                            <TextField fullWidth placeholder="10" name="current_stock" value={data.current_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" />
                                             <Box
                                                 sx={{
                                                     display: 'flex',
@@ -489,16 +465,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                             Minimal Stock
                                         </Typography>
                                         <Box sx={{ display: 'flex' }}>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="10"
-                                                name="minimalStock"
-                                                value={data.minimalStock}
-                                                onChange={handleInputChange}
-                                                variant="outlined"
-                                                size="small"
-                                                type="number"
-                                            />
+                                            <TextField fullWidth placeholder="10" name="minimal_stock" value={data.minimal_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" />
                                             <Box
                                                 sx={{
                                                     display: 'flex',
@@ -547,11 +514,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                     </Typography>
                                                 </Box>
                                             </Box>
-                                            <Switch
-                                                checked={data.outOfStock}
-                                                onChange={() => setData((prev) => ({ ...prev, outOfStock: !prev.outOfStock }))}
-                                                color="primary"
-                                            />
+                                            <Switch checked={data.outOfStock} onChange={() => setData((prev) => ({ ...prev, outOfStock: !prev.outOfStock }))} color="primary" />
                                         </Box>
                                     </Grid>
                                     <Grid item xs={12}>
@@ -570,17 +533,12 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                 <Typography variant="body2" sx={{ mr: 1, color: '#121212', fontSize: '14px' }}>
                                                     Select All
                                                 </Typography>
-                                                <Switch
-                                                    checked={orderTypes.every((opt) => data.orderTypes.includes(opt.value))}
-                                                    onChange={handleSelectAll}
-                                                    color="primary"
-                                                    size="small"
-                                                />
+                                                <Switch checked={orderTypes.every((opt) => data.available_order_types.includes(opt.value))} onChange={handleSelectAll} color="primary" size="small" />
                                             </Box>
                                         </Box>
                                         <Box sx={{ display: 'flex', gap: 1 }}>
                                             {orderTypes.map((item, index) => {
-                                                const isSelected = data.orderTypes.includes(item.value);
+                                                const isSelected = data.available_order_types.includes(item.value);
                                                 return (
                                                     <Button
                                                         key={index}
@@ -624,17 +582,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                             >
                                                 <Typography variant="body2">Rs</Typography>
                                             </Box>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="3.00"
-                                                name="cogs"
-                                                value={data.cogs}
-                                                onChange={handleInputChange}
-                                                variant="outlined"
-                                                size="small"
-                                                type="number"
-                                                inputProps={{ step: '0.01' }}
-                                            />
+                                            <TextField fullWidth placeholder="3.00" name="cost_of_goods_sold" value={data.cost_of_goods_sold} onChange={handleInputChange} variant="outlined" size="small" type="number" inputProps={{ step: '0.01' }} />
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
@@ -656,17 +604,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                             >
                                                 <Typography variant="body2">Rs</Typography>
                                             </Box>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="4.00"
-                                                name="basePrice"
-                                                value={data.basePrice}
-                                                onChange={handleInputChange}
-                                                variant="outlined"
-                                                size="small"
-                                                type="number"
-                                                inputProps={{ step: '0.01' }}
-                                            />
+                                            <TextField fullWidth placeholder="4.00" name="base_price" value={data.base_price} onChange={handleInputChange} variant="outlined" size="small" type="number" inputProps={{ step: '0.01' }} />
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
@@ -697,24 +635,22 @@ const AddProduct = ({ openMenu, onClose }) => {
 
                                         {/* <pre>{JSON.stringify(data.variants, null, 2)}</pre> */}
 
-                                        {productVariants.map((item) => (
-                                            <Box key={item.name} sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 2 }}>
+                                        {data.variants.map((variant, variantIndex) => (
+                                            <Box key={variant.name} sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 2 }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <Typography variant="body1" fontWeight="bold">
-                                                        {item.name}
-                                                    </Typography>
-                                                    <Switch
-                                                        checked={!!data.variants[item.name]?.active}
-                                                        onChange={() => handleVariantToggle(item.name)}
-                                                        color="primary"
-                                                        size="small"
-                                                    />
+                                                    {variant.active ? (
+                                                        <TextField size="small" value={variant.name} onChange={(e) => handleVariantNameChange(variantIndex, e.target.value)} sx={{ fontWeight: 'bold' }} />
+                                                    ) : (
+                                                        <Typography variant="body1" fontWeight="bold">
+                                                            {variant.name}
+                                                        </Typography>
+                                                    )}
+
+                                                    <Switch checked={!!variant.active} onChange={() => handleVariantToggle(variant.name)} color="primary" size="small" />
                                                 </Box>
 
-                                                {/* Render if active */}
-                                                {data.variants[item.name]?.active && (
+                                                {variant.active && (
                                                     <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                        {/* Loop through the items for both single and multiple variant types */}
                                                         <Grid container sx={{ mb: 1 }}>
                                                             <Grid item xs={5}>
                                                                 <Typography variant="body2" color="text.secondary">
@@ -731,193 +667,52 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                                     Stock
                                                                 </Typography>
                                                             </Grid>
-                                                            <Grid item xs={2}></Grid>
                                                         </Grid>
-                                                        {data.variants[item.name]?.items?.map((topping, index) => (
-                                                            <Grid container sx={{ mb: 1 }} key={index}>
+
+                                                        {variant.items.map((item, itemIndex) => (
+                                                            <Grid container sx={{ mb: 1 }} key={itemIndex}>
                                                                 <Grid item xs={5}>
-                                                                    {/* Name field (editable for multiple, not editable for single) */}
-                                                                    {item.type === 'single' ? (
-                                                                        <Typography sx={{ flex: 1, mr: 1 }}>{topping.name}</Typography>
-                                                                    ) : (
-                                                                        <TextField
-                                                                            size="small"
-                                                                            placeholder="Variant Name"
-                                                                            value={topping.name}
-                                                                            onChange={(e) => {
-                                                                                const value = e.target.value;
-                                                                                setData((prev) => {
-                                                                                    const items = [...prev.variants[item.name].items];
-                                                                                    items[index].name = value;
-                                                                                    return {
-                                                                                        ...prev,
-                                                                                        variants: {
-                                                                                            ...prev.variants,
-                                                                                            [item.name]: {
-                                                                                                ...prev.variants[item.name],
-                                                                                                items,
-                                                                                            },
-                                                                                        },
-                                                                                    };
-                                                                                });
-                                                                            }}
-                                                                            sx={{ flex: 1, mr: 1 }}
-                                                                        />
-                                                                    )}
+                                                                    {variant.type === 'single' ? <Typography>{item.name}</Typography> : <TextField size="small" placeholder="Variant Name" value={item.name} onChange={(e) => updateVariantItem(variantIndex, itemIndex, 'name', e.target.value)} sx={{ flex: 1, mr: 1 }} />}
                                                                 </Grid>
                                                                 <Grid item xs={3}>
-                                                                    {/* Price field */}
-                                                                    <TextField
-                                                                        size="small"
-                                                                        placeholder="Price"
-                                                                        type="number"
-                                                                        inputProps={{ min: 0 }}
-                                                                        value={topping.price}
-                                                                        onChange={(e) => {
-                                                                            let value = parseFloat(e.target.value);
-                                                                            value = isNaN(value) ? '' : Math.max(0, value); // enforce minimum 0
-
-                                                                            setData((prev) => {
-                                                                                const items = [...prev.variants[item.name].items];
-                                                                                items[index].price = value;
-                                                                                return {
-                                                                                    ...prev,
-                                                                                    variants: {
-                                                                                        ...prev.variants,
-                                                                                        [item.name]: {
-                                                                                            ...prev.variants[item.name],
-                                                                                            items,
-                                                                                        },
-                                                                                    },
-                                                                                };
-                                                                            });
-                                                                        }}
-                                                                        sx={{ width: 130, mr: 1 }}
-                                                                    />
+                                                                    <TextField size="small" type="number" placeholder="Price" value={item.additional_price} inputProps={{ min: 0 }} onChange={(e) => updateVariantItem(variantIndex, itemIndex, 'additional_price', e.target.value)} sx={{ width: 130, mr: 1 }} />
                                                                 </Grid>
                                                                 <Grid item xs={3}>
-                                                                    <TextField
-                                                                        size="small"
-                                                                        placeholder="Stock"
-                                                                        type="number"
-                                                                        inputProps={{ min: 0 }}
-                                                                        value={topping.stock}
-                                                                        onChange={(e) => {
-                                                                            let value = parseInt(e.target.value);
-                                                                            value = isNaN(value) ? '' : Math.max(0, value); // enforce minimum 0
-
-                                                                            setData((prev) => {
-                                                                                const items = [...prev.variants[item.name].items];
-                                                                                items[index].stock = value;
-                                                                                return {
-                                                                                    ...prev,
-                                                                                    variants: {
-                                                                                        ...prev.variants,
-                                                                                        [item.name]: {
-                                                                                            ...prev.variants[item.name],
-                                                                                            items,
-                                                                                        },
-                                                                                    },
-                                                                                };
-                                                                            });
-                                                                        }}
-                                                                        sx={{ width: 130, mr: 1 }}
-                                                                    />
+                                                                    <TextField size="small" type="number" placeholder="Stock" value={item.stock} inputProps={{ min: 0 }} onChange={(e) => updateVariantItem(variantIndex, itemIndex, 'stock', e.target.value)} sx={{ width: 130, mr: 1 }} />
                                                                 </Grid>
                                                                 <Grid item xs={1}>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        sx={{ width: 40 }}
-                                                                        onClick={() => handleRemoveVariantItem(item.name, index)}
-                                                                        color="error"
-                                                                    >
+                                                                    <IconButton size="small" onClick={() => removeVariantItem(variantIndex, itemIndex)} color="error">
                                                                         <CloseIcon fontSize="small" />
                                                                     </IconButton>
                                                                 </Grid>
                                                             </Grid>
                                                         ))}
 
-                                                        {/* Add new variant item for both single and multiple */}
-                                                        {item.type === 'multiple' && (
+                                                        {variant.type === 'multiple' && (
                                                             <>
                                                                 <Grid container sx={{ mb: 1 }}>
                                                                     <Grid item xs={5}>
-                                                                        <TextField
-                                                                            placeholder="e.g. Oreo"
-                                                                            size="small"
-                                                                            value={data.variants[item.name]?.newItem?.name || ''}
-                                                                            onChange={(e) =>
-                                                                                handleNewVariantItemChange(item.name, 'name', e.target.value)
-                                                                            }
-                                                                            sx={{ flex: 1, mr: 1 }}
-                                                                        />
+                                                                        <TextField placeholder="e.g. Oreo" size="small" value={variant.newItem?.name || ''} onChange={(e) => updateNewVariantField(variantIndex, 'name', e.target.value)} sx={{ flex: 1, mr: 1 }} />
                                                                     </Grid>
                                                                     <Grid item xs={3}>
                                                                         <Box sx={{ display: 'flex', width: 130, mr: 1 }}>
-                                                                            <Box
-                                                                                sx={{
-                                                                                    display: 'flex',
-                                                                                    alignItems: 'center',
-                                                                                    justifyContent: 'center',
-                                                                                    border: '1px solid #e0e0e0',
-                                                                                    borderRight: 'none',
-                                                                                    px: 1,
-                                                                                    borderTopLeftRadius: 4,
-                                                                                    borderBottomLeftRadius: 4,
-                                                                                }}
-                                                                            >
+                                                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e0e0e0', borderRight: 'none', px: 1, borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }}>
                                                                                 <Typography variant="body2">Rs</Typography>
                                                                             </Box>
-                                                                            <TextField
-                                                                                type="number"
-                                                                                placeholder="10"
-                                                                                size="small"
-                                                                                value={data.variants[item.name]?.newItem?.price || ''}
-                                                                                onChange={(e) =>
-                                                                                    handleNewVariantItemChange(item.name, 'price', e.target.value)
-                                                                                }
-                                                                                fullWidth
-                                                                                inputProps={{
-                                                                                    min: 0,
-                                                                                }}
-                                                                            />
+                                                                            <TextField type="number" placeholder="10" size="small" value={variant.newItem?.additional_price || ''} onChange={(e) => updateNewVariantField(variantIndex, 'additional_price', e.target.value)} fullWidth inputProps={{ min: 0 }} />
                                                                         </Box>
                                                                     </Grid>
                                                                     <Grid item xs={3}>
-                                                                        <TextField
-                                                                            type="number"
-                                                                            placeholder="0"
-                                                                            size="small"
-                                                                            value={data.variants[item.name]?.newItem?.stock || ''}
-                                                                            onChange={(e) =>
-                                                                                handleNewVariantItemChange(item.name, 'stock', e.target.value)
-                                                                            }
-                                                                            sx={{ width: 130, mr: 1 }}
-                                                                            inputProps={{
-                                                                                min: 0,
-                                                                            }}
-                                                                        />
+                                                                        <TextField type="number" placeholder="0" size="small" value={variant.newItem?.stock || ''} onChange={(e) => updateNewVariantField(variantIndex, 'stock', e.target.value)} sx={{ width: 130, mr: 1 }} inputProps={{ min: 0 }} />
                                                                     </Grid>
                                                                     <Grid item xs={1}>
-                                                                        <IconButton
-                                                                            size="small"
-                                                                            sx={{ width: 40 }}
-                                                                            onClick={() => handleAddVariantItem(item.name)}
-                                                                            color="primary"
-                                                                        >
+                                                                        <IconButton size="small" onClick={() => addVariantItem(variantIndex)} color="primary">
                                                                             <AddIcon fontSize="small" />
                                                                         </IconButton>
                                                                     </Grid>
                                                                 </Grid>
-
-                                                                {/* Button to add new item */}
-                                                                <Button
-                                                                    variant="text"
-                                                                    startIcon={<AddIcon />}
-                                                                    onClick={() => handleAddVariantItem(item.name)}
-                                                                    sx={{ mt: 1 }}
-                                                                >
-                                                                    Add Variant
+                                                                <Button variant="text" startIcon={<AddIcon />} onClick={() => addVariantItem(variantIndex)} sx={{ mt: 1 }}>
+                                                                    Add Variant Item
                                                                 </Button>
                                                             </>
                                                         )}
@@ -925,6 +720,10 @@ const AddProduct = ({ openMenu, onClose }) => {
                                                 )}
                                             </Box>
                                         ))}
+
+                                        <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddNewVariant} sx={{ mt: 2 }}>
+                                            Add New Variant
+                                        </Button>
 
                                         {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -1013,14 +812,7 @@ const AddProduct = ({ openMenu, onClose }) => {
                                     >
                                         <AddIcon sx={{ color: '#90caf9' }} />
                                     </Box>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        style={{ display: 'none' }}
-                                        onChange={handleImageUpload}
-                                        accept="image/*"
-                                        multiple
-                                    />
+                                    <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleImageUpload} accept="image/*" multiple />
                                 </Box>
 
                                 <Typography variant="body1" sx={{ mb: 2 }}>

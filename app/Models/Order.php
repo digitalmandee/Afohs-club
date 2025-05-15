@@ -9,7 +9,7 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $dates = ['order_time'];
+    // protected $dates = ['order_time' => 'datetime:Y-m-d\TH:i:s\Z'];
 
     protected $fillable = [
         'order_number',

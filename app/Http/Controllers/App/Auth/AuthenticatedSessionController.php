@@ -34,6 +34,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = Auth::guard('tenant')->user();
+
+        if ($user->hasRole('kitchen', 'web')) {
+            return redirect()->intended(route('kitchen.index', absolute: false));
+        }
+
         return redirect()->intended(route('tenant.dashboard', absolute: false));
     }
 
