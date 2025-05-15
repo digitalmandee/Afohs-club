@@ -11,7 +11,7 @@ use App\Http\Controllers\App\Auth\RegisteredUserController;
 use App\Http\Controllers\App\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->group(function () {
+Route::middleware(\App\Http\Middleware\RedirectIfTenantAuthenticated::class)->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])->name('tenant.register');
 
     Route::post('register', [RegisteredUserController::class, 'store']);

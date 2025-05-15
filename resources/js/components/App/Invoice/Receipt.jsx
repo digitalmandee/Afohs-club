@@ -16,7 +16,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
     useEffect(() => {
         if (openModal && invoiceId) {
             setLoading(true);
-            axios.get(`/payment-order-data/${invoiceId}`).then((response) => {
+            axios.get(route('transaction.invoice', { invoiceId: invoiceId })).then((response) => {
                 setPaymentData(response.data);
                 setLoading(false);
             });

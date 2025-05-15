@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class KitchenController extends Controller
 {
@@ -124,12 +125,12 @@ class KitchenController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        $users = User::role('kitchen')
+        $users = User::role('kitchen', 'web')
             ->with('memberType')
             ->latest()
             ->paginate($limit);
 
-        $userDetail = User::role('kitchen')
+        $userDetail = User::role('kitchen', 'web')
             ->with('userDetail')
             ->latest()
             ->paginate($limit);
@@ -205,7 +206,7 @@ class KitchenController extends Controller
             }
 
             $customer->save();
-            $customer->assignRole('kitchen');
+            $customer->assignRole(Role::findByName('kitchen', 'web'));
 
             // Create addresses if provided
             if (!empty($validated['addresses'])) {

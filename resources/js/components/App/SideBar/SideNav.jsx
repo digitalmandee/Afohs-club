@@ -347,38 +347,40 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' }, // Chrome & Safari
                     }}
                 >
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            p: 1,
-                            mt: 2,
-                        }}
-                    >
-                        <Button
-                            variant="text"
+                    {auth.role !== 'kitchen' && (
+                        <Box
                             sx={{
-                                backgroundColor: '#0A2647',
-                                color: '#fff',
-                                '&:hover': { backgroundColor: '#09203F' },
-                                width: open ? '90%' : '100px',
-                                minWidth: '50px',
-                                height: '40px',
-                                fontSize: open ? '16px' : '12px',
-                                textTransform: 'none',
-                                overflow: 'hidden',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
                                 display: 'flex',
-                                alignItems: 'center',
                                 justifyContent: 'center',
-                                transition: 'all 0.3s ease-in-out',
+                                p: 1,
+                                mt: 2,
                             }}
-                            onClick={() => router.visit(route('order.new'))}
                         >
-                            {open ? '+ New Order' : '+ New Order'}
-                        </Button>
-                    </Box>
+                            <Button
+                                variant="text"
+                                sx={{
+                                    backgroundColor: '#0A2647',
+                                    color: '#fff',
+                                    '&:hover': { backgroundColor: '#09203F' },
+                                    width: open ? '90%' : '100px',
+                                    minWidth: '50px',
+                                    height: '40px',
+                                    fontSize: open ? '16px' : '12px',
+                                    textTransform: 'none',
+                                    overflow: 'hidden',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.3s ease-in-out',
+                                }}
+                                onClick={() => router.visit(route('order.new'))}
+                            >
+                                {open ? '+ New Order' : '+ New Order'}
+                            </Button>
+                        </Box>
+                    )}
 
                     <List>
                         {menuItems

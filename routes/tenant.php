@@ -155,20 +155,23 @@ Route::group([
         Route::put('/kitchens/{id}', [KitchenController::class, 'update'])->name('kitchens.update');
     });
 
-    // Tenant guest-only auth routes
-    Route::middleware(\App\Http\Middleware\RedirectIfTenantAuthenticated::class)->group(function () {
-        Route::get('/register', [RegisteredUserController::class, 'create'])->name('tenant.register');
-        Route::post('/register', [RegisteredUserController::class, 'store']);
-
-        Route::post('/check-user-id', [AuthController::class, 'checkUserId'])->name('tenant.check-user-id');
-
-        Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('tenant.login');
-        Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-
-        Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('tenant.password.request');
-        Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('tenant.password.email');
-
-        Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('tenant.password.reset');
-        Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('tenant.password.store');
+    // Login Authentication Routes
+    Route::get('/forget-pin', function () {
+        return Inertia::render('App/Auth/ForgetPin');
     });
+
+    Route::get('/reset/pin', function () {
+        return Inertia::render('App/Auth/Reset');
+    });
+
+    Route::get('/set/new/pin', function () {
+        return Inertia::render('App/Auth/NewPin');
+    });
+
+    Route::get('/success', function () {
+        return Inertia::render('App/Auth/Success');
+    });
+
+    // Authentication
+    require __DIR__ . '/tenant-auth.php';
 });
