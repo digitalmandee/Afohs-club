@@ -3,13 +3,14 @@ import { Typography, Button, Card, CardContent, TextField, Table, TableBody, Tab
 import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard, Warning } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react'; // Import usePage for props
 import MembershipSuspensionDialog from './Modal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = () => {
+const MembershipDashboard = ({ members }) => {
+    // Receive members as a prop
     // Modal state
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
@@ -25,10 +26,7 @@ const MembershipDashboard = () => {
     });
 
     const handleOpenModal = (member, event, type = 'actions') => {
-        // Get the position of the clicked button
         const rect = event.currentTarget.getBoundingClientRect();
-
-        // Calculate position for the modal
         const position = {
             top: rect.top + window.scrollY,
             left: rect.left + window.scrollX,
@@ -45,64 +43,16 @@ const MembershipDashboard = () => {
     };
 
     const handleCancelMembership = () => {
-        // Logic to cancel membership would go here
         handleCloseModal();
     };
 
     const handleSuspendMembership = () => {
-        // Logic to suspend membership would go here
         handleCloseModal();
     };
 
     const showMemberDetails = (member, event) => {
-        // You would typically fetch these details from an API
-        // For now we'll use the sample data
         handleOpenModal(member, event, 'details');
     };
-
-    // Sample data
-    const members = [
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            type: 'Member',
-            status: 'Active',
-            avatar: '/placeholder.svg?height=40&width=40',
-        },
-        {
-            id: 'AFOHS-1234',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            type: 'Applied Member',
-            status: 'Suspend',
-            avatar: '/placeholder.svg?height=40&width=40',
-        },
-        {
-            id: 'AFOHS-1245',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            type: 'Affiliated Member',
-            status: 'Active',
-            avatar: '/placeholder.svg?height=40&width=40',
-        },
-        {
-            id: 'AFOHS-1345',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            type: 'VIP Guest',
-            status: 'Expired',
-            avatar: '/placeholder.svg?height=40&width=40',
-        },
-        {
-            id: 'AFOHS-2345',
-            name: 'Zahid Ullah',
-            email: 'user@gmail.com',
-            type: 'Applied Member',
-            status: 'Suspend',
-            avatar: '/placeholder.svg?height=40&width=40',
-        },
-    ];
 
     return (
         <>
@@ -155,7 +105,7 @@ const MembershipDashboard = () => {
                                         Total Membership
                                     </Typography>
                                     <Typography variant="h4" style={{ fontWeight: 'bold' }}>
-                                        320
+                                        {members.length} {/* Update with dynamic count */}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -172,7 +122,7 @@ const MembershipDashboard = () => {
                                         Total Payment
                                     </Typography>
                                     <Typography variant="h4" style={{ fontWeight: 'bold' }}>
-                                        10,000
+                                        10,000 {/* Replace with dynamic data if available */}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -189,7 +139,7 @@ const MembershipDashboard = () => {
                                         Current Balance
                                     </Typography>
                                     <Typography variant="h4" style={{ fontWeight: 'bold' }}>
-                                        300,00
+                                        300,00 {/* Replace with dynamic data if available */}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -246,6 +196,7 @@ const MembershipDashboard = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
+                                    {JSON.stringify(members)}
                                     {members.map((member) => (
                                         <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell>{member.id}</TableCell>
@@ -324,8 +275,9 @@ const MembershipDashboard = () => {
                             </Box>
 
                             {modalType === 'actions' ? (
-                                <div className="d-flex " style={{ gap: '10px' }}>
+                                <div className="d-flex" style={{ gap: '10px' }}>
                                     <Button
+                                        miners
                                         variant="outlined"
                                         style={{
                                             borderColor: '#1976d2',
@@ -346,7 +298,6 @@ const MembershipDashboard = () => {
                                             justifyContent: 'center',
                                             padding: '8px 16px',
                                         }}
-                                        // onClick={handleSuspendMembership}
                                         onClick={() => {
                                             handleCloseModal();
                                             setTimeout(() => {

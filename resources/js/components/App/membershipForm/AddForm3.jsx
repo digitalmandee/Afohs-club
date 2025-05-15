@@ -19,30 +19,28 @@ const AddForm3 = ({ onSubmit, onBack }) => {
     const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
     const [familyMembers, setFamilyMembers] = useState([]);
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
-        fullName: 'Ayesha Khan',
+        full_name: 'Ayesha Khan',
         relation: 'Mother',
         cnic: '42201-1234567-0',
-        phoneNumber: '03451234567',
+        phone_number: '03451234567',
         email: 'ayesha.khan@example.com',
-        membershipType: 'Silver',
-        membershipCategory: 'Family',
-        startDate: '2025-04-15',
-        endDate: '2026-04-15',
+        membership_type: 'Silver',
+        membership_category: 'Family',
+        start_date: '2025-04-15',
+        end_date: '2026-04-15',
         picture: null,
-        picturePreview: 'https://via.placeholder.com/150',
+        picture_preview: null,
     });
 
     const [membershipData, setMembershipData] = useState({
-        membershipCategory: 'Family',
-        membershipNumber: 'FM-2025-001',
-        membershipDate: '2025-05-01',
-        statusOfCard: 'Active',
-        cardIssueDate: '2025-05-01',
-        cardExpiryDate: '2026-05-01',
-        fromDate: '2025-05-01',
-        toDate: '2026-05-01',
-        password: '',
-        password_confirmation: '',
+        membership_category: 'Family',
+        membership_number: 'FM-2025-001',
+        membership_date: '2025-05-01',
+        card_status: 'Active',
+        card_issue_date: '2025-05-01',
+        card_expiry_date: '2026-05-01',
+        from_date: '2025-05-01',
+        to_date: '2026-05-01',
     });
 
     const [submitError, setSubmitError] = useState('');
@@ -66,12 +64,16 @@ const AddForm3 = ({ onSubmit, onBack }) => {
     const handleImageUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
+            if (file.size > 4 * 1024 * 1024) {
+                alert('Image size must be less than 4MB');
+                return;
+            }
             const reader = new FileReader();
             reader.onloadend = () => {
                 setCurrentFamilyMember({
                     ...currentFamilyMember,
-                    picture: file,
-                    picturePreview: reader.result,
+                    picture: reader.result,
+                    picture_preview: reader.result,
                 });
             };
             reader.readAsDataURL(file);
@@ -79,23 +81,23 @@ const AddForm3 = ({ onSubmit, onBack }) => {
     };
 
     const handleAddFamilyMember = () => {
-        if (!currentFamilyMember.fullName || !currentFamilyMember.relation || !currentFamilyMember.email) {
+        if (!currentFamilyMember.full_name || !currentFamilyMember.relation || !currentFamilyMember.email) {
             alert('Please fill required family member fields: Full Name, Relation, and Email');
             return;
         }
         setFamilyMembers([...familyMembers, currentFamilyMember]);
         setCurrentFamilyMember({
-            fullName: '',
+            full_name: '',
             relation: '',
             cnic: '',
-            phoneNumber: '',
+            phone_number: '',
             email: '',
-            membershipType: '',
-            membershipCategory: '',
-            startDate: '',
-            endDate: '',
+            membership_type: '',
+            membership_category: '',
+            start_date: '',
+            end_date: '',
             picture: null,
-            picturePreview: null,
+            picture_preview: null,
         });
         setShowFamilyMemberForm(false);
     };
@@ -112,26 +114,54 @@ const AddForm3 = ({ onSubmit, onBack }) => {
         setShowFamilyMemberForm(true);
     };
 
+    const handleCancelFamilyMember = () => {
+        setShowFamilyMemberForm(false);
+        setFamilyMembers([]); // Clear family members on cancel
+    };
+
     const handleSubmit = async () => {
         const missingFields = [];
-        if (!membershipData.membershipNumber) missingFields.push('Membership Number');
-        if (!membershipData.membershipDate) missingFields.push('Membership Date');
-        if (!membershipData.password) missingFields.push('Password');
-        if (!membershipData.password_confirmation) missingFields.push('Password Confirmation');
+        const allowedMemberTypes = ['Silver', 'Gold', 'Corporate Member', 'Applied Member', 'Affiliated Member', 'VIP Guest', 'Employee'];
+
+        // Validate required fields
+        if (!memberType || !allowedMemberTypes.includes(memberType)) {
+            missingFields.push('Member Type (must be one of: ' + allowedMemberTypes.join(', ') + ')');
+        }
+        if (!membershipData.membership_number) {
+            missingFields.push('Membership Number');
+        }
+        if (!membershipData.membership_date) {
+            missingFields.push('Membership Date');
+        } else {
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(membershipData.membership_date)) {
+                missingFields.push('Membership Date (must be in YYYY-MM-DD format)');
+            }
+        }
 
         if (missingFields.length > 0) {
-            alert(`Please fill all required fields: ${missingFields.join(', ')}`);
+            alert(`Please fill all required fields correctly: ${missingFields.join(', ')}`);
+            console.log('Validation failed:', { memberType, membership_number: membershipData.membership_number, membership_date: membershipData.membership_date });
             return;
         }
 
+        // Validate family members
+        const validFamilyMembers = familyMembers.filter((member) => member.full_name && member.relation && member.email);
+
         const dataToSave = {
-            memberType,
-            ...membershipData,
-            familyMembers,
-            password: membershipData.password,
-            password_confirmation: membershipData.password_confirmation,
+            member_type: memberType,
+            membership_category: membershipData.membership_category || '',
+            membership_number: String(membershipData.membership_number),
+            membership_date: membershipData.membership_date,
+            card_status: membershipData.card_status || '',
+            card_issue_date: membershipData.card_issue_date || '',
+            card_expiry_date: membershipData.card_expiry_date || '',
+            from_date: membershipData.from_date || '',
+            to_date: membershipData.to_date || '',
+            family_members: validFamilyMembers,
         };
-        console.log('AddForm3 Data:', dataToSave);
+
+        console.log('Submitting data:', JSON.stringify(dataToSave, null, 2));
 
         try {
             await onSubmit(dataToSave);
@@ -139,7 +169,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
         } catch (error) {
             console.error('Submission Error:', error);
             const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data || 'An error occurred during submission');
-            setSubmitError(`Submission failed: ${errorMessage}. Please check the Personal Information form for errors (e.g., Date of Birth).`);
+            setSubmitError(`Submission failed: ${errorMessage}. Please check all form fields.`);
         }
     };
 
@@ -242,148 +272,25 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                 </Box>
 
                                 <Box sx={{ mb: 3 }}>
-                                    <Typography sx={{ mb: 1, fontWeight: 500 }}>Password *</Typography>
-                                    <TextField
-                                        fullWidth
-                                        type="password"
-                                        placeholder="Enter password"
-                                        variant="outlined"
-                                        name="password"
-                                        value={membershipData.password}
-                                        onChange={handleMembershipDataChange}
-                                        sx={{
-                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#ccc',
-                                            },
-                                        }}
-                                    />
-                                </Box>
-                                <Box sx={{ mb: 3 }}>
-                                    <Typography sx={{ mb: 1, fontWeight: 500 }}>Confirm Password *</Typography>
-                                    <TextField
-                                        fullWidth
-                                        type="password"
-                                        placeholder="Confirm password"
-                                        variant="outlined"
-                                        name="password_confirmation"
-                                        value={membershipData.password_confirmation}
-                                        onChange={handleMembershipDataChange}
-                                        sx={{
-                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#ccc',
-                                            },
-                                        }}
-                                    />
-                                </Box>
-
-                                <Box sx={{ mb: 3 }}>
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Member Type</Typography>
                                     <Grid container spacing={2}>
-                                        <Grid item xs={6} sm={6}>
-                                            <Box
-                                                sx={{
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: 1,
-                                                    p: 1,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    bgcolor: memberType === 'Silver' ? '#fff' : 'transparent',
-                                                }}
-                                            >
-                                                <Radio checked={memberType === 'Silver'} onChange={handleMemberTypeChange} value="Silver" name="member-type" sx={{ color: '#1976d2' }} />
-                                                <Typography>Silver</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6} sm={6}>
-                                            <Box
-                                                sx={{
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: 1,
-                                                    p: 1,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    bgcolor: memberType === 'Gold' ? '#fff' : 'transparent',
-                                                }}
-                                            >
-                                                <Radio checked={memberType === 'Gold'} onChange={handleMemberTypeChange} value="Gold" name="member-type" sx={{ color: '#1976d2' }} />
-                                                <Typography>Gold</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6} sm={6}>
-                                            <Box
-                                                sx={{
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: 1,
-                                                    p: 1,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    bgcolor: memberType === 'Corporate Member' ? '#fff' : 'transparent',
-                                                }}
-                                            >
-                                                <Radio checked={memberType === 'Corporate Member'} onChange={handleMemberTypeChange} value="Corporate Member" name="member-type" sx={{ color: '#1976d2' }} />
-                                                <Typography>Corporate Member</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6} sm={6}>
-                                            <Box
-                                                sx={{
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: 1,
-                                                    p: 1,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    bgcolor: memberType === 'Applied Member' ? '#fff' : 'transparent',
-                                                }}
-                                            >
-                                                <Radio checked={memberType === 'Applied Member'} onChange={handleMemberTypeChange} value="Applied Member" name="member-type" sx={{ color: '#1976d2' }} />
-                                                <Typography>Applied Member</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6} sm={6}>
-                                            <Box
-                                                sx={{
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: 1,
-                                                    p: 1,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    bgcolor: memberType === 'Affiliated Member' ? '#fff' : 'transparent',
-                                                }}
-                                            >
-                                                <Radio checked={memberType === 'Affiliated Member'} onChange={handleMemberTypeChange} value="Affiliated Member" name="member-type" sx={{ color: '#1976d2' }} />
-                                                <Typography>Affiliated Member</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6} sm={6}>
-                                            <Box
-                                                sx={{
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: 1,
-                                                    p: 1,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    bgcolor: memberType === 'VIP Guest' ? '#fff' : 'transparent',
-                                                }}
-                                            >
-                                                <Radio checked={memberType === 'VIP Guest'} onChange={handleMemberTypeChange} value="VIP Guest" name="member-type" sx={{ color: '#1976d2' }} />
-                                                <Typography>VIP Guest</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6} sm={6}>
-                                            <Box
-                                                sx={{
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: 1,
-                                                    p: 1,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    bgcolor: memberType === 'Employee' ? '#fff' : 'transparent',
-                                                }}
-                                            >
-                                                <Radio checked={memberType === 'Employee'} onChange={handleMemberTypeChange} value="Employee" name="member-type" sx={{ color: '#1976d2' }} />
-                                                <Typography>Employee</Typography>
-                                            </Box>
-                                        </Grid>
+                                        {['Silver', 'Gold', 'Corporate Member', 'Applied Member', 'Affiliated Member', 'VIP Guest', 'Employee'].map((type) => (
+                                            <Grid item xs={6} sm={6} key={type}>
+                                                <Box
+                                                    sx={{
+                                                        border: '1px solid #ccc',
+                                                        borderRadius: 1,
+                                                        p: 1,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        bgcolor: memberType === type ? '#fff' : 'transparent',
+                                                    }}
+                                                >
+                                                    <Radio checked={memberType === type} onChange={handleMemberTypeChange} value={type} name="member-type" sx={{ color: '#1976d2' }} />
+                                                    <Typography>{type}</Typography>
+                                                </Box>
+                                            </Grid>
+                                        ))}
                                     </Grid>
                                 </Box>
 
@@ -391,8 +298,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category</Typography>
                                     <FormControl fullWidth variant="outlined">
                                         <Select
-                                            name="membershipCategory"
-                                            value={membershipData.membershipCategory}
+                                            name="membership_category"
+                                            value={membershipData.membership_category}
                                             onChange={handleMembershipDataChange}
                                             displayEmpty
                                             renderValue={(selected) => {
@@ -410,6 +317,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                             <MenuItem value="Category 1">Category 1</MenuItem>
                                             <MenuItem value="Category 2">Category 2</MenuItem>
                                             <MenuItem value="Category 3">Category 3</MenuItem>
+                                            <MenuItem value="Family">Family</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Box>
@@ -420,8 +328,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                         fullWidth
                                         placeholder="Enter membership number"
                                         variant="outlined"
-                                        name="membershipNumber"
-                                        value={membershipData.membershipNumber}
+                                        name="membership_number"
+                                        value={membershipData.membership_number}
                                         onChange={handleMembershipDataChange}
                                         sx={{
                                             '& .MuiOutlinedInput-notchedOutline': {
@@ -441,8 +349,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="membershipDate"
-                                                value={membershipData.membershipDate}
+                                                name="membership_date"
+                                                value={membershipData.membership_date}
                                                 onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -457,8 +365,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
                                             <FormControl fullWidth variant="outlined">
                                                 <Select
-                                                    name="statusOfCard"
-                                                    value={membershipData.statusOfCard}
+                                                    name="card_status"
+                                                    value={membershipData.card_status}
                                                     onChange={handleMembershipDataChange}
                                                     displayEmpty
                                                     renderValue={(selected) => {
@@ -491,8 +399,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="cardIssueDate"
-                                                value={membershipData.cardIssueDate}
+                                                name="card_issue_date"
+                                                value={membershipData.card_issue_date}
                                                 onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -511,8 +419,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="cardExpiryDate"
-                                                value={membershipData.cardExpiryDate}
+                                                name="card_expiry_date"
+                                                value={membershipData.card_expiry_date}
                                                 onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -534,8 +442,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="fromDate"
-                                                value={membershipData.fromDate}
+                                                name="from_date"
+                                                value={membershipData.from_date}
                                                 onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -554,8 +462,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="toDate"
-                                                value={membershipData.toDate}
+                                                name="to_date"
+                                                value={membershipData.to_date}
                                                 onChange={handleMembershipDataChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -610,7 +518,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 }}
                                             >
                                                 <Typography>
-                                                    {member.fullName} ({member.relation})
+                                                    {member.full_name} ({member.relation})
                                                 </Typography>
                                                 <Box>
                                                     <IconButton size="small" onClick={() => handleEditFamilyMember(index)} sx={{ mr: 1 }}>
@@ -668,11 +576,11 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 position: 'relative',
                                             }}
                                         >
-                                            {currentFamilyMember.picturePreview ? (
+                                            {currentFamilyMember.picture_preview ? (
                                                 <>
-                                                    <img src={currentFamilyMember.picturePreview} alt="Family member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <img src={currentFamilyMember.picture_preview} alt="Family member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
-                                                        <IconButton size="small" sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={() => handleFamilyMemberChange('picturePreview', null)}>
+                                                        <IconButton size="small" sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={() => handleFamilyMemberChange('picture_preview', null)}>
                                                             <DeleteIcon fontSize="small" />
                                                         </IconButton>
                                                     </Box>
@@ -704,8 +612,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                     fullWidth
                                                     placeholder="Enter Full Name"
                                                     variant="outlined"
-                                                    value={currentFamilyMember.fullName}
-                                                    onChange={(e) => handleFamilyMemberChange('fullName', e.target.value)}
+                                                    value={currentFamilyMember.full_name}
+                                                    onChange={(e) => handleFamilyMemberChange('full_name', e.target.value)}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
@@ -769,8 +677,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                     fullWidth
                                                     placeholder="Enter Phone Number"
                                                     variant="outlined"
-                                                    value={currentFamilyMember.phoneNumber}
-                                                    onChange={(e) => handleFamilyMemberChange('phoneNumber', e.target.value)}
+                                                    value={currentFamilyMember.phone_number}
+                                                    onChange={(e) => handleFamilyMemberChange('phone_number', e.target.value)}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
@@ -805,8 +713,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 <FormControl fullWidth variant="outlined">
                                                     <Select
                                                         displayEmpty
-                                                        value={currentFamilyMember.membershipType}
-                                                        onChange={(e) => handleFamilyMemberChange('membershipType', e.target.value)}
+                                                        value={currentFamilyMember.membership_type}
+                                                        onChange={(e) => handleFamilyMemberChange('membership_type', e.target.value)}
                                                         renderValue={(selected) => {
                                                             if (!selected) {
                                                                 return <Typography sx={{ color: '#757575' }}>Choose Type</Typography>;
@@ -839,8 +747,8 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 <FormControl fullWidth variant="outlined">
                                                     <Select
                                                         displayEmpty
-                                                        value={currentFamilyMember.membershipCategory}
-                                                        onChange={(e) => handleFamilyMemberChange('membershipCategory', e.target.value)}
+                                                        value={currentFamilyMember.membership_category}
+                                                        onChange={(e) => handleFamilyMemberChange('membership_category', e.target.value)}
                                                         renderValue={(selected) => {
                                                             if (!selected) {
                                                                 return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
@@ -856,6 +764,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                         <MenuItem value="Category 1">Category 1</MenuItem>
                                                         <MenuItem value="Category 2">Category 2</MenuItem>
                                                         <MenuItem value="Category 3">Category 3</MenuItem>
+                                                        <MenuItem value="Family">Family</MenuItem>
                                                     </Select>
                                                 </FormControl>
                                             </Box>
@@ -866,13 +775,11 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 <TextField
                                                     fullWidth
                                                     type="date"
-                                                    InputLabelProps={{
-                                                        shrink: true,
-                                                    }}
+                                                    InputLabelProps={{ shrink: true }}
                                                     placeholder="Select date"
                                                     variant="outlined"
-                                                    value={currentFamilyMember.startDate}
-                                                    onChange={(e) => handleFamilyMemberChange('startDate', e.target.value)}
+                                                    value={currentFamilyMember.start_date}
+                                                    onChange={(e) => handleFamilyMemberChange('start_date', e.target.value)}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
@@ -890,13 +797,11 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 <TextField
                                                     fullWidth
                                                     type="date"
-                                                    InputLabelProps={{
-                                                        shrink: true,
-                                                    }}
+                                                    InputLabelProps={{ shrink: true }}
                                                     placeholder="Select date"
                                                     variant="outlined"
-                                                    value={currentFamilyMember.endDate}
-                                                    onChange={(e) => handleFamilyMemberChange('endDate', e.target.value)}
+                                                    value={currentFamilyMember.end_date}
+                                                    onChange={(e) => handleFamilyMemberChange('end_date', e.target.value)}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
@@ -906,33 +811,6 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                             </Box>
                                         </Grid>
                                     </Grid>
-
-                                    <Button
-                                        variant="contained"
-                                        sx={{
-                                            mt: 2,
-                                            bgcolor: '#f5f5f5',
-                                            color: '#000',
-                                            textTransform: 'none',
-                                            '&:hover': {
-                                                bgcolor: '#e0e0e0',
-                                            },
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            width: '100%',
-                                            py: 1.5,
-                                            borderRadius: 1,
-                                        }}
-                                        onClick={handleAddFamilyMember}
-                                    >
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                            <Typography sx={{ fontWeight: 500 }}>Add Another Family Member</Typography>
-                                            <Typography variant="body2" sx={{ color: '#666' }}>
-                                                If you add another family members then click
-                                            </Typography>
-                                        </Box>
-                                        <ChevronRightIcon />
-                                    </Button>
 
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                                         <Button
@@ -944,7 +822,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 color: '#333',
                                                 '&:hover': { borderColor: '#999', backgroundColor: '#f5f5f5' },
                                             }}
-                                            onClick={() => setShowFamilyMemberForm(false)}
+                                            onClick={handleCancelFamilyMember}
                                         >
                                             Cancel
                                         </Button>
@@ -957,14 +835,29 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                 },
                                                 textTransform: 'none',
                                             }}
-                                            onClick={handleSubmit}
+                                            onClick={handleAddFamilyMember}
                                         >
-                                            Save & Submit
+                                            Save Members
                                         </Button>
                                     </Box>
                                 </Grid>
                             )}
                         </Grid>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    bgcolor: '#0c4b6e',
+                                    '&:hover': {
+                                        bgcolor: '#083854',
+                                    },
+                                    textTransform: 'none',
+                                }}
+                                onClick={handleSubmit}
+                            >
+                                Save & Submit
+                            </Button>
+                        </Box>
                     </Box>
                 </Container>
             </div>

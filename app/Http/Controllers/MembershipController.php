@@ -13,6 +13,28 @@ use Illuminate\Support\Str;
 
 class MembershipController extends Controller
 {
+    public function index()
+    {
+        // Fetch all members with their related user details and member type
+        $members = Member::with(['userDetail.user', 'memberType'])
+            ->whereNull('primary_member_id') // Only primary members
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->membership_number ?? 'N/A',
+                    'name' => $member->userDetail->first_name . ' ' . ($member->userDetail->last_name ?? ''),
+                    'email' => $member->userDetail->personal_email,
+                    'type' => $member->memberType->name ?? 'N/A',
+                    'status' => $member->card_status ?? 'Inactive',
+                    'avatar' => $member->member_image ? Storage::url($member->member_image) : '/placeholder.svg?height=40&width=40',
+                ];
+            });
+
+        // Pass the members data to the Inertia view
+        return Inertia::render('App/Admin/Membership/Dashboard', [
+            'members' => $members,
+        ]);
+    }
     public function store(Request $request)
     {
         // Log request data for debugging
@@ -73,7 +95,7 @@ class MembershipController extends Controller
             'family_members.*.end_date' => 'nullable|date',
             'family_members.*.picture' => 'nullable|string',
             'member_image' => 'nullable|string',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         // Fetch member_type_id for primary member
@@ -83,7 +105,7 @@ class MembershipController extends Controller
         // Create primary user
         $primaryUser = User::create([
             'email' => $validated['personal_email'],
-            'password' => $validated['password'],
+            'password' => isset($validated['password']) ? $validated['password'] : null,
             'first_name' => $validated['first_name'],
             'middle_name' => $validated['middle_name'],
             'last_name' => $validated['last_name'],
@@ -164,10 +186,10 @@ class MembershipController extends Controller
 
                 // Create User for family member (no password)
                 $familyUser = User::create([
-                    'email' => $familyMemberData['email'],
+                    'email' => $familyMemberData['family_members.*.email'],
                     'password' => null, // Explicitly set to null
-                    'first_name' => $familyMemberData['full_name'],
-                    'phone_number' => $familyMemberData['phone_number'],
+                    'first_name' => $familyMemberData['family_members.*.full_name'],
+                    'phone_number' => $familyMemberData['family_members.*.phone_number'],
                     'member_type_id' => $family_member_type_id,
                 ]);
 
