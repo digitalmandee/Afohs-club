@@ -48,7 +48,7 @@ class HandleInertiaRequests extends Middleware
                 'role' => $request->user()?->roles->first()?->name ?? null,
                 'permissions' => $request->user()?->getAllPermissions()->pluck('name'),
             ],
-            'tenantAssetBase' => tenant_asset(''),
+            'tenantAssetBase' => '',
             'ziggy' => fn(): array => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
