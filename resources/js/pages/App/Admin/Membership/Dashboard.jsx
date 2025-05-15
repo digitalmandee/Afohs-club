@@ -196,7 +196,6 @@ const MembershipDashboard = ({ members }) => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {JSON.stringify(members)}
                                     {members.map((member) => (
                                         <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell>{member.id}</TableCell>
