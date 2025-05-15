@@ -184,6 +184,18 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Leave Category',
                     path: route('employee.leavecategory'),
                 },
+                {
+                    text: 'Leave Management',
+                    path: route('employee.leavemanagement'),
+                },
+                {
+                    text: 'Leave Report',
+                    path: route('employee.leavereport'),
+                },
+                {
+                    text: 'Attendance Report',
+                    path: route('employee.attendancereport'),
+                },
             ],
         },
         {
