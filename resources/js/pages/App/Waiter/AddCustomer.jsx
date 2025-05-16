@@ -147,16 +147,15 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
         }
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
-        const routeName = isEditMode ? 'members.update' : 'members.store';
         const method = isEditMode ? 'put' : 'post';
-        const url = isEditMode ? `/waiters/${newCustomer.id}` : '/waiters';
+        const url = isEditMode ? route('waiters.update', { id: newCustomer.id }) : route('waiters.store');
 
         router[method](url, formData, {
             onSuccess: () => {
                 setSuccessMessage(isEditMode ? 'Waiter updated successfully!' : 'Waiter added successfully!');
                 setShowSuccess(true);
                 handleCloseAddForm();
-                router.visit('/waiters'); // Redirect to dashboard
+                router.visit(route('waiters.index')); // Redirect to dashboard
             },
             onError: (errors) => {
                 setErrors(errors);
@@ -181,7 +180,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <IconButton onClick={() => router.visit('/waiters')}>
+                    <IconButton onClick={() => router.visit(route('waiters.index'))}>
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="h6" style={{ marginLeft: '10px' }}>

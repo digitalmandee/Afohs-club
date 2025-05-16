@@ -4,46 +4,8 @@ import AddMenu from '@/components/App/Inventory/AddMenu';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { router } from '@inertiajs/react';
-import {
-    Add as AddIcon,
-    ArrowDownward as ArrowDownwardIcon,
-    ArrowUpward as ArrowUpwardIcon,
-    AttachMoney as AttachMoneyIcon,
-    CheckCircle as CheckCircleIcon,
-    Check as CheckIcon,
-    ChevronRight as ChevronRightIcon,
-    Close as CloseIcon,
-    Delete as DeleteIcon,
-    Edit as EditIcon,
-    ExpandMore as ExpandMoreIcon,
-    FilterList as FilterIcon,
-    Info as InfoIcon,
-    Inventory as InventoryIcon,
-    Search as SearchIcon,
-} from '@mui/icons-material';
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    Divider,
-    Grid,
-    IconButton,
-    InputAdornment,
-    Snackbar,
-    Switch,
-    TextField,
-    Tooltip,
-    Typography,
-} from '@mui/material';
+import { Add as AddIcon, ArrowDownward as ArrowDownwardIcon, ArrowUpward as ArrowUpwardIcon, AttachMoney as AttachMoneyIcon, CheckCircle as CheckCircleIcon, Check as CheckIcon, ChevronRight as ChevronRightIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, FilterList as FilterIcon, Info as InfoIcon, Inventory as InventoryIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, Snackbar, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import MenuFilter from './Menu';
@@ -138,15 +100,7 @@ export default function CoffeeShop({ productLists }) {
 
         // Apply stock filter
         if (stockFilter !== 'All') {
-            filtered = filtered.filter((product) =>
-                stockFilter === 'Ready'
-                    ? product.stock.status === 'Ready Stock'
-                    : stockFilter === 'Out of Stock'
-                        ? product.stock.status === 'Out of Stock'
-                        : stockFilter === 'Imaji at Home'
-                            ? product.category === 'Imaji at Home'
-                            : true,
-            );
+            filtered = filtered.filter((product) => (stockFilter === 'Ready' ? product.stock.status === 'Ready Stock' : stockFilter === 'Out of Stock' ? product.stock.status === 'Out of Stock' : stockFilter === 'Imaji at Home' ? product.category === 'Imaji at Home' : true));
         }
 
         // Apply sorting
@@ -510,22 +464,12 @@ export default function CoffeeShop({ productLists }) {
                                                 </Box>
 
                                                 <Box>
-                                                    <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>
-                                                        {product.name}
-                                                    </Typography>
-                                                    <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#063455' }}>
-                                                        {product.category?.name}
-                                                    </Typography>
+                                                    <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{product.name}</Typography>
+                                                    <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#063455' }}>{product.category?.name}</Typography>
                                                 </Box>
                                             </Grid>
 
-                                            <Grid
-                                                item
-                                                xs={12}
-                                                sm={3}
-                                                md={2.5}
-                                                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                            >
+                                            <Grid item xs={12} sm={3} md={2.5} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 <Box>
                                                     {product.current_stock === 0 ? (
                                                         <Typography
@@ -550,13 +494,7 @@ export default function CoffeeShop({ productLists }) {
                                                 </Box>
                                             </Grid>
 
-                                            <Grid
-                                                item
-                                                xs={12}
-                                                sm={3}
-                                                md={2.5}
-                                                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                            >
+                                            <Grid item xs={12} sm={3} md={2.5} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
                                                         Rs
@@ -593,31 +531,31 @@ export default function CoffeeShop({ productLists }) {
                                             <Grid item xs={12} sm={3} md={4.5} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                                 {product.variants.length > 0
                                                     ? product.variants.map((variant, index) => {
-                                                        return (
-                                                            <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    {variant.name}
-                                                                </Typography>
-                                                                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                                    {variant.values.map((value, valueIndex) => (
-                                                                        <Button
-                                                                            key={valueIndex}
-                                                                            variant="outlined"
-                                                                            size="small"
-                                                                            sx={{
-                                                                                minWidth: 'unset',
-                                                                                px: 1.5,
-                                                                                borderColor: '#e0e0e0',
-                                                                                color: 'text.primary',
-                                                                            }}
-                                                                        >
-                                                                            {value.name}
-                                                                        </Button>
-                                                                    ))}
-                                                                </Box>
-                                                            </Box>
-                                                        );
-                                                    })
+                                                          return (
+                                                              <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
+                                                                  <Typography variant="body2" color="text.secondary">
+                                                                      {variant.name}
+                                                                  </Typography>
+                                                                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                                      {variant.values.map((value, valueIndex) => (
+                                                                          <Button
+                                                                              key={valueIndex}
+                                                                              variant="outlined"
+                                                                              size="small"
+                                                                              sx={{
+                                                                                  minWidth: 'unset',
+                                                                                  px: 1.5,
+                                                                                  borderColor: '#e0e0e0',
+                                                                                  color: 'text.primary',
+                                                                              }}
+                                                                          >
+                                                                              {value.name}
+                                                                          </Button>
+                                                                      ))}
+                                                                  </Box>
+                                                              </Box>
+                                                          );
+                                                      })
                                                     : '-----'}
 
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -645,7 +583,7 @@ export default function CoffeeShop({ productLists }) {
                                 position: 'fixed',
                                 right: 10,
                                 top: 10,
-                                bottom:0,
+                                bottom: 0,
                                 height: 'calc(100% - 25px)',
                                 maxHeight: '100%',
                             },
@@ -759,7 +697,7 @@ export default function CoffeeShop({ productLists }) {
                                                 p: 1,
                                             }}
                                         >
-                                            <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={handleEditMenuOpen}>
+                                            <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={() => router.visit(route('inventory.show', selectedProduct.id))}>
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
                                             <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={handleAdjustPriceOpen}>
@@ -817,7 +755,7 @@ export default function CoffeeShop({ productLists }) {
                                                         Rs {(selectedProduct.base_price - selectedProduct.cost_of_goods_sold).toFixed(2)}
                                                     </Typography>
                                                     <Chip
-                                                        label="33%"
+                                                        label={`${Math.round(((selectedProduct.base_price - selectedProduct.cost_of_goods_sold) / selectedProduct.base_price) * 100)}%`}
                                                         size="small"
                                                         sx={{
                                                             ml: 1,
@@ -878,12 +816,12 @@ export default function CoffeeShop({ productLists }) {
                     <AddMenu
                         openMenu={openAddMenu}
                         onClose={handleAddMenuClose}
-                    // handleAddMenu={handleAddMenu}
-                    // selectedCategory={selectedCategory}
-                    // setSelectedCategory={setSelectedCategory}
-                    // newMenu={newMenu}
-                    // setNewMenu={setNewMenu}
-                    // addMenuStep={addMenuStep}
+                        // handleAddMenu={handleAddMenu}
+                        // selectedCategory={selectedCategory}
+                        // setSelectedCategory={setSelectedCategory}
+                        // newMenu={newMenu}
+                        // setNewMenu={setNewMenu}
+                        // addMenuStep={addMenuStep}
                     />
 
                     {/* Stock Modal */}
@@ -1463,14 +1401,7 @@ export default function CoffeeShop({ productLists }) {
                             <Typography variant="body1" sx={{ mb: 2 }}>
                                 Are you sure want to delete this product?
                             </Typography>
-                            <TextField
-                                fullWidth
-                                placeholder="Type CONFIRM DELETE"
-                                value={deleteConfirmText}
-                                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                variant="outlined"
-                                size="small"
-                            />
+                            <TextField fullWidth placeholder="Type CONFIRM DELETE" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} variant="outlined" size="small" />
                         </DialogContent>
                         <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
                             <Button onClick={handleDeleteConfirmClose} color="primary">
@@ -1483,12 +1414,7 @@ export default function CoffeeShop({ productLists }) {
                     </Dialog>
 
                     {/* Delete Success Snackbar */}
-                    <Snackbar
-                        open={showDeleteSuccess}
-                        autoHideDuration={3000}
-                        onClose={handleDeleteSuccessClose}
-                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                    >
+                    <Snackbar open={showDeleteSuccess} autoHideDuration={3000} onClose={handleDeleteSuccessClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
                         <Alert
                             severity="success"
                             onClose={handleDeleteSuccessClose}

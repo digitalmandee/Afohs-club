@@ -23,6 +23,6 @@ class AuthController extends Controller
         }
 
         // You can redirect to the employee sign-in tab or dashboard
-        return redirect()->route('login');
+        return redirect()->route('tenant.login');
     }
 }

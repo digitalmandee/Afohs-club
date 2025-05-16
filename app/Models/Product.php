@@ -40,4 +40,8 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    public function kitchen()
+    {
+        return $this->belongsTo(User::class, 'kitchen_id', 'id');
+    }
 }

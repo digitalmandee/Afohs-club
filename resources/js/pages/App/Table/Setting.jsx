@@ -10,7 +10,7 @@ const TableSetting = ({ floorsdata, tablesData }) => {
         setProcessingId(id);
 
         router.put(
-            `/floors/${id}/status`,
+            route('floors.toggleStatus', { id: id }),
             {
                 status: newStatus,
             },
@@ -128,23 +128,9 @@ const TableSetting = ({ floorsdata, tablesData }) => {
                             </Typography>
                         </Box>
 
-                        {processingId === floor.id ? (
-                            <CircularProgress size={18} thickness={5} sx={{ mx: 1 }} />
-                        ) : (
-                            <Switch
-                                checked={floor.status}
-                                onChange={(e) => handleToggle(floor.id, e.target.checked)}
-                                size="small"
-                                disabled={processingId !== null}
-                            />
-                        )}
+                        {processingId === floor.id ? <CircularProgress size={18} thickness={5} sx={{ mx: 1 }} /> : <Switch checked={floor.status} onChange={(e) => handleToggle(floor.id, e.target.checked)} size="small" disabled={processingId !== null} />}
 
-                        <img
-                            src="/assets/edit.png"
-                            alt="Edit"
-                            style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }}
-                            onClick={() => router.visit(`/floors/${floor.id}/edit`)}
-                        />
+                        <img src="/assets/edit.png" alt="Edit" style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }} onClick={() => router.visit(route('floors.edit', { id: floor.id }))} />
                     </Paper>
                 ))}
             </Box>

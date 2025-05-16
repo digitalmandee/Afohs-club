@@ -147,14 +147,14 @@ export default function AddKitchen({ users, memberTypes, customer = null }) {
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
         const method = isEditMode ? 'put' : 'post';
-        const url = isEditMode ? `/kitchens/${newCustomer.id}` : '/kitchens';
+        const url = isEditMode ? route('kitchens.update', { id: newCustomer.id }) : route('kitchens.store');
 
         router[method](url, formData, {
             onSuccess: () => {
                 setSuccessMessage(isEditMode ? 'Kitchen updated successfully!' : 'Kitchen added successfully!');
                 setShowSuccess(true);
                 handleCloseAddForm();
-                router.visit('/kitchens'); // Redirect to dashboard
+                router.visit(route('kitchens.index')); // Redirect to dashboard
             },
             onError: (errors) => {
                 setErrors(errors);
@@ -179,7 +179,7 @@ export default function AddKitchen({ users, memberTypes, customer = null }) {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <IconButton onClick={() => router.visit('/kitchens')}>
+                    <IconButton onClick={() => router.visit(route('kitchens.index'))}>
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="h6" style={{ marginLeft: '10px' }}>

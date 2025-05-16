@@ -16,7 +16,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
     useEffect(() => {
         if (openModal && invoiceId) {
             setLoading(true);
-            axios.get(`/payment-order-data/${invoiceId}`).then((response) => {
+            axios.get(route('transaction.invoice', { invoiceId: invoiceId })).then((response) => {
                 setPaymentData(response.data);
                 setLoading(false);
             });
@@ -150,12 +150,6 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
     return (
         <Box sx={styles.receiptContainer}>
-            <Box sx={styles.receiptLogo}>
-                <img src="/assets/slogo.png" alt="Sidebar Logo" style={{ width: '80px' }} />
-                {/* <Typography variant="h6" fontWeight="bold" color="#0a3d62">
-                    IMAJI Coffee.
-                </Typography> */}
-            </Box>
             <Box sx={styles.receiptHeader}>
                 <img src={'/assets/Logo.png'} style={styles.receiptLogo} />
             </Box>

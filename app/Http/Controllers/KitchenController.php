@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class KitchenController extends Controller
 {
@@ -60,6 +61,7 @@ class KitchenController extends Controller
 
         if ($request->filled('order_time')) {
             $orderTimeIso = $request->input('order_time');
+            Log::info('Order time ISO: ' . $orderTimeIso);
             $order->order_time = Carbon::parse($orderTimeIso)->format('Y-m-d H:i:s');
         } elseif ($request->input('status') === 'in_progress') {
             $order->order_time = Carbon::now()->format('Y-m-d H:i:s');
@@ -67,6 +69,7 @@ class KitchenController extends Controller
 
         if ($request->filled('end_time')) {
             $orderTimeIso = $request->input('end_time');
+            Log::info('Order time ISO: ' . $orderTimeIso);
             $order->end_time = Carbon::parse($orderTimeIso)->format('Y-m-d H:i:s');
         } elseif ($request->input('status') === 'completed') {
             $order->end_time = Carbon::now()->format('Y-m-d H:i:s');
@@ -124,12 +127,12 @@ class KitchenController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        $users = User::role('kitchen')
+        $users = User::role('kitchen', 'web')
             ->with('memberType')
             ->latest()
             ->paginate($limit);
 
-        $userDetail = User::role('kitchen')
+        $userDetail = User::role('kitchen', 'web')
             ->with('userDetail')
             ->latest()
             ->paginate($limit);
@@ -205,7 +208,7 @@ class KitchenController extends Controller
             }
 
             $customer->save();
-            $customer->assignRole('kitchen');
+            $customer->assignRole(Role::findByName('kitchen', 'web'));
 
             // Create addresses if provided
             if (!empty($validated['addresses'])) {

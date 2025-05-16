@@ -14,7 +14,7 @@ class UserController extends Controller
         $memberType = $request->input('member_type');
         $roleType = $request->input('role', 'user');
 
-        $members = User::where('name', 'like', "%{$query}%")->role($roleType);
+        $members = User::where('name', 'like', "%{$query}%")->role($roleType, 'web');
 
         // Only apply member_type filter if role is 'user' and member_type is provided
         if ($roleType === 'user' && !empty($memberType)) {
@@ -28,13 +28,13 @@ class UserController extends Controller
     // get waiters
     public function waiters()
     {
-        $waiters = User::role('waiter')->select('id', 'name', 'email')->get();
+        $waiters = User::role('waiter', 'web')->select('id', 'name', 'email')->get();
 
         return response()->json(['success' => true, 'waiters' => $waiters], 200);
     }
     public function kitchens()
     {
-        $kitchens = User::role('kitchen')->select('id', 'name', 'email')->get();
+        $kitchens = User::role('kitchen', 'web')->select('id', 'name', 'email')->get();
 
         return response()->json(['success' => true, 'kitchens' => $kitchens], 200);
     }
