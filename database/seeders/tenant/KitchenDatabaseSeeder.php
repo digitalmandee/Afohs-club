@@ -21,7 +21,7 @@ class KitchenDatabaseSeeder extends Seeder
                 'password' => bcrypt('123456'),
             ]);
 
-            $kitchen->assignRole('kitchen');
+            $kitchen->assignRole('kitchen', 'web');
 
             KitchenDetail::create([
                 'kitchen_id' => $kitchen->id,

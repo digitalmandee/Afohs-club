@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class WaiterController extends Controller
 {
@@ -20,12 +21,12 @@ class WaiterController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
 
-        $users = User::role('waiter')
+        $users = User::role('waiter', 'web')
             ->with('memberType')
             ->latest()
             ->paginate($limit);
 
-        $userDetail = User::role('waiter')
+        $userDetail = User::role('waiter', 'web')
             ->with('userDetail')
             ->latest()
             ->paginate($limit);
@@ -101,7 +102,7 @@ class WaiterController extends Controller
             }
 
             $customer->save();
-            $customer->assignRole('waiter');
+            $customer->assignRole(Role::findByName('waiter', 'web'));
 
             // Create addresses if provided
             if (!empty($validated['addresses'])) {
@@ -144,9 +145,6 @@ class WaiterController extends Controller
             }
             $request->merge(['addresses' => $addresses ?? []]);
 
-            Log::info('Raw update request data: ' . json_encode($request->all()));
-            Log::info('Merged update addresses: ' . json_encode($addresses));
-
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255|unique:users,email,' . $customer->id,
@@ -163,8 +161,6 @@ class WaiterController extends Controller
                 'addresses.*.zipCode' => 'required|string|max:20',
                 'addresses.*.isMain' => 'boolean',
             ]);
-
-            Log::info('Validated update data: ' . json_encode($validated));
 
             $memberType = MemberType::where('name', $validated['customer_type'])->first();
             if (!$memberType) {
