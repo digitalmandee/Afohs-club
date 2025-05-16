@@ -3,19 +3,7 @@ import ShopIcon from '@/components/App/Icons/ShoppingBag';
 import SofaIcon from '@/components/App/Icons/Sofa';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { useOrderStore } from '@/stores/useOrderStore';
-import {
-    Box,
-    Button,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    ListItemText,
-    Paper,
-    Radio,
-    ToggleButton,
-    ToggleButtonGroup,
-    Typography,
-} from '@mui/material';
+import { Box, Button, List, ListItem, ListItemSecondaryAction, ListItemText, Paper, Radio, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import DineDialog from './Dine';
@@ -26,8 +14,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
-    const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails } =
-        useOrderStore();
+    const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails } = useOrderStore();
 
     const [open, setOpen] = useState(false);
     const [showData, setShowData] = useState(false);

@@ -15,7 +15,7 @@ class FloorController extends Controller
     {
         $floors = Floor::all();
         $tables = Table::with('floor')->get();
-        return Inertia::render('App/Table/NewFloor', [
+        return Inertia::render('App/Table/Newfloor', [
             'floorsdata' => $floors,
             'tablesData' => $tables,
         ]);
@@ -23,7 +23,7 @@ class FloorController extends Controller
 
     public function create()
     {
-        return Inertia::render('App/Table/NewFloor');
+        return Inertia::render('App/Table/Newfloor');
     }
 
     public function store(Request $request)
@@ -81,7 +81,7 @@ class FloorController extends Controller
     {
         $floor = $id ? Floor::with('tables')->findOrFail($id) : null;
 
-        return Inertia::render('App/Table/NewFloor', [
+        return Inertia::render('App/Table/Newfloor', [
             'floorInfo' => $floor,
         ]);
     }
@@ -92,7 +92,7 @@ class FloorController extends Controller
         $floors = Floor::all();
         $tables = Table::with('floor')->get();
 
-        return Inertia::render('App/Table/NewFloor', [
+        return Inertia::render('App/Table/Newfloor', [
             'floorInfo' => $floor,
             'floorsdata' => $floors,
             'tablesData' => $tables,
