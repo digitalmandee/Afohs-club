@@ -27,7 +27,7 @@ import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard, Warning } f
 import "bootstrap/dist/css/bootstrap.min.css"
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
-import MembershipSuspensionDialog from "./Modal";
+import InvoiceSlip from "./Invoice";
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -40,6 +40,7 @@ const AllMembers = () => {
     const [selectedMember, setSelectedMember] = useState(null)
     const [modalType, setModalType] = useState("actions") // "actions" or "details"
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [detailsData, setDetailsData] = useState({
         reason: "Violation of rules",
         duration: "30 Month",
@@ -140,7 +141,7 @@ const AllMembers = () => {
             >
                 <div className="container-fluid px-4" style={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
                     {/* Header */}
-                    <div className="d-flex justify-content-between align-items-center p-3">
+                    <div className="d-flex justify-content-between align-items-center pt-3">
                         <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                             <Typography
                                 sx={{
@@ -165,10 +166,10 @@ const AllMembers = () => {
                         }}
                     >
                         {[
-                            { title: 'Total Employee', value: 320, icon: EventSeatIcon },
-                            { title: 'Total Present', value: 200, icon: PeopleIcon },
-                            { title: 'Total Absent', value: 120, icon: AssignmentIcon },
-                            { title: 'Late Arrival', value: 120, icon: PrintIcon },
+                            { title: 'Total Members', value: 320, icon: PeopleIcon },
+                            { title: 'Pending', value: 200, image: '/assets/refresh.png' },
+                            { title: 'Active', value: 120, image: '/assets/ticks.png' },
+                            { title: 'In-Active', value: 120, image: '/assets/cross.png' },
                         ].map((item, index) => (
                             <div key={index} style={{ flex: 1 }}>
                                 <Card
@@ -176,12 +177,15 @@ const AllMembers = () => {
                                         backgroundColor: '#3F4E4F',
                                         color: '#fff',
                                         borderRadius: '2px',
-                                        height: '120px',
+                                        height: '150px',
                                         display: 'flex',
+                                        flexDirection: 'column',
                                         alignItems: 'center',
+                                        justifyContent: 'center',
                                         padding: '1rem',
                                         boxShadow: 'none',
                                         border: 'none',
+                                        textAlign: 'center',
                                     }}
                                 >
                                     <div
@@ -193,19 +197,25 @@ const AllMembers = () => {
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            marginRight: '1rem',
+                                            marginBottom: '0.5rem',
                                         }}
                                     >
-                                        <item.icon style={{ color: '#fff', fontSize: '28px' }} />
+                                        {item.icon ? (
+                                            <item.icon style={{ color: '#fff', fontSize: '28px' }} />
+                                        ) : (
+                                            <img
+                                                src={item.image}
+                                                alt={item.title}
+                                                style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                                            />
+                                        )}
                                     </div>
-                                    <div>
-                                        <Typography variant="body2" style={{ color: '#DDE6E8' }}>
-                                            {item.title}
-                                        </Typography>
-                                        <Typography variant="h6" style={{ fontWeight: 'bold', color: '#fff' }}>
-                                            {item.value}
-                                        </Typography>
-                                    </div>
+                                    <Typography variant="body2" style={{ color: '#DDE6E8', marginBottom: '0.25rem' }}>
+                                        {item.title}
+                                    </Typography>
+                                    <Typography variant="h6" style={{ fontWeight: 'bold', color: '#fff' }}>
+                                        {item.value}
+                                    </Typography>
                                 </Card>
                             </div>
                         ))}
@@ -214,7 +224,7 @@ const AllMembers = () => {
                     {/* Recently Joined Section */}
                     <div className="mx-3">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <Typography variant="h6" style={{ fontWeight: "bold" }}>
+                            <Typography sx={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>
                                 All Members
                             </Typography>
                             <div className="d-flex">
@@ -238,7 +248,7 @@ const AllMembers = () => {
                                         borderColor: "#ccc",
                                         color: "#333",
                                         textTransform: "none",
-                                        backgroundColor: "white",
+                                        backgroundColor: "transparent",
                                     }}
                                 >
                                     Filter
@@ -250,34 +260,34 @@ const AllMembers = () => {
                         <TableContainer component={Paper} style={{ boxShadow: "none" }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: "#e8e8e8" }}>
-                                        <TableCell>Membership ID</TableCell>
-                                        <TableCell>Member</TableCell>
-                                        <TableCell>Member Type</TableCell>
-                                        <TableCell>Status</TableCell>
-                                        <TableCell>Card</TableCell>
-                                        <TableCell>Invoice</TableCell>
-                                        <TableCell>Action</TableCell>
+                                    <TableRow style={{ backgroundColor: "#E5E5EA", height: '70px' }}>
+                                        <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Membership ID</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Member</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Member Type</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Status</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Card</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Invoice</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {members.map((member) => (
                                         <TableRow key={member.id} style={{ borderBottom: "1px solid #eee" }}>
-                                            <TableCell>{member.id}</TableCell>
+                                            <TableCell sx={{ color: "#7F7F7F", fontWeight: 400, fontSize: '14px' }}>{member.id}</TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={member.avatar} alt={member.name} style={{ marginRight: "10px" }} />
                                                     <div>
-                                                        <Typography variant="body2" style={{ fontWeight: "bold" }}>
+                                                        <Typography sx={{ color: "#7F7F7F", fontWeight: 400, fontSize: '14px' }}>
                                                             {member.name}
                                                         </Typography>
-                                                        <Typography variant="body2" color="textSecondary">
+                                                        <Typography sx={{ color: "#7F7F7F", fontWeight: 400, fontSize: '14px' }}>
                                                             {member.email}
                                                         </Typography>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{member.type}</TableCell>
+                                            <TableCell sx={{ color: "#7F7F7F", fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
@@ -290,24 +300,34 @@ const AllMembers = () => {
                                                 >
                                                     {member.status}
                                                     {member.status === "Suspend" && (
-                                                        <Warning
-                                                            style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
-                                                        />
+                                                        // <Warning
+                                                        //     style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
+                                                        // />
+                                                        <img src="/assets/system-expired.png" alt="" style={{
+                                                            height: 25,
+                                                            width: 25,
+                                                            marginBottom: 5,
+                                                            marginLeft: 3
+                                                        }} />
                                                     )}
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                <Button variant="text" style={{ color: "#1976d2", textTransform: "none", padding: "0" }}>
+                                                <Button variant="text" style={{ color: "#0C67AA", textTransform: "none", textDecoration: 'underline', padding: "0", }}
+                                                    onClick={() => {
+                                                        setOpenInvoiceModal(true); // open the modal
+                                                    }}
+                                                >
                                                     View
                                                 </Button>
                                             </TableCell>
                                             <TableCell>
                                                 {member.status === "Expired" || member.status === "Suspend" ? (
-                                                    <Button variant="text" style={{ color: "#1976d2", textTransform: "none", padding: "0" }}>
+                                                    <Button variant="text" style={{ color: "#1976d2", textDecoration: 'underline', textTransform: "none", padding: "0" }}>
                                                         Send Remind
                                                     </Button>
                                                 ) : (
-                                                    <Button variant="text" style={{ color: "#1976d2", textTransform: "none", padding: "0" }}>
+                                                    <Button variant="text" style={{ color: "#0C67AA", textDecoration: 'underline', textTransform: "none", padding: "0" }}>
                                                         View
                                                     </Button>
                                                 )}
@@ -398,6 +418,10 @@ const AllMembers = () => {
                         </div>
                     )}
                 </div>
+                <InvoiceSlip
+                    open={openInvoiceModal}
+                    onClose={() => setOpenInvoiceModal(false)}
+                />
             </div>
         </>
     )

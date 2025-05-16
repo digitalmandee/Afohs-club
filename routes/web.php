@@ -20,6 +20,56 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Dashboard');
     })->name('dashboard');
 
+    //Admin Employee Routes
+    Route::get('/employee/department/list', function () {
+        return Inertia::render('App/Admin/Employee/Department');
+    })->name('employee.departmentlist');
+
+    Route::get('/employee/attendance/dashboard', function () {
+        return Inertia::render('App/Admin/Employee/Attendance');
+    })->name('employee.attendance');
+
+    Route::get('/employee/attendance/add/leave/application', function () {
+        return Inertia::render('App/Admin/Employee/AddLeave');
+    })->name('employee.addleave');
+
+    Route::get('/employee/all/attendance', function () {
+        return Inertia::render('App/Admin/Employee/AllAttendance');
+    })->name('employee.allattendance');
+
+    Route::get('/employee/leave/category', function () {
+        return Inertia::render('App/Admin/Employee/Category');
+    })->name('employee.leavecategory');
+
+    Route::get('/employee/add/leave/category', function () {
+        return Inertia::render('App/Admin/Employee/LeaveCategory');
+    })->name('employee.addleavecategory');
+
+    Route::get('/employee/leave/application/management', function () {
+        return Inertia::render('App/Admin/Employee/LeaveManage');
+    })->name('employee.leavemanagement');
+
+    Route::get('/employee/leave/report', function () {
+        return Inertia::render('App/Admin/Employee/Report');
+    })->name('employee.leavereport');
+
+    Route::get('/employee/attendance/report', function () {
+        return Inertia::render('App/Admin/Employee/AttendanceReport');
+    })->name('employee.attendancereport');
+
+    //Membership Booking Routes
+    Route::get('/admin/membership/finance', function () {
+        return Inertia::render('App/Admin/Membership/Finance');
+    })->name('membership.finance');
+
+    Route::get('/admin/membership/add/membertype', function () {
+        return Inertia::render('App/Admin/Membership/AddMember');
+    })->name('membership.addmembertype');
+
+    Route::get('/admin/membership/all/payments', function () {
+        return Inertia::render('App/Admin/Membership/AllPayment');
+    })->name('membership.allpayment');
+
     //Admin Booking Routes
     Route::get('/booking/dashboard', function () {
         return Inertia::render('App/Admin/Booking/Dashboard');

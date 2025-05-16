@@ -3,7 +3,6 @@ import {
     Box,
     Typography,
     TextField,
-    Button,
     Dialog,
     DialogContent,
     DialogActions,
@@ -12,27 +11,22 @@ import {
     RadioGroup,
     FormControlLabel,
     FormControl,
+    Button,
+    Alert,
+    Collapse,
+    Snackbar
 } from "@mui/material"
 import { Close as CloseIcon } from "@mui/icons-material"
 
-const MembershipSuspensionDialog = () => {
-    const [open, setOpen] = useState(true)
-    const [suspensionReason, setSuspensionReason] = useState("")
-    const [suspensionDuration, setSuspensionDuration] = useState("1Day")
-
-    const handleClose = () => {
-        setOpen(false)
-    }
-
-    const handleConfirm = () => {
-        console.log("Suspension confirmed with reason:", suspensionReason, "and duration:", suspensionDuration)
-        handleClose()
-    }
+const MembershipSuspensionDialog = ({ open, onClose, onConfirm }) => {
+    const [suspensionReason, setSuspensionReason] = useState("");
+    const [suspensionDuration, setSuspensionDuration] = useState("1Day");
+    
 
     return (
         <Dialog
             open={open}
-            onClose={handleClose}
+            onClose={onClose}
             maxWidth="sm"
             fullWidth
             PaperProps={{
@@ -43,7 +37,7 @@ const MembershipSuspensionDialog = () => {
                     m: 0,
                     width: '600px',
                     borderRadius: 2,
-                    p:2
+                    p: 2
                 },
             }}
         >
@@ -51,7 +45,7 @@ const MembershipSuspensionDialog = () => {
                 <Typography variant="h4" sx={{ fontWeight: 500, fontSize: 28 }}>
                     Membership suspended
                 </Typography>
-                <IconButton onClick={handleClose} size="large" sx={{ p: 0 }}>
+                <IconButton size="large" sx={{ p: 0 }}>
                     <CloseIcon />
                 </IconButton>
             </Box>
@@ -175,11 +169,10 @@ const MembershipSuspensionDialog = () => {
                     </RadioGroup>
                 </FormControl>
             </DialogContent>
-
             <DialogActions sx={{ p: 0, mt: 4, justifyContent: "flex-end" }}>
                 <Button
                     variant="outlined"
-                    onClick={handleClose}
+                    onClick={onClose}
                     sx={{
                         borderColor: "#003153",
                         color: "#003153",
@@ -194,7 +187,6 @@ const MembershipSuspensionDialog = () => {
                 </Button>
                 <Button
                     variant="contained"
-                    onClick={handleConfirm}
                     sx={{
                         bgcolor: "#003153",
                         "&:hover": { bgcolor: "#00254d" },
@@ -203,6 +195,7 @@ const MembershipSuspensionDialog = () => {
                         py: 1,
                         borderRadius: 0.5,
                     }}
+                    onClick={onConfirm}
                 >
                     Confirm Suspend
                 </Button>

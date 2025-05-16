@@ -119,6 +119,7 @@ const MembersType = () => {
                                 padding: '8px 16px',
                                 fontSize: '14px'
                             }}
+                            onClick={()=>router.visit('/admin/membership/add/membertype')}
                         >
                             Add Type
                         </Button>
