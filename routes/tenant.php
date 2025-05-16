@@ -40,8 +40,9 @@ Route::group([
             return Inertia::render('App/Order/Queue');
         });
 
-        // Members types
+        // Members
         Route::resource('members', MembersController::class)->except('show', 'edit');
+        // Members types
         Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
         Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
         Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
@@ -54,11 +55,11 @@ Route::group([
         Route::put('/members/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
         Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
         // member
-        Route::get('/members', [MembersController::class, 'index'])->name('members.index');
-        Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
-        Route::post('/members', [MembersController::class, 'store'])->name('members.store');
-        Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
-        Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
+        // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
+        // Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
+        // Route::post('/members', [MembersController::class, 'store'])->name('members.store');
+        // Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
+        // Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
 
         // Waiter Dashboard
         Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');

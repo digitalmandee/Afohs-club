@@ -76,9 +76,7 @@ const Index = ({ tenants }) => {
                                     <TableRow key={index}>
                                         <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>{tenant.name}</TableCell>
                                         <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>{tenant.email}</TableCell>
-                                        <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>
-                                            {tenant.domains.map((d) => d.domain).join(', ')}
-                                        </TableCell>
+                                        <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>{tenant.domains.map((d) => d.domain).join(', ')}</TableCell>
                                         <TableCell>
                                             <Button
                                                 size="small"
