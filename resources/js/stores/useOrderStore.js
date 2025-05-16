@@ -43,7 +43,7 @@ const getWeeksInMonth = (inputDate) => {
     }
 
     return weeks;
-}
+};
 
 export const useOrderStore = create((set, get) => ({
     monthYear: new Date(),
@@ -69,26 +69,24 @@ export const useOrderStore = create((set, get) => ({
         customer_change: 0,
     },
 
-    resetOrderDetails: () => set({
-        orderDetails: {
-            order_no: '',
-            order_type: 'dineIn',
-            membership_type: '',
-            member: null,
-            person_count: 1,
-            waiter: null,
-            table: '',
-            floor: '',
-            date: new Date(),
-            time: dayjs().format('HH:mm'),
-            order_items: [],
-            order_status: 'pending',
-            payment_method: 'cash',
-            cash_total: 0,
-            customer_change: 0,
-        }
-    }),
-
+    resetOrderDetails: () =>
+        set((state) => ({
+            orderDetails: {
+                ...state.orderDetails,
+                member: null,
+                person_count: 1,
+                waiter: null,
+                table: '',
+                floor: '',
+                date: new Date(),
+                time: dayjs().format('HH:mm'),
+                order_items: [],
+                order_status: 'pending',
+                payment_method: 'cash',
+                cash_total: 0,
+                customer_change: 0,
+            },
+        })),
     setInitialOrder: ({ orderNo, memberTypes, floorTables, time }) =>
         set((state) => ({
             orderDetails: {
@@ -138,6 +136,5 @@ export const useOrderStore = create((set, get) => ({
         if (week) {
             handleOrderDetailChange('date', week.days[0]);
         }
-    }
+    },
 }));
-

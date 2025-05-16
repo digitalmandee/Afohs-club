@@ -125,6 +125,8 @@ class OrderController extends Controller
 
             // Insert order items
             foreach ($groupedByKitchen as $kitchenId => $items) {
+                // Ensure kitchenId is null if empty or not numeric
+                $safeKitchenId = (is_numeric($kitchenId) && $kitchenId !== '') ? (int)$kitchenId : null;
                 foreach ($items as $item) {
                     $productData = $item;
                     $productId = $productData['id'];
@@ -154,7 +156,7 @@ class OrderController extends Controller
                     // Create order item (save original item JSON for reference)
                     OrderItem::create([
                         'order_id' => $order->id,
-                        'kitchen_id' => $kitchenId,
+                        'kitchen_id' => $safeKitchenId,
                         'order_item' => $item,
                         'status' => 'pending',
                     ]);
