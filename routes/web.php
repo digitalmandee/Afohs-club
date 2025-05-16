@@ -124,11 +124,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/admin/add/contact/information', function () {
         return Inertia::render('App/Admin/Membership/AddForm-2');
-    })->name('membership.add');
+    })->name('membership.add2');
 
     Route::get('/admin/add/membership/information', function () {
         return Inertia::render('App/Admin/Membership/AddForm-3');
-    })->name('membership.add');
+    })->name('membership.add3');
 
     Route::get('/admin/membership/history', function () {
         return Inertia::render('App/Admin/Membership/History');
@@ -160,14 +160,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/admin/membership/full/detail', function () {
         return Inertia::render('App/Admin/Membership/CompleteDetail');
-    })->name('membership.detail');
+    })->name('membership.detail2');
 
     // tenant route
-    Route::get('tenants', [TenantController::class, 'index'])->name('tenant.index');
+    Route::get('tenant', [TenantController::class, 'index'])->name('tenant.index');
     Route::get('tenant/register', [TenantController::class, 'create'])->name('tenant.create');
     Route::post('tenant/store', [TenantController::class, 'store'])->name('tenant.store');
-
-
 
     // membership routes
     Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
