@@ -20,7 +20,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Dashboard');
     })->name('dashboard');
 
-
     //Admin Booking Routes
     Route::get('/booking/dashboard', function () {
         return Inertia::render('App/Admin/Booking/Dashboard');
