@@ -1,7 +1,9 @@
+import { usePage } from '@inertiajs/react';
 import { ChevronRight, Edit, History as HistoryIcon, Logout as LogoutIcon } from '@mui/icons-material';
 import { Box, Button, IconButton, Paper, Typography } from '@mui/material';
 
 const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
+    const { auth } = usePage().props;
     return (
         <Paper
             elevation={1}
@@ -37,34 +39,12 @@ const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
                     justifyContent: 'space-between',
                 }}
             >
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                        Kasa Aksa
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                        10:00 am - 15:00 pm
-                    </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', textAlign: 'right' }}>
-                        Cashier
-                    </Typography>
-                    <Button
-                        size="small"
-                        variant="contained"
-                        sx={{
-                            bgcolor: '#1976d2',
-                            fontSize: '0.7rem',
-                            mt: 0.5,
-                            textTransform: 'none',
-                            '&:hover': {
-                                bgcolor: '#1565c0',
-                            },
-                        }}
-                    >
-                        10 min to finish
-                    </Button>
-                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                    {auth.user?.name}
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', textAlign: 'right' }}>
+                    {auth.role}
+                </Typography>
             </Box>
 
             {/* Profile Details */}
@@ -82,28 +62,28 @@ const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Employee ID
                     </Typography>
-                    <Typography variant="body2">CA9820</Typography>
+                    <Typography variant="body2">{auth.user.user_id}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 1.5 }}>
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Email
                     </Typography>
-                    <Typography variant="body2">Dianna.russel@gmail.com</Typography>
+                    <Typography variant="body2">{auth.user.email}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 1.5 }}>
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Phone number
                     </Typography>
-                    <Typography variant="body2">(702) 555-0122</Typography>
+                    <Typography variant="body2">{auth.user.phone || 'N/A'}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Address
                     </Typography>
-                    <Typography variant="body2">1901 Thornridge Cir. Shiloh, Hawaii 81063</Typography>
+                    <Typography variant="body2">{auth.user.address || 'N/A'}</Typography>
                 </Box>
             </Box>
 

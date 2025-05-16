@@ -37,7 +37,9 @@ const OrderDetail = ({ handleEditItem }) => {
         };
 
         router.post(route('order.send-to-kitchen'), payload, {
-            onSuccess: () => {
+            onSuccess: (data) => {
+                console.log(data);
+
                 enqueueSnackbar('Your order has been successfully sent to the kitchen!', { variant: 'success' });
             },
             onError: (errors) => {
@@ -92,9 +94,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                     </Box>
                                 </Box>
                                 <Box sx={{ display: 'flex', gap: 1 }}>
-                                    {orderDetails.table && (
-                                        <Avatar sx={{ width: 28, height: 28, bgcolor: '#1976d2', fontSize: 12 }}>{orderDetails.table}</Avatar>
-                                    )}
+                                    {orderDetails.table && <Avatar sx={{ width: 28, height: 28, bgcolor: '#1976d2', fontSize: 12 }}>{orderDetails.table}</Avatar>}
                                     <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                         <CloseIcon fontSize="small" />
                                     </IconButton>
@@ -113,9 +113,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                         Order Date
                                     </Typography>
                                     <Typography variant="body2" fontWeight="medium">
-                                        {new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).format(
-                                            new Date(orderDetails.date),
-                                        )}
+                                        {new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(orderDetails.date))}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={4}>
@@ -160,11 +158,7 @@ const OrderDetail = ({ handleEditItem }) => {
                         {/* Cappuccino */}
                         {orderDetails.order_items.length > 0 &&
                             orderDetails.order_items.map((item, index) => (
-                                <Box
-                                    key={index}
-                                    onClick={() => handleEditItem(item, index)}
-                                    sx={{ mb: 2, borderBottom: '1px solid #E3E3E3', cursor: 'pointer' }}
-                                >
+                                <Box key={index} onClick={() => handleEditItem(item, index)} sx={{ mb: 2, borderBottom: '1px solid #E3E3E3', cursor: 'pointer' }}>
                                     <Box sx={{ display: 'flex', mb: 1 }}>
                                         <Avatar src={item.image} variant="rounded" sx={{ width: 36, height: 36, mr: 1.5, bgcolor: '#f8c291' }} />
                                         <Box sx={{ flexGrow: 1 }}>

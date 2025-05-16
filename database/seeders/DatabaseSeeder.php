@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
         $fullDomain = $subdomain . '.' . config('app.domain');
 
         $tenant = Tenant::create([
+            'id' => strtolower($tenantName),
             'name' => $tenantName,
             'email' => $tenantEmail,
             'password' => $tenantPassword,

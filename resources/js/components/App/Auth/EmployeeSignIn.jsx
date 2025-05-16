@@ -43,9 +43,9 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
             password: data.password.join(''),
         }));
 
-        post(route('login'), {
+        post(route('tenant.login'), {
             onSuccess: () => {
-                router.visit(route('dashboard'));
+                router.visit(route('tenant.dashboard'));
             },
             onError: (errors) => {
                 enqueueSnackbar('Login failed. Please check your credentials and try again.', { variant: 'error' });

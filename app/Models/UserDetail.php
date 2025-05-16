@@ -13,13 +13,42 @@ class UserDetail extends Model
 
     protected $fillable = [
         'user_id',
-        'address_type',
-        'country',
+        'coa_account',
+        'title',
+
         'state',
-        'city',
-        'zip',
-        'address',
-        'status',
+        'application_number',
+        'name_comments',
+        'guardian_name',
+        'guardian_membership',
+        'nationality',
+        'cnic_no',
+        'passport_no',
+        'gender',
+        'ntn',
+        'date_of_birth',
+        'education',
+        'membership_reason',
+        'mobile_number_a',
+        'mobile_number_b',
+        'mobile_number_c',
+        'telephone_number',
+        'personal_email',
+        'critical_email',
+        'emergency_name',
+        'emergency_relation',
+        'emergency_contact',
+        'current_address',
+        'current_city',
+        'current_country',
+        'permanent_address',
+        'permanent_city',
+        'permanent_country',
+        'country',
+    ];
+    protected $casts = [
+        'education' => 'array',
+        'date_of_birth' => 'date',
     ];
 
     public function user()

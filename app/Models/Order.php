@@ -9,7 +9,7 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $dates = ['order_time'];
+    // protected $dates = ['order_time' => 'datetime:Y-m-d\TH:i:s\Z'];
 
     protected $fillable = [
         'order_number',
@@ -39,5 +39,10 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function invoice()
+    {
+        return $this->hasOne(Invoices::class);
     }
 }

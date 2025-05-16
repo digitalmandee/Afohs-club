@@ -3,20 +3,29 @@
 namespace App\Helpers;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class FileHelper
 {
     public static function saveImage(UploadedFile $image, string $folder): string
     {
-        // Generate a unique filename with the current timestamp and the original name
+        // Get the tenant ID (Adjust this based on your tenant identification logic)
+        $tenantId = tenant('id') ?? 'default';  // Use 'default' if tenant is not found
+
+        // Define tenant-specific folder inside public
+        $destinationPath = public_path("tenants/{$tenantId}/{$folder}");
+
+        // Create folder if it doesn't exist
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0777, true);
+        }
+
+        // Generate unique filename
         $filename = time() . '_' . strtolower(str_replace(' ', '-', $image->getClientOriginalName()));
-    
-        // Store the image in the 'public' disk in the specified folder
-        $path = $image->storeAs($folder, $filename, 'public');  // 'public' disk
-    
-        // Return the public URL using tenant_asset to make the path tenant-aware
-        return $path;  // tenant-specific URL
+
+        // Move the file to the tenant's folder
+        $image->move($destinationPath, $filename);
+
+        // Return the full URL of the image
+        return "tenants/{$tenantId}/{$folder}/{$filename}";
     }
-    
 }

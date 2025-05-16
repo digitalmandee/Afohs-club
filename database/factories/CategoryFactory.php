@@ -14,7 +14,7 @@ class CategoryFactory extends Factory
     {
         return [
             'name' => $this->faker->word(),
-            'image' => $this->faker->imageUrl(640, 480, 'categories', true),
+            'image' => '/assets/cimage.png',
         ];
     }
 

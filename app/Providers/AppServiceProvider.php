@@ -2,8 +2,15 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\AuthenticateTenant;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use Stancl\Tenancy\Events\TenancyInitialized;
+use Stancl\Tenancy\Tenancy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,11 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Inertia::share([
-            'auth' => fn() => [
-                'user' => auth()->user(),
-            ],
-            'tenantAssetBase' => fn() => tenant_asset(''),
-        ]);
+        Route::aliasMiddleware('auth.tenant.custom', AuthenticateTenant::class);
+        Event::listen(TenancyInitialized::class, function (TenancyInitialized $event) {
+            URL::defaults(['tenant' => tenant('id')]);
+        });
     }
 }

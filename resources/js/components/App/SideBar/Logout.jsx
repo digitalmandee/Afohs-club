@@ -11,7 +11,7 @@ const LogoutScreen = ({ setProfileView }) => {
     ];
 
     const handleLogout = () => {
-        router.post(route('logout'));
+        router.post(route('tenant.logout'));
     };
 
     return (
