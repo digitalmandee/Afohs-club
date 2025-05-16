@@ -9,6 +9,7 @@ use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductVariantValue;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -26,10 +27,6 @@ class OrderController extends Controller
         $orderNo = $this->getOrderNo();
         $memberTypes = MemberType::select('id', 'name')->get();
 
-        // Current date/time (or use provided start_date/time from frontend)
-        $startDate = $request->input('start_date', now()->toDateString());
-        $startTime = $request->input('start_time', now()->toTimeString());
-
         // Get all active floors with their tables
         $floorTables = Floor::select('id', 'name')->where('status', 1)->with('tables:id,floor_id,table_no,capacity')->get();
 
@@ -39,6 +36,12 @@ class OrderController extends Controller
             'memberTypes' => $memberTypes,
             'floorTables' => $floorTables,
         ]);
+    }
+    public function orderManagement(Request $request)
+    {
+        $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,kitchen_id,order_item,status', 'user:id,name,member_type_id', 'user.memberType'])->latest()->get();
+
+        return Inertia::render('App/Order/Management/Dashboard', compact('orders'));
     }
     public function savedOrder()
     {
@@ -123,6 +126,32 @@ class OrderController extends Controller
             // Insert order items
             foreach ($groupedByKitchen as $kitchenId => $items) {
                 foreach ($items as $item) {
+                    $productData = $item;
+                    $productId = $productData['id'];
+                    $productQty = $item['quantity'] ?? 1;
+
+                    $product = Product::find($productId);
+
+                    if (!$product || $product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
+                        return redirect()->back()->withErrors(['Insufficient stock for product: ' . ($product->name ?? 'Unknown')]);
+                    }
+
+                    // Deduct stock for product
+                    $product->decrement('current_stock', $productQty);
+
+                    // Deduct variant stock if any are selected
+                    if (!empty($productData['variants'])) {
+                        foreach ($productData['variants'] as $variant) {
+                            $variantValue = ProductVariantValue::find($variant['id']);
+                            if (!$variantValue || $variantValue->stock < 0) {
+                                return redirect()->back()->withErrors(['Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown')]);
+                            }
+
+                            $variantValue->decrement('stock', 1);
+                        }
+                    }
+
+                    // Create order item (save original item JSON for reference)
                     OrderItem::create([
                         'order_id' => $order->id,
                         'kitchen_id' => $kitchenId,
@@ -131,6 +160,17 @@ class OrderController extends Controller
                     ]);
                 }
             }
+
+            // foreach ($groupedByKitchen as $kitchenId => $items) {
+            //     foreach ($items as $item) {
+            //         OrderItem::create([
+            //             'order_id' => $order->id,
+            //             'kitchen_id' => $kitchenId,
+            //             'order_item' => $item,
+            //             'status' => 'pending',
+            //         ]);
+            //     }
+            // }
 
             // Create invoice
             Invoices::create([
@@ -212,6 +252,65 @@ class OrderController extends Controller
         // Add separator
         $printer->text("--------------------------------\n");
     }
+
+    // update Order
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'subtotal' => 'required|numeric',
+            'discount' => 'required|numeric',
+            'total_price' => 'required|numeric',
+            'updated_items' => 'nullable|array',
+            'new_items' => 'nullable|array',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $order = Order::findOrFail($id);
+
+            // Update order base amount
+            $order->update([
+                'amount' => $validated['subtotal'],
+            ]);
+
+            // Update existing order items
+            foreach ($validated['updated_items'] ?? [] as $itemData) {
+                $itemId = (int) str_replace('update-', '', $itemData['id']);
+                $order->orderItems()->where('id', $itemId)->update([
+                    'order_item' => $itemData['order_item'],
+                    'status'     => $itemData['status'],
+                ]);
+            }
+
+            // Add new order items
+            foreach ($validated['new_items'] ?? [] as $itemData) {
+                $order->orderItems()->create([
+                    'kitchen_id' => $itemData['order_item']['kitchen_id'] ?? null,
+                    'order_item' => $itemData['order_item'],
+                    'status'     => 'pending',
+                ]);
+            }
+
+            // Update related invoice
+            $order->invoice?->update([
+                'amount'      => $validated['subtotal'],
+                'total_price' => $validated['total_price'],
+                // 'discount'  => $validated['discount'],
+                // 'tax'       => $validated['tax_amount'] ?? 0,
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Order updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->withErrors(['error' => 'Failed to update order.']);
+        }
+    }
+
 
 
     public function getProducts($category_id)

@@ -6,28 +6,12 @@ import { Close as CloseIcon, FilterAlt as FilterIcon, KeyboardArrowDown, Keyboar
 import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining'; // delivery
 import RestaurantIcon from '@mui/icons-material/Restaurant'; // dine_in
 import TakeoutDiningIcon from '@mui/icons-material/TakeoutDining'; // take_away
-import {
-    Alert,
-    Box,
-    Button,
-    Checkbox,
-    Chip,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    Grid,
-    IconButton,
-    MenuItem,
-    Paper,
-    Select,
-    Snackbar,
-    Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid, IconButton, MenuItem, Paper, Select, Snackbar, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useCallback, useEffect, useState } from 'react';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -68,9 +52,9 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
     // Function to calculate total time from order_time and end_time
     const calculateTotalTime = (order_time, end_time) => {
         if (!order_time || !end_time) return '00:00:00';
-        const start = new Date(order_time);
-        const end = new Date(end_time);
-        const diffSeconds = Math.floor((end - start) / 1000);
+        const start = dayjs.utc(order_time);
+        const end = dayjs.utc(end_time);
+        const diffSeconds = end.diff(start, 'second');
         return formatTime(diffSeconds);
     };
 
@@ -81,7 +65,9 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
             if (order.status === 'in_progress' && order.order_time) {
                 try {
                     const startTime = new Date(order.order_time);
+
                     const currentTime = new Date();
+
                     seconds = Math.floor((currentTime - startTime) / 1000);
                     if (seconds < 0) seconds = 0; // Prevent negative time
                 } catch (e) {
@@ -89,13 +75,12 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                     seconds = 0;
                 }
             }
+            console.log(order.id, order.status, order.order_time, order.end_time);
+
             acc[order.id] = {
                 running: order.status === 'in_progress',
                 seconds,
-                totalTime:
-                    order.status === 'completed' && order.order_time && order.end_time
-                        ? calculateTotalTime(order.order_time, order.end_time)
-                        : '00:00:00',
+                totalTime: order.status === 'completed' && order.order_time && order.end_time ? calculateTotalTime(order.order_time, order.end_time) : '00:00:00',
             };
             return acc;
         }, {}),
@@ -121,9 +106,13 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                 kitchenOrders.forEach((order) => {
                     if (order.status === 'in_progress' && order.order_time) {
                         try {
-                            const startTime = new Date(order.order_time);
-                            const currentTime = new Date();
-                            let seconds = Math.floor((currentTime - startTime) / 1000);
+                            const startTime = dayjs.utc(order.order_time);
+                            const currentTime = dayjs.utc();
+                            const seconds = Math.floor(currentTime.diff(startTime, 'second'));
+
+                            // const startTime = new Date(order.order_time);
+                            // const currentTime = new Date();
+                            // let seconds = Math.floor((currentTime - startTime) / 1000);
                             if (seconds < 0) seconds = 0;
 
                             updated[order.id] = {
@@ -166,11 +155,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         if (status === 'All') {
             setStatusFilters(['All']);
         } else {
-            const newFilters = statusFilters.includes('All')
-                ? [status]
-                : statusFilters.includes(status)
-                  ? statusFilters.filter((s) => s !== status)
-                  : [...statusFilters, status];
+            const newFilters = statusFilters.includes('All') ? [status] : statusFilters.includes(status) ? statusFilters.filter((s) => s !== status) : [...statusFilters, status];
             setStatusFilters(newFilters.length ? newFilters : ['All']);
         }
     };
@@ -179,11 +164,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         if (type === 'All') {
             setOrderTypeFilters(['All']);
         } else {
-            const newFilters = orderTypeFilters.includes('All')
-                ? [type]
-                : orderTypeFilters.includes(type)
-                  ? orderTypeFilters.filter((t) => t !== type)
-                  : [...orderTypeFilters, type];
+            const newFilters = orderTypeFilters.includes('All') ? [type] : orderTypeFilters.includes(type) ? orderTypeFilters.filter((t) => t !== type) : [...orderTypeFilters, type];
             setOrderTypeFilters(newFilters.length ? newFilters : ['All']);
         }
     };
@@ -238,9 +219,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                         order.id === orderId
                             ? {
                                   ...order,
-                                  order_items: order.order_items.map((item) =>
-                                      item.id === itemId ? { ...item, status: checked ? 'completed' : 'pending' } : item,
-                                  ),
+                                  order_items: order.order_items.map((item) => (item.id === itemId ? { ...item, status: checked ? 'completed' : 'pending' } : item)),
                               }
                             : order,
                     ),
@@ -286,6 +265,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                 formData.append('order_time', new Date().toISOString());
             } else if (newOrderStatus === 'completed') {
                 formData.append('end_time', new Date().toISOString());
+                formattedTime = new Date().toISOString();
             }
 
             router.post(route('kitchen.update-all', orderId), formData, {
@@ -315,9 +295,9 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                         if (newOrderStatus === 'in_progress') {
                             updated[orderId] = { running: true, seconds: 0, totalTime: null };
                         } else if (newOrderStatus === 'completed') {
-                            const order = filteredOrder.find((o) => o.id === orderId);
-                            const totalTime = calculateTotalTime(order.order_time, formattedTime);
-                            updated[orderId] = { running: false, seconds: prev[orderId].seconds, totalTime };
+                            const updatedOrderTime = order.order_time ?? new Date().toISOString(); // fallback if null
+                            const totalTime = calculateTotalTime(updatedOrderTime, formattedTime);
+                            updated[orderId] = { running: false, seconds: prev[orderId]?.seconds || 0, totalTime };
                         }
                         return updated;
                     });
@@ -357,10 +337,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                 }}
             >
                 <div className="container-fluid p-3">
-                    <div
-                        className="d-flex justify-content-between align-items-center mb-3 p-3"
-                        style={{ backgroundColor: '#eeeeee', borderRadius: '10px' }}
-                    >
+                    <div className="d-flex justify-content-between align-items-center mb-3 p-3" style={{ backgroundColor: '#eeeeee', borderRadius: '10px' }}>
                         <div className="d-flex">
                             {tabs.map((tab) => (
                                 <Button
@@ -406,16 +383,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                     <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
                                         <div
                                             style={{
-                                                backgroundColor:
-                                                    order.status === 'completed'
-                                                        ? '#4CAF50'
-                                                        : order.status === 'pending'
-                                                          ? '#1565C0'
-                                                          : order.status === 'cancelled' && order.status === 'Refund'
-                                                            ? '#00BCD4'
-                                                            : order.status === 'in_progress'
-                                                              ? '#003366'
-                                                              : '#00BCD4',
+                                                backgroundColor: order.status === 'completed' ? '#4CAF50' : order.status === 'pending' ? '#1565C0' : order.status === 'cancelled' && order.status === 'Refund' ? '#00BCD4' : order.status === 'in_progress' ? '#003366' : '#00BCD4',
                                                 color: 'white',
                                                 padding: '12px',
                                                 display: 'flex',
@@ -428,12 +396,8 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     #{order.id}
                                                 </Typography>
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    {order.status !== 'completed' && (
-                                                        <Typography variant="body2">Timer: {formatTime(timers[order.id]?.seconds || 0)}</Typography>
-                                                    )}
-                                                    {order.status === 'completed' && timers[order.id]?.totalTime && (
-                                                        <Typography variant="body2">Timer: {timers[order.id].totalTime}</Typography>
-                                                    )}
+                                                    {order.status !== 'completed' && <Typography variant="body2">Timer: {formatTime(timers[order.id]?.seconds || 0)}</Typography>}
+                                                    {order.status === 'completed' && timers[order.id]?.totalTime && <Typography variant="body2">Timer: {timers[order.id].totalTime}</Typography>}
                                                 </div>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -453,13 +417,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     <Typography variant="body2">{order.table_id}</Typography>
                                                 </div>
                                                 <IconButton size="small" style={{ color: 'white' }}>
-                                                    {order.order_type === 'dine_in' ? (
-                                                        <RestaurantIcon />
-                                                    ) : order.order_type === 'delivery' ? (
-                                                        <DeliveryDiningIcon />
-                                                    ) : order.order_type === 'take_away' ? (
-                                                        <TakeoutDiningIcon />
-                                                    ) : null}
+                                                    {order.order_type === 'dine_in' ? <RestaurantIcon /> : order.order_type === 'delivery' ? <DeliveryDiningIcon /> : order.order_type === 'take_away' ? <TakeoutDiningIcon /> : null}
                                                 </IconButton>
                                             </div>
                                         </div>
@@ -483,21 +441,13 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                                             variant="body1"
                                                                             sx={{
                                                                                 textDecoration: isCancelled ? 'line-through' : 'none',
-                                                                                color: isCancelled
-                                                                                    ? 'red'
-                                                                                    : item.status === 'completed'
-                                                                                      ? 'green'
-                                                                                      : 'inherit',
+                                                                                color: isCancelled ? 'red' : item.status === 'completed' ? 'green' : 'inherit',
                                                                             }}
                                                                         >
                                                                             {item.order_item.name}
                                                                         </Typography>
                                                                         {hasVariants && (
-                                                                            <IconButton
-                                                                                size="small"
-                                                                                onClick={() => handleToggle(item.id, variants)}
-                                                                                sx={{ ml: 1 }}
-                                                                            >
+                                                                            <IconButton size="small" onClick={() => handleToggle(item.id, variants)} sx={{ ml: 1 }}>
                                                                                 {expandedItems[item.id] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
                                                                             </IconButton>
                                                                         )}
@@ -707,18 +657,8 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                             onClick={() => handleStatusFilterChange(status)}
                                             variant={statusFilters.includes(status) ? 'filled' : 'outlined'}
                                             style={{
-                                                backgroundColor: statusFilters.includes(status)
-                                                    ? status === 'All'
-                                                        ? '#003366'
-                                                        : status === 'New Order'
-                                                          ? '#1976D2'
-                                                          : '#E3F2FD'
-                                                    : 'transparent',
-                                                color: statusFilters.includes(status)
-                                                    ? status === 'All' || status === 'New Order'
-                                                        ? 'white'
-                                                        : '#1976D2'
-                                                    : 'inherit',
+                                                backgroundColor: statusFilters.includes(status) ? (status === 'All' ? '#003366' : status === 'New Order' ? '#1976D2' : '#E3F2FD') : 'transparent',
+                                                color: statusFilters.includes(status) ? (status === 'All' || status === 'New Order' ? 'white' : '#1976D2') : 'inherit',
                                                 borderRadius: '16px',
                                                 fontSize: '13px',
                                             }}
@@ -738,11 +678,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                             onClick={() => handleOrderTypeFilterChange(type)}
                                             variant={orderTypeFilters.includes(type) ? 'filled' : 'outlined'}
                                             style={{
-                                                backgroundColor: orderTypeFilters.includes(type)
-                                                    ? type === 'All'
-                                                        ? '#003366'
-                                                        : '#E3F2FD'
-                                                    : 'transparent',
+                                                backgroundColor: orderTypeFilters.includes(type) ? (type === 'All' ? '#003366' : '#E3F2FD') : 'transparent',
                                                 color: orderTypeFilters.includes(type) ? (type === 'All' ? 'white' : '#1976D2') : 'inherit',
                                                 borderRadius: '16px',
                                                 fontSize: '13px',
@@ -784,12 +720,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                     </Dialog>
                 </div>
             </div>
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={6000}
-                onClose={handleSnackbarClose}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
                 <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
                     {snackbarMessage}
                 </Alert>

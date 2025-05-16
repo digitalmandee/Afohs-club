@@ -3,13 +3,21 @@
 declare(strict_types=1);
 
 use Stancl\Tenancy\Database\Models\Domain;
+use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 // use Stancl\Tenancy\Database\Models\Tenant;
 
 return [
     'tenant_model' => \App\Models\Tenant::class,
     'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
-    'domain_model' => Domain::class,
+    // 'domain_model' => Domain::class,
+
+    // 'tenant_identification' => [
+    //     InitializeTenancyByPath::class,
+    //     PreventAccessFromCentralDomains::class,
+    // ],
+
 
     /**
      * The list of domains hosting your central app.
@@ -17,8 +25,7 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => [
-        '127.0.0.1',
-        'localhost',
+        'localhost'
     ],
 
     /**

@@ -1,33 +1,8 @@
-import SideNav from '@/components/App/SideBar/SideNav';
+import SideNav from '@/components/App/Sidebar/SideNav';
+
 import { router } from '@inertiajs/react';
-import {
-    Add as AddIcon,
-    Apartment as ApartmentIcon,
-    ArrowBack as ArrowBackIcon,
-    Business as BusinessIcon,
-    Close as CloseIcon,
-    Home as HomeIcon,
-    KeyboardArrowRight as KeyboardArrowRightIcon,
-    LocationOn as LocationOnIcon,
-} from '@mui/icons-material';
-import {
-    Box,
-    Button,
-    FormControl,
-    FormControlLabel,
-    Grid,
-    IconButton,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    MenuItem,
-    Radio,
-    Select,
-    Switch,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Add as AddIcon, Apartment as ApartmentIcon, ArrowBack as ArrowBackIcon, Business as BusinessIcon, Close as CloseIcon, Home as HomeIcon, KeyboardArrowRight as KeyboardArrowRightIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
+import { Box, Button, FormControl, FormControlLabel, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, MenuItem, Radio, Select, Switch, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
@@ -85,12 +60,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     const [phoneCountryCode, setPhoneCountryCode] = useState('+702');
 
     useEffect(() => {
-        const filtered = customers.filter(
-            (customer) =>
-                customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                customer.type.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
+        const filtered = customers.filter((customer) => customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || customer.email.toLowerCase().includes(searchTerm.toLowerCase()) || customer.type.toLowerCase().includes(searchTerm.toLowerCase()));
         setFilteredCustomers(filtered);
     }, [searchTerm, customers]);
 
@@ -254,9 +224,10 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <IconButton onClick={handleCloseAddForm}>
+                    <IconButton onClick={() => router.visit(route('members.index'))}>
                         <ArrowBackIcon />
                     </IconButton>
+
                     <Typography variant="h6" style={{ marginLeft: '10px' }}>
                         {isEditMode ? 'Edit Customer Information' : 'Add Customer Information'}
                     </Typography>
@@ -273,21 +244,11 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                 <Box sx={{ mb: 2 }}>
                                     {profileImage ? (
                                         <div style={{ position: 'relative', width: '150px', height: '150px' }}>
-                                            <img
-                                                src={profileImage || '/placeholder.svg'}
-                                                alt="Profile"
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
-                                            />
+                                            <img src={profileImage || '/placeholder.svg'} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
                                         </div>
                                     ) : (
                                         <Box>
-                                            <input
-                                                accept="image/*"
-                                                style={{ display: 'none' }}
-                                                id="profile-image-upload-add"
-                                                type="file"
-                                                onChange={handleImageUpload}
-                                            />
+                                            <input accept="image/*" style={{ display: 'none' }} id="profile-image-upload-add" type="file" onChange={handleImageUpload} />
                                             <label htmlFor="profile-image-upload-add">
                                                 <AddIcon
                                                     sx={{
@@ -317,19 +278,8 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                                     Choose Photo
                                                 </Button>
                                             </label>
-                                            <input
-                                                accept="image/*"
-                                                style={{ display: 'none' }}
-                                                id="profile-image-upload-edit"
-                                                type="file"
-                                                onChange={handleImageUpload}
-                                            />
-                                            <Button
-                                                size="small"
-                                                color="error"
-                                                onClick={handleDeleteImage}
-                                                sx={{ minWidth: 'auto', fontSize: '14px' }}
-                                            >
+                                            <input accept="image/*" style={{ display: 'none' }} id="profile-image-upload-edit" type="file" onChange={handleImageUpload} />
+                                            <Button size="small" color="error" onClick={handleDeleteImage} sx={{ minWidth: 'auto', fontSize: '14px' }}>
                                                 Delete
                                             </Button>
                                         </div>
@@ -358,23 +308,10 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                             flexBasis: 'calc(33.333% - 16px)',
                                             boxSizing: 'border-box',
                                         }}
-                                        control={
-                                            <Radio
-                                                checked={newCustomer.customer_type === memberType.name}
-                                                onChange={handleInputChange}
-                                                name="customer_type"
-                                                value={memberType.name}
-                                            />
-                                        }
+                                        control={<Radio checked={newCustomer.customer_type === memberType.name} onChange={handleInputChange} name="customer_type" value={memberType.name} />}
                                         label={
                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <img
-                                                    src="https://img.icons8.com/ios-filled/50/FFD700/gold-medal.png"
-                                                    width="24"
-                                                    height="24"
-                                                    alt={memberType.name}
-                                                    style={{ marginRight: '8px' }}
-                                                />
+                                                <img src="https://img.icons8.com/ios-filled/50/FFD700/gold-medal.png" width="24" height="24" alt={memberType.name} style={{ marginRight: '8px' }} />
                                                 {memberType.name}
                                             </Box>
                                         }
@@ -389,34 +326,13 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                 Customer Name
                             </Typography>
-                            <TextField
-                                fullWidth
-                                placeholder="e.g. Dianne Russell"
-                                name="name"
-                                value={newCustomer.name}
-                                onChange={handleInputChange}
-                                margin="normal"
-                                variant="outlined"
-                                sx={{ mb: 2 }}
-                                error={!!errors.name}
-                                helperText={errors.name}
-                            />
+                            <TextField fullWidth placeholder="e.g. Dianne Russell" name="name" value={newCustomer.name} onChange={handleInputChange} margin="normal" variant="outlined" sx={{ mb: 2 }} error={!!errors.name} helperText={errors.name} />
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Email
                                     </Typography>
-                                    <TextField
-                                        fullWidth
-                                        placeholder="e.g. dianne.russell@gmail.com"
-                                        name="email"
-                                        value={newCustomer.email}
-                                        onChange={handleInputChange}
-                                        margin="normal"
-                                        variant="outlined"
-                                        error={!!errors.email}
-                                        helperText={errors.email}
-                                    />
+                                    <TextField fullWidth placeholder="e.g. dianne.russell@gmail.com" name="email" value={newCustomer.email} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.email} helperText={errors.email} />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
@@ -431,17 +347,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                                 <option value="+91">+91</option>
                                             </Select>
                                         </FormControl>
-                                        <TextField
-                                            fullWidth
-                                            placeholder="e.g. 123 456 7890"
-                                            name="phone_number"
-                                            value={newCustomer.phone_number}
-                                            onChange={handleInputChange}
-                                            margin="normal"
-                                            variant="outlined"
-                                            error={!!errors.phone}
-                                            helperText={errors.phone}
-                                        />
+                                        <TextField fullWidth placeholder="e.g. 123 456 7890" name="phone_number" value={newCustomer.phone_number} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.phone} helperText={errors.phone} />
                                     </Box>
                                 </Grid>
                             </Grid>
@@ -453,15 +359,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                     <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
                                         {newCustomer.addresses.map((address, index) => (
                                             <ListItem key={index}>
-                                                <ListItemIcon>
-                                                    {address.type === 'House' ? (
-                                                        <HomeIcon />
-                                                    ) : address.type === 'Apartment' ? (
-                                                        <ApartmentIcon />
-                                                    ) : (
-                                                        <BusinessIcon />
-                                                    )}
-                                                </ListItemIcon>
+                                                <ListItemIcon>{address.type === 'House' ? <HomeIcon /> : address.type === 'Apartment' ? <ApartmentIcon /> : <BusinessIcon />}</ListItemIcon>
                                                 <ListItemText
                                                     primary={address.type}
                                                     secondary={
@@ -474,12 +372,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                                         </>
                                                     }
                                                 />
-                                                <Switch
-                                                    edge="end"
-                                                    checked={address.isMain}
-                                                    onChange={() => handleSetMainAddress(index)}
-                                                    inputProps={{ 'aria-labelledby': `address-switch-${index}` }}
-                                                />
+                                                <Switch edge="end" checked={address.isMain} onChange={() => handleSetMainAddress(index)} inputProps={{ 'aria-labelledby': `address-switch-${index}` }} />
                                                 <Typography variant="body2" color="primary" sx={{ ml: 1 }}>
                                                     {address.isMain ? 'Main Address' : ''}
                                                 </Typography>
@@ -637,44 +530,19 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
                                             <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
                                                 Zip Code / Postal Code
                                             </Typography>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="e.g. 10101"
-                                                name="zipCode"
-                                                value={newAddress.zipCode}
-                                                onChange={handleAddressInputChange}
-                                                margin="normal"
-                                                variant="outlined"
-                                            />
+                                            <TextField fullWidth placeholder="e.g. 10101" name="zipCode" value={newAddress.zipCode} onChange={handleAddressInputChange} margin="normal" variant="outlined" />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
                                                 Main Address
                                             </Typography>
-                                            <FormControlLabel
-                                                control={
-                                                    <Switch
-                                                        checked={newAddress.isMain}
-                                                        onChange={(e) => setNewAddress({ ...newAddress, isMain: e.target.checked })}
-                                                        name="isMain"
-                                                    />
-                                                }
-                                                label="Set as main address"
-                                            />
+                                            <FormControlLabel control={<Switch checked={newAddress.isMain} onChange={(e) => setNewAddress({ ...newAddress, isMain: e.target.checked })} name="isMain" />} label="Set as main address" />
                                         </Grid>
                                     </Grid>
                                     <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
                                         Full Address / Street
                                     </Typography>
-                                    <TextField
-                                        fullWidth
-                                        placeholder="e.g. 1901 Thornridge Cir. Shiloh, Hawaii 81063"
-                                        name="address"
-                                        value={newAddress.address}
-                                        onChange={handleAddressInputChange}
-                                        margin="normal"
-                                        variant="outlined"
-                                    />
+                                    <TextField fullWidth placeholder="e.g. 1901 Thornridge Cir. Shiloh, Hawaii 81063" name="address" value={newAddress.address} onChange={handleAddressInputChange} margin="normal" variant="outlined" />
                                     <Button variant="contained" onClick={handleSaveAddress} sx={{ backgroundColor: '#003366', mt: 2 }}>
                                         Save Address
                                     </Button>

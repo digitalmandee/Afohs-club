@@ -32,7 +32,7 @@ import MemberIcon from '@/components/App/Icons/Member';
 import TableIcon from '@/components/App/Icons/TableManagement';
 import CategoryIcon from '@mui/icons-material/Category';
 import AddressType from '../Icons/AddressType';
-import { MdManageHistory } from "react-icons/md";
+import { MdManageHistory } from 'react-icons/md';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -100,47 +100,54 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url, component, props } = usePage();
+    const { auth } = usePage().props;
 
     const [showNotification, setShowNotification] = React.useState(false);
     const [showProfile, setShowProfile] = React.useState(false);
-    const [showOrder, setShowOrder] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: '/' },
-        { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
-        { text: 'Inventory Category', icon: <CategoryIcon />, path: '/inventory/category' },
-        { text: 'Transaction', icon: <PaymentsIcon />, path: '/transaction' },
+        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard'), permission: 'dashboard' },
+        { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index'), permission: 'order' },
+        { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category'), permission: 'order' },
+        { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index'), permission: 'order' },
         {
             text: 'Table Management',
             icon: <TableIcon />,
-            path: '/table/management',
+            path: route('table.management'),
+            permission: 'order',
         },
         {
             text: 'Kitchen',
             icon: <KitchenIcon />,
-            path: '/kitchen',
+            path: route('kitchen.index'),
+            permission: 'kitchen',
         },
         {
             text: 'Order Management',
             icon: <MdManageHistory />,
-            path: '/order/management',
+            path: route('order.management'),
+            permission: 'order',
         },
         {
             text: 'Members',
             icon: <MemberIcon />,
-            path: '/members',
+            path: route('members.index'),
+            permission: 'order',
         },
+
         {
             text: 'Members Types',
             icon: <MemberIcon />,
-            path: '/members/member-types',
+            path: route('member-types.index'),
+            permission: 'order',
         },
         {
             text: 'Address Type',
             icon: <AddressType />,
-            path: '/members/address-types',
+            path: route('address-types.index'),
+            permission: 'order',
         },
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+        { text: 'Settings', icon: <SettingsIcon />, path: route('settings'), permission: 'order' },
     ];
 
     return (
@@ -264,8 +271,8 @@ export default function SideNav({ open, setOpen }) {
                                 }}
                             />
                             <Box>
-                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>MALIK</Typography>
-                                <Typography sx={{ fontSize: '12px', color: '#666' }}>Admin</Typography>
+                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>{auth.user?.name}</Typography>
+                                <Typography sx={{ fontSize: '12px', color: '#666' }}>{auth?.role}</Typography>
                             </Box>
                         </Box>
                         <Modal open={showProfile} onClose={() => setShowProfile(false)} aria-labelledby="profile-modal" sx={{ zIndex: 1300 }}>
@@ -286,13 +293,7 @@ export default function SideNav({ open, setOpen }) {
                                 }}
                             >
                                 {/* Profile Modal Content */}
-                                {profileView === 'profile' ? (
-                                    <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} />
-                                ) : profileView === 'loginActivity' ? (
-                                    <LoginActivityScreen setProfileView={setProfileView} />
-                                ) : profileView === 'logoutSuccess' ? (
-                                    <LogoutScreen setProfileView={setProfileView} />
-                                ) : null}
+                                {profileView === 'profile' ? <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} /> : profileView === 'loginActivity' ? <LoginActivityScreen setProfileView={setProfileView} /> : profileView === 'logoutSuccess' ? <LogoutScreen setProfileView={setProfileView} /> : null}
                             </Box>
                         </Modal>
                     </Box>
@@ -300,7 +301,9 @@ export default function SideNav({ open, setOpen }) {
             </AppBar>
 
             {/* Sidebar Drawer */}
-            <Drawer variant="permanent" open={open}
+            <Drawer
+                variant="permanent"
+                open={open}
                 sx={{
                     '& .MuiDrawer-paper': {
                         display: 'flex',
@@ -344,79 +347,83 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' }, // Chrome & Safari
                     }}
                 >
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            p: 1,
-                            mt: 2,
-                        }}
-                    >
-                        <Button
-                            variant="text"
+                    {auth.role !== 'kitchen' && (
+                        <Box
                             sx={{
-                                backgroundColor: '#0A2647',
-                                color: '#fff',
-                                '&:hover': { backgroundColor: '#09203F' },
-                                width: open ? '90%' : '100px',
-                                minWidth: '50px',
-                                height: '40px',
-                                fontSize: open ? '16px' : '12px',
-                                textTransform: 'none',
-                                overflow: 'hidden',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
                                 display: 'flex',
-                                alignItems: 'center',
                                 justifyContent: 'center',
-                                transition: 'all 0.3s ease-in-out',
+                                p: 1,
+                                mt: 2,
                             }}
-                            onClick={() => router.visit('/new/order')}
                         >
-                            {open ? '+ New Order' : '+ New Order'}
-                        </Button>
-                    </Box>
+                            <Button
+                                variant="text"
+                                sx={{
+                                    backgroundColor: '#0A2647',
+                                    color: '#fff',
+                                    '&:hover': { backgroundColor: '#09203F' },
+                                    width: open ? '90%' : '100px',
+                                    minWidth: '50px',
+                                    height: '40px',
+                                    fontSize: open ? '16px' : '12px',
+                                    textTransform: 'none',
+                                    overflow: 'hidden',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.3s ease-in-out',
+                                }}
+                                onClick={() => router.visit(route('order.new'))}
+                            >
+                                {open ? '+ New Order' : '+ New Order'}
+                            </Button>
+                        </Box>
+                    )}
 
                     <List>
-                        {menuItems.map(({ text, icon, path }) => {
-                            const isSelected = url === path
-                            return (
-                                <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
-                                    <ListItemButton
-                                        onClick={() => router.visit(path)}
-                                        sx={{
-                                            minHeight: 50,
-                                            justifyContent: open ? 'initial' : 'center',
-                                            mx: 3,
-                                            borderRadius: '12px',
-                                            backgroundColor: isSelected ? '#333' : 'transparent',
-                                            '&:hover': { backgroundColor: '#444' },
-                                        }}
-                                    >
-                                        <ListItemIcon
+                        {menuItems
+                            .filter((item) => auth.permissions.includes(item.permission))
+                            .map(({ text, icon, path }) => {
+                                const isSelected = url === path;
+                                return (
+                                    <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
+                                        <ListItemButton
+                                            onClick={() => router.visit(path)}
                                             sx={{
-                                                minWidth: 0,
-                                                justifyContent: 'center',
-                                                ml: open ? -1 : 0,
-                                                mr: open ? 1 : 'auto',
-                                                '& svg': {
-                                                    fill: isSelected ? 'orange' : '#fff',
-                                                },
+                                                minHeight: 50,
+                                                justifyContent: open ? 'initial' : 'center',
+                                                mx: 3,
+                                                borderRadius: '12px',
+                                                backgroundColor: isSelected ? '#333' : 'transparent',
+                                                '&:hover': { backgroundColor: '#444' },
                                             }}
                                         >
-                                            {icon}
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={text}
-                                            sx={{
-                                                color: isSelected ? 'orange' : '#fff',
-                                                opacity: open ? 1 : 0,
-                                            }}
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            )
-                        })}
+                                            <ListItemIcon
+                                                sx={{
+                                                    minWidth: 0,
+                                                    justifyContent: 'center',
+                                                    ml: open ? -1 : 0,
+                                                    mr: open ? 1 : 'auto',
+                                                    '& svg': {
+                                                        fill: isSelected ? 'orange' : '#fff',
+                                                    },
+                                                }}
+                                            >
+                                                {icon}
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={text}
+                                                sx={{
+                                                    color: isSelected ? 'orange' : '#fff',
+                                                    opacity: open ? 1 : 0,
+                                                }}
+                                            />
+                                        </ListItemButton>
+                                    </ListItem>
+                                );
+                            })}
                     </List>
                 </Box>
             </Drawer>

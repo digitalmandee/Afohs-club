@@ -1,4 +1,5 @@
-import SideNav from '@/components/App/SideBar/SideNav';
+import SideNav from '@/components/App/Sidebar/SideNav';
+
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Alert, Box, Button, FormControl, Grid, IconButton, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material';
@@ -49,10 +50,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
     const [phoneCountryCode, setPhoneCountryCode] = useState('+702');
 
     useEffect(() => {
-        const filtered = customers.filter(
-            (customer) =>
-                customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || customer.email.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
+        const filtered = customers.filter((customer) => customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
         setFilteredCustomers(filtered);
     }, [searchTerm, customers]);
 
@@ -149,16 +147,15 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
         }
         formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
-        const routeName = isEditMode ? 'members.update' : 'members.store';
         const method = isEditMode ? 'put' : 'post';
-        const url = isEditMode ? `/waiters/${newCustomer.id}` : '/waiters';
+        const url = isEditMode ? route('waiters.update', { id: newCustomer.id }) : route('waiters.store');
 
         router[method](url, formData, {
             onSuccess: () => {
                 setSuccessMessage(isEditMode ? 'Waiter updated successfully!' : 'Waiter added successfully!');
                 setShowSuccess(true);
                 handleCloseAddForm();
-                router.visit('/waiters'); // Redirect to dashboard
+                router.visit(route('waiters.index')); // Redirect to dashboard
             },
             onError: (errors) => {
                 setErrors(errors);
@@ -183,7 +180,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <IconButton onClick={() => router.visit('/waiters')}>
+                    <IconButton onClick={() => router.visit(route('waiters.index'))}>
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="h6" style={{ marginLeft: '10px' }}>
@@ -202,21 +199,11 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                                 <Box sx={{ mb: 2 }}>
                                     {profileImage ? (
                                         <div style={{ position: 'relative', width: '150px', height: '150px' }}>
-                                            <img
-                                                src={profileImage}
-                                                alt="Profile"
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
-                                            />
+                                            <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
                                         </div>
                                     ) : (
                                         <Box>
-                                            <input
-                                                accept="image/*"
-                                                style={{ display: 'none' }}
-                                                id="profile-image-upload-add"
-                                                type="file"
-                                                onChange={handleImageUpload}
-                                            />
+                                            <input accept="image/*" style={{ display: 'none' }} id="profile-image-upload-add" type="file" onChange={handleImageUpload} />
                                             <label htmlFor="profile-image-upload-add">
                                                 <AddIcon
                                                     sx={{
@@ -246,19 +233,8 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                                                     Choose Photo
                                                 </Button>
                                             </label>
-                                            <input
-                                                accept="image/*"
-                                                style={{ display: 'none' }}
-                                                id="profile-image-upload-edit"
-                                                type="file"
-                                                onChange={handleImageUpload}
-                                            />
-                                            <Button
-                                                size="small"
-                                                color="error"
-                                                onClick={handleDeleteImage}
-                                                sx={{ minWidth: 'auto', fontSize: '14px' }}
-                                            >
+                                            <input accept="image/*" style={{ display: 'none' }} id="profile-image-upload-edit" type="file" onChange={handleImageUpload} />
+                                            <Button size="small" color="error" onClick={handleDeleteImage} sx={{ minWidth: 'auto', fontSize: '14px' }}>
                                                 Delete
                                             </Button>
                                         </div>
@@ -282,34 +258,13 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                             <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                 Waiter Name
                             </Typography>
-                            <TextField
-                                fullWidth
-                                placeholder="e.g. Dianne Russell"
-                                name="name"
-                                value={newCustomer.name}
-                                onChange={handleInputChange}
-                                margin="normal"
-                                variant="outlined"
-                                sx={{ mb: 2 }}
-                                error={!!errors.name}
-                                helperText={errors.name}
-                            />
+                            <TextField fullWidth placeholder="e.g. Dianne Russell" name="name" value={newCustomer.name} onChange={handleInputChange} margin="normal" variant="outlined" sx={{ mb: 2 }} error={!!errors.name} helperText={errors.name} />
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Email
                                     </Typography>
-                                    <TextField
-                                        fullWidth
-                                        placeholder="e.g. dianne.russell@gmail.com"
-                                        name="email"
-                                        value={newCustomer.email}
-                                        onChange={handleInputChange}
-                                        margin="normal"
-                                        variant="outlined"
-                                        error={!!errors.email}
-                                        helperText={errors.email}
-                                    />
+                                    <TextField fullWidth placeholder="e.g. dianne.russell@gmail.com" name="email" value={newCustomer.email} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.email} helperText={errors.email} />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
@@ -324,17 +279,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                                                 <MenuItem value="+91">+91</MenuItem>
                                             </Select>
                                         </FormControl>
-                                        <TextField
-                                            fullWidth
-                                            placeholder="e.g. 123 456 7890"
-                                            name="phone_number"
-                                            value={newCustomer.phone_number}
-                                            onChange={handleInputChange}
-                                            margin="normal"
-                                            variant="outlined"
-                                            error={!!errors.phone}
-                                            helperText={errors.phone}
-                                        />
+                                        <TextField fullWidth placeholder="e.g. 123 456 7890" name="phone_number" value={newCustomer.phone_number} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.phone} helperText={errors.phone} />
                                     </Box>
                                 </Grid>
                             </Grid>

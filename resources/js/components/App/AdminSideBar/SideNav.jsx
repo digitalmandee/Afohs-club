@@ -14,7 +14,7 @@ import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import { TiBusinessCard } from "react-icons/ti";
+import { TiBusinessCard } from 'react-icons/ti';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
@@ -23,6 +23,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState } from 'react';
+import MemberIcon from '@/components/App/Icons/Member';
+import AddressType from '../Icons/AddressType';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -132,7 +134,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Membership Booking',
-            icon: <TiBusinessCard style={{width:25, height:25}}/>,
+            icon: <TiBusinessCard style={{ width: 25, height: 25 }} />,
             children: [
                 {
                     text: 'Dashboard',
@@ -199,6 +201,12 @@ export default function SideNav({ open, setOpen }) {
             ],
         },
         {
+            text: 'Members Types',
+            icon: <MemberIcon />,
+            path: '/members/member-types',
+        },
+
+        {
             text: 'Tenant',
             icon: <PeopleIcon />,
             children: [
@@ -212,6 +220,7 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
+
         {
             text: 'Settings',
             icon: <PeopleIcon />,

@@ -2,15 +2,10 @@
 
 namespace Database\Seeders\Tenant;
 
-use App\Models\MemberType;
-use App\Models\Tenant;
 use App\Models\User;
-use App\Models\UserDetail;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Str;
 
 class PermissionsDatabaseSeeder extends Seeder
 {
@@ -38,10 +33,10 @@ class PermissionsDatabaseSeeder extends Seeder
         $userRole = Role::firstOrCreate(['name' => 'user']);
 
         // Assign Permissions to Roles
-        $adminRole->syncPermissions($permissions);
+        $adminRole->syncPermissions(['dashboard', 'order', 'user', 'admin']);
         $employeeRole->syncPermissions(['dashboard', 'order']);
         $waiterRole->syncPermissions(['dashboard', 'order']);
-        $kitchenRole->syncPermissions(['dashboard', 'kitchen']);
+        $kitchenRole->syncPermissions(['kitchen']);
         $userRole->syncPermissions(['dashboard']);
 
 

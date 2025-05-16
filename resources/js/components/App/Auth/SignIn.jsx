@@ -15,7 +15,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
     };
 
     const handleSubmit = () => {
-        post(route('check-user-id'), {
+        post(route('tenant.check-user-id'), {
             onSuccess: () => {
                 setActiveTab('employee-signin');
             },
@@ -28,7 +28,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent:'flex-start',
+                    justifyContent: 'flex-start',
                     height: '100vh',
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': {
@@ -44,7 +44,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                         width: 150,
                         height: 114,
                         mb: 2,
-                        ml: -1
+                        ml: -1,
                     }}
                 />
                 <Typography

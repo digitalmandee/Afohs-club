@@ -21,6 +21,11 @@ class ProductVariant extends Model
         return $this->hasMany(ProductVariantValue::class)
             ->select('product_variant_id', 'name', 'additional_price', 'stock', 'is_default');
     }
+    public function items(): HasMany
+    {
+        return $this->hasMany(ProductVariantValue::class)
+            ->select('id', 'product_variant_id', 'name', 'additional_price', 'stock', 'is_default');
+    }
 
     public function getValuesAttribute()
     {
