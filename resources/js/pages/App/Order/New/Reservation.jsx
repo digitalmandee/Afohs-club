@@ -122,6 +122,8 @@ const ReservationDialog = () => {
             router.visit(route('order.new')); // Redirect after success
         } catch (error) {
             if (error.response?.status === 422) {
+                console.log(error.response);
+
                 setErrors(error.response.data.errors);
                 enqueueSnackbar('Validation error: Please fix the form fields.', { variant: 'error' });
             } else {
@@ -282,12 +284,7 @@ const ReservationDialog = () => {
                                         Down Payment
                                     </Typography>
                                     <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
-                                        <Radio
-                                            checked={paymentType === 'percentage'}
-                                            onChange={() => setPaymentType('percentage')}
-                                            size="small"
-                                            sx={{ p: 0.5 }}
-                                        />
+                                        <Radio checked={paymentType === 'percentage'} onChange={() => setPaymentType('percentage')} size="small" sx={{ p: 0.5 }} />
                                         <Typography variant="body2" sx={{ ml: 0.5 }}>
                                             Percentage
                                         </Typography>
@@ -363,23 +360,14 @@ const ReservationDialog = () => {
                                 <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
                                     <Box sx={{ mt: 1, p: 2, bgcolor: '#fff', boxShadow: 3, borderRadius: 1 }}>
                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                            <StaticDatePicker
-                                                views={['year', 'month']}
-                                                value={dayjs(monthYear)}
-                                                onChange={handleDateChange}
-                                                minDate={dayjs().add(1, 'day')}
-                                                maxDate={dayjs().add(5, 'year')}
-                                                disablePast={true}
-                                            />
+                                            <StaticDatePicker views={['year', 'month']} value={dayjs(monthYear)} onChange={handleDateChange} minDate={dayjs().add(1, 'day')} maxDate={dayjs().add(5, 'year')} disablePast={true} />
                                         </LocalizationProvider>
                                     </Box>
                                 </ClickAwayListener>
                             </Popper>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <Box
-                                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#B0DEFF', p: 0.5, borderRadius: 1 }}
-                            >
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#B0DEFF', p: 0.5, borderRadius: 1 }}>
                                 <CalendarTodayIcon fontSize="small" sx={{ color: '#1976d2' }} />
                                 <Typography variant="caption" sx={{ ml: 0.5, color: '#1976d2' }}>
                                     {weeks.find((w) => w.id === selectedWeek)?.label}
@@ -410,10 +398,7 @@ const ReservationDialog = () => {
                                     <Typography variant="caption" color="text.secondary">
                                         {dayLabels[index]}
                                     </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        fontWeight={day && orderDetails.date?.toDateString() === day.toDateString() ? 'medium' : 'normal'}
-                                    >
+                                    <Typography variant="body2" fontWeight={day && orderDetails.date?.toDateString() === day.toDateString() ? 'medium' : 'normal'}>
                                         {day ? day.getDate() : ''}
                                     </Typography>
                                 </Box>

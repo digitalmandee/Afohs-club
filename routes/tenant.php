@@ -69,11 +69,11 @@ Route::group([
 
 
         // Order Management
+        Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
         Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
         Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
+        Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
         Route::post('/order/{id}', [OrderController::class, 'update'])->name('orders.update');
-        Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
-        Route::post('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
 
         // for member and waiter
         Route::get('/user/search', [UserController::class, 'searchMember'])->name('user.search');
@@ -137,7 +137,7 @@ Route::group([
             return Inertia::render('App/Inventory/Product');
         })->name('product.create');
         Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
-        // 
+        //
         Route::get('/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
 
 
