@@ -158,7 +158,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Finance',
-                    path: route(''),
+                    path: route('membership.finance'),
                 },
             ],
         },
@@ -176,11 +176,27 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Department',
-                    path: '',
+                    path: route('employee.departmentlist'),
                 },
                 {
                     text: 'Attendance',
-                    path: '',
+                    path: route('employee.attendance'),
+                },
+                {
+                    text: 'Leave Category',
+                    path: route('employee.leavecategory'),
+                },
+                {
+                    text: 'Leave Management',
+                    path: route('employee.leavemanagement'),
+                },
+                {
+                    text: 'Leave Report',
+                    path: route('employee.leavereport'),
+                },
+                {
+                    text: 'Attendance Report',
+                    path: route('employee.attendancereport'),
                 },
             ],
         },

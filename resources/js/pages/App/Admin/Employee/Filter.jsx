@@ -55,17 +55,17 @@ const styles = {
 
 };
 
-const MemberFilter = ({ open, onClose }) => {
+const AttendanceFilter = ({ open, onClose }) => {
     const [expandedSections, setExpandedSections] = useState({
         sorting: true,
-        orderType: true,
+        leaveType: true,
         memberStatus: true,
         orderStatus: true,
     });
 
     const [filters, setFilters] = useState({
         sort: 'asc',
-        orderType: 'all',
+        leaveType: 'all',
         memberStatus: 'all',
         orderStatus: 'all',
     });
@@ -87,7 +87,7 @@ const MemberFilter = ({ open, onClose }) => {
     const handleResetFilters = () => {
         setFilters({
             sort: 'asc',
-            orderType: 'all',
+            leaveType: 'all',
             memberStatus: 'all',
             orderStatus: 'all',
         });
@@ -108,7 +108,7 @@ const MemberFilter = ({ open, onClose }) => {
                     style: {
                         position: 'absolute',
                         top: 0,
-                        right: 20,
+                        right: 0,
                         m: 0,
                         width: '600px',
                         borderRadius: 2,
@@ -119,7 +119,7 @@ const MemberFilter = ({ open, onClose }) => {
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Typography sx={{ color: '#121212', fontWeight: 500, fontSize: '32px' }}>
-                            Member Filter
+                            Attendance Filter
                         </Typography>
                         <IconButton edge="end">
                             <CloseIcon />
@@ -241,14 +241,11 @@ const MemberFilter = ({ open, onClose }) => {
                                         variant="contained"
                                         onClick={() => handleFilterChange('sort', 'asc')}
                                         sx={{
-                                            backgroundColor: filters.sort === 'asc' ? '#b3e5fc' : '#e3f2fd',
-                                            color: '#000',
+                                            backgroundColor: filters.sort === 'asc' ? '#063455' : '#B0DEFF',
+                                            color: filters.sort === 'asc' ? 'white' : 'black',
                                             borderRadius: '20px',
                                             textTransform: 'none',
                                             fontWeight: 500,
-                                            '&:hover': {
-                                                backgroundColor: '#b3e5fc',
-                                            },
                                             minWidth: '130px',
                                         }}
                                         startIcon={
@@ -267,14 +264,11 @@ const MemberFilter = ({ open, onClose }) => {
                                         variant="contained"
                                         onClick={() => handleFilterChange('sort', 'desc')}
                                         sx={{
-                                            backgroundColor: filters.sort === 'desc' ? '#b3e5fc' : '#e3f2fd',
-                                            color: '#000',
+                                            backgroundColor: filters.sort === 'desc' ? '#063455' : '#B0DEFF',
+                                            color: filters.sort === 'desc' ? 'white' : 'black',
                                             borderRadius: '20px',
                                             textTransform: 'none',
                                             fontWeight: 500,
-                                            '&:hover': {
-                                                backgroundColor: '#b3e5fc',
-                                            },
                                             minWidth: '130px',
                                         }}
                                         startIcon={
@@ -308,7 +302,7 @@ const MemberFilter = ({ open, onClose }) => {
                     >
                         <Box
                             className={styles.filterHeader}
-                            onClick={() => toggleSection('orderType')}
+                            onClick={() => toggleSection('leaveType')}
                             sx={{
                                 p: 0,
                                 mb: 1,
@@ -317,53 +311,40 @@ const MemberFilter = ({ open, onClose }) => {
                                 alignItems: 'center',
                             }}
                         >
-                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Choose Status</Typography>
+                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Leave Type</Typography>
                             <KeyboardArrowDownIcon
                                 sx={{
                                     cursor: 'pointer',
-                                    transform: expandedSections.orderType ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transform: expandedSections.leaveType ? 'rotate(180deg)' : 'rotate(0deg)',
                                     transition: 'transform 0.3s',
                                 }}
                             />
                         </Box>
 
-                        <Collapse in={expandedSections.orderType}>
+                        <Collapse in={expandedSections.leaveType}>
                             <Box sx={{ mb: 1 }}>
                                 <Box display="flex" flexWrap="wrap" gap={1}>
                                     {[
-                                        {
-                                            label: 'All type',
-                                            value: 'all',
-                                            icon: null,
-                                        },
-                                        {
-                                            label: 'Active',
-                                            value: 'dine-in',
-                                            icon: <DiningIcon />,
-                                        },
-                                        {
-                                            label: 'Expired',
-                                            value: 'pickup',
-                                            icon: <TakeoutIcon />,
-                                        },
-                                        {
-                                            label: 'Pending',
-                                            value: 'delivery',
-                                            icon: <DeliveryIcon />,
-                                        },
+                                        { label: 'All type', value: 'all' },
+                                        { label: 'Annual Leave', value: 'annual' },
+                                        { label: 'Business Leave', value: 'business' },
+                                        { label: 'Casual Leave', value: 'casual' },
+                                        { label: 'Sick Leave', value: 'sick' },
+                                        { label: 'Unpaid Leave', value: 'unpaid' },
                                     ].map((item) => (
                                         <Chip
                                             key={item.value}
                                             label={item.label}
-                                            onClick={() => handleFilterChange('orderType', item.value)}
+                                            onClick={() => handleFilterChange('leaveType', item.value)}
                                             sx={{
-                                                backgroundColor: filters.orderType === item.value ? '#063455' : '#B0DEFF', // light blue for unselected
-                                                color: filters.orderType === item.value ? 'white' : 'black',
+                                                backgroundColor: filters.leaveType === item.value ? '#063455' : '#B0DEFF',
+                                                color: filters.leaveType === item.value ? 'white' : 'black',
                                                 fontWeight: 500,
-                                                borderRadius: '16px', // more round
+                                                borderRadius: '16px',
                                                 px: 2,
                                                 py: 0.5,
                                                 fontSize: '0.875rem',
+                                                cursor: 'pointer',
                                             }}
                                         />
                                     ))}
@@ -394,7 +375,7 @@ const MemberFilter = ({ open, onClose }) => {
                                 alignItems: 'center',
                             }}
                         >
-                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Choose by type</Typography>
+                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Leave Management</Typography>
                             <KeyboardArrowDownIcon
                                 sx={{
                                     cursor: 'pointer',
@@ -407,7 +388,7 @@ const MemberFilter = ({ open, onClose }) => {
                             <Box sx={{ mb: 1 }}>
                                 <Box display="flex" flexWrap="wrap" gap={1}>
                                     <Chip
-                                        label="All types"
+                                        label="All Leaves"
                                         onClick={() => handleFilterChange('orderStatus', 'all')}
                                         sx={{
                                             backgroundColor: filters.orderStatus === 'all' ? '#003049' : '#cce5ff',
@@ -418,22 +399,11 @@ const MemberFilter = ({ open, onClose }) => {
                                         }}
                                     />
                                     <Chip
-                                        label="VIP Members"
+                                        label="Leave Reports"
                                         onClick={() => handleFilterChange('orderStatus', 'ready')}
                                         sx={{
                                             backgroundColor: filters.orderStatus === 'ready' ? '#003049' : '#cce5ff',
                                             color: filters.orderStatus === 'ready' ? 'white' : 'black',
-                                            fontWeight: 500,
-                                            borderRadius: '20px',
-                                            px: 2,
-                                        }}
-                                    />
-                                    <Chip
-                                        label="Premium Members"
-                                        onClick={() => handleFilterChange('orderStatus', 'cooking')}
-                                        sx={{
-                                            backgroundColor: filters.orderStatus === 'cooking' ? '#003049' : '#cce5ff',
-                                            color: filters.orderStatus === 'cooking' ? 'white' : 'black',
                                             fontWeight: 500,
                                             borderRadius: '20px',
                                             px: 2,
@@ -487,7 +457,7 @@ const MemberFilter = ({ open, onClose }) => {
                                     px: 1
                                 }}
                             >
-                                <Typography sx={{ fontWeight: 400, fontSize:'14px' }}>
+                                <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>
                                     Select your target date
                                 </Typography>
 
@@ -538,4 +508,4 @@ const MemberFilter = ({ open, onClose }) => {
     )
 }
 
-export default MemberFilter
+export default AttendanceFilter
