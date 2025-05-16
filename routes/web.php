@@ -95,6 +95,10 @@ if (in_array(request()->getHost(), $allowedDomains)) {
             return Inertia::render('App/Admin/Employee/AttendanceReport');
         })->name('employee.attendancereport');
 
+        Route::get('/employee/attendance/monthly/report', function () {
+            return Inertia::render('App/Admin/Employee/MonthlyReport');
+        })->name('employee.monthlyreport');
+
         //Membership Booking Routes
         Route::get('/membership/booking/dashboard', function () {
             return Inertia::render('App/Admin/Membership/Dashboard');

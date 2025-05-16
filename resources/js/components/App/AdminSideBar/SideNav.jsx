@@ -196,6 +196,10 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Attendance Report',
                     path: route('employee.attendancereport'),
                 },
+                {
+                    text: 'Monthly Report',
+                    path: route('employee.monthlyreport'),
+                },
             ],
         },
         {
