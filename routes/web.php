@@ -112,6 +112,27 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/employee/monthly/attendance/report', function () {
         return Inertia::render('App/Admin/Employee/MonthlyReport');
     })->name('employee.monthlyreport');
+
+    Route::get('/employee/payroll/dashboard', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Dashboard');
+    })->name('employee.payroll');
+
+    Route::get('/employee/payroll/monthly/summary', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Summary');
+    })->name('employee.summary');
+
+    Route::get('/employee/payroll/salary/component', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Component');
+    })->name('employee.component');
+
+    Route::get('/employee/payroll/add/salary/component', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddSalary');
+    })->name('employee.addsalary');
+
+    //Finance Routes
+    Route::get('/finance/dashboard', function () {
+        return Inertia::render('App/Admin/Finance/Dashboard');
+    })->name('finance.dashboard');
     // member
     // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
     // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
