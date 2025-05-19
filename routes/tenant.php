@@ -2,24 +2,16 @@
 
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\CategoryController;
-use App\Http\Controllers\App\MemberAddressController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\WaiterController;
 use App\Http\Controllers\FloorController;
-use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\App\Auth\AuthController;
-use App\Http\Controllers\App\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\App\Auth\NewPasswordController;
-use App\Http\Controllers\App\Auth\PasswordResetLinkController;
-use App\Http\Controllers\App\Auth\RegisteredUserController;
-use App\Http\Middleware\AuthenticateTenant;
-use Illuminate\Support\Facades\Redirect;
+use App\Http\Controllers\App\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
@@ -32,9 +24,7 @@ Route::group([
 
     // Tenant auth-protected routes
     Route::middleware([\App\Http\Middleware\AuthenticateTenant::class, 'auth:tenant'])->group(function () {
-        Route::get('/dashboard', function () {
-            return Inertia::render('App/Dashboard/Dashboardm');
-        })->name('tenant.dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
 
         Route::get('/order/queue', [OrderController::class, 'orderQueue'])->name('order.queue');
 
@@ -53,11 +43,11 @@ Route::group([
         Route::put('/members/address-types/{id}/update', [AddressTypeController::class, 'update'])->name('address.update');
         Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
         // member
-        // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
-        // Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
-        // Route::post('/members', [MembersController::class, 'store'])->name('members.store');
-        // Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
-        // Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
+        Route::get('/members', [MembersController::class, 'index'])->name('members.index');
+        Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
+        Route::post('/members', [MembersController::class, 'store'])->name('members.store');
+        Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
+        Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
 
         // Waiter Dashboard
         Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');
@@ -152,6 +142,7 @@ Route::group([
         // Kitchen Dashboard
         Route::get('/kitchens', [KitchenController::class, 'indexPage'])->name('kitchens.index');
         Route::get('/kitchens/create', [KitchenController::class, 'create'])->name('kitchens.create');
+        Route::get('/kitchens/{id}/edit', [KitchenController::class, 'edit'])->name('kitchens.edit');
         Route::post('/kitchens', [KitchenController::class, 'store'])->name('kitchens.store');
         Route::put('/kitchens/{id}/update', [KitchenController::class, 'update'])->name('kitchens.update');
     });

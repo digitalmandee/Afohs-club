@@ -149,6 +149,7 @@ const TakeAwayDialog = () => {
                         },
                         textTransform: 'none',
                     }}
+                    disabled={!orderDetails.member}
                     onClick={() => router.visit(route('order.menu'))}
                 >
                     Choose Menu

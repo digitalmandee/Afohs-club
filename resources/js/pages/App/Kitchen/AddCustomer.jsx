@@ -3,72 +3,42 @@ import { router } from '@inertiajs/react';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Alert, Box, Button, FormControl, Grid, IconButton, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
-export default function AddKitchen({ users, memberTypes, customer = null }) {
-    const drawerWidthOpen = 240;
-    const drawerWidthClosed = 110;
+const drawerWidthOpen = 240;
+const drawerWidthClosed = 110;
+export default function AddKitchen({ userNo, customer = null }) {
+    const phoneNumber = customer?.phone_number || '';
+    const [phoneCountryCodeFromData, phoneNumberWithoutCode] = phoneNumber.includes('-') ? phoneNumber.split('-') : [phoneNumber.match(/^\+\d+/)?.[0] || '+702', phoneNumber.replace(/^\+\d+/, '').trim()];
 
     const [open, setOpen] = useState(false);
-    const [customers, setCustomers] = useState(users.data); // Initialize with users prop
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filteredCustomers, setFilteredCustomers] = useState(users.data);
-
-    const [openAddForm, setOpenAddForm] = useState(!!customer);
     const [isEditMode, setIsEditMode] = useState(!!customer);
-    const [currentCustomerIndex, setCurrentCustomerIndex] = useState(null);
+    const [phoneCountryCode, setPhoneCountryCode] = useState(phoneCountryCodeFromData);
 
     const [newCustomer, setNewCustomer] = useState({
         id: customer?.id || null,
         name: customer?.name || '',
         email: customer?.email || '',
-        phone_number: customer?.phone_number || '',
-        customer_type: customer?.memberType?.name || memberTypes[0]?.name || 'Silver',
+        phone_number: phoneNumberWithoutCode || '',
         profile_photo: customer?.profile_photo || null,
-        addresses:
-            customer?.userDetails?.map((detail) => ({
-                type: detail.address_type,
-                address: detail.address,
-                city: detail.city,
-                province: detail.state,
-                country: detail.country,
-                zipCode: detail.zip,
-                isMain: detail.status === 'active',
-            })) || [],
+        printer_ip: customer?.kitchen_detail?.printer_ip || '',
+        printer_port: customer?.kitchen_detail?.printer_port || '',
     });
 
-    const [showAddressForm, setShowAddressForm] = useState(false);
-
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [showError, setShowError] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
     const [errors, setErrors] = useState({});
 
     const [profileImage, setProfileImage] = useState(customer?.profile_photo || null);
-    const [phoneCountryCode, setPhoneCountryCode] = useState('+702');
-
-    useEffect(() => {
-        const filtered = customers.filter((customer) => customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
-        setFilteredCustomers(filtered);
-    }, [searchTerm, customers]);
 
     const handleCloseAddForm = () => {
-        setOpenAddForm(false);
-        setShowAddressForm(false);
         setErrors({});
-        setShowError(false);
-        setErrorMessage('');
         setIsEditMode(false);
-        setCurrentCustomerIndex(null);
         setNewCustomer({
             id: null,
             name: '',
             email: '',
             phone_number: '',
-            customer_type: memberTypes[0]?.name || 'Silver',
             profile_photo: null,
-            addresses: [],
         });
         setProfileImage(null);
     };
@@ -92,6 +62,10 @@ export default function AddKitchen({ users, memberTypes, customer = null }) {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const reader = new FileReader();
+            setNewCustomer({
+                ...newCustomer,
+                profile_photo: file,
+            });
             reader.onloadend = () => {
                 setProfileImage(reader.result);
             };
@@ -106,67 +80,36 @@ export default function AddKitchen({ users, memberTypes, customer = null }) {
         setProfileImage(null);
     };
 
-    const base64ToBlob = (base64) => {
-        const byteString = atob(base64.split(',')[1]);
-        const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-        }
-        return new Blob([ab], { type: mimeString });
-    };
-
     const handleSaveCustomer = () => {
         // Client-side validation
-        if (!newCustomer.name || !newCustomer.email || !newCustomer.phone_number) {
-            setErrorMessage('Please fill in all required fields.');
-            setShowError(true);
+        if (!newCustomer.name || !newCustomer.email || !newCustomer.phone_number || !newCustomer.printer_ip || !newCustomer.printer_port) {
+            enqueueSnackbar('Please fill in all required fields.', { variant: 'error' });
             return;
         }
-
-        if (newCustomer.addresses.length > 0) {
-            for (const addr of newCustomer.addresses) {
-                if (!addr.type || !addr.address || !addr.city || !addr.province || !addr.country || !addr.zipCode) {
-                    setErrorMessage('All address fields are required.');
-                    setShowError(true);
-                    return;
-                }
-            }
-        }
-
-        const formData = new FormData();
-        formData.append('name', newCustomer.name);
-        formData.append('email', newCustomer.email);
-        formData.append('phone', `${phoneCountryCode}${newCustomer.phone_number}`);
-        formData.append('customer_type', newCustomer.customer_type);
-        if (profileImage && profileImage.startsWith('data:image')) {
-            const blob = base64ToBlob(profileImage);
-            formData.append('profile_pic', blob, 'profile.jpg');
-        }
-        formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
         const method = isEditMode ? 'put' : 'post';
         const url = isEditMode ? route('kitchens.update', { id: newCustomer.id }) : route('kitchens.store');
 
-        router[method](url, formData, {
+        const payload = {
+            _method: method,
+            ...newCustomer,
+            phone: `${phoneCountryCode}-${newCustomer.phone_number}`,
+        };
+
+        router.post(url, payload, {
+            forceFormData: true,
             onSuccess: () => {
-                setSuccessMessage(isEditMode ? 'Kitchen updated successfully!' : 'Kitchen added successfully!');
-                setShowSuccess(true);
+                enqueueSnackbar(isEditMode ? 'Kitchen updated successfully!' : 'Kitchen added successfully!', { variant: 'success' });
                 handleCloseAddForm();
-                router.visit(route('kitchens.index')); // Redirect to dashboard
+                router.visit(route('kitchens.index'));
             },
             onError: (errors) => {
                 setErrors(errors);
                 const errorMessages = Object.values(errors).filter(Boolean).join('; ');
-                setErrorMessage(errorMessages || 'Failed to save Kitchen. Please check the form.');
-                setShowError(true);
+                enqueueSnackbar(errorMessages || 'Failed to save Kitchen. Please check the form.', { variant: 'error' });
             },
         });
     };
-
-    const lastUserId = users.data.length > 0 ? parseInt(users.data[0].user_id) : 0;
-    const newMemberId = lastUserId + 1;
 
     return (
         <>
@@ -188,10 +131,10 @@ export default function AddKitchen({ users, memberTypes, customer = null }) {
                 </div>
                 <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '5px' }}>
                     <Grid container spacing={3}>
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12}>
                             <Box sx={{ p: 2, backgroundColor: '#F6F6F6', border: '1px solid #e0e0e0', borderRadius: '4px', mb: 2 }}>
                                 <Typography variant="body1">
-                                    Member Id: <strong>#{newMemberId}</strong>
+                                    Member Id: <strong>#{userNo}</strong>
                                 </Typography>
                             </Box>
                             <Box style={{ display: 'flex', gap: '10px' }}>
@@ -281,6 +224,18 @@ export default function AddKitchen({ users, memberTypes, customer = null }) {
                                         <TextField fullWidth placeholder="e.g. 123 456 7890" name="phone_number" value={newCustomer.phone_number} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.phone} helperText={errors.phone} />
                                     </Box>
                                 </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                                        Printer IP
+                                    </Typography>
+                                    <TextField fullWidth placeholder="e.g. 192.168.1.100" name="printer_ip" value={newCustomer.printer_ip} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.printer_ip} helperText={errors.printer_ip} />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                                        Printer Port
+                                    </Typography>
+                                    <TextField fullWidth placeholder="e.g. 9100" name="printer_port" value={newCustomer.printer_port} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.printer_port} helperText={errors.printer_port} />
+                                </Grid>
                             </Grid>
                         </Grid>
                         <Grid item xs={12}>
@@ -293,17 +248,6 @@ export default function AddKitchen({ users, memberTypes, customer = null }) {
                     </Grid>
                 </div>
             </div>
-
-            <Snackbar open={showSuccess} autoHideDuration={6000} onClose={() => setShowSuccess(false)}>
-                <Alert onClose={() => setShowSuccess(false)} severity="success" sx={{ width: '100%' }}>
-                    {successMessage}
-                </Alert>
-            </Snackbar>
-            <Snackbar open={showError} autoHideDuration={6000} onClose={() => setShowError(false)}>
-                <Alert onClose={() => setShowError(false)} severity="error" sx={{ width: '100%' }}>
-                    {errorMessage}
-                </Alert>
-            </Snackbar>
         </>
     );
 }

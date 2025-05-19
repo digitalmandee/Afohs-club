@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { Print as PrintIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Typography } from '@mui/material';
+import { Avatar, Box, Button, CircularProgress, Typography } from '@mui/material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 
@@ -24,7 +24,11 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
     }, [openModal, invoiceId]); // Trigger on modal open and invoiceId change
 
     if (loading) {
-        return <div>Loading...</div>; // Display loading state until data is fetched
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '40%' }}>
+                <CircularProgress />
+            </Box>
+        ); // Display loading state until data is fetched
     }
 
     const handlePrintReceipt = (data) => {

@@ -10,13 +10,12 @@ import { Box, Button, Chip, Grid, IconButton, Modal, Paper, Typography } from '@
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = () => {
+const Dashboard = ({ today_revenue = 0, yesterday_revenue = 0, sales_change = 0, today_profit = 0 }) => {
     const [open, setOpen] = useState(false);
     const [showReserve, setShowReserve] = useState(false);
     const [showOrder, setShowOrder] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isNotificationVisible, setIsNotificationVisible] = useState(false);
-    const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
 
     const handleCancelOrder = () => {
         setIsModalVisible(false); // Close the cancel order modal
@@ -68,7 +67,7 @@ const Dashboard = () => {
                                                 ml: 1,
                                             }}
                                         >
-                                            Sales up to <strong>56%</strong> compared to yesterday
+                                            Sales up to <strong>{sales_change ?? 0}%</strong> compared to yesterday
                                         </Typography>
                                         <Box
                                             sx={{
@@ -122,7 +121,7 @@ const Dashboard = () => {
                                                         color: '#FFFFFF',
                                                     }}
                                                 >
-                                                    Rs 559,102.00
+                                                    Rs {Number(today_revenue).toFixed(2)}
                                                 </Typography>
                                             </Box>
 
@@ -183,7 +182,7 @@ const Dashboard = () => {
                                                         color: '#FFFFFF',
                                                     }}
                                                 >
-                                                    Rs 223,640.80
+                                                    Rs {Number(today_profit).toFixed(2)}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -197,19 +196,19 @@ const Dashboard = () => {
                                         }}
                                     >
                                         <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">40%</Typography>
+                                            <Typography variant="h6">0%</Typography>
                                             <Typography variant="caption">Dine In</Typography>
                                         </Grid>
                                         <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">15%</Typography>
+                                            <Typography variant="h6">0%</Typography>
                                             <Typography variant="caption">Takeaway</Typography>
                                         </Grid>
                                         <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">35%</Typography>
+                                            <Typography variant="h6">0%</Typography>
                                             <Typography variant="caption">Delivery</Typography>
                                         </Grid>
                                         <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">10%</Typography>
+                                            <Typography variant="h6">0%</Typography>
                                             <Typography variant="caption">Pick Up</Typography>
                                         </Grid>
                                     </Grid>
@@ -246,12 +245,7 @@ const Dashboard = () => {
                                         onClick={() => setShowReserve(true)}
                                     />
                                 </Box>
-                                <Modal
-                                    open={showReserve}
-                                    onClose={() => setShowReserve(false)}
-                                    aria-labelledby="reservation-order-modal"
-                                    sx={{ zIndex: 1300 }}
-                                >
+                                <Modal open={showReserve} onClose={() => setShowReserve(false)} aria-labelledby="reservation-order-modal" sx={{ zIndex: 1300 }}>
                                     <Box
                                         sx={{
                                             position: 'fixed',
@@ -1301,12 +1295,7 @@ const Dashboard = () => {
                                         onClick={() => setShowOrder(true)}
                                     />
                                 </Box>
-                                <Modal
-                                    open={showOrder}
-                                    onClose={() => setShowOrder(false)}
-                                    aria-labelledby="reservation-order-modal"
-                                    sx={{ zIndex: 1300 }}
-                                >
+                                <Modal open={showOrder} onClose={() => setShowOrder(false)} aria-labelledby="reservation-order-modal" sx={{ zIndex: 1300 }}>
                                     <Box
                                         sx={{
                                             position: 'fixed',
@@ -1440,9 +1429,7 @@ const Dashboard = () => {
                                                         fontWeight: 'medium',
                                                     }}
                                                 />
-                                                {isModalVisible && (
-                                                    <CancelOrder onClose={() => setIsModalVisible(false)} onConfirm={handleCancelOrder} />
-                                                )}
+                                                {isModalVisible && <CancelOrder onClose={() => setIsModalVisible(false)} onConfirm={handleCancelOrder} />}
                                                 {isNotificationVisible && (
                                                     <Box
                                                         sx={{

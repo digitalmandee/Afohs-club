@@ -123,6 +123,8 @@ class OrderController extends Controller
             // Group items by kitchen
             $groupedByKitchen = collect($request->order_items)->groupBy('kitchen_id');
 
+            $totalCostPrice = 0;
+
             // Insert order items
             foreach ($groupedByKitchen as $kitchenId => $items) {
                 // Ensure kitchenId is null if empty or not numeric
@@ -148,10 +150,13 @@ class OrderController extends Controller
                             if (!$variantValue || $variantValue->stock < 0) {
                                 return redirect()->back()->withErrors(['Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown')]);
                             }
+                            $totalCostPrice += $variantValue->additional_price;
 
                             $variantValue->decrement('stock', 1);
                         }
                     }
+
+                    $totalCostPrice += $product->cost_of_goods_sold * $productQty;
 
                     // Create order item (save original item JSON for reference)
                     OrderItem::create([
@@ -163,16 +168,7 @@ class OrderController extends Controller
                 }
             }
 
-            // foreach ($groupedByKitchen as $kitchenId => $items) {
-            //     foreach ($items as $item) {
-            //         OrderItem::create([
-            //             'order_id' => $order->id,
-            //             'kitchen_id' => $kitchenId,
-            //             'order_item' => $item,
-            //             'status' => 'pending',
-            //         ]);
-            //     }
-            // }
+
 
             // Create invoice
             Invoices::create([
@@ -183,6 +179,7 @@ class OrderController extends Controller
                 'tax' => $request->tax,
                 'discount' => $request->discount,
                 'total_price' => $request->total_price,
+                'cost_price' => $$totalCostPrice,
                 'status' => 'unpaid',
             ]);
 

@@ -536,6 +536,7 @@ const ReservationDialog = () => {
                                 '&:hover': { bgcolor: '#072a42' },
                                 textTransform: 'none',
                             }}
+                            disabled={!orderDetails.member}
                             onClick={() => router.visit(route('order.menu'))}
                         >
                             Choose Menu
