@@ -121,9 +121,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
 
     //Membership Booking Routes
-    Route::get('/membership/booking/dashboard', function () {
-        return Inertia::render('App/Admin/Membership/Dashboard');
-    })->name('membership.dashboard');
 
     Route::get('/admin/add/personal/information', function () {
         return Inertia::render('App/Admin/Membership/MembershipForm');

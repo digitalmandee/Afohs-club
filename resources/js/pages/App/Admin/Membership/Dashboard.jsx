@@ -13,7 +13,7 @@ import MemberFilter from './MemberFilter';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = () => {
+const MembershipDashboard = ({ member }) => {
     // Modal state
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
@@ -33,6 +33,7 @@ const MembershipDashboard = () => {
         fromDate: 'Apr 1, 2025',
         toDate: 'Apr 30, 2025',
     });
+    console.log('member', member);
 
     const handleOpenModal = (member, event, type = 'actions') => {
         // Get the position of the clicked button
