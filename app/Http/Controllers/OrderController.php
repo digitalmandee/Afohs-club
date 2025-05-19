@@ -206,7 +206,7 @@ class OrderController extends Controller
             if (!$kitchen || !$kitchen->printer_ip) continue;
 
             try {
-                $connector = new NetworkPrintConnector($kitchen->printer_ip, 9100);
+                $connector = new NetworkPrintConnector($kitchen->printer_ip, $kitchen->printer_port ?? 9100);
                 $printer = new Printer($connector);
 
                 // Print header
@@ -313,6 +313,12 @@ class OrderController extends Controller
         }
     }
 
+    // Order Queue
+    public function orderQueue()
+    {
+        $orders2 = Order::whereIn('status', ['pending', 'in_progress', 'completed'])->get();
+        return Inertia::render('App/Order/Queue', compact('orders2'));
+    }
 
 
     public function getProducts($category_id)

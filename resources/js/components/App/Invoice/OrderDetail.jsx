@@ -1,6 +1,6 @@
 import { Close as CloseIcon, Home as HomeIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
-import { Avatar, Box, Button, Chip, Dialog, Grid, IconButton, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, Dialog, Grid, IconButton, LinearProgress, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
@@ -62,11 +62,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                       (item) => `
                 <div class="item">
                   <div class="item-name">${item.order_item.name} (${item.order_item.quantity} x Rs ${item.order_item.price})</div>
-                  ${
-                      item.order_item.variants.length > 0
-                          ? `<div class="item-variant">Variant: ${item.order_item.variants.map((v) => v.value).join(', ')}</div>`
-                          : ''
-                  }
+                  ${item.order_item.variants.length > 0 ? `<div class="item-variant">Variant: ${item.order_item.variants.map((v) => v.value).join(', ')}</div>` : ''}
                   <div>Rs ${item.order_item.total_price}</div>
                 </div>
               `,
@@ -117,6 +113,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                 },
             }}
         >
+            {/* {loading && <LinearProgress />} */}
             <Box sx={{ p: 3 }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Typography variant="h6" fontWeight="bold">

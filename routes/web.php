@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\App\AddressTypeController;
+use App\Http\Controllers\App\MembersController;
+use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -108,10 +111,14 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/employee/list', function () {
         return Inertia::render('App/Admin/Employee/EmployeeList');
     })->name('employee.employeeList');
+
     // member
     // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
     // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
     // Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
+
+    Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
+    Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
 
     //Membership Booking Routes
     Route::get('/membership/booking/dashboard', function () {
@@ -119,7 +126,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('membership.dashboard');
 
     Route::get('/admin/add/personal/information', function () {
-        return Inertia::render('App/Admin/Membership/AddForm-1');
+        return Inertia::render('App/Admin/Membership/MembershipForm');
     })->name('membership.add');
 
     Route::get('/admin/add/contact/information', function () {

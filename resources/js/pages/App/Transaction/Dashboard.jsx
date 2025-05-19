@@ -4,39 +4,9 @@ import OrderDetail from '@/components/App/Invoice/OrderDetail';
 import PaymentNow from '@/components/App/Invoice/PaymentNow';
 import Receipt from '@/components/App/Invoice/Receipt';
 import SideNav from '@/components/App/SideBar/SideNav';
-import {
-    CheckCircle as CheckCircleIcon,
-    Check as CheckIcon,
-    Circle as CircleIcon,
-    Close as CloseIcon,
-    TwoWheeler as DeliveryIcon,
-    Diamond as DiamondIcon,
-    LocalDining as DiningIcon,
-    FilterAlt as FilterIcon,
-    KeyboardArrowDown as KeyboardArrowDownIcon,
-    Receipt as ReceiptIcon,
-    EventSeat as ReservationIcon,
-    Restaurant as RestaurantIcon,
-    Search as SearchIcon,
-    TakeoutDining as TakeoutIcon,
-} from '@mui/icons-material';
+import { CheckCircle as CheckCircleIcon, Check as CheckIcon, Circle as CircleIcon, Close as CloseIcon, TwoWheeler as DeliveryIcon, Diamond as DiamondIcon, LocalDining as DiningIcon, FilterAlt as FilterIcon, KeyboardArrowDown as KeyboardArrowDownIcon, Receipt as ReceiptIcon, EventSeat as ReservationIcon, Restaurant as RestaurantIcon, Search as SearchIcon, TakeoutDining as TakeoutIcon } from '@mui/icons-material';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
-import {
-    Avatar,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Chip,
-    Collapse,
-    Dialog,
-    DialogContent,
-    Grid,
-    IconButton,
-    InputAdornment,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Avatar, Box, Button, Card, CardContent, Chip, Collapse, Dialog, DialogContent, Grid, IconButton, InputAdornment, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 
@@ -614,34 +584,19 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                             <Button style={activeTab === 'all' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('all')}>
                                 All transactions
                             </Button>
-                            <Button
-                                style={activeTab === 'dine-in' ? styles.activeTabButton : styles.tabButton}
-                                onClick={() => handleTabChange('dine-in')}
-                            >
+                            <Button style={activeTab === 'dine-in' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('dine-in')}>
                                 Dine In
                             </Button>
-                            <Button
-                                style={activeTab === 'pickup' ? styles.activeTabButton : styles.tabButton}
-                                onClick={() => handleTabChange('pickup')}
-                            >
+                            <Button style={activeTab === 'pickup' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('pickup')}>
                                 Pick Up
                             </Button>
-                            <Button
-                                style={activeTab === 'delivery' ? styles.activeTabButton : styles.tabButton}
-                                onClick={() => handleTabChange('delivery')}
-                            >
+                            <Button style={activeTab === 'delivery' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('delivery')}>
                                 Delivery
                             </Button>
-                            <Button
-                                style={activeTab === 'takeaway' ? styles.activeTabButton : styles.tabButton}
-                                onClick={() => handleTabChange('takeaway')}
-                            >
+                            <Button style={activeTab === 'takeaway' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('takeaway')}>
                                 Takeaway
                             </Button>
-                            <Button
-                                style={activeTab === 'reservation' ? styles.activeTabButton : styles.tabButton}
-                                onClick={() => handleTabChange('reservation')}
-                            >
+                            <Button style={activeTab === 'reservation' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('reservation')}>
                                 Reservation
                             </Button>
                         </Box>
@@ -688,12 +643,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             ),
                                         }}
                                     />
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<FilterIcon />}
-                                        style={styles.filterButton}
-                                        onClick={handleOpenFilterModal}
-                                    >
+                                    <Button variant="contained" startIcon={<FilterIcon />} style={styles.filterButton} onClick={handleOpenFilterModal}>
                                         Filter
                                     </Button>
                                 </Box>
@@ -721,7 +671,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                         >
                                             <CardContent>
                                                 <Box display="flex" alignItems="center">
-                                                    <Avatar style={getAvatarStyle(order.order.order_type)}>{order.order.table_id}</Avatar>
+                                                    <Avatar style={getAvatarStyle(order.order.order_type)}>{order.order.table?.table_no}</Avatar>
 
                                                     <Avatar
                                                         style={{
@@ -749,17 +699,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                             >
                                                                 {order.order?.user?.name}
                                                             </Typography>
-                                                            {order.isVIP && (
-                                                                <Box
-                                                                    component="span"
-                                                                    ml={1}
-                                                                    display="inline-block"
-                                                                    width={16}
-                                                                    height={16}
-                                                                    borderRadius="50%"
-                                                                    bgcolor="#ffc107"
-                                                                />
-                                                            )}
+                                                            {order.isVIP && <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />}
                                                         </Box>
                                                         <Typography
                                                             variant="body2"
@@ -810,7 +750,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     : order?.order?.status === 'in_progress'
                                                                       ? 'In Progress'
                                                                       : order?.order?.status === 'completed'
-                                                                        ? '' // Don't show label if completed
+                                                                        ? 'Completed' // Don't show label if completed
                                                                         : order?.order?.status === 'cancelled'
                                                                           ? 'Order Cancelled'
                                                                           : 'Unknown' // Default if status is not recognized
@@ -839,11 +779,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 color: 'white',
                                                             }}
                                                         >
-                                                            {order.status === 'paid'
-                                                                ? 'Paid'
-                                                                : order.status == 'cancelled'
-                                                                  ? 'Cancelled'
-                                                                  : 'Payment Now'}
+                                                            {order.status === 'paid' ? 'Paid' : order.status == 'cancelled' ? 'Cancelled' : 'Payment Now'}
                                                         </Button>
                                                     </Box>
                                                 </Box>
@@ -1352,21 +1288,10 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                     </Dialog>
 
                     {/* Order Detail Modal */}
-                    <OrderDetail
-                        invoiceId={selectedOrder?.id}
-                        openModal={openOrderDetailModal}
-                        closeModal={handleCloseOrderDetail}
-                        orderDetail={orderDetail}
-                        handleOpenTrackOrder={handleOpenTrackOrder}
-                    />
+                    <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} orderDetail={orderDetail} handleOpenTrackOrder={handleOpenTrackOrder} />
 
                     {/* Payment Modal */}
-                    <PaymentNow
-                        invoiceData={selectedOrder}
-                        openSuccessPayment={handleSuccessPayment}
-                        openPaymentModal={openPaymentModal}
-                        handleClosePayment={handleClosePayment}
-                    />
+                    <PaymentNow invoiceData={selectedOrder} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} />
 
                     {/* Payment Success Modal */}
                     <Dialog
@@ -1491,11 +1416,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                         <DialogContent>
                             {trackingSteps.map((step, index) => (
                                 <Box key={index} style={styles.trackOrderStep}>
-                                    {step.completed ? (
-                                        <CheckCircleIcon style={styles.trackOrderStepIcon} />
-                                    ) : (
-                                        <CircleIcon style={styles.trackOrderStepIcon} />
-                                    )}
+                                    {step.completed ? <CheckCircleIcon style={styles.trackOrderStepIcon} /> : <CircleIcon style={styles.trackOrderStepIcon} />}
                                     <Box style={styles.trackOrderStepContent}>
                                         <Typography variant="body1" style={styles.trackOrderStepTitle}>
                                             {step.title}
@@ -1511,11 +1432,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 <Typography variant="body2" style={styles.trackOrderStepTime}>
                                                     {step.proofAddedBy}
                                                 </Typography>
-                                                <img
-                                                    src={step.proofImage || '/placeholder.svg'}
-                                                    alt="Delivery Proof"
-                                                    style={styles.trackOrderImage}
-                                                />
+                                                <img src={step.proofImage || '/placeholder.svg'} alt="Delivery Proof" style={styles.trackOrderImage} />
                                             </Box>
                                         )}
                                     </Box>
