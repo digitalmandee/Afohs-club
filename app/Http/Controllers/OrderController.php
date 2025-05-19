@@ -206,7 +206,7 @@ class OrderController extends Controller
             if (!$kitchen || !$kitchen->printer_ip) continue;
 
             try {
-                $connector = new NetworkPrintConnector($kitchen->printer_ip, 9100);
+                $connector = new NetworkPrintConnector($kitchen->printer_ip, $kitchen->printer_port ?? 9100);
                 $printer = new Printer($connector);
 
                 // Print header

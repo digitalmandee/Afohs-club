@@ -7,6 +7,7 @@ import { router } from '@inertiajs/react';
 import AddForm1 from '@/components/App/membershipForm/AddForm1';
 import AddForm2 from '@/components/App/membershipForm/AddForm2';
 import AddForm3 from '@/components/App/membershipForm/AddForm3';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -31,13 +32,13 @@ const MembershipDashboard = () => {
     const handleFinalSubmit = (stepKey, data) => {
         setFormData((prev) => ({ ...prev, [stepKey]: data }));
         // Transform familyMembers to match backend validation keys
-        const transformedFamilyMembers = (data.familyMembers || []).map((member) => ({
+        const transformedFamilyMembers = (data.family_members || []).map((member) => ({
             full_name: member.fullName || '',
             relation: member.relation || '',
             cnic: member.cnic || '',
             phone_number: member.phoneNumber || '',
-            membership_type: member.membershipType || '',
-            membership_category: member.membershipCategory || '',
+            membership_type: member.member_type || '',
+            membership_category: member.membership_category || '',
             start_date: member.startDate || '',
             end_date: member.endDate || '',
             picture: member.picturePreview || '', // Base64 string
@@ -76,27 +77,28 @@ const MembershipDashboard = () => {
             permanent_address: formData.step2.permanentAddress || '',
             permanent_city: formData.step2.permanentCity || '',
             permanent_country: formData.step2.permanentCountry || '',
-            member_type: data.memberType || '',
-            membership_category: data.membershipCategory || '',
-            membership_number: data.membershipNumber || '',
-            membership_date: data.membershipDate || '',
-            card_status: data.statusOfCard || '',
-            card_issue_date: data.cardIssueDate || '',
-            card_expiry_date: data.cardExpiryDate || '',
-            from_date: data.fromDate || '',
-            to_date: data.toDate || '',
+            member_type: data.member_type || '',
+            membership_category: data.membership_category || '',
+            membership_number: data.membership_number || '',
+            membership_date: data.membership_date || '',
+            card_status: data.card_status || '',
+            card_issue_date: data.card_issue_date || '',
+            card_expiry_date: data.card_expiry_date || '',
+            from_date: data.from_date || '',
+            to_date: data.to_date || '',
             family_members: transformedFamilyMembers,
             member_image: formData.step1.memberImage || null,
         };
 
         console.log('Submitting fullData:', fullData);
 
-        router.post('/membership/store', fullData, {
+        router.post(route('membership.store'), fullData, {
             onSuccess: () => {
-                alert('Membership details submitted successfully.');
+                enqueueSnackbar('Membership created successfully.', { variant: 'success' });
             },
             onError: (errors) => {
-                alert('Submission failed: ' + JSON.stringify(errors));
+                enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+                // alert('Submission failed: ' + JSON.stringify(errors));
             },
         });
     };
