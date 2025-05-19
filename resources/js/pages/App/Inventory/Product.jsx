@@ -2,17 +2,16 @@ import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, EventSeat as EventSeatIcon, FormatBold as FormatBoldIcon, FormatItalic as FormatItalicIcon, FormatListBulleted, FormatListNumbered, InsertEmoticon as InsertEmoticonIcon, Link as LinkIcon, LocalMall as LocalMallIcon, LocalShipping as LocalShippingIcon, ShoppingBag as ShoppingBagIcon } from '@mui/icons-material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Autocomplete, Box, Button, DialogActions, DialogContent, Divider, Grid, IconButton, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import { Autocomplete, Box, Button, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, MenuItem, Switch, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { ChevronDown } from 'lucide-react';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 const AddProduct = ({ product, id }) => {
-    console.log(product);
-
     const [open, setOpen] = useState(false);
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
@@ -427,7 +426,23 @@ const AddProduct = ({ product, id }) => {
                                                     }))
                                                 }
                                                 loading={loadingKitchen}
-                                                renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Kitchen" variant="outlined" />}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        fullWidth
+                                                        sx={{ p: 0 }}
+                                                        placeholder="Select Kitchen"
+                                                        variant="outlined"
+                                                        InputProps={{
+                                                            ...params.InputProps,
+                                                            endAdornment: (
+                                                                <InputAdornment position="end">
+                                                                    <ChevronDown fontSize="small" />
+                                                                </InputAdornment>
+                                                            ),
+                                                        }}
+                                                    />
+                                                )}
                                                 filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
                                                 renderOption={(props, option) => (
                                                     <li {...props}>
