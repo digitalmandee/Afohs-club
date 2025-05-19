@@ -26,7 +26,6 @@ const drawerWidthClosed = 110;
 
 const PayrollDashboard = () => {
     const [open, setOpen] = useState(false);
-    const [openFilter, setOpenFilter] = useState(false);
 
     const employeeData = [
         {
@@ -115,6 +114,7 @@ const PayrollDashboard = () => {
                                         backgroundColor: '#063455',
                                         textTransform: 'none'
                                     }}
+                                    onClick={()=>router.visit('/employee/payroll/runpayroll/dashboard')}
                                 >
                                     Run Payroll
                                 </Button>

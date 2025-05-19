@@ -129,6 +129,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/AddSalary');
     })->name('employee.addsalary');
 
+    Route::get('/employee/payroll/runpayroll/dashboard', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/RunPayroll');
+    })->name('employee.runpayroll');
+
     //Finance Routes
     Route::get('/finance/dashboard', function () {
         return Inertia::render('App/Admin/Finance/Dashboard');
