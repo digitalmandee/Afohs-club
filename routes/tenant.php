@@ -36,9 +36,7 @@ Route::group([
             return Inertia::render('App/Dashboard/Dashboardm');
         })->name('tenant.dashboard');
 
-        Route::get('/order/queue', function () {
-            return Inertia::render('App/Order/Queue');
-        });
+        Route::get('/order/queue', [OrderController::class, 'orderQueue'])->name('order.queue');
 
         // Members
         Route::resource('members', MembersController::class)->except('show', 'edit');
@@ -46,13 +44,13 @@ Route::group([
         Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
         Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
         Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
-        Route::put('/members/member-types/{id}', [MemberTypeController::class, 'update'])->name('member.update');
+        Route::put('/members/member-types/{id}/update', [MemberTypeController::class, 'update'])->name('member.update');
         Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
         // address
         Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
         Route::get('/members/address-types', [AddressTypeController::class, 'index'])->name('address-types.index');
         Route::post('/members/address-types', [AddressTypeController::class, 'store'])->name('address-types.store');
-        Route::put('/members/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
+        Route::put('/members/address-types/{id}/update', [AddressTypeController::class, 'update'])->name('address.update');
         Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
         // member
         // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
@@ -65,7 +63,7 @@ Route::group([
         Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');
         Route::get('/waiters/create', [WaiterController::class, 'create'])->name('waiters.create');
         Route::post('/waiters', [WaiterController::class, 'store'])->name('waiters.store');
-        Route::put('/waiters/{id}', [WaiterController::class, 'update'])->name('waiters.update');
+        Route::put('/waiters/{id}/update', [WaiterController::class, 'update'])->name('waiters.update');
 
 
         // Order Management
@@ -73,7 +71,7 @@ Route::group([
         Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
         Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
         Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
-        Route::post('/order/{id}', [OrderController::class, 'update'])->name('orders.update');
+        Route::post('/order/{id}/update', [OrderController::class, 'update'])->name('orders.update');
 
         // for member and waiter
         Route::get('/user/search', [UserController::class, 'searchMember'])->name('user.search');
@@ -108,7 +106,7 @@ Route::group([
         // Floors & Table Routes
         Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
         Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
-        Route::put('/floors/{id}', [FloorController::class, 'update'])->name('floors.update');
+        Route::put('/floors/{id}/update', [FloorController::class, 'update'])->name('floors.update');
         Route::delete('/floors/{floor}', [FloorController::class, 'destroy'])->name('floors.destroy');
 
         Route::get('/floors/{id}/edit', [FloorController::class, 'edit'])->name('floors.edit');
@@ -125,7 +123,7 @@ Route::group([
         // Inventory Category
         Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
         Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
-        Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
+        Route::put('/inventory/category/{category}/update', [CategoryController::class, 'update'])->name('category.update');
         Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
 
         // Inventory Items
@@ -155,7 +153,7 @@ Route::group([
         Route::get('/kitchens', [KitchenController::class, 'indexPage'])->name('kitchens.index');
         Route::get('/kitchens/create', [KitchenController::class, 'create'])->name('kitchens.create');
         Route::post('/kitchens', [KitchenController::class, 'store'])->name('kitchens.store');
-        Route::put('/kitchens/{id}', [KitchenController::class, 'update'])->name('kitchens.update');
+        Route::put('/kitchens/{id}/update', [KitchenController::class, 'update'])->name('kitchens.update');
     });
 
     // Login Authentication Routes

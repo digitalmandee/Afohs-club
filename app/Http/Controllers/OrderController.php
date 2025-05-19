@@ -313,6 +313,12 @@ class OrderController extends Controller
         }
     }
 
+    // Order Queue
+    public function orderQueue()
+    {
+        $orders2 = Order::whereIn('status', ['pending', 'in_progress', 'completed'])->get();
+        return Inertia::render('App/Order/Queue', compact('orders2'));
+    }
 
 
     public function getProducts($category_id)

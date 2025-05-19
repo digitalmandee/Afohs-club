@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\Tenant\FloorDatabaseSeeder;
+use Database\Seeders\Tenant\KitchenDatabaseSeeder;
 use Database\Seeders\Tenant\MemberTypeSeeder;
 use Database\Seeders\Tenant\OrderDatabaseSeeder;
 use Database\Seeders\Tenant\PermissionsDatabaseSeeder;
@@ -20,8 +21,9 @@ class DatabaseSeeder extends Seeder
             MemberTypeSeeder::class,
             FloorDatabaseSeeder::class,
             PermissionsDatabaseSeeder::class,
+            KitchenDatabaseSeeder::class,
             ProductDatabaseSeeder::class,
-            OrderDatabaseSeeder::class
+            // OrderDatabaseSeeder::class
         ]);
 
         // Create Super Admin

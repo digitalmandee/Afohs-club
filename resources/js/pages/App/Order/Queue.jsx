@@ -22,7 +22,7 @@ const theme = createTheme({
     },
 });
 
-const OrderQueue = () => {
+const OrderQueue = ({ orders2 }) => {
     const [open, setOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('All Order');
     const [activeFilter, setActiveFilter] = useState('All Type');
@@ -353,7 +353,7 @@ const OrderQueue = () => {
                                                 color: '#000000',
                                             }}
                                         >
-                                            9
+                                            {orders2.length}
                                         </Typography>
                                         <Typography
                                             variant="body2"

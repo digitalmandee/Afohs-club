@@ -8,6 +8,8 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 
 class KitchenDatabaseSeeder extends Seeder
 {
@@ -21,7 +23,7 @@ class KitchenDatabaseSeeder extends Seeder
                 'password' => bcrypt('123456'),
             ]);
 
-            $kitchen->assignRole('kitchen', 'web');
+            $kitchen->assignRole(Role::findByName('kitchen', 'web'));
 
             KitchenDetail::create([
                 'kitchen_id' => $kitchen->id,
