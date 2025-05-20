@@ -709,7 +709,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 fontSize: '14px',
                                                             }}
                                                         >
-                                                            {totalOrders} Items
+                                                            {order.order_items_count} Items
                                                         </Typography>
                                                     </Box>
                                                     <Box textAlign="right">

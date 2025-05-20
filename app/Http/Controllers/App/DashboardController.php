@@ -86,4 +86,15 @@ class DashboardController extends Controller
             'total_orders' => $total_orders,
         ]);
     }
+
+    // Order Reservations
+    public function orderReservations(Request $request)
+    {
+        $date = $request->query('date') ?: date('Y-m-d');
+        $limit = $request->query('limit');
+
+        $orders = Order::where('order_type', 'reservation')->whereDate('start_date', $date)->with(['user:id,name', 'table:id,table_no'])->withCount('orderItems')->limit($limit)->get();
+
+        return response()->json(['success' => true, 'orders' => $orders]);
+    }
 }

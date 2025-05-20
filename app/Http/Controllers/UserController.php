@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -14,14 +15,23 @@ class UserController extends Controller
         $memberType = $request->input('member_type');
         $roleType = $request->input('role', 'user');
 
-        $members = User::where('name', 'like', "%{$query}%")->role($roleType, 'web');
+        Log::info($query);
+
+        $members = User::role($roleType, 'web')
+            ->where(function ($queryBuilder) use ($query) {
+                $queryBuilder->where('name', 'like', "%{$query}%")
+                    ->orWhere('user_id', 'like', "%{$query}%");
+            });
+
 
         // Only apply member_type filter if role is 'user' and member_type is provided
         if ($roleType === 'user' && !empty($memberType)) {
             $members->where('member_type_id', $memberType);
         }
 
-        $results = $members->select('id', 'name', 'email')->get();
+        $results = $members->select('id', 'user_id', 'name', 'email')->get();
+
+        Log::info($results);
 
         return response()->json(['success' => true, 'results' => $results], 200);
     }

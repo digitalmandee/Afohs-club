@@ -144,19 +144,6 @@ const ReservationDialog = () => {
         return date.toLocaleString('en-US', options);
     }
 
-    function parseTime(time) {
-        const [hours, minutes] = time.split(':').map((num) => parseInt(num, 10));
-
-        if (isNaN(hours) || isNaN(minutes)) {
-            return null; // Return null if the time is invalid
-        }
-
-        // Create a new Date object and set the hours and minutes
-        const date = new Date();
-        date.setHours(hours, minutes, 0, 0);
-        return date;
-    }
-
     return (
         <>
             <Box
@@ -417,13 +404,13 @@ const ReservationDialog = () => {
                             Select Time of Attendance
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            {['10:00', '13:00', '14:00', '18:00', 'Custom'].map((time) => {
+                            {['10:00', '13:00', '14:00', '18:00', 'Custom'].map((time, index) => {
                                 const isCustom = time === 'Custom';
                                 const isSelected = isCustom ? customTime : orderDetails.time === time;
 
                                 return (
                                     <Box
-                                        key={time}
+                                        key={index}
                                         onClick={() => {
                                             const selected = isCustom ? '' : time;
                                             setSelectedTime(time);

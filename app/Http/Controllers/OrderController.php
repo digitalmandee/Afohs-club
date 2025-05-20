@@ -184,7 +184,7 @@ class OrderController extends Controller
             DB::commit();
 
             // Print the orders per kitchen
-            // $this->printOrdersForKitchens($groupedByKitchen, $order);
+            $this->printOrdersForKitchens($groupedByKitchen, $order);
 
             return redirect()->back()->with('success', 'Order sent to kitchen.');
         } catch (\Throwable $th) {
@@ -211,7 +211,7 @@ class OrderController extends Controller
                 $printer->setJustification(Printer::JUSTIFY_CENTER);
                 $printer->text("Kitchen: {$kitchen->name}\n");
                 $printer->text("Order #: {$order->order_number}\n");
-                $printer->text("Table: {$order->table_id}\n");
+                $printer->text("Table: {$order->table->table_no}\n");
                 $printer->text(date("Y-m-d H:i:s") . "\n");
                 $printer->text("--------------------------------\n");
 
