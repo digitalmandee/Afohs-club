@@ -29,10 +29,10 @@ class Member extends Model
         'member_image',
     ];
 
-    public function userDetail()
-    {
-        return $this->belongsTo(UserDetail::class);
-    }
+    // public function userDetail()
+    // {
+    //     return $this->belongsTo(UserDetail::class);
+    // }
 
     public function memberType()
     {
@@ -42,5 +42,9 @@ class Member extends Model
     public function primaryMember()
     {
         return $this->belongsTo(Member::class, 'primary_member_id');
+    }
+    public function userDetail()
+    {
+        return $this->belongsTo(UserDetail::class);
     }
 }
