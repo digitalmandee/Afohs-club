@@ -1,23 +1,15 @@
 'use client';
 
 import { tenantAsset } from '@/helpers/asset';
-import { useOrderStore } from '@/stores/useOrderStore';
-import { router } from '@inertiajs/react';
-import { ArrowBack, Search } from '@mui/icons-material';
+import { Search } from '@mui/icons-material';
 import { Avatar, Badge, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 
 const AddItems = ({ setOrderItems, orderItems, setShowAddItem }) => {
-    // const { orderDetails, handleOrderDetailChange } = useOrderStore();
-
-    const [open, setOpen] = useState(false);
-
-    // const [showPayment, setShowPayment] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(1);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
-    const [activeView, setActiveView] = useState('orderDetail');
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
 
@@ -69,16 +61,6 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem }) => {
         setVariantPopupOpen(false);
         setVariantProduct(null);
         setEditingItemIndex(null);
-    };
-
-    const handleEditItem = (item, index) => {
-        const fullProduct = products.find((p) => p.id === item.id);
-        if (!fullProduct) return;
-
-        setVariantProduct(fullProduct);
-        setEditingItemIndex(index);
-        setVariantPopupOpen(true);
-        setInitialEditItem(item); // new state to pass into VariantSelector
     };
 
     useEffect(() => {

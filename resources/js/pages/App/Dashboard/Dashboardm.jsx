@@ -10,7 +10,7 @@ import { Box, Button, Chip, Grid, IconButton, Modal, Paper, Typography } from '@
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ today_revenue = 0, yesterday_revenue = 0, sales_change = 0, today_profit = 0 }) => {
+const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, today_profit = 0, today_profit_margin = 0, order_types }) => {
     const [open, setOpen] = useState(false);
     const [showReserve, setShowReserve] = useState(false);
     const [showOrder, setShowOrder] = useState(false);
@@ -152,7 +152,7 @@ const Dashboard = ({ today_revenue = 0, yesterday_revenue = 0, sales_change = 0,
                                                     }}
                                                 >
                                                     <Chip
-                                                        label="+ 40.0%"
+                                                        label={`${today_profit_margin} %`}
                                                         size="small"
                                                         sx={{
                                                             bgcolor: '#ffffff33',
@@ -187,7 +187,6 @@ const Dashboard = ({ today_revenue = 0, yesterday_revenue = 0, sales_change = 0,
                                             </Box>
                                         </Box>
                                     </Box>
-
                                     <Grid
                                         container
                                         spacing={2}
@@ -196,19 +195,19 @@ const Dashboard = ({ today_revenue = 0, yesterday_revenue = 0, sales_change = 0,
                                         }}
                                     >
                                         <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">0%</Typography>
+                                            <Typography variant="h6">{order_types?.dineIn?.percentage ?? 0}%</Typography>
                                             <Typography variant="caption">Dine In</Typography>
                                         </Grid>
                                         <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">0%</Typography>
+                                            <Typography variant="h6">{order_types?.takeway?.percentage ?? 0}%</Typography>
                                             <Typography variant="caption">Takeaway</Typography>
                                         </Grid>
                                         <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">0%</Typography>
+                                            <Typography variant="h6">{order_types?.delivery?.percentage ?? 0}%</Typography>
                                             <Typography variant="caption">Delivery</Typography>
                                         </Grid>
                                         <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">0%</Typography>
+                                            <Typography variant="h6">{order_types?.pickup?.percentage ?? 0}%</Typography>
                                             <Typography variant="caption">Pick Up</Typography>
                                         </Grid>
                                     </Grid>
@@ -1169,7 +1168,7 @@ const Dashboard = ({ today_revenue = 0, yesterday_revenue = 0, sales_change = 0,
                                                     fontSize: '20px',
                                                 }}
                                             >
-                                                500{' '}
+                                                {products_sold}
                                                 <Box
                                                     component="span"
                                                     sx={{

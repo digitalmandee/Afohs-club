@@ -102,6 +102,7 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
+            Log::info('Order Started');
             // Order creation or update
             $order = Order::updateOrCreate(
                 ['id' => $request->id],
@@ -157,7 +158,6 @@ class OrderController extends Controller
                     }
 
                     $totalCostPrice += $product->cost_of_goods_sold * $productQty;
-
                     // Create order item (save original item JSON for reference)
                     OrderItem::create([
                         'order_id' => $order->id,
@@ -168,8 +168,6 @@ class OrderController extends Controller
                 }
             }
 
-
-
             // Create invoice
             Invoices::create([
                 'invoice_no' => $this->getInvoiceNo(),
@@ -179,18 +177,18 @@ class OrderController extends Controller
                 'tax' => $request->tax,
                 'discount' => $request->discount,
                 'total_price' => $request->total_price,
-                'cost_price' => $$totalCostPrice,
+                'cost_price' => $totalCostPrice,
                 'status' => 'unpaid',
             ]);
 
             DB::commit();
 
             // Print the orders per kitchen
-            $this->printOrdersForKitchens($groupedByKitchen, $order);
+            // $this->printOrdersForKitchens($groupedByKitchen, $order);
 
             return redirect()->back()->with('success', 'Order sent to kitchen.');
         } catch (\Throwable $th) {
-            DB::rollBack();
+            // DB::rollBack();
             Log::error("Error sending order to kitchen: " . $th->getMessage());
             return redirect()->back()->with('error', 'Failed to send order to kitchen.');
         }
@@ -199,11 +197,14 @@ class OrderController extends Controller
     protected function printOrdersForKitchens($groupedByKitchen, $order)
     {
         foreach ($groupedByKitchen as $kitchenId => $items) {
-            $kitchen = User::find($kitchenId);
-            if (!$kitchen || !$kitchen->printer_ip) continue;
+            $kitchen = User::with('kitchenDetail')->find($kitchenId);
+            if (!$kitchen || !$kitchen->kitchenDetail || !$kitchen->kitchenDetail->printer_ip) continue;
 
             try {
-                $connector = new NetworkPrintConnector($kitchen->printer_ip, $kitchen->printer_port ?? 9100);
+                $printerIp = $kitchen->kitchenDetail->printer_ip;
+                $printerPort = $kitchen->kitchenDetail->printer_port ?? 9100;
+
+                $connector = new NetworkPrintConnector($printerIp, $printerPort);
                 $printer = new Printer($connector);
 
                 // Print header
@@ -228,6 +229,7 @@ class OrderController extends Controller
             }
         }
     }
+
 
     protected function printItem($printer, $item)
     {
