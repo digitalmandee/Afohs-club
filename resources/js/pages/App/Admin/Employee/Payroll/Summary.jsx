@@ -10,7 +10,8 @@ import {
     TableCell,
     TableBody,
     InputBase,
-    IconButton
+    IconButton,
+    Typography
 } from "@mui/material"
 import { Add, CalendarToday, FilterAlt, ArrowBack } from "@mui/icons-material"
 import SideNav from '@/components/App/AdminSideBar/SideNav'
@@ -104,9 +105,12 @@ const PayrollSummary = () => {
                     >
                         {/* Left: Back + Title */}
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <IconButton style={{ color: "#3F4E4F" }} onClick={() => window.history.back()}>
+                            <IconButton style={{ color: "#3F4E4F", height:24, width:24 }} onClick={() => window.history.back()}>
                                 <ArrowBack />
                             </IconButton>
+                            <Typography sx={{color:'#3F4E4F', fontWeight:500, fontSize:'36px', marginLeft:2}}>
+                                Salary Report
+                            </Typography>
                         </Box>
 
                         {/* Right: Search + Filter */}

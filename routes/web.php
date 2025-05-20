@@ -133,6 +133,18 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/RunPayroll');
     })->name('employee.runpayroll');
 
+    Route::get('/employee/payroll/salary/revision', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Revision');
+    })->name('employee.salaryrevision');
+
+    Route::get('/employee/payroll/holed/salary', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Holed');
+    })->name('employee.holedsalary');
+
+    Route::get('/employee/payroll/add/holed/employee', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddHoled');
+    })->name('employee.addholed');
+
     //Finance Routes
     Route::get('/finance/dashboard', function () {
         return Inertia::render('App/Admin/Finance/Dashboard');

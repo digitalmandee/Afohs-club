@@ -22,11 +22,11 @@ const RunPayrollDashboard = () => {
 
             const year = date.getFullYear();
             const monthIndex = date.getMonth();
-            const monthName = date.toLocaleString('default', { month: 'short' }); // e.g. "May"
-            const fullMonthName = date.toLocaleString('default', { month: 'long' }); // e.g. "May"
-
+            const monthName = date.toLocaleString('default', { month: 'short' }); // "Sep"
             const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-            const period = `${fullMonthName} 1 - ${fullMonthName} ${daysInMonth}`;
+
+            // Change full month name to short name here
+            const period = `${monthName} 1 - ${monthName} ${daysInMonth}`;
 
             const status = (i === 0) ? "Current" : "Pending";
 
@@ -69,6 +69,10 @@ const RunPayrollDashboard = () => {
     }
 
     const visibleMonths = timelineData.slice(startMonthIndex, startMonthIndex + 5)
+    const cardRoutes = {
+        "Salary Revisions": "/employee/payroll/salary/revision",
+        "Holed Employ": "/employee/payroll/holed/salary"
+    };
 
 
     return (
@@ -289,7 +293,18 @@ const RunPayrollDashboard = () => {
                     }}>
                         {statusCards.map((card, index) => (
                             <Col md={4} key={index}>
-                                <Card className="border-1">
+                                <Card
+                                    className="border-1"
+                                    onClick={() => {
+                                        const route = cardRoutes[card.title];
+                                        if (route) {
+                                            router.visit(route);
+                                        }
+                                    }}
+                                    style={{
+                                        cursor: cardRoutes[card.title] ? "pointer" : "default"
+                                    }}
+                                >
                                     <Card.Body className="d-flex justify-content-between align-items-center p-4">
                                         <div>
                                             <div className="mb-1" style={{ fontSize: "14px" }}>
