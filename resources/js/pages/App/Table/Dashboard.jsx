@@ -1,6 +1,10 @@
 import TableIcon from '@/components/App/Icons/BTable';
-import Table2Icon from '@/components/App/Icons/CTable';
+import Table10Icon from '@/components/App/Icons/CTable';
 import Table1Icon from '@/components/App/Icons/Table1';
+import Table2Icon from '@/components/App/Icons/Table2';
+import Table6Icon from '@/components/App/Icons/Table6';
+import Table8Icon from '@/components/App/Icons/Table8';
+
 import SideNav from '@/components/App/SideBar/SideNav';
 import { KeyboardArrowDown, Settings } from '@mui/icons-material';
 import { Box, Button, FormControl, MenuItem, Modal, Select, Typography } from '@mui/material';
@@ -69,23 +73,42 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
                 },
             }}
         >
-            {data.capacity == 8 ? (
+            {data.capacity == 2 ? (
                 <Table2Icon
                     style={{
-                        width: '100%',
                         height: '100%',
                         bgcolor: fill,
                     }}
                 />
-            ) : (
+            ) : data.capacity == 4 ? (
                 <Table1Icon
                     style={{
-                        width: '20%',
                         height: '100%',
                         bgcolor: fill,
                     }}
                 />
-            )}
+            ) : data.capacity == 6 ? (
+                <Table6Icon
+                    style={{
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            ) : data.capacity == 8 ? (
+                <Table8Icon
+                    style={{
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            ) : data.capacity == 10 ? (
+                <Table10Icon
+                    style={{
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            ) : null}
 
             <Box
                 sx={{
@@ -187,7 +210,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
             tableNumber: 'T17',
             width: 230,
             height: 120,
-            tableIcon: Table2Icon,
+            tableIcon: Table10Icon,
             fill: 'white',
             row: 2,
         },
@@ -196,7 +219,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
             tableNumber: 'T18',
             width: 230,
             height: 120,
-            tableIcon: Table2Icon,
+            tableIcon: Table10Icon,
             fill: 'white',
             row: 2,
         },
@@ -205,7 +228,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
             tableNumber: 'T19',
             width: 230,
             height: 120,
-            tableIcon: Table2Icon,
+            tableIcon: Table10Icon,
             fill: '#d1fae5',
             reservation: {
                 id: 'RSV003',
@@ -219,7 +242,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
             tableNumber: 'T20',
             width: 230,
             height: 120,
-            tableIcon: Table2Icon,
+            tableIcon: Table10Icon,
             fill: 'white',
             row: 3,
         },
@@ -228,7 +251,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
             tableNumber: 'T21',
             width: 230,
             height: 120,
-            tableIcon: Table2Icon,
+            tableIcon: Table10Icon,
             fill: 'white',
             row: 3,
         },
@@ -237,7 +260,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
             tableNumber: 'T22',
             width: 230,
             height: 120,
-            tableIcon: Table2Icon,
+            tableIcon: Table10Icon,
             fill: '#d1fae5',
             reservation: {
                 id: 'RSV004',

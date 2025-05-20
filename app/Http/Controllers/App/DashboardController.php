@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -47,6 +48,7 @@ class DashboardController extends Controller
 
         $products_sold = DB::table('order_items')
             ->whereIn('order_id', $orderIdsToday)
+            ->where('status', '!=', 'cancelled')
             ->select(DB::raw('SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(order_item, "$.quantity")) AS UNSIGNED)) as total_quantity'))
             ->value('total_quantity');
 

@@ -10,7 +10,7 @@ import { Box, Button, Chip, Grid, IconButton, Modal, Paper, Typography } from '@
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, today_profit = 0, today_profit_margin = 0, order_types }) => {
+const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, today_profit = 0, today_profit_margin = 0, total_transactions, total_orders, order_types }) => {
     const [open, setOpen] = useState(false);
     const [showReserve, setShowReserve] = useState(false);
     const [showOrder, setShowOrder] = useState(false);
@@ -1040,7 +1040,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                             fontSize: '20px',
                                                         }}
                                                     >
-                                                        320
+                                                        {total_transactions}
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -1168,7 +1168,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                     fontSize: '20px',
                                                 }}
                                             >
-                                                {products_sold}
+                                                {products_sold ?? 0}
                                                 <Box
                                                     component="span"
                                                     sx={{
@@ -1239,7 +1239,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                     fontSize: '20px',
                                                 }}
                                             >
-                                                380{' '}
+                                                {total_orders}
                                                 <Box
                                                     component="span"
                                                     sx={{

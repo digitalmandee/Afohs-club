@@ -1,9 +1,7 @@
-import { router } from '@inertiajs/react';
 import { AccessTime, Add } from '@mui/icons-material';
-import { Alert, Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Snackbar, Typography, Slide, DialogTitle, DialogActions, ToggleButtonGroup, ToggleButton, CircularProgress, TextField } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide } from '@mui/material';
+import { useState } from 'react';
 import AddItems from './AddItem';
-import axios from 'axios';
 import VariantSelectorDialog from '../VariantSelectorDialog';
 
 function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSave }) {
