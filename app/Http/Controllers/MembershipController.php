@@ -11,31 +11,31 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+
+
 
 class MembershipController extends Controller
 {
+
+
+
     public function index()
     {
-        // Fetch all members with their related user details and member type
-        $members = Member::with(['userDetail.user', 'memberType'])
-            ->whereNull('primary_member_id') // Only primary members
-            ->get()
-            ->map(function ($member) {
-                return [
-                    'id' => $member->membership_number ?? 'N/A',
-                    'name' => $member->userDetail->first_name . ' ' . ($member->userDetail->last_name ?? ''),
-                    'email' => $member->userDetail->personal_email,
-                    'type' => $member->memberType->name ?? 'N/A',
-                    'status' => $member->card_status ?? 'Inactive',
-                    'avatar' => $member->member_image ? Storage::url($member->member_image) : '/placeholder.svg?height=40&width=40',
-                ];
-            });
+        // Get all users with their userDetails and their members (through userDetails)
+        $users = User::with([
+            'userDetail' => function ($query) {
+                $query->with('members');  // load members related to userDetail
+            }
+        ])->get();
 
-        // Pass the members data to the Inertia view
+        // Now $users contains all users, their userDetail, and members
+
         return Inertia::render('App/Admin/Membership/Dashboard', [
-            'members' => $members,
+            'member' => $users,
         ]);
     }
+
     public function store(Request $request)
     {
         // Log request data for debugging
