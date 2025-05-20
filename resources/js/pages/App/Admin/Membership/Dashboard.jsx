@@ -206,7 +206,8 @@ const MembershipDashboard = ({ member = [] }) => {
                                                     setOpenProfileModal(true);
                                                 }}
                                             >
-                                                {user.user_detail?.membership_number || 'N/A'}
+                                                {/* {user.user_detail?.membership_number || 'N/A'} */}
+                                                {user.id}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
