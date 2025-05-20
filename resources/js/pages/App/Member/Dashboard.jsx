@@ -149,7 +149,7 @@ const CustomerLists = ({ users }) => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{user.user_detail?.address_type || 'N/A'}</TableCell>
+                                            <TableCell>{user.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell>{user.user_detail?.address || user.user_detail?.city || user.user_detail?.state || user.user_detail?.country || user.user_detail?.zip ? `${user.user_detail?.address || ''}, ${user.user_detail?.city || ''}, ${user.user_detail?.state || ''}, ${user.user_detail?.country || ''}, ${user.user_detail?.zip || ''}` : '----'}</TableCell>
                                             <TableCell>
                                                 <Button
