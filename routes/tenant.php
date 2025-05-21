@@ -26,7 +26,13 @@ Route::group([
     // Tenant auth-protected routes
     Route::middleware([AuthenticateTenant::class, 'auth:tenant'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
-        Route::get('/orser/reservations', [DashboardController::class, 'orderReservations'])->name('order.reservations');
+
+        // All Orders
+        Route::get('/order/all', [DashboardController::class, 'allOrders'])->name('order.all');
+        // Order Reservations
+        Route::get('/order/reservations', [DashboardController::class, 'orderReservations'])->name('order.reservations');
+        // Order Reservation WeekDays
+        Route::get('/weekly-reservation-overview', [DashboardController::class, 'weeklyReservationOverview'])->name('order.weekly-overview');
 
         Route::get('/order/queue', [OrderController::class, 'orderQueue'])->name('order.queue');
 

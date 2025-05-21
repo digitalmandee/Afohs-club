@@ -54,7 +54,8 @@ class OrderController extends Controller
 
     public function orderMenu(Request $request)
     {
-        return Inertia::render('App/Order/OrderMenu');
+        $totalSavedOrders = Order::where('status', 'saved')->count();
+        return Inertia::render('App/Order/OrderMenu', compact('totalSavedOrders'));
     }
 
     // Get next order number
@@ -73,14 +74,15 @@ class OrderController extends Controller
     }
     public function orderReservation(Request $request)
     {
-        // dd($request->all());
+        $date = $request->input('date');
+        $date = Carbon::parse($date)->setTimezone('Asia/Karachi')->toDateString();
 
         $order = Order::create([
             'order_number' => $this->getOrderNo(),
             'user_id' => $request->member['id'],
             'order_type' => $request->order_type,
             'person_count' => $request->person_count,
-            'start_date' => Carbon::parse($request->date)->toDateString(),
+            'start_date' => $date,
             'start_time' => $request->time,
             'down_payment' => $request->down_payment,
             'status' => 'saved',

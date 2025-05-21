@@ -4,27 +4,9 @@ import SideNav from '@/Components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon } from '@mui/icons-material';
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Grid,
-    IconButton,
-    InputAdornment,
-    Snackbar,
-    TextField,
-    Typography,
-    useMediaQuery,
-    useTheme,
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, IconButton, InputAdornment, Snackbar, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 
 const drawerWidthOpen = 240;
@@ -111,12 +93,12 @@ export default function Category({ categoriesList }) {
 
             if (editingCategoryId) {
                 formData.append('_method', 'PUT');
-                router.post(`/inventory/category/${editingCategoryId}`, formData, {
+                router.post(route('category.update', editingCategoryId), formData, {
                     forceFormData: true,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit('/inventory/category');
+                        router.visit(route('inventory.category'));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || 'An error occurred while updating the category.');
@@ -161,11 +143,11 @@ export default function Category({ categoriesList }) {
 
     const handleConfirmDelete = useCallback(() => {
         if (pendingDeleteCategory) {
-            router.delete(`/inventory/category/${pendingDeleteCategory.id}`, {
+            router.delete(route('category.destroy', { category: pendingDeleteCategory.id }), {
                 onSuccess: () => {
-                    setShowDeleteSuccess(true);
+                    enqueueSnackbar('Category deleted successfully', { variant: 'success' });
                     setPendingDeleteCategory(null);
-                    router.visit('/inventory/category');
+                    router.visit(route('inventory.category'));
                 },
                 onError: (errors) => {
                     setErrorMessage(errors.message || 'An error occurred while deleting the category.');
@@ -180,9 +162,6 @@ export default function Category({ categoriesList }) {
         setPendingDeleteCategory(null);
     }, []);
 
-    const handleCloseConfirmation = () => {
-        setShowConfirmation(false);
-    };
     // const handleCloseConfirmation = useCallback(() => {
     //     setTimeout(() => {
     //       setShowConfirmation(false);  // Close the Snackbar after 10 seconds
@@ -191,11 +170,6 @@ export default function Category({ categoriesList }) {
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
-
-    const handleErrorClose = useCallback(() => {
-        setShowError(false);
-        setErrorMessage('');
-    }, []);
 
     useEffect(() => {
         if (flash?.success) {
@@ -340,17 +314,7 @@ export default function Category({ categoriesList }) {
                                 <Typography variant="body1" sx={{ mb: 1 }}>
                                     Category Name
                                 </Typography>
-                                <TextField
-                                    fullWidth
-                                    placeholder="Enter category name"
-                                    name="name"
-                                    value={data.name}
-                                    onChange={handleInputChange}
-                                    variant="outlined"
-                                    size="small"
-                                    error={!!errors.name}
-                                    helperText={errors.name}
-                                />
+                                <TextField fullWidth placeholder="Enter category name" name="name" value={data.name} onChange={handleInputChange} variant="outlined" size="small" error={!!errors.name} helperText={errors.name} />
                             </Grid>
                             <Grid item xs={12}>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
@@ -367,11 +331,7 @@ export default function Category({ categoriesList }) {
                                 )}
                                 {(data.image || data.existingImage) && (
                                     <Box sx={{ mb: 1, mt: 2 }}>
-                                        <img
-                                            src={data.image ? URL.createObjectURL(data.image) : tenantAsset(data.existingImage)}
-                                            alt="Preview"
-                                            style={{ width: '100%', height: 100, objectFit: 'contain', borderRadius: 8 }}
-                                        />
+                                        <img src={data.image ? URL.createObjectURL(data.image) : tenantAsset(data.existingImage)} alt="Preview" style={{ width: '100%', height: 100, objectFit: 'contain', borderRadius: 8 }} />
                                     </Box>
                                 )}
                             </Grid>
@@ -398,9 +358,7 @@ export default function Category({ categoriesList }) {
             <Dialog fullScreen={fullScreen} open={!!pendingDeleteCategory} onClose={handleCancelDelete} aria-labelledby="delete-dialog-title">
                 <DialogTitle id="delete-dialog-title">Confirm Deletion</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to delete the category "{pendingDeleteCategory?.name || ''}"? This action cannot be undone.
-                    </DialogContentText>
+                    <DialogContentText>Are you sure you want to delete the category "{pendingDeleteCategory?.name || ''}"? This action cannot be undone.</DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCancelDelete}>Cancel</Button>

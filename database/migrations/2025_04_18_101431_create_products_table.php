@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->longText('description')->nullable();
             $table->json('images')->nullable();
 
-            $table->foreignId('category_id')->constrained();
+            $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
 
             $table->decimal('base_price', 10, 2);
             $table->decimal('cost_of_goods_sold', 10, 2);

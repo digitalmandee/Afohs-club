@@ -16,7 +16,7 @@ import VariantSelectorDialog from './VariantSelectorDialog';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const OrderMenu = () => {
+const OrderMenu = ({ totalSavedOrders }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [open, setOpen] = useState(false);
@@ -440,7 +440,7 @@ const OrderMenu = () => {
                                         }}
                                     >
                                         Order Saved
-                                        <Badge badgeContent="3" color="primary" sx={{ ml: 3, mr: 1 }} />
+                                        <Badge badgeContent={totalSavedOrders ?? 0} color="primary" sx={{ ml: 3, mr: 1 }} />
                                     </Button>
                                 </Box>
                             </Box>

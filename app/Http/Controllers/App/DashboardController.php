@@ -8,6 +8,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -15,51 +16,54 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $today = Carbon::today();
-        $yesterday = Carbon::yesterday();
+        $today = Carbon::today()->toDateString();
+        $yesterday = Carbon::yesterday()->toDateString();
 
-        // Revenue
-        $today_revenue = Invoices::whereDate('created_at', $today)->sum('total_price');
-        $yesterday_revenue = Invoices::whereDate('created_at', $yesterday)->sum('total_price');
+        // Invoices Summary
+        $invoices = Invoices::selectRaw('
+        DATE(created_at) as date,
+        SUM(total_price) as revenue,
+        SUM(cost_price) as cost,
+        COUNT(*) as transactions
+    ')
+            ->whereIn(DB::raw('DATE(created_at)'), [$today, $yesterday])
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get()
+            ->keyBy('date');
 
-        // Cost
-        $today_cost = Invoices::whereDate('created_at', $today)->sum('cost_price');
-        $yesterday_cost = Invoices::whereDate('created_at', $yesterday)->sum('cost_price');
+        $today_revenue = $invoices[$today]->revenue ?? 0;
+        $yesterday_revenue = $invoices[$yesterday]->revenue ?? 0;
 
-        // Profit
+        $today_cost = $invoices[$today]->cost ?? 0;
+        $yesterday_cost = $invoices[$yesterday]->cost ?? 0;
+
         $today_profit = $today_revenue - $today_cost;
         $yesterday_profit = $yesterday_revenue - $yesterday_cost;
 
-        // Profit margin
         $today_profit_margin = $today_revenue > 0
             ? round(($today_profit / $today_revenue) * 100, 2)
             : 0;
 
-        // Sales change
         $sales_change = $yesterday_revenue > 0
             ? round((($today_revenue - $yesterday_revenue) / $yesterday_revenue) * 100, 2)
             : 0;
 
-        // Total orders today
-        $total_orders = Order::whereDate('created_at', $today)->count();
+        $total_transactions = $invoices[$today]->transactions ?? 0;
 
-        // Products sold today (sum of quantities from order_items via today's orders)
-        $orderIdsToday = Order::where('status', 'completed')->whereDate('created_at', $today)->pluck('id');
+        // Orders Summary
+        $ordersToday = Order::whereDate('start_date', $today)
+            ->selectRaw('order_type, COUNT(*) as count')
+            ->groupBy('order_type')
+            ->get()
+            ->keyBy('order_type');
 
-        $products_sold = DB::table('order_items')
-            ->whereIn('order_id', $orderIdsToday)
-            ->where('status', '!=', 'cancelled')
-            ->select(DB::raw('SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(order_item, "$.quantity")) AS UNSIGNED)) as total_quantity'))
-            ->value('total_quantity');
+        $total_orders = $ordersToday->sum('count');
 
-        // Order Type Distribution
         $orderTypes = ['dineIn', 'takeaway', 'pickup', 'delivery'];
         $order_types = [];
 
         foreach ($orderTypes as $type) {
-            $count = Order::whereDate('created_at', $today)
-                ->where('order_type', $type)
-                ->count();
+            $count = $ordersToday[$type]->count ?? 0;
             $percentage = $total_orders > 0
                 ? round(($count / $total_orders) * 100, 2)
                 : 0;
@@ -70,20 +74,52 @@ class DashboardController extends Controller
             ];
         }
 
-        // Total transactions
-        $total_transactions = Invoices::whereDate('created_at', $today)->count();
+        // Products Sold
+        $products_sold = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereDate('orders.start_date', $today)
+            ->where('orders.status', 'completed')
+            ->where('order_items.status', '!=', 'cancelled')
+            ->selectRaw('SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(order_item, "$.quantity")) AS UNSIGNED)) as total_quantity')
+            ->value('total_quantity') ?? 0;
 
         return Inertia::render('App/Dashboard/Dashboardm', [
             'today_revenue' => $today_revenue,
-            'yesterday_profit' => $yesterday_profit,
             'yesterday_revenue' => $yesterday_revenue,
-            'sales_change' => $sales_change,
             'today_profit' => $today_profit,
+            'yesterday_profit' => $yesterday_profit,
             'today_profit_margin' => $today_profit_margin,
+            'sales_change' => $sales_change,
+            'total_orders' => $total_orders,
             'order_types' => $order_types,
             'total_transactions' => $total_transactions,
             'products_sold' => $products_sold,
-            'total_orders' => $total_orders,
+        ]);
+    }
+
+    public function weeklyReservationOverview()
+    {
+        $start = Carbon::today();
+        $end = Carbon::today()->addDays(6); // Next 7 days
+        $period = CarbonPeriod::create($start, $end);
+
+        $days = [];
+
+        foreach ($period as $date) {
+            $ordersCount = Order::where('order_type', 'reservation')
+                ->whereDate('start_date', $date->toDateString())
+                ->count();
+
+            $days[] = [
+                'label' => $date->format('D'), // Sun, Mon, etc.
+                'date' => $date->toDateString(),
+                'dayNum' => $date->day,
+                'orders_count' => $ordersCount,
+            ];
+        }
+
+        return response()->json([
+            'week_days' => $days
         ]);
     }
 
@@ -94,6 +130,29 @@ class DashboardController extends Controller
         $limit = $request->query('limit');
 
         $orders = Order::where('order_type', 'reservation')->whereDate('start_date', $date)->with(['user:id,name', 'table:id,table_no'])->withCount('orderItems')->limit($limit)->get();
+
+        return response()->json(['success' => true, 'orders' => $orders]);
+    }
+
+    public function allOrders(Request $request)
+    {
+        $date = $request->query('date') ?: date('Y-m-d');
+        // $limit = $request->query('limit');
+        $order_type = $request->query('order_type');
+
+        if (empty($order_type) || $order_type === 'all') {
+            $orders = Order::whereDate('start_date', $date)->with(['user:id,name', 'table:id,table_no', 'invoice:id,order_id,total_price'])->withCount([
+                'orderItems AS completed_order_items_count' => function ($query) {
+                    $query->where('order_items.status', 'completed');
+                }
+            ])->get();
+        } else {
+            $orders = Order::where('order_type', $order_type)->whereDate('start_date', $date)->with(['user:id,name', 'table:id,table_no'])->withCount([
+                'orderItems AS completed_order_items_count' => function ($query) {
+                    $query->where('order_items.status', 'completed');
+                }
+            ])->get();
+        }
 
         return response()->json(['success' => true, 'orders' => $orders]);
     }
