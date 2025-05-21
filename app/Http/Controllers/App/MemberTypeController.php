@@ -25,19 +25,26 @@ class MemberTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:member_types,name',
-            'duration' => 'nullable|string',
-            'fee' => 'nullable|string',
-            'maintenance_fee' => 'nullable|string',
-            'discount' => 'nullable|string',
-            'discount_authorized' => 'nullable|string',
-            'benefit' => 'nullable|array',
+            'duration' => 'nullable|string|max:255',
+            'fee' => 'nullable|numeric',
+            'maintenance_fee' => 'nullable|numeric',
+            'discount' => 'nullable|numeric',
+            'discount_authorized' => 'nullable|numeric',
+            'benefit' => 'nullable|string|max:1000',
         ]);
 
-        MemberType::create($request->all());
+        MemberType::create($request->only([
+            'name',
+            'duration',
+            'fee',
+            'maintenance_fee',
+            'discount',
+            'discount_authorized',
+            'benefit',
+        ]));
 
-        return redirect()->route('member-types.index')->with('success', 'Member Type created successfully.');
+        return redirect()->back()->with('success', 'Member Type created.');
     }
-
 
     /**
      * Update the specified resource in storage.

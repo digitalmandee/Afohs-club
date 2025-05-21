@@ -135,7 +135,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Members types
     Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
     Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
-    Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
+    Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
     Route::put('/members/member-types/{id}/update', [MemberTypeController::class, 'update'])->name('member.update');
     Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
 
