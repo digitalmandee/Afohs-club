@@ -15,7 +15,7 @@ class MemberTypeController extends Controller
     public function index()
     {
         $memberTypesList = MemberType::all();
-        return Inertia::render('App/Member/MemberTypes', compact('memberTypesList'));
+        return Inertia::render('App/Admin/Membership/MemberType', compact('memberTypesList'));
     }
 
     /**
@@ -25,14 +25,19 @@ class MemberTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:member_types,name',
+            'duration' => 'nullable|string',
+            'fee' => 'nullable|string',
+            'maintenance_fee' => 'nullable|string',
+            'discount' => 'nullable|string',
+            'discount_authorized' => 'nullable|string',
+            'benefit' => 'nullable|array',
         ]);
 
-        MemberType::create([
-            'name' => $request->name,
-        ]);
+        MemberType::create($request->all());
 
-        return redirect()->back()->with('success', 'Member Type created.');
+        return redirect()->route('member-types.index')->with('success', 'Member Type created successfully.');
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -41,12 +46,24 @@ class MemberTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:member_types,name,' . $id,
+            'duration' => 'nullable|string|max:255',
+            'fee' => 'nullable|numeric',
+            'maintenance_fee' => 'nullable|numeric',
+            'discount' => 'nullable|numeric',
+            'discount_authorized' => 'nullable|boolean',
+            'benefit' => 'nullable|string|max:1000',
         ]);
 
         $memberType = MemberType::findOrFail($id);
-        $memberType->update([
-            'name' => $request->name,
-        ]);
+        $memberType->update($request->only([
+            'name',
+            'duration',
+            'fee',
+            'maintenance_fee',
+            'discount',
+            'discount_authorized',
+            'benefit',
+        ]));
 
         return redirect()->back()->with('success', 'Member Type updated.');
     }

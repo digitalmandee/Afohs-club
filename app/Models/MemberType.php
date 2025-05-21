@@ -10,5 +10,13 @@ class MemberType extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'name',
+        'duration',
+        'fee',
+        'maintenance_fee',
+        'discount',
+        'discount_authorized',
+        'benefit',
+    ];
 }

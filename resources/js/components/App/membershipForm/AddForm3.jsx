@@ -161,11 +161,12 @@ const AddForm3 = ({ onSubmit, onBack }) => {
             family_members: validFamilyMembers,
         };
 
-        console.log('Submitting data:', JSON.stringify(dataToSave, null, 2));
+        // console.log('Submitting data:', JSON.stringify(dataToSave, null, 2));
 
         try {
             await onSubmit(dataToSave);
             setSubmitError('');
+            router.visit('App/admin/membership/payment');
         } catch (error) {
             console.error('Submission Error:', error);
             const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data || 'An error occurred during submission');

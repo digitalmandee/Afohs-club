@@ -152,9 +152,13 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Guest History',
                     path: route('membership.guest'),
                 },
+                // {
+                //     text: 'Membership Type',
+                //     path: 'route('membership.membertype')',
+                // },
                 {
                     text: 'Membership Type',
-                    path: route('membership.membertype'),
+                    path: '/members/member-types',
                 },
                 {
                     text: 'Finance',
@@ -162,6 +166,7 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
+
         {
             text: 'Employee Management',
             icon: <PeopleIcon />,
@@ -200,11 +205,11 @@ export default function SideNav({ open, setOpen }) {
                 },
             ],
         },
-        {
-            text: 'Members Types',
-            icon: <MemberIcon />,
-            path: '/members/member-types',
-        },
+        // {
+        //     text: 'Members Types',
+        //     icon: <MemberIcon />,
+        //     path: '/members/member-types',
+        // },
 
         {
             text: 'Tenant',

@@ -125,8 +125,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
-    Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
+    // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
     Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
+
+
+    // Route::get('/admin/membership/all.members', function () {
+    //     return Inertia::render('App/Admin/Membership/MemberType');
+    // })->name('membership.membertype');
+    // Members types
+    Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
+    Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+    Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
+    Route::put('/members/member-types/{id}/update', [MemberTypeController::class, 'update'])->name('member.update');
+    Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
 
 
     //Membership Booking Routes
@@ -167,9 +178,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/Detail');
     })->name('membership.detail');
 
-    Route::get('/admin/membership/all.members', function () {
-        return Inertia::render('App/Admin/Membership/MemberType');
-    })->name('membership.membertype');
+    // Route::get('/admin/membership/all.members', function () {
+    //     return Inertia::render('App/Admin/Membership/MemberType');
+    // })->name('membership.membertype');
 
     Route::get('/admin/membership/full/detail', function () {
         return Inertia::render('App/Admin/Membership/CompleteDetail');
