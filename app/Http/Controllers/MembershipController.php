@@ -22,19 +22,36 @@ class MembershipController extends Controller
 
     public function index()
     {
-        // Get all users with their userDetails and their members (through userDetails)
         $users = User::with([
-            'userDetail' => function ($query) {
-                $query->with('members');  // load members related to userDetail
-            }
+            'userDetail.members.memberType'
         ])->get();
-
-        // Now $users contains all users, their userDetail, and members
 
         return Inertia::render('App/Admin/Membership/Dashboard', [
             'member' => $users,
         ]);
     }
+    public function allMembers()
+    {
+        $users = User::with([
+            'userDetail.members.memberType'
+        ])->get();
+
+        return Inertia::render('App/Admin/Membership/Members', [
+            'member' => $users,
+        ]);
+    }
+    public function membershipHistory()
+    {
+        $users = User::with([
+            'userDetail.members.memberType'
+        ])->get();
+
+        return Inertia::render('App/Admin/Membership/Members', [
+            'member' => $users,
+        ]);
+    }
+
+
 
     public function store(Request $request)
     {
@@ -112,6 +129,8 @@ class MembershipController extends Controller
             'middle_name' => $validated['middle_name'],
             'last_name' => $validated['last_name'],
             'phone_number' => $validated['mobile_number_a'],
+            'user_id' => $validated['membership_number'],
+
             'member_type_id' => $member_type_id,
         ]);
 
@@ -237,5 +256,29 @@ class MembershipController extends Controller
         }
 
         return redirect()->back()->with('success', 'Membership details submitted successfully.');
+    }
+    public function getAllMemberTypes()
+    {
+        $memberTypes = MemberType::all();
+        return Inertia::render('App/Admin/Membership/Profile', [
+            'memberTypesData' => $memberTypes,
+        ]);
+    }
+    public function updateMemberStatus(Request $request, $id)
+    {
+        $request->validate([
+            'card_status' => 'required|string|in:Active,In Active,Expired',
+        ]);
+
+        try {
+            $member = Member::findOrFail($id);
+            $member->card_status = $request->card_status;
+            $member->save();
+
+            return response()->json(['message' => 'Member status updated successfully']);
+        } catch (\Exception $e) {
+            Log::error('Error updating member status: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update member status'], 500);
+        }
     }
 }

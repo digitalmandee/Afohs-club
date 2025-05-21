@@ -112,13 +112,22 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/EmployeeList');
     })->name('employee.employeeList');
 
-    // member
-    // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
-    // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
-    // Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
+    // UserMember routes
+    Route::get('/user-member', [UserMemberController::class, 'index'])->name('usermember');
+    Route::post('/user-member/store', [UserMemberController::class, 'store'])->name('usermember.store');
+
+    // membership routes
+    Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
+    Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
+    // Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
 
     Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
+    Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
+    Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+    Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
+    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
+
 
     //Membership Booking Routes
 
@@ -150,9 +159,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/Checkout');
     })->name('membership.checkout');
 
-    Route::get('/admin/all/members', function () {
-        return Inertia::render('App/Admin/Membership/Members');
-    })->name('membership.members');
+    // Route::get('/admin/all/members', function () {
+    //     return Inertia::render('App/Admin/Membership/Members');
+    // })->name('membership.members');
 
     Route::get('/admin/membership/visit/detail', function () {
         return Inertia::render('App/Admin/Membership/Detail');
@@ -170,14 +179,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('tenant', [TenantController::class, 'index'])->name('tenant.index');
     Route::get('tenant/register', [TenantController::class, 'create'])->name('tenant.create');
     Route::post('tenant/store', [TenantController::class, 'store'])->name('tenant.store');
-
-    // membership routes
-    Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
-    Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
-    Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
-    // UserMember routes
-    Route::get('/user-member', [UserMemberController::class, 'index'])->name('usermember');
-    Route::post('/user-member/store', [UserMemberController::class, 'store'])->name('usermember.store');
 });
 
 // Central guest-only auth routes
