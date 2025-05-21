@@ -9,6 +9,8 @@ const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [isEditingDiscount, setIsEditingDiscount] = useState(false);
+    const [editingQtyIndex, setEditingQtyIndex] = useState(null);
+    const [tempQty, setTempQty] = useState(null);
     const [discount, setDiscount] = useState(0); // percentage
 
     const subtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
@@ -90,7 +92,7 @@ const OrderDetail = ({ handleEditItem }) => {
                             </Box>
                             <Box sx={{ display: 'flex', gap: 1 }}>
                                 {orderDetails.table && <Avatar sx={{ width: 28, height: 28, bgcolor: '#1976d2', fontSize: 12 }}>{orderDetails.table}</Avatar>}
-                                <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
+                                {/* <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                     <CloseIcon fontSize="small" />
                                 </IconButton>
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
@@ -98,7 +100,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                 </IconButton>
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                     <EditIcon fontSize="small" />
-                                </IconButton>
+                                </IconButton> */}
                             </Box>
                         </Box>
 
@@ -155,56 +157,111 @@ const OrderDetail = ({ handleEditItem }) => {
                 {/* Order Items */}
                 <Box sx={{ mt: 1, p: 1 }}>
                     {orderDetails.order_items.length > 0 &&
-                        orderDetails.order_items.map((item, index) => (
-                            <Box
-                                key={index}
-                                onClick={() => handleEditItem(item, index)}
-                                sx={{
-                                    mb: 2,
-                                    borderBottom: '1px solid #E3E3E3',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                <Box sx={{ display: 'flex', mb: 1 }}>
-                                    <Avatar src={item.image} variant="rounded" sx={{ width: 36, height: 36, mr: 1.5, bgcolor: '#f8c291' }} />
-                                    <Box sx={{ flexGrow: 1 }}>
-                                        <Typography variant="body2" fontWeight="medium">
-                                            {item.name}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            {item.category}
-                                        </Typography>
+                        orderDetails.order_items.map((item, index) => {
+                            const isEditing = editingQtyIndex === index;
+
+                            const handleQtyClick = (e) => {
+                                e.stopPropagation(); // prevent triggering handleEditItem
+                                setEditingQtyIndex(index);
+                                setTempQty(item.quantity.toString());
+                            };
+
+                            const handleQtyChange = (e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                    setTempQty(value);
+                                }
+                            };
+
+                            const handleQtyBlur = () => {
+                                const newQty = Number(tempQty);
+                                if (newQty > 0 && newQty !== item.quantity) {
+                                    const updatedItems = [...orderDetails.order_items];
+                                    updatedItems[index].quantity = newQty;
+                                    updatedItems[index].total_price = newQty * updatedItems[index].price;
+
+                                    handleOrderDetailChange('order_items', updatedItems);
+                                }
+                                setEditingQtyIndex(null);
+                                setTempQty('');
+                            };
+                            return (
+                                <Box
+                                    key={index}
+                                    onClick={() => handleEditItem(item, index)}
+                                    sx={{
+                                        mb: 2,
+                                        borderBottom: '1px solid #E3E3E3',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', mb: 1 }}>
+                                        <Avatar src={item.image} variant="rounded" sx={{ width: 36, height: 36, mr: 1.5, bgcolor: '#f8c291' }} />
+                                        <Box sx={{ flexGrow: 1 }}>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                {item.name}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {item.category}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ textAlign: 'right' }}>
+                                            <Typography variant="caption" color="text.secondary" onClick={handleQtyClick}>
+                                                Qty :{' '}
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        value={tempQty}
+                                                        onChange={handleQtyChange}
+                                                        onBlur={handleQtyBlur}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                handleQtyBlur();
+                                                            }
+                                                        }}
+                                                        autoFocus
+                                                        style={{
+                                                            width: '40px',
+                                                            fontSize: '0.8rem',
+                                                            textAlign: 'center',
+                                                            marginLeft: '4px',
+                                                            border: '1px solid #ccc',
+                                                            borderRadius: '4px',
+                                                            padding: '2px 4px',
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    item.quantity
+                                                )}{' '}
+                                                x Rs {item.price}
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="medium">
+                                                Rs. {item.total_price}
+                                            </Typography>
+                                        </Box>
                                     </Box>
-                                    <Box sx={{ textAlign: 'right' }}>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Qty : {item.quantity} x Rs {item.price}
-                                        </Typography>
-                                        <Typography variant="body2" fontWeight="medium">
-                                            Rs. {item.total_price}
-                                        </Typography>
-                                    </Box>
+                                    {item.variants.length > 0 &&
+                                        item.variants.map((variant, variantIndex) => (
+                                            <Button
+                                                key={variantIndex}
+                                                sx={{
+                                                    border: '1px solid #e0e0e0 !important',
+                                                    borderRadius: '4px !important',
+                                                    mb: 2,
+                                                    mx: 0.5,
+                                                    minWidth: '2px',
+                                                    fontSize: '0.7rem',
+                                                    py: 0.5,
+                                                    px: 1.5,
+                                                    color: '#555',
+                                                }}
+                                            >
+                                                {variant.value}
+                                            </Button>
+                                        ))}
                                 </Box>
-                                {item.variants.length > 0 &&
-                                    item.variants.map((variant, variantIndex) => (
-                                        <Button
-                                            key={variantIndex}
-                                            sx={{
-                                                border: '1px solid #e0e0e0 !important',
-                                                borderRadius: '4px !important',
-                                                mb: 2,
-                                                mx: 0.5,
-                                                minWidth: '2px',
-                                                fontSize: '0.7rem',
-                                                py: 0.5,
-                                                px: 1.5,
-                                                color: '#555',
-                                            }}
-                                        >
-                                            {variant.value}
-                                        </Button>
-                                    ))}
-                            </Box>
-                        ))}
+                            );
+                        })}
                 </Box>
 
                 {/* Order Summary */}
