@@ -112,6 +112,51 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/EmployeeList');
     })->name('employee.employeeList');
 
+    Route::get('/employee/monthly/attendance/report', function () {
+        return Inertia::render('App/Admin/Employee/MonthlyReport');
+    })->name('employee.monthlyreport');
+
+    Route::get('/employee/payroll/dashboard', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Dashboard');
+    })->name('employee.payroll');
+
+    Route::get('/employee/payroll/monthly/summary', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Summary');
+    })->name('employee.summary');
+
+    Route::get('/employee/payroll/salary/component', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Component');
+    })->name('employee.component');
+
+    Route::get('/employee/payroll/add/salary/component', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddSalary');
+    })->name('employee.addsalary');
+
+    Route::get('/employee/payroll/runpayroll/dashboard', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/RunPayroll');
+    })->name('employee.runpayroll');
+
+    Route::get('/employee/payroll/salary/revision', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Revision');
+    })->name('employee.salaryrevision');
+
+    Route::get('/employee/payroll/holed/salary', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Holed');
+    })->name('employee.holedsalary');
+
+    Route::get('/employee/payroll/add/holed/employee', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddHoled');
+    })->name('employee.addholed');
+
+    //Subscription Routes
+    Route::get('/subscription/dashboard', function () {
+        return Inertia::render('App/Admin/Subscription/Dashboard');
+    })->name('subscription.dashboard');
+
+    //Finance Routes
+    Route::get('/finance/dashboard', function () {
+        return Inertia::render('App/Admin/Finance/Dashboard');
+    })->name('finance.dashboard');
     // member
     // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
     // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');

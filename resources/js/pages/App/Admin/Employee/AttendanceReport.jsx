@@ -63,6 +63,18 @@ const AttendanceReport = () => {
                 totalAbsent: 5,
                 totalLet: 1
             }
+        },
+        {
+            id: 23,
+            name: 'Micheal Dougles',
+            position: 'Project Manager',
+            photo: 'https://randomuser.me/api/portraits/men/32.jpg',
+            stats: {
+                totalLeave: 3,
+                totalAttendance: 35,
+                totalAbsent: 5,
+                totalLet: 1
+            }
         }
     ];
 
@@ -78,8 +90,8 @@ const AttendanceReport = () => {
                 }}
             >
                 <Box sx={{
-                    px:4,
-                    py:2
+                    px: 8,
+                    py: 2
                 }}>
                     {/* Header with back button and title */}
                     <Box
@@ -108,7 +120,7 @@ const AttendanceReport = () => {
                         </Box>
 
                         {/* Right: Search + Filter */}
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mr: 3 }}>
                             {/* Search Bar */}
                             <Box
                                 sx={{
@@ -154,13 +166,14 @@ const AttendanceReport = () => {
                     {/* Form Card */}
                     <div className="row">
                         {employees.map((employee, index) => (
-                            <div className="col-md-4 mb-4" key={index}>
+                            <div className="col-md-4 mb-2 mt-5" key={index}>
                                 <Card
                                     sx={{
-                                        maxWidth: 320,
+                                        maxWidth: 340,
+                                        height: 450,
                                         borderRadius: 3,
                                         boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-                                        overflow: 'visible',
+                                        // overflow: 'visible',
                                         position: 'relative',
                                         pb: 1
                                     }}
@@ -177,9 +190,9 @@ const AttendanceReport = () => {
                                             <Avatar
                                                 src={employee.photo}
                                                 sx={{
-                                                    width: 80,
-                                                    height: 80,
-                                                    border: '3px solid white',
+                                                    width: 89,
+                                                    height: 89,
+                                                    border: '2px solid #949494',
                                                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                                                 }}
                                             />
@@ -187,10 +200,8 @@ const AttendanceReport = () => {
 
                                         {/* Employee ID */}
                                         <Typography
-                                            variant="body2"
-                                            color="text.secondary"
                                             align="center"
-                                            sx={{ mt: 1 }}
+                                            sx={{ mt: 2, fontWeight: 500, fontSize: '16px', color: '#979797' }}
                                         >
                                             Employ ID : {employee.id}
                                         </Typography>
@@ -200,94 +211,54 @@ const AttendanceReport = () => {
                                             sx={{
                                                 my: 2,
                                                 borderStyle: 'dotted',
-                                                borderColor: '#ddd'
+                                                borderColor: '#D8D8D8',
+                                                borderWidth: '1px',
+                                                opacity: 1, // Ensures it's not too transparent
                                             }}
                                         />
 
                                         {/* Name and Position */}
                                         <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                            <Typography variant="h6" fontWeight="bold">
+                                            <Typography sx={{ fontWeight: 600, fontSize: '22px', color: '#363636' }}>
                                                 {employee.name}
                                             </Typography>
-                                            <Typography variant="body2" color="text.secondary">
+                                            <Typography sx={{ color: '#3C3C3C', fontWeight: 500, fontSize: '16px' }}>
                                                 {employee.position}
                                             </Typography>
                                         </Box>
 
                                         {/* Stats Grid */}
                                         <Grid container spacing={2} sx={{ px: 2, mb: 2 }}>
-                                            <Grid item xs={6}>
-                                                <Paper
-                                                    elevation={0}
-                                                    sx={{
-                                                        bgcolor: '#f9f9f9',
-                                                        p: 1.5,
-                                                        textAlign: 'center',
-                                                        borderRadius: 2
-                                                    }}
-                                                >
-                                                    <Typography variant="h6" fontWeight="bold">
-                                                        {employee.totalLeave}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" fontSize="12px">
-                                                        Total Leave
-                                                    </Typography>
-                                                </Paper>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Paper
-                                                    elevation={0}
-                                                    sx={{
-                                                        bgcolor: '#f9f9f9',
-                                                        p: 1.5,
-                                                        textAlign: 'center',
-                                                        borderRadius: 2
-                                                    }}
-                                                >
-                                                    <Typography variant="h6" fontWeight="bold">
-                                                        {employee.totalAttendance}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" fontSize="12px">
-                                                        Total Attendance
-                                                    </Typography>
-                                                </Paper>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Paper
-                                                    elevation={0}
-                                                    sx={{
-                                                        bgcolor: '#f9f9f9',
-                                                        p: 1.5,
-                                                        textAlign: 'center',
-                                                        borderRadius: 2
-                                                    }}
-                                                >
-                                                    <Typography variant="h6" fontWeight="bold">
-                                                        {employee.totalAbsent}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" fontSize="12px">
-                                                        Total Absent
-                                                    </Typography>
-                                                </Paper>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Paper
-                                                    elevation={0}
-                                                    sx={{
-                                                        bgcolor: '#f9f9f9',
-                                                        p: 1.5,
-                                                        textAlign: 'center',
-                                                        borderRadius: 2
-                                                    }}
-                                                >
-                                                    <Typography variant="h6" fontWeight="bold">
-                                                        {employee.totalLet}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" fontSize="12px">
-                                                        Total Let
-                                                    </Typography>
-                                                </Paper>
-                                            </Grid>
+                                            {[
+                                                { label: 'Total Leave', value: employee.stats.totalLeave },
+                                                { label: 'Total Attendance', value: employee.stats.totalAttendance },
+                                                { label: 'Total Absent', value: employee.stats.totalAbsent },
+                                                { label: 'Total Let', value: employee.stats.totalLet }
+                                            ].map((item, index) => (
+                                                <Grid item xs={6} key={index}>
+                                                    <Paper
+                                                        elevation={3}
+                                                        sx={{
+                                                            bgcolor: '#F9F9F9',
+                                                            p: 2,
+                                                            textAlign: 'center',
+                                                            borderRadius: 2,
+                                                            height: 80,
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            justifyContent: 'center',
+                                                            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.08)'
+                                                        }}
+                                                    >
+                                                        <Typography sx={{color:'#000000', fontWeight:700, fontSize:'20px'}}>
+                                                            {item.value}
+                                                        </Typography>
+                                                        <Typography sx={{color:'#717171', fontWeight:500, fontSize:'13px'}}>
+                                                            {item.label}
+                                                        </Typography>
+                                                    </Paper>
+                                                </Grid>
+                                            ))}
                                         </Grid>
 
                                         {/* Bottom Bar */}
