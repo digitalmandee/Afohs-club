@@ -22,7 +22,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
     const [open, setOpen] = useState(false);
 
     // const [showPayment, setShowPayment] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState(1);
+    const [selectedCategory, setSelectedCategory] = useState(2);
     const [variantProductId, setVariantProductId] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [activeView, setActiveView] = useState('orderDetail');

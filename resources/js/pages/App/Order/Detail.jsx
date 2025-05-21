@@ -9,18 +9,20 @@ const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [isEditingDiscount, setIsEditingDiscount] = useState(false);
-    const [discount, setDiscount] = useState(0);
+    const [discount, setDiscount] = useState(0); // percentage
 
     const subtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
     const taxRate = 0.12;
     const taxAmount = subtotal * taxRate;
-    const total = subtotal + taxAmount - discount;
+    const discountAmount = subtotal * (discount / 100);
+    const total = subtotal + taxAmount - discountAmount;
 
     useEffect(() => {
         const cash = parseFloat(orderDetails.cash_total || 0);
         const calculatedSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
         const tax = calculatedSubtotal * 0.12;
-        const finalTotal = calculatedSubtotal + tax - discount;
+        const discountAmt = calculatedSubtotal * (discount / 100);
+        const finalTotal = calculatedSubtotal + tax - discountAmt;
 
         if (cash > 0) {
             const change = (cash - finalTotal).toFixed(2);
@@ -234,6 +236,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                         border: '1px solid #ccc',
                                     }}
                                 />
+                                <span>%</span>
                                 <Button variant="text" size="small" onClick={() => setIsEditingDiscount(false)} sx={{ fontSize: '0.75rem' }}>
                                     Save
                                 </Button>
@@ -241,7 +244,7 @@ const OrderDetail = ({ handleEditItem }) => {
                         ) : (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography variant="body2" color="#4caf50">
-                                    Rs {discount}
+                                    {discount}%
                                 </Typography>
                                 <IconButton size="small" onClick={() => setIsEditingDiscount(true)}>
                                     <EditIcon fontSize="small" />
