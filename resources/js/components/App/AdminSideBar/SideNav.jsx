@@ -222,6 +222,29 @@ export default function SideNav({ open, setOpen }) {
                 },
             ]
         },
+
+        {
+            text: 'Subscription',
+            icon: <PaymentsIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: route('subscription.dashboard'),
+                },
+                {
+                    text: 'Management',
+                    path: route(''),
+                },
+                {
+                    text: 'Monthly Fee',
+                    path: route(''),
+                },
+                {
+                    text: 'Sports Category',
+                    path: route(''),
+                },
+            ]
+        },
         {
             text: 'Members Types',
             icon: <MemberIcon />,

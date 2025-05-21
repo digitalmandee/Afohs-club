@@ -145,6 +145,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/AddHoled');
     })->name('employee.addholed');
 
+    //Subscription Routes
+    Route::get('/subscription/dashboard', function () {
+        return Inertia::render('App/Admin/Subscription/Dashboard');
+    })->name('subscription.dashboard');
+
     //Finance Routes
     Route::get('/finance/dashboard', function () {
         return Inertia::render('App/Admin/Finance/Dashboard');
