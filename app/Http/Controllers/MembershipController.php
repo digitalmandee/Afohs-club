@@ -20,21 +20,24 @@ class MembershipController extends Controller
 
 
 
+    // public function index()
+    // {
+    //     $users = User::all(); // This will fetch only users table data
+
+    //     return Inertia::render('App/Admin/Membership/Dashboard', [
+    //         'member' => $users,
+    //     ]);
+    // }
     public function index()
     {
-        // Get all users with their userDetails and their members (through userDetails)
-        $users = User::with([
-            'userDetail' => function ($query) {
-                $query->with('members');  // load members related to userDetail
-            }
-        ])->get();
-
-        // Now $users contains all users, their userDetail, and members
+        $users = User::with('userDetail')->get(); // Only user + user_detail
 
         return Inertia::render('App/Admin/Membership/Dashboard', [
             'member' => $users,
         ]);
     }
+
+
 
     public function store(Request $request)
     {
