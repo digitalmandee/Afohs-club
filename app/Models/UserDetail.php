@@ -51,8 +51,21 @@ class UserDetail extends Model
         'date_of_birth' => 'date',
     ];
 
+    // public function user()
+    // {
+    //     return $this->belongsTo(User::class, 'user_id', 'user_id');
+    // }
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
+        return $this->belongsTo(User::class);
+    }
+
+    // public function members()
+    // {
+    //     return $this->hasOne(Member::class, 'user_detail_id');
+    // }
+    public function members()
+    {
+        return $this->hasMany(Member::class, 'user_detail_id');
     }
 }

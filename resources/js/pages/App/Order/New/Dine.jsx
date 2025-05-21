@@ -5,27 +5,7 @@ import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-    Autocomplete,
-    Box,
-    Button,
-    FormControl,
-    FormControlLabel,
-    Grid,
-    IconButton,
-    InputAdornment,
-    InputBase,
-    InputLabel,
-    MenuItem,
-    Paper,
-    Radio,
-    RadioGroup,
-    Select,
-    TextField,
-    ToggleButton,
-    ToggleButtonGroup,
-    Typography,
-} from '@mui/material';
+import { Autocomplete, Box, Button, FormControl, FormControlLabel, Grid, IconButton, InputAdornment, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -142,12 +122,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
             {/* Membership Type Selection */}
             <Box sx={{ px: 2, mb: 2 }}>
                 <FormControl component="fieldset">
-                    <RadioGroup
-                        row
-                        name="membership-type"
-                        value={orderDetails.membership_type}
-                        onChange={(e) => handleMembershipType(e.target.value)}
-                    >
+                    <RadioGroup row name="membership-type" value={orderDetails.membership_type} onChange={(e) => handleMembershipType(e.target.value)}>
                         <Box
                             sx={{
                                 display: 'flex',
@@ -239,14 +214,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                         Customer Qty
                     </Typography>
                     <Box sx={{ display: 'flex' }}>
-                        <TextField
-                            size="small"
-                            value={orderDetails.person_count}
-                            onChange={(e) => handleOrderDetailChange('person_count', e.target.value)}
-                            min={1}
-                            type="number"
-                            sx={{ width: '60%' }}
-                        />
+                        <TextField size="small" value={orderDetails.person_count} onChange={(e) => handleOrderDetailChange('person_count', e.target.value)} min={1} type="number" sx={{ width: '60%' }} />
                         <Button
                             variant="outlined"
                             sx={{
@@ -275,9 +243,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                     onChange={(event, value) => handleAutocompleteChange(event, value, 'waiter')}
                     loading={searchLoading}
                     renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Waiter" variant="outlined" />}
-                    filterOptions={(options, state) =>
-                        options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))
-                    }
+                    filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
                     renderOption={(props, option) => (
                         <li {...props}>
                             <span>{option.name}</span>
@@ -300,13 +266,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                         boxShadow: 'none',
                     }}
                 >
-                    <InputBase
-                        sx={{ ml: 1, flex: 1 }}
-                        placeholder="Search"
-                        inputProps={{ 'aria-label': 'search tables' }}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                    <InputBase sx={{ ml: 1, flex: 1 }} placeholder="Search" inputProps={{ 'aria-label': 'search tables' }} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
                         <SearchIcon />
                     </IconButton>
@@ -314,13 +274,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                 {/* Select Floor */}
                 <FormControl sx={{ marginLeft: 1 }}>
                     <InputLabel id="select-floor">Floor</InputLabel>
-                    <Select
-                        labelId="select-floor"
-                        id="floor"
-                        value={orderDetails.floor}
-                        label="Floor"
-                        onChange={(e) => handleFloorChange(e.target.value)}
-                    >
+                    <Select labelId="select-floor" id="floor" value={orderDetails.floor} label="Floor" onChange={(e) => handleFloorChange(e.target.value)}>
                         {floorTables.map((item, index) => (
                             <MenuItem value={item.id} key={index}>
                                 {item.name}
@@ -329,14 +283,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                     </Select>
                 </FormControl>
 
-                <ToggleButtonGroup
-                    value={filterOption}
-                    exclusive
-                    onChange={handleFilterOptionChange}
-                    aria-label="filter option"
-                    size="small"
-                    sx={{ ml: 1 }}
-                >
+                <ToggleButtonGroup value={filterOption} exclusive onChange={handleFilterOptionChange} aria-label="filter option" size="small" sx={{ ml: 1 }}>
                     <ToggleButton
                         value="all"
                         aria-label="all"
@@ -460,6 +407,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                         },
                         textTransform: 'none',
                     }}
+                    disabled={!orderDetails.member || !orderDetails.waiter || !orderDetails.table}
                     onClick={() => router.visit(route('order.menu'))}
                 >
                     Choose Menu

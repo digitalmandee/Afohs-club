@@ -1,6 +1,6 @@
 import { Close as CloseIcon, Home as HomeIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
-import { Avatar, Box, Button, Chip, Dialog, Grid, IconButton, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, Dialog, Grid, IconButton, LinearProgress, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
@@ -12,17 +12,17 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
 
     useEffect(() => {
         if (openModal && invoiceId) {
-            // setLoading(true);
-            axios.get(`/payment-order-data/${invoiceId}`).then((response) => {
+            setLoading(true);
+            axios.get(route('transaction.invoice', { invoiceId: invoiceId })).then((response) => {
                 setPaymentData(response.data);
                 setLoading(false);
             });
         }
     }, [openModal, invoiceId]); // Trigger on modal open and invoiceId change
 
-    if (loading) {
-        return <div>Loading...</div>; // Display loading state until data is fetched
-    }
+    // if (loading) {
+    //     return <div>Loading...</div>; // Display loading state until data is fetched
+    // }
 
     const handlePrintOrderDetail = () => {
         const printWindow = window.open('', '_blank');
@@ -62,11 +62,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                       (item) => `
                 <div class="item">
                   <div class="item-name">${item.order_item.name} (${item.order_item.quantity} x Rs ${item.order_item.price})</div>
-                  ${
-                      item.order_item.variants.length > 0
-                          ? `<div class="item-variant">Variant: ${item.order_item.variants.map((v) => v.value).join(', ')}</div>`
-                          : ''
-                  }
+                  ${item.order_item.variants.length > 0 ? `<div class="item-variant">Variant: ${item.order_item.variants.map((v) => v.value).join(', ')}</div>` : ''}
                   <div>Rs ${item.order_item.total_price}</div>
                 </div>
               `,
@@ -117,87 +113,90 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                 },
             }}
         >
-            <Box sx={{ p: 3 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Typography variant="h6" fontWeight="bold">
-                        Order Detail
-                    </Typography>
-                    <IconButton onClick={closeModal} edge="end">
-                        <CloseIcon />
-                    </IconButton>
-                </Box>
-
-                {/* Customer Info */}
-                <Box sx={{ mb: 3 }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Customer Name
-                    </Typography>
-                    <Box display="flex" alignItems="center" mt={1}>
-                        <Avatar
-                            sx={{
-                                bgcolor: '#f5f5f5',
-                                color: '#333',
-                                width: 36,
-                                height: 36,
-                                mr: 1,
-                            }}
-                        >
-                            {paymentData.user.name.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Typography variant="subtitle1" fontWeight="medium">
-                            {paymentData.user.name}
+            {loading ? (
+                <LinearProgress />
+            ) : (
+                <Box sx={{ p: 3 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography variant="h6" fontWeight="bold">
+                            Order Detail
                         </Typography>
-                        {/* {orderDetail.isVIP && (
-                            <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />
-                        )} */}
-                        <Box ml="auto" display="flex" alignItems="center" gap={1}>
+                        <IconButton onClick={closeModal} edge="end">
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+
+                    {/* Customer Info */}
+                    <Box sx={{ mb: 3 }}>
+                        <Typography variant="caption" color="text.secondary">
+                            Customer Name
+                        </Typography>
+                        <Box display="flex" alignItems="center" mt={1}>
                             <Avatar
                                 sx={{
-                                    bgcolor: '#0a3d62',
-                                    color: 'white',
+                                    bgcolor: '#f5f5f5',
+                                    color: '#333',
                                     width: 36,
                                     height: 36,
-                                }}
-                            >
-                                {paymentData.order.table.table_no}
-                            </Avatar>
-                            <IconButton size="small" sx={{ border: '1px solid #e0e0e0' }}>
-                                <HomeIcon />
-                            </IconButton>
-                            <IconButton size="small" sx={{ border: '1px solid #e0e0e0' }}>
-                                <RoomServiceIcon />
-                            </IconButton>
-                        </Box>
-                    </Box>
-                </Box>
-
-                {/* Order Info Grid */}
-                <Grid container spacing={2} sx={{ mb: 2 }}>
-                    <Grid item xs={4}>
-                        <Typography variant="caption" color="text.secondary">
-                            Order Date
-                        </Typography>
-                        <Typography variant="body2" mt={0.5}>
-                            {paymentData.order.start_date}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={4}>
-                        <Typography variant="caption" color="text.secondary">
-                            Cashier
-                        </Typography>
-                        <Box display="flex" alignItems="center" mt={0.5}>
-                            <Avatar
-                                src={paymentData.cashier?.profile_photo}
-                                sx={{
-                                    width: 20,
-                                    height: 20,
                                     mr: 1,
                                 }}
-                            />
-                            <Typography variant="body2">{paymentData.cashier?.name}</Typography>
+                            >
+                                {paymentData.user.name.charAt(0).toUpperCase()}
+                            </Avatar>
+                            <Typography variant="subtitle1" fontWeight="medium">
+                                {paymentData.user.name}
+                            </Typography>
+                            {/* {orderDetail.isVIP && (
+                            <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />
+                        )} */}
+                            <Box ml="auto" display="flex" alignItems="center" gap={1}>
+                                <Avatar
+                                    sx={{
+                                        bgcolor: '#0a3d62',
+                                        color: 'white',
+                                        width: 36,
+                                        height: 36,
+                                    }}
+                                >
+                                    {paymentData.order.table.table_no}
+                                </Avatar>
+                                <IconButton size="small" sx={{ border: '1px solid #e0e0e0' }}>
+                                    <HomeIcon />
+                                </IconButton>
+                                <IconButton size="small" sx={{ border: '1px solid #e0e0e0' }}>
+                                    <RoomServiceIcon />
+                                </IconButton>
+                            </Box>
                         </Box>
-                    </Grid>
-                    {/* <Grid item xs={4}>
+                    </Box>
+
+                    {/* Order Info Grid */}
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                        <Grid item xs={4}>
+                            <Typography variant="caption" color="text.secondary">
+                                Order Date
+                            </Typography>
+                            <Typography variant="body2" mt={0.5}>
+                                {paymentData.order.start_date}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={4}>
+                            <Typography variant="caption" color="text.secondary">
+                                Cashier
+                            </Typography>
+                            <Box display="flex" alignItems="center" mt={0.5}>
+                                <Avatar
+                                    src={paymentData.cashier?.profile_photo}
+                                    sx={{
+                                        width: 20,
+                                        height: 20,
+                                        mr: 1,
+                                    }}
+                                />
+                                <Typography variant="body2">{paymentData.cashier?.name}</Typography>
+                            </Box>
+                        </Grid>
+                        {/* <Grid item xs={4}>
                         <Typography variant="caption" color="text.secondary">
                             Working Time
                         </Typography>
@@ -205,162 +204,163 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                             {orderDetail.workingTime}
                         </Typography>
                     </Grid> */}
-                </Grid>
+                    </Grid>
 
-                {/* Order ID */}
-                <Box sx={{ mb: 3 }}>
-                    <Chip
-                        label={`Order Id : #${paymentData.order.id}`}
-                        sx={{
-                            backgroundColor: '#f5f5f5',
-                            color: '#333',
-                            fontWeight: 500,
-                            borderRadius: '4px',
-                        }}
-                    />
-                </Box>
+                    {/* Order ID */}
+                    <Box sx={{ mb: 3 }}>
+                        <Chip
+                            label={`Order Id : #${paymentData.order.id}`}
+                            sx={{
+                                backgroundColor: '#f5f5f5',
+                                color: '#333',
+                                fontWeight: 500,
+                                borderRadius: '4px',
+                            }}
+                        />
+                    </Box>
 
-                {/* Order Items */}
-                <Box sx={{ mb: 3 }}>
-                    {paymentData.order.order_items.map((item, index) => (
-                        <Box key={index} display="flex" alignItems="center" mb={2}>
-                            <img
-                                src={item.order_item.image || '/placeholder.svg'}
-                                alt={item.order_item.name}
-                                style={{
-                                    width: 50,
-                                    height: 50,
-                                    borderRadius: 8,
-                                    objectFit: 'cover',
-                                }}
-                            />
-                            <Box ml={2} flex={1}>
-                                <Typography variant="subtitle2" fontWeight="bold">
-                                    {item.order_item.name}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" display="block">
-                                    {item.order_item.category}
-                                </Typography>
-                                {item.order_item.variants.length > 0 && (
-                                    <Typography variant="caption" color="text.secondary">
-                                        Variant: {item.order_item.variants.map((v) => v.value).join(', ')}
+                    {/* Order Items */}
+                    <Box sx={{ mb: 3 }}>
+                        {paymentData.order.order_items.map((item, index) => (
+                            <Box key={index} display="flex" alignItems="center" mb={2}>
+                                <img
+                                    src={item.order_item.image || '/placeholder.svg'}
+                                    alt={item.order_item.name}
+                                    style={{
+                                        width: 50,
+                                        height: 50,
+                                        borderRadius: 8,
+                                        objectFit: 'cover',
+                                    }}
+                                />
+                                <Box ml={2} flex={1}>
+                                    <Typography variant="subtitle2" fontWeight="bold">
+                                        {item.order_item.name}
                                     </Typography>
-                                )}
+                                    <Typography variant="caption" color="text.secondary" display="block">
+                                        {item.order_item.category}
+                                    </Typography>
+                                    {item.order_item.variants.length > 0 && (
+                                        <Typography variant="caption" color="text.secondary">
+                                            Variant: {item.order_item.variants.map((v) => v.value).join(', ')}
+                                        </Typography>
+                                    )}
+                                </Box>
+                                <Box textAlign="right">
+                                    <Typography variant="caption" color="text.secondary">
+                                        Qty: {item.order_item.quantity} x Rs {item.order_item.price}
+                                    </Typography>
+                                    <Typography variant="subtitle2" fontWeight="bold" display="block">
+                                        Rs {item.order_item.total_price}
+                                    </Typography>
+                                </Box>
                             </Box>
-                            <Box textAlign="right">
-                                <Typography variant="caption" color="text.secondary">
-                                    Qty: {item.order_item.quantity} x Rs {item.order_item.price}
-                                </Typography>
-                                <Typography variant="subtitle2" fontWeight="bold" display="block">
-                                    Rs {item.order_item.total_price}
-                                </Typography>
-                            </Box>
+                        ))}
+                    </Box>
+
+                    {/* Order Summary */}
+                    <Box sx={{ mb: 3 }}>
+                        <Box display="flex" justifyContent="space-between" mb={1}>
+                            <Typography variant="body2" color="text.secondary">
+                                Subtotal
+                            </Typography>
+                            <Typography variant="body2">Rs {paymentData.amount}</Typography>
                         </Box>
-                    ))}
-                </Box>
-
-                {/* Order Summary */}
-                <Box sx={{ mb: 3 }}>
-                    <Box display="flex" justifyContent="space-between" mb={1}>
-                        <Typography variant="body2" color="text.secondary">
-                            Subtotal
-                        </Typography>
-                        <Typography variant="body2">Rs {paymentData.amount}</Typography>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between" mb={1}>
-                        <Typography variant="body2" color="text.secondary">
-                            Discount
-                        </Typography>
-                        <Typography variant="body2" color="#4caf50">
-                            Rs 0% (0)
-                        </Typography>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between" mb={1}>
-                        <Typography variant="body2" color="text.secondary">
-                            Tax 12%
-                        </Typography>
-                        <Typography variant="body2">Rs {(paymentData.amount * 0.12).toFixed(2)}</Typography>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between" mt={2}>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                            Total
-                        </Typography>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                            Rs {paymentData.total_price}
-                        </Typography>
-                    </Box>
-                </Box>
-
-                {/* Payment Info */}
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: '#f9f9f9',
-                        borderRadius: 1,
-                        mb: 3,
-                    }}
-                >
-                    <Box>
-                        <Typography variant="caption" color="text.secondary">
-                            Payment
-                        </Typography>
-                        <Box display="flex" alignItems="center" mt={0.5}>
-                            <ReceiptIcon fontSize="small" sx={{ mr: 1, color: '#0a3d62' }} />
-                            <Typography variant="body2" fontWeight="medium">
-                                {paymentData.payment_method}
+                        <Box display="flex" justifyContent="space-between" mb={1}>
+                            <Typography variant="body2" color="text.secondary">
+                                Discount
+                            </Typography>
+                            <Typography variant="body2" color="#4caf50">
+                                Rs 0% (0)
+                            </Typography>
+                        </Box>
+                        <Box display="flex" justifyContent="space-between" mb={1}>
+                            <Typography variant="body2" color="text.secondary">
+                                Tax 12%
+                            </Typography>
+                            <Typography variant="body2">Rs {(paymentData.amount * 0.12).toFixed(2)}</Typography>
+                        </Box>
+                        <Box display="flex" justifyContent="space-between" mt={2}>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                                Total
+                            </Typography>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                                Rs {paymentData.total_price}
                             </Typography>
                         </Box>
                     </Box>
-                    <Box>
-                        <Typography variant="caption" color="text.secondary">
-                            Cash Total
-                        </Typography>
-                        <Typography variant="body2" fontWeight="medium" mt={0.5}>
-                            Rs {paymentData.paid_amount}
-                        </Typography>
-                    </Box>
-                    <Box>
-                        <Typography variant="caption" color="text.secondary">
-                            Customer Change
-                        </Typography>
-                        <Typography variant="body2" fontWeight="medium" mt={0.5}>
-                            Rs {paymentData.customer_change || 0}
-                        </Typography>
-                    </Box>
-                </Box>
 
-                {/* Action Buttons */}
-                <Box display="flex" justifyContent="space-between" mt={3}>
-                    <Button
-                        variant="outlined"
-                        onClick={handleOpenTrackOrder}
+                    {/* Payment Info */}
+                    <Box
                         sx={{
-                            color: '#333',
-                            borderColor: '#ddd',
-                            textTransform: 'none',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            p: 2,
+                            bgcolor: '#f9f9f9',
+                            borderRadius: 1,
+                            mb: 3,
                         }}
                     >
-                        Track Order
-                    </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={<PrintIcon />}
-                        onClick={handlePrintOrderDetail}
-                        sx={{
-                            backgroundColor: '#0a3d62',
-                            color: 'white',
-                            textTransform: 'none',
-                            '&:hover': {
-                                backgroundColor: '#083352',
-                            },
-                        }}
-                    >
-                        Print Receipt
-                    </Button>
+                        <Box>
+                            <Typography variant="caption" color="text.secondary">
+                                Payment
+                            </Typography>
+                            <Box display="flex" alignItems="center" mt={0.5}>
+                                <ReceiptIcon fontSize="small" sx={{ mr: 1, color: '#0a3d62' }} />
+                                <Typography variant="body2" fontWeight="medium">
+                                    {paymentData.payment_method}
+                                </Typography>
+                            </Box>
+                        </Box>
+                        <Box>
+                            <Typography variant="caption" color="text.secondary">
+                                Cash Total
+                            </Typography>
+                            <Typography variant="body2" fontWeight="medium" mt={0.5}>
+                                Rs {paymentData.paid_amount}
+                            </Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="caption" color="text.secondary">
+                                Customer Change
+                            </Typography>
+                            <Typography variant="body2" fontWeight="medium" mt={0.5}>
+                                Rs {paymentData.customer_change || 0}
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    {/* Action Buttons */}
+                    <Box display="flex" justifyContent="space-between" mt={3}>
+                        <Button
+                            variant="outlined"
+                            onClick={handleOpenTrackOrder}
+                            sx={{
+                                color: '#333',
+                                borderColor: '#ddd',
+                                textTransform: 'none',
+                            }}
+                        >
+                            Track Order
+                        </Button>
+                        <Button
+                            variant="contained"
+                            startIcon={<PrintIcon />}
+                            onClick={handlePrintOrderDetail}
+                            sx={{
+                                backgroundColor: '#0a3d62',
+                                color: 'white',
+                                textTransform: 'none',
+                                '&:hover': {
+                                    backgroundColor: '#083352',
+                                },
+                            }}
+                        >
+                            Print Receipt
+                        </Button>
+                    </Box>
                 </Box>
-            </Box>
+            )}
         </Dialog>
     );
 };

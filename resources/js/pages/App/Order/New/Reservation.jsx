@@ -122,6 +122,8 @@ const ReservationDialog = () => {
             router.visit(route('order.new')); // Redirect after success
         } catch (error) {
             if (error.response?.status === 422) {
+                console.log(error.response);
+
                 setErrors(error.response.data.errors);
                 enqueueSnackbar('Validation error: Please fix the form fields.', { variant: 'error' });
             } else {
@@ -140,19 +142,6 @@ const ReservationDialog = () => {
         const date = new Date(`1970-01-01T${time}:00Z`);
         const options = { hour: '2-digit', minute: '2-digit', hour12: true };
         return date.toLocaleString('en-US', options);
-    }
-
-    function parseTime(time) {
-        const [hours, minutes] = time.split(':').map((num) => parseInt(num, 10));
-
-        if (isNaN(hours) || isNaN(minutes)) {
-            return null; // Return null if the time is invalid
-        }
-
-        // Create a new Date object and set the hours and minutes
-        const date = new Date();
-        date.setHours(hours, minutes, 0, 0);
-        return date;
     }
 
     return (
@@ -282,12 +271,7 @@ const ReservationDialog = () => {
                                         Down Payment
                                     </Typography>
                                     <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
-                                        <Radio
-                                            checked={paymentType === 'percentage'}
-                                            onChange={() => setPaymentType('percentage')}
-                                            size="small"
-                                            sx={{ p: 0.5 }}
-                                        />
+                                        <Radio checked={paymentType === 'percentage'} onChange={() => setPaymentType('percentage')} size="small" sx={{ p: 0.5 }} />
                                         <Typography variant="body2" sx={{ ml: 0.5 }}>
                                             Percentage
                                         </Typography>
@@ -363,23 +347,14 @@ const ReservationDialog = () => {
                                 <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
                                     <Box sx={{ mt: 1, p: 2, bgcolor: '#fff', boxShadow: 3, borderRadius: 1 }}>
                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                            <StaticDatePicker
-                                                views={['year', 'month']}
-                                                value={dayjs(monthYear)}
-                                                onChange={handleDateChange}
-                                                minDate={dayjs().add(1, 'day')}
-                                                maxDate={dayjs().add(5, 'year')}
-                                                disablePast={true}
-                                            />
+                                            <StaticDatePicker views={['year', 'month']} value={dayjs(monthYear)} onChange={handleDateChange} minDate={dayjs().add(1, 'day')} maxDate={dayjs().add(5, 'year')} disablePast={true} />
                                         </LocalizationProvider>
                                     </Box>
                                 </ClickAwayListener>
                             </Popper>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <Box
-                                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#B0DEFF', p: 0.5, borderRadius: 1 }}
-                            >
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#B0DEFF', p: 0.5, borderRadius: 1 }}>
                                 <CalendarTodayIcon fontSize="small" sx={{ color: '#1976d2' }} />
                                 <Typography variant="caption" sx={{ ml: 0.5, color: '#1976d2' }}>
                                     {weeks.find((w) => w.id === selectedWeek)?.label}
@@ -403,6 +378,8 @@ const ReservationDialog = () => {
                                     }}
                                     onClick={() => {
                                         if (day) {
+                                            alert(day);
+
                                             handleOrderDetailChange('date', day);
                                         }
                                     }}
@@ -410,10 +387,7 @@ const ReservationDialog = () => {
                                     <Typography variant="caption" color="text.secondary">
                                         {dayLabels[index]}
                                     </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        fontWeight={day && orderDetails.date?.toDateString() === day.toDateString() ? 'medium' : 'normal'}
-                                    >
+                                    <Typography variant="body2" fontWeight={day && orderDetails.date?.toDateString() === day.toDateString() ? 'medium' : 'normal'}>
                                         {day ? day.getDate() : ''}
                                     </Typography>
                                 </Box>
@@ -432,13 +406,13 @@ const ReservationDialog = () => {
                             Select Time of Attendance
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            {['10:00', '13:00', '14:00', '18:00', 'Custom'].map((time) => {
+                            {['10:00', '13:00', '14:00', '18:00', 'Custom'].map((time, index) => {
                                 const isCustom = time === 'Custom';
                                 const isSelected = isCustom ? customTime : orderDetails.time === time;
 
                                 return (
                                     <Box
-                                        key={time}
+                                        key={index}
                                         onClick={() => {
                                             const selected = isCustom ? '' : time;
                                             setSelectedTime(time);
@@ -551,6 +525,7 @@ const ReservationDialog = () => {
                                 '&:hover': { bgcolor: '#072a42' },
                                 textTransform: 'none',
                             }}
+                            disabled={!orderDetails.member}
                             onClick={() => router.visit(route('order.menu'))}
                         >
                             Choose Menu

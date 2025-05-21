@@ -217,7 +217,7 @@ class MembersController extends Controller
 
     public function edit(string $id)
     {
-        $customer = User::with(['memberType', 'userDetails'])->findOrFail($id);
+        $customer = User::with(['memberType', 'userDetail'])->findOrFail($id);
 
         $memberTypes = MemberType::all(['id', 'name']);
         $addressTypes = AddressType::all(['id', 'name']);

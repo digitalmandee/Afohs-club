@@ -9,7 +9,7 @@ import { useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MainDashboard = ({ userDetail, users }) => {
+const MainDashboard = ({ kitchens }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -68,6 +68,10 @@ const MainDashboard = ({ userDetail, users }) => {
         setShowSuccess(false);
     };
 
+    const handleEditKitchen = (kitchen) => {
+        router.get(route('kitchens.edit', kitchen.id), kitchen);
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -90,7 +94,7 @@ const MainDashboard = ({ userDetail, users }) => {
                             marginBottom: '20px',
                         }}
                     >
-                        <Typography variant="h5">{userDetail.data.length} Kitchen</Typography>
+                        <Typography variant="h5">{kitchens?.data?.length} Kitchen</Typography>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <TextField
                                 placeholder="Search name or membership type"
@@ -121,18 +125,24 @@ const MainDashboard = ({ userDetail, users }) => {
                                     <TableCell style={{ fontWeight: 'bold' }}>Kitchen Name</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Phone number</TableCell>
+                                    <TableCell style={{ fontWeight: 'bold' }}>Edit</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {users?.data?.length > 0 ? (
-                                    users.data.map((user, index) => (
-                                        <TableRow key={`${user.user_id}-${index}`}>
-                                            <TableCell>{user.user_id || 'N/A'}</TableCell>
+                                {kitchens?.data?.length > 0 ? (
+                                    kitchens.data.map((kitchen, index) => (
+                                        <TableRow key={`${kitchen.user_id}-${index}`}>
+                                            <TableCell>{kitchen.user_id || 'N/A'}</TableCell>
                                             <TableCell>
-                                                <Typography variant="body1">{user.name || 'N/A'}</Typography>
+                                                <Typography variant="body1">{kitchen.name || 'N/A'}</Typography>
                                             </TableCell>
-                                            <TableCell>{user.email || 'N/A'}</TableCell>
-                                            <TableCell>{user.phone_number || 'N/A'}</TableCell>
+                                            <TableCell>{kitchen.email || 'N/A'}</TableCell>
+                                            <TableCell>{kitchen.phone_number || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <Button variant="contained" onClick={() => handleEditKitchen(kitchen)} style={{ backgroundColor: '#063455', color: 'white' }}>
+                                                    Edit
+                                                </Button>
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
@@ -142,35 +152,6 @@ const MainDashboard = ({ userDetail, users }) => {
                                         </TableCell>
                                     </TableRow>
                                 )}
-
-                                {/* {userDetail?.data?.length > 0 ? (
-                                    userDetail?.data?.map((user, userIndex) =>
-                                        user.user_detail && user.user_detail.length > 0 ? (
-                                            user.user_detail.map((detail, detailIndex) => (
-                                                <TableRow key={`${user.user_id}-${detailIndex}`}>
-                                                    <TableCell>{user.user_id || 'N/A'}</TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body1">{user.name || 'N/A'}</Typography>
-                                                    </TableCell>
-                                                    <TableCell>{user.email || 'N/A'}</TableCell>
-                                                    <TableCell>{user.phone_number || 'N/A'}</TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow key={`no-kitchen-${userIndex}`}>
-                                                <TableCell colSpan={4}>
-                                                    <Typography variant="body2">No kitchen details available.</Typography>
-                                                </TableCell>
-                                            </TableRow>
-                                        ),
-                                    )
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4}>
-                                            <Typography variant="body2">No customers found.</Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                )} */}
                             </TableBody>
                         </Table>
                     </Box>

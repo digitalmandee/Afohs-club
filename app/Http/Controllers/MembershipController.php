@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FileHelper;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Member;
@@ -10,31 +11,31 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+
+
 
 class MembershipController extends Controller
 {
+
+
+
     public function index()
     {
-        // Fetch all members with their related user details and member type
-        $members = Member::with(['userDetail.user', 'memberType'])
-            ->whereNull('primary_member_id') // Only primary members
-            ->get()
-            ->map(function ($member) {
-                return [
-                    'id' => $member->membership_number ?? 'N/A',
-                    'name' => $member->userDetail->first_name . ' ' . ($member->userDetail->last_name ?? ''),
-                    'email' => $member->userDetail->personal_email,
-                    'type' => $member->memberType->name ?? 'N/A',
-                    'status' => $member->card_status ?? 'Inactive',
-                    'avatar' => $member->member_image ? Storage::url($member->member_image) : '/placeholder.svg?height=40&width=40',
-                ];
-            });
+        // Get all users with their userDetails and their members (through userDetails)
+        $users = User::with([
+            'userDetail' => function ($query) {
+                $query->with('members');  // load members related to userDetail
+            }
+        ])->get();
 
-        // Pass the members data to the Inertia view
+        // Now $users contains all users, their userDetail, and members
+
         return Inertia::render('App/Admin/Membership/Dashboard', [
-            'members' => $members,
+            'member' => $users,
         ]);
     }
+
     public function store(Request $request)
     {
         // Log request data for debugging
@@ -74,9 +75,10 @@ class MembershipController extends Controller
             'permanent_address' => 'nullable|string',
             'permanent_city' => 'nullable|string|max:255',
             'permanent_country' => 'nullable|string|max:255',
-            'member_type' => 'required|string|max:255|exists:member_types,name',
+            // 'member_type' => 'required|string|max:255|exists:member_types,name',
+            'member_type' => 'required|string|max:255',
             'membership_category' => 'nullable|string|max:255',
-            'membership_number' => 'string|max:255',
+            'membership_number' => 'required|max:255',
             'membership_date' => 'date',
             'card_status' => 'nullable|string|in:Active,Inactive',
             'card_issue_date' => 'nullable|date',
@@ -186,11 +188,12 @@ class MembershipController extends Controller
 
                 // Create User for family member (no password)
                 $familyUser = User::create([
-                    'email' => $familyMemberData['family_members.*.email'],
-                    'password' => null, // Explicitly set to null
-                    'first_name' => $familyMemberData['family_members.*.full_name'],
-                    'phone_number' => $familyMemberData['family_members.*.phone_number'],
+                    'email' => $familyMemberData['email'],
+                    'password' => '123456',
+                    'first_name' => $familyMemberData['full_name'],
+                    'phone_number' => $familyMemberData['phone_number'],
                     'member_type_id' => $family_member_type_id,
+                    'parent_user_id' => $primaryUser->id
                 ]);
 
                 // Create UserDetail for family member
@@ -199,24 +202,20 @@ class MembershipController extends Controller
                     'cnic_no' => $familyMemberData['cnic'],
                     'personal_email' => $familyMemberData['email'],
                     'mobile_number_a' => $familyMemberData['phone_number'],
-                    'current_address' => $validated['current_address'],
-                    'current_city' => $validated['current_city'],
-                    'current_country' => $validated['current_country'],
-                    'permanent_address' => $validated['permanent_address'],
-                    'permanent_city' => $validated['permanent_city'],
-                    'permanent_country' => $validated['permanent_country'],
-                    'country' => $validated['current_country'],
-                    'state' => 'Punjab',
+                    // 'current_address' => $validated['current_address'],
+                    // 'current_city' => $validated['current_city'],
+                    // 'current_country' => $validated['current_country'],
+                    // 'permanent_address' => $validated['permanent_address'],
+                    // 'permanent_city' => $validated['permanent_city'],
+                    // 'permanent_country' => $validated['permanent_country'],
+                    // 'country' => $validated['current_country'],
+                    // 'state' => 'Punjab',
                 ]);
 
                 // Handle family member image
                 $familyMemberImagePath = null;
                 if (!empty($familyMemberData['picture'])) {
-                    $base64Image = preg_replace('/^data:image\/(png|jpg|jpeg);base64,/', '', $familyMemberData['picture']);
-                    $imageData = base64_decode($base64Image);
-                    $filename = 'family_member_images/' . Str::uuid() . '.jpg';
-                    Storage::disk('public')->put($filename, $imageData);
-                    $familyMemberImagePath = $filename;
+                    $familyMemberImagePath = FileHelper::saveImage($familyMemberData['picture'], 'family_member_images');
                 }
 
                 // Create Member record for family member
@@ -225,14 +224,14 @@ class MembershipController extends Controller
                     'member_type_id' => $family_member_type_id,
                     'full_name' => $familyMemberData['full_name'],
                     'relation' => $familyMemberData['relation'],
-                    'cnic' => $familyMemberData['cnic'],
-                    'phone_number' => $familyMemberData['phone_number'],
+                    // 'cnic' => $familyMemberData['cnic'],
+                    // 'phone_number' => $familyMemberData['phone_number'],
                     'membership_type' => $familyMemberData['membership_type'],
                     'membership_category' => $familyMemberData['membership_category'],
                     'start_date' => $familyMemberData['start_date'],
                     'end_date' => $familyMemberData['end_date'],
                     'picture' => $familyMemberImagePath,
-                    'primary_member_id' => $primaryMember->id,
+                    // 'primary_member_id' => $primaryMember->id,
                 ]);
             }
         }

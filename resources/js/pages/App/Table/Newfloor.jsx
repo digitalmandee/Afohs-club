@@ -1,24 +1,13 @@
-import Table2Icon from '@/components/App/Icons/CTable';
-import Table1Icon from '@/components/App/Icons/Table1';
+import { useState } from 'react';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
 import { Add, ArrowBack, Delete, ExpandMore } from '@mui/icons-material';
-import {
-    Alert,
-    Box,
-    Button,
-    Container,
-    FormControl,
-    Grid,
-    IconButton,
-    MenuItem,
-    Paper,
-    Select,
-    Snackbar,
-    TextField,
-    Typography,
-} from '@mui/material';
-import { useState } from 'react';
+import { Alert, Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Paper, Select, Snackbar, TextField, Typography } from '@mui/material';
+import Table10Icon from '@/components/App/Icons/CTable';
+import Table1Icon from '@/components/App/Icons/Table1';
+import Table2Icon from '@/components/App/Icons/Table2';
+import Table6Icon from '@/components/App/Icons/Table6';
+import Table8Icon from '@/components/App/Icons/Table8';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -208,18 +197,8 @@ const NewFloor = ({ floorInfo }) => {
                                     mr: 1.5,
                                 }}
                             />
-                            <Typography
-                                onClick={() => setModalOpen(true)}
-                                variant="body2"
-                                sx={{ color: 'white', cursor: 'pointer', fontWeight: 500 }}
-                            >
-                                {data.floor.name
-                                    ? data.floor.area
-                                        ? `${data.floor.name} • ${data.floor.area}`
-                                        : `${data.floor.name} • Untitled Area`
-                                    : data.floor.area
-                                      ? `Untitled Floor • ${data.floor.area}`
-                                      : 'Untitled Floor • Untitled Area'}
+                            <Typography onClick={() => setModalOpen(true)} variant="body2" sx={{ color: 'white', cursor: 'pointer', fontWeight: 500 }}>
+                                {data.floor.name ? (data.floor.area ? `${data.floor.name} • ${data.floor.area}` : `${data.floor.name} • Untitled Area`) : data.floor.area ? `Untitled Floor • ${data.floor.area}` : 'Untitled Floor • Untitled Area'}
                             </Typography>
                         </Box>
                         {/* Grid pattern */}
@@ -361,27 +340,13 @@ const NewFloor = ({ floorInfo }) => {
                                                     <Typography variant="body2" color="text.secondary">
                                                         Floor Name
                                                     </Typography>
-                                                    <TextField
-                                                        size="small"
-                                                        value={data.floor.name}
-                                                        onChange={(e) => handleFloorChange('name', e.target.value)}
-                                                        fullWidth
-                                                        error={!!errors[`floor.name`]}
-                                                        helperText={errors[`floor.name`]}
-                                                    />
+                                                    <TextField size="small" value={data.floor.name} onChange={(e) => handleFloorChange('name', e.target.value)} fullWidth error={!!errors[`floor.name`]} helperText={errors[`floor.name`]} />
                                                 </Grid>
                                                 <Grid item xs={5}>
                                                     <Typography variant="body2" color="text.secondary">
                                                         Floor Area
                                                     </Typography>
-                                                    <TextField
-                                                        size="small"
-                                                        value={data.floor.area}
-                                                        onChange={(e) => handleFloorChange('area', e.target.value)}
-                                                        fullWidth
-                                                        error={!!errors[`floor.area`]}
-                                                        helperText={errors[`floor.area`]}
-                                                    />
+                                                    <TextField size="small" value={data.floor.area} onChange={(e) => handleFloorChange('area', e.target.value)} fullWidth error={!!errors[`floor.area`]} helperText={errors[`floor.area`]} />
                                                 </Grid>
                                             </Grid>
                                         </>
@@ -418,25 +383,14 @@ const NewFloor = ({ floorInfo }) => {
                                                         <Typography variant="body2" color="text.secondary">
                                                             Table Number
                                                         </Typography>
-                                                        <TextField
-                                                            size="small"
-                                                            value={table.table_no}
-                                                            onChange={(e) => handleTableChange(index, 'table_no', e.target.value)}
-                                                            fullWidth
-                                                            error={!!errors[`tables.${index}.table_no`]}
-                                                            helperText={errors[`tables.${index}.table_no`]}
-                                                        />
+                                                        <TextField size="small" value={table.table_no} onChange={(e) => handleTableChange(index, 'table_no', e.target.value)} fullWidth error={!!errors[`tables.${index}.table_no`]} helperText={errors[`tables.${index}.table_no`]} />
                                                     </Grid>
                                                     <Grid item xs={5}>
                                                         <Typography variant="body2" color="text.secondary">
                                                             Capacity
                                                         </Typography>
                                                         <FormControl fullWidth size="small">
-                                                            <Select
-                                                                value={table.capacity}
-                                                                onChange={(e) => handleTableChange(index, 'capacity', e.target.value)}
-                                                                error={!!errors[`tables.${index}.capacity`]}
-                                                            >
+                                                            <Select value={table.capacity} onChange={(e) => handleTableChange(index, 'capacity', e.target.value)} error={!!errors[`tables.${index}.capacity`]}>
                                                                 <MenuItem value="2">2 Person</MenuItem>
                                                                 <MenuItem value="4">4 Person</MenuItem>
                                                                 <MenuItem value="6">6 Person</MenuItem>
@@ -501,23 +455,42 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
                 },
             }}
         >
-            {data.capacity == 8 ? (
+            {data.capacity == 2 ? (
                 <Table2Icon
                     style={{
-                        width: '100%',
                         height: '100%',
                         bgcolor: fill,
                     }}
                 />
-            ) : (
+            ) : data.capacity == 4 ? (
                 <Table1Icon
                     style={{
-                        width: '20%',
                         height: '100%',
                         bgcolor: fill,
                     }}
                 />
-            )}
+            ) : data.capacity == 6 ? (
+                <Table6Icon
+                    style={{
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            ) : data.capacity == 8 ? (
+                <Table8Icon
+                    style={{
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            ) : data.capacity == 10 ? (
+                <Table10Icon
+                    style={{
+                        height: '100%',
+                        bgcolor: fill,
+                    }}
+                />
+            ) : null}
 
             <Box
                 sx={{

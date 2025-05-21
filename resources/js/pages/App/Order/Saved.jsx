@@ -117,7 +117,7 @@ const OrderSaved = ({ setActiveView }) => {
 
     useEffect(() => {
         axios
-            .post(route('order.savedOrder'))
+            .get(route('order.savedOrder'))
             .then((response) => {
                 setSavedOrders(response.data.SavedOrders);
             })
@@ -178,143 +178,144 @@ const OrderSaved = ({ setActiveView }) => {
                 </Typography>
             </Box>
             <List sx={{ p: 0 }}>
-                {savedOrders.map((order, index) => (
-                    <ListItem
-                        key={index}
-                        sx={{
-                            px: 2,
-                        }}
-                    >
-                        <Box
+                {savedOrders.length > 0 &&
+                    savedOrders.map((order, index) => (
+                        <ListItem
+                            key={index}
                             sx={{
-                                width: '100%',
-                                bgcolor: '#F6F6F6',
-                                border: '1px solid #E3E3E3',
-                                p: 2,
+                                px: 2,
                             }}
                         >
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                <Avatar
-                                    sx={{
-                                        bgcolor: '#0C67AA',
-                                        width: 36,
-                                        height: 36,
-                                        fontSize: '16px',
-                                        color: '#FFFFFF',
-                                    }}
-                                >
-                                    {order.table_id}
-                                </Avatar>
-                                {isModalVisible && <CancelOrder onClose={() => setIsModalVisible(false)} onConfirm={handleCancelOrder} />}
-                                {isNotificationVisible && (
-                                    <Box
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    bgcolor: '#F6F6F6',
+                                    border: '1px solid #E3E3E3',
+                                    p: 2,
+                                }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <Avatar
                                         sx={{
-                                            position: 'fixed',
-                                            top: '5%',
-                                            right: '2%',
-                                            zIndex: 2000,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            bgcolor: '#E6FAE6',
-                                            color: '#333',
-                                            borderRadius: 2,
-                                            p: 2,
-                                            boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
-                                            minWidth: 300,
+                                            bgcolor: '#0C67AA',
+                                            width: 36,
+                                            height: 36,
+                                            fontSize: '16px',
+                                            color: '#FFFFFF',
                                         }}
                                     >
-                                        <Typography
+                                        {order.table_id}
+                                    </Avatar>
+                                    {isModalVisible && <CancelOrder onClose={() => setIsModalVisible(false)} onConfirm={handleCancelOrder} />}
+                                    {isNotificationVisible && (
+                                        <Box
                                             sx={{
-                                                fontWeight: 'bold',
-                                                mr: 1,
+                                                position: 'fixed',
+                                                top: '5%',
+                                                right: '2%',
+                                                zIndex: 2000,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                bgcolor: '#E6FAE6',
+                                                color: '#333',
+                                                borderRadius: 2,
+                                                p: 2,
+                                                boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
+                                                minWidth: 300,
                                             }}
                                         >
-                                            ✅ Order Canceled!
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                fontSize: '0.875rem',
-                                            }}
-                                        >
-                                            Order id <b>#Order002</b> has been canceled
-                                        </Typography>
-                                    </Box>
-                                )}
-                                <IconButton
-                                    size="small"
-                                    sx={{
-                                        ml: 1,
-                                        bgcolor: '#E3E3E3',
-                                        width: 36,
-                                        height: 36,
-                                    }}
-                                >
-                                    <img src="/assets/food-tray.png" alt="" />
-                                </IconButton>
-                            </Box>
-
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                <Typography variant="body1" sx={{ fontWeight: 500, mr: 1 }}>
-                                    {order.user.name}
-                                </Typography>
-
-                                <img
-                                    src="/assets/Diamond.png"
-                                    alt=""
-                                    style={{
-                                        height: 24,
-                                        width: 24,
-                                    }}
-                                />
-                            </Box>
-
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Box
-                                    sx={{
-                                        bgcolor: '#E3E3E3',
-                                        px: 1.5,
-                                        py: 0.5,
-                                        borderRadius: 1,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                        #{order.order_number}
-                                    </Typography>
-                                </Box>
-
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <img
-                                        src="/assets/trash.png"
-                                        alt=""
-                                        style={{
-                                            height: 20,
-                                            width: 20,
-                                            marginRight: 10,
-                                            cursor: 'pointer',
-                                        }}
-                                        onClick={() => setIsModalVisible(true)}
-                                    />
-                                    <Button
-                                        variant="contained"
+                                            <Typography
+                                                sx={{
+                                                    fontWeight: 'bold',
+                                                    mr: 1,
+                                                }}
+                                            >
+                                                ✅ Order Canceled!
+                                            </Typography>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: '0.875rem',
+                                                }}
+                                            >
+                                                Order id <b>#Order002</b> has been canceled
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    <IconButton
                                         size="small"
                                         sx={{
-                                            bgcolor: '#0c3b5c',
-                                            textTransform: 'none',
-                                            '&:hover': {
-                                                bgcolor: '#072a42',
-                                            },
+                                            ml: 1,
+                                            bgcolor: '#E3E3E3',
+                                            width: 36,
+                                            height: 36,
                                         }}
-                                        onClick={() => handleContinueOrderClick(order)}
                                     >
-                                        Continue Order
-                                    </Button>
+                                        <img src="/assets/food-tray.png" alt="" />
+                                    </IconButton>
+                                </Box>
+
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <Typography variant="body1" sx={{ fontWeight: 500, mr: 1 }}>
+                                        {order.user.name}
+                                    </Typography>
+
+                                    <img
+                                        src="/assets/Diamond.png"
+                                        alt=""
+                                        style={{
+                                            height: 24,
+                                            width: 24,
+                                        }}
+                                    />
+                                </Box>
+
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Box
+                                        sx={{
+                                            bgcolor: '#E3E3E3',
+                                            px: 1.5,
+                                            py: 0.5,
+                                            borderRadius: 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            #{order.order_number}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <img
+                                            src="/assets/trash.png"
+                                            alt=""
+                                            style={{
+                                                height: 20,
+                                                width: 20,
+                                                marginRight: 10,
+                                                cursor: 'pointer',
+                                            }}
+                                            onClick={() => setIsModalVisible(true)}
+                                        />
+                                        <Button
+                                            variant="contained"
+                                            size="small"
+                                            sx={{
+                                                bgcolor: '#0c3b5c',
+                                                textTransform: 'none',
+                                                '&:hover': {
+                                                    bgcolor: '#072a42',
+                                                },
+                                            }}
+                                            onClick={() => handleContinueOrderClick(order)}
+                                        >
+                                            Continue Order
+                                        </Button>
+                                    </Box>
                                 </Box>
                             </Box>
-                        </Box>
-                    </ListItem>
-                ))}
+                        </ListItem>
+                    ))}
             </List>
 
             {/* Popup Dialog */}

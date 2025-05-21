@@ -27,10 +27,10 @@ return new class extends Migration
             $table->string('guardian_membership')->nullable();
             $table->string('nationality')->nullable();
             $table->string('cnic_no', 13);
-            $table->string('passport_no');
-            $table->string('gender');
+            $table->string('passport_no')->nullable();
+            $table->string('gender')->nullable();
             $table->string('ntn')->nullable();
-            $table->date('date_of_birth');
+            $table->date('date_of_birth')->nullable();
             $table->json('education')->nullable();
             $table->text('membership_reason')->nullable();
 
@@ -59,7 +59,7 @@ return new class extends Migration
 
             // General address info
             $table->string('address_type')->nullable();
-            $table->string('country'); // Keep this if you need a general "country" field
+            $table->string('country')->nullable();
             $table->string('city')->nullable();
             $table->string('zip')->nullable();
             $table->string('address')->nullable();

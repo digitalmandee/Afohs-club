@@ -2,24 +2,17 @@
 
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\CategoryController;
-use App\Http\Controllers\App\MemberAddressController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\WaiterController;
 use App\Http\Controllers\FloorController;
-use App\Http\Controllers\TableController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\App\Auth\AuthController;
-use App\Http\Controllers\App\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\App\Auth\NewPasswordController;
-use App\Http\Controllers\App\Auth\PasswordResetLinkController;
-use App\Http\Controllers\App\Auth\RegisteredUserController;
+use App\Http\Controllers\App\DashboardController;
 use App\Http\Middleware\AuthenticateTenant;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
@@ -31,27 +24,37 @@ Route::group([
     Route::get('/', fn() => redirect()->route('tenant.login'));
 
     // Tenant auth-protected routes
-    Route::middleware([\App\Http\Middleware\AuthenticateTenant::class, 'auth:tenant'])->group(function () {
-        Route::get('/dashboard', function () {
-            return Inertia::render('App/Dashboard/Dashboardm');
-        })->name('tenant.dashboard');
+    Route::middleware([AuthenticateTenant::class, 'auth:tenant'])->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
 
-        Route::get('/order/queue', function () {
-            return Inertia::render('App/Order/Queue');
-        });
+        // All Orders
+        Route::get('/order/all', [DashboardController::class, 'allOrders'])->name('order.all');
+        // Order Reservations
+        Route::get('/order/reservations', [DashboardController::class, 'orderReservations'])->name('order.reservations');
+        // Order Reservation WeekDays
+        Route::get('/weekly-reservation-overview', [DashboardController::class, 'weeklyReservationOverview'])->name('order.weekly-overview');
 
-        // Members types
+        Route::get('/order/queue', [OrderController::class, 'orderQueue'])->name('order.queue');
+
+        // for member and waiter
+        Route::get('/user/search', [UserController::class, 'searchMember'])->name('user.search');
+        Route::get('/waiters/all', [UserController::class, 'waiters'])->name('waiters.all');
+        Route::get('/kitchens/all', [UserController::class, 'kitchens'])->name('kitchens.all');
+        Route::get('/floor/all', [FloorController::class, 'floorAll'])->name('floor.all');
+
+        // Members
         Route::resource('members', MembersController::class)->except('show', 'edit');
+        // Members types
         Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
         Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
         Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
-        Route::put('/members/member-types/{id}', [MemberTypeController::class, 'update'])->name('member.update');
+        Route::put('/members/member-types/{id}/update', [MemberTypeController::class, 'update'])->name('member.update');
         Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
         // address
         Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
         Route::get('/members/address-types', [AddressTypeController::class, 'index'])->name('address-types.index');
         Route::post('/members/address-types', [AddressTypeController::class, 'store'])->name('address-types.store');
-        Route::put('/members/address-types/{id}', [AddressTypeController::class, 'update'])->name('address.update');
+        Route::put('/members/address-types/{id}/update', [AddressTypeController::class, 'update'])->name('address.update');
         Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
         // member
         Route::get('/members', [MembersController::class, 'index'])->name('members.index');
@@ -64,21 +67,15 @@ Route::group([
         Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');
         Route::get('/waiters/create', [WaiterController::class, 'create'])->name('waiters.create');
         Route::post('/waiters', [WaiterController::class, 'store'])->name('waiters.store');
-        Route::put('/waiters/{id}', [WaiterController::class, 'update'])->name('waiters.update');
+        Route::put('/waiters/{id}/update', [WaiterController::class, 'update'])->name('waiters.update');
 
 
         // Order Management
+        Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
         Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
         Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
-        Route::post('/order/{id}', [OrderController::class, 'update'])->name('orders.update');
-        Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
-        Route::post('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
-
-        // for member and waiter
-        Route::get('/user/search', [UserController::class, 'searchMember'])->name('user.search');
-        Route::get('/waiters/all', [UserController::class, 'waiters'])->name('waiters.all');
-        Route::get('/kitchens/all', [UserController::class, 'kitchens'])->name('kitchens.all');
-        Route::get('/floor/all', [FloorController::class, 'floorAll'])->name('floor.all');
+        Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
+        Route::post('/order/{id}/update', [OrderController::class, 'update'])->name('orders.update');
 
         Route::get('/order/management', [OrderController::class, 'orderManagement'])->name('order.management');
         // Send to kitchen order
@@ -107,7 +104,7 @@ Route::group([
         // Floors & Table Routes
         Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
         Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
-        Route::put('/floors/{id}', [FloorController::class, 'update'])->name('floors.update');
+        Route::put('/floors/{id}/update', [FloorController::class, 'update'])->name('floors.update');
         Route::delete('/floors/{floor}', [FloorController::class, 'destroy'])->name('floors.destroy');
 
         Route::get('/floors/{id}/edit', [FloorController::class, 'edit'])->name('floors.edit');
@@ -124,7 +121,7 @@ Route::group([
         // Inventory Category
         Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
         Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
-        Route::put('/inventory/category/{category}', [CategoryController::class, 'update'])->name('category.update');
+        Route::put('/inventory/category/{category}/update', [CategoryController::class, 'update'])->name('category.update');
         Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
 
         // Inventory Items
@@ -136,7 +133,7 @@ Route::group([
             return Inertia::render('App/Inventory/Product');
         })->name('product.create');
         Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
-        // 
+        //
         Route::get('/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
 
 
@@ -153,8 +150,9 @@ Route::group([
         // Kitchen Dashboard
         Route::get('/kitchens', [KitchenController::class, 'indexPage'])->name('kitchens.index');
         Route::get('/kitchens/create', [KitchenController::class, 'create'])->name('kitchens.create');
+        Route::get('/kitchens/{id}/edit', [KitchenController::class, 'edit'])->name('kitchens.edit');
         Route::post('/kitchens', [KitchenController::class, 'store'])->name('kitchens.store');
-        Route::put('/kitchens/{id}', [KitchenController::class, 'update'])->name('kitchens.update');
+        Route::put('/kitchens/{id}/update', [KitchenController::class, 'update'])->name('kitchens.update');
     });
 
     // Login Authentication Routes
