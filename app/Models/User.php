@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -17,6 +18,8 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'user_id',
+        'name',
         'email',
         'member_type_id',
         'phone_number',
@@ -60,5 +63,24 @@ class User extends Authenticatable
     public function userDetail()
     {
         return $this->hasOne(UserDetail::class);
+    }
+
+    /**
+     * Get the kitchen detail.
+     */
+    public function kitchenDetail()
+    {
+        return $this->hasOne(kitchenDetail::class, 'kitchen_id', 'id');
+    }
+
+    /**
+     * Set the password for a new user.
+     *
+     * @param  string  $password
+     * @return $this
+     */
+    public function setPasswordAttribute($password)
+    {
+        $this->attributes['password'] = $password ? $password : Hash::make(123456);
     }
 }

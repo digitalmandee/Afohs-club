@@ -17,7 +17,6 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
     const [showError, setShowError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [errors, setErrors] = useState({});
-    const [showData, setShowData] = useState(false);
     const [currentAddressIndex, setCurrentAddressIndex] = useState(null);
 
     // Extract phone number and country code

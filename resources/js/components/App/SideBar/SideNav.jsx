@@ -129,6 +129,12 @@ export default function SideNav({ open, setOpen }) {
             permission: 'order',
         },
         {
+            text: 'Kitchens',
+            icon: <KitchenIcon />,
+            path: route('kitchens.index'),
+            permission: 'order',
+        },
+        {
             text: 'Members',
             icon: <MemberIcon />,
             path: route('members.index'),

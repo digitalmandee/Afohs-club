@@ -20,6 +20,7 @@ class Invoices extends Model
         'total_price',
         'paid_amount',
         'customer_change',
+        'cost_price',
         'payment_method',
         'status',
     ];

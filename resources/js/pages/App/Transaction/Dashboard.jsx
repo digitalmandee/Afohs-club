@@ -709,7 +709,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 fontSize: '14px',
                                                             }}
                                                         >
-                                                            {totalOrders} Items
+                                                            {order.order_items_count} Items
                                                         </Typography>
                                                     </Box>
                                                     <Box textAlign="right">
@@ -749,11 +749,13 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     ? 'Pending'
                                                                     : order?.order?.status === 'in_progress'
                                                                       ? 'In Progress'
-                                                                      : order?.order?.status === 'completed'
-                                                                        ? 'Completed' // Don't show label if completed
-                                                                        : order?.order?.status === 'cancelled'
-                                                                          ? 'Order Cancelled'
-                                                                          : 'Unknown' // Default if status is not recognized
+                                                                      : order?.order?.status === 'completed' && order.status === 'paid'
+                                                                        ? 'Completed'
+                                                                        : order?.order?.status === 'completed'
+                                                                          ? 'Ready to Serve' // Don't show label if completed
+                                                                          : order?.order?.status === 'cancelled'
+                                                                            ? 'Order Cancelled'
+                                                                            : 'Unknown' // Default if status is not recognized
                                                             }
                                                             size="small"
                                                             style={{

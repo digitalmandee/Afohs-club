@@ -11,6 +11,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import OrderDetail from './Detail';
 import OrderSaved from './Saved';
+import VariantSelectorDialog from './VariantSelectorDialog';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -22,6 +23,7 @@ const OrderMenu = () => {
 
     // const [showPayment, setShowPayment] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(1);
+    const [variantProductId, setVariantProductId] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [activeView, setActiveView] = useState('orderDetail');
     const [categories, setCategories] = useState([]);
@@ -37,9 +39,12 @@ const OrderMenu = () => {
 
     // This would be called when user clicks a product
     const handleProductClick = (product) => {
-        if (product.current_stock === 0) return;
+        console.log(product);
+
+        if (product.minimal_stock > product.current_stock - 1) return;
 
         if (product.variants && product.variants.length > 0) {
+            setVariantProductId(product.id);
             setVariantProduct(product);
             setVariantPopupOpen(true);
         } else {
@@ -74,10 +79,7 @@ const OrderMenu = () => {
     };
 
     const handleEditItem = (item, index) => {
-        const fullProduct = products.find((p) => p.id === item.id);
-        if (!fullProduct) return;
-
-        setVariantProduct(fullProduct);
+        setVariantProductId(item.id);
         setEditingItemIndex(index);
         setVariantPopupOpen(true);
         setInitialEditItem(item); // new state to pass into VariantSelector
@@ -125,7 +127,20 @@ const OrderMenu = () => {
                         </IconButton>
                     </Box>
 
-                    {variantPopupOpen && variantProduct && (
+                    {variantPopupOpen && (
+                        <VariantSelectorDialog
+                            open={variantPopupOpen}
+                            onClose={() => {
+                                setVariantPopupOpen(false);
+                                setEditingItemIndex(null);
+                                setInitialEditItem(null);
+                            }}
+                            productId={variantProductId}
+                            initialItem={initialEditItem}
+                            onConfirm={handleVariantConfirm}
+                        />
+                    )}
+                    {/* {variantPopupOpen && variantProduct && (
                         <VariantSelector
                             product={variantProduct}
                             initialItem={initialEditItem}
@@ -136,7 +151,7 @@ const OrderMenu = () => {
                             }}
                             onConfirm={handleVariantConfirm}
                         />
-                    )}
+                    )} */}
 
                     {/* <pre>{JSON.stringify(orderDetails, null, 2)}</pre> */}
 
@@ -431,11 +446,7 @@ const OrderMenu = () => {
                             </Box>
 
                             {/* Conditional rendering based on active view */}
-                            {activeView === 'orderDetail' ? (
-                                <OrderDetail handleEditItem={handleEditItem} />
-                            ) : (
-                                <OrderSaved setActiveView={setActiveView} />
-                            )}
+                            {activeView === 'orderDetail' ? <OrderDetail handleEditItem={handleEditItem} /> : <OrderSaved setActiveView={setActiveView} />}
                         </Paper>
                     </Box>
                 </Box>
@@ -568,13 +579,7 @@ const VariantSelector = ({ product, onConfirm, onClose, initialItem = null }) =>
             <div style={{ marginTop: '10px' }}>
                 <label>
                     Quantity:
-                    <input
-                        type="number"
-                        min="1"
-                        value={quantity}
-                        onChange={(e) => setQuantity(parseInt(e.target.value))}
-                        style={{ marginLeft: '10px', width: '60px' }}
-                    />
+                    <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value))} style={{ marginLeft: '10px', width: '60px' }} />
                 </label>
             </div>
 

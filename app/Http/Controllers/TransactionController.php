@@ -11,7 +11,7 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $Invoices = Invoices::with(['user', 'order.user', 'order.table:id,table_no'])->latest()->get();
+        $Invoices = Invoices::with(['user', 'order.user', 'order.table:id,table_no'])->withCount('orderItems')->latest()->get();
         $totalOrders = Order::count();
 
         return Inertia::render('App/Transaction/Dashboard', compact('Invoices', 'totalOrders'));
