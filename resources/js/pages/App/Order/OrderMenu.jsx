@@ -167,7 +167,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Left Category Sidebar */}
                         <Box
                             sx={{
-                                width: '80px',
+                                width: '95px',
                                 marginLeft: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -223,7 +223,8 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Main Content Area */}
                         <Box
                             sx={{
-                                flex: 1,
+                                width:'660px',
+                                // flex: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
                                 borderRadius: '12px',
@@ -382,7 +383,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Order Details Section */}
                         <Paper
                             sx={{
-                                width: 320,
+                                width: 440,
                                 borderRadius: 2,
                                 p: 2,
                                 display: 'flex',
@@ -408,13 +409,13 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                 >
                                     {/* Order Detail Button */}
                                     <Button
-                                        variant={activeView === 'orderDetail' ? 'text' : 'outlined'}
+                                        variant={activeView === 'orderDetail' ? 'outlined' : 'text'}
                                         size="small"
                                         onClick={() => setActiveView('orderDetail')}
                                         sx={{
                                             borderRadius: 5,
                                             textTransform: 'none',
-                                            borderColor: activeView === 'orderDetail' ? 'transparent' : '#0c3b5c',
+                                            borderColor: activeView === 'orderDetail' ? '#0c3b5c' : 'transparent',
                                             color: '#0c3b5c',
                                             minWidth: 'auto',
                                             px: 1.5,
@@ -426,13 +427,13 @@ const OrderMenu = ({ totalSavedOrders }) => {
 
                                     {/* Order Saved Button */}
                                     <Button
-                                        variant={activeView === 'orderSaved' ? 'text' : 'outlined'}
+                                        variant={activeView === 'orderSaved' ? 'outlined' : 'text'}
                                         size="small"
                                         onClick={() => setActiveView('orderSaved')}
                                         sx={{
                                             borderRadius: 5,
                                             textTransform: 'none',
-                                            borderColor: activeView === 'orderSaved' ? 'transparent' : '#0c3b5c',
+                                            borderColor: activeView === 'orderSaved' ? '#0c3b5c' : 'transparent',
                                             color: '#0c3b5c',
                                             display: 'flex',
                                             alignItems: 'center',
