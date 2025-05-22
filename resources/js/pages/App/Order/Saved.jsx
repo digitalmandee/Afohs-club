@@ -146,7 +146,7 @@ const OrderSaved = ({ setActiveView }) => {
             sx={{
                 bgcolor: '#FFFFFF',
                 mt: 2,
-                mx: -2,
+                px: 1,
                 borderRadius: '20px',
                 border: '1px solid #E3E3E3',
             }}

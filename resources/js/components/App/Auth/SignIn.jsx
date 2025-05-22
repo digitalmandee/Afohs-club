@@ -25,12 +25,18 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
     return (
         <>
             <Box
+                component="form"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                }}
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-start',
                     height: '100vh',
                     overflowY: 'auto',
+                    pb: '100px',
                     '&::-webkit-scrollbar': {
                         display: 'none',
                     },
@@ -81,7 +87,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                             fontSize: '14px',
                         }}
                     >
-                        Company Id
+                        Employee Id
                     </Typography>
                     <TextField
                         fullWidth
