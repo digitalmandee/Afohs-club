@@ -1,11 +1,6 @@
 import { router } from '@inertiajs/react';
-import {
-    AccountBalance as AccountBalanceIcon,
-    ArrowForward as ArrowForwardIcon,
-    Backspace as BackspaceIcon,
-    CreditCard as CreditCardIcon,
-} from '@mui/icons-material';
-import { Box, Button, Dialog, Grid, InputAdornment, TextField, Typography } from '@mui/material';
+import { AccountBalance as AccountBalanceIcon, ArrowForward as ArrowForwardIcon, Backspace as BackspaceIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
+import { Box, Button, Dialog, Grid, InputAdornment, MenuItem, Select, TextField, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useState } from 'react';
 import Receipt from './Receipt';
@@ -15,11 +10,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const [inputAmount, setInputAmount] = useState('0');
     const [customerChanges, setCustomerChanges] = useState('0');
     const [activePaymentMethod, setActivePaymentMethod] = useState('cash');
-    const [selectedBank, setSelectedBank] = useState('bca');
+    const [selectedBank, setSelectedBank] = useState('mcb');
     // Bank transfer form state
     const [accountNumber, setAccountNumber] = useState('');
     const [cardHolderName, setCardHolderName] = useState('');
     const [cvvCode, setCvvCode] = useState('');
+
+    // Credit card states
+    const [creditCardType, setCreditCardType] = useState('visa');
+    const [receiptFile, setReceiptFile] = useState(null);
 
     const handlePaymentMethodChange = (method) => {
         setActivePaymentMethod(method);
@@ -71,34 +70,80 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         }
     };
 
+    const handleFileChange = (e) => {
+        if (e.target.files.length > 0) {
+            setReceiptFile(e.target.files[0]);
+        } else {
+            setReceiptFile(null);
+        }
+    };
+
     const handlePayNow = () => {
-        if (inputAmount !== invoiceData.total_price) {
-            enqueueSnackbar('Please enter the correct amount', { variant: 'warning' });
+        // Amount validation
+        if (parseFloat(inputAmount) < invoiceData.total_price) {
+            enqueueSnackbar('Please enter the correct amount or greater', { variant: 'warning' });
             return;
         }
 
-        const payload = {
-            invoice_id: invoiceData?.id,
-            paid_amount: inputAmount,
-            customer_changes: customerChanges,
-        };
+        if (activePaymentMethod === 'credit_card' && !receiptFile) {
+            enqueueSnackbar('Please upload the receipt', { variant: 'warning' });
+            return;
+        }
 
-        router.post(route('order.payment'), payload, {
-            onSuccess: (data) => {
-                enqueueSnackbar('Payment successful', { variant: 'success' });
-                openSuccessPayment();
-            },
-            onError: (errors) => {
-                enqueueSnackbar(
-                    typeof errors === 'object' && errors !== null
-                        ? Object.entries(errors)
-                              .map(([field, message]) => message)
-                              .join(', ')
-                        : 'Something went wrong',
-                    { variant: 'error' },
-                );
-            },
-        });
+        // Prepare form data for credit card (with file)
+        if (activePaymentMethod === 'credit_card') {
+            const formData = new FormData();
+            formData.append('invoice_id', invoiceData.id);
+            formData.append('paid_amount', inputAmount);
+            formData.append('payment_method', 'credit_card');
+            formData.append('credit_card_type', creditCardType);
+            formData.append('receipt', receiptFile);
+
+            router.post(route('order.payment'), formData, {
+                onSuccess: () => {
+                    enqueueSnackbar('Payment successful', { variant: 'success' });
+                    openSuccessPayment();
+                },
+                onError: (errors) => {
+                    enqueueSnackbar(
+                        typeof errors === 'object' && errors !== null
+                            ? Object.entries(errors)
+                                  .map(([field, message]) => message)
+                                  .join(', ')
+                            : 'Something went wrong',
+                        { variant: 'error' },
+                    );
+                },
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+        } else {
+            // For other payment methods (cash, bank) use regular payload
+            const payload = {
+                invoice_id: invoiceData?.id,
+                paid_amount: inputAmount,
+                customer_changes: customerChanges,
+                payment_method: activePaymentMethod,
+            };
+
+            router.post(route('order.payment'), payload, {
+                onSuccess: () => {
+                    enqueueSnackbar('Payment successful', { variant: 'success' });
+                    openSuccessPayment();
+                },
+                onError: (errors) => {
+                    enqueueSnackbar(
+                        typeof errors === 'object' && errors !== null
+                            ? Object.entries(errors)
+                                  .map(([field, message]) => message)
+                                  .join(', ')
+                            : 'Something went wrong',
+                        { variant: 'error' },
+                    );
+                },
+            });
+        }
     };
 
     return (
@@ -140,10 +185,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                             mb: 3,
                         }}
                     >
-                        <Box
-                            sx={activePaymentMethod === 'cash' ? styles.activePaymentMethodTab : styles.paymentMethodTab}
-                            onClick={() => handlePaymentMethodChange('cash')}
-                        >
+                        <Box sx={activePaymentMethod === 'cash' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('cash')}>
                             <CreditCardIcon
                                 sx={{
                                     fontSize: 24,
@@ -155,10 +197,22 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 Cash
                             </Typography>
                         </Box>
-                        <Box
-                            sx={activePaymentMethod === 'bank' ? styles.activePaymentMethodTab : styles.paymentMethodTab}
-                            onClick={() => handlePaymentMethodChange('bank')}
-                        >
+
+                        {/* New Credit Card Tab */}
+                        <Box sx={activePaymentMethod === 'credit_card' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('credit_card')}>
+                            <CreditCardIcon
+                                sx={{
+                                    fontSize: 24,
+                                    mb: 1,
+                                    color: activePaymentMethod === 'credit_card' ? '#0a3d62' : '#666',
+                                }}
+                            />
+                            <Typography variant="body1" fontWeight={activePaymentMethod === 'credit_card' ? 'medium' : 'normal'}>
+                                Credit Card
+                            </Typography>
+                        </Box>
+
+                        <Box sx={activePaymentMethod === 'bank' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('bank')}>
                             <AccountBalanceIcon
                                 sx={{
                                     fontSize: 24,
@@ -217,11 +271,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         flexWrap: 'wrap',
                                     }}
                                 >
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleQuickAmountClick(invoiceData.total_price.toString())}
-                                        sx={styles.quickAmountButton}
-                                    >
+                                    <Button variant="outlined" onClick={() => handleQuickAmountClick(invoiceData.total_price.toString())} sx={styles.quickAmountButton}>
                                         Exact money
                                     </Button>
                                     <Button variant="outlined" onClick={() => handleQuickAmountClick('10.00')} sx={styles.quickAmountButton}>
@@ -330,25 +380,13 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         mb: 3,
                                     }}
                                 >
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleBankSelection('bca')}
-                                        sx={selectedBank === 'bca' ? styles.activeBankButton : styles.bankButton}
-                                    >
-                                        BCA Bank
+                                    <Button variant="outlined" onClick={() => handleBankSelection('mcb')} sx={selectedBank === 'mcb' ? styles.activeBankButton : styles.bankButton}>
+                                        MCB Bank
                                     </Button>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleBankSelection('citi')}
-                                        sx={selectedBank === 'citi' ? styles.activeBankButton : styles.bankButton}
-                                    >
-                                        CITI Bank
+                                    <Button variant="outlined" onClick={() => handleBankSelection('ubl')} sx={selectedBank === 'ubl' ? styles.activeBankButton : styles.bankButton}>
+                                        UBL Bank
                                     </Button>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleBankSelection('hbl')}
-                                        sx={selectedBank === 'hbl' ? styles.activeBankButton : styles.bankButton}
-                                    >
+                                    <Button variant="outlined" onClick={() => handleBankSelection('hbl')} sx={selectedBank === 'hbl' ? styles.activeBankButton : styles.bankButton}>
                                         HBL Bank
                                     </Button>
                                 </Box>
@@ -356,36 +394,52 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 <Typography variant="subtitle1" mb={1}>
                                     Account Number
                                 </Typography>
-                                <TextField
-                                    fullWidth
-                                    placeholder="e.g. 222-29863902-2"
-                                    value={accountNumber}
-                                    onChange={(e) => setAccountNumber(e.target.value)}
-                                    sx={{ mb: 3 }}
-                                />
+                                <TextField fullWidth placeholder="e.g. 222-29863902-2" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} sx={{ mb: 3 }} />
 
                                 <Typography variant="subtitle1" mb={1}>
                                     Card Holder Name
                                 </Typography>
-                                <TextField
-                                    fullWidth
-                                    placeholder="e.g. Zahid Ullah"
-                                    value={cardHolderName}
-                                    onChange={(e) => setCardHolderName(e.target.value)}
-                                    sx={{ mb: 3 }}
-                                />
+                                <TextField fullWidth placeholder="e.g. Zahid Ullah" value={cardHolderName} onChange={(e) => setCardHolderName(e.target.value)} sx={{ mb: 3 }} />
 
                                 <Typography variant="subtitle1" mb={1}>
                                     CVV Code
                                 </Typography>
+                                <TextField fullWidth placeholder="e.g. 234" value={cvvCode} onChange={(e) => setCvvCode(e.target.value)} sx={{ mb: 3 }} type="password" />
+                            </Grid>
+                        </Grid>
+                    )}
+
+                    {/* Credit Card Form */}
+                    {/* Bank Transfer Form */}
+                    {activePaymentMethod === 'credit_card' && (
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle1" mb={1}>
+                                    Amount
+                                </Typography>
                                 <TextField
                                     fullWidth
-                                    placeholder="e.g. 234"
-                                    value={cvvCode}
-                                    onChange={(e) => setCvvCode(e.target.value)}
+                                    type="number"
+                                    value={inputAmount}
+                                    onChange={(e) => setInputAmount(e.target.value)}
+                                    InputProps={{
+                                        startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+                                    }}
                                     sx={{ mb: 3 }}
-                                    type="password"
                                 />
+
+                                <Typography variant="subtitle1" mb={1}>
+                                    Credit Card Type
+                                </Typography>
+                                <Select fullWidth value={creditCardType} onChange={(e) => setCreditCardType(e.target.value)} sx={{ mb: 3 }}>
+                                    <MenuItem value="visa">Visa</MenuItem>
+                                    <MenuItem value="mastercard">MasterCard</MenuItem>
+                                </Select>
+
+                                <Typography variant="subtitle1" mb={1}>
+                                    Upload Receipt
+                                </Typography>
+                                <input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
                             </Grid>
                         </Grid>
                     )}

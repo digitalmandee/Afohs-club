@@ -21,22 +21,63 @@ use Mike42\Escpos\Printer;
 
 class OrderController extends Controller
 {
+
     // Show new order page
     public function index(Request $request)
     {
         $orderNo = $this->getOrderNo();
         $memberTypes = MemberType::select('id', 'name')->get();
 
-        // Get all active floors with their tables
-        $floorTables = Floor::select('id', 'name')->where('status', 1)->with('tables:id,floor_id,table_no,capacity')->get();
+        $today = Carbon::today()->toDateString();
 
-        // return Inertia::render('App/Order/New/Index', compact('orderNo', 'memberTypes', ''));
+        // Fetch floors and their tables, along with today's relevant orders and invoices
+        $floorTables = Floor::select('id', 'name')
+            ->where('status', 1)
+            ->with(['tables' => function ($query) use ($today) {
+                $query->select('id', 'floor_id', 'table_no', 'capacity')
+                    ->with(['orders' => function ($orderQuery) use ($today) {
+                        $orderQuery->select('id', 'table_id', 'status', 'start_date')
+                            ->whereDate('start_date', $today)
+                            ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                            ->with(['invoice:id,order_id,status']);
+                    }]);
+            }])->get();
+
+        // Process is_available flag based on today's orders and invoice status
+        foreach ($floorTables as $floor) {
+            foreach ($floor->tables as $table) {
+                $isAvailable = true;
+
+                foreach ($table->orders as $order) {
+                    $invoice = $order->invoice;
+
+                    // Invoice missing or unpaid → not available
+                    if (!$invoice || $invoice->status === 'unpaid') {
+                        $isAvailable = false;
+                        break;
+                    }
+
+                    // Only allow availability if order is completed AND invoice is paid
+                    if (!($order->status === 'completed' && $invoice->status === 'paid')) {
+                        $isAvailable = false;
+                        break;
+                    }
+                }
+
+                $table->is_available = $isAvailable;
+
+                // Optional cleanup
+                unset($table->orders);
+            }
+        }
+
         return Inertia::render('App/Order/New/Index', [
             'orderNo' => $orderNo,
             'memberTypes' => $memberTypes,
             'floorTables' => $floorTables,
         ]);
     }
+
     public function orderManagement(Request $request)
     {
         $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,kitchen_id,order_item,status', 'user:id,name,member_type_id', 'user.memberType'])->latest()->get();
@@ -322,18 +363,27 @@ class OrderController extends Controller
     }
 
 
-    public function getProducts($category_id)
+    public function getProducts(Request $request, $category_id)
     {
+        $order_type = $request->input('order_type', '');
         $category = Category::find($category_id);
 
-        if ($category) {
-            $products = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id)->get();
-
-            return response()->json(['success' => true, 'products' => $products], 200);
-        } else {
+        if (!$category) {
             return response()->json(['success' => true, 'products' => []], 200);
         }
+
+        $productsQuery = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id);
+
+        // Only filter by order_type if it exists
+        if ($order_type) {
+            $productsQuery->whereJsonContains('available_order_types', $order_type);
+        }
+
+        $products = $productsQuery->get();
+
+        return response()->json(['success' => true, 'products' => $products], 200);
     }
+
     public function getCategories()
     {
         $categories = Category::latest()->get();

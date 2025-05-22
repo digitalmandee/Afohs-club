@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('total_price', 10, 2)->default(0);
             $table->decimal('paid_amount', 10, 2)->default(0);
             $table->decimal('customer_change', 10, 2)->default(0);
-            $table->enum('payment_method', ['cash', 'card'])->nullable();
+            $table->enum('payment_method', ['cash', 'credit_card', 'bank'])->nullable();
             $table->enum('status', ['paid', 'unpaid', 'refund', 'cancelled'])->default('unpaid');
             $table->timestamps();
         });

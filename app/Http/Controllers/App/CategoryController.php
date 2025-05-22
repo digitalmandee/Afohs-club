@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Helpers\FileHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -77,12 +78,26 @@ class CategoryController extends Controller
         return redirect()->back()->with('success', 'Category updated.');
     }
 
-    public function destroy(Category $category)
+
+    public function destroy(Request $request, Category $category)
     {
+        $newCategoryId = $request->input('new_category_id');
+
+        // Reassign products if a new category is selected
+        if ($newCategoryId) {
+            Product::where('category_id', $category->id)
+                ->update(['category_id' => $newCategoryId]);
+        } else {
+            Product::where('category_id', $category->id)
+                ->update(['category_id' => null]);
+        }
+
         if ($category->image && Storage::disk('public')->exists($category->image)) {
             Storage::disk('public')->delete($category->image);
         }
+
         $category->delete();
+
         return redirect()->back()->with('success', 'Category deleted.');
     }
 }

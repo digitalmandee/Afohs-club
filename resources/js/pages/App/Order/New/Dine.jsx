@@ -85,7 +85,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
 
     const filteredTables = currentFloor?.tables?.length
         ? currentFloor.tables.filter((table) => {
-              if (filterOption === 'available' && !table.available) return false;
+              if (filterOption === 'available' && !table.is_available) return false;
               const keyword = searchTerm.toLowerCase();
               return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
           })
@@ -355,7 +355,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                                                 <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
                                                     {table.capacity} person
                                                 </Typography>
-                                                {table.available ? (
+                                                {table.is_available ? (
                                                     <FormControlLabel
                                                         value={table.id}
                                                         control={<Radio size="small" />}

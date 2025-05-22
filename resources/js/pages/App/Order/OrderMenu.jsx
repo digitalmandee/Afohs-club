@@ -22,7 +22,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
     const [open, setOpen] = useState(false);
 
     // const [showPayment, setShowPayment] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState(1);
+    const [selectedCategory, setSelectedCategory] = useState(2);
     const [variantProductId, setVariantProductId] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [activeView, setActiveView] = useState('orderDetail');
@@ -39,8 +39,6 @@ const OrderMenu = ({ totalSavedOrders }) => {
 
     // This would be called when user clicks a product
     const handleProductClick = (product) => {
-        console.log(product);
-
         if (product.minimal_stock > product.current_stock - 1) return;
 
         if (product.variants && product.variants.length > 0) {
@@ -48,18 +46,36 @@ const OrderMenu = ({ totalSavedOrders }) => {
             setVariantProduct(product);
             setVariantPopupOpen(true);
         } else {
-            const item = {
-                id: product.id,
-                name: product.name,
-                price: parseFloat(product.base_price),
-                total_price: parseFloat(product.base_price),
-                quantity: 1,
-                kitchen_id: product.kitchen_id,
-                category: product.category?.name || '',
-                variants: [],
-            };
+            const existingIndex = orderDetails.order_items.findIndex((item) => item.id === product.id && item.variants.length === 0);
 
-            handleOrderDetailChange('order_items', [...orderDetails.order_items, item]);
+            if (existingIndex !== -1) {
+                // Update existing item (increment quantity & total_price)
+                const updatedItems = [...orderDetails.order_items];
+                const existingItem = updatedItems[existingIndex];
+
+                const newQuantity = existingItem.quantity + 1;
+                updatedItems[existingIndex] = {
+                    ...existingItem,
+                    quantity: newQuantity,
+                    total_price: newQuantity * existingItem.price,
+                };
+
+                handleOrderDetailChange('order_items', updatedItems);
+            } else {
+                // Add new item
+                const newItem = {
+                    id: product.id,
+                    name: product.name,
+                    price: parseFloat(product.base_price),
+                    total_price: parseFloat(product.base_price),
+                    quantity: 1,
+                    kitchen_id: product.kitchen_id,
+                    category: product.category?.name || '',
+                    variants: [],
+                };
+
+                handleOrderDetailChange('order_items', [...orderDetails.order_items, newItem]);
+            }
         }
     };
 
@@ -90,7 +106,11 @@ const OrderMenu = ({ totalSavedOrders }) => {
     }, []);
 
     useEffect(() => {
-        axios.get(route('products.bycategory', { category_id: selectedCategory })).then((res) => setProducts(res.data.products));
+        axios
+            .get(route('products.bycategory', { category_id: selectedCategory }), {
+                params: { order_type: orderDetails.order_type },
+            })
+            .then((res) => setProducts(res.data.products));
     }, [selectedCategory]);
 
     return (
@@ -506,115 +526,6 @@ const OrderMenu = ({ totalSavedOrders }) => {
                 </Modal> */}
         </>
     );
-};
-
-const VariantSelector = ({ product, onConfirm, onClose, initialItem = null }) => {
-    const [selectedValues, setSelectedValues] = useState({});
-    const [quantity, setQuantity] = useState(initialItem?.quantity || 1);
-
-    useEffect(() => {
-        if (initialItem?.variants?.length) {
-            const initial = {};
-            for (const v of product.variants) {
-                const match = initialItem.variants.find((iv) => iv.id === v.id);
-                const option = v.values.find((opt) => opt.name === match?.value);
-                if (option) {
-                    initial[v.name] = option;
-                }
-            }
-            setSelectedValues(initial);
-        }
-    }, [initialItem, product]);
-
-    const handleConfirm = () => {
-        const selectedVariantItems = product.variants
-            .filter((variant) => selectedValues[variant.name])
-            .map((variant) => {
-                const selected = selectedValues[variant.name];
-                return {
-                    id: variant.id,
-                    name: variant.name,
-                    price: parseFloat(selected?.additional_price || 0),
-                    value: selected?.name || '',
-                };
-            });
-
-        const totalVariantPrice = selectedVariantItems.reduce((acc, v) => acc + v.price, 0);
-        const total_price = (parseFloat(product.base_price) + totalVariantPrice) * quantity;
-
-        const orderItem = {
-            id: product.id,
-            name: product.name,
-            price: parseFloat(product.base_price),
-            kitchen_id: product.kitchen_id,
-            total_price,
-            quantity,
-            category: product.category?.name || '',
-            variants: selectedVariantItems,
-        };
-
-        onConfirm(orderItem);
-    };
-
-    return (
-        <div style={popupStyle}>
-            <h3>{product.name}</h3>
-
-            {product.variants.map((variant, idx) => (
-                <div key={idx}>
-                    <h4>{variant.name}</h4>
-                    <ul>
-                        {variant.values.map((v, idx2) => (
-                            <li key={idx2}>
-                                <button
-                                    style={{
-                                        marginBottom: '10px',
-                                        fontWeight: selectedValues[variant.name]?.name === v.name ? 'bold' : 'normal',
-                                        opacity: v.stock === 0 ? 0.5 : 1,
-                                    }}
-                                    disabled={v.stock === 0}
-                                    onClick={() =>
-                                        setSelectedValues({
-                                            ...selectedValues,
-                                            [variant.name]: v,
-                                        })
-                                    }
-                                >
-                                    {v.name} (+${v.additional_price}) — Stock: {v.stock}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            ))}
-
-            <div style={{ marginTop: '10px' }}>
-                <label>
-                    Quantity:
-                    <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value))} style={{ marginLeft: '10px', width: '60px' }} />
-                </label>
-            </div>
-
-            <div style={{ marginTop: '20px' }}>
-                <button onClick={handleConfirm} disabled={Object.values(selectedValues).some((v) => !v || v.stock === 0)}>
-                    {initialItem ? 'Update' : 'Add'}
-                </button>
-                <button onClick={onClose} style={{ marginLeft: '10px' }}>
-                    Cancel
-                </button>
-            </div>
-        </div>
-    );
-};
-const popupStyle = {
-    position: 'fixed',
-    top: '20%',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    backgroundColor: '#fff',
-    padding: '20px',
-    border: '1px solid #ccc',
-    zIndex: 1000,
 };
 
 export default OrderMenu;
