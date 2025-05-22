@@ -100,7 +100,7 @@ export default function CoffeeShop({ productLists }) {
 
         // Apply stock filter
         if (stockFilter !== 'All') {
-            filtered = filtered.filter((product) => (stockFilter === 'Ready' ? product.stock.status === 'Ready Stock' : stockFilter === 'Out of Stock' ? product.stock.status === 'Out of Stock' : stockFilter === 'Imaji at Home' ? product.category === 'Imaji at Home' : true));
+            filtered = filtered.filter((product) => (stockFilter === 'Ready' ? product.stock.status === 'Ready Stock' : stockFilter === 'Out of Stock' ? product.stock.status === 'Out of Stock' : stockFilter === 'Afohs at Home' ? product.category === 'Afohs at Home' : true));
         }
 
         // Apply sorting
@@ -341,19 +341,19 @@ export default function CoffeeShop({ productLists }) {
                         </Button>
 
                         <Button
-                            variant={activeCategory === 'Imaji at Home' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('Imaji at Home')}
+                            variant={activeCategory === 'Afohs at Home' ? 'contained' : 'outlined'}
+                            onClick={() => handleCategoryClick('Afohs at Home')}
                             sx={{
                                 borderRadius: 50,
-                                color: activeCategory === 'Imaji at Home' ? '#fff' : '#063455',
+                                color: activeCategory === 'Afohs at Home' ? '#fff' : '#063455',
                                 borderColor: '#063455',
-                                backgroundColor: activeCategory === 'Imaji at Home' ? '#063455' : 'transparent',
+                                backgroundColor: activeCategory === 'Afohs at Home' ? '#063455' : 'transparent',
                                 '&:hover': {
-                                    backgroundColor: activeCategory === 'Imaji at Home' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
+                                    backgroundColor: activeCategory === 'Afohs at Home' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
                                 },
                             }}
                         >
-                            Imaji at Home
+                            Afohs at Home
                         </Button>
                     </div>
 
