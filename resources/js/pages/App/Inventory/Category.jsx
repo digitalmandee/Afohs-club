@@ -4,7 +4,7 @@ import SideNav from '@/Components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon } from '@mui/icons-material';
-import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, IconButton, InputAdornment, Snackbar, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Select, Snackbar, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
@@ -17,6 +17,9 @@ export default function Category({ categoriesList }) {
     const [openAddMenu, setOpenAddMenu] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [reassignCategoryId, setReassignCategoryId] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
     const [showError, setShowError] = useState(false);
@@ -24,7 +27,7 @@ export default function Category({ categoriesList }) {
     const [pendingDeleteCategory, setPendingDeleteCategory] = useState(null);
     const { flash } = usePage().props;
     const theme = useTheme();
-    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const fullScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
     const { data, setData, post, reset, errors, processing } = useForm({
         name: '',
@@ -139,24 +142,34 @@ export default function Category({ categoriesList }) {
 
     const handleDeleteClick = useCallback((category) => {
         setPendingDeleteCategory(category);
+        setReassignCategoryId(null); // reset on each delete open
     }, []);
 
     const handleConfirmDelete = useCallback(() => {
         if (pendingDeleteCategory) {
+            setDeleting(true);
+
             router.delete(route('category.destroy', { category: pendingDeleteCategory.id }), {
+                data: {
+                    new_category_id: reassignCategoryId || null,
+                },
                 onSuccess: () => {
                     enqueueSnackbar('Category deleted successfully', { variant: 'success' });
                     setPendingDeleteCategory(null);
+                    setReassignCategoryId(null);
+                    setDeleting(false);
                     router.visit(route('inventory.category'));
                 },
                 onError: (errors) => {
                     setErrorMessage(errors.message || 'An error occurred while deleting the category.');
                     setShowError(true);
                     setPendingDeleteCategory(null);
+                    setReassignCategoryId(null);
+                    setDeleting(false);
                 },
             });
         }
-    }, [pendingDeleteCategory]);
+    }, [pendingDeleteCategory, reassignCategoryId]);
 
     const handleCancelDelete = useCallback(() => {
         setPendingDeleteCategory(null);
@@ -355,14 +368,32 @@ export default function Category({ categoriesList }) {
             </Dialog>
 
             {/* Delete Confirmation */}
-            <Dialog fullScreen={fullScreen} open={!!pendingDeleteCategory} onClose={handleCancelDelete} aria-labelledby="delete-dialog-title">
-                <DialogTitle id="delete-dialog-title">Confirm Deletion</DialogTitle>
+            <Dialog fullScreen={fullScreen} open={!!pendingDeleteCategory} onClose={handleCancelDelete}>
+                <DialogTitle>Confirm Deletion</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>Are you sure you want to delete the category "{pendingDeleteCategory?.name || ''}"? This action cannot be undone.</DialogContentText>
+                    <DialogContentText>
+                        Are you sure you want to delete the category "{pendingDeleteCategory?.name}"?
+                        <br />
+                        You can optionally move its products to another category:
+                    </DialogContentText>
+
+                    <FormControl fullWidth>
+                        <InputLabel id="delete-category">Reassign Products To</InputLabel>
+                        <Select labelId="delete-category" id="demo-delete-category" value={reassignCategoryId || ''} onChange={(e) => setReassignCategoryId(e.target.value)} label="Reassign Products To">
+                            <MenuItem value=" ">— Leave products uncategorized —</MenuItem>
+                            {categoriesList
+                                .filter((cat) => cat.id !== pendingDeleteCategory?.id)
+                                .map((cat) => (
+                                    <MenuItem key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </MenuItem>
+                                ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCancelDelete}>Cancel</Button>
-                    <Button onClick={handleConfirmDelete} sx={{ color: '#c62828' }}>
+                    <Button onClick={handleConfirmDelete} sx={{ color: '#c62828' }} disabled={deleting} loading={deleting} loadingPosition="start">
                         Delete
                     </Button>
                 </DialogActions>
