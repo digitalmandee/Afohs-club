@@ -75,7 +75,7 @@ const OrderDetail = ({ handleEditItem }) => {
     return (
         <>
             {/* Order ID */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: '80vh' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Paper
                     elevation={0}
                     sx={{

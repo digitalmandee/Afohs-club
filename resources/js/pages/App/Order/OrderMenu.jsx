@@ -177,7 +177,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                 py: 2,
                                 borderRadius: '12px',
                                 gap: 2,
-                                maxHeight: 7 * 80, // Assuming each item is ~80px tall
+                                maxHeight: 7 * 90,
                                 overflowY: 'auto',
                                 scrollbarWidth: 'thin', // for Firefox
                                 '&::-webkit-scrollbar': {
@@ -394,7 +394,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         <Paper
                             sx={{
                                 width: 440,
-                                height:600,
+                                // height:600,
                                 borderRadius: 2,
                                 p: 2,
                                 display: 'flex',
