@@ -177,6 +177,16 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                 py: 2,
                                 borderRadius: '12px',
                                 gap: 2,
+                                maxHeight: 7 * 80, // Assuming each item is ~80px tall
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin', // for Firefox
+                                '&::-webkit-scrollbar': {
+                                    width: '4px', // for Chrome/Edge
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    backgroundColor: '#ccc',
+                                    borderRadius: '4px',
+                                },
                             }}
                         >
                             {categories.length > 0 &&
@@ -193,6 +203,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                             cursor: 'pointer',
                                             bgcolor: selectedCategory === category.id ? '#f0f7ff' : 'transparent',
                                             border: selectedCategory === category.id ? '1px solid #063455' : '1px solid #E3E3E3',
+                                            mb: 0.5
                                         }}
                                     >
                                         {/* Skip image for first item */}
@@ -223,7 +234,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Main Content Area */}
                         <Box
                             sx={{
-                                width:'660px',
+                                width: '660px',
                                 // flex: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -316,65 +327,64 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                     bgcolor: 'transparent',
                                 }}
                             >
-                                <Grid container spacing={2}>
+                                <Grid container spacing={0} sx={{ flexWrap: 'wrap', gap:1 }}>
                                     {products.length > 0 &&
                                         products.map((product, index) => (
-                                            <>
-                                                {/* {index === 0 && <pre>{JSON.stringify(product, null, 2)}</pre>} */}
-                                                <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={product.id}>
-                                                    <Paper
-                                                        elevation={0}
-                                                        onClick={() => handleProductClick(product)}
+                                            <Grid item key={product.id} sx={{ width: '15%' }}>
+                                                <Paper
+                                                    elevation={0}
+                                                    onClick={() => handleProductClick(product)}
+                                                    sx={{
+                                                        p: 2,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        border: '1px solid #eee',
+                                                        borderRadius: 2,
+                                                        height: '100%',
+                                                        width: 100,
+                                                        cursor: 'pointer',
+                                                        // bgcolor: 'pink',
+                                                        '&:hover': {
+                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                        },
+                                                    }}
+                                                >
+                                                    <Box
                                                         sx={{
-                                                            p: 2,
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            alignItems: 'center',
-                                                            border: '1px solid #eee',
-                                                            borderRadius: 2,
-                                                            height: '100%',
-                                                            cursor: 'pointer',
-                                                            '&:hover': {
-                                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                                            },
+                                                            width: 40,
+                                                            height: 40,
+                                                            borderRadius: '50%',
+                                                            overflow: 'hidden',
+                                                            // mb: 1,
                                                         }}
                                                     >
                                                         <Box
+                                                            component="img"
+                                                            src={tenantAsset(product.images[0])}
+                                                            alt={product.name}
                                                             sx={{
-                                                                width: 80,
-                                                                height: 80,
-                                                                borderRadius: '50%',
-                                                                overflow: 'hidden',
-                                                                mb: 1.5,
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'cover',
                                                             }}
-                                                        >
-                                                            <Box
-                                                                component="img"
-                                                                src={tenantAsset(product.images[0])}
-                                                                alt={product.name}
-                                                                sx={{
-                                                                    width: '100%',
-                                                                    height: '100%',
-                                                                    objectFit: 'cover',
-                                                                }}
-                                                            />
-                                                        </Box>
-                                                        <Typography
-                                                            variant="body1"
-                                                            sx={{
-                                                                fontWeight: 500,
-                                                                mb: 0.5,
-                                                                textAlign: 'center',
-                                                            }}
-                                                        >
-                                                            {product.name}
-                                                        </Typography>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-                                                            Rs {product.base_price}
-                                                        </Typography>
-                                                    </Paper>
-                                                </Grid>
-                                            </>
+                                                        />
+                                                    </Box>
+                                                    <Typography
+                                                        variant="body1"
+                                                        sx={{
+                                                            fontWeight: 500,
+                                                            mb: 0.5,
+                                                            textAlign: 'center',
+                                                        }}
+                                                    >
+                                                        {product.name}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                                                        Rs {product.base_price}
+                                                    </Typography>
+                                                </Paper>
+                                            </Grid>
                                         ))}
                                 </Grid>
                             </Paper>
@@ -384,6 +394,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         <Paper
                             sx={{
                                 width: 440,
+                                height:600,
                                 borderRadius: 2,
                                 p: 2,
                                 display: 'flex',
@@ -451,7 +462,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         </Paper>
                     </Box>
                 </Box>
-            </div>
+            </div >
 
             {/* Payment Modal */}
             {/* <Modal
