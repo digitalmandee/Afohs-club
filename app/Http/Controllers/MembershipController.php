@@ -26,7 +26,7 @@ class MembershipController extends Controller
             'userDetail.members.memberType'
         ])->get();
 
-        return Inertia::render('App/Admin/Membership/Payment', [
+        return Inertia::render('App/Admin/Membership/Dashboard', [
             'member' => $users,
         ]);
     }

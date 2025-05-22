@@ -9,26 +9,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('member_types', function (Blueprint $table) {
-            $table->integer('duration')->nullable()->after('name'); // in months or your unit
-            $table->decimal('fee', 10, 2)->nullable()->after('duration');
-            $table->decimal('maintenance_fee', 10, 2)->nullable()->after('fee');
-            $table->decimal('discount', 10, 2)->nullable()->after('maintenance_fee');
-            $table->boolean('discount_authorized')->default(false)->after('discount');
-            $table->text('benefit')->nullable()->after('discount_authorized');
+            $table->integer('duration')->nullable()->change(); // Change to integer if not already
+            $table->decimal('fee', 10, 2)->nullable()->change();
+            $table->decimal('maintenance_fee', 10, 2)->nullable()->change();
+            $table->decimal('discount', 10, 2)->nullable()->change();
+            $table->text('discount_authorized')->nullable()->change();
+            $table->json('benefit')->nullable()->change(); // Change to JSON for array storage
         });
     }
 
     public function down(): void
     {
         Schema::table('member_types', function (Blueprint $table) {
-            $table->dropColumn([
-                'duration',
-                'fee',
-                'maintenance_fee',
-                'discount',
-                'discount_authorized',
-                'benefit',
-            ]);
+            $table->string('duration', 255)->nullable()->change(); // Revert if needed
+            $table->decimal('fee', 10, 2)->nullable()->change();
+            $table->decimal('maintenance_fee', 10, 2)->nullable()->change();
+            $table->decimal('discount', 10, 2)->nullable()->change();
+            $table->string('discount_authorized', 255)->nullable()->change();
+            $table->string('benefit', 1000)->nullable()->change(); // Revert to string
         });
     }
 };

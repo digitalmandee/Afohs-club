@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MemberType extends Model
 {
-    use HasFactory, SoftDeletes;
-
     protected $fillable = [
         'name',
         'duration',
@@ -18,5 +16,9 @@ class MemberType extends Model
         'discount',
         'discount_authorized',
         'benefit',
+    ];
+
+    protected $casts = [
+        'benefit' => 'array', // Cast benefit as an array
     ];
 }

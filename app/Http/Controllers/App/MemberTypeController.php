@@ -14,9 +14,13 @@ class MemberTypeController extends Controller
      */
     public function index()
     {
-        $memberTypesList = MemberType::all();
-        return Inertia::render('App/Admin/Membership/MemberType', compact('memberTypesList'));
+        $memberTypes = MemberType::all();
+
+        return Inertia::render('App/Admin/Membership/MemberType', [
+            'memberTypesData' => $memberTypes,
+        ]);
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -25,15 +29,15 @@ class MemberTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:member_types,name',
-            'duration' => 'nullable|string|max:255',
-            'fee' => 'nullable|numeric',
-            'maintenance_fee' => 'nullable|numeric',
+            'duration' => 'required|integer', // In months
+            'fee' => 'required|numeric',
+            'maintenance_fee' => 'required|numeric',
             'discount' => 'nullable|numeric',
-            'discount_authorized' => 'nullable|numeric',
-            'benefit' => 'nullable|string|max:1000',
+            'discount_authorized' => 'required|string|max:255',
+            'benefit' => 'required|array', // Validate as array
         ]);
 
-        MemberType::create($request->only([
+        $data = $request->only([
             'name',
             'duration',
             'fee',
@@ -41,11 +45,12 @@ class MemberTypeController extends Controller
             'discount',
             'discount_authorized',
             'benefit',
-        ]));
+        ]);
+
+        MemberType::create($data);
 
         return redirect()->back()->with('success', 'Member Type created.');
     }
-
     /**
      * Update the specified resource in storage.
      */
