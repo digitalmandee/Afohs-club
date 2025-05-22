@@ -39,8 +39,6 @@ const OrderMenu = ({ totalSavedOrders }) => {
 
     // This would be called when user clicks a product
     const handleProductClick = (product) => {
-        console.log(product);
-
         if (product.minimal_stock > product.current_stock - 1) return;
 
         if (product.variants && product.variants.length > 0) {
@@ -48,18 +46,36 @@ const OrderMenu = ({ totalSavedOrders }) => {
             setVariantProduct(product);
             setVariantPopupOpen(true);
         } else {
-            const item = {
-                id: product.id,
-                name: product.name,
-                price: parseFloat(product.base_price),
-                total_price: parseFloat(product.base_price),
-                quantity: 1,
-                kitchen_id: product.kitchen_id,
-                category: product.category?.name || '',
-                variants: [],
-            };
+            const existingIndex = orderDetails.order_items.findIndex((item) => item.id === product.id && item.variants.length === 0);
 
-            handleOrderDetailChange('order_items', [...orderDetails.order_items, item]);
+            if (existingIndex !== -1) {
+                // Update existing item (increment quantity & total_price)
+                const updatedItems = [...orderDetails.order_items];
+                const existingItem = updatedItems[existingIndex];
+
+                const newQuantity = existingItem.quantity + 1;
+                updatedItems[existingIndex] = {
+                    ...existingItem,
+                    quantity: newQuantity,
+                    total_price: newQuantity * existingItem.price,
+                };
+
+                handleOrderDetailChange('order_items', updatedItems);
+            } else {
+                // Add new item
+                const newItem = {
+                    id: product.id,
+                    name: product.name,
+                    price: parseFloat(product.base_price),
+                    total_price: parseFloat(product.base_price),
+                    quantity: 1,
+                    kitchen_id: product.kitchen_id,
+                    category: product.category?.name || '',
+                    variants: [],
+                };
+
+                handleOrderDetailChange('order_items', [...orderDetails.order_items, newItem]);
+            }
         }
     };
 
@@ -223,7 +239,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Main Content Area */}
                         <Box
                             sx={{
-                                width:'660px',
+                                width: '660px',
                                 // flex: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
