@@ -106,7 +106,11 @@ const OrderMenu = ({ totalSavedOrders }) => {
     }, []);
 
     useEffect(() => {
-        axios.get(route('products.bycategory', { category_id: selectedCategory })).then((res) => setProducts(res.data.products));
+        axios
+            .get(route('products.bycategory', { category_id: selectedCategory }), {
+                params: { order_type: orderDetails.order_type },
+            })
+            .then((res) => setProducts(res.data.products));
     }, [selectedCategory]);
 
     return (

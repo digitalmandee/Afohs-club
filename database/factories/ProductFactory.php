@@ -26,7 +26,7 @@ class ProductFactory extends Factory
             'current_stock' => $this->faker->numberBetween(0, 100),
             'minimal_stock' => $this->faker->numberBetween(1, 10),
             'notify_when_out_of_stock' => $this->faker->boolean(),
-            'available_order_types' => ['dine_in', 'take_away'],
+            'available_order_types' => ['dineIn', 'takeaway'],
         ];
     }
 }

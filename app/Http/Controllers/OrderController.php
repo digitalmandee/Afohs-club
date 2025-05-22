@@ -363,18 +363,27 @@ class OrderController extends Controller
     }
 
 
-    public function getProducts($category_id)
+    public function getProducts(Request $request, $category_id)
     {
+        $order_type = $request->input('order_type', '');
         $category = Category::find($category_id);
 
-        if ($category) {
-            $products = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id)->get();
-
-            return response()->json(['success' => true, 'products' => $products], 200);
-        } else {
+        if (!$category) {
             return response()->json(['success' => true, 'products' => []], 200);
         }
+
+        $productsQuery = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id);
+
+        // Only filter by order_type if it exists
+        if ($order_type) {
+            $productsQuery->whereJsonContains('available_order_types', $order_type);
+        }
+
+        $products = $productsQuery->get();
+
+        return response()->json(['success' => true, 'products' => $products], 200);
     }
+
     public function getCategories()
     {
         $categories = Category::latest()->get();
