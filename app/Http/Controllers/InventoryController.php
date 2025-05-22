@@ -264,6 +264,12 @@ class InventoryController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            Product::where('id', $id)->delete();
+            return response()->json(['success' => true, 'message' => 'Product deleted.']);
+        } catch (\Throwable $th) {
+            Log::info($th);
+            return response()->json(['success' => false, 'message' => 'Failed to delete product.']);
+        }
     }
 }

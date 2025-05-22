@@ -35,4 +35,9 @@ class Table extends Model
             ->whereIn('status', ['pending', 'in_progress', 'reserved']) // Active/reserved status
             ->exists();
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

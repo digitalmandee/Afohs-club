@@ -156,20 +156,76 @@ class FloorController extends Controller
     public function getFloors(Request $request)
     {
         $date = $request->date;
-        $floor = $request->floor;
+        $floorId = $request->floor;
 
-        // Parse the incoming ISO date string to Carbon
-        $parsedDate = Carbon::parse($date)->startOfDay(); // For safe comparison
+        $parsedDate = Carbon::parse($date)->startOfDay();
 
-        // Fetch floors created today or earlier
-        $floor = Floor::where('id', $floor)->whereDate('created_at', '<=', $parsedDate)
+        $floor = Floor::where('id', $floorId)
+            ->whereDate('created_at', '<=', $parsedDate)
             ->with(['tables' => function ($query) use ($parsedDate) {
-                $query->whereDate('created_at', '<=', $parsedDate);
+                $query->whereDate('created_at', '<=', $parsedDate)
+                    ->select('id', 'floor_id', 'table_no', 'capacity')
+                    ->with(['orders' => function ($orderQuery) use ($parsedDate) {
+                        $orderQuery->select('id', 'table_id', 'status', 'start_date', 'user_id')
+                            ->whereDate('start_date', $parsedDate)
+                            ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                            ->with([
+                                'invoice:id,order_id,status',
+                                'user:id,user_id,name',
+                            ]);
+                    }]);
             }])
             ->first();
 
-        return response()->json(['floor' => $floor]);
+        $totalCapacity = 0;
+        $availableCapacity = 0;
+
+        if ($floor) {
+            foreach ($floor->tables as $table) {
+                $isAvailable = true;
+                $bookedBy = null;
+
+                $totalCapacity += $table->capacity;
+
+                foreach ($table->orders as $order) {
+                    $invoice = $order->invoice;
+
+                    if (!$bookedBy && $order->user) {
+                        $bookedBy = [
+                            'id' => $order->user->user_id,
+                            'name' => $order->user->name,
+                        ];
+                    }
+
+                    if (!$invoice || $invoice->status === 'unpaid') {
+                        $isAvailable = false;
+                        break;
+                    }
+
+                    if (!($order->status === 'completed' && $invoice->status === 'paid')) {
+                        $isAvailable = false;
+                        break;
+                    }
+                }
+
+                $table->is_available = $isAvailable;
+                $table->booked_by = $bookedBy;
+
+                if ($isAvailable) {
+                    $availableCapacity += $table->capacity;
+                }
+
+                unset($table->orders);
+            }
+        }
+
+        return response()->json([
+            'floor' => $floor,
+            'total_capacity' => $totalCapacity,
+            'available_capacity' => $availableCapacity,
+        ]);
     }
+
 
     public function destroy(Floor $floor)
     {

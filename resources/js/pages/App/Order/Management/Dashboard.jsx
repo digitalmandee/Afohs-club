@@ -2,7 +2,7 @@ import SideNav from '@/components/App/SideBar/SideNav';
 import { AccessTime, FilterAlt as FilterIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
 import { Avatar, Box, Button, Drawer, Grid, InputBase, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
 import OrderFilter from './Filter';
@@ -18,6 +18,9 @@ const Dashboard = ({ orders }) => {
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    // Search Order
+    const [searchText, setSearchText] = useState('');
+    const [filteredOrders, setFilteredOrders] = useState(orders);
 
     const openFilter = () => setIsFilterOpen(true);
     const closeFilter = () => setIsFilterOpen(false);
@@ -68,6 +71,21 @@ const Dashboard = ({ orders }) => {
         });
     };
 
+    // Search Order
+
+    useEffect(() => {
+        if (!searchText.trim()) {
+            setFilteredOrders(orders);
+        } else {
+            const lowercased = searchText.toLowerCase();
+            const filtered = orders.filter((order) => {
+                return order.order_number.toString().includes(lowercased) || (order.user?.name && order.user.name.toLowerCase().includes(lowercased)) || (order.user?.user_id && order.user.user_id.toLowerCase().includes(lowercased));
+            });
+
+            setFilteredOrders(filtered);
+        }
+    }, [searchText, orders]);
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -114,7 +132,7 @@ const Dashboard = ({ orders }) => {
                                 }}
                             >
                                 <SearchIcon style={{ color: '#121212', marginRight: '8px' }} />
-                                <InputBase placeholder="Search employee member here" fullWidth sx={{ fontSize: '14px' }} inputProps={{ style: { padding: 0 } }} />
+                                <InputBase placeholder="Search by order ID, client name, or member ID" fullWidth sx={{ fontSize: '14px' }} inputProps={{ style: { padding: 0 } }} value={searchText} onChange={(e) => setSearchText(e.target.value)} />
                             </div>
 
                             <Button
@@ -140,8 +158,8 @@ const Dashboard = ({ orders }) => {
                             mt: 2,
                         }}
                     >
-                        {orders.length > 0 &&
-                            orders.map((card, index) => (
+                        {filteredOrders.length > 0 ? (
+                            filteredOrders.map((card, index) => (
                                 <Grid item xs={12} sm={6} md={4} key={index}>
                                     <Paper
                                         elevation={1}
@@ -244,7 +262,14 @@ const Dashboard = ({ orders }) => {
                                         </Box>
                                     </Paper>
                                 </Grid>
-                            ))}
+                            ))
+                        ) : (
+                            <Grid item xs={12}>
+                                <Typography variant="body1" sx={{ textAlign: 'center', mt: 3 }}>
+                                    No orders found.
+                                </Typography>
+                            </Grid>
+                        )}
                     </Grid>
                     {showCancelModal && <CancelOrder onClose={handleCloseCancelModal} onConfirm={handleConfirmCancel} />}
                     <Drawer

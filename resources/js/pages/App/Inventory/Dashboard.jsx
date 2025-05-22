@@ -9,6 +9,8 @@ import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import MenuFilter from './Menu';
+import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -18,6 +20,7 @@ export default function CoffeeShop({ productLists }) {
     const [openFilter, setOpenFilter] = useState(false);
     const [openProductDetail, setOpenProductDetail] = useState(false);
     const [openAddMenu, setOpenAddMenu] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState({
         id: '',
         name: '',
@@ -100,7 +103,7 @@ export default function CoffeeShop({ productLists }) {
 
         // Apply stock filter
         if (stockFilter !== 'All') {
-            filtered = filtered.filter((product) => (stockFilter === 'Ready' ? product.stock.status === 'Ready Stock' : stockFilter === 'Out of Stock' ? product.stock.status === 'Out of Stock' : stockFilter === 'Imaji at Home' ? product.category === 'Imaji at Home' : true));
+            filtered = filtered.filter((product) => (stockFilter === 'Ready' ? product.stock.status === 'Ready Stock' : stockFilter === 'Out of Stock' ? product.stock.status === 'Out of Stock' : stockFilter === 'Afohs at Home' ? product.category === 'Afohs at Home' : true));
         }
 
         // Apply sorting
@@ -253,15 +256,31 @@ export default function CoffeeShop({ productLists }) {
         setOpenDeleteConfirm(false);
     };
 
-    const handleDeleteProduct = () => {
-        if (deleteConfirmText === 'CONFIRM DELETE') {
-            // Here you would delete the product from your data
-            if (selectedProduct) {
+    const handleDeleteProduct = async () => {
+        if (selectedProduct === null) {
+            enqueueSnackbar('No product selected', { variant: 'warning' });
+            return;
+        }
+
+        // Here you would delete the product from your data
+        setDeleteLoading(true);
+        try {
+            const response = await axios.delete(route('inventory.destroy', selectedProduct.id));
+            if (response.data?.success) {
                 setProducts((prev) => prev.filter((product) => product.id !== selectedProduct.id));
+                setOpenDeleteConfirm(false);
+                setOpenProductDetail(false);
+                setShowDeleteSuccess(true);
+                enqueueSnackbar('Product deleted successfully!', { variant: 'success' });
+            } else {
+                enqueueSnackbar('Something went wrong', { variant: 'error' });
+                console.error('Error deleting product:', response.data);
             }
-            setOpenDeleteConfirm(false);
-            setOpenProductDetail(false);
-            setShowDeleteSuccess(true);
+        } catch (error) {
+            enqueueSnackbar('Something went wrong', { variant: 'error' });
+            console.error('Error deleting product:', error);
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -341,19 +360,19 @@ export default function CoffeeShop({ productLists }) {
                         </Button>
 
                         <Button
-                            variant={activeCategory === 'Imaji at Home' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('Imaji at Home')}
+                            variant={activeCategory === 'Afohs at Home' ? 'contained' : 'outlined'}
+                            onClick={() => handleCategoryClick('Afohs at Home')}
                             sx={{
                                 borderRadius: 50,
-                                color: activeCategory === 'Imaji at Home' ? '#fff' : '#063455',
+                                color: activeCategory === 'Afohs at Home' ? '#fff' : '#063455',
                                 borderColor: '#063455',
-                                backgroundColor: activeCategory === 'Imaji at Home' ? '#063455' : 'transparent',
+                                backgroundColor: activeCategory === 'Afohs at Home' ? '#063455' : 'transparent',
                                 '&:hover': {
-                                    backgroundColor: activeCategory === 'Imaji at Home' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
+                                    backgroundColor: activeCategory === 'Afohs at Home' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
                                 },
                             }}
                         >
-                            Imaji at Home
+                            Afohs at Home
                         </Button>
                     </div>
 
@@ -699,9 +718,6 @@ export default function CoffeeShop({ productLists }) {
                                         >
                                             <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={() => router.visit(route('inventory.show', selectedProduct.id))}>
                                                 <EditIcon fontSize="small" />
-                                            </IconButton>
-                                            <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={handleAdjustPriceOpen}>
-                                                <AttachMoneyIcon fontSize="small" />
                                             </IconButton>
                                             <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={handleDeleteConfirmOpen}>
                                                 <DeleteIcon fontSize="small" />
@@ -1401,13 +1417,12 @@ export default function CoffeeShop({ productLists }) {
                             <Typography variant="body1" sx={{ mb: 2 }}>
                                 Are you sure want to delete this product?
                             </Typography>
-                            <TextField fullWidth placeholder="Type CONFIRM DELETE" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} variant="outlined" size="small" />
                         </DialogContent>
                         <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
                             <Button onClick={handleDeleteConfirmClose} color="primary">
                                 Cancel
                             </Button>
-                            <Button onClick={handleDeleteProduct} color="error" disabled={deleteConfirmText !== 'CONFIRM DELETE'}>
+                            <Button onClick={handleDeleteProduct} color="error" disabled={deleteLoading} loading={deleteLoading} loadingPosition="start">
                                 Delete
                             </Button>
                         </DialogActions>

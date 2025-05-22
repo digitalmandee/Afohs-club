@@ -104,7 +104,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
                                 >
                                     {variant.values.map((v) => (
                                         <ToggleButton key={v.name} value={v.name} disabled={v.stock === 0}>
-                                            {v.name} (+${v.additional_price})
+                                            {v.name} (R<span style={{ textTransform: 'lowercase' }}>s </span> +{v.additional_price})
                                         </ToggleButton>
                                     ))}
                                 </ToggleButtonGroup>
