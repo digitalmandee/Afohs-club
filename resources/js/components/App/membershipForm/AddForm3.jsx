@@ -166,7 +166,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
         try {
             await onSubmit(dataToSave);
             setSubmitError('');
-            router.visit('App/admin/membership/payment');
+            router.visit('/admin/membership/all/payments');
         } catch (error) {
             console.error('Submission Error:', error);
             const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data || 'An error occurred during submission');

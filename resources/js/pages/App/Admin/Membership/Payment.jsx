@@ -3,16 +3,21 @@ import { TextField, Button, Paper, Typography, Box, IconButton } from '@mui/mate
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
+import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
-const Payment = ({ onNext, onBack }) => {
+
+const Payment = ({ member, onBack, memberTypes }) => {
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({
+        user_id: '1',
         subscriptionType: 'One Time',
         inputAmount: '10.00',
         customerCharges: '0.00',
     });
+    const [error, setError] = useState('');
+    console.log('memberTypes data', memberTypes);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -21,8 +26,33 @@ const Payment = ({ onNext, onBack }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Form2 Data:', formData);
-        onNext(formData);
+
+        // Basic validation
+        if (!formData.inputAmount || parseFloat(formData.inputAmount) <= 0) {
+            setError('Please enter a valid amount.');
+            return;
+        }
+
+        const paymentData = {
+            user_id: member?.id || formData.user_id, // fallback to formData value
+            subscription_type: formData.subscriptionType,
+            amount: parseFloat(formData.inputAmount),
+            customer_charges: parseFloat(formData.customerCharges),
+        };
+
+        console.log('Sending payment data:', paymentData);
+
+        // Send payment data to backend
+        router.post('/admin/membership/payments/store', paymentData, {
+            onSuccess: () => {
+                setError('');
+                // Optionally navigate to a success page or show a confirmation
+                router.visit('/admin/membership/history');
+            },
+            onError: (errors) => {
+                setError('Payment failed: ' + (errors.message || 'Please check the form data.'));
+            },
+        });
     };
 
     return (
@@ -36,7 +66,7 @@ const Payment = ({ onNext, onBack }) => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2, pl: 2 }}>
                     <IconButton onClick={onBack} sx={{ color: '#000' }}>
                         <ArrowBack />
                     </IconButton>
@@ -44,6 +74,20 @@ const Payment = ({ onNext, onBack }) => {
                         Cash Payment
                     </Typography>
                 </Box>
+
+                {/* Member Details */}
+                {member && (
+                    <Paper sx={{ p: 2, mb: 3, boxShadow: 'none', border: '1px solid #e0e0e0', ml: 2, mr: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>
+                            Member Details
+                        </Typography>
+                        <Typography>
+                            Name: {member.first_name} {member.last_name}
+                        </Typography>
+                        <Typography>Email: {member.email}</Typography>
+                        <Typography>Membership Number: {member.userDetail?.members[0]?.membership_number}</Typography>
+                    </Paper>
+                )}
 
                 {/* Progress Steps */}
                 <Paper
@@ -56,6 +100,8 @@ const Payment = ({ onNext, onBack }) => {
                         mb: 3,
                         backgroundColor: '#f0f0f0',
                         borderRadius: '4px',
+                        ml: 2,
+                        mr: 2,
                     }}
                 >
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -97,10 +143,16 @@ const Payment = ({ onNext, onBack }) => {
                 </Paper>
 
                 {/* Main Form */}
-                <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
+                <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0', ml: 2, mr: 2 }}>
                     <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50', mb: 2 }}>
                         Payment Method
                     </Typography>
+
+                    {error && (
+                        <Typography variant="body2" sx={{ color: 'red', mb: 2 }}>
+                            {error}
+                        </Typography>
+                    )}
 
                     <form onSubmit={handleSubmit}>
                         <Box sx={{ mb: 3 }}>
@@ -108,45 +160,22 @@ const Payment = ({ onNext, onBack }) => {
                                 Payment Subscription
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 2 }}>
-                                <Button
-                                    variant={formData.subscriptionType === 'One Time' ? 'contained' : 'outlined'}
-                                    sx={{
-                                        textTransform: 'none',
-                                        backgroundColor: formData.subscriptionType === 'One Time' ? '#0c4b6e' : 'transparent',
-                                        color: formData.subscriptionType === 'One Time' ? 'white' : '#333',
-                                        borderColor: '#ccc',
-                                        '&:hover': { backgroundColor: formData.subscriptionType === 'One Time' ? '#083854' : '#f5f5f5' },
-                                    }}
-                                    onClick={() => handleInputChange({ target: { name: 'subscriptionType', value: 'One Time' } })}
-                                >
-                                    One Time
-                                </Button>
-                                <Button
-                                    variant={formData.subscriptionType === 'Monthly' ? 'contained' : 'outlined'}
-                                    sx={{
-                                        textTransform: 'none',
-                                        backgroundColor: formData.subscriptionType === 'Monthly' ? '#0c4b6e' : 'transparent',
-                                        color: formData.subscriptionType === 'Monthly' ? 'white' : '#333',
-                                        borderColor: '#ccc',
-                                        '&:hover': { backgroundColor: formData.subscriptionType === 'Monthly' ? '#083854' : '#f5f5f5' },
-                                    }}
-                                    onClick={() => handleInputChange({ target: { name: 'subscriptionType', value: 'Monthly' } })}
-                                >
-                                    Monthly
-                                </Button>
-                                <Button
-                                    variant={formData.subscriptionType === 'Annual' ? 'contained' : 'outlined'}
-                                    sx={{
-                                        textTransform: 'none',
-                                        backgroundColor: formData.subscriptionType === 'Annual' ? '#0c4b6e' : 'transparent',
-                                        color: formData.subscriptionType === 'Annual' ? 'white' : '#333',
-                                        borderColor: '#ccc',
-                                        '&:hover': { backgroundColor: formData.subscriptionType === 'Annual' ? '#083854' : '#f5f5f5' },
-                                    }}
-                                    onClick={() => handleInputChange({ target: { name: 'subscriptionType', value: 'Annual' } })}
-                                >
-                                    Annual
-                                </Button>
+                                {['One Time', 'Monthly', 'Annual'].map((type) => (
+                                    <Button
+                                        key={type}
+                                        variant={formData.subscriptionType === type ? 'contained' : 'outlined'}
+                                        sx={{
+                                            textTransform: 'none',
+                                            backgroundColor: formData.subscriptionType === type ? '#0c4b6e' : 'transparent',
+                                            color: formData.subscriptionType === type ? 'white' : '#333',
+                                            borderColor: '#ccc',
+                                            '&:hover': { backgroundColor: formData.subscriptionType === type ? '#083854' : '#f5f5f5' },
+                                        }}
+                                        onClick={() => handleInputChange({ target: { name: 'subscriptionType', value: type } })}
+                                    >
+                                        {type}
+                                    </Button>
+                                ))}
                             </Box>
                         </Box>
 
@@ -155,13 +184,13 @@ const Payment = ({ onNext, onBack }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Input Amount
                                 </Typography>
-                                <TextField variant="outlined" size="small" name="inputAmount" value={formData.inputAmount} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField variant="outlined" size="small" name="inputAmount" value={formData.inputAmount} onChange={handleInputChange} type="number" step="0.01" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Box>
                             <Box>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Customer Charges
                                 </Typography>
-                                <TextField variant="outlined" size="small" name="customerCharges" value={formData.customerCharges} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField variant="outlined" size="small" name="customerCharges" value={formData.customerCharges} onChange={handleInputChange} type="number" step="0.01" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Box>
                         </Box>
 

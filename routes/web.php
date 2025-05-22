@@ -7,8 +7,11 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MembershipInvoiceController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserMemberController;
+use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -69,9 +72,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/AddMember');
     })->name('membership.addmembertype');
 
-    Route::get('/admin/membership/all/payments', function () {
-        return Inertia::render('App/Admin/Membership/AllPayment');
-    })->name('membership.allpayment');
+
 
     //Admin Booking Routes
     Route::get('/booking/dashboard', function () {
@@ -129,10 +130,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
 
-    // Route::get('/admin/membership/all.members', function () {
-    //     return Inertia::render('App/Admin/Membership/MemberType');
-    // })->name('membership.membertype');
-    // Members types
     // Members types
     Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
     Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
@@ -140,6 +137,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
     Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
 
+    //payment
+    Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');
+    Route::post('/admin/membership/payments/store', [PaymentController::class, 'store'])->name('membership.payment.store');
 
 
     //Membership Booking Routes
