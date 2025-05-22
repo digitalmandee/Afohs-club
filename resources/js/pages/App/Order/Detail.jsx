@@ -77,17 +77,37 @@ const OrderDetail = ({ handleEditItem }) => {
                                     <Typography variant="body2" fontWeight="medium">
                                         {orderDetails.member.name}
                                     </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                        <Avatar sx={{ width: 24, height: 24, bgcolor: '#e0e0e0', fontSize: 12, mr: 1 }}>Q</Avatar>
+                                        <Typography sx={{ fontWeight: 500, fontSize: '14px', color: '#121212' }}>
+                                            {orderDetails.member.name}
+                                        </Typography>
+                                        <img src="/assets/Diamond.png" alt="" style={{
+                                            height: 24,
+                                            width: 24,
+                                            marginLeft: 5
+                                        }} />
+                                    </Box>
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 2 }}>
+                                    {orderDetails.table && <Avatar sx={{ width: 28, height: 28, bgcolor: '#0C67AA', fontSize: 12 }}>{`T${orderDetails.table}`}</Avatar>}
                                     <Box
                                         component="span"
                                         sx={{
                                             display: 'inline-block',
-                                            width: 16,
-                                            height: 16,
+                                            width: 30,
+                                            height: 30,
                                             borderRadius: '50%',
-                                            bgcolor: '#ffc107',
-                                            ml: 1,
-                                        }}
-                                    />
+                                            bgcolor: '#E3E3E3',
+                                        }}> <img src="/assets/food-tray.png" alt="" style={{
+                                            height: 20,
+                                            width: 20,
+                                            marginLeft: 4
+                                        }} /> </Box>
+                                    <img src="/assets/edit.png" alt="" style={{
+                                        width: 30,
+                                        height: 30
+                                    }} />
                                 </Box>
                             </Box>
                             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -104,27 +124,40 @@ const OrderDetail = ({ handleEditItem }) => {
                             </Box>
                         </Box>
 
-                        <Grid container spacing={2}>
-                            <Grid item xs={4}>
-                                <Typography variant="caption" color="text.secondary">
-                                    Order Date
-                                </Typography>
-                                <Typography variant="body2" fontWeight="medium">
-                                    {new Intl.DateTimeFormat('en-US', {
-                                        day: 'numeric',
-                                        month: 'long',
-                                        year: 'numeric',
-                                    }).format(new Date(orderDetails.date))}
-                                </Typography>
-                            </Grid>
-                            <Grid item xs={4}>
-                                <Typography variant="caption" color="text.secondary">
-                                    Waiter
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                    <Avatar sx={{ width: 20, height: 20, mr: 0.5, fontSize: 10 }}>T</Avatar>
-                                    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                                        {orderDetails.waiter?.name || 'N/A'}
+                            <Grid container sx={{ mt: 1, border: '1px solid transparent' }}>
+                                <Grid item xs={4} sx={{ pr: 2, borderRight: '1px solid #e0e0e0' }}>
+                                    <Typography sx={{color:'#7F7F7F', fontWeight:400, fontSize:'12px'}}>
+                                        Order Date
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight="medium" sx={{mt:1}}>
+                                        {new Intl.DateTimeFormat('en-US', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                        }).format(new Date(orderDetails.date))}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={4} sx={{ px:1, borderRight: '1px solid #e0e0e0' }}>
+                                    <Typography sx={{color:'#7F7F7F', fontWeight:400, fontSize:'12px'}}>
+                                        Cashier
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                        <Avatar sx={{ width: 20, height: 20, mr: 1, fontSize: 10 }}>
+                                            {orderDetails.waiter?.name?.charAt(0) || 'N'}
+                                        </Avatar>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            {orderDetails.waiter?.name || 'N/A'}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Grid item xs={4} sx={{ pl: 2 }}>
+                                    <Typography sx={{color:'#7F7F7F', fontWeight:400, fontSize:'12px'}}>
+                                        Order Time
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight="medium">
+                                        {formatTime(orderDetails.time)}
                                     </Typography>
                                 </Box>
                             </Grid>
@@ -137,7 +170,6 @@ const OrderDetail = ({ handleEditItem }) => {
                                 </Typography>
                             </Grid>
                         </Grid>
-
                         <Box sx={{ mt: 2 }}>
                             <Chip
                                 label={`Order Id : #${orderDetails.order_no}`}
