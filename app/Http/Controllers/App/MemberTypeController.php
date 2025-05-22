@@ -21,7 +21,6 @@ class MemberTypeController extends Controller
         ]);
     }
 
-
     /**
      * Store a newly created resource in storage.
      */
@@ -51,6 +50,7 @@ class MemberTypeController extends Controller
 
         return redirect()->back()->with('success', 'Member Type created.');
     }
+
     /**
      * Update the specified resource in storage.
      */
@@ -58,12 +58,12 @@ class MemberTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:member_types,name,' . $id,
-            'duration' => 'nullable|string|max:255',
+            'duration' => 'nullable|integer|max:255',
             'fee' => 'nullable|numeric',
             'maintenance_fee' => 'nullable|numeric',
             'discount' => 'nullable|numeric',
-            'discount_authorized' => 'nullable|boolean',
-            'benefit' => 'nullable|string|max:1000',
+            'discount_authorized' => 'nullable|string|max:255',
+            'benefit' => 'nullable|array',
         ]);
 
         $memberType = MemberType::findOrFail($id);
@@ -78,6 +78,23 @@ class MemberTypeController extends Controller
         ]));
 
         return redirect()->back()->with('success', 'Member Type updated.');
+    }
+
+    public function edit(string $member_type)
+    {
+        $memberType = MemberType::findOrFail($member_type);
+        return Inertia::render('App/Admin/Membership/EditMember', [
+            'memberType' => [
+                'id' => $memberType->id,
+                'name' => $memberType->name,
+                'duration' => $memberType->duration ? (int)$memberType->duration : '',
+                'fee' => $memberType->fee ? (string)$memberType->fee : '',
+                'maintenance_fee' => $memberType->maintenance_fee ? (string)$memberType->maintenance_fee : '',
+                'discount' => $memberType->discount ? (string)$memberType->discount : '',
+                'discount_authorized' => $memberType->discount_authorized ?? '',
+                'benefit' => $memberType->benefit ? implode(', ', $memberType->benefit) : '',
+            ],
+        ]);
     }
 
     /**

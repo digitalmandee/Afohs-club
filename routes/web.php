@@ -133,11 +133,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     //     return Inertia::render('App/Admin/Membership/MemberType');
     // })->name('membership.membertype');
     // Members types
-    Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
+    // Members types
     Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
     Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
-    Route::put('/members/member-types/{id}/update', [MemberTypeController::class, 'update'])->name('member.update');
-    Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
+    Route::put('/members/member-types/{id}/update', [MemberTypeController::class, 'update'])->name('member-types.update');
+    Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
+    Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
+
 
 
     //Membership Booking Routes
