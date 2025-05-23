@@ -15,14 +15,10 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::latest()->get();
+        $categories = Category::latest()->select('id', 'name', 'image')->withCount('products')->get();
 
         return Inertia::render('App/Inventory/Category', [
-            'categoriesList' => $categories->map(fn($category) => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'image' => $category->image,
-            ]),
+            'categoriesList' => $categories,
         ]);
     }
 

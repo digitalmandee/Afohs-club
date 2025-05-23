@@ -261,7 +261,7 @@ export default function Category({ categoriesList }) {
                                     '&:hover': { background: '#F6F6F6' },
                                 }}
                             >
-                                <CardContent sx={{ p: 3 }}>
+                                <CardContent sx={{ p: 3 }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
                                     <Grid container alignItems="center" justifyContent="space-between">
                                         <Grid item xs={12} sm={9} md={9} sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Box sx={{ width: 70, height: 70, mr: 2 }}>
@@ -276,7 +276,10 @@ export default function Category({ categoriesList }) {
                                                     }}
                                                 />
                                             </Box>
-                                            <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{category.name}</Typography>
+                                            <Box>
+                                                <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{category.name}</Typography>
+                                                <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#121212' }}>Products ({category.products_count ?? 0})</Typography>
+                                            </Box>
                                         </Grid>
                                         <Grid item>
                                             <IconButton onClick={() => handleEdit(category)}>

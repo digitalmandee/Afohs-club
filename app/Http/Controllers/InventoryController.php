@@ -17,12 +17,24 @@ class InventoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $productLists = Product::latest()->with(['category', 'variants', 'variants.values'])->get();
+        $category_id = $request->query('category_id');
+
+        $query = Product::latest()->with(['category', 'variants', 'variants.values']);
+
+        if ($category_id) {
+            $query->where('category_id', $category_id);
+        }
+
+        $productLists = $query->get();
 
         return Inertia::render('App/Inventory/Dashboard', compact('productLists'));
     }
+
+
+
+
 
     /**
      * Show the form for creating a new resource.
@@ -187,7 +199,7 @@ class InventoryController extends Controller
         }
 
 
-        $product = Product::where('id', $id)->update([
+        Product::where('id', $id)->update([
             'name' => $request->input('name'),
             'menu_code' => $request->input('menu_code'),
             'category_id' => $request->input('category_id'),

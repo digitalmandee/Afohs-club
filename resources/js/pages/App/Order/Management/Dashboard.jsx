@@ -79,7 +79,7 @@ const Dashboard = ({ orders }) => {
         } else {
             const lowercased = searchText.toLowerCase();
             const filtered = orders.filter((order) => {
-                return order.order_number.toString().includes(lowercased) || (order.user?.name && order.user.name.toLowerCase().includes(lowercased)) || (order.user?.user_id && order.user.user_id.toLowerCase().includes(lowercased));
+                return order.order_number.toString().includes(lowercased) || (order.user?.name && order.user.name.toLowerCase().includes(lowercased)) || (order.user?.user_id && order.user.user_id.toLowerCase().includes(lowercased)) || (order.table?.table_no && order.table.table_no.toLowerCase().includes(lowercased));
             });
 
             setFilteredOrders(filtered);
