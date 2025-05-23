@@ -81,9 +81,14 @@ class OrderController extends Controller
     public function orderManagement(Request $request)
     {
         $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,kitchen_id,order_item,status', 'user:id,name,member_type_id', 'user.memberType'])->latest()->get();
+        $categoriesList = Category::select('id', 'name')->get();
+        return Inertia::render('App/Order/Management/Dashboard', [
+            'orders' => $orders,
+            'categoriesList' => $categoriesList,
 
-        return Inertia::render('App/Order/Management/Dashboard', compact('orders'));
+        ]);
     }
+
     public function savedOrder()
     {
         $orders = Order::where('status', 'saved')->with('user:id,name')->get();
