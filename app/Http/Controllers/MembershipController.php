@@ -37,12 +37,11 @@ class MembershipController extends Controller
             'memberTypesData' => $memberTypes,
         ]);
     }
-    public function getAllMemberTypesForm3()
+    public function create()
     {
-        $memberTypes = MemberType::all();
-        return Inertia::render('App/Admin/Membership/MembershipForm', [
-            'memberTypesData' => $memberTypes,
-        ]);
+        $userNo = $this->getUserNo();
+        $memberTypesData = MemberType::all();
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('userNo', 'memberTypesData'));
     }
     public function allMembers()
     {
@@ -84,8 +83,6 @@ class MembershipController extends Controller
             'membersdata' => $users,
         ]);
     }
-
-
 
     public function store(Request $request)
     {
@@ -308,5 +305,13 @@ class MembershipController extends Controller
             Log::error('Error updating member status: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to update member status'], 500);
         }
+    }
+
+    // User No
+    private function getUserNo()
+    {
+        $userNo = User::max('user_id');
+        $userNo = $userNo + 1;
+        return $userNo;
     }
 }

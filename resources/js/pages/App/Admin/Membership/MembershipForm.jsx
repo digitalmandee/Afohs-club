@@ -12,7 +12,7 @@ import { enqueueSnackbar } from 'notistack';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = ({ memberTypesData }) => {
+const MembershipDashboard = ({ memberTypesData, userNo }) => {
     const [open, setOpen] = useState(false);
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -46,7 +46,7 @@ const MembershipDashboard = ({ memberTypesData }) => {
         }));
 
         const fullData = {
-            application_number: '7171',
+            application_number: userNo ?? 0,
             first_name: formData.step1.firstName || '',
             middle_name: formData.step1.middleName || '',
             last_name: formData.step1.lastName || '',
@@ -115,11 +115,11 @@ const MembershipDashboard = ({ memberTypesData }) => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <pre>{JSON.stringify(memberTypesData, null, 2)}</pre>
+                {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                 <div className="">
-                    {step === 1 && <AddForm1 onNext={(data) => handleNext('step1', data)} />}
+                    {step === 1 && <AddForm1 userNo={userNo} onNext={(data) => handleNext('step1', data)} />}
                     {step === 2 && <AddForm2 onNext={(data) => handleNext('step2', data)} onBack={() => setStep(1)} />}
-                    {step === 3 && <AddForm3 memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} />}
+                    {step === 3 && <AddForm3 userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} />}
                 </div>
             </div>
         </>

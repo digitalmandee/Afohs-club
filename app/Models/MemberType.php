@@ -19,6 +19,6 @@ class MemberType extends Model
     ];
 
     protected $casts = [
-        'benefit' => 'array', // Cast benefit as an array
+        'benefit' => 'array',
     ];
 }

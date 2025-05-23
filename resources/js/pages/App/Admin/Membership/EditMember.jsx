@@ -60,11 +60,9 @@ const EditMember = ({ memberType }) => {
         };
 
         try {
-            const response = await axios.put(`/members/member-types/${memberType.id}/update`, dataToSubmit, {
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-            });
+            console.log(route('member-types.update2', memberType.id));
+
+            const response = await axios.post(route('member-types.update2', memberType.id), dataToSubmit);
 
             enqueueSnackbar('Member Type updated successfully.', { variant: 'success' });
             router.visit('/members/member-types');

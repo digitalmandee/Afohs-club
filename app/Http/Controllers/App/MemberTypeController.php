@@ -14,11 +14,9 @@ class MemberTypeController extends Controller
      */
     public function index()
     {
-        $memberTypes = MemberType::all();
+        $memberTypesData = MemberType::all();
 
-        return Inertia::render('App/Admin/Membership/MemberType', [
-            'memberTypesData' => $memberTypes,
-        ]);
+        return Inertia::render('App/Admin/Membership/MemberType', compact('memberTypesData'));
     }
 
     /**

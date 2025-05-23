@@ -50,7 +50,7 @@ Route::group([
         Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
         Route::post('/members', [MembersController::class, 'store'])->name('members.store');
         Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
-        Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
+        // Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
 
         // Waiter Dashboard
         Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');

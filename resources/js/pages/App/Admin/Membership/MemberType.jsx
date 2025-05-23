@@ -43,7 +43,7 @@ const MembersType = ({ memberTypesData }) => {
 
     const handleEdit = () => {
         if (selectedMember) {
-            router.visit(`/members/member-types/edit/${selectedMember.id}`);
+            router.visit(route('member-types.edit', selectedMember.id));
         }
         handleMenuClose();
     };
