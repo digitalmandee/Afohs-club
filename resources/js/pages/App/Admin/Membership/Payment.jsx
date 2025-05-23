@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { TextField, Button, Paper, Typography, Box, IconButton } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { TextField, Button, Typography, Box, IconButton, Radio, RadioGroup, FormControlLabel, Paper } from '@mui/material';
+import { ArrowBack, ArrowForward, Check } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
@@ -24,6 +24,10 @@ const Payment = ({ member, onBack, memberTypes }) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleQuickAmount = (value) => {
+        setFormData((prev) => ({ ...prev, inputAmount: value }));
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -34,7 +38,7 @@ const Payment = ({ member, onBack, memberTypes }) => {
         }
 
         const paymentData = {
-            user_id: member?.id || formData.user_id, // fallback to formData value
+            user_id: member?.id || formData.user_id,
             subscription_type: formData.subscriptionType,
             amount: parseFloat(formData.inputAmount),
             customer_charges: parseFloat(formData.customerCharges),
@@ -42,11 +46,9 @@ const Payment = ({ member, onBack, memberTypes }) => {
 
         console.log('Sending payment data:', paymentData);
 
-        // Send payment data to backend
         router.post('/admin/membership/payments/store', paymentData, {
             onSuccess: () => {
                 setError('');
-                // Optionally navigate to a success page or show a confirmation
                 router.visit('/admin/membership/history');
             },
             onError: (errors) => {
@@ -64,30 +66,18 @@ const Payment = ({ member, onBack, memberTypes }) => {
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
+                    minHeight: '100vh',
+                    padding: '0 2rem',
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2, pl: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
                     <IconButton onClick={onBack} sx={{ color: '#000' }}>
                         <ArrowBack />
                     </IconButton>
-                    <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>
+                    <Typography variant="h5" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>
                         Cash Payment
                     </Typography>
                 </Box>
-
-                {/* Member Details */}
-                {member && (
-                    <Paper sx={{ p: 2, mb: 3, boxShadow: 'none', border: '1px solid #e0e0e0', ml: 2, mr: 2 }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                            Member Details
-                        </Typography>
-                        <Typography>
-                            Name: {member.first_name} {member.last_name}
-                        </Typography>
-                        <Typography>Email: {member.email}</Typography>
-                        <Typography>Membership Number: {member.userDetail?.members[0]?.membership_number}</Typography>
-                    </Paper>
-                )}
 
                 {/* Progress Steps */}
                 <Paper
@@ -97,136 +87,176 @@ const Payment = ({ member, onBack, memberTypes }) => {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         p: 2,
-                        mb: 3,
-                        backgroundColor: '#f0f0f0',
+                        mb: 4,
+                        backgroundColor: '#e0e0e0',
                         borderRadius: '4px',
-                        ml: 2,
-                        mr: 2,
                     }}
                 >
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Box
                             sx={{
-                                width: 30,
-                                height: 30,
+                                width: 24,
+                                height: 24,
                                 borderRadius: '50%',
-                                backgroundColor: '#e0e0e0',
+                                backgroundColor: '#fff',
                                 color: '#333',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                mr: 2,
+                                mr: 1,
+                                border: '2px solid #333',
                             }}
                         >
-                            1
+                            <Check sx={{ fontSize: 16 }} />
                         </Box>
-                        <Typography sx={{ fontWeight: 500 }}>Member Detail</Typography>
+                        <Typography sx={{ fontWeight: 500, color: '#666' }}>Member Detail</Typography>
                     </Box>
+                    <Box sx={{ width: '50%', height: '2px', backgroundColor: '#333' }} />
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Box
                             sx={{
-                                width: 30,
-                                height: 30,
+                                width: 24,
+                                height: 24,
                                 borderRadius: '50%',
                                 backgroundColor: '#2c3e50',
                                 color: 'white',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                mr: 2,
+                                mr: 1,
                             }}
                         >
                             2
                         </Box>
-                        <Typography sx={{ fontWeight: 500 }}>Payment Detail</Typography>
+                        <Typography sx={{ fontWeight: 500, color: '#2c3e50' }}>Payment Detail</Typography>
                     </Box>
                 </Paper>
 
+                {/* Member Details */}
+                {member && (
+                    <Paper sx={{ p: 2, mb: 4, boxShadow: 'none', border: '1px solid #e0e0e0', borderRadius: '4px' }}>
+                        <Typography variant="h6" sx={{ mb: 2, color: '#333' }}>
+                            Member Details
+                        </Typography>
+                        <Typography sx={{ mb: 1 }}>
+                            Name: {member.first_name} {member.last_name}
+                        </Typography>
+                        <Typography sx={{ mb: 1 }}>Email: {member.email}</Typography>
+                        <Typography>Membership Number: {member.userDetail?.members[0]?.membership_number}</Typography>
+                    </Paper>
+                )}
+
                 {/* Main Form */}
-                <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0', ml: 2, mr: 2 }}>
-                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50', mb: 2 }}>
+                <Box sx={{ mb: 4 }}>
+                    <Typography variant="h4" sx={{ fontSize: '1.5rem', fontWeight: 600, mb: 2, color: '#333' }}>
                         Payment Method
                     </Typography>
+                </Box>
+                <Box className="bg-white p-4" sx={{ border: '1px solid #e0e0e0', borderRadius: '4px' }}>
+                    <Typography variant="h6" sx={{ fontSize: '1.125rem', mb: 3, color: '#666' }}>
+                        Payment Subscription
+                    </Typography>
+
+                    <Box className="d-flex gap-3 mb-4">
+                        <RadioGroup row name="subscriptionType" value={formData.subscriptionType} onChange={handleInputChange}>
+                            {['One Time', 'Monthly', 'Annual'].map((type) => (
+                                <Box
+                                    key={type}
+                                    className="d-flex align-items-center p-2 border"
+                                    sx={{
+                                        borderRadius: '4px',
+                                        bgcolor: formData.subscriptionType === type ? '#f0f0f0' : 'transparent',
+                                        borderColor: '#ccc',
+                                    }}
+                                >
+                                    <FormControlLabel value={type} control={<Radio sx={{ color: '#1976d2' }} />} label={type} sx={{ margin: 0, '& .MuiTypography-root': { fontSize: '0.875rem' } }} />
+                                </Box>
+                            ))}
+                        </RadioGroup>
+                    </Box>
+
+                    <Box className="d-flex gap-5 mb-4">
+                        <Box className="d-flex flex-column w-50">
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                Input Amount
+                            </Typography>
+                            <Box className="d-flex">
+                                <Box className="py-2 px-3 border border-end-0" sx={{ bgcolor: '#dbdbdb', borderColor: '#ccc', display: 'flex', alignItems: 'center' }}>
+                                    Rs
+                                </Box>
+                                <TextField
+                                    name="inputAmount"
+                                    value={formData.inputAmount}
+                                    onChange={handleInputChange}
+                                    placeholder="10.00"
+                                    variant="outlined"
+                                    size="small"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '0 4px 4px 0',
+                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                            width: '100%',
+                                        },
+                                    }}
+                                    inputProps={{ type: 'text', pattern: '[0-9.]*' }}
+                                />
+                            </Box>
+                        </Box>
+                        <Box className="d-flex flex-column w-50">
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                Customer Charges
+                            </Typography>
+                            <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                                Rs {formData.customerCharges}
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <Box className="d-flex gap-3 mb-4">
+                        {['Exact money', '10.00', '20.00', '50.00', '100.00'].map((value) => (
+                            <Button
+                                key={value}
+                                variant="outlined"
+                                className="p-2"
+                                onClick={() => handleQuickAmount(value === 'Exact money' ? '' : value)}
+                                sx={{
+                                    textTransform: 'none',
+                                    borderColor: '#ccc',
+                                    color: '#333',
+                                    fontSize: '0.875rem',
+                                    '&:hover': { borderColor: '#999', bgcolor: '#f5f5f5' },
+                                }}
+                            >
+                                {value === 'Exact money' ? 'Exact money' : `Rs ${value}`}
+                            </Button>
+                        ))}
+                    </Box>
 
                     {error && (
-                        <Typography variant="body2" sx={{ color: 'red', mb: 2 }}>
+                        <Typography color="error" sx={{ mb: 2 }}>
                             {error}
                         </Typography>
                     )}
 
-                    <form onSubmit={handleSubmit}>
-                        <Box sx={{ mb: 3 }}>
-                            <Typography variant="body2" sx={{ mb: 1 }}>
-                                Payment Subscription
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 2 }}>
-                                {['One Time', 'Monthly', 'Annual'].map((type) => (
-                                    <Button
-                                        key={type}
-                                        variant={formData.subscriptionType === type ? 'contained' : 'outlined'}
-                                        sx={{
-                                            textTransform: 'none',
-                                            backgroundColor: formData.subscriptionType === type ? '#0c4b6e' : 'transparent',
-                                            color: formData.subscriptionType === type ? 'white' : '#333',
-                                            borderColor: '#ccc',
-                                            '&:hover': { backgroundColor: formData.subscriptionType === type ? '#083854' : '#f5f5f5' },
-                                        }}
-                                        onClick={() => handleInputChange({ target: { name: 'subscriptionType', value: type } })}
-                                    >
-                                        {type}
-                                    </Button>
-                                ))}
-                            </Box>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                            <Box>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Input Amount
-                                </Typography>
-                                <TextField variant="outlined" size="small" name="inputAmount" value={formData.inputAmount} onChange={handleInputChange} type="number" step="0.01" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
-                            </Box>
-                            <Box>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Customer Charges
-                                </Typography>
-                                <TextField variant="outlined" size="small" name="customerCharges" value={formData.customerCharges} onChange={handleInputChange} type="number" step="0.01" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
-                            </Box>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-                            <Typography variant="body2">Exact money</Typography>
-                            {['10.00', '20.00', '50.00', '100.00'].map((amount) => (
-                                <Button
-                                    key={amount}
-                                    variant={formData.inputAmount === amount ? 'contained' : 'outlined'}
-                                    sx={{
-                                        textTransform: 'none',
-                                        backgroundColor: formData.inputAmount === amount ? '#0c4b6e' : 'transparent',
-                                        color: formData.inputAmount === amount ? 'white' : '#333',
-                                        borderColor: '#ccc',
-                                        '&:hover': { backgroundColor: formData.inputAmount === amount ? '#083854' : '#f5f5f5' },
-                                    }}
-                                    onClick={() => handleInputChange({ target: { name: 'inputAmount', value: amount } })}
-                                >
-                                    Rs {amount}
-                                </Button>
-                            ))}
-                        </Box>
-
+                    <Box className="d-flex justify-content-end">
                         <Button
                             variant="contained"
-                            type="submit"
+                            className="d-flex align-items-center"
+                            onClick={handleSubmit}
                             sx={{
+                                bgcolor: '#0056b3',
+                                color: '#fff',
                                 textTransform: 'none',
-                                backgroundColor: '#0c4b6e',
-                                '&:hover': { backgroundColor: '#083854' },
+                                padding: '8px 16px',
+                                fontSize: '0.875rem',
+                                '&:hover': { bgcolor: '#004085' },
                             }}
                         >
                             Pay Now
+                            <ArrowForward sx={{ ml: 1, fontSize: '16px' }} />
                         </Button>
-                    </form>
-                </Paper>
+                    </Box>
+                </Box>
             </div>
         </>
     );

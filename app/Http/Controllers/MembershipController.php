@@ -30,6 +30,20 @@ class MembershipController extends Controller
             'member' => $users,
         ]);
     }
+    public function getAllMemberTypes()
+    {
+        $memberTypes = MemberType::all(['name']);
+        return Inertia::render('App/Admin/Membership/Profile', [
+            'memberTypesData' => $memberTypes,
+        ]);
+    }
+    public function getAllMemberTypesForm3()
+    {
+        $memberTypes = MemberType::all();
+        return Inertia::render('App/Admin/Membership/MembershipForm', [
+            'memberTypesData' => $memberTypes,
+        ]);
+    }
     public function allMembers()
     {
         $users = User::with([
@@ -48,6 +62,26 @@ class MembershipController extends Controller
 
         return Inertia::render('App/Admin/Membership/Members', [
             'member' => $users,
+        ]);
+    }
+    public function paymentMembersHistory()
+    {
+        $users = User::with([
+            'userDetail.members.memberType'
+        ])->get();
+
+        return Inertia::render('App/Admin/Membership/History', [
+            'membersdata' => $users,
+        ]);
+    }
+    public function membershipFinance()
+    {
+        $users = User::with([
+            'userDetail.members.memberType'
+        ])->get();
+
+        return Inertia::render('App/Admin/Membership/Finance', [
+            'membersdata' => $users,
         ]);
     }
 
@@ -92,7 +126,7 @@ class MembershipController extends Controller
             'permanent_address' => 'nullable|string',
             'permanent_city' => 'nullable|string|max:255',
             'permanent_country' => 'nullable|string|max:255',
-            // 'member_type' => 'required|string|max:255|exists:member_types,name',
+            // 'member_types' => 'required|string|max:255|exists:member_types,name',
             'member_type' => 'required|string|max:255',
             'membership_category' => 'nullable|string|max:255',
             'membership_number' => 'required|max:255',
@@ -118,7 +152,7 @@ class MembershipController extends Controller
         ]);
 
         // Fetch member_type_id for primary member
-        $memberType = MemberType::where('name', $validated['member_type'])->firstOrFail();
+        $memberType = MemberType::where('name', $request->member_type)->firstOrFail();
         $member_type_id = $memberType->id;
 
         // Create primary user
@@ -257,13 +291,7 @@ class MembershipController extends Controller
 
         return redirect()->back()->with('success', 'Membership details submitted successfully.');
     }
-    public function getAllMemberTypes()
-    {
-        $memberTypes = MemberType::all();
-        return Inertia::render('App/Admin/Membership/Profile', [
-            'memberTypesData' => $memberTypes,
-        ]);
-    }
+
     public function updateMemberStatus(Request $request, $id)
     {
         $request->validate([

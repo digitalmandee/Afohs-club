@@ -12,7 +12,7 @@ import { enqueueSnackbar } from 'notistack';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = () => {
+const MembershipDashboard = ({ memberTypesData }) => {
     const [open, setOpen] = useState(false);
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -20,6 +20,7 @@ const MembershipDashboard = () => {
         step2: {},
         step3: {},
     });
+    console.log('memberTypesData', memberTypesData);
 
     const handleNext = (stepKey, data) => {
         setFormData((prev) => ({ ...prev, [stepKey]: data }));
@@ -114,10 +115,11 @@ const MembershipDashboard = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
+                <pre>{JSON.stringify(memberTypesData, null, 2)}</pre>
                 <div className="">
                     {step === 1 && <AddForm1 onNext={(data) => handleNext('step1', data)} />}
                     {step === 2 && <AddForm2 onNext={(data) => handleNext('step2', data)} onBack={() => setStep(1)} />}
-                    {step === 3 && <AddForm3 onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} />}
+                    {step === 3 && <AddForm3 memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} />}
                 </div>
             </div>
         </>

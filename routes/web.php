@@ -64,9 +64,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('employee.attendancereport');
 
     //Membership Booking Routes
-    Route::get('/admin/membership/finance', function () {
-        return Inertia::render('App/Admin/Membership/Finance');
-    })->name('membership.finance');
+
 
     Route::get('/admin/membership/add/membertype', function () {
         return Inertia::render('App/Admin/Membership/AddMember');
@@ -120,6 +118,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // membership routes
     Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
     Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
+    Route::get('/membership/member-types', [MembershipController::class, 'getAllMemberTypesForm3'])->name('membership.member-types');
+
     // Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
 
     Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
@@ -129,6 +129,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
     Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
+    Route::get('/admin/membership/finance', [MembershipController::class, 'membershipFinance'])->name('membership.finance');
+    // Route::get('/admin/membership/finance', function () {
+    //     return Inertia::render('App/Admin/Membership/Finance');
+    // })->name('membership.finance');
 
     // Members types
     Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
@@ -140,7 +144,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     //payment
     Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');
     Route::post('/admin/membership/payments/store', [PaymentController::class, 'store'])->name('membership.payment.store');
+    Route::get('/admin/membership/history', [MembershipController::class, 'paymentMembersHistory'])->name('admin.membership.history');
 
+
+    //  Route::get('/admin/membership/history', function () {
+    //         return Inertia::render('App/Admin/Membership/History');
+    //     })->name('membership.history');
 
     //Membership Booking Routes
 
@@ -156,9 +165,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/AddForm-3');
     })->name('membership.add3');
 
-    Route::get('/admin/membership/history', function () {
-        return Inertia::render('App/Admin/Membership/History');
-    })->name('membership.history');
+    // Route::get('/admin/membership/history', function () {
+    //     return Inertia::render('App/Admin/Membership/History');
+    // })->name('membership.history');
 
     Route::get('/admin/membership/guest/history', function () {
         return Inertia::render('App/Admin/Membership/Guest');
