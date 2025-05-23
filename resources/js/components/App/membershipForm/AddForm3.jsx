@@ -9,7 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 
-const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo }) => {
+const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading }) => {
     const [open, setOpen] = useState(false);
     const [memberType, setMemberType] = useState('Silver');
     const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
@@ -69,7 +69,7 @@ const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo }) => {
             reader.onloadend = () => {
                 setCurrentFamilyMember({
                     ...currentFamilyMember,
-                    picture: reader.result,
+                    picture: file,
                     picture_preview: reader.result,
                 });
             };
@@ -165,7 +165,7 @@ const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo }) => {
         try {
             await onSubmit(dataToSave);
             setSubmitError('');
-            router.visit('/admin/membership/all/payments');
+            // router.visit('/admin/membership/all/payments');
         } catch (error) {
             console.error('Submission Error:', error);
             const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data || 'An error occurred during submission');
@@ -852,6 +852,9 @@ const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo }) => {
                                     textTransform: 'none',
                                 }}
                                 onClick={handleSubmit}
+                                loading={loading}
+                                disabled={loading}
+                                loadingPosition="start"
                             >
                                 Save & Submit
                             </Button>

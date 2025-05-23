@@ -8,6 +8,7 @@ use App\Models\UserDetail;
 use App\Models\Member;
 use App\Models\MemberType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -86,17 +87,13 @@ class MembershipController extends Controller
 
     public function store(Request $request)
     {
-        // Log request data for debugging
-        // \Log::info('Received member_type: ' . $request->input('member_type'));
-        // \Log::info('All request data: ', $request->all());
-
         $validated = $request->validate([
             'coa_account' => 'nullable|string|max:255',
             'title' => 'nullable|string|in:Mr,Mrs,Ms,dr,Female,Other',
             'first_name' => 'nullable|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'application_number' => 'nullable|string|max:255',
+            'application_number' => 'nullable|max:255',
             'name_comments' => 'nullable|string',
             'guardian_name' => 'nullable|string|max:255',
             'guardian_membership' => 'nullable|string|max:255',
@@ -143,150 +140,158 @@ class MembershipController extends Controller
             'family_members.*.membership_category' => 'nullable|string|max:255',
             'family_members.*.start_date' => 'nullable|date',
             'family_members.*.end_date' => 'nullable|date',
-            'family_members.*.picture' => 'nullable|string',
+            'family_members.*.picture' => 'nullable',
             'member_image' => 'nullable|string',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        // Fetch member_type_id for primary member
-        $memberType = MemberType::where('name', $request->member_type)->firstOrFail();
-        $member_type_id = $memberType->id;
+        // $memberType = MemberType::where('name', $request->member_type)->firstOrFail();
+        // $member_type_id = $memberType->id;
+        try {
+            DB::beginTransaction();
 
-        // Create primary user
-        $primaryUser = User::create([
-            'email' => $validated['personal_email'],
-            'password' => isset($validated['password']) ? $validated['password'] : null,
-            'first_name' => $validated['first_name'],
-            'middle_name' => $validated['middle_name'],
-            'last_name' => $validated['last_name'],
-            'phone_number' => $validated['mobile_number_a'],
-            'user_id' => $validated['membership_number'],
+            $member_type_id = $request->member_type;
 
-            'member_type_id' => $member_type_id,
-        ]);
+            // Create primary user
+            $primaryUser = User::create([
+                'user_id' => $this->getUserNo(),
+                'email' => $validated['personal_email'],
+                'password' => isset($validated['password']) ? $validated['password'] : null,
+                'first_name' => $validated['first_name'],
+                'middle_name' => $validated['middle_name'],
+                'last_name' => $validated['last_name'],
+                'phone_number' => $validated['mobile_number_a'],
+                'user_id' => $this->getUserNo(),
+                'member_type_id' => $member_type_id,
+            ]);
 
-        // Create UserDetail for primary user
-        $primaryUserDetail = UserDetail::create([
-            'user_id' => $primaryUser->id,
-            'coa_account' => $validated['coa_account'],
-            'title' => $validated['title'],
-            'state' => 'Punjab',
-            'application_number' => $validated['application_number'],
-            'name_comments' => $validated['name_comments'],
-            'guardian_name' => $validated['guardian_name'],
-            'guardian_membership' => $validated['guardian_membership'],
-            'nationality' => $validated['nationality'],
-            'cnic_no' => $validated['cnic_no'],
-            'passport_no' => $validated['passport_no'],
-            'gender' => $validated['gender'],
-            'ntn' => $validated['ntn'],
-            'date_of_birth' => $validated['date_of_birth'],
-            'education' => json_encode($validated['education'] ?? []),
-            'membership_reason' => $validated['membership_reason'],
-            'mobile_number_a' => $validated['mobile_number_a'],
-            'mobile_number_b' => $validated['mobile_number_b'],
-            'mobile_number_c' => $validated['mobile_number_c'],
-            'telephone_number' => $validated['telephone_number'],
-            'personal_email' => $validated['personal_email'],
-            'critical_email' => $validated['critical_email'],
-            'emergency_name' => $validated['emergency_name'],
-            'emergency_relation' => $validated['emergency_relation'],
-            'emergency_contact' => $validated['emergency_contact'],
-            'current_address' => $validated['current_address'],
-            'current_city' => $validated['current_city'],
-            'current_country' => $validated['current_country'],
-            'permanent_address' => $validated['permanent_address'],
-            'permanent_city' => $validated['permanent_city'],
-            'permanent_country' => $validated['permanent_country'],
-            'country' => $validated['current_country'],
-        ]);
+            // Create UserDetail for primary user
+            $primaryUserDetail = UserDetail::create([
+                'user_id' => $primaryUser->id,
+                'coa_account' => $validated['coa_account'],
+                'title' => $validated['title'],
+                'state' => 'Punjab',
+                'application_number' => $validated['application_number'],
+                'name_comments' => $validated['name_comments'],
+                'guardian_name' => $validated['guardian_name'],
+                'guardian_membership' => $validated['guardian_membership'],
+                'nationality' => $validated['nationality'],
+                'cnic_no' => $validated['cnic_no'],
+                'passport_no' => $validated['passport_no'],
+                'gender' => $validated['gender'],
+                'ntn' => $validated['ntn'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'education' => json_encode($validated['education'] ?? []),
+                'membership_reason' => $validated['membership_reason'],
+                'mobile_number_a' => $validated['mobile_number_a'],
+                'mobile_number_b' => $validated['mobile_number_b'],
+                'mobile_number_c' => $validated['mobile_number_c'],
+                'telephone_number' => $validated['telephone_number'],
+                'personal_email' => $validated['personal_email'],
+                'critical_email' => $validated['critical_email'],
+                'emergency_name' => $validated['emergency_name'],
+                'emergency_relation' => $validated['emergency_relation'],
+                'emergency_contact' => $validated['emergency_contact'],
+                'current_address' => $validated['current_address'],
+                'current_city' => $validated['current_city'],
+                'current_country' => $validated['current_country'],
+                'permanent_address' => $validated['permanent_address'],
+                'permanent_city' => $validated['permanent_city'],
+                'permanent_country' => $validated['permanent_country'],
+                'country' => $validated['current_country'],
+            ]);
 
-        // Handle primary member image
-        $memberImagePath = null;
-        if ($request->filled('member_image')) {
-            $base64Image = $request->input('member_image');
-            $base64Image = preg_replace('/^data:image\/(png|jpg|jpeg);base64,/', '', $base64Image);
-            $imageData = base64_decode($base64Image);
-            $filename = 'member_images/' . Str::uuid() . '.jpg';
-            Storage::disk('public')->put($filename, $imageData);
-            $memberImagePath = $filename;
-        }
-
-        // Create primary member record
-        $primaryMember = Member::create([
-            'user_detail_id' => $primaryUserDetail->id,
-            'member_type_id' => $member_type_id,
-            'membership_category' => $validated['membership_category'],
-            'membership_number' => $validated['membership_number'],
-            'membership_date' => $validated['membership_date'],
-            'card_status' => $validated['card_status'],
-            'card_issue_date' => $validated['card_issue_date'],
-            'card_expiry_date' => $validated['card_expiry_date'],
-            'from_date' => $validated['from_date'],
-            'to_date' => $validated['to_date'],
-            'member_image' => $memberImagePath,
-        ]);
-
-        // Handle family members
-        if (!empty($validated['family_members'])) {
-            foreach ($validated['family_members'] as $familyMemberData) {
-                // Fetch member_type_id for family member
-                $familyMemberType = isset($familyMemberData['membership_type'])
-                    ? MemberType::where('name', $familyMemberData['membership_type'])->first()
-                    : null;
-                $family_member_type_id = $familyMemberType ? $familyMemberType->id : $member_type_id;
-
-                // Create User for family member (no password)
-                $familyUser = User::create([
-                    'email' => $familyMemberData['email'],
-                    'password' => '123456',
-                    'first_name' => $familyMemberData['full_name'],
-                    'phone_number' => $familyMemberData['phone_number'],
-                    'member_type_id' => $family_member_type_id,
-                    'parent_user_id' => $primaryUser->id
-                ]);
-
-                // Create UserDetail for family member
-                $familyUserDetail = UserDetail::create([
-                    'user_id' => $familyUser->id,
-                    'cnic_no' => $familyMemberData['cnic'],
-                    'personal_email' => $familyMemberData['email'],
-                    'mobile_number_a' => $familyMemberData['phone_number'],
-                    // 'current_address' => $validated['current_address'],
-                    // 'current_city' => $validated['current_city'],
-                    // 'current_country' => $validated['current_country'],
-                    // 'permanent_address' => $validated['permanent_address'],
-                    // 'permanent_city' => $validated['permanent_city'],
-                    // 'permanent_country' => $validated['permanent_country'],
-                    // 'country' => $validated['current_country'],
-                    // 'state' => 'Punjab',
-                ]);
-
-                // Handle family member image
-                $familyMemberImagePath = null;
-                if (!empty($familyMemberData['picture'])) {
-                    $familyMemberImagePath = FileHelper::saveImage($familyMemberData['picture'], 'family_member_images');
-                }
-
-                // Create Member record for family member
-                Member::create([
-                    'user_detail_id' => $familyUserDetail->id,
-                    'member_type_id' => $family_member_type_id,
-                    'full_name' => $familyMemberData['full_name'],
-                    'relation' => $familyMemberData['relation'],
-                    // 'cnic' => $familyMemberData['cnic'],
-                    // 'phone_number' => $familyMemberData['phone_number'],
-                    'membership_type' => $familyMemberData['membership_type'],
-                    'membership_category' => $familyMemberData['membership_category'],
-                    'start_date' => $familyMemberData['start_date'],
-                    'end_date' => $familyMemberData['end_date'],
-                    'picture' => $familyMemberImagePath,
-                    // 'primary_member_id' => $primaryMember->id,
-                ]);
+            // Handle primary member image
+            $memberImagePath = null;
+            if ($request->hasFile('profile_photo')) {
+                $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'member_images');
             }
-        }
 
-        return redirect()->back()->with('success', 'Membership details submitted successfully.');
+            // Create primary member record
+            $primaryMember = Member::create([
+                'user_detail_id' => $primaryUserDetail->id,
+                'member_type_id' => $member_type_id,
+                'membership_category' => $validated['membership_category'],
+                'membership_number' => $validated['membership_number'],
+                'membership_date' => $validated['membership_date'],
+                'card_status' => $validated['card_status'],
+                'card_issue_date' => $validated['card_issue_date'],
+                'card_expiry_date' => $validated['card_expiry_date'],
+                'from_date' => $validated['from_date'],
+                'to_date' => $validated['to_date'],
+                'picture' => $memberImagePath,
+            ]);
+
+            // Handle family members
+            if (!empty($validated['family_members'])) {
+                foreach ($validated['family_members'] as $familyMemberData) {
+                    // Fetch member_type_id for family member
+                    $familyMemberType = isset($familyMemberData['membership_type'])
+                        ? MemberType::where('name', $familyMemberData['membership_type'])->first()
+                        : null;
+                    $family_member_type_id = $familyMemberType ? $familyMemberType->id : $member_type_id;
+
+                    // Create User for family member (no password)
+                    $familyUser = User::create([
+                        'user_id' => $this->getUserNo(),
+                        'email' => $familyMemberData['email'],
+                        'password' => isset($validated['password']) ? $validated['password'] : null,
+                        'first_name' => $familyMemberData['full_name'],
+                        'phone_number' => $familyMemberData['phone_number'],
+                        'member_type_id' => $family_member_type_id,
+                        'parent_user_id' => $primaryUser->id
+                    ]);
+
+                    // Create UserDetail for family member
+                    $familyUserDetail = UserDetail::create([
+                        'user_id' => $familyUser->id,
+                        'cnic_no' => $familyMemberData['cnic'],
+                        'personal_email' => $familyMemberData['email'],
+                        'mobile_number_a' => $familyMemberData['phone_number'],
+                        // 'current_address' => $validated['current_address'],
+                        // 'current_city' => $validated['current_city'],
+                        // 'current_country' => $validated['current_country'],
+                        // 'permanent_address' => $validated['permanent_address'],
+                        // 'permanent_city' => $validated['permanent_city'],
+                        // 'permanent_country' => $validated['permanent_country'],
+                        // 'country' => $validated['current_country'],
+                        // 'state' => 'Punjab',
+                    ]);
+
+                    // Handle family member image
+                    $familyMemberImagePath = null;
+                    if (!empty($familyMemberData['picture'])) {
+                        $familyMemberImagePath = FileHelper::saveImage($familyMemberData['picture'], 'family_member_images');
+                    }
+
+                    // Create Member record for family member
+                    Member::create([
+                        'user_detail_id' => $familyUserDetail->id,
+                        'member_type_id' => $family_member_type_id,
+                        'full_name' => $familyMemberData['full_name'],
+                        'relation' => $familyMemberData['relation'],
+                        // 'cnic' => $familyMemberData['cnic'],
+                        // 'phone_number' => $familyMemberData['phone_number'],
+                        'membership_type' => $familyMemberData['membership_type'],
+                        'membership_category' => $familyMemberData['membership_category'],
+                        'start_date' => $familyMemberData['start_date'],
+                        'end_date' => $familyMemberData['end_date'],
+                        'picture' => $familyMemberImagePath,
+                        // 'primary_member_id' => $primaryMember->id,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return to_route('membership.add', ['member_id' => $primaryMember->id])->with(['success' => 'Membership created successfully']);
+
+
+            // return redirect()->back()->with(['success' => 'Membership details submitted successfully.', 'member' => $primaryMember]);
+        } catch (\Throwable $th) {
+            Log::error('Error submitting membership details: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Failed to submit membership details: ' . $th->getMessage());
+        }
     }
 
     public function updateMemberStatus(Request $request, $id)

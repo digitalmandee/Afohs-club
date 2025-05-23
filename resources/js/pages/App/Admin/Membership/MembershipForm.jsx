@@ -8,12 +8,14 @@ import AddForm1 from '@/components/App/membershipForm/AddForm1';
 import AddForm2 from '@/components/App/membershipForm/AddForm2';
 import AddForm3 from '@/components/App/membershipForm/AddForm3';
 import { enqueueSnackbar } from 'notistack';
+import Payment from './Payment';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const MembershipDashboard = ({ memberTypesData, userNo }) => {
     const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         step1: {},
@@ -34,19 +36,21 @@ const MembershipDashboard = ({ memberTypesData, userNo }) => {
         setFormData((prev) => ({ ...prev, [stepKey]: data }));
         // Transform familyMembers to match backend validation keys
         const transformedFamilyMembers = (data.family_members || []).map((member) => ({
-            full_name: member.fullName || '',
+            full_name: member.full_name || '',
             relation: member.relation || '',
             cnic: member.cnic || '',
-            phone_number: member.phoneNumber || '',
-            membership_type: member.member_type || '',
+            phone_number: member.phone_number || '',
+            email: member.email || '',
+            membership_type: member.membership_type || '',
             membership_category: member.membership_category || '',
-            start_date: member.startDate || '',
-            end_date: member.endDate || '',
-            picture: member.picturePreview || '', // Base64 string
+            start_date: member.start_date || '',
+            end_date: member.end_date || '',
+            picture: member.picture || '', // Base64 string
         }));
 
         const fullData = {
             application_number: userNo ?? 0,
+            profile_photo: formData.step1.profile_photo,
             first_name: formData.step1.firstName || '',
             middle_name: formData.step1.middleName || '',
             last_name: formData.step1.lastName || '',
@@ -88,16 +92,22 @@ const MembershipDashboard = ({ memberTypesData, userNo }) => {
             from_date: data.from_date || '',
             to_date: data.to_date || '',
             family_members: transformedFamilyMembers,
-            member_image: formData.step1.memberImage || null,
         };
 
-        console.log('Submitting fullData:', fullData);
+        // console.log('Submitting fullData:', fullData);
+        setLoading(true);
 
         router.post(route('membership.store'), fullData, {
-            onSuccess: () => {
+            onSuccess: (success) => {
+                console.log(success);
+                console.log(success.member);
+
+                // router.visit(route('membership.allpayment', { id: success.member?.id }));
+                setLoading(false);
                 enqueueSnackbar('Membership created successfully.', { variant: 'success' });
             },
             onError: (errors) => {
+                setLoading(false);
                 enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
                 // alert('Submission failed: ' + JSON.stringify(errors));
             },
@@ -119,7 +129,7 @@ const MembershipDashboard = ({ memberTypesData, userNo }) => {
                 <div className="">
                     {step === 1 && <AddForm1 userNo={userNo} onNext={(data) => handleNext('step1', data)} />}
                     {step === 2 && <AddForm2 onNext={(data) => handleNext('step2', data)} onBack={() => setStep(1)} />}
-                    {step === 3 && <AddForm3 userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} />}
+                    {step === 3 && <AddForm3 userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} loading={loading} />}
                 </div>
             </div>
         </>
