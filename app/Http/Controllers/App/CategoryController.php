@@ -13,14 +13,28 @@ use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
-    public function index()
-    {
-        $categories = Category::latest()->select('id', 'name', 'image')->withCount('products')->get();
 
-        return Inertia::render('App/Inventory/Category', [
-            'categoriesList' => $categories,
+
+    public function index(Request $request)
+    {
+        $category_id = $request->query('category_id');
+
+        $query = Product::latest()->with(['category', 'variants', 'variants.values']);
+
+        if ($category_id) {
+            $query->where('category_id', $category_id);
+        }
+
+        $productLists = $query->get();
+
+        $categoriesList = Category::select('id', 'name')->get(); // ← Make sure this line is present
+
+        return Inertia::render('App/Inventory/Dashboard', [
+            'productLists' => $productLists,
+            'categoriesList' => $categoriesList, // ← Make sure this key matches the React destructuring
         ]);
     }
+
 
     public function getCategories()
     {
