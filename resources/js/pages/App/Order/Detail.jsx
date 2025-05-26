@@ -124,9 +124,9 @@ const OrderDetail = ({ handleEditItem }) => {
                                     <img src="/assets/food-tray.png" alt="" style={{ width: 20, height: 20, marginLeft: 4 }} />
                                 </Box>
 
-                                <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
+                                {/* <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                     <ClearIcon fontSize="small" />
-                                </IconButton>
+                                </IconButton> */}
                                 {/*
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                     <EditIcon fontSize="small" />

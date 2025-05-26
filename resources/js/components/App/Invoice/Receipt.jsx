@@ -166,7 +166,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                     Order Id
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                    {paymentData.order.order_number}
+                    #{paymentData.order.order_number}
                 </Typography>
             </Box>
 

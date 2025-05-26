@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use function PHPSTORM_META\map;
+
 class Invoices extends Model
 {
     use HasFactory;
@@ -22,6 +24,9 @@ class Invoices extends Model
         'customer_change',
         'cost_price',
         'payment_method',
+        'cash',
+        'credit_card',
+        'bank_transfer',
         'status',
     ];
 
