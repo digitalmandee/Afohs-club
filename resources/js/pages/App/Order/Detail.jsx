@@ -1,11 +1,12 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
-import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
+import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon, Save as SaveIcon } from '@mui/icons-material';
 import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ClearIcon from '@mui/icons-material/Clear';
+import axios from 'axios';
 
 const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
@@ -16,6 +17,24 @@ const OrderDetail = ({ handleEditItem }) => {
     const [tempQty, setTempQty] = useState(null);
     const [discount, setDiscount] = useState(0); // percentage
     const [discountType, setDiscountType] = useState(0);
+    const [setting, setSetting] = useState(null);
+    const [loadingSetting, setLoadingSetting] = useState(true); // Added loading state
+    const [isEditingTax, setIsEditingTax] = useState(false);
+    const [tempTax, setTempTax] = useState('');
+
+    useEffect(() => {
+        axios
+            .get(route('setting.index'))
+            .then((response) => {
+                setSetting(response.data);
+                setTempTax(response.data.tax?.toString() || '12');
+                setLoadingSetting(false);
+            })
+            .catch((error) => {
+                console.error('Failed to load setting:', error);
+                setLoadingSetting(false);
+            });
+    }, []);
 
     const [formData, setFormData] = useState({
         discountValue: '',
@@ -31,7 +50,7 @@ const OrderDetail = ({ handleEditItem }) => {
     };
 
     const subtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
-    const taxRate = 0.12;
+    const taxRate = setting?.tax ? setting.tax / 100 : 0.12; // Default to 12% if not set
     const taxAmount = subtotal * taxRate;
     const discountAmount = formData.discountType === 'percentage' ? subtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
     const total = subtotal + taxAmount - discountAmount;
@@ -81,6 +100,28 @@ const OrderDetail = ({ handleEditItem }) => {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     }
 
+    const handleTaxEditClick = () => {
+        setIsEditingTax(true);
+        setTempTax(setting?.tax?.toString() || '12');
+    };
+
+    const handleTaxChange = (e) => {
+        const value = e.target.value;
+        if (/^\d*\.?\d*$/.test(value)) {
+            setTempTax(value);
+        }
+    };
+
+    const handleSaveTax = () => {
+        const newTax = parseFloat(tempTax);
+        if (!isNaN(newTax) && newTax >= 0 && newTax <= 100) {
+            setSetting({ ...setting, tax: newTax });
+        } else {
+            enqueueSnackbar('Tax must be a number between 0 and 100.', { variant: 'error' });
+        }
+        setIsEditingTax(false);
+    };
+
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: '80vh' }}>
             <Paper elevation={0} sx={{ width: '100%', maxWidth: 500, borderRadius: 1, overflow: 'hidden' }}>
@@ -97,19 +138,6 @@ const OrderDetail = ({ handleEditItem }) => {
                                     <Typography variant="body2" fontWeight="medium">
                                         {orderDetails.member.name}
                                     </Typography>
-                                    {/* <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                        <Avatar sx={{ width: 24, height: 24, bgcolor: '#e0e0e0', fontSize: 12, mr: 1 }}>Q</Avatar>
-                                        <Typography sx={{ fontWeight: 500, fontSize: '14px', color: '#121212' }}>{orderDetails.member.name}</Typography>
-                                        <img
-                                            src="/assets/Diamond.png"
-                                            alt=""
-                                            style={{
-                                                height: 24,
-                                                width: 24,
-                                                marginLeft: 5,
-                                            }}
-                                        />
-                                    </Box> */}
                                 </Box>
                             </Box>
                             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -128,10 +156,6 @@ const OrderDetail = ({ handleEditItem }) => {
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                     <ClearIcon fontSize="small" />
                                 </IconButton>
-                                {/*
-                                <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
-                                    <EditIcon fontSize="small" />
-                                </IconButton> */}
                             </Box>
                         </Box>
 
@@ -320,10 +344,36 @@ const OrderDetail = ({ handleEditItem }) => {
                         </Box>
                     </Box>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                            Tax 12%
-                        </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
+                        {isEditingTax ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <TextField
+                                    size="small"
+                                    value={tempTax}
+                                    onChange={handleTaxChange}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSaveTax();
+                                        }
+                                    }}
+                                    autoFocus
+                                    sx={{ width: '80px' }}
+                                    inputProps={{ style: { textAlign: 'center' } }}
+                                />
+                                <IconButton size="small" onClick={handleSaveTax}>
+                                    <SaveIcon fontSize="small" />
+                                </IconButton>
+                            </Box>
+                        ) : (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Tax {setting?.tax || 12}%
+                                </Typography>
+                                <IconButton size="small" onClick={handleTaxEditClick}>
+                                    <EditIcon fontSize="small" />
+                                </IconButton>
+                            </Box>
+                        )}
                         <Typography variant="body2">Rs {taxAmount.toFixed(2)}</Typography>
                     </Box>
 
