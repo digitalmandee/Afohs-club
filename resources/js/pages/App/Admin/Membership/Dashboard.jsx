@@ -9,6 +9,7 @@ import MembershipCancellationDialog from './CancelModal';
 import MemberProfileModal from './Profile';
 import MembershipCardComponent from './UserCard';
 import MemberFilter from './MemberFilter';
+import InvoiceSlip from './Invoice';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -26,6 +27,7 @@ const MembershipDashboard = ({ member = [] }) => {
     const [openProfileModal, setOpenProfileModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false); // State for InvoiceSlip modal
     const [selectMember, setSelectMember] = useState(null);
     const [detailsData] = useState({
         reason: 'Violation of rules',
@@ -34,7 +36,7 @@ const MembershipDashboard = ({ member = [] }) => {
         toDate: 'Apr 30, 2025',
     });
 
-    console.log('Member prop:', member); // Debug: Log the member prop
+    // console.log('Member prop:', member); // Debug: Log the member prop
 
     const handleOpenModal = (member, event, type = 'actions') => {
         const rect = event.currentTarget.getBoundingClientRect();
@@ -129,7 +131,7 @@ const MembershipDashboard = ({ member = [] }) => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Payment</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>10,000</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>0</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -142,7 +144,7 @@ const MembershipDashboard = ({ member = [] }) => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Current Balance</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>300,000</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>0</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -206,30 +208,29 @@ const MembershipDashboard = ({ member = [] }) => {
                                                     setOpenProfileModal(true);
                                                 }}
                                             >
-                                                {/* {user.user_detail?.membership_number || 'N/A'} */}
-                                                {user.id}
+                                                {user.user_id || 'N/A'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.name}</Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.first_name}</Typography>
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.email}</Typography>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.user_detail?.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
-                                                        color: user.user_detail?.card_status === 'Active' ? '#2e7d32' : user.user_detail?.card_status === 'Suspend' ? '#FFA90B' : '#d32f2f',
+                                                        color: user.member?.card_status === 'active' ? '#2e7d32' : user.member?.card_status === 'Suspend' ? '#FFA90B' : '#d32f2f',
                                                         fontWeight: 'medium',
                                                         cursor: 'pointer',
                                                     }}
                                                     onClick={(e) => showMemberDetails(user, e)}
                                                 >
-                                                    {user.user_detail?.card_status || 'N/A'}
-                                                    {user.user_detail?.card_status === 'Suspend' && (
+                                                    {user.member?.card_status || 'N/A'}
+                                                    {user.member?.card_status === 'Suspend' && (
                                                         <img
                                                             src="/assets/system-expired.png"
                                                             alt=""
@@ -254,7 +255,21 @@ const MembershipDashboard = ({ member = [] }) => {
                                                     View
                                                 </Button>
                                             </TableCell>
-                                            <TableCell>{user.user_detail?.card_status === 'Expired' || user.user_detail?.card_status === 'Suspend' ? <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button> : <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>View</Button>}</TableCell>
+                                            <TableCell>
+                                                {user.member?.card_status === 'Expired' || user.member?.card_status === 'Suspend' ? (
+                                                    <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
+                                                ) : (
+                                                    <Button
+                                                        style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
+                                                        onClick={() => {
+                                                            setSelectMember(user);
+                                                            setOpenInvoiceModal(true);
+                                                        }}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                )}
+                                            </TableCell>
                                             <TableCell>
                                                 <IconButton onClick={(e) => handleOpenModal(user, e)}>
                                                     <MoreVert />
@@ -326,22 +341,10 @@ const MembershipDashboard = ({ member = [] }) => {
                     )}
                     <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} onConfirm={handleConfirmSuspend} />
                     <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} />
-                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} />
-                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} />
+                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={member} />
+                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={member} />
                     <MemberFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
-                    {/* Membership Alerts */}
-                    <Snackbar open={showAlert} autoHideDuration={5000} onClose={() => setShowAlert(false)} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} TransitionComponent={(props) => <Slide {...props} direction="left" />}>
-                        <Alert onClose={() => setShowAlert(false)} severity="error" sx={{ width: '100%', fontWeight: 500, fontSize: '18px' }}>
-                            Membership successfully suspended!
-                            <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>This member card suspended successfully</Typography>
-                        </Alert>
-                    </Snackbar>
-                    <Snackbar open={showAlert} autoHideDuration={5000} onClose={() => setShowAlert(false)} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} TransitionComponent={(props) => <Slide {...props} direction="left" />}>
-                        <Alert onClose={() => setShowAlert(false)} severity="error" sx={{ width: '100%', fontWeight: 500, fontSize: '18px' }}>
-                            Membership successfully cancelled!
-                            <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>This member card has been cancelled successfully</Typography>
-                        </Alert>
-                    </Snackbar>
+                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} member={selectMember} />
                 </div>
             </div>
         </>

@@ -3,7 +3,7 @@ import { TextField, Button, Select, MenuItem, FormControl, Paper, Typography, Gr
 import { ArrowBack, Add, Delete, Edit, KeyboardArrowRight, KeyboardArrowDown } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const AddForm1 = ({ onNext }) => {
+const AddForm1 = ({ onNext, userNo }) => {
     const [memberImage, setMemberImage] = useState(null);
     const [showImageButtons, setShowImageButtons] = useState(false);
     // const [title, setTitle] = useState('');
@@ -32,6 +32,7 @@ const AddForm1 = ({ onNext }) => {
     const [gender, setGender] = useState('Male');
 
     const [formData, setFormData] = useState({
+        profile_photo: '',
         coaAccount: 'COA123456',
         firstName: '',
         middleName: '',
@@ -50,6 +51,7 @@ const AddForm1 = ({ onNext }) => {
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {
+            setFormData((prev) => ({ ...prev, profile_photo: event.target.files[0] }));
             const reader = new FileReader();
             reader.onload = (e) => {
                 setMemberImage(e.target.result);
@@ -244,7 +246,7 @@ const AddForm1 = ({ onNext }) => {
                                 Application Number :
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                7171
+                                #{userNo}
                             </Typography>
                         </Box>
                     </Grid>

@@ -1,39 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    Typography,
-    TextField,
-    Button,
-    IconButton,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Avatar,
-    Dialog,
-    DialogContent,
-    Select,
-    MenuItem,
-    FormControl,
-    Chip,
-    InputAdornment,
-    Grid,
-    Card,
-    CardContent,
-} from '@mui/material';
-import {
-    ArrowBack,
-    Search,
-    FilterAlt,
-    CreditCard,
-    CalendarMonth,
-    PendingActions,
-    Close,
-    KeyboardArrowDown,
-} from '@mui/icons-material';
+import { Box, Typography, TextField, Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Dialog, DialogContent, Select, MenuItem, FormControl, Chip, InputAdornment, Grid, Card, CardContent } from '@mui/material';
+import { ArrowBack, Search, FilterAlt, CreditCard, CalendarMonth, PendingActions, Close, KeyboardArrowDown } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
@@ -41,7 +8,7 @@ import { router } from '@inertiajs/react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembersFinance = () => {
+const MembersFinance = ({ membersdata = [] }) => {
     const [open, setOpen] = useState(false);
     // State for filter modal
     const [openFilter, setOpenFilter] = useState(false);
@@ -56,7 +23,7 @@ const MembersFinance = () => {
             amount: 1000,
             date: 'Apr 7, 2025',
             status: 'Paid',
-            avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
+            avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
         },
         {
             id: 'AFOHS-12345',
@@ -66,7 +33,7 @@ const MembersFinance = () => {
             amount: 2000,
             date: 'Apr 4, 2025',
             status: 'Paid',
-            avatar: 'https://randomuser.me/api/portraits/men/33.jpg'
+            avatar: 'https://randomuser.me/api/portraits/men/33.jpg',
         },
         {
             id: 'AFOHS-12345',
@@ -76,7 +43,7 @@ const MembersFinance = () => {
             amount: 3000,
             date: 'Apr 3, 2025',
             status: 'Pending',
-            avatar: 'https://randomuser.me/api/portraits/men/34.jpg'
+            avatar: 'https://randomuser.me/api/portraits/men/34.jpg',
         },
         {
             id: 'AFOHS-12345',
@@ -86,7 +53,7 @@ const MembersFinance = () => {
             amount: 4000,
             date: 'Apr 2, 2025',
             status: 'Paid',
-            avatar: 'https://randomuser.me/api/portraits/men/35.jpg'
+            avatar: 'https://randomuser.me/api/portraits/men/35.jpg',
         },
         {
             id: 'AFOHS-12345',
@@ -96,8 +63,8 @@ const MembersFinance = () => {
             amount: 5000,
             date: 'Apr 2, 2025',
             status: 'Paid',
-            avatar: 'https://randomuser.me/api/portraits/men/36.jpg'
-        }
+            avatar: 'https://randomuser.me/api/portraits/men/36.jpg',
+        },
     ]);
 
     // State for filtered payments
@@ -110,7 +77,7 @@ const MembersFinance = () => {
     const [filterOptions, setFilterOptions] = useState({
         paymentType: 'All Type',
         month: '',
-        year: ''
+        year: '',
     });
 
     // Initialize filtered payments with all payments
@@ -126,11 +93,7 @@ const MembersFinance = () => {
         if (query.trim() === '') {
             setFilteredPayments(payments);
         } else {
-            const filtered = payments.filter(
-                payment =>
-                    payment.name.toLowerCase().includes(query) ||
-                    payment.memberType.toLowerCase().includes(query)
-            );
+            const filtered = payments.filter((payment) => payment.name.toLowerCase().includes(query) || payment.memberType.toLowerCase().includes(query));
             setFilteredPayments(filtered);
         }
     };
@@ -148,7 +111,7 @@ const MembersFinance = () => {
     const handleFilterChange = (field, value) => {
         setFilterOptions({
             ...filterOptions,
-            [field]: value
+            [field]: value,
         });
     };
 
@@ -159,14 +122,12 @@ const MembersFinance = () => {
         // Filter by payment type
         if (filterOptions.paymentType !== 'All Type') {
             const statusMap = {
-                'Paid': 'Paid',
-                'Pending': 'Pending',
-                'Refunded': 'Refunded'
+                Paid: 'Paid',
+                Pending: 'Pending',
+                Refunded: 'Refunded',
             };
 
-            filtered = filtered.filter(payment =>
-                payment.status === statusMap[filterOptions.paymentType]
-            );
+            filtered = filtered.filter((payment) => payment.status === statusMap[filterOptions.paymentType]);
         }
 
         // Additional filters for month/year could be added here
@@ -180,7 +141,7 @@ const MembersFinance = () => {
         setFilterOptions({
             paymentType: 'All Type',
             month: '',
-            year: ''
+            year: '',
         });
         setFilteredPayments(payments);
     };
@@ -204,6 +165,7 @@ const MembersFinance = () => {
                         </IconButton>
                         <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
                             Finance
+                            {/* <pre>{JSON.stringify(membersdata, null, 2)}</pre> */}
                         </Typography>
                     </Box>
 
@@ -213,24 +175,24 @@ const MembersFinance = () => {
                             <Grid item xs={12} md={4}>
                                 <Card sx={{ bgcolor: '#3a4a4c', color: 'white', height: '100%' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                                        <Box sx={{
-                                            bgcolor: 'rgba(255,255,255,0.1)',
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            margin: '0 auto',
-                                            mb: 1
-                                        }}>
+                                        <Box
+                                            sx={{
+                                                bgcolor: 'rgba(255,255,255,0.1)',
+                                                width: 40,
+                                                height: 40,
+                                                borderRadius: '50%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                margin: '0 auto',
+                                                mb: 1,
+                                            }}
+                                        >
                                             <CreditCard />
                                         </Box>
-                                        <Typography sx={{ fontSize: 14, mb: 1 }}>
-                                            Total Payments
-                                        </Typography>
+                                        <Typography sx={{ fontSize: 14, mb: 1 }}>Total Payments</Typography>
                                         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                            320,000
+                                            0
                                         </Typography>
                                     </CardContent>
                                 </Card>
@@ -239,24 +201,24 @@ const MembersFinance = () => {
                             <Grid item xs={12} md={4}>
                                 <Card sx={{ bgcolor: '#3a4a4c', color: 'white', height: '100%' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                                        <Box sx={{
-                                            bgcolor: 'rgba(255,255,255,0.1)',
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            margin: '0 auto',
-                                            mb: 1
-                                        }}>
+                                        <Box
+                                            sx={{
+                                                bgcolor: 'rgba(255,255,255,0.1)',
+                                                width: 40,
+                                                height: 40,
+                                                borderRadius: '50%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                margin: '0 auto',
+                                                mb: 1,
+                                            }}
+                                        >
                                             <CalendarMonth />
                                         </Box>
-                                        <Typography sx={{ fontSize: 14, mb: 1 }}>
-                                            This Month
-                                        </Typography>
+                                        <Typography sx={{ fontSize: 14, mb: 1 }}>This Month</Typography>
                                         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                            10,000
+                                            0
                                         </Typography>
                                     </CardContent>
                                 </Card>
@@ -265,24 +227,24 @@ const MembersFinance = () => {
                             <Grid item xs={12} md={4}>
                                 <Card sx={{ bgcolor: '#3a4a4c', color: 'white', height: '100%' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                                        <Box sx={{
-                                            bgcolor: 'rgba(255,255,255,0.1)',
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            margin: '0 auto',
-                                            mb: 1
-                                        }}>
+                                        <Box
+                                            sx={{
+                                                bgcolor: 'rgba(255,255,255,0.1)',
+                                                width: 40,
+                                                height: 40,
+                                                borderRadius: '50%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                margin: '0 auto',
+                                                mb: 1,
+                                            }}
+                                        >
                                             <PendingActions />
                                         </Box>
-                                        <Typography sx={{ fontSize: 14, mb: 1 }}>
-                                            Pending
-                                        </Typography>
+                                        <Typography sx={{ fontSize: 14, mb: 1 }}>Pending</Typography>
                                         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                            30,000
+                                            0
                                         </Typography>
                                     </CardContent>
                                 </Card>
@@ -361,7 +323,7 @@ const MembersFinance = () => {
                                             borderColor: '#ccc',
                                         },
                                     }}
-                                    onClick={()=>router.visit('/admin/membership/all/payments')}
+                                    onClick={() => router.visit('/admin/membership/all/payments')}
                                 >
                                     View All
                                 </Button>
@@ -382,10 +344,10 @@ const MembersFinance = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {filteredPayments.map((payment, index) => (
+                                    {membersdata.map((payment, index) => (
                                         <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                                             <TableCell component="th" scope="row" sx={{ color: '#666' }}>
-                                                {payment.id}
+                                                {payment.user_id}
                                             </TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -400,9 +362,9 @@ const MembersFinance = () => {
                                                     </Box>
                                                 </Box>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#666' }}>{payment.memberType}</TableCell>
-                                            <TableCell sx={{ color: '#666' }}>{payment.amount}</TableCell>
-                                            <TableCell sx={{ color: '#666' }}>{payment.date}</TableCell>
+                                            <TableCell sx={{ color: '#666' }}>{payment.memberType || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#666' }}>{payment.amount || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#666' }}>{payment.date || 'N/A'}</TableCell>
                                             <TableCell>
                                                 {payment.status === 'Paid' ? (
                                                     <Chip
@@ -412,7 +374,7 @@ const MembersFinance = () => {
                                                             bgcolor: '#e6f9f1',
                                                             color: '#00c07f',
                                                             fontWeight: 'bold',
-                                                            borderRadius: '16px'
+                                                            borderRadius: '16px',
                                                         }}
                                                     />
                                                 ) : (
@@ -422,12 +384,12 @@ const MembersFinance = () => {
                                                         sx={{
                                                             bgcolor: '#003b5c',
                                                             '&:hover': {
-                                                                bgcolor: '#002b42'
+                                                                bgcolor: '#002b42',
                                                             },
                                                             textTransform: 'none',
                                                             borderRadius: '16px',
                                                             fontSize: '0.75rem',
-                                                            py: 0.5
+                                                            py: 0.5,
                                                         }}
                                                     >
                                                         Send Remind
@@ -455,11 +417,11 @@ const MembersFinance = () => {
                                 width: 400,
                                 maxWidth: '90vw',
                                 borderRadius: 1,
-                                p: 2
-                            }
+                                p: 2,
+                            },
                         }}
                         BackdropProps={{
-                            onClick: handleFilterClose // Ensure clicking backdrop closes modal
+                            onClick: handleFilterClose, // Ensure clicking backdrop closes modal
                         }}
                     >
                         <DialogContent sx={{ p: 0 }}>
@@ -493,8 +455,8 @@ const MembersFinance = () => {
                                             color: filterOptions.paymentType === 'All Type' ? 'white' : '#333',
                                             borderRadius: '16px',
                                             '&:hover': {
-                                                bgcolor: filterOptions.paymentType === 'All Type' ? '#002b42' : '#d8eafc'
-                                            }
+                                                bgcolor: filterOptions.paymentType === 'All Type' ? '#002b42' : '#d8eafc',
+                                            },
                                         }}
                                     />
                                     <Chip
@@ -505,8 +467,8 @@ const MembersFinance = () => {
                                             color: filterOptions.paymentType === 'Paid' ? 'white' : '#333',
                                             borderRadius: '16px',
                                             '&:hover': {
-                                                bgcolor: filterOptions.paymentType === 'Paid' ? '#002b42' : '#d8eafc'
-                                            }
+                                                bgcolor: filterOptions.paymentType === 'Paid' ? '#002b42' : '#d8eafc',
+                                            },
                                         }}
                                     />
                                     <Chip
@@ -517,8 +479,8 @@ const MembersFinance = () => {
                                             color: filterOptions.paymentType === 'Pending' ? 'white' : '#333',
                                             borderRadius: '16px',
                                             '&:hover': {
-                                                bgcolor: filterOptions.paymentType === 'Pending' ? '#002b42' : '#d8eafc'
-                                            }
+                                                bgcolor: filterOptions.paymentType === 'Pending' ? '#002b42' : '#d8eafc',
+                                            },
                                         }}
                                     />
                                     <Chip
@@ -529,8 +491,8 @@ const MembersFinance = () => {
                                             color: filterOptions.paymentType === 'Refunded' ? 'white' : '#333',
                                             borderRadius: '16px',
                                             '&:hover': {
-                                                bgcolor: filterOptions.paymentType === 'Refunded' ? '#002b42' : '#d8eafc'
-                                            }
+                                                bgcolor: filterOptions.paymentType === 'Refunded' ? '#002b42' : '#d8eafc',
+                                            },
                                         }}
                                     />
                                 </Box>
@@ -562,8 +524,8 @@ const MembersFinance = () => {
                                             sx={{
                                                 bgcolor: 'white',
                                                 '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#ddd'
-                                                }
+                                                    borderColor: '#ddd',
+                                                },
                                             }}
                                         >
                                             <MenuItem value="January">January</MenuItem>
@@ -600,8 +562,8 @@ const MembersFinance = () => {
                                             sx={{
                                                 bgcolor: 'white',
                                                 '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#ddd'
-                                                }
+                                                    borderColor: '#ddd',
+                                                },
                                             }}
                                         >
                                             <MenuItem value="2023">2023</MenuItem>
@@ -622,9 +584,9 @@ const MembersFinance = () => {
                                         color: '#333',
                                         '&:hover': {
                                             bgcolor: '#f5f5f5',
-                                            borderColor: '#ccc'
+                                            borderColor: '#ccc',
                                         },
-                                        textTransform: 'none'
+                                        textTransform: 'none',
                                     }}
                                 >
                                     Cancel
@@ -637,9 +599,9 @@ const MembersFinance = () => {
                                         color: '#333',
                                         '&:hover': {
                                             bgcolor: '#f5f5f5',
-                                            borderColor: '#ccc'
+                                            borderColor: '#ccc',
                                         },
-                                        textTransform: 'none'
+                                        textTransform: 'none',
                                     }}
                                 >
                                     Reset Filter
@@ -650,9 +612,9 @@ const MembersFinance = () => {
                                     sx={{
                                         bgcolor: '#003b5c',
                                         '&:hover': {
-                                            bgcolor: '#002b42'
+                                            bgcolor: '#002b42',
                                         },
-                                        textTransform: 'none'
+                                        textTransform: 'none',
                                     }}
                                 >
                                     Apply Filters

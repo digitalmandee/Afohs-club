@@ -57,6 +57,11 @@ class User extends Authenticatable
         return $this->belongsTo(MemberType::class);
     }
 
+    public function member()
+    {
+        return $this->hasOne(Member::class);
+    }
+
     /**
      * Get the user's detail.
      */

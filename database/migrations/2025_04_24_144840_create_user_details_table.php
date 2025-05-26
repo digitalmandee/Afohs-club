@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('guardian_name')->nullable();
             $table->string('guardian_membership')->nullable();
             $table->string('nationality')->nullable();
-            $table->string('cnic_no', 13);
+            $table->string('cnic_no')->nullable();
             $table->string('passport_no')->nullable();
             $table->string('gender')->nullable();
             $table->string('ntn')->nullable();
