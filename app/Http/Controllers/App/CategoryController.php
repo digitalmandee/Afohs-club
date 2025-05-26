@@ -25,12 +25,12 @@ class CategoryController extends Controller
             $query->where('category_id', $category_id);
         }
 
-        $productLists = $query->get();
+        // $productLists = $query->get();
 
         $categoriesList = Category::select('id', 'name')->get(); // ← Make sure this line is present
 
         return Inertia::render('App/Inventory/Dashboard', [
-            'productLists' => $productLists,
+            // 'productLists' => $productLists,
             'categoriesList' => $categoriesList, // ← Make sure this key matches the React destructuring
         ]);
     }
