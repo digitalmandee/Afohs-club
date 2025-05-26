@@ -24,7 +24,7 @@ const OrderDetail = ({ handleEditItem }) => {
 
     useEffect(() => {
         axios
-            .get(route('setting.index'))
+            .get(route('setting.showTax'))
             .then((response) => {
                 setSetting(response.data);
                 setTempTax(response.data.tax?.toString() || '12');
