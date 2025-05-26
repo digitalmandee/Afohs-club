@@ -15,6 +15,7 @@ const OrderDetail = ({ handleEditItem }) => {
     const [editingQtyIndex, setEditingQtyIndex] = useState(null);
     const [tempQty, setTempQty] = useState(null);
     const [discount, setDiscount] = useState(0); // percentage
+    const [discountType, setDiscountType] = useState(0);
 
     const [formData, setFormData] = useState({
         guestName: '',
@@ -310,7 +311,7 @@ const OrderDetail = ({ handleEditItem }) => {
 
                     {/* Editable Discount Row */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary" onClick={() => setOpenDiscountModal(true)} sx={{ cursor: 'pointer' }}>
+                        <Typography variant="body2" color="text.secondary">
                             Discount
                         </Typography>
                         {isEditingDiscount ? (
@@ -338,9 +339,12 @@ const OrderDetail = ({ handleEditItem }) => {
                                 <Typography variant="body2" color="#4caf50">
                                     {discount}%
                                 </Typography>
-                                <IconButton size="small" onClick={() => setIsEditingDiscount(true)}>
+                                <IconButton size="small" onClick={() => setOpenDiscountModal(true)}>
                                     <EditIcon fontSize="small" />
                                 </IconButton>
+                                {/* <IconButton size="small" onClick={() => setIsEditingDiscount(true)}>
+                                    <EditIcon fontSize="small" />
+                                </IconButton> */}
                             </Box>
                         )}
                     </Box>
