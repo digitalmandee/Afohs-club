@@ -15,6 +15,7 @@ const OrderDetail = ({ handleEditItem }) => {
     const [editingQtyIndex, setEditingQtyIndex] = useState(null);
     const [tempQty, setTempQty] = useState(null);
     const [discount, setDiscount] = useState(0); // percentage
+    const [discountType, setDiscountType] = useState(0);
 
     const [formData, setFormData] = useState({
         discountValue: '',
@@ -316,7 +317,7 @@ const OrderDetail = ({ handleEditItem }) => {
 
                     {/* Editable Discount Row */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
+                        <Typography variant="body2" color="text.secondary">
                             Discount
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
