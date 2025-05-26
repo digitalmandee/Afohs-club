@@ -1,7 +1,7 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -18,12 +18,8 @@ const OrderDetail = ({ handleEditItem }) => {
     const [discountType, setDiscountType] = useState(0);
 
     const [formData, setFormData] = useState({
-        guestName: '',
-        phone: '',
-        clubName: '',
-        authorizedBy: '',
-        checkInDate: '',
-        checkInTime: '',
+        discountValue: '',
+        discountType: 'percentage', // 'percentage' or 'amount'
     });
 
     const handleChange = (e) => {
@@ -37,21 +33,21 @@ const OrderDetail = ({ handleEditItem }) => {
     const subtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
     const taxRate = 0.12;
     const taxAmount = subtotal * taxRate;
-    const discountAmount = subtotal * (discount / 100);
+    const discountAmount = formData.discountType === 'percentage' ? subtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
     const total = subtotal + taxAmount - discountAmount;
 
     useEffect(() => {
         const cash = parseFloat(orderDetails.cash_total || 0);
         const calculatedSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
         const tax = calculatedSubtotal * 0.12;
-        const discountAmt = calculatedSubtotal * (discount / 100);
+        const discountAmt = formData.discountType === 'percentage' ? calculatedSubtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
         const finalTotal = calculatedSubtotal + tax - discountAmt;
 
         if (cash > 0) {
             const change = (cash - finalTotal).toFixed(2);
             handleOrderDetailChange('customer_change', change);
         }
-    }, [orderDetails.order_items, orderDetails.cash_total, discount]);
+    }, [orderDetails.order_items, orderDetails.cash_total, formData]);
 
     const handleSendToKitchen = () => {
         const payload = {
@@ -314,39 +310,14 @@ const OrderDetail = ({ handleEditItem }) => {
                         <Typography variant="body2" color="text.secondary">
                             Discount
                         </Typography>
-                        {isEditingDiscount ? (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <input
-                                    type="number"
-                                    value={discount}
-                                    onChange={(e) => setDiscount(Number(e.target.value))}
-                                    style={{
-                                        width: '60px',
-                                        height: '24px',
-                                        fontSize: '0.8rem',
-                                        padding: '2px 4px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ccc',
-                                    }}
-                                />
-                                <span>%</span>
-                                <Button variant="text" size="small" onClick={() => setIsEditingDiscount(false)} sx={{ fontSize: '0.75rem' }}>
-                                    Save
-                                </Button>
-                            </Box>
-                        ) : (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body2" color="#4caf50">
-                                    {discount}%
-                                </Typography>
-                                <IconButton size="small" onClick={() => setOpenDiscountModal(true)}>
-                                    <EditIcon fontSize="small" />
-                                </IconButton>
-                                {/* <IconButton size="small" onClick={() => setIsEditingDiscount(true)}>
-                                    <EditIcon fontSize="small" />
-                                </IconButton> */}
-                            </Box>
-                        )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" color="#4caf50">
+                                {formData.discountType === 'percentage' ? `${formData.discountValue || 0}%` : `Rs ${formData.discountValue || 0}`}
+                            </Typography>
+                            <IconButton size="small" onClick={() => setOpenDiscountModal(true)}>
+                                <EditIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
                     </Box>
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -423,127 +394,72 @@ const OrderDetail = ({ handleEditItem }) => {
                     },
                 }}
             >
-                <div
-                    style={{
-                        fontFamily: 'Arial, sans-serif',
-                        padding: '20px',
-                        backgroundColor: '#FFFFFF',
-                        // minHeight: '100vh'
-                    }}
-                >
-                    {/* Header with back button and title */}
-                    <div className="d-flex align-items-center mb-4">
-                        <Typography
-                            variant="h5"
-                            style={{
-                                fontWeight: 500,
-                                color: '#3F4E4F',
-                                fontSize: '30px',
+                <Box sx={{ padding: 3 }}>
+                    {/* Header */}
+                    <Typography variant="h5" sx={{ fontWeight: 500, color: '#3F4E4F', fontSize: '30px', mb: 3 }}>
+                        Apply Discount
+                    </Typography>
+
+                    {/* Discount Value Input */}
+                    <Box mb={2}>
+                        <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
+                            Discount Rate
+                        </Typography>
+                        <TextField fullWidth name="discountValue" type="number" value={formData.discountValue} onChange={handleChange} placeholder={formData.discountType === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs'} size="small" />
+                    </Box>
+
+                    {/* Discount Type Select */}
+                    <Box mb={3}>
+                        <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
+                            Discount Method
+                        </Typography>
+                        <TextField select fullWidth name="discountType" value={formData.discountType} onChange={handleChange} size="small">
+                            <MenuItem value="percentage">Percentage (%)</MenuItem>
+                            <MenuItem value="amount">Fixed Amount (Rs)</MenuItem>
+                        </TextField>
+                    </Box>
+
+                    {/* Action Buttons */}
+                    <Box display="flex" justifyContent="flex-end">
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                // Reset form or just close
+                                setOpenDiscountModal(false);
+                            }}
+                            sx={{
+                                backgroundColor: '#F14C35',
+                                color: '#FFFFFF',
+                                textTransform: 'none',
+                                fontSize: '14px',
+                                mr: 1,
+                                '&:hover': { backgroundColor: '#d8432f' },
                             }}
                         >
-                            Apply Discount
-                        </Typography>
-                    </div>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                const val = Number(formData.discountValue || 0);
+                                const calcDiscount = formData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
 
-                    {/* Form Card */}
-                    <Paper
-                        elevation={0}
-                        style={{
-                            maxWidth: '600px',
-                            margin: '0 auto',
-                            padding: '10px',
-                            borderRadius: '4px',
-                        }}
-                    >
-                        <form>
-                            {/* Guest Name */}
-                            <Box mb={2}>
-                                <Typography
-                                    variant="body1"
-                                    style={{
-                                        marginBottom: '8px',
-                                        color: '#121212',
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    Discount Rate
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    name="guestName"
-                                    value={formData.guestName}
-                                    onChange={handleChange}
-                                    placeholder="e.g. Enter Discount in Price"
-                                    variant="outlined"
-                                    size="small"
-                                    style={{ marginBottom: '8px' }}
-                                    InputProps={{
-                                        style: { fontSize: '14px' },
-                                    }}
-                                />
-                            </Box>
-
-                            {/* Phone */}
-                            <Box mb={2}>
-                                <Typography
-                                    variant="body1"
-                                    style={{
-                                        marginBottom: '8px',
-                                        color: '#121212',
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    Discount Method
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    placeholder="e.g. Discount in Percentage %"
-                                    variant="outlined"
-                                    size="small"
-                                    style={{ marginBottom: '8px' }}
-                                    InputProps={{
-                                        style: { fontSize: '14px' },
-                                        endAdornment: <ArrowDropDownIcon style={{ color: '#121212' }} />,
-                                    }}
-                                />
-                            </Box>
-
-                            {/* Action Buttons */}
-                            <Box display="flex" justifyContent="flex-end">
-                                <Button
-                                    variant="text"
-                                    style={{
-                                        backgroundColor: '#F14C35',
-                                        marginRight: '10px',
-                                        color: '#FFFFFF',
-                                        textTransform: 'none',
-                                        fontSize: '14px',
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    style={{
-                                        backgroundColor: '#003366',
-                                        color: 'white',
-                                        textTransform: 'none',
-                                        fontSize: '14px',
-                                        padding: '6px 16px',
-                                    }}
-                                >
-                                    Apply
-                                </Button>
-                            </Box>
-                        </form>
-                    </Paper>
-                </div>
+                                setDiscount(calcDiscount); // This will affect total calculation
+                                setOpenDiscountModal(false);
+                            }}
+                            sx={{
+                                backgroundColor: '#003366',
+                                color: '#FFFFFF',
+                                textTransform: 'none',
+                                fontSize: '14px',
+                                px: 3,
+                                '&:hover': { backgroundColor: '#002244' },
+                            }}
+                        >
+                            Apply
+                        </Button>
+                    </Box>
+                </Box>
             </Dialog>
         </Box>
     );
