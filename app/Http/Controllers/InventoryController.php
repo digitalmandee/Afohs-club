@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantValue;
@@ -28,8 +29,9 @@ class InventoryController extends Controller
         }
 
         $productLists = $query->get();
+        $categoriesList = Category::select('id', 'name')->get(); // Add this line to fetch categories
 
-        return Inertia::render('App/Inventory/Dashboard', compact('productLists'));
+        return Inertia::render('App/Inventory/Dashboard', compact('productLists', 'categoriesList')); // Include categoriesList
     }
 
 
