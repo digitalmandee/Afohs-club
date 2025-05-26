@@ -1364,7 +1364,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             <Typography variant="subtitle2" color="text.secondary" mb={1}>
                                                 Cash
                                             </Typography>
-                                            <Typography variant="body1">Rs {selectedOrder?.paid_amount}</Typography>
+                                            <Typography variant="body1">Rs {selectedOrder?.total_price}</Typography>
                                         </Grid>
                                     </Grid>
 

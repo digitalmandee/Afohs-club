@@ -245,8 +245,13 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 </Typography>
                 <Typography variant="caption">Rs {(paymentData.amount * 0.12).toFixed(2)}</Typography>
             </Box>
-
             <Box sx={styles.receiptDivider} />
+            <Box sx={styles.receiptRow}>
+                <Typography variant="caption" color="text.secondary">
+                    Customer Changes
+                </Typography>
+                <Typography variant="caption">Rs{paymentData.customer_change}</Typography>
+            </Box>
 
             <Box sx={styles.receiptTotal}>
                 <Typography variant="body2" fontWeight="bold" color="#0a3d62">
