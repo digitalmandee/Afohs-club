@@ -188,6 +188,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/finance/dashboard', function () {
         return Inertia::render('App/Admin/Finance/Dashboard');
     })->name('finance.dashboard');
+
+    //Cards Routes
+    Route::get('/card/dashboard', function () {
+        return Inertia::render('App/Admin/Card/Dashboard');
+    })->name('cards.dashboard');
     // member
     // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
     // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');

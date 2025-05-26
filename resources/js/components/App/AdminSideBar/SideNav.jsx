@@ -23,6 +23,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState } from 'react';
+import { FaRegAddressCard } from "react-icons/fa";
 import MemberIcon from '@/components/App/Icons/Member';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
@@ -149,14 +150,6 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Members History',
                     path: route('membership.history'),
                 },
-                // {
-                //     text: 'Guest History',
-                //     path: route('membership.guest'),
-                // },
-                // {
-                //     text: 'Membership Type',
-                //     path: 'route('membership.membertype')',
-                // },
                 {
                     text: 'Membership Type',
                     path: '/members/member-types',
@@ -251,11 +244,11 @@ export default function SideNav({ open, setOpen }) {
                 },
             ]
         },
-//         {
-//             text: 'Members Types',
-//             icon: <MemberIcon />,
-//             path: '/members/member-types',
-//         },
+        {
+            text: 'Cards',
+            icon: <FaRegAddressCard style={{ width: 25, height: 25 }}/>,
+            path: route('cards.dashboard'),
+        },
         {
             text: 'Tenant',
             icon: <PeopleIcon />,
