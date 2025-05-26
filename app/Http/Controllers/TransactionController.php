@@ -64,6 +64,7 @@ class TransactionController extends Controller
             $invoice->customer_change = $request->customer_changes;
         }
         $invoice->payment_method = $request->payment_method;
+        $invoice->paid_amount = $request->paid_amount;
 
         if ($request->payment_method === 'credit_card') {
             $invoice->credit_card_type = $request->credit_card_type;

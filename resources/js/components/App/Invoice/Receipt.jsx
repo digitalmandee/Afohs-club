@@ -248,6 +248,12 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
             <Box sx={styles.receiptDivider} />
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
+                    Total Cash
+                </Typography>
+                <Typography variant="caption">Rs{paymentData.paid_amount}</Typography>
+            </Box>
+            <Box sx={styles.receiptRow}>
+                <Typography variant="caption" color="text.secondary">
                     Customer Changes
                 </Typography>
                 <Typography variant="caption">Rs{paymentData.customer_change}</Typography>
