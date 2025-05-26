@@ -18,8 +18,18 @@ const OrderDetail = ({ handleEditItem }) => {
 
     const [formData, setFormData] = useState({
         discountValue: '',
-        discountType: 'percentage', // 'percentage' or 'amount'
+        discountType: 'percentage',
     });
+
+    const [tempFormData, setTempFormData] = useState({
+        discountValue: '',
+        discountType: 'percentage',
+    });
+
+    const openDiscountDialog = () => {
+        setTempFormData(formData); // Copy current discount values into temp
+        setOpenDiscountModal(true);
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -35,18 +45,18 @@ const OrderDetail = ({ handleEditItem }) => {
     const discountAmount = formData.discountType === 'percentage' ? subtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
     const total = subtotal + taxAmount - discountAmount;
 
-    useEffect(() => {
-        const cash = parseFloat(orderDetails.cash_total || 0);
-        const calculatedSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
-        const tax = calculatedSubtotal * 0.12;
-        const discountAmt = formData.discountType === 'percentage' ? calculatedSubtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
-        const finalTotal = calculatedSubtotal + tax - discountAmt;
+    // useEffect(() => {
+    //     const cash = parseFloat(orderDetails.cash_total || 0);
+    //     const calculatedSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
+    //     const tax = calculatedSubtotal * 0.12;
+    //     const discountAmt = formData.discountType === 'percentage' ? calculatedSubtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
+    //     const finalTotal = calculatedSubtotal + tax - discountAmt;
 
-        if (cash > 0) {
-            const change = (cash - finalTotal).toFixed(2);
-            handleOrderDetailChange('customer_change', change);
-        }
-    }, [orderDetails.order_items, orderDetails.cash_total, formData]);
+    //     if (cash > 0) {
+    //         const change = (cash - finalTotal).toFixed(2);
+    //         handleOrderDetailChange('customer_change', change);
+    //     }
+    // }, [orderDetails.order_items, orderDetails.cash_total, formData]);
 
     const handleSendToKitchen = () => {
         const payload = {
@@ -306,14 +316,14 @@ const OrderDetail = ({ handleEditItem }) => {
 
                     {/* Editable Discount Row */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary" onClick={() => setOpenDiscountModal(true)} sx={{ cursor: 'pointer' }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
                             Discount
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Typography variant="body2" color="#4caf50">
                                 {formData.discountType === 'percentage' ? `${formData.discountValue || 0}%` : `Rs ${formData.discountValue || 0}`}
                             </Typography>
-                            <IconButton size="small" onClick={() => setOpenDiscountModal(true)}>
+                            <IconButton size="small" onClick={openDiscountDialog}>
                                 <EditIcon fontSize="small" />
                             </IconButton>
                         </Box>
@@ -394,38 +404,31 @@ const OrderDetail = ({ handleEditItem }) => {
                 }}
             >
                 <Box sx={{ padding: 3 }}>
-                    {/* Header */}
                     <Typography variant="h5" sx={{ fontWeight: 500, color: '#3F4E4F', fontSize: '30px', mb: 3 }}>
                         Apply Discount
                     </Typography>
 
-                    {/* Discount Value Input */}
                     <Box mb={2}>
                         <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
                             Discount Rate
                         </Typography>
-                        <TextField fullWidth name="discountValue" type="number" value={formData.discountValue} onChange={handleChange} placeholder={formData.discountType === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs'} size="small" />
+                        <TextField fullWidth name="discountValue" type="number" value={tempFormData.discountValue} onChange={(e) => setTempFormData((prev) => ({ ...prev, discountValue: e.target.value }))} placeholder={tempFormData.discountType === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs'} size="small" />
                     </Box>
 
-                    {/* Discount Type Select */}
                     <Box mb={3}>
                         <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
                             Discount Method
                         </Typography>
-                        <TextField select fullWidth name="discountType" value={formData.discountType} onChange={handleChange} size="small">
+                        <TextField select fullWidth name="discountType" value={tempFormData.discountType} onChange={(e) => setTempFormData((prev) => ({ ...prev, discountType: e.target.value }))} size="small">
                             <MenuItem value="percentage">Percentage (%)</MenuItem>
                             <MenuItem value="amount">Fixed Amount (Rs)</MenuItem>
                         </TextField>
                     </Box>
 
-                    {/* Action Buttons */}
                     <Box display="flex" justifyContent="flex-end">
                         <Button
                             variant="contained"
-                            onClick={() => {
-                                // Reset form or just close
-                                setOpenDiscountModal(false);
-                            }}
+                            onClick={() => setOpenDiscountModal(false)}
                             sx={{
                                 backgroundColor: '#F14C35',
                                 color: '#FFFFFF',
@@ -437,13 +440,14 @@ const OrderDetail = ({ handleEditItem }) => {
                         >
                             Cancel
                         </Button>
+
                         <Button
                             variant="contained"
                             onClick={() => {
-                                const val = Number(formData.discountValue || 0);
-                                const calcDiscount = formData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
-
-                                setDiscount(calcDiscount); // This will affect total calculation
+                                setFormData(tempFormData); // Commit changes
+                                const val = Number(tempFormData.discountValue || 0);
+                                const calcDiscount = tempFormData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
+                                setDiscount(calcDiscount); // Rs value
                                 setOpenDiscountModal(false);
                             }}
                             sx={{
