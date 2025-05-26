@@ -32,6 +32,7 @@ return new class extends Migration
             $table->date('start_date')->nullable(); // For family members
             $table->date('end_date')->nullable(); // For family members
             $table->string('picture')->nullable(); // For family members
+            $table->string('qr_code')->nullable(); // For family members
             $table->timestamps();
         });
     }

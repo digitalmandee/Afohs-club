@@ -6,6 +6,7 @@ use App\Helpers\FileHelper;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Member;
+use App\Models\MembershipInvoice;
 use App\Models\MemberType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +14,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-
-
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MembershipController extends Controller
 {
@@ -23,14 +23,12 @@ class MembershipController extends Controller
 
     public function index()
     {
-        $users = User::with([
-            'userDetail',
-            'member.memberType'
-        ])->get();
+        $member = User::role('user', 'web')->whereNull('parent_user_id')->with('userDetail', 'member.memberType')->get();
 
-        return Inertia::render('App/Admin/Membership/Dashboard', [
-            'member' => $users,
-        ]);
+        $total_members = User::role('user', 'web')->whereNull('parent_user_id')->count();
+        $total_payment = MembershipInvoice::where('status', 'paid')->sum('amount');
+
+        return Inertia::render('App/Admin/Membership/Dashboard', compact('member', 'total_members', 'total_payment'));
     }
     public function getAllMemberTypes()
     {
@@ -153,6 +151,7 @@ class MembershipController extends Controller
             DB::beginTransaction();
 
             $member_type_id = $request->member_type;
+            $memberType = MemberType::where('id', $member_type_id)->firstOrFail();
 
             // Create primary user
             $primaryUser = User::create([
@@ -168,7 +167,7 @@ class MembershipController extends Controller
             ]);
 
             // Create UserDetail for primary user
-            $primaryUserDetail = UserDetail::create([
+            UserDetail::create([
                 'user_id' => $primaryUser->id,
                 'coa_account' => $validated['coa_account'],
                 'title' => $validated['title'],
@@ -209,8 +208,15 @@ class MembershipController extends Controller
                 $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'member_images');
             }
 
+            $qrCodeData = route('member.profile', ['id' => $primaryUser->id]);
+
+            Log::info(QrCode::format('png')->size(300)->generate($qrCodeData));
+
+            // Create QR code image and save it
+            $qrImagePath = FileHelper::saveImage(QrCode::format('png')->size(300)->generate($qrCodeData), 'qr_codes');
+
             // Create primary member record
-            $primaryMember = Member::create([
+            Member::create([
                 'user_id' => $primaryUser->id,
                 'member_type_id' => $member_type_id,
                 'membership_category' => $validated['membership_category'],
@@ -222,6 +228,7 @@ class MembershipController extends Controller
                 'from_date' => $validated['from_date'],
                 'to_date' => $validated['to_date'],
                 'picture' => $memberImagePath,
+                'qr_code' => $qrImagePath
             ]);
 
             // Handle family members
@@ -245,7 +252,7 @@ class MembershipController extends Controller
                     ]);
 
                     // Create UserDetail for family member
-                    $familyUserDetail = UserDetail::create([
+                    UserDetail::create([
                         'user_id' => $familyUser->id,
                         'cnic_no' => $familyMemberData['cnic'],
                         'personal_email' => $familyMemberData['email'],
@@ -284,12 +291,17 @@ class MembershipController extends Controller
                 }
             }
 
+            MembershipInvoice::create([
+                'user_id' => $primaryUser->id,
+                'total_price' => $memberType->fee,
+            ]);
+
             DB::commit();
 
             return response()->json(['message' => 'Membership created successfully.', 'member_id' => $primaryUser->id]);
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
-            return redirect()->back()->with('error', 'Failed to submit membership details: ' . $th->getMessage());
+            return response()->json(['error' => 'Failed to submit membership details: ' . $th->getMessage()], 500);
         }
     }
 
@@ -309,6 +321,15 @@ class MembershipController extends Controller
             Log::error('Error updating member status: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to update member status'], 500);
         }
+    }
+
+    // Show Public Profile
+
+    public function show($id)
+    {
+        $user = User::with(['member', 'member.memberType', 'userDetail'])->findOrFail($id);
+
+        return Inertia::render('App/Membership/Show', ['user' => $user]);
     }
 
     // User No
