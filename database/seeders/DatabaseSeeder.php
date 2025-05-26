@@ -6,7 +6,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\Tenant\FloorDatabaseSeeder;
 use Database\Seeders\Tenant\KitchenDatabaseSeeder;
-use Database\Seeders\Tenant\MemberTypeSeeder;
 use Database\Seeders\Tenant\OrderDatabaseSeeder;
 use Database\Seeders\Tenant\PermissionsDatabaseSeeder;
 use Database\Seeders\Tenant\ProductDatabaseSeeder;

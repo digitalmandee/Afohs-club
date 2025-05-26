@@ -7,18 +7,15 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
-
-const AddForm3 = ({ onSubmit, onBack }) => {
+const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading }) => {
     const [open, setOpen] = useState(false);
     const [memberType, setMemberType] = useState('Silver');
     const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
     const [familyMembers, setFamilyMembers] = useState([]);
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
+        user_id: userNo + 1,
         full_name: 'Ayesha Khan',
         relation: 'Mother',
         cnic: '42201-1234567-0',
@@ -72,7 +69,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
             reader.onloadend = () => {
                 setCurrentFamilyMember({
                     ...currentFamilyMember,
-                    picture: reader.result,
+                    picture: file,
                     picture_preview: reader.result,
                 });
             };
@@ -87,6 +84,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
         }
         setFamilyMembers([...familyMembers, currentFamilyMember]);
         setCurrentFamilyMember({
+            user_id: userNo + 1,
             full_name: '',
             relation: '',
             cnic: '',
@@ -121,10 +119,13 @@ const AddForm3 = ({ onSubmit, onBack }) => {
 
     const handleSubmit = async () => {
         const missingFields = [];
-        const allowedMemberTypes = ['Silver', 'Gold', 'Corporate Member', 'Applied Member', 'Affiliated Member', 'VIP Guest', 'Employee'];
+        const allowedMemberTypes = memberTypesData.map((type) => type.id);
+
+        console.log(allowedMemberTypes);
+        console.log(memberType);
 
         // Validate required fields
-        if (!memberType || !allowedMemberTypes.includes(memberType)) {
+        if (!memberType || !allowedMemberTypes.includes(Number(memberType))) {
             missingFields.push('Member Type (must be one of: ' + allowedMemberTypes.join(', ') + ')');
         }
         if (!membershipData.membership_number) {
@@ -161,11 +162,10 @@ const AddForm3 = ({ onSubmit, onBack }) => {
             family_members: validFamilyMembers,
         };
 
-        console.log('Submitting data:', JSON.stringify(dataToSave, null, 2));
-
         try {
             await onSubmit(dataToSave);
             setSubmitError('');
+            // router.visit('/admin/membership/all/payments');
         } catch (error) {
             console.error('Submission Error:', error);
             const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data || 'An error occurred during submission');
@@ -270,12 +270,12 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                     </Typography>
                                     <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                 </Box>
-
+                                {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                                 <Box sx={{ mb: 3 }}>
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Member Type</Typography>
                                     <Grid container spacing={2}>
-                                        {['Silver', 'Gold', 'Corporate Member', 'Applied Member', 'Affiliated Member', 'VIP Guest', 'Employee'].map((type) => (
-                                            <Grid item xs={6} sm={6} key={type}>
+                                        {memberTypesData.map((type) => (
+                                            <Grid item xs={6} sm={6} key={type.id}>
                                                 <Box
                                                     sx={{
                                                         border: '1px solid #ccc',
@@ -283,11 +283,11 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                         p: 1,
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        bgcolor: memberType === type ? '#fff' : 'transparent',
+                                                        bgcolor: memberType == type.id ? '#fff' : 'transparent',
                                                     }}
                                                 >
-                                                    <Radio checked={memberType === type} onChange={handleMemberTypeChange} value={type} name="member-type" sx={{ color: '#1976d2' }} />
-                                                    <Typography>{type}</Typography>
+                                                    <Radio checked={memberType == type.id} onChange={handleMemberTypeChange} value={type.id} name="member-type" sx={{ color: '#1976d2' }} />
+                                                    <Typography>{type.name}</Typography>
                                                 </Box>
                                             </Grid>
                                         ))}
@@ -547,7 +547,7 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                         <TextField
                                             fullWidth
                                             label="Application Number :"
-                                            value="7171"
+                                            value={currentFamilyMember.user_id}
                                             variant="outlined"
                                             InputProps={{
                                                 readOnly: true,
@@ -727,13 +727,11 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                                             },
                                                         }}
                                                     >
-                                                        <MenuItem value="Silver">Silver</MenuItem>
-                                                        <MenuItem value="Gold">Gold</MenuItem>
-                                                        <MenuItem value="Corporate Member">Corporate Member</MenuItem>
-                                                        <MenuItem value="Applied Member">Applied Member</MenuItem>
-                                                        <MenuItem value="Affiliated Member">Affiliated Member</MenuItem>
-                                                        <MenuItem value="VIP Guest">VIP Guest</MenuItem>
-                                                        <MenuItem value="Employee">Employee</MenuItem>
+                                                        {memberTypesData.map((type) => (
+                                                            <MenuItem key={type.name} value={type.name}>
+                                                                {type.name}
+                                                            </MenuItem>
+                                                        ))}
                                                     </Select>
                                                 </FormControl>
                                             </Box>
@@ -854,6 +852,9 @@ const AddForm3 = ({ onSubmit, onBack }) => {
                                     textTransform: 'none',
                                 }}
                                 onClick={handleSubmit}
+                                loading={loading}
+                                disabled={loading}
+                                loadingPosition="start"
                             >
                                 Save & Submit
                             </Button>

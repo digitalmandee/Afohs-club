@@ -44,12 +44,7 @@ Route::group([
 
         // Members
         Route::resource('members', MembersController::class)->except('show', 'edit');
-        // Members types
-        Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
-        Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
-        Route::post('/members/member-types', [MemberTypeController::class, 'store'])->name('member-types.store');
-        Route::put('/members/member-types/{id}/update', [MemberTypeController::class, 'update'])->name('member.update');
-        Route::delete('/members/member-types/{id}', [MemberTypeController::class, 'destroy'])->name('member.destroy');
+
         // address
         Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
         Route::get('/members/address-types', [AddressTypeController::class, 'index'])->name('address-types.index');
@@ -61,7 +56,7 @@ Route::group([
         Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
         Route::post('/members', [MembersController::class, 'store'])->name('members.store');
         Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
-        Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
+        // Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
 
         // Waiter Dashboard
         Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');

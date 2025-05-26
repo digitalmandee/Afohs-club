@@ -14,8 +14,9 @@ class MemberTypeController extends Controller
      */
     public function index()
     {
-        $memberTypesList = MemberType::all();
-        return Inertia::render('App/Member/MemberTypes', compact('memberTypesList'));
+        $memberTypesData = MemberType::all();
+
+        return Inertia::render('App/Admin/Membership/MemberType', compact('memberTypesData'));
     }
 
     /**
@@ -25,11 +26,25 @@ class MemberTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:member_types,name',
+            'duration' => 'required|integer', // In months
+            'fee' => 'required|numeric',
+            'maintenance_fee' => 'required|numeric',
+            'discount' => 'nullable|numeric',
+            'discount_authorized' => 'required|string|max:255',
+            'benefit' => 'required|array', // Validate as array
         ]);
 
-        MemberType::create([
-            'name' => $request->name,
+        $data = $request->only([
+            'name',
+            'duration',
+            'fee',
+            'maintenance_fee',
+            'discount',
+            'discount_authorized',
+            'benefit',
         ]);
+
+        MemberType::create($data);
 
         return redirect()->back()->with('success', 'Member Type created.');
     }
@@ -41,14 +56,43 @@ class MemberTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:member_types,name,' . $id,
+            'duration' => 'nullable|integer|max:255',
+            'fee' => 'nullable|numeric',
+            'maintenance_fee' => 'nullable|numeric',
+            'discount' => 'nullable|numeric',
+            'discount_authorized' => 'nullable|string|max:255',
+            'benefit' => 'nullable|array',
         ]);
 
         $memberType = MemberType::findOrFail($id);
-        $memberType->update([
-            'name' => $request->name,
-        ]);
+        $memberType->update($request->only([
+            'name',
+            'duration',
+            'fee',
+            'maintenance_fee',
+            'discount',
+            'discount_authorized',
+            'benefit',
+        ]));
 
         return redirect()->back()->with('success', 'Member Type updated.');
+    }
+
+    public function edit(string $member_type)
+    {
+        $memberType = MemberType::findOrFail($member_type);
+        return Inertia::render('App/Admin/Membership/EditMember', [
+            'memberType' => [
+                'id' => $memberType->id,
+                'name' => $memberType->name,
+                'duration' => $memberType->duration ? (int)$memberType->duration : '',
+                'fee' => $memberType->fee ? (string)$memberType->fee : '',
+                'maintenance_fee' => $memberType->maintenance_fee ? (string)$memberType->maintenance_fee : '',
+                'discount' => $memberType->discount ? (string)$memberType->discount : '',
+                'discount_authorized' => $memberType->discount_authorized ?? '',
+                'benefit' => $memberType->benefit ? implode(', ', $memberType->benefit) : '',
+            ],
+        ]);
     }
 
     /**

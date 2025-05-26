@@ -5,6 +5,7 @@ import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ClearIcon from '@mui/icons-material/Clear';
 
 const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
@@ -116,19 +117,28 @@ const OrderDetail = ({ handleEditItem }) => {
                             </Box>
                             <Box sx={{ display: 'flex', gap: 1 }}>
                                 {orderDetails.table && <Avatar sx={{ width: 28, height: 28, bgcolor: '#0C67AA', fontSize: 12 }}>{`T${orderDetails.table}`}</Avatar>}
-                                {/* <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
-                                    <CloseIcon fontSize="small" />
-                                </IconButton>
+                                <Box
+                                    sx={{
+                                        height: 30,
+                                        width: 30,
+                                        borderRadius: '50%',
+                                        bgcolor: '#E3E3E3',
+                                    }}
+                                >
+                                    <img src="/assets/food-tray.png" alt="" style={{ width: 20, height: 20, marginLeft: 4 }} />
+                                </Box>
+
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
-                                    <ReceiptIcon fontSize="small" />
+                                    <ClearIcon fontSize="small" />
                                 </IconButton>
+                                {/*
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                     <EditIcon fontSize="small" />
                                 </IconButton> */}
                             </Box>
                         </Box>
 
-                        <Grid container sx={{ mt: 1, border: '1px solid transparent' }}>
+                        <Grid container sx={{ border: '1px solid transparent' }}>
                             <Grid item xs={4} sx={{ pr: 2, borderRight: '1px solid #e0e0e0' }}>
                                 <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '12px' }}>Order Date</Typography>
                                 <Typography variant="body2" fontWeight="medium" sx={{ mt: 1 }}>
@@ -140,9 +150,9 @@ const OrderDetail = ({ handleEditItem }) => {
                                 </Typography>
                             </Grid>
 
-                            <Grid item xs={8} sx={{ px: 1, borderRight: '1px solid #e0e0e0' }}>
+                            <Grid item xs={4} sx={{ px: 1, borderRight: '1px solid #e0e0e0' }}>
                                 <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '12px' }}>Cashier</Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                                     <Avatar sx={{ width: 20, height: 20, mr: 1, fontSize: 10 }}>{orderDetails.waiter?.name?.charAt(0) || 'N'}</Avatar>
                                     <Typography variant="body2" fontWeight="medium">
                                         {orderDetails.waiter?.name || 'N/A'}
@@ -150,28 +160,26 @@ const OrderDetail = ({ handleEditItem }) => {
                                 </Box>
                             </Grid>
 
-                            {/* <Grid item xs={4} sx={{ pl: 2 }}>
-                                <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '12px' }}>Order Time</Typography>
+                            <Grid item xs={4} sx={{ px: 1, mt: -0.5 }}>
+                                <Typography variant="caption" color="text.secondary">
+                                    Order Time
+                                </Typography>
                                 <Typography variant="body2" fontWeight="medium">
                                     {formatTime(orderDetails.time)}
                                 </Typography>
-                            </Grid> */}
-                        </Grid>
-                        <Grid item xs={4}>
-                            <Typography variant="caption" color="text.secondary">
-                                Order Time
-                            </Typography>
-                            <Typography variant="body2" fontWeight="medium">
-                                {formatTime(orderDetails.time)}
-                            </Typography>
+                            </Grid>
                         </Grid>
                         <Box sx={{ mt: 2 }}>
                             <Chip
-                                label={`Order Id : #${orderDetails.order_no}`}
+                                label={
+                                    <span>
+                                        <span style={{ color: '#7F7F7F' }}>Order Id : </span>
+                                        <span style={{ color: '#000' }}>#{orderDetails.order_no}</span>
+                                    </span>
+                                }
                                 size="small"
                                 sx={{
-                                    bgcolor: '#f5f5f5',
-                                    color: '#555',
+                                    bgcolor: '#E3E3E3',
                                     height: '24px',
                                     fontSize: '0.75rem',
                                     borderRadius: '4px',

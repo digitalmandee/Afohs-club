@@ -8,18 +8,23 @@ import AddForm1 from '@/components/App/membershipForm/AddForm1';
 import AddForm2 from '@/components/App/membershipForm/AddForm2';
 import AddForm3 from '@/components/App/membershipForm/AddForm3';
 import { enqueueSnackbar } from 'notistack';
+import Payment from './Payment';
+import axios from 'axios';
+import { objectToFormData } from '@/helpers/objectToFormData';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = () => {
+const MembershipDashboard = ({ memberTypesData, userNo }) => {
     const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         step1: {},
         step2: {},
         step3: {},
     });
+    console.log('memberTypesData', memberTypesData);
 
     const handleNext = (stepKey, data) => {
         setFormData((prev) => ({ ...prev, [stepKey]: data }));
@@ -29,23 +34,25 @@ const MembershipDashboard = () => {
         if (stepKey === 'step2') setStep(3);
     };
 
-    const handleFinalSubmit = (stepKey, data) => {
+    const handleFinalSubmit = async (stepKey, data) => {
         setFormData((prev) => ({ ...prev, [stepKey]: data }));
         // Transform familyMembers to match backend validation keys
         const transformedFamilyMembers = (data.family_members || []).map((member) => ({
-            full_name: member.fullName || '',
+            full_name: member.full_name || '',
             relation: member.relation || '',
             cnic: member.cnic || '',
-            phone_number: member.phoneNumber || '',
-            membership_type: member.member_type || '',
+            phone_number: member.phone_number || '',
+            email: member.email || '',
+            membership_type: member.membership_type || '',
             membership_category: member.membership_category || '',
-            start_date: member.startDate || '',
-            end_date: member.endDate || '',
-            picture: member.picturePreview || '', // Base64 string
+            start_date: member.start_date || '',
+            end_date: member.end_date || '',
+            picture: member.picture || '', // Base64 string
         }));
 
         const fullData = {
-            application_number: '7171',
+            application_number: userNo ?? 0,
+            profile_photo: formData.step1.profile_photo,
             first_name: formData.step1.firstName || '',
             middle_name: formData.step1.middleName || '',
             last_name: formData.step1.lastName || '',
@@ -87,20 +94,49 @@ const MembershipDashboard = () => {
             from_date: data.from_date || '',
             to_date: data.to_date || '',
             family_members: transformedFamilyMembers,
-            member_image: formData.step1.memberImage || null,
         };
 
         console.log('Submitting fullData:', fullData);
+        setLoading(true);
 
-        router.post(route('membership.store'), fullData, {
-            onSuccess: () => {
+        console.log('fullData: ', fullData);
+
+        const formData2 = await objectToFormData(fullData);
+
+        await axios
+            .post(route('membership.store'), formData2)
+            .then((response) => {
+                const memberId = response.data.member_id;
+
                 enqueueSnackbar('Membership created successfully.', { variant: 'success' });
-            },
-            onError: (errors) => {
-                enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
-                // alert('Submission failed: ' + JSON.stringify(errors));
-            },
-        });
+
+                // Redirect with query param
+                router.visit(route('membership.allpayment') + `?member_id=${memberId}`);
+            })
+            .catch((error) => {
+                console.error(error);
+                enqueueSnackbar('Something went wrong.', { variant: 'error' });
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+        // router.post(route('membership.store'), fullData, {
+        //     onSuccess: (page) => {
+        //         setLoading(false);
+        //         console.log('page', page);
+
+        //         const memberId = page.props?.member_id;
+
+        //         enqueueSnackbar('Membership created successfully.', { variant: 'success' });
+
+        //         router.visit(route('membership.allpayment') + `?member_id=${memberId}`);
+        //     },
+        //     onError: (errors) => {
+        //         setLoading(false);
+        //         enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+        //         // alert('Submission failed: ' + JSON.stringify(errors));
+        //     },
+        // });
     };
 
     return (
@@ -114,10 +150,11 @@ const MembershipDashboard = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
+                {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                 <div className="">
-                    {step === 1 && <AddForm1 onNext={(data) => handleNext('step1', data)} />}
+                    {step === 1 && <AddForm1 userNo={userNo} onNext={(data) => handleNext('step1', data)} />}
                     {step === 2 && <AddForm2 onNext={(data) => handleNext('step2', data)} onBack={() => setStep(1)} />}
-                    {step === 3 && <AddForm3 onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} />}
+                    {step === 3 && <AddForm3 userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} loading={loading} />}
                 </div>
             </div>
         </>

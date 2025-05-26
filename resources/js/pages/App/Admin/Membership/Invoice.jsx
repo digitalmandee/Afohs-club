@@ -1,56 +1,49 @@
-import React from 'react';
-import {
-    Box,
-    Typography,
-    Button,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Drawer,
-    Grid,
-    Container
-} from '@mui/material';
+import React, { useEffect } from 'react';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Drawer, Grid, Container } from '@mui/material';
 import { Print, Close, Send } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const InvoiceSlip = ({ open, onClose }) => {
-    // Sample data
+const InvoiceSlip = ({ open, onClose, member }) => {
+    // Debug member prop
+    useEffect(() => {
+        if (open) {
+            console.log('InvoiceSlip member:', JSON.stringify(member, null, 2));
+        }
+    }, [open, member]);
+
+    // Dynamic invoice data based on member prop
     const invoiceData = {
         billTo: {
-            name: 'Zahid Ullah',
-            category: 'Member',
-            membershipId: '23423',
-            contactNumber: '0324234234',
-            city: 'Lahore',
-            familyMember: 'Non'
+            name: member?.first_name || 'N/A',
+            category: member?.user_detail?.members?.[0]?.member_type?.name || 'Member',
+            membershipId: member?.user_detail?.members?.[0]?.membership_number || 'N/A',
+            contactNumber: member?.phone_number || 'N/A',
+            city: member?.user_detail?.address?.city || 'N/A',
+            familyMember: 'Non',
         },
         details: {
             invoiceNumber: '7171',
-            issueDate: '12/04/2025',
-            paymentMethod: 'On Cash'
+            issueDate: member?.user_detail?.members?.[0]?.card_expiry_date,
+            paymentMethod: 'On Cash',
         },
         items: [
             {
                 srNo: 1,
                 description: 'Member Charges',
-                invoiceAmount: 1000,
-                remainingAmount: 500,
-                paidAmount: 500
-            }
+                invoiceAmount: 0,
+                remainingAmount: 0,
+                paidAmount: 0,
+            },
         ],
         summary: {
-            grandTotal: 5000,
-            remainingAmount: 5.00,
-            paidAmount: 500
+            grandTotal: 0,
+            remainingAmount: 0,
+            paidAmount: 0,
         },
-        note: 'This is the computer generated receipt. It does no required any signature or stamp.',
-        paymentNote: 'If paid by credit card or cheque, 5% sub charges will be added to the total amount.',
-        amountInWords: 'Ten thousand, five hundred',
-        sentBy: 'Admin'
+        note: 'This is a computer-generated receipt. It does not require any signature or stamp.',
+        paymentNote: 'If paid by credit card or cheque, 5% surcharge will be added to the total amount.',
+        amountInWords: 'Zero',
+        sentBy: 'Admin',
     };
 
     return (
@@ -66,7 +59,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                     margin: '10px auto 0',
                     width: 930,
                     borderRadius: '8px',
-                }
+                },
             }}
         >
             <Container maxWidth="md" sx={{ mt: 2, mb: 4 }}>
@@ -75,24 +68,21 @@ const InvoiceSlip = ({ open, onClose }) => {
                     sx={{
                         borderRadius: '4px',
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
                     }}
                 >
                     {/* Header */}
                     <Grid container spacing={2} sx={{ mb: 4, pb: 2, borderBottom: '1px solid #f0f0f0' }}>
                         <Grid item xs={4} sx={{ display: 'flex', alignItems: 'center' }}>
-                            <img
-                                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png"
-                                alt="Afohs Club Logo"
-                                style={{ height: '60px' }}
-                            />
+                            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" style={{ height: '60px' }} />
                         </Grid>
                         <Grid item xs={4} sx={{ textAlign: 'center' }}>
                             <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#003366', fontSize: '18px' }}>
                                 Afohs Club
                             </Typography>
                             <Typography variant="body2" sx={{ color: '#555', fontSize: '12px', lineHeight: 1.4 }}>
-                                PAF Falcon complex, Gulberg III,<br />
+                                PAF Falcon complex, Gulberg III,
+                                <br />
                                 Lahore, Pakistan
                             </Typography>
                         </Grid>
@@ -107,26 +97,32 @@ const InvoiceSlip = ({ open, onClose }) => {
                     <Grid container spacing={2} sx={{ mb: 4 }}>
                         <Grid item xs={6}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
-                                Bill To
+                                Bill To {member?.user_id ? `- ${member.user_id}` : ''}
                             </Typography>
                             <Box sx={{ ml: 0 }}>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Name : </span>{invoiceData.billTo.name}
+                                    <span style={{ fontWeight: 'bold' }}>Name: </span>
+                                    {invoiceData.billTo.name}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Category : </span>{invoiceData.billTo.category}
+                                    <span style={{ fontWeight: 'bold' }}>Category: </span>
+                                    {invoiceData.billTo.category}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Membership # : </span>{invoiceData.billTo.membershipId}
+                                    <span style={{ fontWeight: 'bold' }}>Membership #: </span>
+                                    {invoiceData.billTo.membershipId}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Contact # : </span>{invoiceData.billTo.contactNumber}
+                                    <span style={{ fontWeight: 'bold' }}>Contact #: </span>
+                                    {invoiceData.billTo.contactNumber}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>City : </span>{invoiceData.billTo.city}
+                                    <span style={{ fontWeight: 'bold' }}>City: </span>
+                                    {invoiceData.billTo.city}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Family Member : </span>{invoiceData.billTo.familyMember}
+                                    <span style={{ fontWeight: 'bold' }}>Family Member: </span>
+                                    {invoiceData.billTo.familyMember}
                                 </Typography>
                             </Box>
                         </Grid>
@@ -136,13 +132,16 @@ const InvoiceSlip = ({ open, onClose }) => {
                             </Typography>
                             <Box sx={{ ml: 0 }}>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Invoice # : </span>{invoiceData.details.invoiceNumber}
+                                    <span style={{ fontWeight: 'bold' }}>Invoice #: </span>
+                                    {invoiceData.details.invoiceNumber}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Issue Date : </span>{invoiceData.details.issueDate}
+                                    <span style={{ fontWeight: 'bold' }}>Issue Date: </span>
+                                    {invoiceData.details.issueDate}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Payment Method : </span>{invoiceData.details.paymentMethod}
+                                    <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
+                                    {invoiceData.details.paymentMethod}
                                 </Typography>
                             </Box>
                         </Grid>
@@ -178,7 +177,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                     <Grid container justifyContent="flex-end" sx={{ mb: 3 }}>
                         <Grid item xs={12} sm={6} md={4}>
                             <Box sx={{ pt: 1 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee', }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
                                         Grand Total
                                     </Typography>
@@ -186,7 +185,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                                         Rs {invoiceData.summary.grandTotal.toFixed(0)}
                                     </Typography>
                                 </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee', }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
                                         Remaining Amount
                                     </Typography>
@@ -194,7 +193,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                                         Rs {invoiceData.summary.remainingAmount.toFixed(2)}
                                     </Typography>
                                 </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee', }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
                                         Paid Amount
                                     </Typography>
@@ -217,7 +216,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                             </Typography>
                             <Box sx={{ mt: 2 }}>
                                 <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '13px' }}>
-                                    Send By : {invoiceData.sentBy}
+                                    Sent By: {invoiceData.sentBy}
                                 </Typography>
                             </Box>
                         </Grid>
@@ -226,19 +225,21 @@ const InvoiceSlip = ({ open, onClose }) => {
                                 {invoiceData.paymentNote}
                             </Typography>
                             <Typography variant="body2" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '13px' }}>
-                                AMOUNT IN WORDS : {invoiceData.amountInWords}
+                                AMOUNT IN WORDS: {invoiceData.amountInWords}
                             </Typography>
                         </Grid>
                     </Grid>
 
                     {/* Action Buttons */}
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: 1,
-                        borderTop: '1px solid #eee',
-                        pt: 2
-                    }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: 1,
+                            borderTop: '1px solid #eee',
+                            pt: 2,
+                        }}
+                    >
                         <Button
                             variant="outlined"
                             sx={{
@@ -247,8 +248,8 @@ const InvoiceSlip = ({ open, onClose }) => {
                                 color: '#555',
                                 '&:hover': {
                                     borderColor: '#bbb',
-                                    backgroundColor: '#f5f5f5'
-                                }
+                                    backgroundColor: '#f5f5f5',
+                                },
                             }}
                             onClick={onClose}
                         >
@@ -262,8 +263,8 @@ const InvoiceSlip = ({ open, onClose }) => {
                                 color: '#555',
                                 '&:hover': {
                                     borderColor: '#bbb',
-                                    backgroundColor: '#f5f5f5'
-                                }
+                                    backgroundColor: '#f5f5f5',
+                                },
                             }}
                         >
                             Send Remind
@@ -275,8 +276,8 @@ const InvoiceSlip = ({ open, onClose }) => {
                                 textTransform: 'none',
                                 backgroundColor: '#003366',
                                 '&:hover': {
-                                    backgroundColor: '#002244'
-                                }
+                                    backgroundColor: '#002244',
+                                },
                             }}
                         >
                             Print
