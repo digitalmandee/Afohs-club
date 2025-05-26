@@ -165,6 +165,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Subscription/Dashboard');
     })->name('subscription.dashboard');
 
+    Route::get('/admin/add/subscription', function () {
+        return Inertia::render('App/Admin/Subscription/AddSubscription');
+    })->name('subscription.addsubscription');
+
     //Finance Routes
     Route::get('/finance/dashboard', function () {
         return Inertia::render('App/Admin/Finance/Dashboard');
