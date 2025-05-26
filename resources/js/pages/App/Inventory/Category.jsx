@@ -4,27 +4,9 @@ import SideNav from '@/Components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon } from '@mui/icons-material';
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Grid,
-    IconButton,
-    InputAdornment,
-    Snackbar,
-    TextField,
-    Typography,
-    useMediaQuery,
-    useTheme,
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Select, Snackbar, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 
 const drawerWidthOpen = 240;
@@ -35,6 +17,9 @@ export default function Category({ categoriesList }) {
     const [openAddMenu, setOpenAddMenu] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [reassignCategoryId, setReassignCategoryId] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
     const [showError, setShowError] = useState(false);
@@ -42,7 +27,7 @@ export default function Category({ categoriesList }) {
     const [pendingDeleteCategory, setPendingDeleteCategory] = useState(null);
     const { flash } = usePage().props;
     const theme = useTheme();
-    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const fullScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
     const { data, setData, post, reset, errors, processing } = useForm({
         name: '',
@@ -111,12 +96,12 @@ export default function Category({ categoriesList }) {
 
             if (editingCategoryId) {
                 formData.append('_method', 'PUT');
-                router.post(`/inventory/category/${editingCategoryId}`, formData, {
+                router.post(route('category.update', editingCategoryId), formData, {
                     forceFormData: true,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit('/inventory/category');
+                        router.visit(route('inventory.category'));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || 'An error occurred while updating the category.');
@@ -157,32 +142,39 @@ export default function Category({ categoriesList }) {
 
     const handleDeleteClick = useCallback((category) => {
         setPendingDeleteCategory(category);
+        setReassignCategoryId(null); // reset on each delete open
     }, []);
 
     const handleConfirmDelete = useCallback(() => {
         if (pendingDeleteCategory) {
-            router.delete(`/inventory/category/${pendingDeleteCategory.id}`, {
+            setDeleting(true);
+
+            router.delete(route('category.destroy', { category: pendingDeleteCategory.id }), {
+                data: {
+                    new_category_id: reassignCategoryId || null,
+                },
                 onSuccess: () => {
-                    setShowDeleteSuccess(true);
+                    enqueueSnackbar('Category deleted successfully', { variant: 'success' });
                     setPendingDeleteCategory(null);
-                    router.visit('/inventory/category');
+                    setReassignCategoryId(null);
+                    setDeleting(false);
+                    router.visit(route('inventory.category'));
                 },
                 onError: (errors) => {
                     setErrorMessage(errors.message || 'An error occurred while deleting the category.');
                     setShowError(true);
                     setPendingDeleteCategory(null);
+                    setReassignCategoryId(null);
+                    setDeleting(false);
                 },
             });
         }
-    }, [pendingDeleteCategory]);
+    }, [pendingDeleteCategory, reassignCategoryId]);
 
     const handleCancelDelete = useCallback(() => {
         setPendingDeleteCategory(null);
     }, []);
 
-    const handleCloseConfirmation = () => {
-        setShowConfirmation(false);
-    };
     // const handleCloseConfirmation = useCallback(() => {
     //     setTimeout(() => {
     //       setShowConfirmation(false);  // Close the Snackbar after 10 seconds
@@ -191,11 +183,6 @@ export default function Category({ categoriesList }) {
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
-
-    const handleErrorClose = useCallback(() => {
-        setShowError(false);
-        setErrorMessage('');
-    }, []);
 
     useEffect(() => {
         if (flash?.success) {
@@ -274,7 +261,7 @@ export default function Category({ categoriesList }) {
                                     '&:hover': { background: '#F6F6F6' },
                                 }}
                             >
-                                <CardContent sx={{ p: 3 }}>
+                                <CardContent sx={{ p: 3 }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
                                     <Grid container alignItems="center" justifyContent="space-between">
                                         <Grid item xs={12} sm={9} md={9} sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Box sx={{ width: 70, height: 70, mr: 2 }}>
@@ -289,7 +276,10 @@ export default function Category({ categoriesList }) {
                                                     }}
                                                 />
                                             </Box>
-                                            <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{category.name}</Typography>
+                                            <Box>
+                                                <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{category.name}</Typography>
+                                                <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#121212' }}>Products ({category.products_count ?? 0})</Typography>
+                                            </Box>
                                         </Grid>
                                         <Grid item>
                                             <IconButton onClick={() => handleEdit(category)}>
@@ -340,17 +330,7 @@ export default function Category({ categoriesList }) {
                                 <Typography variant="body1" sx={{ mb: 1 }}>
                                     Category Name
                                 </Typography>
-                                <TextField
-                                    fullWidth
-                                    placeholder="Enter category name"
-                                    name="name"
-                                    value={data.name}
-                                    onChange={handleInputChange}
-                                    variant="outlined"
-                                    size="small"
-                                    error={!!errors.name}
-                                    helperText={errors.name}
-                                />
+                                <TextField fullWidth placeholder="Enter category name" name="name" value={data.name} onChange={handleInputChange} variant="outlined" size="small" error={!!errors.name} helperText={errors.name} />
                             </Grid>
                             <Grid item xs={12}>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
@@ -367,11 +347,7 @@ export default function Category({ categoriesList }) {
                                 )}
                                 {(data.image || data.existingImage) && (
                                     <Box sx={{ mb: 1, mt: 2 }}>
-                                        <img
-                                            src={data.image ? URL.createObjectURL(data.image) : tenantAsset(data.existingImage)}
-                                            alt="Preview"
-                                            style={{ width: '100%', height: 100, objectFit: 'contain', borderRadius: 8 }}
-                                        />
+                                        <img src={data.image ? URL.createObjectURL(data.image) : tenantAsset(data.existingImage)} alt="Preview" style={{ width: '100%', height: 100, objectFit: 'contain', borderRadius: 8 }} />
                                     </Box>
                                 )}
                             </Grid>
@@ -395,16 +371,32 @@ export default function Category({ categoriesList }) {
             </Dialog>
 
             {/* Delete Confirmation */}
-            <Dialog fullScreen={fullScreen} open={!!pendingDeleteCategory} onClose={handleCancelDelete} aria-labelledby="delete-dialog-title">
-                <DialogTitle id="delete-dialog-title">Confirm Deletion</DialogTitle>
+            <Dialog fullScreen={fullScreen} open={!!pendingDeleteCategory} onClose={handleCancelDelete}>
+                <DialogTitle>Confirm Deletion</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to delete the category "{pendingDeleteCategory?.name || ''}"? This action cannot be undone.
+                        Are you sure you want to delete the category "{pendingDeleteCategory?.name}"?
+                        <br />
+                        You can optionally move its products to another category:
                     </DialogContentText>
+
+                    <FormControl fullWidth>
+                        <InputLabel id="delete-category">Reassign Products To</InputLabel>
+                        <Select labelId="delete-category" id="demo-delete-category" value={reassignCategoryId || ''} onChange={(e) => setReassignCategoryId(e.target.value)} label="Reassign Products To">
+                            <MenuItem value=" ">— Leave products uncategorized —</MenuItem>
+                            {categoriesList
+                                .filter((cat) => cat.id !== pendingDeleteCategory?.id)
+                                .map((cat) => (
+                                    <MenuItem key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </MenuItem>
+                                ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCancelDelete}>Cancel</Button>
-                    <Button onClick={handleConfirmDelete} sx={{ color: '#c62828' }}>
+                    <Button onClick={handleConfirmDelete} sx={{ color: '#c62828' }} disabled={deleting} loading={deleting} loadingPosition="start">
                         Delete
                     </Button>
                 </DialogActions>

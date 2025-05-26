@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Helpers\FileHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -12,18 +13,28 @@ use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
-    public function index()
-    {
-        $categories = Category::latest()->get();
 
-        return Inertia::render('App/Inventory/Category', [
-            'categoriesList' => $categories->map(fn($category) => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'image' => $category->image,
-            ]),
+
+    public function index(Request $request)
+    {
+        $category_id = $request->query('category_id');
+
+        $query = Product::latest()->with(['category', 'variants', 'variants.values']);
+
+        if ($category_id) {
+            $query->where('category_id', $category_id);
+        }
+
+        $productLists = $query->get();
+
+        $categoriesList = Category::select('id', 'name')->get(); // ← Make sure this line is present
+
+        return Inertia::render('App/Inventory/Dashboard', [
+            'productLists' => $productLists,
+            'categoriesList' => $categoriesList, // ← Make sure this key matches the React destructuring
         ]);
     }
+
 
     public function getCategories()
     {
@@ -77,12 +88,26 @@ class CategoryController extends Controller
         return redirect()->back()->with('success', 'Category updated.');
     }
 
-    public function destroy(Category $category)
+
+    public function destroy(Request $request, Category $category)
     {
+        $newCategoryId = $request->input('new_category_id');
+
+        // Reassign products if a new category is selected
+        if ($newCategoryId) {
+            Product::where('category_id', $category->id)
+                ->update(['category_id' => $newCategoryId]);
+        } else {
+            Product::where('category_id', $category->id)
+                ->update(['category_id' => null]);
+        }
+
         if ($category->image && Storage::disk('public')->exists($category->image)) {
             Storage::disk('public')->delete($category->image);
         }
+
         $category->delete();
+
         return redirect()->back()->with('success', 'Category deleted.');
     }
 }

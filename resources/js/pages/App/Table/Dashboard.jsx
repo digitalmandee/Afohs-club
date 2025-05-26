@@ -47,10 +47,14 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
     );
 
     // Determine text color based on reservation status
-    const getTextColor = () => {
-        if (fill === '#d1fae5') return '#059669';
+    const getTextColor = (data) => {
+        if (!data.is_available) return '#059669';
         if (fill === '#cfe7ff') return '#3b82f6';
         return '#6b7280';
+    };
+    const getBgColor = (data) => {
+        if (!data.is_available) return '#d1fae5';
+        return 'white';
     };
 
     return (
@@ -73,42 +77,7 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
                 },
             }}
         >
-            {data.capacity == 2 ? (
-                <Table2Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : data.capacity == 4 ? (
-                <Table1Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : data.capacity == 6 ? (
-                <Table6Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : data.capacity == 8 ? (
-                <Table8Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : data.capacity == 10 ? (
-                <Table10Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : null}
+            {data.capacity == 2 ? <Table2Icon fillColor={getBgColor(data)} /> : data.capacity == 4 ? <Table1Icon fillColor={getBgColor(data)} /> : data.capacity == 6 ? <Table6Icon fillColor={getBgColor(data)} /> : data.capacity == 8 ? <Table8Icon fillColor={getBgColor(data)} /> : data.capacity == 10 ? <Table10Icon fillColor={getBgColor(data)} /> : null}
 
             <Box
                 sx={{
@@ -120,19 +89,19 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
                     justifyContent: 'center',
                 }}
             >
-                <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor() }}>
+                <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor(data) }}>
                     {data.table_no}
                 </Typography>
-                {/* {reservation && (
+                {!data.is_available && (
                     <>
-                        <Typography variant="caption" sx={{ color: getTextColor(), fontWeight: 'medium' }}>
-                            #{reservation.id}
+                        <Typography variant="caption" sx={{ color: getTextColor(data), fontWeight: 'medium' }}>
+                            #{data.booked_by?.id}
                         </Typography>
                         <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.65rem' }}>
-                            {reservation.customer}
+                            {data.booked_by?.name}
                         </Typography>
                     </>
-                )} */}
+                )}
             </Box>
         </Box>
     );
@@ -154,6 +123,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     const [openReservation, setOpenReservation] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
     const [activefloor, setActiveFloor] = useState(null);
+    const [availableCapacity, setAvailableCapacity] = useState(0);
     const [tables, setTables] = useState([
         // First row
         {
@@ -292,10 +262,6 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     }, []);
 
     // Group tables by row
-    const firstRowTables = tables.slice(0, 5);
-    const secondRowTables = tables.slice(5, 8);
-    const thirdRowTables = tables.slice(8, 11);
-
     const handleOpenSettings = () => setOpenSettings(true);
     const handleCloseSettings = () => setOpenSettings(false);
 
@@ -331,15 +297,6 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     // Days of the week with dates and reservation indicators
     const days = generateDaysArray();
 
-    // const days = [
-
-    // Floor options
-    const floors = [
-        { id: 0, name: 'Floor 1', area: 'Indoor Area', capacity: '62-Person' },
-        { id: 1, name: 'Floor 1', area: 'Outdoor Area', capacity: '62-Person' },
-        { id: 2, name: 'Floor 2', area: 'Indoor Area', capacity: '50-Person' },
-    ];
-
     // selectedDate is like "2", convert to number for comparison
     const selectedDay = parseInt(selectedDate.date, 10);
 
@@ -360,6 +317,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                 })
                 .then((res) => {
                     setActiveFloor(res.data.floor);
+                    setAvailableCapacity(res.data.total_capacity);
                 });
         }
     }, [selectedDate, selectedFloor]);
@@ -681,7 +639,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                             </Typography>
                                         </Box>
                                         <Typography variant="body2" sx={{ color: '#333333' }}>
-                                            Available for 62-Person
+                                            Available for {availableCapacity ?? 0}-Person
                                         </Typography>
                                     </Box>
                                 </Box>

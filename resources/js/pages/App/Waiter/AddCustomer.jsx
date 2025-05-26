@@ -4,6 +4,7 @@ import { router } from '@inertiajs/react';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Alert, Box, Button, FormControl, Grid, IconButton, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 export default function AddWaiter({ users, memberTypes, customer = null }) {
@@ -11,13 +12,8 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
     const drawerWidthClosed = 110;
 
     const [open, setOpen] = useState(false);
-    const [customers, setCustomers] = useState(users.data); // Initialize with users prop
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filteredCustomers, setFilteredCustomers] = useState(users.data);
 
-    const [openAddForm, setOpenAddForm] = useState(!!customer);
     const [isEditMode, setIsEditMode] = useState(!!customer);
-    const [currentCustomerIndex, setCurrentCustomerIndex] = useState(null);
 
     const [newCustomer, setNewCustomer] = useState({
         id: customer?.id || null,
@@ -26,42 +22,16 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
         phone_number: customer?.phone_number || '',
         customer_type: customer?.memberType?.name || memberTypes[0]?.name || 'Silver',
         profile_photo: customer?.profile_photo || null,
-        addresses:
-            customer?.userDetails?.map((detail) => ({
-                type: detail.address_type,
-                address: detail.address,
-                city: detail.city,
-                province: detail.state,
-                country: detail.country,
-                zipCode: detail.zip,
-                isMain: detail.status === 'active',
-            })) || [],
     });
 
-    const [showAddressForm, setShowAddressForm] = useState(false);
-
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [showError, setShowError] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
     const [errors, setErrors] = useState({});
 
     const [profileImage, setProfileImage] = useState(customer?.profile_photo || null);
     const [phoneCountryCode, setPhoneCountryCode] = useState('+702');
 
-    useEffect(() => {
-        const filtered = customers.filter((customer) => customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
-        setFilteredCustomers(filtered);
-    }, [searchTerm, customers]);
-
     const handleCloseAddForm = () => {
-        setOpenAddForm(false);
-        setShowAddressForm(false);
         setErrors({});
-        setShowError(false);
-        setErrorMessage('');
         setIsEditMode(false);
-        setCurrentCustomerIndex(null);
         setNewCustomer({
             id: null,
             name: '',
@@ -69,7 +39,6 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
             phone_number: '',
             customer_type: memberTypes[0]?.name || 'Silver',
             profile_photo: null,
-            addresses: [],
         });
         setProfileImage(null);
     };
@@ -107,61 +76,56 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
         setProfileImage(null);
     };
 
-    const base64ToBlob = (base64) => {
-        const byteString = atob(base64.split(',')[1]);
-        const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-        }
-        return new Blob([ab], { type: mimeString });
-    };
-
     const handleSaveCustomer = () => {
-        // Client-side validation
-        if (!newCustomer.name || !newCustomer.email || !newCustomer.phone_number) {
-            setErrorMessage('Please fill in all required fields.');
-            setShowError(true);
-            return;
+        // Clear previous errors
+        const newErrors = {};
+
+        // Client-side validation for required fields
+        if (!newCustomer.name) newErrors.name = 'Waiter Name is required.';
+        if (!newCustomer.email) newErrors.email = 'Email is required.';
+        if (!newCustomer.phone_number) newErrors.phone = 'Phone Number is required.';
+        if (!newCustomer.customer_type) newErrors.customer_type = 'Customer Type is required.';
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (newCustomer.email && !emailRegex.test(newCustomer.email)) {
+            newErrors.email = 'Email is not valid.';
         }
 
-        if (newCustomer.addresses.length > 0) {
-            for (const addr of newCustomer.addresses) {
-                if (!addr.type || !addr.address || !addr.city || !addr.province || !addr.country || !addr.zipCode) {
-                    setErrorMessage('All address fields are required.');
-                    setShowError(true);
-                    return;
-                }
-            }
-        }
+        // Phone number format validation (digits only, min 7 digits)
+        // const phoneRegex = /^\d{7,}$/;
+        // if (newCustomer.phone_number && !phoneRegex.test(newCustomer.phone_number)) {
+        //     newErrors.phone = 'Phone number must be at least 7 digits.';
+        // }
 
-        const formData = new FormData();
-        formData.append('name', newCustomer.name);
-        formData.append('email', newCustomer.email);
-        formData.append('phone', `${phoneCountryCode}${newCustomer.phone_number}`);
-        formData.append('customer_type', newCustomer.customer_type);
-        if (profileImage && profileImage.startsWith('data:image')) {
-            const blob = base64ToBlob(profileImage);
-            formData.append('profile_pic', blob, 'profile.jpg');
+        // Profile image validation (only if uploading a file object, not base64 string)
+        // Assuming profileImage is base64, so skipping file validations here.
+        // You can add this if you handle File object elsewhere.
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            enqueueSnackbar('Please fix the errors before submitting.', { variant: 'error' });
+            return; // Don't proceed if errors exist
         }
-        formData.append('addresses', JSON.stringify(newCustomer.addresses));
 
         const method = isEditMode ? 'put' : 'post';
         const url = isEditMode ? route('waiters.update', { id: newCustomer.id }) : route('waiters.store');
 
-        router[method](url, formData, {
+        const payload = {
+            _method: method,
+            ...newCustomer,
+            phone: `${phoneCountryCode}-${newCustomer.phone_number}`,
+        };
+
+        router.post(url, payload, {
+            forceFormData: true,
             onSuccess: () => {
-                setSuccessMessage(isEditMode ? 'Waiter updated successfully!' : 'Waiter added successfully!');
-                setShowSuccess(true);
+                enqueueSnackbar(isEditMode ? 'Waiter updated successfully!' : 'Waiter added successfully!', { variant: 'success' });
                 handleCloseAddForm();
-                router.visit(route('waiters.index')); // Redirect to dashboard
+                router.visit(route('waiters.index'));
             },
             onError: (errors) => {
                 setErrors(errors);
-                const errorMessages = Object.values(errors).filter(Boolean).join('; ');
-                setErrorMessage(errorMessages || 'Failed to save waiter. Please check the form.');
-                setShowError(true);
             },
         });
     };
@@ -219,9 +183,9 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                                             </label>
                                         </Box>
                                     )}
-                                    {errors.profile_pic && (
+                                    {errors.profile_photo && (
                                         <Typography color="error" variant="caption">
-                                            {errors.profile_pic}
+                                            {errors.profile_photo}
                                         </Typography>
                                     )}
                                 </Box>
@@ -294,17 +258,6 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                     </Grid>
                 </div>
             </div>
-
-            <Snackbar open={showSuccess} autoHideDuration={6000} onClose={() => setShowSuccess(false)}>
-                <Alert onClose={() => setShowSuccess(false)} severity="success" sx={{ width: '100%' }}>
-                    {successMessage}
-                </Alert>
-            </Snackbar>
-            <Snackbar open={showError} autoHideDuration={6000} onClose={() => setShowError(false)}>
-                <Alert onClose={() => setShowError(false)} severity="error" sx={{ width: '100%' }}>
-                    {errorMessage}
-                </Alert>
-            </Snackbar>
         </>
     );
 }

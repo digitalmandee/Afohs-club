@@ -1,13 +1,14 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { Alert, Box, Button, FormControl, Grid, IconButton, MenuItem, Select, Snackbar, TextField, Typography } from '@mui/material';
+import { Box, Button, FormControl, Grid, IconButton, MenuItem, Select, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
+
 export default function AddKitchen({ userNo, customer = null }) {
     const phoneNumber = customer?.phone_number || '';
     const [phoneCountryCodeFromData, phoneNumberWithoutCode] = phoneNumber.includes('-') ? phoneNumber.split('-') : [phoneNumber.match(/^\+\d+/)?.[0] || '+702', phoneNumber.replace(/^\+\d+/, '').trim()];
@@ -27,7 +28,6 @@ export default function AddKitchen({ userNo, customer = null }) {
     });
 
     const [errors, setErrors] = useState({});
-
     const [profileImage, setProfileImage] = useState(customer?.profile_photo || null);
 
     const handleCloseAddForm = () => {
@@ -39,16 +39,18 @@ export default function AddKitchen({ userNo, customer = null }) {
             email: '',
             phone_number: '',
             profile_photo: null,
+            printer_ip: '',
+            printer_port: '',
         });
         setProfileImage(null);
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setNewCustomer({
-            ...newCustomer,
+        setNewCustomer((prev) => ({
+            ...prev,
             [name]: value,
-        });
+        }));
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: null }));
         }
@@ -62,10 +64,10 @@ export default function AddKitchen({ userNo, customer = null }) {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const reader = new FileReader();
-            setNewCustomer({
-                ...newCustomer,
+            setNewCustomer((prev) => ({
+                ...prev,
                 profile_photo: file,
-            });
+            }));
             reader.onloadend = () => {
                 setProfileImage(reader.result);
             };
@@ -81,10 +83,25 @@ export default function AddKitchen({ userNo, customer = null }) {
     };
 
     const handleSaveCustomer = () => {
-        // Client-side validation
-        if (!newCustomer.name || !newCustomer.email || !newCustomer.phone_number || !newCustomer.printer_ip || !newCustomer.printer_port) {
-            enqueueSnackbar('Please fill in all required fields.', { variant: 'error' });
-            return;
+        // Clear previous errors
+        const newErrors = {};
+
+        // Client-side validation for required fields
+        if (!newCustomer.name) newErrors.name = 'Kitchen Name is required.';
+        if (!newCustomer.email) newErrors.email = 'Email is required.';
+        if (!newCustomer.phone_number) newErrors.phone = 'Phone Number is required.';
+        if (!newCustomer.printer_ip) newErrors.printer_ip = 'Printer IP is required.';
+        if (!newCustomer.printer_port) newErrors.printer_port = 'Printer Port is required.';
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (newCustomer.email && !emailRegex.test(newCustomer.email)) {
+            newErrors.email = 'Email is not valid.';
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return; // Don't proceed if errors exist
         }
 
         const method = isEditMode ? 'put' : 'post';
@@ -105,8 +122,7 @@ export default function AddKitchen({ userNo, customer = null }) {
             },
             onError: (errors) => {
                 setErrors(errors);
-                const errorMessages = Object.values(errors).filter(Boolean).join('; ');
-                enqueueSnackbar(errorMessages || 'Failed to save Kitchen. Please check the form.', { variant: 'error' });
+                // No snackbar here to avoid popup for validation errors
             },
         });
     };
@@ -121,27 +137,29 @@ export default function AddKitchen({ userNo, customer = null }) {
                     marginTop: '5rem',
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
                     <IconButton onClick={() => router.visit(route('kitchens.index'))}>
                         <ArrowBackIcon />
                     </IconButton>
-                    <Typography variant="h6" style={{ marginLeft: '10px' }}>
+                    <Typography variant="h6" sx={{ ml: 1 }}>
                         {isEditMode ? 'Edit Kitchen Information' : 'Add Kitchen Information'}
                     </Typography>
                 </div>
-                <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '5px' }}>
+
+                <div style={{ backgroundColor: 'white', padding: 20, borderRadius: 5 }}>
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
-                            <Box sx={{ p: 2, backgroundColor: '#F6F6F6', border: '1px solid #e0e0e0', borderRadius: '4px', mb: 2 }}>
+                            <Box sx={{ p: 2, backgroundColor: '#F6F6F6', border: '1px solid #e0e0e0', borderRadius: 1, mb: 2 }}>
                                 <Typography variant="body1">
                                     Member Id: <strong>#{userNo}</strong>
                                 </Typography>
                             </Box>
-                            <Box style={{ display: 'flex', gap: '10px' }}>
+
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Box sx={{ mb: 2 }}>
                                     {profileImage ? (
-                                        <div style={{ position: 'relative', width: '150px', height: '150px' }}>
-                                            <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                                        <div style={{ position: 'relative', width: 150, height: 150 }}>
+                                            <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} />
                                         </div>
                                     ) : (
                                         <Box>
@@ -151,9 +169,9 @@ export default function AddKitchen({ userNo, customer = null }) {
                                                     sx={{
                                                         p: 2,
                                                         border: '1px dashed #1976d2',
-                                                        borderRadius: '4px',
-                                                        height: '80px',
-                                                        width: '80px',
+                                                        borderRadius: 1,
+                                                        height: 80,
+                                                        width: 80,
                                                         cursor: 'pointer',
                                                     }}
                                                     color="primary"
@@ -161,25 +179,26 @@ export default function AddKitchen({ userNo, customer = null }) {
                                             </label>
                                         </Box>
                                     )}
-                                    {errors.profile_pic && (
+                                    {errors.profile_photo && (
                                         <Typography color="error" variant="caption">
-                                            {errors.profile_pic}
+                                            {errors.profile_photo}
                                         </Typography>
                                     )}
                                 </Box>
-                                <Box style={{ display: 'flex', flexDirection: 'column' }}>
+
+                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                                     {(isEditMode || profileImage) && (
-                                        <div style={{ display: 'flex', gap: '5px', padding: '5px' }}>
+                                        <Box sx={{ display: 'flex', gap: 1, p: 1 }}>
                                             <label htmlFor="profile-image-upload-edit">
-                                                <Button size="small" sx={{ minWidth: 'auto', fontSize: '14px' }} component="span">
+                                                <Button size="small" sx={{ minWidth: 'auto', fontSize: 14 }} component="span">
                                                     Choose Photo
                                                 </Button>
                                             </label>
                                             <input accept="image/*" style={{ display: 'none' }} id="profile-image-upload-edit" type="file" onChange={handleImageUpload} />
-                                            <Button size="small" color="error" onClick={handleDeleteImage} sx={{ minWidth: 'auto', fontSize: '14px' }}>
+                                            <Button size="small" color="error" onClick={handleDeleteImage} sx={{ minWidth: 'auto', fontSize: 14 }}>
                                                 Delete
                                             </Button>
-                                        </div>
+                                        </Box>
                                     )}
                                     {!isEditMode && (
                                         <Typography variant="body2" sx={{ mt: 1 }}>
@@ -192,15 +211,11 @@ export default function AddKitchen({ userNo, customer = null }) {
                                 </Box>
                             </Box>
 
-                            {errors.customer_type && (
-                                <Typography color="error" variant="caption">
-                                    {errors.customer_type}
-                                </Typography>
-                            )}
-                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                            <Typography variant="subtitle1" sx={{ mt: 3, mb: 1 }}>
                                 Kitchen Name
                             </Typography>
-                            <TextField fullWidth placeholder="e.g. Dianne Russell" name="name" value={newCustomer.name} onChange={handleInputChange} margin="normal" variant="outlined" sx={{ mb: 2 }} error={!!errors.name} helperText={errors.name} />
+                            <TextField fullWidth placeholder="e.g. Dianne Russell" name="name" value={newCustomer.name} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.name} helperText={errors.name} />
+
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
@@ -208,12 +223,13 @@ export default function AddKitchen({ userNo, customer = null }) {
                                     </Typography>
                                     <TextField fullWidth placeholder="e.g. dianne.russell@gmail.com" name="email" value={newCustomer.email} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.email} helperText={errors.email} />
                                 </Grid>
+
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Phone Number
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <FormControl variant="outlined" margin="normal" sx={{ minWidth: '90px' }}>
+                                        <FormControl variant="outlined" margin="normal" sx={{ minWidth: 90 }}>
                                             <Select value={phoneCountryCode} onChange={handlePhoneCountryCodeChange}>
                                                 <MenuItem value="+702">+702</MenuItem>
                                                 <MenuItem value="+1">+1</MenuItem>
@@ -224,12 +240,14 @@ export default function AddKitchen({ userNo, customer = null }) {
                                         <TextField fullWidth placeholder="e.g. 123 456 7890" name="phone_number" value={newCustomer.phone_number} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.phone} helperText={errors.phone} />
                                     </Box>
                                 </Grid>
+
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Printer IP
                                     </Typography>
                                     <TextField fullWidth placeholder="e.g. 192.168.1.100" name="printer_ip" value={newCustomer.printer_ip} onChange={handleInputChange} margin="normal" variant="outlined" error={!!errors.printer_ip} helperText={errors.printer_ip} />
                                 </Grid>
+
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         Printer Port
@@ -238,6 +256,7 @@ export default function AddKitchen({ userNo, customer = null }) {
                                 </Grid>
                             </Grid>
                         </Grid>
+
                         <Grid item xs={12}>
                             <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 0 }}>
                                 <Button variant="contained" onClick={handleSaveCustomer} sx={{ backgroundColor: '#003366' }}>

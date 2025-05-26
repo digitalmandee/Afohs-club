@@ -24,7 +24,7 @@ import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState } from 'react';
 import MemberIcon from '@/components/App/Icons/Member';
-import AddressType from '../Icons/AddressType';
+import PaymentsIcon from '@mui/icons-material/Payments';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -203,14 +203,58 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Attendance Report',
                     path: route('employee.attendancereport'),
                 },
+                {
+                    text: 'Monthly Report',
+                    path: route('employee.monthlyreport'),
+                },
+                {
+                    text: 'Payroll',
+                    path: route('employee.payroll'),
+                },
             ],
         },
-        // {
-        //     text: 'Members Types',
-        //     icon: <MemberIcon />,
-        //     path: '/members/member-types',
-        // },
+        {
+            text: 'Finance',
+            icon: <PaymentsIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: route('finance.dashboard'),
+                },
+                {
+                    text: 'Transaction',
+                    path: route(''),
+                },
+            ]
+        },
 
+        {
+            text: 'Subscription',
+            icon: <PaymentsIcon />,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: route('subscription.dashboard'),
+                },
+                {
+                    text: 'Management',
+                    path: route(''),
+                },
+                {
+                    text: 'Monthly Fee',
+                    path: route(''),
+                },
+                {
+                    text: 'Sports Category',
+                    path: route(''),
+                },
+            ]
+        },
+//         {
+//             text: 'Members Types',
+//             icon: <MemberIcon />,
+//             path: '/members/member-types',
+//         },
         {
             text: 'Tenant',
             icon: <PeopleIcon />,

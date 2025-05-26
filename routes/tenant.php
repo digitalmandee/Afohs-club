@@ -26,7 +26,13 @@ Route::group([
     // Tenant auth-protected routes
     Route::middleware([AuthenticateTenant::class, 'auth:tenant'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
-        Route::get('/orser/reservations', [DashboardController::class, 'orderReservations'])->name('order.reservations');
+
+        // All Orders
+        Route::get('/order/all', [DashboardController::class, 'allOrders'])->name('order.all');
+        // Order Reservations
+        Route::get('/order/reservations', [DashboardController::class, 'orderReservations'])->name('order.reservations');
+        // Order Reservation WeekDays
+        Route::get('/weekly-reservation-overview', [DashboardController::class, 'weeklyReservationOverview'])->name('order.weekly-overview');
 
         Route::get('/order/queue', [OrderController::class, 'orderQueue'])->name('order.queue');
 
@@ -118,6 +124,7 @@ Route::group([
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
         Route::put('/inventory/{id}/update', [InventoryController::class, 'update'])->name('inventory.update');
+        Route::delete('/inventory/{id}/destroy', [InventoryController::class, 'destroy'])->name('inventory.destroy');
         Route::get('/add/product', function () {
             return Inertia::render('App/Inventory/Product');
         })->name('product.create');

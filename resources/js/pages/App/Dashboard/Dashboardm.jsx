@@ -5,7 +5,7 @@ import NewSelfOrder from './NewOrder';
 import ReservationOrder from './Reserve';
 import { router } from '@inertiajs/react';
 import { Add } from '@mui/icons-material';
-import { Box, Button, Chip, Grid, IconButton, Modal, Paper, Typography } from '@mui/material';
+import { Box, Button, Chip, CircularProgress, Grid, IconButton, Modal, Paper, Typography } from '@mui/material';
 import axios from 'axios';
 
 const drawerWidthOpen = 240;
@@ -19,7 +19,14 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
     const [isNotificationVisible, setIsNotificationVisible] = useState(false);
 
     // Orders
+    const [weekDays, setWeekDays] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(new Date());
     const [orderReservtions, setOrderReservtions] = useState([]);
+    const [selfOrders, setSelfOrders] = useState([]);
+    const [queueOrders, setQueueOrders] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [orderLoading, setOrderLoading] = useState(false);
+    const [queueOrderLoading, setQueueOrderLoading] = useState(false);
 
     const handleCancelOrder = () => {
         setIsModalVisible(false); // Close the cancel order modal
@@ -31,16 +38,59 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
         }, 3000);
     };
 
-    const getOrderReservtions = () => {
-        axios
-            .get(route('order.reservations', { params: { date: new Date().toISOString().split('T')[0], limit: 5 } }))
-            .then((res) => setOrderReservtions(res.data.orders))
-            .catch((err) => console.log(err));
+    // Format Time
+    function formatTime(timeStr) {
+        if (!timeStr) return '';
+        const [hour, minute] = timeStr.split(':');
+        const date = new Date();
+        date.setHours(parseInt(hour), parseInt(minute));
+
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    // Fetch orders for selected date
+    const getAllOrders = async (date, order_type) => {
+        try {
+            const { data } = await axios.get(route('order.all', { date, order_type }));
+            return data.orders; // return orders without setting state here
+        } catch (err) {
+            console.log(err);
+            return []; // return empty array on error to avoid undefined
+        }
     };
 
     useEffect(() => {
-        getOrderReservtions();
+        // Generate next 7 days from today
+        axios.get(route('order.weekly-overview')).then((res) => {
+            setWeekDays(res.data.week_days);
+            // default select first day (today)
+            setSelectedDate(new Date(res.data.week_days[0].date));
+        });
+        setOrderLoading(true); // start loader
+        getAllOrders(selectedDate.toISOString().split('T')[0], 'takeaway').then((orders) => {
+            setSelfOrders(orders); // set orders here after data returned
+            setOrderLoading(false); // stop loader
+        });
+        setQueueOrderLoading(true); // start loader
+        getAllOrders(selectedDate.toISOString().split('T')[0], 'all').then((orders) => {
+            setQueueOrders(orders); // set orders here after data returned
+            setQueueOrderLoading(false); // stop loader
+        });
     }, []);
+
+    // Fetch Reservation orders for selected date
+    const getOrderReservtions = (date) => {
+        setLoading(true); // start loader
+        axios
+            .get(route('order.reservations', { date, limit: 5 }))
+            .then((res) => setOrderReservtions(res.data.orders))
+            .catch((err) => console.log(err))
+            .finally(() => setLoading(false)); // stop loader
+    };
+
+    useEffect(() => {
+        getOrderReservtions(selectedDate.toISOString().split('T')[0]);
+    }, [selectedDate]);
 
     return (
         <>
@@ -285,65 +335,65 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
 
                                 {/* Calendar Days */}
                                 <Grid container spacing={0} sx={{ mb: 2 }}>
-                                    {['Sun', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, index) => (
-                                        <Grid
-                                            item
-                                            key={index}
-                                            xs={12 / 7}
-                                            sx={{
-                                                textAlign: 'center',
-                                                p: 1,
-                                                borderRight: '1px solid #e0e0e0',
-                                                borderTop: '1px solid #e0e0e0',
-                                                borderBottom: '1px solid #e0e0e0',
-                                                borderLeft: index === 0 ? '1px solid #e0e0e0' : 'none',
-                                                bgcolor: index === 0 ? '#e6f0fa' : 'white',
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="caption"
+                                    {weekDays.map((day, index) => {
+                                        const isSelected = selectedDate.toDateString() === new Date(day.date).toDateString();
+
+                                        return (
+                                            <Grid
+                                                item
+                                                key={index}
+                                                xs={12 / 7}
+                                                onClick={() => setSelectedDate(new Date(day.date))}
                                                 sx={{
-                                                    color: '#6b7280',
-                                                    fontWeight: 500,
+                                                    cursor: 'pointer',
+                                                    textAlign: 'center',
+                                                    p: 1,
+                                                    border: '1px solid #e0e0e0',
+                                                    bgcolor: isSelected ? '#e6f0fa' : 'white',
                                                 }}
                                             >
-                                                {day}
-                                            </Typography>
-
-                                            <Box sx={{ mt: 1 }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                    {7 + index}
+                                                <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500 }}>
+                                                    {day.label}
                                                 </Typography>
-                                            </Box>
-
-                                            {[0, 1, 2, 5].includes(index) && (
-                                                <Box
-                                                    sx={{
-                                                        mt: 1,
-                                                        mx: 'auto',
-                                                        width: 24,
-                                                        height: 24,
-                                                        bgcolor: '#1976d2',
-                                                        color: 'white',
-                                                        borderRadius: '50%',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 'bold',
-                                                    }}
-                                                >
-                                                    2
+                                                <Box sx={{ mt: 1 }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                        {day.dayNum}
+                                                    </Typography>
                                                 </Box>
-                                            )}
-                                        </Grid>
-                                    ))}
+
+                                                {day.orders_count > 0 && (
+                                                    <Box
+                                                        sx={{
+                                                            mt: 1,
+                                                            mx: 'auto',
+                                                            width: 24,
+                                                            height: 24,
+                                                            bgcolor: '#1976d2',
+                                                            color: 'white',
+                                                            borderRadius: '50%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 'bold',
+                                                        }}
+                                                    >
+                                                        {day.orders_count}
+                                                    </Box>
+                                                )}
+                                            </Grid>
+                                        );
+                                    })}
                                 </Grid>
 
                                 {/* Reservation List */}
                                 <Box sx={{ mt: 3 }}>
                                     {/* Reservation 1 */}
-                                    {orderReservtions.length > 0 &&
+                                    {loading ? (
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                                            <CircularProgress />
+                                        </Box>
+                                    ) : orderReservtions.length > 0 ? (
                                         orderReservtions.map((item, index) => (
                                             <Box
                                                 key={index}
@@ -461,7 +511,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 >
                                                                     🕙
                                                                 </Box>
-                                                                <Typography variant="caption">{item.start_time}</Typography>
+                                                                <Typography variant="caption">{formatTime(item.start_time)}</Typography>
                                                             </Box>
                                                         </Box>
 
@@ -507,7 +557,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 fontWeight: 'medium',
                                                             }}
                                                         />
-                                                        <Chip
+                                                        {/* <Chip
                                                             label="DP : 50%"
                                                             size="small"
                                                             variant="outlined"
@@ -519,7 +569,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 height: 24,
                                                                 fontSize: '0.75rem',
                                                             }}
-                                                        />
+                                                        /> */}
                                                     </Box>
                                                     <Box sx={{ ml: 'auto', mr: 2 }}>
                                                         <img
@@ -557,11 +607,14 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                             },
                                                         }}
                                                     >
-                                                        Process Order
+                                                        {item.status === 'saved' ? 'Process Order' : item.status === 'cancelled' ? 'Cancelled' : item.status === 'completed' ? 'Completed' : item.status === 'in_progress' ? 'Cooking process' : 'Pending'}
                                                     </Button>
                                                 </Box>
                                             </Box>
-                                        ))}
+                                        ))
+                                    ) : (
+                                        <Typography>No reservations found for this date.</Typography>
+                                    )}
                                 </Box>
                             </Paper>
                         </Grid>
@@ -673,7 +726,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                             ml: 2,
                                                         }}
                                                     >
-                                                        280
+                                                        0
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6} sx={{ p: 1 }}>
@@ -695,7 +748,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                             fontSize: '18px',
                                                         }}
                                                     >
-                                                        40
+                                                        0
                                                     </Typography>
                                                 </Grid>
                                             </Grid>
@@ -915,480 +968,197 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                     }}
                                 >
                                     {/* Order 1 */}
-                                    <Box
-                                        sx={{
-                                            bgcolor: '#F6F6F6',
-                                            borderRadius: 1,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            overflow: 'hidden',
-                                        }}
-                                    >
-                                        {/* Customer info section */}
-                                        <Box
-                                            sx={{
-                                                p: 2,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                            }}
-                                        >
+                                    {orderLoading ? (
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                                            <CircularProgress />
+                                        </Box>
+                                    ) : selfOrders.length > 0 ? (
+                                        selfOrders.map((order, index) => (
                                             <Box
+                                                key={index}
                                                 sx={{
-                                                    mr: 2,
-                                                    bgcolor: '#E3E3E3',
-                                                    borderRadius: '50%',
-                                                    width: 40,
-                                                    height: 40,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
+                                                    bgcolor: '#F6F6F6',
+                                                    borderRadius: 1,
+                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                                    overflow: 'hidden',
                                                 }}
                                             >
-                                                <img
-                                                    src="/assets/truck.png"
-                                                    alt=""
-                                                    style={{
-                                                        height: 27,
-                                                        width: 27,
-                                                    }}
-                                                />
-                                            </Box>
-
-                                            <Box sx={{ flexGrow: 1 }}>
+                                                {/* Customer info section */}
                                                 <Box
                                                     sx={{
+                                                        p: 2,
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        mb: 0.5,
                                                     }}
                                                 >
-                                                    <Typography
-                                                        variant="subtitle1"
-                                                        sx={{
-                                                            fontWeight: '500',
-                                                            fontSize: '16px',
-                                                            color: '#121212',
-                                                            mr: 1,
-                                                        }}
-                                                    >
-                                                        Miles Esther
-                                                    </Typography>
-                                                    <img
-                                                        src="/assets/Diamond.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 24,
-                                                            width: 24,
-                                                            marginLeft: '10px',
-                                                        }}
-                                                    />
-                                                </Box>
-
-                                                <Typography variant="caption" sx={{ color: '#666' }}>
-                                                    2 items
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-
-                                        {/* Order actions section */}
-                                        <Box
-                                            sx={{
-                                                p: 2,
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <Chip
-                                                    label="#001"
-                                                    size="small"
-                                                    color="#121212"
-                                                    variant="outlined"
-                                                    sx={{
-                                                        mr: 1,
-                                                        bgcolor: '#E3E3E3',
-                                                        borderRadius: 1,
-                                                        height: 24,
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 'medium',
-                                                    }}
-                                                />
-                                                {isModalVisible && <CancelOrder onClose={() => setIsModalVisible(false)} onConfirm={handleCancelOrder} />}
-                                                {isNotificationVisible && (
                                                     <Box
                                                         sx={{
-                                                            position: 'fixed',
-                                                            top: '5%',
-                                                            right: '2%',
-                                                            zIndex: 2000,
+                                                            mr: 2,
+                                                            bgcolor: '#E3E3E3',
+                                                            borderRadius: '50%',
+                                                            width: 40,
+                                                            height: 40,
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            bgcolor: '#E6FAE6',
-                                                            color: '#333',
-                                                            borderRadius: 2,
-                                                            p: 2,
-                                                            boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
-                                                            minWidth: 300,
+                                                            justifyContent: 'center',
                                                         }}
                                                     >
-                                                        <Typography
+                                                        <img
+                                                            src="/assets/truck.png"
+                                                            alt=""
+                                                            style={{
+                                                                height: 27,
+                                                                width: 27,
+                                                            }}
+                                                        />
+                                                    </Box>
+
+                                                    <Box sx={{ flexGrow: 1 }}>
+                                                        <Box
                                                             sx={{
-                                                                fontWeight: 'bold',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                mb: 0.5,
+                                                            }}
+                                                        >
+                                                            <Typography
+                                                                variant="subtitle1"
+                                                                sx={{
+                                                                    fontWeight: '500',
+                                                                    fontSize: '16px',
+                                                                    color: '#121212',
+                                                                    mr: 1,
+                                                                }}
+                                                            >
+                                                                {order.user?.name}
+                                                            </Typography>
+                                                            <img
+                                                                src="/assets/Diamond.png"
+                                                                alt=""
+                                                                style={{
+                                                                    height: 24,
+                                                                    width: 24,
+                                                                    marginLeft: '10px',
+                                                                }}
+                                                            />
+                                                        </Box>
+
+                                                        <Typography variant="caption" sx={{ color: '#666' }}>
+                                                            {order.order_items_count} items
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+
+                                                {/* Order actions section */}
+                                                <Box
+                                                    sx={{
+                                                        p: 2,
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                        }}
+                                                    >
+                                                        <Chip
+                                                            label={`#${order.order_number}`}
+                                                            size="small"
+                                                            color="#121212"
+                                                            variant="outlined"
+                                                            sx={{
                                                                 mr: 1,
+                                                                bgcolor: '#E3E3E3',
+                                                                borderRadius: 1,
+                                                                height: 24,
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: 'medium',
                                                             }}
-                                                        >
-                                                            ✅ Order Canceled!
-                                                        </Typography>
-                                                        <Typography
-                                                            sx={{
-                                                                fontSize: '0.875rem',
-                                                            }}
-                                                        >
-                                                            Order id <b>#Order002</b> has been canceled
-                                                        </Typography>
+                                                        />
+                                                        {isModalVisible && <CancelOrder onClose={() => setIsModalVisible(false)} onConfirm={handleCancelOrder} />}
+                                                        {isNotificationVisible && (
+                                                            <Box
+                                                                sx={{
+                                                                    position: 'fixed',
+                                                                    top: '5%',
+                                                                    right: '2%',
+                                                                    zIndex: 2000,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    bgcolor: '#E6FAE6',
+                                                                    color: '#333',
+                                                                    borderRadius: 2,
+                                                                    p: 2,
+                                                                    boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
+                                                                    minWidth: 300,
+                                                                }}
+                                                            >
+                                                                <Typography
+                                                                    sx={{
+                                                                        fontWeight: 'bold',
+                                                                        mr: 1,
+                                                                    }}
+                                                                >
+                                                                    ✅ Order Canceled!
+                                                                </Typography>
+                                                                <Typography
+                                                                    sx={{
+                                                                        fontSize: '0.875rem',
+                                                                    }}
+                                                                >
+                                                                    Order id <b>#Order002</b> has been canceled
+                                                                </Typography>
+                                                            </Box>
+                                                        )}
                                                     </Box>
-                                                )}
-                                            </Box>
-                                            <img
-                                                src="/assets/trash.png"
-                                                alt=""
-                                                onClick={() => setIsModalVisible(true)}
-                                                style={{
-                                                    height: 20,
-                                                    width: 20,
-                                                    marginLeft: '1rem',
-                                                    cursor: 'pointer',
-                                                }}
-                                            />
-                                            <Button
-                                                variant="contained"
-                                                size="small"
-                                                startIcon={
-                                                    <Box
-                                                        component="span"
-                                                        sx={{
-                                                            fontSize: '0.875rem',
-                                                        }}
-                                                    >
-                                                        ✓
-                                                    </Box>
-                                                }
-                                                sx={{
-                                                    bgcolor: '#0e3151',
-                                                    color: 'white',
-                                                    textTransform: 'none',
-                                                    borderRadius: 0,
-                                                    px: 2,
-                                                    py: 0.5,
-                                                    fontSize: '0.875rem',
-                                                    '&:hover': {
-                                                        bgcolor: '#0a2540',
-                                                    },
-                                                }}
-                                            >
-                                                Process Order
-                                            </Button>
-                                        </Box>
-                                    </Box>
-
-                                    {/* Order 2 */}
-
-                                    <Box
-                                        sx={{
-                                            bgcolor: '#F6F6F6',
-                                            borderRadius: 1,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            overflow: 'hidden',
-                                            mt: 2,
-                                        }}
-                                    >
-                                        {/* Customer info section */}
-                                        <Box
-                                            sx={{
-                                                p: 2,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    mr: 2,
-                                                    bgcolor: '#E3E3E3',
-                                                    borderRadius: '50%',
-                                                    width: 40,
-                                                    height: 40,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                }}
-                                            >
-                                                <img
-                                                    src="/assets/truck.png"
-                                                    alt=""
-                                                    style={{
-                                                        height: 27,
-                                                        width: 27,
-                                                    }}
-                                                />
-                                            </Box>
-
-                                            <Box sx={{ flexGrow: 1 }}>
-                                                <Box
-                                                    sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        mb: 0.5,
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        variant="subtitle1"
-                                                        sx={{
-                                                            fontWeight: '500',
-                                                            fontSize: '16px',
-                                                            color: '#121212',
-                                                            mr: 1,
-                                                        }}
-                                                    >
-                                                        Annette Black
-                                                    </Typography>
                                                     <img
-                                                        src="/assets/Diamond.png"
+                                                        src="/assets/trash.png"
                                                         alt=""
+                                                        onClick={() => setIsModalVisible(true)}
                                                         style={{
-                                                            height: 24,
-                                                            width: 24,
-                                                            marginLeft: '10px',
+                                                            height: 20,
+                                                            width: 20,
+                                                            marginLeft: '1rem',
+                                                            cursor: 'pointer',
                                                         }}
                                                     />
-                                                </Box>
-
-                                                <Typography variant="caption" sx={{ color: '#666' }}>
-                                                    2 items
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-
-                                        {/* Order actions section */}
-                                        <Box
-                                            sx={{
-                                                p: 2,
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <Chip
-                                                    label="#001"
-                                                    size="small"
-                                                    color="#121212"
-                                                    variant="outlined"
-                                                    sx={{
-                                                        mr: 1,
-                                                        bgcolor: '#E3E3E3',
-                                                        borderRadius: 1,
-                                                        height: 24,
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 'medium',
-                                                    }}
-                                                />
-                                            </Box>
-                                            <img
-                                                src="/assets/trash.png"
-                                                alt=""
-                                                style={{
-                                                    height: 20,
-                                                    width: 20,
-                                                    marginLeft: '1rem',
-                                                }}
-                                            />
-                                            <Button
-                                                variant="contained"
-                                                size="small"
-                                                startIcon={
-                                                    <Box
-                                                        component="span"
+                                                    <Button
+                                                        variant="contained"
+                                                        size="small"
+                                                        startIcon={
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    fontSize: '0.875rem',
+                                                                }}
+                                                            >
+                                                                ✓
+                                                            </Box>
+                                                        }
                                                         sx={{
+                                                            bgcolor: '#0e3151',
+                                                            color: 'white',
+                                                            textTransform: 'none',
+                                                            borderRadius: 0,
+                                                            px: 2,
+                                                            py: 0.5,
                                                             fontSize: '0.875rem',
+                                                            '&:hover': {
+                                                                bgcolor: '#0a2540',
+                                                            },
                                                         }}
                                                     >
-                                                        ✓
-                                                    </Box>
-                                                }
-                                                sx={{
-                                                    bgcolor: '#0e3151',
-                                                    color: 'white',
-                                                    textTransform: 'none',
-                                                    borderRadius: 0,
-                                                    px: 2,
-                                                    py: 0.5,
-                                                    fontSize: '0.875rem',
-                                                    '&:hover': {
-                                                        bgcolor: '#0a2540',
-                                                    },
-                                                }}
-                                            >
-                                                Process Order
-                                            </Button>
-                                        </Box>
-                                    </Box>
-
-                                    {/* Order 3 */}
-
-                                    <Box
-                                        sx={{
-                                            bgcolor: '#F6F6F6',
-                                            borderRadius: 1,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            overflow: 'hidden',
-                                            mt: 2,
-                                        }}
-                                    >
-                                        {/* Customer info section */}
-                                        <Box
-                                            sx={{
-                                                p: 2,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    mr: 2,
-                                                    bgcolor: '#E3E3E3',
-                                                    borderRadius: '50%',
-                                                    width: 40,
-                                                    height: 40,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                }}
-                                            >
-                                                <img
-                                                    src="/assets/truck.png"
-                                                    alt=""
-                                                    style={{
-                                                        height: 27,
-                                                        width: 27,
-                                                    }}
-                                                />
-                                            </Box>
-
-                                            <Box sx={{ flexGrow: 1 }}>
-                                                <Box
-                                                    sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        mb: 0.5,
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        variant="subtitle1"
-                                                        sx={{
-                                                            fontWeight: '500',
-                                                            fontSize: '16px',
-                                                            color: '#121212',
-                                                            mr: 1,
-                                                        }}
-                                                    >
-                                                        Bessie Cooper
-                                                    </Typography>
-                                                    <img
-                                                        src="/assets/Diamond.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 24,
-                                                            width: 24,
-                                                            marginLeft: '10px',
-                                                        }}
-                                                    />
+                                                        {order.status === 'cancelled' ? 'Cancelled' : order.status === 'completed' ? 'Completed' : order.status === 'in_progress' ? 'Cooking process' : 'Pending'}
+                                                    </Button>
                                                 </Box>
-
-                                                <Typography variant="caption" sx={{ color: '#666' }}>
-                                                    2 items
-                                                </Typography>
                                             </Box>
-                                        </Box>
-
-                                        {/* Order actions section */}
-                                        <Box
-                                            sx={{
-                                                p: 2,
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <Chip
-                                                    label="#001"
-                                                    size="small"
-                                                    color="#121212"
-                                                    variant="outlined"
-                                                    sx={{
-                                                        mr: 1,
-                                                        bgcolor: '#E3E3E3',
-                                                        borderRadius: 1,
-                                                        height: 24,
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 'medium',
-                                                    }}
-                                                />
-                                            </Box>
-                                            <img
-                                                src="/assets/trash.png"
-                                                alt=""
-                                                style={{
-                                                    height: 20,
-                                                    width: 20,
-                                                    marginLeft: '1rem',
-                                                }}
-                                            />
-                                            <Button
-                                                variant="contained"
-                                                size="small"
-                                                startIcon={
-                                                    <Box
-                                                        component="span"
-                                                        sx={{
-                                                            fontSize: '0.875rem',
-                                                        }}
-                                                    >
-                                                        ✓
-                                                    </Box>
-                                                }
-                                                sx={{
-                                                    bgcolor: '#0e3151',
-                                                    color: 'white',
-                                                    textTransform: 'none',
-                                                    borderRadius: 0,
-                                                    px: 2,
-                                                    py: 0.5,
-                                                    fontSize: '0.875rem',
-                                                    '&:hover': {
-                                                        bgcolor: '#0a2540',
-                                                    },
-                                                }}
-                                            >
-                                                Process Order
-                                            </Button>
-                                        </Box>
-                                    </Box>
+                                        ))
+                                    ) : (
+                                        <Typography>No order found.</Typography>
+                                    )}
                                 </Box>
                             </Paper>
                         </Grid>
@@ -1492,359 +1262,218 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                     }}
                                 >
                                     {/* Customer 1 */}
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            p: 2,
-                                            borderRadius: 1,
-                                            border: '1px solid #E3E3E3',
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                mb: 2,
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Button
-                                                    variant="contained"
-                                                    sx={{
-                                                        bgcolor: '#0C67AA',
-                                                        color: 'white',
-                                                        borderRadius: '50%',
-                                                        minWidth: 40,
-                                                        height: 40,
-                                                        p: 0,
-                                                    }}
-                                                >
-                                                    T2
-                                                </Button>
-                                                <Button
-                                                    sx={{
-                                                        bgcolor: '#E3E3E3',
-                                                        height: 40,
-                                                        minWidth: 40,
-                                                        borderRadius: '50%',
-                                                        p: 0,
-                                                    }}
-                                                >
-                                                    <img
-                                                        src="/assets/food-tray.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 21,
-                                                            width: 21,
-                                                        }}
-                                                    />
-                                                </Button>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <IconButton
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: '#0e3151',
-                                                        color: 'white',
-                                                        height: 46,
-                                                        width: 46,
-                                                        borderRadius: '0px',
-                                                    }}
-                                                >
-                                                    <Add fontSize="small" />
-                                                </IconButton>
-                                            </Box>
+                                    {queueOrderLoading ? (
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                                            <CircularProgress />
                                         </Box>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                            }}
-                                        >
-                                            <Box>
-                                                <Typography
-                                                    variant="subtitle1"
-                                                    sx={{
-                                                        fontWeight: '500',
-                                                        fontSize: '20px',
-                                                        color: '#121212',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        mb: 0.5,
-                                                    }}
-                                                >
-                                                    Qafi Latif
-                                                    <img
-                                                        src="/assets/Diamond.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 24,
-                                                            width: 24,
-                                                            marginLeft: '0.7rem',
-                                                        }}
-                                                    />
-                                                </Typography>
-
-                                                <Typography
-                                                    variant="caption"
-                                                    sx={{
-                                                        mb: 1,
-                                                        display: 'block',
-                                                        fontSize: '14px',
-                                                        color: '#7F7F7F',
-                                                    }}
-                                                >
-                                                    4 items (
-                                                    <Typography
-                                                        component="span"
-                                                        variant="caption"
-                                                        sx={{
-                                                            color: '#22D7A6',
-                                                        }}
-                                                    >
-                                                        1 Complete
-                                                    </Typography>
-                                                    )
-                                                </Typography>
-                                            </Box>
-                                            <Box
+                                    ) : queueOrders.length > 0 ? (
+                                        queueOrders.map((order, index) => (
+                                            <Paper
+                                                key={index}
+                                                elevation={0}
                                                 sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
+                                                    p: 2,
+                                                    borderRadius: 1,
+                                                    border: '1px solid #E3E3E3',
                                                 }}
                                             >
-                                                <Typography
-                                                    component="span"
-                                                    variant="caption"
+                                                <Box
                                                     sx={{
-                                                        color: '#7F7F7F',
-                                                        fontWeight: 'normal',
-                                                        mr: 0.5,
-                                                        fontSize: '14px',
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        mb: 2,
                                                     }}
                                                 >
-                                                    Rs
-                                                </Typography>
-                                                <Typography
-                                                    component="span"
-                                                    sx={{
-                                                        color: '#121212',
-                                                        fontSize: '20px',
-                                                        fontWeight: 'bold',
-                                                    }}
-                                                >
-                                                    47.00
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <Chip
-                                                label="#001"
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{
-                                                    bgcolor: '#f5f5f5',
-                                                    borderRadius: 1,
-                                                    height: 24,
-                                                }}
-                                            />
-                                            <Chip
-                                                label="Ready to serve"
-                                                size="small"
-                                                sx={{
-                                                    bgcolor: '#f5f5f5',
-                                                    borderRadius: 1,
-                                                    height: 24,
-                                                }}
-                                                icon={
-                                                    <Box
-                                                        component="span"
-                                                        sx={{
-                                                            fontSize: '0.75rem',
-                                                            ml: 1,
-                                                        }}
-                                                    >
-                                                        ✓
+                                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                                        <Button
+                                                            variant="contained"
+                                                            sx={{
+                                                                bgcolor: '#0C67AA',
+                                                                color: 'white',
+                                                                borderRadius: '50%',
+                                                                minWidth: 40,
+                                                                height: 40,
+                                                                p: 0,
+                                                            }}
+                                                        >
+                                                            {order.table?.table_no}
+                                                        </Button>
+                                                        <Button
+                                                            sx={{
+                                                                bgcolor: '#E3E3E3',
+                                                                height: 40,
+                                                                minWidth: 40,
+                                                                borderRadius: '50%',
+                                                                p: 0,
+                                                            }}
+                                                        >
+                                                            <img
+                                                                src="/assets/food-tray.png"
+                                                                alt=""
+                                                                style={{
+                                                                    height: 21,
+                                                                    width: 21,
+                                                                }}
+                                                            />
+                                                        </Button>
                                                     </Box>
-                                                }
-                                            />
-                                        </Box>
-                                    </Paper>
-
-                                    {/* Customer 2 */}
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            p: 2,
-                                            borderRadius: 1,
-                                            border: '1px solid #E3E3E3',
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                mb: 2,
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Button
-                                                    variant="contained"
+                                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                                        <IconButton
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: '#0e3151',
+                                                                color: 'white',
+                                                                height: 46,
+                                                                width: 46,
+                                                                borderRadius: '0px',
+                                                            }}
+                                                        >
+                                                            <Add fontSize="small" />
+                                                        </IconButton>
+                                                    </Box>
+                                                </Box>
+                                                <Box
                                                     sx={{
-                                                        bgcolor: '#0C67AA',
-                                                        color: 'white',
-                                                        borderRadius: '50%',
-                                                        minWidth: 40,
-                                                        height: 40,
-                                                        p: 0,
-                                                    }}
-                                                >
-                                                    T3
-                                                </Button>
-                                                <Button
-                                                    sx={{
-                                                        bgcolor: '#E3E3E3',
-                                                        height: 40,
-                                                        minWidth: 40,
-                                                        borderRadius: '50%',
-                                                        p: 0,
-                                                    }}
-                                                >
-                                                    <img
-                                                        src="/assets/food-tray.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 21,
-                                                            width: 21,
-                                                        }}
-                                                    />
-                                                </Button>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <img
-                                                    src="/assets/camera.png"
-                                                    alt=""
-                                                    style={{
-                                                        height: 46,
-                                                        width: 46,
-                                                    }}
-                                                />
-                                                <IconButton
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: '#0e3151',
-                                                        color: 'white',
-                                                        height: 46,
-                                                        width: 46,
-                                                        borderRadius: '0px',
-                                                    }}
-                                                >
-                                                    <Add fontSize="small" />
-                                                </IconButton>
-                                            </Box>
-                                        </Box>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                            }}
-                                        >
-                                            <Box>
-                                                <Typography
-                                                    variant="subtitle1"
-                                                    sx={{
-                                                        fontWeight: '500',
-                                                        fontSize: '20px',
-                                                        color: '#121212',
                                                         display: 'flex',
-                                                        alignItems: 'center',
-                                                        mb: 0.5,
+                                                        justifyContent: 'space-between',
                                                     }}
                                                 >
-                                                    Hamid Indra
-                                                    <img
-                                                        src="/assets/Diamond.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 24,
-                                                            width: 24,
-                                                            marginLeft: '0.7rem',
-                                                        }}
-                                                    />
-                                                </Typography>
+                                                    <Box>
+                                                        <Typography
+                                                            variant="subtitle1"
+                                                            sx={{
+                                                                fontWeight: '500',
+                                                                fontSize: '20px',
+                                                                color: '#121212',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                mb: 0.5,
+                                                            }}
+                                                        >
+                                                            {order.user?.name}
+                                                            <img
+                                                                src="/assets/Diamond.png"
+                                                                alt=""
+                                                                style={{
+                                                                    height: 24,
+                                                                    width: 24,
+                                                                    marginLeft: '0.7rem',
+                                                                }}
+                                                            />
+                                                        </Typography>
 
-                                                <Typography
-                                                    variant="caption"
-                                                    sx={{
-                                                        mb: 1,
-                                                        display: 'block',
-                                                        fontSize: '14px',
-                                                        color: '#7F7F7F',
-                                                    }}
-                                                >
-                                                    4 items (
-                                                    <Typography
-                                                        component="span"
-                                                        variant="caption"
+                                                        <Typography
+                                                            variant="caption"
+                                                            sx={{
+                                                                mb: 1,
+                                                                display: 'block',
+                                                                fontSize: '14px',
+                                                                color: '#7F7F7F',
+                                                            }}
+                                                        >
+                                                            {order.order_items_count} items{' '}
+                                                            {order.completed_order_items_count > 0 && (
+                                                                <Typography
+                                                                    component="span"
+                                                                    variant="caption"
+                                                                    sx={{
+                                                                        color: '#22D7A6',
+                                                                    }}
+                                                                >
+                                                                    ({order.completed_order_items_count} Complete)
+                                                                </Typography>
+                                                            )}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box
                                                         sx={{
-                                                            color: '#22D7A6',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
                                                         }}
                                                     >
-                                                        1 Complete
-                                                    </Typography>
-                                                    )
-                                                </Typography>
-                                            </Box>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <Typography
-                                                    component="span"
-                                                    variant="caption"
-                                                    sx={{
-                                                        color: '#7F7F7F',
-                                                        fontWeight: 'normal',
-                                                        mr: 0.5,
-                                                        fontSize: '14px',
-                                                    }}
-                                                >
-                                                    Rs
-                                                </Typography>
-                                                <Typography
-                                                    component="span"
-                                                    sx={{
-                                                        color: '#121212',
-                                                        fontSize: '20px',
-                                                        fontWeight: 'bold',
-                                                    }}
-                                                >
-                                                    47.00
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Chip
-                                                    label="#003"
-                                                    size="small"
-                                                    variant="outlined"
-                                                    sx={{
-                                                        bgcolor: '#f5f5f5',
-                                                        borderRadius: 1,
-                                                        height: 24,
-                                                    }}
-                                                />
-                                                <Chip
+                                                        <Typography
+                                                            component="span"
+                                                            variant="caption"
+                                                            sx={{
+                                                                color: '#7F7F7F',
+                                                                fontWeight: 'normal',
+                                                                mr: 0.5,
+                                                                fontSize: '14px',
+                                                            }}
+                                                        >
+                                                            Rs
+                                                        </Typography>
+                                                        <Typography
+                                                            component="span"
+                                                            sx={{
+                                                                color: '#121212',
+                                                                fontSize: '20px',
+                                                                fontWeight: 'bold',
+                                                            }}
+                                                        >
+                                                            {order.invoice?.total_price}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Chip
+                                                        label={`#${order.order_number}`}
+                                                        size="small"
+                                                        variant="outlined"
+                                                        sx={{
+                                                            bgcolor: '#f5f5f5',
+                                                            borderRadius: 1,
+                                                            height: 24,
+                                                        }}
+                                                    />
+                                                    <Chip
+                                                        label={order.status === 'cancelled' ? 'Cancelled' : order.status === 'completed' ? 'Ready To Serve' : order.status === 'in_progress' ? 'Cooking process' : 'Pending'}
+                                                        size="small"
+                                                        sx={{
+                                                            bgcolor: '#f5f5f5',
+                                                            borderRadius: 1,
+                                                            height: 24,
+                                                        }}
+                                                        icon={
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    fontSize: '0.75rem',
+                                                                    ml: 1,
+                                                                }}
+                                                            >
+                                                                ✓
+                                                            </Box>
+                                                        }
+                                                    />
+                                                    {/* <Chip
+                                                        label="Cooking process"
+                                                        size="small"
+                                                        sx={{
+                                                            bgcolor: '#f5f5f5',
+                                                            borderRadius: 1,
+                                                            height: 24,
+                                                        }}
+                                                        icon={
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    fontSize: '0.75rem',
+                                                                    ml: 1,
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src="/assets/stopwatch-alt.png"
+                                                                    alt=""
+                                                                    style={{
+                                                                        height: 18,
+                                                                        width: 18,
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        }
+                                                    /> */}
+                                                    {/* <Chip
                                                     label="Waiting to payment"
                                                     size="small"
                                                     sx={{
@@ -1872,213 +1501,13 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                             />
                                                         </Box>
                                                     }
-                                                />
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-
-                                    {/* Customer 3 */}
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            p: 2,
-                                            borderRadius: 1,
-                                            border: '1px solid #E3E3E3',
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                mb: 2,
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Button
-                                                    variant="contained"
-                                                    sx={{
-                                                        bgcolor: '#0C67AA',
-                                                        color: 'white',
-                                                        borderRadius: '50%',
-                                                        minWidth: 40,
-                                                        height: 40,
-                                                        p: 0,
-                                                    }}
-                                                >
-                                                    T4
-                                                </Button>
-                                                <Button
-                                                    sx={{
-                                                        bgcolor: '#E3E3E3',
-                                                        height: 40,
-                                                        minWidth: 40,
-                                                        borderRadius: '50%',
-                                                        // p: 0
-                                                    }}
-                                                >
-                                                    <img
-                                                        src="/assets/food-tray.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 21,
-                                                            width: 21,
-                                                        }}
-                                                    />
-                                                </Button>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <img
-                                                    src="/assets/camera.png"
-                                                    alt=""
-                                                    style={{
-                                                        height: 46,
-                                                        width: 46,
-                                                    }}
-                                                />
-                                                <IconButton
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: '#0e3151',
-                                                        color: 'white',
-                                                        height: 46,
-                                                        width: 46,
-                                                        borderRadius: '0px',
-                                                    }}
-                                                >
-                                                    <Add fontSize="small" />
-                                                </IconButton>
-                                            </Box>
-                                        </Box>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                            }}
-                                        >
-                                            <Box>
-                                                <Typography
-                                                    variant="subtitle1"
-                                                    sx={{
-                                                        fontWeight: '500',
-                                                        fontSize: '20px',
-                                                        color: '#121212',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        mb: 0.5,
-                                                    }}
-                                                >
-                                                    Miles Esther
-                                                    <img
-                                                        src="/assets/Guest.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 24,
-                                                            width: 24,
-                                                            marginLeft: '0.7rem',
-                                                        }}
-                                                    />
-                                                </Typography>
-
-                                                <Typography
-                                                    variant="caption"
-                                                    sx={{
-                                                        mb: 1,
-                                                        display: 'block',
-                                                        fontSize: '14px',
-                                                        color: '#7F7F7F',
-                                                    }}
-                                                >
-                                                    4 items (
-                                                    <Typography
-                                                        component="span"
-                                                        variant="caption"
-                                                        sx={{
-                                                            color: '#22D7A6',
-                                                        }}
-                                                    >
-                                                        1 Complete
-                                                    </Typography>
-                                                    )
-                                                </Typography>
-                                            </Box>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <Typography
-                                                    component="span"
-                                                    variant="caption"
-                                                    sx={{
-                                                        color: '#7F7F7F',
-                                                        fontWeight: 'normal',
-                                                        mr: 0.5,
-                                                        fontSize: '14px',
-                                                    }}
-                                                >
-                                                    Rs
-                                                </Typography>
-                                                <Typography
-                                                    component="span"
-                                                    sx={{
-                                                        color: '#121212',
-                                                        fontSize: '20px',
-                                                        fontWeight: 'bold',
-                                                    }}
-                                                >
-                                                    47.00
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Chip
-                                                    label="#004"
-                                                    size="small"
-                                                    variant="outlined"
-                                                    sx={{
-                                                        bgcolor: '#f5f5f5',
-                                                        borderRadius: 1,
-                                                        height: 24,
-                                                    }}
-                                                />
-                                                <Chip
-                                                    label="Cooking process"
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: '#f5f5f5',
-                                                        borderRadius: 1,
-                                                        height: 24,
-                                                    }}
-                                                    icon={
-                                                        <Box
-                                                            component="span"
-                                                            sx={{
-                                                                fontSize: '0.75rem',
-                                                                ml: 1,
-                                                            }}
-                                                        >
-                                                            <img
-                                                                src="/assets/stopwatch-alt.png"
-                                                                alt=""
-                                                                style={{
-                                                                    height: 18,
-                                                                    width: 18,
-                                                                }}
-                                                            />
-                                                        </Box>
-                                                    }
-                                                />
-                                            </Box>
-                                        </Box>
-                                    </Paper>
+                                                /> */}
+                                                </Box>
+                                            </Paper>
+                                        ))
+                                    ) : (
+                                        <Typography>No order found.</Typography>
+                                    )}
                                 </Box>
                             </Box>
                         </Grid>

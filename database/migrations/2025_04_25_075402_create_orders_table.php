@@ -16,7 +16,7 @@ return new class extends Migration
             $table->bigInteger('order_number')->unique();
             $table->foreignId('user_id')->constrained();
             $table->foreignId('waiter_id')->nullable()->constrained('users');
-            $table->foreignId('table_id')->nullable()->constrained('tables');
+            $table->foreignId('table_id')->nullable()->constrained('tables')->nullOnDelete();
             $table->string('order_type')->nullable();
             $table->integer('person_count')->default(0);
             $table->decimal('down_payment', 10, 2)->nullable();

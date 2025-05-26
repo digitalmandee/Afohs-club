@@ -3,21 +3,28 @@
 import AddMenu from '@/components/App/Inventory/AddMenu';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { Add as AddIcon, ArrowDownward as ArrowDownwardIcon, ArrowUpward as ArrowUpwardIcon, AttachMoney as AttachMoneyIcon, CheckCircle as CheckCircleIcon, Check as CheckIcon, ChevronRight as ChevronRightIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, FilterList as FilterIcon, Info as InfoIcon, Inventory as InventoryIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, Snackbar, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import MenuFilter from './Menu';
+import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-export default function CoffeeShop({ productLists }) {
+export default function CoffeeShop({ productLists, categoriesList = [] }) {
+    const { url } = usePage();
+    const queryParams = new URLSearchParams(url.split('?')[1]);
+    const categoryId = queryParams.get('category_id');
+
     const [open, setOpen] = useState(false);
     const [openFilter, setOpenFilter] = useState(false);
     const [openProductDetail, setOpenProductDetail] = useState(false);
     const [openAddMenu, setOpenAddMenu] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState({
         id: '',
         name: '',
@@ -78,7 +85,7 @@ export default function CoffeeShop({ productLists }) {
 
         // Filter by category
         if (activeCategory !== 'All Menus') {
-            filtered = filtered.filter((product) => product.category === activeCategory);
+            filtered = filtered.filter((product) => product.category.id === activeCategory);
         }
 
         // Filter by search term
@@ -100,7 +107,7 @@ export default function CoffeeShop({ productLists }) {
 
         // Apply stock filter
         if (stockFilter !== 'All') {
-            filtered = filtered.filter((product) => (stockFilter === 'Ready' ? product.stock.status === 'Ready Stock' : stockFilter === 'Out of Stock' ? product.stock.status === 'Out of Stock' : stockFilter === 'Imaji at Home' ? product.category === 'Imaji at Home' : true));
+            filtered = filtered.filter((product) => (stockFilter === 'Ready' ? product.stock.status === 'Ready Stock' : stockFilter === 'Out of Stock' ? product.stock.status === 'Out of Stock' : stockFilter === 'Afohs at Home' ? product.category === 'Afohs at Home' : true));
         }
 
         // Apply sorting
@@ -253,15 +260,31 @@ export default function CoffeeShop({ productLists }) {
         setOpenDeleteConfirm(false);
     };
 
-    const handleDeleteProduct = () => {
-        if (deleteConfirmText === 'CONFIRM DELETE') {
-            // Here you would delete the product from your data
-            if (selectedProduct) {
+    const handleDeleteProduct = async () => {
+        if (selectedProduct === null) {
+            enqueueSnackbar('No product selected', { variant: 'warning' });
+            return;
+        }
+
+        // Here you would delete the product from your data
+        setDeleteLoading(true);
+        try {
+            const response = await axios.delete(route('inventory.destroy', selectedProduct.id));
+            if (response.data?.success) {
                 setProducts((prev) => prev.filter((product) => product.id !== selectedProduct.id));
+                setOpenDeleteConfirm(false);
+                setOpenProductDetail(false);
+                setShowDeleteSuccess(true);
+                enqueueSnackbar('Product deleted successfully!', { variant: 'success' });
+            } else {
+                enqueueSnackbar('Something went wrong', { variant: 'error' });
+                console.error('Error deleting product:', response.data);
             }
-            setOpenDeleteConfirm(false);
-            setOpenProductDetail(false);
-            setShowDeleteSuccess(true);
+        } catch (error) {
+            enqueueSnackbar('Something went wrong', { variant: 'error' });
+            console.error('Error deleting product:', error);
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -281,81 +304,55 @@ export default function CoffeeShop({ productLists }) {
             >
                 <div className="container-fluid bg-light py-4">
                     {/* Category Filter Buttons */}
-                    <div
-                        className="mb-4"
-                        style={{
-                            background: '#f0f0f0',
-                            padding: '20px',
-                            borderRadius: '10px',
-                        }}
-                    >
-                        <Button
-                            variant={activeCategory === 'All Menus' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('All Menus')}
-                            sx={{
-                                borderRadius: 50,
-                                mr: 1,
-                                color: activeCategory === 'All Menus' ? '#fff' : '#063455',
-                                borderColor: '#063455',
-                                backgroundColor: activeCategory === 'All Menus' ? '#063455' : 'transparent',
-                                '&:hover': {
-                                    backgroundColor: activeCategory === 'All Menus' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
-                                },
+                    {!categoryId ? (
+                        <div
+                            className="mb-4"
+                            style={{
+                                background: '#f0f0f0',
+                                padding: '20px',
+                                borderRadius: '10px',
                             }}
                         >
-                            All Menus
-                        </Button>
-
-                        <Button
-                            variant={activeCategory === 'Coffee & Beverage' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('Coffee & Beverage')}
-                            sx={{
-                                borderRadius: 50,
-                                mr: 1,
-                                color: activeCategory === 'Coffee & Beverage' ? '#fff' : '#063455',
-                                borderColor: '#063455',
-                                backgroundColor: activeCategory === 'Coffee & Beverage' ? '#063455' : 'transparent',
-                                '&:hover': {
-                                    backgroundColor: activeCategory === 'Coffee & Beverage' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
-                                },
-                            }}
-                        >
-                            Coffee & Beverage
-                        </Button>
-
-                        <Button
-                            variant={activeCategory === 'Food & Snack' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('Food & Snack')}
-                            sx={{
-                                borderRadius: 50,
-                                mr: 1,
-                                color: activeCategory === 'Food & Snack' ? '#fff' : '#063455',
-                                borderColor: '#063455',
-                                backgroundColor: activeCategory === 'Food & Snack' ? '#063455' : 'transparent',
-                                '&:hover': {
-                                    backgroundColor: activeCategory === 'Food & Snack' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
-                                },
-                            }}
-                        >
-                            Food & Snack
-                        </Button>
-
-                        <Button
-                            variant={activeCategory === 'Imaji at Home' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('Imaji at Home')}
-                            sx={{
-                                borderRadius: 50,
-                                color: activeCategory === 'Imaji at Home' ? '#fff' : '#063455',
-                                borderColor: '#063455',
-                                backgroundColor: activeCategory === 'Imaji at Home' ? '#063455' : 'transparent',
-                                '&:hover': {
-                                    backgroundColor: activeCategory === 'Imaji at Home' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
-                                },
-                            }}
-                        >
-                            Imaji at Home
-                        </Button>
-                    </div>
+                            {/* Add "All" Button */}
+                            <Button
+                                variant={activeCategory === 'All Menus' ? 'contained' : 'outlined'}
+                                onClick={() => handleCategoryClick('All Menus')}
+                                sx={{
+                                    borderRadius: 50,
+                                    mr: 1,
+                                    color: activeCategory === 'All Menus' ? '#fff' : '#063455',
+                                    borderColor: '#063455',
+                                    backgroundColor: activeCategory === 'All Menus' ? '#063455' : 'transparent',
+                                    '&:hover': {
+                                        backgroundColor: activeCategory === 'All Menus' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
+                                    },
+                                }}
+                            >
+                                All Menus
+                            </Button>
+                            {categoriesList.map((category) => (
+                                <Button
+                                    key={category.id}
+                                    variant={activeCategory === category.id ? 'contained' : 'outlined'}
+                                    onClick={() => handleCategoryClick(category.id)}
+                                    sx={{
+                                        borderRadius: 50,
+                                        mr: 1,
+                                        color: activeCategory === category.id ? '#fff' : '#063455',
+                                        borderColor: '#063455',
+                                        backgroundColor: activeCategory === category.id ? '#063455' : 'transparent',
+                                        '&:hover': {
+                                            backgroundColor: activeCategory === category.id ? '#063455' : 'rgba(6, 52, 85, 0.04)',
+                                        },
+                                    }}
+                                >
+                                    {category.name}
+                                </Button>
+                            ))}
+                        </div>
+                    ) : (
+                        ''
+                    )}
 
                     {/* Product Count, Search and Filter */}
                     <div
@@ -699,9 +696,6 @@ export default function CoffeeShop({ productLists }) {
                                         >
                                             <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={() => router.visit(route('inventory.show', selectedProduct.id))}>
                                                 <EditIcon fontSize="small" />
-                                            </IconButton>
-                                            <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={handleAdjustPriceOpen}>
-                                                <AttachMoneyIcon fontSize="small" />
                                             </IconButton>
                                             <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={handleDeleteConfirmOpen}>
                                                 <DeleteIcon fontSize="small" />
@@ -1401,13 +1395,12 @@ export default function CoffeeShop({ productLists }) {
                             <Typography variant="body1" sx={{ mb: 2 }}>
                                 Are you sure want to delete this product?
                             </Typography>
-                            <TextField fullWidth placeholder="Type CONFIRM DELETE" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} variant="outlined" size="small" />
                         </DialogContent>
                         <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
                             <Button onClick={handleDeleteConfirmClose} color="primary">
                                 Cancel
                             </Button>
-                            <Button onClick={handleDeleteProduct} color="error" disabled={deleteConfirmText !== 'CONFIRM DELETE'}>
+                            <Button onClick={handleDeleteProduct} color="error" disabled={deleteLoading} loading={deleteLoading} loadingPosition="start">
                                 Delete
                             </Button>
                         </DialogActions>
