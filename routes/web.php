@@ -7,8 +7,11 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MembershipInvoiceController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserMemberController;
+use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -69,9 +72,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/AddMember');
     })->name('membership.addmembertype');
 
-    Route::get('/admin/membership/all/payments', function () {
-        return Inertia::render('App/Admin/Membership/AllPayment');
-    })->name('membership.allpayment');
+
 
     //Admin Booking Routes
     Route::get('/booking/dashboard', function () {
@@ -112,6 +113,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/EmployeeList');
     })->name('employee.employeeList');
 
+
+    // UserMember routes
+    Route::get('/user-member', [UserMemberController::class, 'index'])->name('usermember');
+    Route::post('/user-member/store', [UserMemberController::class, 'store'])->name('usermember.store');
+
+    // membership routes
+    Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
+    Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
+    // Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
+  
     Route::get('/employee/monthly/attendance/report', function () {
         return Inertia::render('App/Admin/Employee/MonthlyReport');
     })->name('employee.monthlyreport');
@@ -163,13 +174,28 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
 
     Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
+    Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
+    Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+    // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
+    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
+
+
+    // Members types
+    Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+    Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
+    Route::post('/members/member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
+    Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
+    Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
+
+    //payment
+    Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');
+    Route::post('/admin/membership/payments/store', [PaymentController::class, 'store'])->name('membership.payment.store');
+
 
     //Membership Booking Routes
 
-    Route::get('/admin/add/personal/information', function () {
-        return Inertia::render('App/Admin/Membership/MembershipForm');
-    })->name('membership.add');
+    Route::get('/admin/add/personal/information', [MembershipController::class, 'create'])->name('membership.add');
 
     Route::get('/admin/add/contact/information', function () {
         return Inertia::render('App/Admin/Membership/AddForm-2');
@@ -179,9 +205,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/AddForm-3');
     })->name('membership.add3');
 
-    Route::get('/admin/membership/history', function () {
-        return Inertia::render('App/Admin/Membership/History');
-    })->name('membership.history');
+    // Route::get('/admin/membership/history', function () {
+    //     return Inertia::render('App/Admin/Membership/History');
+    // })->name('membership.history');
 
     Route::get('/admin/membership/guest/history', function () {
         return Inertia::render('App/Admin/Membership/Guest');
@@ -195,17 +221,17 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/Checkout');
     })->name('membership.checkout');
 
-    Route::get('/admin/all/members', function () {
-        return Inertia::render('App/Admin/Membership/Members');
-    })->name('membership.members');
+    // Route::get('/admin/all/members', function () {
+    //     return Inertia::render('App/Admin/Membership/Members');
+    // })->name('membership.members');
 
     Route::get('/admin/membership/visit/detail', function () {
         return Inertia::render('App/Admin/Membership/Detail');
     })->name('membership.detail');
 
-    Route::get('/admin/membership/all.members', function () {
-        return Inertia::render('App/Admin/Membership/MemberType');
-    })->name('membership.membertype');
+    // Route::get('/admin/membership/all.members', function () {
+    //     return Inertia::render('App/Admin/Membership/MemberType');
+    // })->name('membership.membertype');
 
     Route::get('/admin/membership/full/detail', function () {
         return Inertia::render('App/Admin/Membership/CompleteDetail');
@@ -215,14 +241,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('tenant', [TenantController::class, 'index'])->name('tenant.index');
     Route::get('tenant/register', [TenantController::class, 'create'])->name('tenant.create');
     Route::post('tenant/store', [TenantController::class, 'store'])->name('tenant.store');
-
-    // membership routes
-    Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
-    Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
-    Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
-    // UserMember routes
-    Route::get('/user-member', [UserMemberController::class, 'index'])->name('usermember');
-    Route::post('/user-member/store', [UserMemberController::class, 'store'])->name('usermember.store');
 });
 
 // Central guest-only auth routes

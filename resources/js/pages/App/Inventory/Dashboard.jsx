@@ -3,7 +3,7 @@
 import AddMenu from '@/components/App/Inventory/AddMenu';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { Add as AddIcon, ArrowDownward as ArrowDownwardIcon, ArrowUpward as ArrowUpwardIcon, AttachMoney as AttachMoneyIcon, CheckCircle as CheckCircleIcon, Check as CheckIcon, ChevronRight as ChevronRightIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, FilterList as FilterIcon, Info as InfoIcon, Inventory as InventoryIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, Snackbar, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,7 +15,11 @@ import { enqueueSnackbar } from 'notistack';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-export default function CoffeeShop({ productLists }) {
+export default function CoffeeShop({ productLists, categoriesList = [] }) {
+    const { url } = usePage();
+    const queryParams = new URLSearchParams(url.split('?')[1]);
+    const categoryId = queryParams.get('category_id');
+
     const [open, setOpen] = useState(false);
     const [openFilter, setOpenFilter] = useState(false);
     const [openProductDetail, setOpenProductDetail] = useState(false);
@@ -81,7 +85,7 @@ export default function CoffeeShop({ productLists }) {
 
         // Filter by category
         if (activeCategory !== 'All Menus') {
-            filtered = filtered.filter((product) => product.category === activeCategory);
+            filtered = filtered.filter((product) => product.category.id === activeCategory);
         }
 
         // Filter by search term
@@ -300,81 +304,55 @@ export default function CoffeeShop({ productLists }) {
             >
                 <div className="container-fluid bg-light py-4">
                     {/* Category Filter Buttons */}
-                    <div
-                        className="mb-4"
-                        style={{
-                            background: '#f0f0f0',
-                            padding: '20px',
-                            borderRadius: '10px',
-                        }}
-                    >
-                        <Button
-                            variant={activeCategory === 'All Menus' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('All Menus')}
-                            sx={{
-                                borderRadius: 50,
-                                mr: 1,
-                                color: activeCategory === 'All Menus' ? '#fff' : '#063455',
-                                borderColor: '#063455',
-                                backgroundColor: activeCategory === 'All Menus' ? '#063455' : 'transparent',
-                                '&:hover': {
-                                    backgroundColor: activeCategory === 'All Menus' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
-                                },
+                    {!categoryId ? (
+                        <div
+                            className="mb-4"
+                            style={{
+                                background: '#f0f0f0',
+                                padding: '20px',
+                                borderRadius: '10px',
                             }}
                         >
-                            All Menus
-                        </Button>
-
-                        <Button
-                            variant={activeCategory === 'Coffee & Beverage' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('Coffee & Beverage')}
-                            sx={{
-                                borderRadius: 50,
-                                mr: 1,
-                                color: activeCategory === 'Coffee & Beverage' ? '#fff' : '#063455',
-                                borderColor: '#063455',
-                                backgroundColor: activeCategory === 'Coffee & Beverage' ? '#063455' : 'transparent',
-                                '&:hover': {
-                                    backgroundColor: activeCategory === 'Coffee & Beverage' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
-                                },
-                            }}
-                        >
-                            Coffee & Beverage
-                        </Button>
-
-                        <Button
-                            variant={activeCategory === 'Food & Snack' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('Food & Snack')}
-                            sx={{
-                                borderRadius: 50,
-                                mr: 1,
-                                color: activeCategory === 'Food & Snack' ? '#fff' : '#063455',
-                                borderColor: '#063455',
-                                backgroundColor: activeCategory === 'Food & Snack' ? '#063455' : 'transparent',
-                                '&:hover': {
-                                    backgroundColor: activeCategory === 'Food & Snack' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
-                                },
-                            }}
-                        >
-                            Food & Snack
-                        </Button>
-
-                        <Button
-                            variant={activeCategory === 'Afohs at Home' ? 'contained' : 'outlined'}
-                            onClick={() => handleCategoryClick('Afohs at Home')}
-                            sx={{
-                                borderRadius: 50,
-                                color: activeCategory === 'Afohs at Home' ? '#fff' : '#063455',
-                                borderColor: '#063455',
-                                backgroundColor: activeCategory === 'Afohs at Home' ? '#063455' : 'transparent',
-                                '&:hover': {
-                                    backgroundColor: activeCategory === 'Afohs at Home' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
-                                },
-                            }}
-                        >
-                            Afohs at Home
-                        </Button>
-                    </div>
+                            {/* Add "All" Button */}
+                            <Button
+                                variant={activeCategory === 'All Menus' ? 'contained' : 'outlined'}
+                                onClick={() => handleCategoryClick('All Menus')}
+                                sx={{
+                                    borderRadius: 50,
+                                    mr: 1,
+                                    color: activeCategory === 'All Menus' ? '#fff' : '#063455',
+                                    borderColor: '#063455',
+                                    backgroundColor: activeCategory === 'All Menus' ? '#063455' : 'transparent',
+                                    '&:hover': {
+                                        backgroundColor: activeCategory === 'All Menus' ? '#063455' : 'rgba(6, 52, 85, 0.04)',
+                                    },
+                                }}
+                            >
+                                All Menus
+                            </Button>
+                            {categoriesList.map((category) => (
+                                <Button
+                                    key={category.id}
+                                    variant={activeCategory === category.id ? 'contained' : 'outlined'}
+                                    onClick={() => handleCategoryClick(category.id)}
+                                    sx={{
+                                        borderRadius: 50,
+                                        mr: 1,
+                                        color: activeCategory === category.id ? '#fff' : '#063455',
+                                        borderColor: '#063455',
+                                        backgroundColor: activeCategory === category.id ? '#063455' : 'transparent',
+                                        '&:hover': {
+                                            backgroundColor: activeCategory === category.id ? '#063455' : 'rgba(6, 52, 85, 0.04)',
+                                        },
+                                    }}
+                                >
+                                    {category.name}
+                                </Button>
+                            ))}
+                        </div>
+                    ) : (
+                        ''
+                    )}
 
                     {/* Product Count, Search and Filter */}
                     <div

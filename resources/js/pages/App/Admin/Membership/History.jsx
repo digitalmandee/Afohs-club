@@ -1,42 +1,14 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {
-    TextField,
-    Button,
-    Modal,
-    Box,
-    Typography,
-    IconButton,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    Container,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Chip,
-    InputAdornment,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails
-} from '@mui/material';
-import {
-    Search as SearchIcon,
-    FilterAlt as FilterIcon,
-    Print as PrintIcon,
-    ArrowBack as ArrowBackIcon,
-    Close as CloseIcon,
-    KeyboardArrowDown as KeyboardArrowDownIcon,
-    CalendarMonth as CalendarMonthIcon
-} from '@mui/icons-material';
+import { TextField, Button, Modal, Box, Typography, IconButton, Paper, Table, TableBody, TableCell, Container, TableContainer, TableHead, TableRow, Chip, InputAdornment, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Search as SearchIcon, FilterAlt as FilterIcon, Print as PrintIcon, ArrowBack as ArrowBackIcon, Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon, CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembersHistory = () => {
+const MembersHistory = ({ membersdata = [] }) => {
     const [open, setOpen] = useState(false);
     // State for search input
     const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +19,7 @@ const MembersHistory = () => {
     // State for selected filter options
     const [selectedMembershipType, setSelectedMembershipType] = useState('All Type');
     const [selectedDate, setSelectedDate] = useState('');
+    console.log('membersdata', membersdata);
 
     // Sample data for members
     const [members, setMembers] = useState([
@@ -57,7 +30,7 @@ const MembersHistory = () => {
             membershipType: 'Member',
             contact: '0323423342',
             totalVisit: 12,
-            lastVisit: '28-Apr-2025'
+            lastVisit: '28-Apr-2025',
         },
         {
             id: 'AFOHS-1234',
@@ -66,7 +39,7 @@ const MembersHistory = () => {
             membershipType: 'Applied Member',
             contact: '0323423342',
             totalVisit: 10,
-            lastVisit: '10-Apr-2024'
+            lastVisit: '10-Apr-2024',
         },
         {
             id: 'AFOHS-1245',
@@ -75,7 +48,7 @@ const MembersHistory = () => {
             membershipType: 'Affiliated Member',
             contact: '0323423342',
             totalVisit: 30,
-            lastVisit: '05-Jan-2025'
+            lastVisit: '05-Jan-2025',
         },
         {
             id: 'AFOHS-1345',
@@ -84,7 +57,7 @@ const MembersHistory = () => {
             membershipType: 'VIP Guest',
             contact: '0323423342',
             totalVisit: 12,
-            lastVisit: '28-Apr-2021'
+            lastVisit: '28-Apr-2021',
         },
         {
             id: 'AFOHS-2345',
@@ -93,7 +66,7 @@ const MembersHistory = () => {
             membershipType: 'Member',
             contact: '0323423342',
             totalVisit: 20,
-            lastVisit: '26-Apr-2023'
+            lastVisit: '26-Apr-2023',
         },
         {
             id: 'AFOHS-2345',
@@ -102,14 +75,12 @@ const MembersHistory = () => {
             membershipType: 'Applied Member',
             contact: '0323423342',
             totalVisit: 5,
-            lastVisit: '10-Oct-2024'
-        }
+            lastVisit: '10-Oct-2024',
+        },
     ]);
 
     // Filter members based on search term
-    const filteredMembers = members.filter(member =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredMembers = members.filter((member) => member.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     // Handle opening and closing filter modal
     const handleOpenFilter = () => setOpenFilter(true);
@@ -146,7 +117,7 @@ const MembersHistory = () => {
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between',   // keeps extreme left / extreme right
+                            justifyContent: 'space-between', // keeps extreme left / extreme right
                             flexWrap: 'wrap',
                             mb: 4,
                         }}
@@ -156,6 +127,7 @@ const MembersHistory = () => {
                             <ArrowBackIcon sx={{ mr: 1, cursor: 'pointer' }} />
                             <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
                                 Members History
+                                {/* <pre>{JSON.stringify(membersdata, null, 2)}</pre> */}
                             </Typography>
                         </Box>
 
@@ -164,8 +136,8 @@ const MembersHistory = () => {
                             sx={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 2,           // space between search / filter / print
-                                ml: 'auto',       // <-- pushes this group to the far right
+                                gap: 2, // space between search / filter / print
+                                ml: 'auto', // <-- pushes this group to the far right
                                 flexWrap: 'wrap',
                             }}
                         >
@@ -212,7 +184,6 @@ const MembersHistory = () => {
                         </Box>
                     </Box>
 
-
                     {/* Members table */}
                     <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '4px' }}>
                         <Table>
@@ -228,9 +199,9 @@ const MembersHistory = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredMembers.map((member, index) => (
+                                {membersdata.map((member, index) => (
                                     <TableRow key={index} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                                        <TableCell>{member.id}</TableCell>
+                                        <TableCell>{member.user_id}</TableCell>
                                         <TableCell>
                                             <div className="d-flex align-items-center">
                                                 <div
@@ -243,14 +214,10 @@ const MembersHistory = () => {
                                                         backgroundColor: '#f0f0f0',
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        justifyContent: 'center'
+                                                        justifyContent: 'center',
                                                     }}
                                                 >
-                                                    <img
-                                                        src={`https://randomuser.me/api/portraits/men/${index + 1}.jpg`}
-                                                        alt="Profile"
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                    />
+                                                    {/* <img src={`https://randomuser.me/api/portraits/men/${index + 1}.jpg`} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> */}
                                                 </div>
                                                 <div>
                                                     <div style={{ fontWeight: 500 }}>{member.name}</div>
@@ -258,17 +225,17 @@ const MembersHistory = () => {
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell>{member.membershipType}</TableCell>
-                                        <TableCell>{member.contact}</TableCell>
-                                        <TableCell>{member.totalVisit}</TableCell>
-                                        <TableCell>{member.lastVisit}</TableCell>
+                                        <TableCell>{member.membershipType || 'N/A'}</TableCell>
+                                        <TableCell>{member.phone_number}</TableCell>
+                                        <TableCell>{member.totalVisit || 'N/A'}</TableCell>
+                                        <TableCell>{member.lastVisit || 'N/A'}</TableCell>
                                         <TableCell>
                                             <Button
                                                 style={{
                                                     color: '#0066cc',
                                                     textTransform: 'none',
                                                     padding: '2px 8px',
-                                                    fontWeight: 500
+                                                    fontWeight: 500,
                                                 }}
                                                 onClick={() => router.visit('/admin/membership/visit/detail')}
                                             >
@@ -282,12 +249,7 @@ const MembersHistory = () => {
                     </TableContainer>
 
                     {/* Filter Modal */}
-                    <Modal
-                        open={openFilter}
-                        onClose={handleCloseFilter}
-                        aria-labelledby="filter-modal-title"
-                        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end' }}
-                    >
+                    <Modal open={openFilter} onClose={handleCloseFilter} aria-labelledby="filter-modal-title" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
                         <Box
                             sx={{
                                 width: 600,
@@ -320,11 +282,7 @@ const MembersHistory = () => {
                                     },
                                 }}
                             >
-                                <AccordionSummary
-                                    expandIcon={<KeyboardArrowDownIcon />}
-                                    aria-controls="panel1a-content"
-                                    id="panel1a-header"
-                                >
+                                <AccordionSummary expandIcon={<KeyboardArrowDownIcon />} aria-controls="panel1a-content" id="panel1a-header">
                                     <Typography>Membership Type</Typography>
                                 </AccordionSummary>
                                 <AccordionDetails>
@@ -335,12 +293,8 @@ const MembersHistory = () => {
                                                 label={type}
                                                 onClick={() => setSelectedMembershipType(type)}
                                                 style={{
-                                                    backgroundColor: selectedMembershipType === type ?
-                                                        (type === 'All Type' ? '#003366' : '#cce5ff') :
-                                                        (type === 'All Type' ? '#003366' : '#f0f0f0'),
-                                                    color: selectedMembershipType === type ?
-                                                        (type === 'All Type' ? 'white' : '#0066cc') :
-                                                        (type === 'All Type' ? 'white' : '#333'),
+                                                    backgroundColor: selectedMembershipType === type ? (type === 'All Type' ? '#003366' : '#cce5ff') : type === 'All Type' ? '#003366' : '#f0f0f0',
+                                                    color: selectedMembershipType === type ? (type === 'All Type' ? 'white' : '#0066cc') : type === 'All Type' ? 'white' : '#333',
                                                     border: 'none',
                                                     marginRight: '8px',
                                                     marginBottom: '8px',
@@ -364,11 +318,7 @@ const MembersHistory = () => {
                                     },
                                 }}
                             >
-                                <AccordionSummary
-                                    expandIcon={<KeyboardArrowDownIcon />}
-                                    aria-controls="panel2a-content"
-                                    id="panel2a-header"
-                                >
+                                <AccordionSummary expandIcon={<KeyboardArrowDownIcon />} aria-controls="panel2a-content" id="panel2a-header">
                                     <Typography>Check by Date</Typography>
                                 </AccordionSummary>
                                 <AccordionDetails>
@@ -399,7 +349,7 @@ const MembersHistory = () => {
                                         marginRight: '10px',
                                         textTransform: 'none',
                                         color: '#333',
-                                        border: '1px solid #ccc'
+                                        border: '1px solid #ccc',
                                     }}
                                     variant="outlined"
                                 >
@@ -411,7 +361,7 @@ const MembersHistory = () => {
                                         marginRight: '10px',
                                         textTransform: 'none',
                                         color: '#333',
-                                        border: '1px solid #ccc'
+                                        border: '1px solid #ccc',
                                     }}
                                     variant="outlined"
                                 >
@@ -422,7 +372,7 @@ const MembersHistory = () => {
                                     style={{
                                         textTransform: 'none',
                                         backgroundColor: '#003366',
-                                        color: 'white'
+                                        color: 'white',
                                     }}
                                     variant="contained"
                                 >

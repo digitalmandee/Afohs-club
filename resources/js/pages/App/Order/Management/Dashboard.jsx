@@ -1,7 +1,7 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { AccessTime, FilterAlt as FilterIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, Box, Button, Drawer, Grid, InputBase, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
+import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Paper, Select, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
@@ -13,7 +13,7 @@ import { enqueueSnackbar } from 'notistack';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ orders }) => {
+const Dashboard = ({ orders, categoriesList = [] }) => {
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
@@ -21,6 +21,8 @@ const Dashboard = ({ orders }) => {
     // Search Order
     const [searchText, setSearchText] = useState('');
     const [filteredOrders, setFilteredOrders] = useState(orders);
+    // Add state for category filtering
+    const [activeCategory, setActiveCategory] = useState('All Menus');
 
     const openFilter = () => setIsFilterOpen(true);
     const closeFilter = () => setIsFilterOpen(false);
@@ -34,6 +36,11 @@ const Dashboard = ({ orders }) => {
         // Do your cancel logic here (API call, state update, etc.)
         console.log('Order cancelled');
         setShowCancelModal(false);
+    };
+
+    // Handle category button click
+    const handleCategoryClick = (category) => {
+        setActiveCategory(category);
     };
 
     const onSave = () => {
@@ -71,20 +78,25 @@ const Dashboard = ({ orders }) => {
         });
     };
 
-    // Search Order
-
+    // Search and Category Filter for Orders
     useEffect(() => {
-        if (!searchText.trim()) {
-            setFilteredOrders(orders);
-        } else {
-            const lowercased = searchText.toLowerCase();
-            const filtered = orders.filter((order) => {
-                return order.order_number.toString().includes(lowercased) || (order.user?.name && order.user.name.toLowerCase().includes(lowercased)) || (order.user?.user_id && order.user.user_id.toLowerCase().includes(lowercased));
-            });
+        let filtered = [...orders];
 
-            setFilteredOrders(filtered);
+        // Filter by category
+        if (activeCategory !== 'All Menus') {
+            filtered = filtered.filter((order) => order.order_items.some((item) => item.order_item.category_id === activeCategory));
         }
-    }, [searchText, orders]);
+
+        // Filter by search term
+        if (searchText.trim()) {
+            const lowercased = searchText.toLowerCase();
+            filtered = filtered.filter((order) => {
+                return order.order_number.toString().includes(lowercased) || (order.user?.name && order.user.name.toLowerCase().includes(lowercased)) || (order.user?.user_id && order.user.user_id.toLowerCase().includes(lowercased)) || (order.table?.table_no && order.table.table_no.toLowerCase().includes(lowercased));
+            });
+        }
+
+        setFilteredOrders(filtered);
+    }, [searchText, activeCategory, orders]);
 
     return (
         <>
@@ -101,7 +113,6 @@ const Dashboard = ({ orders }) => {
                         px: 3,
                     }}
                 >
-                    {/* {JSON.stringify(orders)} */}
                     <Box
                         sx={{
                             display: 'flex',
@@ -119,6 +130,42 @@ const Dashboard = ({ orders }) => {
 
                         {/* Right - Search + Filter */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            {/* Category Filter dropdown */}
+                            <FormControl sx={{ width: '250px' }}>
+                                {/* <InputLabel id="category-select-label">Select Category</InputLabel> */}
+                                <Select
+                                    labelId="category-select-label"
+                                    value={activeCategory}
+                                    label="Select Category"
+                                    onChange={(e) => handleCategoryClick(e.target.value)}
+                                    sx={{
+                                        borderRadius: 0, // Match the border radius of Search and Filter
+                                        backgroundColor: '#FFFFFF', // Match Search background
+                                        height: '40px', // Match height of Search and Filter
+                                        border: '1px solid #121212', // Match Search border
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            border: 'none', // Remove default MUI border
+                                        },
+                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            border: 'none',
+                                        },
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                            border: 'none',
+                                        },
+                                        '& .MuiSelect-select': {
+                                            padding: '4px 8px', // Match Search padding
+                                            color: '#121212', // Match Search text color
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="All Menus">All Category</MenuItem>
+                                    {categoriesList.map((category) => (
+                                        <MenuItem key={category.id} value={category.id}>
+                                            {category.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                             <div
                                 style={{
                                     display: 'flex',
@@ -151,6 +198,7 @@ const Dashboard = ({ orders }) => {
                             </Button>
                         </Box>
                     </Box>
+
                     <Grid
                         container
                         spacing={3}
