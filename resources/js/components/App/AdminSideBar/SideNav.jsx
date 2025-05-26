@@ -24,6 +24,7 @@ import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState } from 'react';
 import MemberIcon from '@/components/App/Icons/Member';
+import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
 
 const drawerWidthOpen = 240; // Set open width to 240px
@@ -230,7 +231,7 @@ export default function SideNav({ open, setOpen }) {
 
         {
             text: 'Subscription',
-            icon: <PaymentsIcon />,
+            icon: <SubscriptionsIcon />,
             children: [
                 {
                     text: 'Dashboard',
@@ -238,15 +239,15 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Management',
-                    path: route(''),
+                    path: route('subscription.management'),
                 },
                 {
                     text: 'Monthly Fee',
-                    path: route(''),
+                    path: route('subscription.monthly'),
                 },
                 {
                     text: 'Sports Category',
-                    path: route(''),
+                    path: route('subscription.sports'),
                 },
             ]
         },
