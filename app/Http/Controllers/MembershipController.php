@@ -24,7 +24,8 @@ class MembershipController extends Controller
     public function index()
     {
         $users = User::with([
-            'userDetail.members.memberType'
+            'userDetail',
+            'member.memberType'
         ])->get();
 
         return Inertia::render('App/Admin/Membership/Dashboard', [
@@ -57,7 +58,8 @@ class MembershipController extends Controller
     public function membershipHistory()
     {
         $users = User::with([
-            'userDetail.members.memberType'
+            'userDetail',
+            'member.memberType'
         ])->get();
 
         return Inertia::render('App/Admin/Membership/Members', [
@@ -209,12 +211,12 @@ class MembershipController extends Controller
 
             // Create primary member record
             $primaryMember = Member::create([
-                'user_detail_id' => $primaryUserDetail->id,
+                'user_id' => $primaryUser->id,
                 'member_type_id' => $member_type_id,
                 'membership_category' => $validated['membership_category'],
                 'membership_number' => $validated['membership_number'],
                 'membership_date' => $validated['membership_date'],
-                'card_status' => $validated['card_status'],
+                // 'card_status' => $validated['card_status'],
                 'card_issue_date' => $validated['card_issue_date'],
                 'card_expiry_date' => $validated['card_expiry_date'],
                 'from_date' => $validated['from_date'],
@@ -266,7 +268,7 @@ class MembershipController extends Controller
 
                     // Create Member record for family member
                     Member::create([
-                        'user_detail_id' => $familyUserDetail->id,
+                        'user_id' => $familyUser->id,
                         'member_type_id' => $family_member_type_id,
                         'full_name' => $familyMemberData['full_name'],
                         'relation' => $familyMemberData['relation'],
@@ -284,10 +286,7 @@ class MembershipController extends Controller
 
             DB::commit();
 
-            return to_route('membership.add', ['member_id' => $primaryMember->id])->with(['success' => 'Membership created successfully']);
-
-
-            // return redirect()->back()->with(['success' => 'Membership details submitted successfully.', 'member' => $primaryMember]);
+            return response()->json(['message' => 'Membership created successfully.', 'member_id' => $primaryUser->id]);
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
             return redirect()->back()->with('error', 'Failed to submit membership details: ' . $th->getMessage());

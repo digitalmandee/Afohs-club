@@ -9,6 +9,8 @@ import AddForm2 from '@/components/App/membershipForm/AddForm2';
 import AddForm3 from '@/components/App/membershipForm/AddForm3';
 import { enqueueSnackbar } from 'notistack';
 import Payment from './Payment';
+import axios from 'axios';
+import { objectToFormData } from '@/helpers/objectToFormData';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -32,7 +34,7 @@ const MembershipDashboard = ({ memberTypesData, userNo }) => {
         if (stepKey === 'step2') setStep(3);
     };
 
-    const handleFinalSubmit = (stepKey, data) => {
+    const handleFinalSubmit = async (stepKey, data) => {
         setFormData((prev) => ({ ...prev, [stepKey]: data }));
         // Transform familyMembers to match backend validation keys
         const transformedFamilyMembers = (data.family_members || []).map((member) => ({
@@ -94,24 +96,47 @@ const MembershipDashboard = ({ memberTypesData, userNo }) => {
             family_members: transformedFamilyMembers,
         };
 
-        // console.log('Submitting fullData:', fullData);
+        console.log('Submitting fullData:', fullData);
         setLoading(true);
 
-        router.post(route('membership.store'), fullData, {
-            onSuccess: (success) => {
-                console.log(success);
-                console.log(success.member);
+        console.log('fullData: ', fullData);
 
-                // router.visit(route('membership.allpayment', { id: success.member?.id }));
-                setLoading(false);
+        const formData2 = await objectToFormData(fullData);
+
+        await axios
+            .post(route('membership.store'), formData2)
+            .then((response) => {
+                const memberId = response.data.member_id;
+
                 enqueueSnackbar('Membership created successfully.', { variant: 'success' });
-            },
-            onError: (errors) => {
+
+                // Redirect with query param
+                router.visit(route('membership.allpayment') + `?member_id=${memberId}`);
+            })
+            .catch((error) => {
+                console.error(error);
+                enqueueSnackbar('Something went wrong.', { variant: 'error' });
+            })
+            .finally(() => {
                 setLoading(false);
-                enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
-                // alert('Submission failed: ' + JSON.stringify(errors));
-            },
-        });
+            });
+        // router.post(route('membership.store'), fullData, {
+        //     onSuccess: (page) => {
+        //         setLoading(false);
+        //         console.log('page', page);
+
+        //         const memberId = page.props?.member_id;
+
+        //         enqueueSnackbar('Membership created successfully.', { variant: 'success' });
+
+        //         router.visit(route('membership.allpayment') + `?member_id=${memberId}`);
+        //     },
+        //     onError: (errors) => {
+        //         setLoading(false);
+        //         enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+        //         // alert('Submission failed: ' + JSON.stringify(errors));
+        //     },
+        // });
     };
 
     return (

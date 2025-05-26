@@ -192,7 +192,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                                         </Box>
                                         <Typography sx={{ fontSize: 14, mb: 1 }}>Total Payments</Typography>
                                         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                            320,000
+                                            0
                                         </Typography>
                                     </CardContent>
                                 </Card>
@@ -218,7 +218,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                                         </Box>
                                         <Typography sx={{ fontSize: 14, mb: 1 }}>This Month</Typography>
                                         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                            10,000
+                                            0
                                         </Typography>
                                     </CardContent>
                                 </Card>
@@ -244,7 +244,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                                         </Box>
                                         <Typography sx={{ fontSize: 14, mb: 1 }}>Pending</Typography>
                                         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                            30,000
+                                            0
                                         </Typography>
                                     </CardContent>
                                 </Card>

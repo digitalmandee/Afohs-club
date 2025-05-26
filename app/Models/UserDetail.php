@@ -64,8 +64,8 @@ class UserDetail extends Model
     // {
     //     return $this->hasOne(Member::class, 'user_detail_id');
     // }
-    public function members()
-    {
-        return $this->hasMany(Member::class, 'user_detail_id');
-    }
+    // public function members()
+    // {
+    //     return $this->hasMany(Member::class, 'user_detail_id');
+    // }
 }

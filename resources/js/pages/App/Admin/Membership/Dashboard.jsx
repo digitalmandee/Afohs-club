@@ -219,18 +219,18 @@ const MembershipDashboard = ({ member = [] }) => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.user_detail?.members?.[0]?.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
-                                                        color: user.user_detail?.members?.[0]?.card_status === 'active' ? '#2e7d32' : user.user_detail?.members?.[0]?.card_status === 'Suspend' ? '#FFA90B' : '#d32f2f',
+                                                        color: user.member?.card_status === 'active' ? '#2e7d32' : user.member?.card_status === 'Suspend' ? '#FFA90B' : '#d32f2f',
                                                         fontWeight: 'medium',
                                                         cursor: 'pointer',
                                                     }}
                                                     onClick={(e) => showMemberDetails(user, e)}
                                                 >
-                                                    {user.user_detail?.members?.[0]?.card_status || 'N/A'}
-                                                    {user.user_detail?.members?.[0]?.card_status === 'Suspend' && (
+                                                    {user.member?.card_status || 'N/A'}
+                                                    {user.member?.card_status === 'Suspend' && (
                                                         <img
                                                             src="/assets/system-expired.png"
                                                             alt=""
@@ -256,7 +256,7 @@ const MembershipDashboard = ({ member = [] }) => {
                                                 </Button>
                                             </TableCell>
                                             <TableCell>
-                                                {user.user_detail?.members?.[0]?.card_status === 'Expired' || user.user_detail?.members?.[0]?.card_status === 'Suspend' ? (
+                                                {user.member?.card_status === 'Expired' || user.member?.card_status === 'Suspend' ? (
                                                     <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
                                                 ) : (
                                                     <Button

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\MembershipInvoice;
 use App\Models\MemberType;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -12,13 +13,17 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $memberTypes = MemberType::all();
+        $memberId = $request->query('member_id'); // or $request->member_id
 
-        return Inertia::render('App/Admin/Membership/Payment', [
-            'error' => null,
-            'memberTypes' => $memberTypes,
-        ]);
+        $member = null;
+
+        if ($memberId) {
+            $member = User::with('member.memberType')->find($memberId);
+        }
+
+        return Inertia::render('App/Admin/Membership/Payment', compact('member'));
     }
+
 
     public function store(Request $request)
     {

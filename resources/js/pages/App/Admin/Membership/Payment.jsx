@@ -8,20 +8,34 @@ import { router } from '@inertiajs/react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Payment = ({ member, onBack, memberTypes }) => {
+const Payment = ({ member, onBack }) => {
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({
         user_id: '1',
         subscriptionType: 'One Time',
-        inputAmount: '10.00',
+        inputAmount: '0',
         customerCharges: '0.00',
     });
     const [error, setError] = useState('');
-    console.log('memberTypes data', memberTypes);
+
+    // Extract minimum amount from nested member data safely
+    const minAmount = parseFloat(member?.member?.member_type?.fee) || 0;
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+
+        // Parse input amount as float
+        if (name === 'inputAmount') {
+            const inputValue = parseFloat(value) || 0;
+            const charges = inputValue - minAmount;
+            setFormData((prev) => ({
+                ...prev,
+                inputAmount: value,
+                customerCharges: charges > 0 ? charges.toFixed(2) : '0.00', // no negative charges
+            }));
+        } else {
+            setFormData((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleQuickAmount = (value) => {
@@ -31,25 +45,33 @@ const Payment = ({ member, onBack, memberTypes }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        const inputAmount = parseFloat(formData.inputAmount);
+
         // Basic validation
-        if (!formData.inputAmount || parseFloat(formData.inputAmount) <= 0) {
+        if (!formData.inputAmount || inputAmount <= 0) {
             setError('Please enter a valid amount.');
+            return;
+        }
+
+        // Validate against minimum amount
+        if (inputAmount < minAmount) {
+            setError(`Amount must be at least Rs ${minAmount.toFixed(2)}.`);
             return;
         }
 
         const paymentData = {
             user_id: member?.id || formData.user_id,
             subscription_type: formData.subscriptionType,
-            amount: parseFloat(formData.inputAmount),
+            amount: inputAmount,
             customer_charges: parseFloat(formData.customerCharges),
         };
 
-        console.log('Sending payment data:', paymentData);
+        // console.log('Sending payment data:', paymentData);
 
-        router.post('/admin/membership/payments/store', paymentData, {
+        router.post(route('membership.payment.store'), paymentData, {
             onSuccess: () => {
                 setError('');
-                router.visit('/admin/membership/history');
+                router.visit(route('membership.history'));
             },
             onError: (errors) => {
                 setError('Payment failed: ' + (errors.message || 'Please check the form data.'));
@@ -201,6 +223,12 @@ const Payment = ({ member, onBack, memberTypes }) => {
                                         inputProps={{ type: 'text', pattern: '[0-9.]*' }}
                                     />
                                 </Box>
+                                {/* Show minimum amount below input */}
+                                {minAmount > 0 && (
+                                    <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
+                                        Minimum Amount: Rs {minAmount.toFixed(2)}
+                                    </Typography>
+                                )}
                             </Box>
                             <Box className="d-flex flex-column w-50">
                                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
@@ -218,7 +246,7 @@ const Payment = ({ member, onBack, memberTypes }) => {
                                     key={value}
                                     variant="outlined"
                                     className="p-2"
-                                    onClick={() => handleQuickAmount(value === 'Exact money' ? '' : value)}
+                                    onClick={() => handleQuickAmount(value === 'Exact money' ? minAmount : value)}
                                     sx={{
                                         textTransform: 'none',
                                         borderColor: '#ccc',

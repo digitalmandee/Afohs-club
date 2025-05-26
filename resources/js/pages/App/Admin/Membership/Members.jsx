@@ -115,9 +115,9 @@ const AllMembers = ({ member = [] }) => {
                     >
                         {[
                             { title: 'Total Members', value: member.length, icon: PeopleIcon },
-                            { title: 'Pending', value: member.filter((m) => m.user_detail?.members?.[0]?.card_status === 'Pending').length, image: '/assets/refresh.png' },
-                            { title: 'Active', value: member.filter((m) => m.user_detail?.members?.[0]?.card_status === 'Active').length, image: '/assets/ticks.png' },
-                            { title: 'In-Active', value: member.filter((m) => m.user_detail?.members?.[0]?.card_status === 'Expired' || m.user_detail?.members?.[0]?.card_status === 'Suspend').length, image: '/assets/cross.png' },
+                            { title: 'Pending', value: member.filter((m) => m.member?.card_status === 'Pending').length, image: '/assets/refresh.png' },
+                            { title: 'Active', value: member.filter((m) => m.member?.card_status === 'Active').length, image: '/assets/ticks.png' },
+                            { title: 'In-Active', value: member.filter((m) => m.member?.card_status === 'Expired' || m.member?.card_status === 'Suspend').length, image: '/assets/cross.png' },
                         ].map((item, index) => (
                             <div key={index} style={{ flex: 1 }}>
                                 <Card
@@ -221,18 +221,18 @@ const AllMembers = ({ member = [] }) => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.user_detail?.members?.[0]?.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
-                                                        color: user.user_detail?.members?.[0]?.card_status === 'Active' ? '#2e7d32' : user.user_detail?.members?.[0]?.card_status === 'Suspend' ? '#ed6c02' : '#d32f2f',
+                                                        color: user.member?.card_status === 'Active' ? '#2e7d32' : user.member?.card_status === 'Suspend' ? '#ed6c02' : '#d32f2f',
                                                         fontWeight: 'medium',
                                                         cursor: 'pointer',
                                                     }}
                                                     onClick={(e) => showMemberDetails(user, e)}
                                                 >
-                                                    {user.user_detail?.members?.[0]?.card_status || 'N/A'}
-                                                    {user.user_detail?.members?.[0]?.card_status === 'Suspend' && (
+                                                    {user.member?.card_status || 'N/A'}
+                                                    {user.member?.card_status === 'Suspend' && (
                                                         <img
                                                             src="/assets/system-expired.png"
                                                             alt=""
@@ -260,7 +260,7 @@ const AllMembers = ({ member = [] }) => {
                                                 </Button>
                                             </TableCell>
                                             <TableCell>
-                                                {user.user_detail?.members?.[0]?.card_status === 'Expired' || user.user_detail?.members?.[0]?.card_status === 'Suspend' ? (
+                                                {user.member?.card_status === 'Expired' || user.member?.card_status === 'Suspend' ? (
                                                     <Button variant="text" style={{ color: '#1976d2', textDecoration: 'underline', textTransform: 'none', padding: '0' }}>
                                                         Send Remind
                                                     </Button>
