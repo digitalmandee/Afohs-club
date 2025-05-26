@@ -91,11 +91,6 @@ export default function AddressType() {
             });
     };
 
-    // Handle cancel action
-    // const handleCancel = () => {
-    //     setTax(originalTax);
-    // };
-
     // Handle Enter key press
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
@@ -144,21 +139,6 @@ export default function AddressType() {
 
                                         {/* Action Buttons */}
                                         <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1 }}>
-                                            {/* <Button
-                                                variant="contained"
-                                                onClick={handleCancel}
-                                                disabled={saving || tax === originalTax}
-                                                sx={{
-                                                    bgcolor: '#F14C35',
-                                                    color: '#FFFFFF',
-                                                    textTransform: 'none',
-                                                    fontSize: '14px',
-                                                    px: 3,
-                                                    '&:hover': { bgcolor: '#d8432f' },
-                                                }}
-                                            >
-                                                Cancel
-                                            </Button> */}
                                             <Button
                                                 variant="contained"
                                                 onClick={handleSave}
