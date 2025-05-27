@@ -217,7 +217,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Transaction',
-                    path: route(''),
+                    path: route('finance.transaction'),
                 },
             ]
         },

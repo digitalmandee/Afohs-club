@@ -19,6 +19,7 @@ import {
     TableRow,
     Paper
 } from '@mui/material';
+import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -154,6 +155,7 @@ const Dashboard = () => {
                                         width: '200px',
                                         color: 'white',
                                     }}
+                                    onClick={()=>router.visit('/finance/add/transaction')}
                                 >
                                     <span style={{ marginRight: '5px', fontSize: '20px' }}>+</span> Add Transaction
                                 </Button>
