@@ -26,6 +26,7 @@ class TransactionController extends Controller
 
         $totalOrders = Order::count();
 
+
         return Inertia::render('App/Transaction/Dashboard', [
             'Invoices' => $invoices,
             'totalOrders' => $totalOrders,
