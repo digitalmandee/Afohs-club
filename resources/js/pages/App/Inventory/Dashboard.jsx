@@ -449,7 +449,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                             <Grid item xs={12} sm={3} md={2.5} sx={{ display: 'flex', alignItems: 'center' }}>
                                                 <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                     <img
-                                                        src={(product.images.length > 0 && tenantAsset(product.images[0])) || '/placeholder.svg'}
+                                                        src={product.images.length > 0 ? tenantAsset(product.images[0]) : '/assets/dish.png'}
                                                         alt={product.name}
                                                         style={{
                                                             width: '100%',
