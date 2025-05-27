@@ -29,7 +29,7 @@ class CategoryController extends Controller
 
         $categoriesList = Category::select('id', 'name')->get(); // ← Make sure this line is present
 
-        return Inertia::render('App/Inventory/Dashboard', [
+        return Inertia::render('App/Inventory/Category', [
             // 'productLists' => $productLists,
             'categoriesList' => $categoriesList, // ← Make sure this key matches the React destructuring
         ]);

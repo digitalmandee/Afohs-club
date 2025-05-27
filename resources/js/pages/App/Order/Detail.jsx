@@ -236,7 +236,7 @@ const OrderDetail = ({ handleEditItem }) => {
                 <Box
                     sx={{
                         display: 'flex',
-                        justifyContent: 'initial',
+                        justifyContent: 'end',
                         alignItems: 'center',
                         p: 1,
                         borderBottom: '1px solid #E3E3E3',
