@@ -105,6 +105,13 @@ export const useOrderStore = create((set, get) => ({
                 [key]: value,
             },
         })),
+    clearOrderItems: () =>
+        set((state) => ({
+            orderDetails: {
+                ...state.orderDetails,
+                order_items: [],
+            },
+        })),
 
     handleOrderTypeChange: (value) => {
         const { orderDetails, handleOrderDetailChange, resetOrderDetails } = get();
