@@ -145,7 +145,9 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         <IconButton onClick={() => router.visit(route('order.new'))} sx={{ mr: 1 }}>
                             <ArrowBack />
                         </IconButton>
-                        <Typography sx={{ color: '#3F4E4F', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
+                        <Typography sx={{ color: '#3F4E4F', fontSize: '30px', fontWeight: 500 }}>
+                            Back
+                        </Typography>
                     </Box>
 
                     {variantPopupOpen && (
@@ -188,7 +190,8 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Left Category Sidebar */}
                         <Box
                             sx={{
-                                width: '95px',
+                                // width: '95px',
+                                flex: { xs: '1 1 100%', sm: '0 0 100px', md: '0 0 95px' },
                                 marginLeft: 1,
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -255,8 +258,9 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Main Content Area */}
                         <Box
                             sx={{
-                                width: '660px',
-                                // flex: 1,
+                                // width: '55%',
+                                flex: { xs: '1 1 100%', md: '1 1 60%' }, // Responsive width
+                                minWidth: 300,
                                 display: 'flex',
                                 flexDirection: 'column',
                                 borderRadius: '12px',
@@ -414,8 +418,9 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Order Details Section */}
                         <Paper
                             sx={{
-                                width: 440,
-                                // height:600,
+                                // width: '40%',
+                                flex: { xs: '1 1 100%', md: '1 1 40%' }, // Responsive width
+                                minWidth: 280,
                                 borderRadius: 2,
                                 p: 2,
                                 display: 'flex',

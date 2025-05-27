@@ -124,7 +124,7 @@ const SubscriptionDashboard = () => {
                                 height: 40,
                                 width: 170
                             }}
-                            onClick={() => router.visit('/admin/add/personal/information')}
+                            onClick={() => router.visit('/admin/add/subscription')}
                         >
                             Add Subscription
                         </Button>

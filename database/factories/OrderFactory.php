@@ -19,7 +19,7 @@ class OrderFactory extends Factory
             'user_id' => User::inRandomOrder()->value('id'),
             'waiter_id' => 7, // optional: ->nullable() if you want to skip sometimes
             'table_id' => Table::inRandomOrder()->value('id'),
-            'order_type' => $this->faker->randomElement(['dine_in', 'take_away', 'delivery']),
+            'order_type' => $this->faker->randomElement(['dineIn', 'takeaway', 'delivery']),
             'person_count' => $this->faker->numberBetween(1, 6),
             'down_payment' => $this->faker->optional()->numberBetween(100, 1000),
             'start_date' => $this->faker->optional()->date(),

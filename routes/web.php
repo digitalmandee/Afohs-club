@@ -19,6 +19,8 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name('member.profile');
+
 // Central auth-protected routes
 Route::middleware(['auth:web', 'verified'])->group(function () {
     // admin dashboard routes
@@ -121,8 +123,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // membership routes
     Route::get('/user-details', [MembershipController::class, 'index'])->name('membership');
     Route::get('/user-details/create', [MembershipController::class, 'create'])->name('membership.create');
-    // Route::post('/user-details', [MembershipController::class, 'store'])->name('membership.store');
-  
+
     Route::get('/employee/monthly/attendance/report', function () {
         return Inertia::render('App/Admin/Employee/MonthlyReport');
     })->name('employee.monthlyreport');
@@ -163,6 +164,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/subscription/dashboard', function () {
         return Inertia::render('App/Admin/Subscription/Dashboard');
     })->name('subscription.dashboard');
+
+    Route::get('/admin/add/subscription', function () {
+        return Inertia::render('App/Admin/Subscription/AddSubscription');
+    })->name('subscription.addsubscription');
 
     //Finance Routes
     Route::get('/finance/dashboard', function () {

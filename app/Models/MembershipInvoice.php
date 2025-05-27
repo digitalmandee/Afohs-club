@@ -11,6 +11,8 @@ class MembershipInvoice extends Model
         'subscription_type',
         'amount',
         'customer_charges',
+        'total_price',
+        'status'
     ];
 
     public function user()
