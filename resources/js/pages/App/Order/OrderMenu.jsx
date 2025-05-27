@@ -229,16 +229,19 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                         }}
                                     >
                                         {/* Skip image for first item */}
-                                        <Avatar
-                                            src={tenantAsset(category.image)}
-                                            alt={category.name}
-                                            sx={{
-                                                width: 40,
-                                                height: 40,
-                                                mb: 1,
-                                                bgcolor: selectedCategory === category.id ? '#e3f2fd' : '#f5f5f5',
-                                            }}
-                                        />
+                                        {category.image && (
+                                            <Avatar
+                                                src={tenantAsset(category.image)}
+                                                alt={category.name}
+                                                sx={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    mb: 1,
+                                                    bgcolor: selectedCategory === category.id ? '#e3f2fd' : '#f5f5f5',
+                                                }}
+                                            />
+                                        )}
+
                                         <Typography
                                             variant="caption"
                                             sx={{
@@ -373,26 +376,29 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                                         },
                                                     }}
                                                 >
-                                                    <Box
-                                                        sx={{
-                                                            width: 40,
-                                                            height: 40,
-                                                            borderRadius: '50%',
-                                                            overflow: 'hidden',
-                                                            // mb: 1,
-                                                        }}
-                                                    >
+                                                    {product.images.length > 0 && (
                                                         <Box
-                                                            component="img"
-                                                            src={tenantAsset(product.images[0])}
-                                                            alt={product.name}
                                                             sx={{
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                objectFit: 'cover',
+                                                                width: 40,
+                                                                height: 40,
+                                                                borderRadius: '50%',
+                                                                overflow: 'hidden',
+                                                                // mb: 1,
                                                             }}
-                                                        />
-                                                    </Box>
+                                                        >
+                                                            <Box
+                                                                component="img"
+                                                                src={tenantAsset(product.images[0])}
+                                                                alt={product.name}
+                                                                sx={{
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    objectFit: 'cover',
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    )}
+
                                                     <Typography
                                                         variant="body1"
                                                         sx={{

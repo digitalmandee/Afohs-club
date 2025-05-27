@@ -27,7 +27,7 @@ class CategoryController extends Controller
 
         // $productLists = $query->get();
 
-        $categoriesList = Category::select('id', 'name')->get(); // ← Make sure this line is present
+        $categoriesList = Category::select('id', 'name', 'image')->get(); // ← Make sure this line is present
 
         return Inertia::render('App/Inventory/Category', [
             // 'productLists' => $productLists,
