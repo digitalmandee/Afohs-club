@@ -12,6 +12,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\SettingController;
 use App\Http\Middleware\AuthenticateTenant;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -110,6 +111,8 @@ Route::group([
         Route::get('/add/newfloor/{id?}', [FloorController::class, 'createOrEdit'])->name('floors.createOrEdit');
 
         Route::get('/floors/get-floors', [FloorController::class, 'getFloors'])->name('floors.getFloors');
+        // get Table Order Details
+        Route::get('/table/order/{id}', [FloorController::class, 'tableOrderDetails'])->name('table.order.details');
 
         // End of floors routes
 
@@ -118,7 +121,10 @@ Route::group([
         Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
         Route::put('/inventory/category/{category}/update', [CategoryController::class, 'update'])->name('category.update');
         Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
-
+        // setting
+        Route::get('/setting', [SettingController::class, 'index'])->name('setting.index');
+        Route::put('/setting', [SettingController::class, 'update'])->name('setting.update');
+        Route::get('/setting/showTax', [SettingController::class, 'showTax'])->name('setting.showTax');
         // Inventory Items
         Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');

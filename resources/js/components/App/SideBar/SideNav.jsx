@@ -153,7 +153,13 @@ export default function SideNav({ open, setOpen }) {
             path: route('address-types.index'),
             permission: 'order',
         },
-        { text: 'Settings', icon: <SettingsIcon />, path: route('settings'), permission: 'order' },
+        {
+            text: 'Settings',
+            icon: <SettingsIcon />,
+            path: route('setting.index'),
+            permission: 'order',
+        },
+        // { text: 'Settings', icon: <SettingsIcon />, path: route('settings'), permission: 'order' },
     ];
 
     return (

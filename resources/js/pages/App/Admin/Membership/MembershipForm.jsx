@@ -19,6 +19,69 @@ const MembershipDashboard = ({ memberTypesData, userNo }) => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
+    const [formsData, setFormsData] = useState({
+        // Form 1
+        profile_photo: '',
+        coaAccount: 'COA123456',
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        nameComments: 'Preferred name: John W. Doe',
+        fatherHusbandName: 'Michael Doe',
+        fatherMembershipNo: 'MEM789',
+        nationality: 'Pakistan',
+        cnicNo: '4210112345678',
+        passportNo: 'AB1234567',
+        ntn: '1234567-8',
+        dateOfBirth: '1990-05-15', // Changed to YYYY-MM-DD and past date
+        education: 'Bachelor’s in Computer Science, University of Karachi, 2012',
+        membershipReason: 'Interested in networking opportunities and professional development through the organization.',
+        // Form 2
+        mobileNumberA: '9876543210',
+        mobileNumberB: '9123456780',
+        mobileNumberC: '9988776655',
+        telephoneNumber: '02212345678',
+        personalEmail: 'john.doe@example.com',
+        criticalEmail: 'johndoe.urgent@example.com',
+        emergencyName: 'Jane Doe',
+        emergencyRelation: 'Sister',
+        emergencyContact: '9876543211',
+        currentAddress: '123 Street Name, Sector 45',
+        currentCity: 'Mumbai',
+        currentCountry: 'India',
+        permanentAddress: '456 Lane, MG Road',
+        permanentCity: 'Pune',
+        permanentCountry: 'India',
+        // Form 3
+    });
+
+    const [currentFamilyMember, setCurrentFamilyMember] = useState({
+        user_id: userNo + 1,
+        full_name: 'Ayesha Khan',
+        relation: 'Mother',
+        cnic: '42201-1234567-0',
+        phone_number: '03451234567',
+        email: 'ayesha.khan@example.com',
+        membership_type: 'Silver',
+        membership_category: 'Family',
+        start_date: '2025-04-15',
+        end_date: '2026-04-15',
+        picture: null,
+        picture_preview: null,
+    });
+
+    const [membershipData, setMembershipData] = useState({
+        membership_category: 'Family',
+        membership_number: 'FM-2025-001',
+        membership_date: '2025-05-01',
+        card_status: 'Active',
+        card_issue_date: '2025-05-01',
+        card_expiry_date: '2026-05-01',
+        from_date: '2025-05-01',
+        to_date: '2026-05-01',
+    });
+    const [familyMembers, setFamilyMembers] = useState([]);
+
     const [formData, setFormData] = useState({
         step1: {},
         step2: {},
@@ -120,23 +183,6 @@ const MembershipDashboard = ({ memberTypesData, userNo }) => {
             .finally(() => {
                 setLoading(false);
             });
-        // router.post(route('membership.store'), fullData, {
-        //     onSuccess: (page) => {
-        //         setLoading(false);
-        //         console.log('page', page);
-
-        //         const memberId = page.props?.member_id;
-
-        //         enqueueSnackbar('Membership created successfully.', { variant: 'success' });
-
-        //         router.visit(route('membership.allpayment') + `?member_id=${memberId}`);
-        //     },
-        //     onError: (errors) => {
-        //         setLoading(false);
-        //         enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
-        //         // alert('Submission failed: ' + JSON.stringify(errors));
-        //     },
-        // });
     };
 
     return (
@@ -152,9 +198,9 @@ const MembershipDashboard = ({ memberTypesData, userNo }) => {
             >
                 {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                 <div className="">
-                    {step === 1 && <AddForm1 userNo={userNo} onNext={(data) => handleNext('step1', data)} />}
-                    {step === 2 && <AddForm2 onNext={(data) => handleNext('step2', data)} onBack={() => setStep(1)} />}
-                    {step === 3 && <AddForm3 userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} loading={loading} />}
+                    {step === 1 && <AddForm1 setFormData={setFormsData} formData={formsData} userNo={userNo} onNext={(data) => handleNext('step1', data)} />}
+                    {step === 2 && <AddForm2 setFormData={setFormsData} formData={formsData} onNext={(data) => handleNext('step2', data)} onBack={() => setStep(1)} />}
+                    {step === 3 && <AddForm3 setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} setMembershipData={setMembershipData} membershipData={membershipData} setFamilyMembers={setFamilyMembers} familyMembers={familyMembers} userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} loading={loading} />}
                 </div>
             </div>
         </>

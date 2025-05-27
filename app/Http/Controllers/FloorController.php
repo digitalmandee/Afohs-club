@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Floor;
+use App\Models\Order;
 use App\Models\Table;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -192,6 +193,7 @@ class FloorController extends Controller
 
                     if (!$bookedBy && $order->user) {
                         $bookedBy = [
+                            'order_id' => $order->id,
                             'id' => $order->user->user_id,
                             'name' => $order->user->name,
                         ];
@@ -226,6 +228,14 @@ class FloorController extends Controller
         ]);
     }
 
+    public function tableOrderDetails(Request $request, $id)
+    {
+        if (Order::where('id', $id)->exists()) {
+            $order = Order::with(['user:id,user_id,name', 'table:id,table_no', 'orderItems:id,order_id,order_item,status', 'invoice:id,order_id,total_price,discount,tax,amount'])->where('id', $id)->first();
+
+            return response()->json(['success' => true, 'order' => $order]);
+        }
+    }
 
     public function destroy(Floor $floor)
     {

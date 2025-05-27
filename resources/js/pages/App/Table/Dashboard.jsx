@@ -15,6 +15,8 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import AddReservation from './Action';
 import TableSetting from './Setting';
+import ActiveTable from './ActiveTable';
+import dayjs from 'dayjs';
 
 const ItemTypes = {
     TABLE: 'table',
@@ -60,7 +62,7 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
     return (
         <Box
             onClick={onClick}
-            ref={(node) => drag(drop(node))}
+            // ref={(node) => drag(drop(node))}
             sx={{
                 // width,
                 // height,
@@ -121,6 +123,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     });
     const [openSettings, setOpenSettings] = useState(false);
     const [openReservation, setOpenReservation] = useState(false);
+    const [openAvailableOrder, setOpenAvailableOrder] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
     const [activefloor, setActiveFloor] = useState(null);
     const [availableCapacity, setAvailableCapacity] = useState(0);
@@ -241,11 +244,15 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     ]);
 
     const handleOpenReservation = (table) => {
+        console.log('Opening reservation for table:', table);
+
         setSelectedTable(table);
-        setOpenReservation(true);
+        if (!table.is_available) setOpenAvailableOrder(true);
+        else setOpenReservation(true);
     };
 
     const handleCloseReservation = () => {
+        setOpenAvailableOrder(false);
         setOpenReservation(false);
         setSelectedTable(null);
     };
@@ -270,13 +277,15 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     };
 
     const handleDateClick = (date) => {
+        console.log('Date clicked:', date);
+
         setSelectedDate(date);
     };
 
     const generateDaysArray = () => {
         const today = new Date();
         const year = today.getFullYear();
-        const month = today.getMonth(); // 0-indexed (0 = Jan)
+        const month = today.getMonth(); // 0-indexed
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
         const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -284,16 +293,15 @@ const TableManagement = ({ floorsdata, tablesData }) => {
         const days = Array.from({ length: daysInMonth }, (_, i) => {
             const dateObj = new Date(year, month, i + 1);
             return {
-                day: weekdays[dateObj.getDay()].slice(0, 2), // e.g., 'Su', 'Mo', 'Tu'
+                day: weekdays[dateObj.getDay()].slice(0, 2),
                 date: i + 1,
-                hasReservations: false, // default value
-                full_date: dateObj.toISOString(),
+                hasReservations: false,
+                full_date: dayjs(dateObj).format('YYYY-MM-DD'), // or your preferred format
             };
         });
 
         return days;
     };
-
     // Days of the week with dates and reservation indicators
     const days = generateDaysArray();
 
@@ -308,6 +316,8 @@ const TableManagement = ({ floorsdata, tablesData }) => {
 
     useEffect(() => {
         if (selectedDate.full_date) {
+            console.log(selectedDate.full_date);
+
             axios
                 .get(route('floors.getFloors'), {
                     params: {
@@ -671,19 +681,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                             gap: '30px 15px',
                                         }}
                                     >
-                                        {activefloor &&
-                                            activefloor?.tables.map((table, index) => (
-                                                <DraggableTable
-                                                    index={index}
-                                                    data={table}
-                                                    // width={table.width}
-                                                    // height={table.height}
-                                                    // fill={table.fill}
-                                                    // reservation={table.reservation}
-                                                    moveTable={moveTable}
-                                                    onClick={() => handleOpenReservation(table)}
-                                                />
-                                            ))}
+                                        {activefloor && activefloor?.tables.map((table, index) => <DraggableTable index={index} data={table} moveTable={moveTable} onClick={() => handleOpenReservation(table)} />)}
                                     </Box>
                                 </Box>
                                 <Modal open={openReservation} onClose={handleCloseReservation}>
@@ -704,6 +702,26 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                         }}
                                     >
                                         <AddReservation table={selectedTable} onClose={handleCloseReservation} />
+                                    </Box>
+                                </Modal>
+                                <Modal open={openAvailableOrder} onClose={handleCloseReservation}>
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            bgcolor: 'white',
+                                            borderRadius: 2,
+                                            boxShadow: 24,
+                                            p: 3,
+                                            maxWidth: 600,
+                                            width: '90%',
+                                            maxHeight: '90vh',
+                                            overflow: 'auto', // or remove if you want to hide scroll
+                                        }}
+                                    >
+                                        <ActiveTable table={selectedTable} floorName={activefloor?.name} onClose={handleCloseReservation} />
                                     </Box>
                                 </Modal>
                             </DndProvider>

@@ -14,7 +14,7 @@ import InvoiceSlip from './Invoice';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = ({ member = [] }) => {
+const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
     // Modal state
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
@@ -118,7 +118,7 @@ const MembershipDashboard = ({ member = [] }) => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Membership</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{member.length}</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_members ?? 0}</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -131,7 +131,7 @@ const MembershipDashboard = ({ member = [] }) => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Payment</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>0</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_payment ?? 0}</Typography>
                                 </CardContent>
                             </Card>
                         </div>

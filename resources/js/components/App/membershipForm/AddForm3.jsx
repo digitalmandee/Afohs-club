@@ -9,36 +9,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 
-const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading }) => {
+const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading, currentFamilyMember, setCurrentFamilyMember, membershipData, setMembershipData, familyMembers, setFamilyMembers }) => {
     const [open, setOpen] = useState(false);
-    const [memberType, setMemberType] = useState('Silver');
+    const [memberType, setMemberType] = useState(1);
     const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
-    const [familyMembers, setFamilyMembers] = useState([]);
-    const [currentFamilyMember, setCurrentFamilyMember] = useState({
-        user_id: userNo + 1,
-        full_name: 'Ayesha Khan',
-        relation: 'Mother',
-        cnic: '42201-1234567-0',
-        phone_number: '03451234567',
-        email: 'ayesha.khan@example.com',
-        membership_type: 'Silver',
-        membership_category: 'Family',
-        start_date: '2025-04-15',
-        end_date: '2026-04-15',
-        picture: null,
-        picture_preview: null,
-    });
-
-    const [membershipData, setMembershipData] = useState({
-        membership_category: 'Family',
-        membership_number: 'FM-2025-001',
-        membership_date: '2025-05-01',
-        card_status: 'Active',
-        card_issue_date: '2025-05-01',
-        card_expiry_date: '2026-05-01',
-        from_date: '2025-05-01',
-        to_date: '2026-05-01',
-    });
 
     const [submitError, setSubmitError] = useState('');
 

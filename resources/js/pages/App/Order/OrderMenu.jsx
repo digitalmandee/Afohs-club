@@ -145,9 +145,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         <IconButton onClick={() => router.visit(route('order.new'))} sx={{ mr: 1 }}>
                             <ArrowBack />
                         </IconButton>
-                        <Typography sx={{ color: '#3F4E4F', fontSize: '30px', fontWeight: 500 }}>
-                            Back
-                        </Typography>
+                        <Typography sx={{ color: '#3F4E4F', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
                     </Box>
 
                     {variantPopupOpen && (
@@ -227,7 +225,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                             cursor: 'pointer',
                                             bgcolor: selectedCategory === category.id ? '#f0f7ff' : 'transparent',
                                             border: selectedCategory === category.id ? '1px solid #063455' : '1px solid #E3E3E3',
-                                            mb: 0.5
+                                            mb: 0.5,
                                         }}
                                     >
                                         {/* Skip image for first item */}
@@ -488,7 +486,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         </Paper>
                     </Box>
                 </Box>
-            </div >
+            </div>
 
             {/* Payment Modal */}
             {/* <Modal
