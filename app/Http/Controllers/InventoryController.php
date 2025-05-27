@@ -29,14 +29,10 @@ class InventoryController extends Controller
         }
 
         $productLists = $query->get();
-        $categoriesList = Category::select('id', 'name')->get(); // Add this line to fetch categories
+        $categoriesList = Category::select('id', 'name')->get();
 
-        return Inertia::render('App/Inventory/Dashboard', compact('productLists', 'categoriesList')); // Include categoriesList
+        return Inertia::render('App/Inventory/Dashboard', compact('productLists', 'categoriesList'));
     }
-
-
-
-
 
     /**
      * Show the form for creating a new resource.
@@ -60,8 +56,10 @@ class InventoryController extends Controller
             'kitchen.id' => ['required', 'exists:users,id', new KitchenRole()],
             'current_stock' => 'required|integer|min:0',
             'minimal_stock' => 'required|integer|min:0',
+            'discount' => 'nullable|numeric|min:0',
+            'discountType' => 'nullable|in:percentage,amount',
             'available_order_types' => 'required|array|min:1',
-            'available_order_types.*' => 'string', // assuming order types are strings
+            'available_order_types.*' => 'string',
             'cost_of_goods_sold' => 'required|numeric|min:0',
             'base_price' => 'required|numeric|min:0',
             'profit' => 'required|numeric',
@@ -71,15 +69,11 @@ class InventoryController extends Controller
         ]);
 
         DB::beginTransaction();
-        // Create a new product
         // Handle image uploads (if any)
         $imagePaths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                // Use the FileHelper to store the image
                 $path = FileHelper::saveImage($image, 'products');
-
-                // Store the image URL or path in the array
                 $imagePaths[] = $path;
             }
         }
@@ -92,10 +86,11 @@ class InventoryController extends Controller
             'kitchen_id' => $request->input('kitchen.id'),
             'current_stock' => $request->input('current_stock'),
             'minimal_stock' => $request->input('minimal_stock'),
+            'discount' => $request->input('discount') ?: null, // Set to NULL if empty
+            'discount_type' => $request->input('discountType'),
             'available_order_types' => $request->input('available_order_types'),
             'cost_of_goods_sold' => $request->input('cost_of_goods_sold'),
             'base_price' => $request->input('base_price'),
-            // 'profit' => $request->input('profit'),
             'description' => $request->input('description'),
             'images' => $imagePaths,
         ]);
@@ -107,14 +102,12 @@ class InventoryController extends Controller
                     continue;
                 }
 
-                // Create the ProductVariant (like "Size")
                 $productVariant = $product->variants()->create([
                     'product_id' => $product->id,
-                    'name' => $variant['name'],  // The variant name, e.g., "Size"
-                    'type' => $variant['type'],  // The type, e.g., "multiple"
+                    'name' => $variant['name'],
+                    'type' => $variant['type'],
                 ]);
 
-                // Now create the ProductVariantValue records for each item in the variant
                 foreach ($variant['items'] as $item) {
                     if ($item['name'] === '') {
                         continue;
@@ -122,21 +115,20 @@ class InventoryController extends Controller
 
                     $productVariant->values()->create([
                         'product_variant_id' => $productVariant->id,
-                        'name' => $item['name'],  // e.g., "Small", "Medium", "Large"
-                        'additional_price' => $item['additional_price'],  // Price for this variant item
-                        'stock' => $item['stock'],  // Stock for this variant item
-                        'is_default' => false,  // Assuming you want to set the default variant
+                        'name' => $item['name'],
+                        'additional_price' => $item['additional_price'],
+                        'stock' => $item['stock'],
+                        'is_default' => false,
                     ]);
                 }
             }
         }
 
         DB::commit();
-        // Optionally return a response
         return redirect()->back()->with('success', 'Product created.');
     }
-    // Get Single Product
 
+    // Get Single Product
     public function getProduct($id)
     {
         $product = Product::with(['variants:id,product_id,name', 'variants.values', 'kitchen'])->find($id);
@@ -174,8 +166,10 @@ class InventoryController extends Controller
             'kitchen.id' => ['required', 'exists:users,id', new KitchenRole()],
             'current_stock' => 'required|integer|min:0',
             'minimal_stock' => 'required|integer|min:0',
+            'discount' => 'nullable|numeric|min:0',
+            'discountType' => 'nullable|in:percentage,amount',
             'available_order_types' => 'required|array|min:1',
-            'available_order_types.*' => 'string', // assuming order types are strings
+            'available_order_types.*' => 'string',
             'cost_of_goods_sold' => 'required|numeric|min:0',
             'base_price' => 'required|numeric|min:0',
             'profit' => 'required|numeric',
@@ -185,21 +179,18 @@ class InventoryController extends Controller
 
         $imagePaths = [];
 
-        // First, keep existing image paths (if any)
         if ($request->has('existing_images')) {
             foreach ($request->input('existing_images') as $existingPath) {
                 $imagePaths[] = $existingPath;
             }
         }
 
-        // Then, store newly uploaded images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $path = FileHelper::saveImage($image, 'products');
                 $imagePaths[] = $path;
             }
         }
-
 
         Product::where('id', $id)->update([
             'name' => $request->input('name'),
@@ -208,23 +199,21 @@ class InventoryController extends Controller
             'kitchen_id' => $request->input('kitchen.id'),
             'current_stock' => $request->input('current_stock'),
             'minimal_stock' => $request->input('minimal_stock'),
+            'discount' => $request->input('discount') ?: null,
+            'discount_type' => $request->input('discountType'),
             'available_order_types' => $request->input('available_order_types'),
             'cost_of_goods_sold' => $request->input('cost_of_goods_sold'),
             'base_price' => $request->input('base_price'),
-            // 'profit' => $request->input('profit'),
             'description' => $request->input('description'),
             'images' => $imagePaths,
         ]);
 
-
-        // Handle variants if passed as an object
         if ($request->has('variants')) {
             $submittedVariantIds = [];
 
             foreach ($request->input('variants') as $variant) {
-                // Update or create the ProductVariant
                 $productVariant = ProductVariant::updateOrCreate(
-                    ['id' => $variant['id'] ?? null, 'product_id' => $id], // Use id if available
+                    ['id' => $variant['id'] ?? null, 'product_id' => $id],
                     [
                         'product_id' => $id,
                         'name' => $variant['name'],
@@ -234,7 +223,6 @@ class InventoryController extends Controller
 
                 $submittedVariantIds[] = $productVariant->id;
 
-                // Track value IDs to preserve
                 $submittedValueIds = [];
 
                 foreach ($variant['items'] as $item) {
@@ -256,19 +244,16 @@ class InventoryController extends Controller
                     $submittedValueIds[] = $variantValue->id;
                 }
 
-                // 🧹 Delete ProductVariantValues not in submitted items
                 ProductVariantValue::where('product_variant_id', $productVariant->id)
                     ->whereNotIn('id', $submittedValueIds)
                     ->delete();
             }
 
-            // 🧹 Remove ProductVariants with no remaining values
             ProductVariant::where('product_id', $id)
                 ->whereNotIn('id', $submittedVariantIds)
-                ->orWhereDoesntHave('values') // assuming the relation is called `values`
+                ->orWhereDoesntHave('values')
                 ->delete();
         }
-
 
         return redirect()->back()->with('success', 'Product updated.');
     }

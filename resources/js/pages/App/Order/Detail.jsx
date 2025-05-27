@@ -1,24 +1,23 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
-import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon, Save as SaveIcon } from '@mui/icons-material';
+import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Save as SaveIcon } from '@mui/icons-material';
 import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ClearIcon from '@mui/icons-material/Clear';
 import axios from 'axios';
 
 const OrderDetail = ({ handleEditItem }) => {
-    const { orderDetails, handleOrderDetailChange } = useOrderStore();
+    const { orderDetails, handleOrderDetailChange, clearOrderItems } = useOrderStore();
 
     const [openDiscountModal, setOpenDiscountModal] = useState(false);
     const [isEditingDiscount, setIsEditingDiscount] = useState(false);
     const [editingQtyIndex, setEditingQtyIndex] = useState(null);
     const [tempQty, setTempQty] = useState(null);
-    const [discount, setDiscount] = useState(0); // percentage
+    const [discount, setDiscount] = useState(0);
     const [discountType, setDiscountType] = useState(0);
     const [setting, setSetting] = useState(null);
-    const [loadingSetting, setLoadingSetting] = useState(true); // Added loading state
+    const [loadingSetting, setLoadingSetting] = useState(true);
     const [isEditingTax, setIsEditingTax] = useState(false);
     const [tempTax, setTempTax] = useState('');
 
@@ -47,7 +46,7 @@ const OrderDetail = ({ handleEditItem }) => {
     });
 
     const openDiscountDialog = () => {
-        setTempFormData(formData); // Copy current discount values into temp
+        setTempFormData(formData);
         setOpenDiscountModal(true);
     };
 
@@ -60,23 +59,10 @@ const OrderDetail = ({ handleEditItem }) => {
     };
 
     const subtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
-    const taxRate = setting?.tax ? setting.tax / 100 : 0.12; // Default to 12% if not set
+    const taxRate = setting?.tax ? setting.tax / 100 : 0.12;
     const taxAmount = subtotal * taxRate;
     const discountAmount = formData.discountType === 'percentage' ? subtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
     const total = subtotal + taxAmount - discountAmount;
-
-    // useEffect(() => {
-    //     const cash = parseFloat(orderDetails.cash_total || 0);
-    //     const calculatedSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
-    //     const tax = calculatedSubtotal * 0.12;
-    //     const discountAmt = formData.discountType === 'percentage' ? calculatedSubtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
-    //     const finalTotal = calculatedSubtotal + tax - discountAmt;
-
-    //     if (cash > 0) {
-    //         const change = (cash - finalTotal).toFixed(2);
-    //         handleOrderDetailChange('customer_change', change);
-    //     }
-    // }, [orderDetails.order_items, orderDetails.cash_total, formData]);
 
     const handleSendToKitchen = () => {
         const payload = {
@@ -163,13 +149,9 @@ const OrderDetail = ({ handleEditItem }) => {
                                     <img src="/assets/food-tray.png" alt="" style={{ width: 20, height: 20, marginLeft: 4 }} />
                                 </Box>
 
-                                {/* <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
-                                    <ClearIcon fontSize="small" />
-                                </IconButton> */}
-                                {/*
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
-                                    <EditIcon fontSize="small" />
-                                </IconButton> */}
+                                    <ClearIcon fontSize="small" />
+                                </IconButton>
                             </Box>
                         </Box>
 
@@ -223,6 +205,24 @@ const OrderDetail = ({ handleEditItem }) => {
                         </Box>
                     </Box>
                 )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderBottom: '1px solid #E3E3E3' }}>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={clearOrderItems}
+                        sx={{
+                            borderRadius: 5,
+                            textTransform: 'none',
+                            borderColor: '#0c3b5c',
+                            color: '#0c3b5c',
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: '16px',
+                        }}
+                    >
+                        Clear All
+                    </Button>
+                </Box>
 
                 {/* Order Items */}
                 <Box sx={{ mt: 1, p: 1 }}>
@@ -231,7 +231,7 @@ const OrderDetail = ({ handleEditItem }) => {
                             const isEditing = editingQtyIndex === index;
 
                             const handleQtyClick = (e) => {
-                                e.stopPropagation(); // prevent triggering handleEditItem
+                                e.stopPropagation();
                                 setEditingQtyIndex(index);
                                 setTempQty(item.quantity.toString());
                             };
@@ -343,7 +343,6 @@ const OrderDetail = ({ handleEditItem }) => {
                         <Typography variant="body2">Rs {subtotal.toFixed(2)}</Typography>
                     </Box>
 
-                    {/* Editable Discount Row */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
                             Discount
@@ -499,10 +498,10 @@ const OrderDetail = ({ handleEditItem }) => {
                         <Button
                             variant="contained"
                             onClick={() => {
-                                setFormData(tempFormData); // Commit changes
+                                setFormData(tempFormData);
                                 const val = Number(tempFormData.discountValue || 0);
                                 const calcDiscount = tempFormData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
-                                setDiscount(calcDiscount); // Rs value
+                                setDiscount(calcDiscount);
                                 setOpenDiscountModal(false);
                             }}
                             sx={{
