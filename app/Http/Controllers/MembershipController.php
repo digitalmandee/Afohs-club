@@ -325,7 +325,7 @@ class MembershipController extends Controller
 
     // Show Public Profile
 
-    public function show($id)
+    public function viewProfile($id)
     {
         $user = User::with(['member', 'member.memberType', 'userDetail'])->findOrFail($id);
 
