@@ -169,10 +169,31 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Subscription/AddSubscription');
     })->name('subscription.addsubscription');
 
+    Route::get('/admin/manage/subscription', function () {
+        return Inertia::render('App/Admin/Subscription/Management');
+    })->name('subscription.management');
+
+    Route::get('/admin/manage/monthly/fee', function () {
+        return Inertia::render('App/Admin/Subscription/Monthly');
+    })->name('subscription.monthly');
+
+    Route::get('/admin/subscription/sports/category', function () {
+        return Inertia::render('App/Admin/Subscription/Sports');
+    })->name('subscription.sports');
+
+    Route::get('/admin/subscription/add/sports/category', function () {
+        return Inertia::render('App/Admin/Subscription/AddSports');
+    })->name('subscription.addsports');
+
     //Finance Routes
     Route::get('/finance/dashboard', function () {
         return Inertia::render('App/Admin/Finance/Dashboard');
     })->name('finance.dashboard');
+
+    //Cards Routes
+    Route::get('/card/dashboard', function () {
+        return Inertia::render('App/Admin/Card/Dashboard');
+    })->name('cards.dashboard');
     // member
     // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
     // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');

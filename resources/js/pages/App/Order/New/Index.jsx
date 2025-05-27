@@ -9,14 +9,18 @@ import { useEffect, useState } from 'react';
 import DineDialog from './Dine';
 import ReservationDialog from './Reservation';
 import TakeAwayDialog from './Takeaway';
+import { usePage } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
+    const page = usePage().props;
+
     const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails } = useOrderStore();
 
     const [open, setOpen] = useState(false);
+    const [showData, setShowData] = useState(false);
 
     // get weeks in month
     useEffect(() => {
@@ -24,8 +28,19 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
     }, [monthYear]);
 
     useEffect(() => {
+        const query = new URLSearchParams(window.location.search);
+        const table = query.get('table');
+        const floor = query.get('floor');
+
         resetOrderDetails();
-        setInitialOrder({ orderNo, memberTypes, floorTables, time: dayjs().format('HH:mm') });
+
+        setInitialOrder({
+            orderNo,
+            memberTypes,
+            floorTables: floor ? [{ id: floor }] : floorTables,
+            table: table ? table : null,
+            time: dayjs().format('HH:mm'),
+        });
     }, []);
 
     return (
@@ -308,7 +323,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                 </Box>
             </div>
 
-            {/* <div
+            <div
                 style={{
                     position: 'fixed',
                     bottom: '0',
@@ -320,12 +335,9 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                     border: '1px solid #ccc',
                 }}
             >
-                <div
-                    style={{ width: '40px', height: '40px', backgroundColor: 'red', borderRadius: '50%', cursor: 'pointer' }}
-                    onClick={() => setShowData(!showData)}
-                ></div>
+                <div style={{ width: '40px', height: '40px', backgroundColor: 'red', borderRadius: '50%', cursor: 'pointer' }} onClick={() => setShowData(!showData)}></div>
                 {showData && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(orderDetails, null, 2)}</pre>}
-            </div> */}
+            </div>
         </>
     );
 };

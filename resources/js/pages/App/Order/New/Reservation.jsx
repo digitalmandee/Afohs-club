@@ -378,8 +378,6 @@ const ReservationDialog = () => {
                                     }}
                                     onClick={() => {
                                         if (day) {
-                                            alert(day);
-
                                             handleOrderDetailChange('date', day);
                                         }
                                     }}

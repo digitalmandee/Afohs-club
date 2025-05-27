@@ -131,6 +131,7 @@ class OrderController extends Controller
             'start_date' => $date,
             'start_time' => $request->time,
             'down_payment' => $request->down_payment,
+            'table_id' => $request->table,
             'status' => 'saved',
         ]);
 
