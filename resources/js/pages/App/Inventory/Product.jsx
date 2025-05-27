@@ -63,6 +63,7 @@ const AddProduct = ({ product, id }) => {
         discountType: data.discountType || 'percentage',
     });
     const fileInputRef = useRef(null);
+    const [fieldErrors, setFieldErrors] = useState({}); // State to store field-specific errors
 
     const orderTypes = [
         { value: 'dineIn', label: 'Dine In', icon: EventSeatIcon },
@@ -75,18 +76,29 @@ const AddProduct = ({ product, id }) => {
     // Menu Steps
     const handleNextStep = () => {
         const validationErrors = getMenuValidationErrors(data);
-
         if (validationErrors.length > 0) {
-            validationErrors.map((error) => enqueueSnackbar(error, { variant: 'error' }));
+            // Map errors to fields
+            const newFieldErrors = {};
+            validationErrors.forEach((error) => {
+                if (error.includes('Name')) newFieldErrors.name = error;
+                if (error.includes('Category')) newFieldErrors.category_id = error;
+                if (error.includes('Kitchen')) newFieldErrors.kitchen = error;
+                if (error.includes('Current stock')) newFieldErrors.current_stock = error;
+                if (error.includes('Minimal stock')) newFieldErrors.minimal_stock = error;
+                if (error.includes('order type')) newFieldErrors.available_order_types = error;
+                if (error.includes('COGS')) newFieldErrors.cost_of_goods_sold = error;
+                if (error.includes('Base price')) newFieldErrors.base_price = error;
+                if (error.includes('Profit')) newFieldErrors.profit = error;
+            });
+            setFieldErrors(newFieldErrors);
             return;
         }
-
+        setFieldErrors({}); // Clear errors if validation passes
         setAddMenuStep(2);
     };
 
     const getMenuValidationErrors = (menu) => {
         const errors = [];
-
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.category_id) errors.push('Category is required');
         if (!menu.kitchen) errors.push('Kitchen is required');
@@ -101,6 +113,7 @@ const AddProduct = ({ product, id }) => {
 
     const handlePreviousStep = () => {
         setAddMenuStep(1);
+        setFieldErrors({}); // Clear errors when going back
     };
 
     // Handle form input changes
@@ -110,6 +123,8 @@ const AddProduct = ({ product, id }) => {
             ...prev,
             [name]: value,
         }));
+        // Clear error for the field when user starts typing
+        setFieldErrors((prev) => ({ ...prev, [name]: '' }));
     };
 
     const openDiscountDialog = () => {
@@ -121,17 +136,18 @@ const AddProduct = ({ product, id }) => {
             ...prev,
             available_order_types: prev.available_order_types.includes(type) ? prev.available_order_types.filter((t) => t !== type) : [...prev.available_order_types, type],
         }));
+        setFieldErrors((prev) => ({ ...prev, available_order_types: '' }));
     };
 
     const handleSelectAll = () => {
         setData((prev) => {
             const allSelected = orderTypes.every((opt) => prev.available_order_types.includes(opt.value));
-
             return {
                 ...prev,
                 available_order_types: allSelected ? [] : orderTypes.map((opt) => opt.value),
             };
         });
+        setFieldErrors((prev) => ({ ...prev, available_order_types: '' }));
     };
 
     // Handle variant changes
@@ -174,9 +190,7 @@ const AddProduct = ({ product, id }) => {
         setData((prev) => {
             const variants = [...prev.variants];
             const newItem = variants[variantIndex].newItem;
-
             if (!newItem?.name) return prev;
-
             variants[variantIndex].items = [
                 ...(variants[variantIndex].items || []),
                 {
@@ -233,20 +247,17 @@ const AddProduct = ({ product, id }) => {
 
     // Save new menu
     const handleSaveMenu = () => {
-        // Update data with tempFormData values before submission
         setData((prev) => ({
             ...prev,
             discountValue: tempFormData.discountValue,
             discountType: tempFormData.discountType,
         }));
-
         transform((data) => ({
             ...data,
             discount: data.discountValue || null,
             discountType: data.discountType || null,
             kitchen: data.kitchen ? { id: data.kitchen.id } : null,
         }));
-
         submit(id ? 'put' : 'post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
             onSuccess: () => {
                 enqueueSnackbar('Product added successfully', { variant: 'success' });
@@ -380,7 +391,7 @@ const AddProduct = ({ product, id }) => {
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Product Name
                                         </Typography>
-                                        <TextField fullWidth placeholder="Cappucino" name="name" value={data.name} onChange={handleInputChange} variant="outlined" size="small" />
+                                        <TextField required fullWidth placeholder="Cappucino" name="name" value={data.name} onChange={handleInputChange} variant="outlined" size="small" error={!!fieldErrors.name} helperText={fieldErrors.name} />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
@@ -405,6 +416,8 @@ const AddProduct = ({ product, id }) => {
                                                 SelectProps={{
                                                     displayEmpty: true,
                                                 }}
+                                                error={!!fieldErrors.category_id}
+                                                helperText={fieldErrors.category_id}
                                             >
                                                 <MenuItem value="">Choose category</MenuItem>
                                                 {categories?.length > 0 &&
@@ -426,12 +439,13 @@ const AddProduct = ({ product, id }) => {
                                                 options={kitchens}
                                                 value={data.kitchen}
                                                 getOptionLabel={(option) => option?.name || ''}
-                                                onChange={(event, value) =>
+                                                onChange={(event, value) => {
                                                     setData((prev) => ({
                                                         ...prev,
                                                         kitchen: value || null,
-                                                    }))
-                                                }
+                                                    }));
+                                                    setFieldErrors((prev) => ({ ...prev, kitchen: '' }));
+                                                }}
                                                 loading={loadingKitchen}
                                                 renderInput={(params) => (
                                                     <TextField
@@ -440,6 +454,8 @@ const AddProduct = ({ product, id }) => {
                                                         sx={{ p: 0 }}
                                                         placeholder="Select Kitchen"
                                                         variant="outlined"
+                                                        error={!!fieldErrors.kitchen}
+                                                        helperText={fieldErrors.kitchen}
                                                         InputProps={{
                                                             ...params.InputProps,
                                                             endAdornment: (
@@ -464,44 +480,60 @@ const AddProduct = ({ product, id }) => {
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Current Ready Stock
                                         </Typography>
-                                        <Box sx={{ display: 'flex' }}>
-                                            <TextField fullWidth placeholder="10" name="current_stock" value={data.current_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" />
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: '1px solid #e0e0e0',
-                                                    borderLeft: 'none',
-                                                    px: 2,
-                                                    borderTopRightRadius: 4,
-                                                    borderBottomRightRadius: 4,
-                                                }}
-                                            >
-                                                <Typography variant="body2">Pcs</Typography>
+                                        <Box>
+                                            <Box sx={{ display: 'flex' }}>
+                                                <TextField fullWidth placeholder="10" name="current_stock" value={data.current_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" error={!!fieldErrors.current_stock} />
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        border: '1px solid #e0e0e0',
+                                                        borderLeft: 'none',
+                                                        px: 2,
+                                                        borderTopRightRadius: 4,
+                                                        borderBottomRightRadius: 4,
+                                                        borderColor: fieldErrors.current_stock ? 'error.main' : '#e0e0e0', // Highlight border if error
+                                                    }}
+                                                >
+                                                    <Typography variant="body2">Pcs</Typography>
+                                                </Box>
                                             </Box>
+                                            {fieldErrors.current_stock && (
+                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                                                    {fieldErrors.current_stock}
+                                                </Typography>
+                                            )}
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Minimal Stock
                                         </Typography>
-                                        <Box sx={{ display: 'flex' }}>
-                                            <TextField fullWidth placeholder="10" name="minimal_stock" value={data.minimal_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" />
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: '1px solid #e0e0e0',
-                                                    borderLeft: 'none',
-                                                    px: 2,
-                                                    borderTopRightRadius: 4,
-                                                    borderBottomRightRadius: 4,
-                                                }}
-                                            >
-                                                <Typography variant="body2">Pcs</Typography>
+                                        <Box>
+                                            <Box sx={{ display: 'flex' }}>
+                                                <TextField fullWidth placeholder="10" name="minimal_stock" value={data.minimal_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" error={!!fieldErrors.minimal_stock} />
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        border: '1px solid #e0e0e0',
+                                                        borderLeft: 'none',
+                                                        px: 2,
+                                                        borderTopRightRadius: 4,
+                                                        borderBottomRightRadius: 4,
+                                                        borderColor: fieldErrors.minimal_stock ? 'error.main' : '#e0e0e0', // Highlight border if error
+                                                    }}
+                                                >
+                                                    <Typography variant="body2">Pcs</Typography>
+                                                </Box>
                                             </Box>
+                                            {fieldErrors.minimal_stock && (
+                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                                                    {fieldErrors.minimal_stock}
+                                                </Typography>
+                                            )}
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
@@ -600,7 +632,7 @@ const AddProduct = ({ product, id }) => {
                                                 <Switch checked={orderTypes.every((opt) => data.available_order_types.includes(opt.value))} onChange={handleSelectAll} color="primary" size="small" />
                                             </Box>
                                         </Box>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                        <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                                             {orderTypes.map((item, index) => {
                                                 const isSelected = data.available_order_types.includes(item.value);
                                                 return (
@@ -626,49 +658,70 @@ const AddProduct = ({ product, id }) => {
                                                 );
                                             })}
                                         </Box>
+                                        {fieldErrors.available_order_types && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                {fieldErrors.available_order_types}
+                                            </Typography>
+                                        )}
                                     </Grid>
                                     <Grid item xs={4}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Cost Of Goods Sold (COGS)
                                         </Typography>
-                                        <Box sx={{ display: 'flex' }}>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: '1px solid #e0e0e0',
-                                                    borderRight: 'none',
-                                                    px: 2,
-                                                    borderTopLeftRadius: 4,
-                                                    borderBottomLeftRadius: 4,
-                                                }}
-                                            >
-                                                <Typography variant="body2">Rs</Typography>
+                                        <Box>
+                                            <Box sx={{ display: 'flex' }}>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        border: '1px solid #e0e0e0',
+                                                        borderRight: 'none',
+                                                        px: 2,
+                                                        borderTopLeftRadius: 4,
+                                                        borderBottomLeftRadius: 4,
+                                                        borderColor: fieldErrors.cost_of_goods_sold ? 'error.main' : '#e0e0e0', // Highlight border if error
+                                                    }}
+                                                >
+                                                    <Typography variant="body2">Rs</Typography>
+                                                </Box>
+                                                <TextField fullWidth placeholder="3.00" name="cost_of_goods_sold" value={data.cost_of_goods_sold} onChange={handleInputChange} variant="outlined" size="small" type="number" inputProps={{ step: '0.01' }} error={!!fieldErrors.cost_of_goods_sold} />
                                             </Box>
-                                            <TextField fullWidth placeholder="3.00" name="cost_of_goods_sold" value={data.cost_of_goods_sold} onChange={handleInputChange} variant="outlined" size="small" type="number" inputProps={{ step: '0.01' }} />
+                                            {fieldErrors.cost_of_goods_sold && (
+                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                                                    {fieldErrors.cost_of_goods_sold}
+                                                </Typography>
+                                            )}
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Base Price Selling
                                         </Typography>
-                                        <Box sx={{ display: 'flex' }}>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: '1px solid #e0e0e0',
-                                                    borderRight: 'none',
-                                                    px: 2,
-                                                    borderTopLeftRadius: 4,
-                                                    borderBottomLeftRadius: 4,
-                                                }}
-                                            >
-                                                <Typography variant="body2">Rs</Typography>
+                                        <Box>
+                                            <Box sx={{ display: 'flex' }}>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        border: '1px solid #e0e0e0',
+                                                        borderRight: 'none',
+                                                        px: 2,
+                                                        borderTopLeftRadius: 4,
+                                                        borderBottomLeftRadius: 4,
+                                                        borderColor: fieldErrors.base_price ? 'error.main' : '#e0e0e0', // Highlight border if error
+                                                    }}
+                                                >
+                                                    <Typography variant="body2">Rs</Typography>
+                                                </Box>
+                                                <TextField fullWidth placeholder="4.00" name="base_price" value={data.base_price} onChange={handleInputChange} variant="outlined" size="small" type="number" inputProps={{ step: '0.01' }} error={!!fieldErrors.base_price} />
                                             </Box>
-                                            <TextField fullWidth placeholder="4.00" name="base_price" value={data.base_price} onChange={handleInputChange} variant="outlined" size="small" type="number" inputProps={{ step: '0.01' }} />
+                                            {fieldErrors.base_price && (
+                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                                                    {fieldErrors.base_price}
+                                                </Typography>
+                                            )}
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
@@ -680,6 +733,11 @@ const AddProduct = ({ product, id }) => {
                                                 Rs {data.profit}
                                             </Typography>
                                         </Box>
+                                        {fieldErrors.profit && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                {fieldErrors.profit}
+                                            </Typography>
+                                        )}
                                     </Grid>
 
                                     {/* Product Variant */}
@@ -707,7 +765,6 @@ const AddProduct = ({ product, id }) => {
                                                             {variant.name}
                                                         </Typography>
                                                     )}
-
                                                     <Switch checked={!!variant.active} onChange={() => handleVariantToggle(variant.name)} color="primary" size="small" />
                                                 </Box>
 
@@ -797,7 +854,7 @@ const AddProduct = ({ product, id }) => {
                                 <Typography variant="body1" sx={{ mb: 2 }}>
                                     Menu Image
                                 </Typography>
-                                <Box sx={{ display: 'flyyex', gap: 2, mb: 4 }}>
+                                <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
                                     {uploadedImages.length > 0 &&
                                         uploadedImages.map((image, index) => (
                                             <Box

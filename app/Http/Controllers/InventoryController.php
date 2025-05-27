@@ -49,8 +49,8 @@ class InventoryController extends Controller
     {
         // Validate the incoming request data
         $request->validate([
-            'name' => 'required|string|max:255',
-            'menu_code' => 'required|string|max:100',
+            'name' => 'nullable|string|max:255',
+            'menu_code' => 'nullable|string|max:100',
             'category_id' => 'required',
             'kitchen' => 'required|array',
             'kitchen.id' => ['required', 'exists:users,id', new KitchenRole()],
@@ -63,7 +63,7 @@ class InventoryController extends Controller
             'cost_of_goods_sold' => 'required|numeric|min:0',
             'base_price' => 'required|numeric|min:0',
             'profit' => 'required|numeric',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'images' => 'nullable|array',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
         ]);
