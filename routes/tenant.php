@@ -111,6 +111,8 @@ Route::group([
         Route::get('/add/newfloor/{id?}', [FloorController::class, 'createOrEdit'])->name('floors.createOrEdit');
 
         Route::get('/floors/get-floors', [FloorController::class, 'getFloors'])->name('floors.getFloors');
+        // get Table Order Details
+        Route::get('/table/order/{id}', [FloorController::class, 'tableOrderDetails'])->name('table.order.details');
 
         // End of floors routes
 

@@ -87,13 +87,14 @@ export const useOrderStore = create((set, get) => ({
                 customer_change: 0,
             },
         })),
-    setInitialOrder: ({ orderNo, memberTypes, floorTables, time }) =>
+    setInitialOrder: ({ orderNo, memberTypes, floorTables, time, table }) =>
         set((state) => ({
             orderDetails: {
                 ...state.orderDetails,
                 order_no: orderNo,
                 membership_type: memberTypes[0]?.id ?? '',
                 floor: floorTables[0]?.id ?? '',
+                table: table ?? '',
                 time: time ?? dayjs().format('HH:mm'),
             },
         })),
