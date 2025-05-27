@@ -28,4 +28,25 @@ class FileHelper
         // Return the full URL of the image
         return "tenants/{$tenantId}/{$folder}/{$filename}";
     }
+
+    public static function saveBinaryImage(string $binaryData, string $folder, string $filename = null): string
+    {
+        $tenantId = tenant('id') ?? 'default';
+
+        $destinationPath = public_path("tenants/{$tenantId}/{$folder}");
+
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0777, true);
+        }
+
+        // Generate a unique filename if not provided
+        $filename = $filename ?? (time() . '_' . uniqid() . '.png');
+
+        $filePath = "{$destinationPath}/{$filename}";
+
+        // Save the binary content
+        file_put_contents($filePath, $binaryData);
+
+        return "tenants/{$tenantId}/{$folder}/{$filename}";
+    }
 }
