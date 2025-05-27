@@ -3,41 +3,7 @@ import { TextField, Button, Paper, Typography, Grid, Box, IconButton } from '@mu
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const AddForm2 = ({ onNext, onBack }) => {
-    // const [formData, setFormData] = useState({
-    //     mobileNumberA: '',
-    //     mobileNumberB: '',
-    //     mobileNumberC: '',
-    //     telephoneNumber: '',
-    //     personalEmail: '',
-    //     criticalEmail: '',
-    //     emergencyName: '',
-    //     emergencyRelation: '',
-    //     emergencyContact: '',
-    //     currentAddress: '',
-    //     currentCity: '',
-    //     currentCountry: '',
-    //     permanentAddress: '',
-    //     permanentCity: '',
-    //     permanentCountry: '',
-    // });
-    const [formData, setFormData] = useState({
-        mobileNumberA: '9876543210',
-        mobileNumberB: '9123456780',
-        mobileNumberC: '9988776655',
-        telephoneNumber: '02212345678',
-        personalEmail: 'john.doe@example.com',
-        criticalEmail: 'johndoe.urgent@example.com',
-        emergencyName: 'Jane Doe',
-        emergencyRelation: 'Sister',
-        emergencyContact: '9876543211',
-        currentAddress: '123 Street Name, Sector 45',
-        currentCity: 'Mumbai',
-        currentCountry: 'India',
-        permanentAddress: '456 Lane, MG Road',
-        permanentCity: 'Pune',
-        permanentCountry: 'India',
-    });
+const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));

@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import { AccountBalance as AccountBalanceIcon, ArrowForward as ArrowForwardIcon, Backspace as BackspaceIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { Box, Button, Dialog, Grid, InputAdornment, MenuItem, Select, TextField, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Receipt from './Receipt';
 
 const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleClosePayment }) => {
@@ -19,6 +19,11 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     // Credit card states
     const [creditCardType, setCreditCardType] = useState('visa');
     const [receiptFile, setReceiptFile] = useState(null);
+
+    // Split Payment
+    const [cashAmount, setCashAmount] = useState('0');
+    const [creditCardAmount, setCreditCardAmount] = useState('0');
+    const [bankTransferAmount, setBankTransferAmount] = useState('0');
 
     const handlePaymentMethodChange = (method) => {
         setActivePaymentMethod(method);
@@ -120,11 +125,18 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             });
         } else {
             // For other payment methods (cash, bank) use regular payload
+            const paidAmount = activePaymentMethod === 'split_payment' ? (parseFloat(cashAmount || 0) + parseFloat(creditCardAmount || 0) + parseFloat(bankTransferAmount || 0)).toFixed(2) : inputAmount;
+
             const payload = {
                 invoice_id: invoiceData?.id,
-                paid_amount: inputAmount,
+                paid_amount: paidAmount,
                 customer_changes: customerChanges,
                 payment_method: activePaymentMethod,
+                ...(activePaymentMethod === 'split_payment' && {
+                    cash: cashAmount,
+                    credit_card: creditCardAmount,
+                    bank_transfer: bankTransferAmount,
+                }),
             };
 
             router.post(route('order.payment'), payload, {
@@ -146,6 +158,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         }
     };
 
+    useEffect(() => {
+        if (activePaymentMethod === 'split_payment') {
+            const totalPaid = parseFloat(cashAmount || 0) + parseFloat(creditCardAmount || 0) + parseFloat(bankTransferAmount || 0);
+            const change = (totalPaid - invoiceData.total_price).toFixed(2);
+            setCustomerChanges(change);
+            setInputAmount(totalPaid.toFixed(2)); // Optional: track total paid in inputAmount too
+        }
+    }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData?.total_price, activePaymentMethod]);
+
     return (
         <Dialog
             open={openPaymentModal}
@@ -161,7 +182,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     height: '100vh',
                     maxHeight: '100vh',
                     width: '100%',
-                    maxWidth: '800px',
+                    maxWidth: '1000px',
                     borderRadius: 0,
                     overflow: 'auto',
                 },
@@ -224,6 +245,19 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 Bank Transfer
                             </Typography>
                         </Box>
+
+                        <Box sx={activePaymentMethod === 'split_payment' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('split_payment')}>
+                            <AccountBalanceIcon
+                                sx={{
+                                    fontSize: 24,
+                                    mb: 1,
+                                    color: activePaymentMethod === 'split_payment' ? '#0a3d62' : '#666',
+                                }}
+                            />
+                            <Typography variant="body1" fontWeight={activePaymentMethod === 'split_payment' ? 'medium' : 'normal'}>
+                                Split Payment
+                            </Typography>
+                        </Box>
                     </Box>
 
                     {/* Cash Payment Form */}
@@ -236,13 +270,13 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 <TextField
                                     fullWidth
                                     value={inputAmount}
+                                    onChange={(e) => handleQuickAmountClick(e.target.value)}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
                                                 <Typography variant="body1">Rs</Typography>
                                             </InputAdornment>
                                         ),
-                                        readOnly: true,
                                     }}
                                     sx={{ mb: 2 }}
                                 />
@@ -440,6 +474,43 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     Upload Receipt
                                 </Typography>
                                 <input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
+                            </Grid>
+                        </Grid>
+                    )}
+
+                    {/* Split Payment */}
+                    {activePaymentMethod === 'split_payment' && (
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle1" mb={1}>
+                                    Cash
+                                </Typography>
+                                <TextField fullWidth type="number" value={cashAmount} onChange={(e) => setCashAmount(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} sx={{ mb: 3 }} />
+
+                                <Typography variant="subtitle1" mb={1}>
+                                    Credit Card
+                                </Typography>
+                                <TextField fullWidth type="number" value={creditCardAmount} onChange={(e) => setCreditCardAmount(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} sx={{ mb: 3 }} />
+
+                                <Typography variant="subtitle1" mb={1}>
+                                    Bank Transfer
+                                </Typography>
+                                <TextField fullWidth type="number" value={bankTransferAmount} onChange={(e) => setBankTransferAmount(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} sx={{ mb: 3 }} />
+
+                                <Typography variant="subtitle1" mb={1}>
+                                    Customer Changes
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        mb: 3,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <Typography variant="h5" fontWeight="bold" color={Number.parseFloat(customerChanges) < 0 ? '#f44336' : '#333'}>
+                                        Rs {customerChanges}
+                                    </Typography>
+                                </Box>
                             </Grid>
                         </Grid>
                     )}

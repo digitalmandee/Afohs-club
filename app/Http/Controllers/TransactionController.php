@@ -46,7 +46,7 @@ class TransactionController extends Controller
             'invoice_id' => 'required|exists:invoices,id',
             'paid_amount' => 'required|numeric',
             // 'customer_changes' => 'required|numeric',
-            'payment_method' => 'required|in:cash,credit_card',
+            'payment_method' => 'required|in:cash,credit_card,split_payment',
             // Conditional validation for credit card fields
             'credit_card_type' => 'required_if:payment_method,credit_card|string|nullable',
             // If you handle receipt upload, validate here, e.g. 'receipt' => 'nullable|file|mimes:jpg,png,pdf',
@@ -75,6 +75,12 @@ class TransactionController extends Controller
                 $path = FileHelper::saveImage($request->file('receipt'), 'receipts');
                 $invoice->receipt = $path;
             }
+        }
+        if ($request->payment_method === 'split_payment') {
+            $invoice->customer_change = $request->customer_changes;
+            $invoice->cash = $request->cash;
+            $invoice->credit_card = $request->credit_card;
+            $invoice->bank_transfer = $request->bank_transfer;
         }
 
         $invoice->status = 'paid';

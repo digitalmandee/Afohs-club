@@ -3,7 +3,7 @@ import { TextField, Button, Select, MenuItem, FormControl, Paper, Typography, Gr
 import { ArrowBack, Add, Delete, Edit, KeyboardArrowRight, KeyboardArrowDown } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const AddForm1 = ({ onNext, userNo }) => {
+const AddForm1 = ({ onNext, userNo, formData, setFormData }) => {
     const [memberImage, setMemberImage] = useState(null);
     const [showImageButtons, setShowImageButtons] = useState(false);
     // const [title, setTitle] = useState('');
@@ -12,42 +12,9 @@ const AddForm1 = ({ onNext, userNo }) => {
     const [genderOpen, setGenderOpen] = useState(false);
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
-    // const [formData, setFormData] = useState({
-    //     coaAccount: '',
-    //     firstName: '',
-    //     middleName: '',
-    //     lastName: '',
-    //     nameComments: '',
-    //     fatherHusbandName: '',
-    //     fatherMembershipNo: '',
-    //     nationality: '',
-    //     cnicNo: '',
-    //     passportNo: '',
-    //     ntn: '',
-    //     dateOfBirth: '',
-    //     education: '',
-    //     membershipReason: '',
-    // });
     const [title, setTitle] = useState('Mr');
     const [gender, setGender] = useState('Male');
-
-    const [formData, setFormData] = useState({
-        profile_photo: '',
-        coaAccount: 'COA123456',
-        firstName: '',
-        middleName: '',
-        lastName: '',
-        nameComments: 'Preferred name: John W. Doe',
-        fatherHusbandName: 'Michael Doe',
-        fatherMembershipNo: 'MEM789',
-        nationality: 'Pakistan',
-        cnicNo: '4210112345678',
-        passportNo: 'AB1234567',
-        ntn: '1234567-8',
-        dateOfBirth: '1990-05-15', // Changed to YYYY-MM-DD and past date
-        education: 'Bachelor’s in Computer Science, University of Karachi, 2012',
-        membershipReason: 'Interested in networking opportunities and professional development through the organization.',
-    });
+    const [formErrors, setFormErrors] = useState({});
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {
@@ -89,43 +56,43 @@ const AddForm1 = ({ onNext, userNo }) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
 
-        // Validate dateOfBirth
+        // Clear error on change
+        setFormErrors((prev) => ({ ...prev, [name]: '' }));
+
+        // Validate date
         if (name === 'dateOfBirth') {
             if (!value) {
                 setDateError('Date of Birth is required');
-                return;
-            }
-            const date = new Date(value);
-            const today = new Date();
-            if (isNaN(date.getTime())) {
-                setDateError('Please enter a valid date');
-            } else if (date > today) {
-                setDateError('Date of Birth cannot be in the future');
             } else {
-                setDateError('');
+                const date = new Date(value);
+                const today = new Date();
+                if (isNaN(date.getTime())) {
+                    setDateError('Please enter a valid date');
+                } else if (date > today) {
+                    setDateError('Date of Birth cannot be in the future');
+                } else {
+                    setDateError('');
+                }
             }
         }
     };
 
     const handleSubmit = () => {
-        // Basic validation
-        const missingFields = [];
-        if (!formData.coaAccount) missingFields.push('COA Account');
-        if (!formData.firstName) missingFields.push('First Name');
-        if (!formData.lastName) missingFields.push('Last Name');
-        if (!formData.fatherHusbandName) missingFields.push('Father/Husband Name');
-        if (!formData.cnicNo) missingFields.push('CNIC No');
-        if (!formData.passportNo) missingFields.push('Passport No');
-        if (!formData.dateOfBirth) missingFields.push('Date of Birth');
+        const errors = {};
 
-        if (missingFields.length > 0) {
-            alert(`Please fill all required fields: ${missingFields.join(', ')}`);
-            return;
-        }
+        if (!formData.coaAccount) errors.coaAccount = 'COA Account is required';
+        if (!formData.firstName) errors.firstName = 'First Name is required';
+        if (!formData.lastName) errors.lastName = 'Last Name is required';
+        if (!formData.fatherHusbandName) errors.fatherHusbandName = 'Father/Husband Name is required';
+        if (!formData.cnicNo) errors.cnicNo = 'CNIC No is required';
+        if (!formData.passportNo) errors.passportNo = 'Passport No is required';
+        if (!formData.dateOfBirth) errors.dateOfBirth = 'Date of Birth is required';
+        else if (dateError) errors.dateOfBirth = dateError;
 
-        if (dateError) {
-            alert(dateError);
-            return;
+        setFormErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            return; // Stop submission if errors exist
         }
 
         const dataToSave = {
@@ -134,8 +101,8 @@ const AddForm1 = ({ onNext, userNo }) => {
             gender,
             memberImage,
         };
-        console.log('AddForm1 Data:', dataToSave); // Debug log
 
+        console.log('AddForm1 Data:', dataToSave); // Debug
         onNext(dataToSave);
     };
 
@@ -301,7 +268,7 @@ const AddForm1 = ({ onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     COA Account*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="coaAccount" value={formData.coaAccount} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="coaAccount" value={formData.coaAccount} error={!!formErrors.coaAccount} helperText={formErrors.coaAccount} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Title */}
@@ -340,7 +307,7 @@ const AddForm1 = ({ onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     First Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter first name" size="small" name="firstName" value={formData.firstName} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter first name" size="small" name="firstName" value={formData.firstName} error={!!formErrors.firstName} helperText={formErrors.firstName} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Middle Name */}
@@ -356,7 +323,7 @@ const AddForm1 = ({ onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Last Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="lastName" value={formData.lastName} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="lastName" value={formData.lastName} error={!!formErrors.lastName} helperText={formErrors.lastName} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Name Comments */}
@@ -372,7 +339,7 @@ const AddForm1 = ({ onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Father/Husband Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter name" size="small" name="fatherHusbandName" value={formData.fatherHusbandName} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter name" size="small" name="fatherHusbandName" value={formData.fatherHusbandName} error={!!formErrors.fatherHusbandName} helperText={formErrors.fatherHusbandName} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Father Membership No */}
@@ -399,7 +366,7 @@ const AddForm1 = ({ onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     CNIC No*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter CNIC Number (13 digits)" size="small" name="cnicNo" value={formData.cnicNo} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter CNIC Number (13 digits)" size="small" name="cnicNo" value={formData.cnicNo} error={!!formErrors.cnicNo} helperText={formErrors.cnicNo} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Passport No */}
@@ -407,7 +374,7 @@ const AddForm1 = ({ onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Passport No*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="passportNo" value={formData.passportNo} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="passportNo" value={formData.passportNo} error={!!formErrors.passportNo} helperText={formErrors.passportNo} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Gender */}
@@ -453,7 +420,7 @@ const AddForm1 = ({ onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Date of Birth*
                                 </Typography>
-                                <TextField fullWidth type="date" InputLabelProps={{ shrink: true }} variant="outlined" size="small" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} error={!!dateError} helperText={dateError} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth type="date" InputLabelProps={{ shrink: true }} variant="outlined" size="small" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleInputChange} error={!!formErrors.dateOfBirth || !!dateError} helperText={formErrors.dateOfBirth || dateError} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Education */}
