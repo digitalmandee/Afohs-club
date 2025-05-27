@@ -2,7 +2,7 @@ import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, EventSeat as EventSeatIcon, FormatBold as FormatBoldIcon, FormatItalic as FormatItalicIcon, FormatListBulleted, FormatListNumbered, InsertEmoticon as InsertEmoticonIcon, Link as LinkIcon, LocalMall as LocalMallIcon, LocalShipping as LocalShippingIcon, ShoppingBag as ShoppingBagIcon } from '@mui/icons-material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Autocomplete, Box, Button, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import { Autocomplete, Box, Button, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, MenuItem, Switch, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ChevronDown } from 'lucide-react';
@@ -11,11 +11,12 @@ import { useEffect, useRef, useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
+
 const AddProduct = ({ product, id }) => {
     const [open, setOpen] = useState(false);
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
-            ? { ...product }
+            ? { ...product, discountValue: product.discount || '', discountType: product.discount_type || 'percentage' }
             : {
                   name: '',
                   menu_code: '',
@@ -28,6 +29,8 @@ const AddProduct = ({ product, id }) => {
                   cost_of_goods_sold: '',
                   base_price: '',
                   profit: '0.00',
+                  discountValue: '',
+                  discountType: 'percentage',
                   variants: [
                       {
                           name: 'Size',
@@ -51,9 +54,15 @@ const AddProduct = ({ product, id }) => {
     const [addMenuStep, setAddMenuStep] = useState(1);
     const [loadingKitchen, setLoadingKitchen] = useState(false);
     const [uploadedImages, setUploadedImages] = useState([]);
+    const [formData, setFormData] = useState({
+        discountValue: data.discountValue || '',
+        discountType: data.discountType || 'percentage',
+    });
+    const [tempFormData, setTempFormData] = useState({
+        discountValue: data.discountValue || '',
+        discountType: data.discountType || 'percentage',
+    });
     const fileInputRef = useRef(null);
-
-    // Snackbar
 
     const orderTypes = [
         { value: 'dineIn', label: 'Dine In', icon: EventSeatIcon },
@@ -68,9 +77,7 @@ const AddProduct = ({ product, id }) => {
         const validationErrors = getMenuValidationErrors(data);
 
         if (validationErrors.length > 0) {
-            validationErrors.map((error, index) => enqueueSnackbar(error, { variant: 'error' }));
-
-            // setSnackbarList((prev) => [...prev, ...errorSnackbars]);
+            validationErrors.map((error) => enqueueSnackbar(error, { variant: 'error' }));
             return;
         }
 
@@ -81,7 +88,6 @@ const AddProduct = ({ product, id }) => {
         const errors = [];
 
         if (!menu.name.trim()) errors.push('Name is required');
-        // if (!menu.menu_code.trim()) errors.push('Menu code is required');
         if (!menu.category_id) errors.push('Category is required');
         if (!menu.kitchen) errors.push('Kitchen is required');
         if (!menu.current_stock || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
@@ -90,8 +96,6 @@ const AddProduct = ({ product, id }) => {
         if (!menu.cost_of_goods_sold || isNaN(menu.cost_of_goods_sold)) errors.push('COGS must be a valid number');
         if (!menu.base_price || isNaN(menu.base_price)) errors.push('Base price must be a valid number');
         if (!menu.profit || isNaN(menu.profit)) errors.push('Profit must be a valid number');
-        // if (!menu.variants || Object.keys(menu.variants).length === 0) errors.push('At least one variant must be added');
-
         return errors;
     };
 
@@ -106,6 +110,10 @@ const AddProduct = ({ product, id }) => {
             ...prev,
             [name]: value,
         }));
+    };
+
+    const openDiscountDialog = () => {
+        setTempFormData(formData);
     };
 
     const handleOrderTypeToggle = (type) => {
@@ -162,36 +170,22 @@ const AddProduct = ({ product, id }) => {
         });
     };
 
-    const updateVariant = (variantName, updater) => {
-        setData((prev) => {
-            const index = prev.variants.findIndex((v) => v.name === variantName);
-            if (index === -1) return prev;
-
-            const updatedVariants = [...prev.variants];
-            updatedVariants[index] = updater(updatedVariants[index]);
-
-            return { ...prev, variants: updatedVariants };
-        });
-    };
-
     const addVariantItem = (variantIndex) => {
         setData((prev) => {
             const variants = [...prev.variants];
             const newItem = variants[variantIndex].newItem;
 
-            if (!newItem?.name) return prev; // Optionally require name
+            if (!newItem?.name) return prev;
 
             variants[variantIndex].items = [
                 ...(variants[variantIndex].items || []),
                 {
                     name: newItem.name,
-                    additional_price: parseFloat(newItem.price) || 0,
+                    additional_price: parseFloat(newItem.additional_price) || 0,
                     stock: parseInt(newItem.stock) || 0,
                 },
             ];
-
-            variants[variantIndex].newItem = { name: '', additional_price: '', stock: '' }; // Clear form
-
+            variants[variantIndex].newItem = { name: '', additional_price: '', stock: '' };
             return { ...prev, variants };
         });
     };
@@ -211,7 +205,7 @@ const AddProduct = ({ product, id }) => {
                 ...prev.variants,
                 {
                     name: 'New Variant',
-                    type: 'multiple', // or 'single' based on your logic/UI
+                    type: 'multiple',
                     active: true,
                     items: [],
                     newItem: { name: '', additional_price: '', stock: '' },
@@ -239,8 +233,22 @@ const AddProduct = ({ product, id }) => {
 
     // Save new menu
     const handleSaveMenu = () => {
+        // Update data with tempFormData values before submission
+        setData((prev) => ({
+            ...prev,
+            discountValue: tempFormData.discountValue,
+            discountType: tempFormData.discountType,
+        }));
+
+        transform((data) => ({
+            ...data,
+            discount: data.discountValue || null,
+            discountType: data.discountType || null,
+            kitchen: data.kitchen ? { id: data.kitchen.id } : null,
+        }));
+
         submit(id ? 'put' : 'post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
-            onSuccess: (data) => {
+            onSuccess: () => {
                 enqueueSnackbar('Product added successfully', { variant: 'success' });
                 reset();
                 setUploadedImages([]);
@@ -248,7 +256,6 @@ const AddProduct = ({ product, id }) => {
             },
             onError: (errors) => {
                 console.log(errors);
-
                 enqueueSnackbar('Something went wrong', { variant: 'error' });
             },
         });
@@ -276,10 +283,10 @@ const AddProduct = ({ product, id }) => {
             setLoadingKitchen(false);
         });
     };
+
     const fetchCategories = () => {
         axios.get(route('inventory.categories')).then((response) => {
             console.log(response.data);
-
             setCategories(response.data.categories);
         });
     };
@@ -497,6 +504,48 @@ const AddProduct = ({ product, id }) => {
                                             </Box>
                                         </Box>
                                     </Grid>
+                                    <Grid item xs={6}>
+                                        <Box mb={2}>
+                                            <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
+                                                Discount Rate
+                                            </Typography>
+                                            <TextField
+                                                fullWidth
+                                                name="discountValue"
+                                                type="number"
+                                                value={tempFormData.discountValue}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setTempFormData((prev) => ({ ...prev, discountValue: value }));
+                                                    setData((prev) => ({ ...prev, discountValue: value }));
+                                                }}
+                                                placeholder={tempFormData.discountType === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs'}
+                                                size="small"
+                                            />
+                                        </Box>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Box mb={3}>
+                                            <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
+                                                Discount Method
+                                            </Typography>
+                                            <TextField
+                                                select
+                                                fullWidth
+                                                name="discountType"
+                                                value={tempFormData.discountType}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setTempFormData((prev) => ({ ...prev, discountType: value }));
+                                                    setData((prev) => ({ ...prev, discountType: value }));
+                                                }}
+                                                size="small"
+                                            >
+                                                <MenuItem value="percentage">Percentage (%)</MenuItem>
+                                                <MenuItem value="amount">Fixed Amount (Rs)</MenuItem>
+                                            </TextField>
+                                        </Box>
+                                    </Grid>
                                     <Grid item xs={12}>
                                         <Box
                                             sx={{
@@ -648,8 +697,6 @@ const AddProduct = ({ product, id }) => {
                                             </Typography>
                                         </Box>
 
-                                        {/* <pre>{JSON.stringify(data.variants, null, 2)}</pre> */}
-
                                         {data.variants.map((variant, variantIndex) => (
                                             <Box key={variant.name} sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 2 }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -739,25 +786,6 @@ const AddProduct = ({ product, id }) => {
                                         <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddNewVariant} sx={{ mt: 2 }}>
                                             Add New Variant
                                         </Button>
-
-                                        {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Typography variant="body2" sx={{ mr: 1 }}>
-                                                Multiple Choice
-                                            </Typography>
-                                            <Tooltip title="Allow customers to select multiple toppings">
-                                                <IconButton size="small">
-                                                    <InfoIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Box>
-                                        <Switch
-                                            checked={data.toppings.multipleChoice}
-                                            onChange={handleMultipleChoiceToggle}
-                                            color="primary"
-                                            size="small"
-                                        />
-                                    </Box> */}
                                     </Grid>
                                 </Grid>
                             </Box>
@@ -769,7 +797,7 @@ const AddProduct = ({ product, id }) => {
                                 <Typography variant="body1" sx={{ mb: 2 }}>
                                     Menu Image
                                 </Typography>
-                                <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+                                <Box sx={{ display: 'flyyex', gap: 2, mb: 4 }}>
                                     {uploadedImages.length > 0 &&
                                         uploadedImages.map((image, index) => (
                                             <Box
@@ -792,25 +820,6 @@ const AddProduct = ({ product, id }) => {
                                                 />
                                             </Box>
                                         ))}
-                                    {/* <Box
-                                    sx={{
-                                        width: 80,
-                                        height: 80,
-                                        borderRadius: 1,
-                                        border: '1px solid #e0e0e0',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        backgroundColor: '#f5f5f5',
-                                    }}
-                                >
-                                    <Typography variant="body2" fontWeight="bold">
-                                        Upload
-                                    </Typography>
-                                    <CloudUploadIcon fontSize="small" sx={{ mt: 0.5 }} />
-                                </Box> */}
                                     <Box
                                         sx={{
                                             width: 80,
@@ -889,7 +898,7 @@ const AddProduct = ({ product, id }) => {
                         )}
                     </DialogContent>
 
-                    <DialogActions sx={{ p: 3, justifyContent: 'flexend' }}>
+                    <DialogActions sx={{ p: 3, justifyContent: 'flex-end' }}>
                         {addMenuStep === 1 ? (
                             <>
                                 <Button
