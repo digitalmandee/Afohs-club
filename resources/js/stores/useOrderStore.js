@@ -67,6 +67,9 @@ export const useOrderStore = create((set, get) => ({
         payment_method: 'cash',
         cash_total: 0,
         customer_change: 0,
+        kitchen_note: '',
+        staff_note: '',
+        payment_note: '',
     },
 
     resetOrderDetails: () =>
@@ -85,6 +88,9 @@ export const useOrderStore = create((set, get) => ({
                 payment_method: 'cash',
                 cash_total: 0,
                 customer_change: 0,
+                kitchen_note: '',
+                staff_note: '',
+                payment_note: '',
             },
         })),
     setInitialOrder: ({ orderNo, memberTypes, floorTables, time, table }) =>

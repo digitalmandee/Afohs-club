@@ -1,11 +1,13 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Save as SaveIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem } from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import ClearIcon from '@mui/icons-material/Clear';
 import axios from 'axios';
+import DescriptionIcon from '@mui/icons-material/Description';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
 const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange, clearOrderItems } = useOrderStore();
@@ -15,11 +17,26 @@ const OrderDetail = ({ handleEditItem }) => {
     const [editingQtyIndex, setEditingQtyIndex] = useState(null);
     const [tempQty, setTempQty] = useState(null);
     const [discount, setDiscount] = useState(0);
-    const [discountType, setDiscountType] = useState(0);
     const [setting, setSetting] = useState(null);
     const [loadingSetting, setLoadingSetting] = useState(true);
     const [isEditingTax, setIsEditingTax] = useState(false);
     const [tempTax, setTempTax] = useState('');
+    const [open, setOpen] = useState(false);
+    const [notes, setNotes] = useState({
+        kitchen_note: '',
+        staff_note: '',
+        payment_note: '',
+    });
+
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => setOpen(false);
+
+    const handleNoteChange = (e) => {
+        setNotes({
+            ...notes,
+            [e.target.name]: e.target.value,
+        });
+    };
 
     useEffect(() => {
         axios
@@ -31,6 +48,7 @@ const OrderDetail = ({ handleEditItem }) => {
             })
             .catch((error) => {
                 console.error('Failed to load setting:', error);
+                enqueueSnackbar('Failed to load tax settings. Please try again.', { variant: 'error' });
                 setLoadingSetting(false);
             });
     }, []);
@@ -69,8 +87,11 @@ const OrderDetail = ({ handleEditItem }) => {
             ...orderDetails,
             price: subtotal,
             tax: taxRate,
-            discount: discount,
+            discount: discountAmount,
             total_price: total,
+            kitchen_note: notes.kitchen_note,
+            staff_note: notes.staff_note,
+            payment_note: notes.payment_note,
         };
 
         router.post(route('order.send-to-kitchen'), payload, {
@@ -80,7 +101,8 @@ const OrderDetail = ({ handleEditItem }) => {
                 });
             },
             onError: (errors) => {
-                enqueueSnackbar('Something went wrong: ' + errors, {
+                const errorMessage = Object.values(errors).join(', ') || 'Something went wrong';
+                enqueueSnackbar(`Failed to send order: ${errorMessage}`, {
                     variant: 'error',
                 });
             },
@@ -118,6 +140,13 @@ const OrderDetail = ({ handleEditItem }) => {
         setIsEditingTax(false);
     };
 
+    const handleClearOrderItems = () => {
+        clearOrderItems();
+        setFormData({ discountValue: '', discountType: 'percentage' });
+        setDiscount(0);
+        setNotes({ kitchen_note: '', staff_note: '', payment_note: '' });
+    };
+
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: '80vh' }}>
             <Paper elevation={0} sx={{ width: '100%', maxWidth: 500, borderRadius: 1, overflow: 'hidden' }}>
@@ -130,7 +159,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                     Member
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                    <Avatar sx={{ width: 24, height: 24, bgcolor: '#e0e0e0', fontSize: 12, mr: 1 }}>Q</Avatar>
+                                    <Avatar sx={{ width: 24, height: 24, bgcolor: '#e0e0e0', fontSize: 12, mr: 1 }}>{orderDetails.member.name?.charAt(0) || 'Q'}</Avatar>
                                     <Typography variant="body2" fontWeight="medium">
                                         {orderDetails.member.name}
                                     </Typography>
@@ -148,7 +177,6 @@ const OrderDetail = ({ handleEditItem }) => {
                                 >
                                     <img src="/assets/food-tray.png" alt="" style={{ width: 20, height: 20, marginLeft: 4 }} />
                                 </Box>
-
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                     <ClearIcon fontSize="small" />
                                 </IconButton>
@@ -205,22 +233,44 @@ const OrderDetail = ({ handleEditItem }) => {
                         </Box>
                     </Box>
                 )}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderBottom: '1px solid #E3E3E3' }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'initial',
+                        alignItems: 'center',
+                        p: 1,
+                        borderBottom: '1px solid #E3E3E3',
+                    }}
+                >
                     <Button
-                        variant="outlined"
                         size="small"
-                        onClick={clearOrderItems}
+                        onClick={handleClearOrderItems}
                         sx={{
-                            borderRadius: 5,
                             textTransform: 'none',
-                            borderColor: '#0c3b5c',
                             color: '#0c3b5c',
                             display: 'flex',
                             alignItems: 'center',
-                            fontSize: '16px',
+                            padding: 0,
+                            minWidth: 0,
+                            marginRight: 0,
                         }}
                     >
-                        Clear All
+                        <HighlightOffIcon sx={{ fontSize: 24 }} />
+                    </Button>
+                    <Button
+                        size="small"
+                        onClick={handleOpen}
+                        sx={{
+                            textTransform: 'none',
+                            color: '#0c3b5c',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: 0,
+                            minWidth: 0,
+                            marginLeft: 2,
+                        }}
+                    >
+                        <DescriptionIcon sx={{ fontSize: 24 }} />
                     </Button>
                 </Box>
 
@@ -399,7 +449,7 @@ const OrderDetail = ({ handleEditItem }) => {
                 </Box>
 
                 {/* Action Buttons */}
-                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                <Box sx={{ mt: 1, display: 'flex', gap: 1, px: 1 }}>
                     <Button
                         variant="outlined"
                         sx={{
@@ -417,7 +467,7 @@ const OrderDetail = ({ handleEditItem }) => {
                         onClick={handleSendToKitchen}
                         sx={{
                             flex: 2,
-                            borderColor: '1px solid #3F4E4F',
+                            borderColor: '#3F4E4F',
                             color: '#555',
                             textTransform: 'none',
                         }}
@@ -474,8 +524,12 @@ const OrderDetail = ({ handleEditItem }) => {
                             Discount Method
                         </Typography>
                         <TextField select fullWidth name="discountType" value={tempFormData.discountType} onChange={(e) => setTempFormData((prev) => ({ ...prev, discountType: e.target.value }))} size="small">
-                            <MenuItem value="percentage">Percentage (%)</MenuItem>
-                            <MenuItem value="amount">Fixed Amount (Rs)</MenuItem>
+                            <MenuItem key="percentage" value="percentage">
+                                Percentage (%)
+                            </MenuItem>
+                            <MenuItem key="amount" value="amount">
+                                Fixed Amount (Rs)
+                            </MenuItem>
                         </TextField>
                     </Box>
 
@@ -498,9 +552,9 @@ const OrderDetail = ({ handleEditItem }) => {
                         <Button
                             variant="contained"
                             onClick={() => {
-                                setFormData(tempFormData);
                                 const val = Number(tempFormData.discountValue || 0);
                                 const calcDiscount = tempFormData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
+                                setFormData(tempFormData);
                                 setDiscount(calcDiscount);
                                 setOpenDiscountModal(false);
                             }}
@@ -517,6 +571,47 @@ const OrderDetail = ({ handleEditItem }) => {
                         </Button>
                     </Box>
                 </Box>
+            </Dialog>
+
+            {/* Notes Popup Modal */}
+            <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+                <DialogContent sx={{ position: 'relative' }}>
+                    {/* Close Icon */}
+                    <IconButton
+                        onClick={handleClose}
+                        sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            color: '#888',
+                            zIndex: 1,
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+
+                    {/* Note Fields */}
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: '#0c3b5c' }}>
+                                Kitchen Note
+                            </Typography>
+                            <TextField fullWidth multiline minRows={6} name="kitchen_note" placeholder="Instructions to chef will be displayed in kitchen along order details" value={notes.kitchen_note} onChange={handleNoteChange} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: '#0c3b5c' }}>
+                                Staff Note
+                            </Typography>
+                            <TextField fullWidth multiline minRows={6} name="staff_note" placeholder="Staff note for internal use" value={notes.staff_note} onChange={handleNoteChange} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: '#0c3b5c' }}>
+                                Payment Note
+                            </Typography>
+                            <TextField fullWidth multiline minRows={6} name="payment_note" placeholder="Payment note for internal use" value={notes.payment_note} onChange={handleNoteChange} />
+                        </Box>
+                    </Box>
+                </DialogContent>
             </Dialog>
         </Box>
     );
