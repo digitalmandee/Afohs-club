@@ -24,7 +24,10 @@ class Order extends Model
         'start_time',
         'order_time',
         'end_time',
-        'status'
+        'status',
+        'kitchen_note',
+        'staff_note',
+        'payment_note',
     ];
 
     public function orderItems()

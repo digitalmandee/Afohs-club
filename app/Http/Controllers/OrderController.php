@@ -145,6 +145,9 @@ class OrderController extends Controller
             'order_items' => 'required|array',
             'order_items.*.id' => 'required|exists:products,id',
             'price' => 'required|numeric',
+            'kitchen_note' => 'nullable|string',
+            'staff_note' => 'nullable|string',
+            'payment_note' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -166,6 +169,9 @@ class OrderController extends Controller
                     'down_payment' => $request->down_payment,
                     'amount' => $request->price,
                     'status' => 'pending',
+                    'kitchen_note' => $request->kitchen_note,
+                    'staff_note' => $request->staff_note,
+                    'payment_note' => $request->payment_note,
                 ]
             );
 

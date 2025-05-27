@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE invoices MODIFY COLUMN payment_method ENUM('cash', 'credit_card', 'bank_transfer', 'split_payment') NOT NULL");
+        // DB::statement("ALTER TABLE invoices MODIFY COLUMN payment_method ENUM('cash', 'credit_card', 'bank_transfer', 'split_payment') NOT NULL");
 
         Schema::table('invoices', function (Blueprint $table) {
             $table->bigInteger('cash')->default(0)->after('payment_method');
@@ -26,7 +26,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE invoices MODIFY COLUMN payment_method ENUM('cash', 'credit_card', 'bank_transfer') NOT NULL");
+        // DB::statement("ALTER TABLE invoices MODIFY COLUMN payment_method ENUM('cash', 'credit_card', 'bank_transfer') NOT NULL");
 
         Schema::table('invoices', function (Blueprint $table) {
             $table->dropColumn('cash');
