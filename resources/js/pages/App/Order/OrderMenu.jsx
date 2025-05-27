@@ -21,6 +21,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
 
     const [open, setOpen] = useState(false);
 
+    // const [showPayment, setShowPayment] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(2);
     const [variantProductId, setVariantProductId] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
@@ -36,6 +37,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
     const [variantProduct, setVariantProduct] = useState(null);
     const [initialEditItem, setInitialEditItem] = useState(null);
 
+    // This would be called when user clicks a product
     const handleProductClick = (product) => {
         if (product.minimal_stock > product.current_stock - 1) return;
 
@@ -47,6 +49,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
             const existingIndex = orderDetails.order_items.findIndex((item) => item.id === product.id && item.variants.length === 0);
 
             if (existingIndex !== -1) {
+                // Update existing item (increment quantity & total_price)
                 const updatedItems = [...orderDetails.order_items];
                 const existingItem = updatedItems[existingIndex];
 
@@ -59,13 +62,14 @@ const OrderMenu = ({ totalSavedOrders }) => {
 
                 handleOrderDetailChange('order_items', updatedItems);
             } else {
+                // Add new item
                 const newItem = {
                     id: product.id,
                     name: product.name,
                     price: parseFloat(product.base_price),
                     total_price: parseFloat(product.base_price),
                     quantity: 1,
-                    kitchen_id: product.kitchen_id || null,
+                    kitchen_id: product.kitchen_id,
                     category: product.category?.name || '',
                     variants: [],
                 };
@@ -77,6 +81,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
 
     const handleVariantConfirm = (item) => {
         let updatedItems = [...orderDetails.order_items];
+
         if (editingItemIndex !== null) {
             updatedItems[editingItemIndex] = item;
         } else {
@@ -93,7 +98,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
         setVariantProductId(item.id);
         setEditingItemIndex(index);
         setVariantPopupOpen(true);
-        setInitialEditItem(item);
+        setInitialEditItem(item); // new state to pass into VariantSelector
     };
 
     useEffect(() => {
@@ -120,7 +125,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
             >
                 <Box
                     sx={{
-                        bgcolor: '#f5f7f0',
+                        bgcolor: '#f5f5f5',
                         minHeight: '100vh',
                         display: 'flex',
                         flexDirection: 'column',
@@ -130,11 +135,14 @@ const OrderMenu = ({ totalSavedOrders }) => {
                     <Box
                         sx={{
                             py: 1,
+                            // px: 3,
                             display: 'flex',
                             alignItems: 'center',
+                            // borderBottom: "1px solid #e0e0e0",
+                            // bgcolor: "white",
                         }}
                     >
-                        <IconButton onClick={() => router.visit(route('order.id'))} sx={{ mr: 1 }}>
+                        <IconButton onClick={() => router.visit(route('order.new'))} sx={{ mr: 1 }}>
                             <ArrowBack />
                         </IconButton>
                         <Typography sx={{ color: '#3F4E4F', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
@@ -153,6 +161,20 @@ const OrderMenu = ({ totalSavedOrders }) => {
                             onConfirm={handleVariantConfirm}
                         />
                     )}
+                    {/* {variantPopupOpen && variantProduct && (
+                        <VariantSelector
+                            product={variantProduct}
+                            initialItem={initialEditItem}
+                            onClose={() => {
+                                setVariantPopupOpen(false);
+                                setEditingItemIndex(null);
+                                setInitialEditItem(null);
+                            }}
+                            onConfirm={handleVariantConfirm}
+                        />
+                    )} */}
+
+                    {/* <pre>{JSON.stringify(orderDetails, null, 2)}</pre> */}
 
                     {/* Main Content */}
                     <Box
@@ -166,6 +188,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Left Category Sidebar */}
                         <Box
                             sx={{
+                                // width: '95px',
                                 flex: { xs: '1 1 100%', sm: '0 0 100px', md: '0 0 95px' },
                                 marginLeft: 1,
                                 display: 'flex',
@@ -178,9 +201,9 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                 gap: 2,
                                 maxHeight: 7 * 90,
                                 overflowY: 'auto',
-                                scrollbarWidth: 'thin',
+                                scrollbarWidth: 'thin', // for Firefox
                                 '&::-webkit-scrollbar': {
-                                    width: '4px',
+                                    width: '4px', // for Chrome/Edge
                                 },
                                 '&::-webkit-scrollbar-thumb': {
                                     backgroundColor: '#ccc',
@@ -205,6 +228,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                             mb: 0.5,
                                         }}
                                     >
+                                        {/* Skip image for first item */}
                                         <Avatar
                                             src={tenantAsset(category.image)}
                                             alt={category.name}
@@ -232,7 +256,8 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Main Content Area */}
                         <Box
                             sx={{
-                                flex: { xs: '1 1 100%', md: '1 1 60%' },
+                                // width: '55%',
+                                flex: { xs: '1 1 100%', md: '1 1 60%' }, // Responsive width
                                 minWidth: 300,
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -244,6 +269,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                 elevation={0}
                                 sx={{
                                     p: 2,
+                                    // mb: 2,
                                     borderRadius: 2,
                                     display: 'flex',
                                     alignItems: 'center',
@@ -277,6 +303,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                         size="small"
                                         sx={{
                                             width: 300,
+                                            // height:44,
                                             mr: 2,
                                             borderRadius: 0,
                                             '& .MuiOutlinedInput-root': {
@@ -317,6 +344,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                 elevation={0}
                                 sx={{
                                     flex: 1,
+                                    // borderRadius: 2,
                                     p: 1,
                                     overflow: 'auto',
                                     bgcolor: 'transparent',
@@ -339,6 +367,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                                         height: '100%',
                                                         width: 100,
                                                         cursor: 'pointer',
+                                                        // bgcolor: 'pink',
                                                         '&:hover': {
                                                             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                                         },
@@ -350,6 +379,7 @@ const OrderMenu = ({ totalSavedOrders }) => {
                                                             height: 40,
                                                             borderRadius: '50%',
                                                             overflow: 'hidden',
+                                                            // mb: 1,
                                                         }}
                                                     >
                                                         <Box
@@ -386,7 +416,8 @@ const OrderMenu = ({ totalSavedOrders }) => {
                         {/* Order Details Section */}
                         <Paper
                             sx={{
-                                flex: { xs: '1 1 100%', md: '1 1 40%' },
+                                // width: '40%',
+                                flex: { xs: '1 1 100%', md: '1 1 40%' }, // Responsive width
                                 minWidth: 280,
                                 borderRadius: 2,
                                 p: 2,
@@ -456,6 +487,47 @@ const OrderMenu = ({ totalSavedOrders }) => {
                     </Box>
                 </Box>
             </div>
+
+            {/* Payment Modal */}
+            {/* <Modal
+                    open={showPayment}
+                    onClose={() => setShowPayment(false)}
+                    aria-labelledby="payment-modal-title"
+                    aria-describedby="payment-modal-description"
+                    closeAfterTransition
+                    sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                    }}
+                >
+                    <Slide
+                        direction="left"
+                        in={showPayment}
+                        mountOnEnter
+                        unmountOnExit
+                    >
+                        <Box
+                            sx={{
+                                position: "fixed",
+                                top: "10px",
+                                bottom: "10px",
+                                right: 10,
+                                width: { xs: "100%", sm: 900 },
+                                bgcolor: "#fff",
+                                boxShadow: 4,
+                                zIndex: 1300,
+                                overflowY: "auto",
+                                borderRadius: 1,
+                                scrollbarWidth: "none",
+                                "&::-webkit-scrollbar": {
+                                    display: "none",
+                                },
+                            }}
+                        >
+                            <PaymentPage />
+                        </Box>
+                    </Slide>
+                </Modal> */}
         </>
     );
 };
