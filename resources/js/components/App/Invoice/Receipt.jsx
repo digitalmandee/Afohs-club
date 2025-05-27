@@ -166,7 +166,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                     Order Id
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                    {paymentData.order.order_number}
+                    #{paymentData.order.order_number}
                 </Typography>
             </Box>
 
@@ -245,8 +245,19 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 </Typography>
                 <Typography variant="caption">Rs {(paymentData.amount * 0.12).toFixed(2)}</Typography>
             </Box>
-
             <Box sx={styles.receiptDivider} />
+            <Box sx={styles.receiptRow}>
+                <Typography variant="caption" color="text.secondary">
+                    Total Cash
+                </Typography>
+                <Typography variant="caption">Rs{paymentData.paid_amount}</Typography>
+            </Box>
+            <Box sx={styles.receiptRow}>
+                <Typography variant="caption" color="text.secondary">
+                    Customer Changes
+                </Typography>
+                <Typography variant="caption">Rs{paymentData.customer_change}</Typography>
+            </Box>
 
             <Box sx={styles.receiptTotal}>
                 <Typography variant="body2" fontWeight="bold" color="#0a3d62">

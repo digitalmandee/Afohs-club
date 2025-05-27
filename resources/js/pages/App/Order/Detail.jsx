@@ -1,29 +1,72 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
-import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography } from '@mui/material';
+import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Save as SaveIcon } from '@mui/icons-material';
+import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ClearIcon from '@mui/icons-material/Clear';
+import axios from 'axios';
+import DescriptionIcon from '@mui/icons-material/Description';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
 const OrderDetail = ({ handleEditItem }) => {
-    const { orderDetails, handleOrderDetailChange } = useOrderStore();
+    const { orderDetails, handleOrderDetailChange, clearOrderItems } = useOrderStore();
 
     const [openDiscountModal, setOpenDiscountModal] = useState(false);
     const [isEditingDiscount, setIsEditingDiscount] = useState(false);
     const [editingQtyIndex, setEditingQtyIndex] = useState(null);
     const [tempQty, setTempQty] = useState(null);
-    const [discount, setDiscount] = useState(0); // percentage
+    const [discount, setDiscount] = useState(0);
+    const [setting, setSetting] = useState(null);
+    const [loadingSetting, setLoadingSetting] = useState(true);
+    const [isEditingTax, setIsEditingTax] = useState(false);
+    const [tempTax, setTempTax] = useState('');
+    const [open, setOpen] = useState(false);
+    const [notes, setNotes] = useState({
+        kitchen_note: '',
+        staff_note: '',
+        payment_note: '',
+    });
+
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => setOpen(false);
+
+    const handleNoteChange = (e) => {
+        setNotes({
+            ...notes,
+            [e.target.name]: e.target.value,
+        });
+    };
+
+    useEffect(() => {
+        axios
+            .get(route('setting.showTax'))
+            .then((response) => {
+                setSetting(response.data);
+                setTempTax(response.data.tax?.toString() || '12');
+                setLoadingSetting(false);
+            })
+            .catch((error) => {
+                console.error('Failed to load setting:', error);
+                enqueueSnackbar('Failed to load tax settings. Please try again.', { variant: 'error' });
+                setLoadingSetting(false);
+            });
+    }, []);
 
     const [formData, setFormData] = useState({
-        guestName: '',
-        phone: '',
-        clubName: '',
-        authorizedBy: '',
-        checkInDate: '',
-        checkInTime: '',
+        discountValue: '',
+        discountType: 'percentage',
     });
+
+    const [tempFormData, setTempFormData] = useState({
+        discountValue: '',
+        discountType: 'percentage',
+    });
+
+    const openDiscountDialog = () => {
+        setTempFormData(formData);
+        setOpenDiscountModal(true);
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -34,31 +77,21 @@ const OrderDetail = ({ handleEditItem }) => {
     };
 
     const subtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
-    const taxRate = 0.12;
+    const taxRate = setting?.tax ? setting.tax / 100 : 0.12;
     const taxAmount = subtotal * taxRate;
-    const discountAmount = subtotal * (discount / 100);
+    const discountAmount = formData.discountType === 'percentage' ? subtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
     const total = subtotal + taxAmount - discountAmount;
-
-    useEffect(() => {
-        const cash = parseFloat(orderDetails.cash_total || 0);
-        const calculatedSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
-        const tax = calculatedSubtotal * 0.12;
-        const discountAmt = calculatedSubtotal * (discount / 100);
-        const finalTotal = calculatedSubtotal + tax - discountAmt;
-
-        if (cash > 0) {
-            const change = (cash - finalTotal).toFixed(2);
-            handleOrderDetailChange('customer_change', change);
-        }
-    }, [orderDetails.order_items, orderDetails.cash_total, discount]);
 
     const handleSendToKitchen = () => {
         const payload = {
             ...orderDetails,
             price: subtotal,
             tax: taxRate,
-            discount: discount,
+            discount: discountAmount,
             total_price: total,
+            kitchen_note: notes.kitchen_note,
+            staff_note: notes.staff_note,
+            payment_note: notes.payment_note,
         };
 
         router.post(route('order.send-to-kitchen'), payload, {
@@ -68,7 +101,8 @@ const OrderDetail = ({ handleEditItem }) => {
                 });
             },
             onError: (errors) => {
-                enqueueSnackbar('Something went wrong: ' + errors, {
+                const errorMessage = Object.values(errors).join(', ') || 'Something went wrong';
+                enqueueSnackbar(`Failed to send order: ${errorMessage}`, {
                     variant: 'error',
                 });
             },
@@ -84,6 +118,35 @@ const OrderDetail = ({ handleEditItem }) => {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     }
 
+    const handleTaxEditClick = () => {
+        setIsEditingTax(true);
+        setTempTax(setting?.tax?.toString() || '12');
+    };
+
+    const handleTaxChange = (e) => {
+        const value = e.target.value;
+        if (/^\d*\.?\d*$/.test(value)) {
+            setTempTax(value);
+        }
+    };
+
+    const handleSaveTax = () => {
+        const newTax = parseFloat(tempTax);
+        if (!isNaN(newTax) && newTax >= 0 && newTax <= 100) {
+            setSetting({ ...setting, tax: newTax });
+        } else {
+            enqueueSnackbar('Tax must be a number between 0 and 100.', { variant: 'error' });
+        }
+        setIsEditingTax(false);
+    };
+
+    const handleClearOrderItems = () => {
+        clearOrderItems();
+        setFormData({ discountValue: '', discountType: 'percentage' });
+        setDiscount(0);
+        setNotes({ kitchen_note: '', staff_note: '', payment_note: '' });
+    };
+
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: '80vh' }}>
             <Paper elevation={0} sx={{ width: '100%', maxWidth: 500, borderRadius: 1, overflow: 'hidden' }}>
@@ -96,23 +159,10 @@ const OrderDetail = ({ handleEditItem }) => {
                                     Member
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                    <Avatar sx={{ width: 24, height: 24, bgcolor: '#e0e0e0', fontSize: 12, mr: 1 }}>Q</Avatar>
+                                    <Avatar sx={{ width: 24, height: 24, bgcolor: '#e0e0e0', fontSize: 12, mr: 1 }}>{orderDetails.member.name?.charAt(0) || 'Q'}</Avatar>
                                     <Typography variant="body2" fontWeight="medium">
                                         {orderDetails.member.name}
                                     </Typography>
-                                    {/* <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                        <Avatar sx={{ width: 24, height: 24, bgcolor: '#e0e0e0', fontSize: 12, mr: 1 }}>Q</Avatar>
-                                        <Typography sx={{ fontWeight: 500, fontSize: '14px', color: '#121212' }}>{orderDetails.member.name}</Typography>
-                                        <img
-                                            src="/assets/Diamond.png"
-                                            alt=""
-                                            style={{
-                                                height: 24,
-                                                width: 24,
-                                                marginLeft: 5,
-                                            }}
-                                        />
-                                    </Box> */}
                                 </Box>
                             </Box>
                             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -127,14 +177,9 @@ const OrderDetail = ({ handleEditItem }) => {
                                 >
                                     <img src="/assets/food-tray.png" alt="" style={{ width: 20, height: 20, marginLeft: 4 }} />
                                 </Box>
-
                                 <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
                                     <ClearIcon fontSize="small" />
                                 </IconButton>
-                                {/*
-                                <IconButton size="small" sx={{ width: 28, height: 28, bgcolor: '#f5f5f5' }}>
-                                    <EditIcon fontSize="small" />
-                                </IconButton> */}
                             </Box>
                         </Box>
 
@@ -188,6 +233,46 @@ const OrderDetail = ({ handleEditItem }) => {
                         </Box>
                     </Box>
                 )}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'initial',
+                        alignItems: 'center',
+                        p: 1,
+                        borderBottom: '1px solid #E3E3E3',
+                    }}
+                >
+                    <Button
+                        size="small"
+                        onClick={handleClearOrderItems}
+                        sx={{
+                            textTransform: 'none',
+                            color: '#0c3b5c',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: 0,
+                            minWidth: 0,
+                            marginRight: 0,
+                        }}
+                    >
+                        <HighlightOffIcon sx={{ fontSize: 24 }} />
+                    </Button>
+                    <Button
+                        size="small"
+                        onClick={handleOpen}
+                        sx={{
+                            textTransform: 'none',
+                            color: '#0c3b5c',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: 0,
+                            minWidth: 0,
+                            marginLeft: 2,
+                        }}
+                    >
+                        <DescriptionIcon sx={{ fontSize: 24 }} />
+                    </Button>
+                </Box>
 
                 {/* Order Items */}
                 <Box sx={{ mt: 1, p: 1 }}>
@@ -196,7 +281,7 @@ const OrderDetail = ({ handleEditItem }) => {
                             const isEditing = editingQtyIndex === index;
 
                             const handleQtyClick = (e) => {
-                                e.stopPropagation(); // prevent triggering handleEditItem
+                                e.stopPropagation();
                                 setEditingQtyIndex(index);
                                 setTempQty(item.quantity.toString());
                             };
@@ -308,47 +393,50 @@ const OrderDetail = ({ handleEditItem }) => {
                         <Typography variant="body2">Rs {subtotal.toFixed(2)}</Typography>
                     </Box>
 
-                    {/* Editable Discount Row */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary" onClick={() => setOpenDiscountModal(true)} sx={{ cursor: 'pointer' }}>
+                        <Typography variant="body2" color="text.secondary">
                             Discount
                         </Typography>
-                        {isEditingDiscount ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" color="#4caf50">
+                                {formData.discountType === 'percentage' ? `${formData.discountValue || 0}%` : `Rs ${formData.discountValue || 0}`}
+                            </Typography>
+                            <IconButton size="small" onClick={openDiscountDialog}>
+                                <EditIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
+                        {isEditingTax ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <input
-                                    type="number"
-                                    value={discount}
-                                    onChange={(e) => setDiscount(Number(e.target.value))}
-                                    style={{
-                                        width: '60px',
-                                        height: '24px',
-                                        fontSize: '0.8rem',
-                                        padding: '2px 4px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ccc',
+                                <TextField
+                                    size="small"
+                                    value={tempTax}
+                                    onChange={handleTaxChange}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSaveTax();
+                                        }
                                     }}
+                                    autoFocus
+                                    sx={{ width: '80px' }}
+                                    inputProps={{ style: { textAlign: 'center' } }}
                                 />
-                                <span>%</span>
-                                <Button variant="text" size="small" onClick={() => setIsEditingDiscount(false)} sx={{ fontSize: '0.75rem' }}>
-                                    Save
-                                </Button>
+                                <IconButton size="small" onClick={handleSaveTax}>
+                                    <SaveIcon fontSize="small" />
+                                </IconButton>
                             </Box>
                         ) : (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body2" color="#4caf50">
-                                    {discount}%
+                                <Typography variant="body2" color="text.secondary">
+                                    Tax {setting?.tax || 12}%
                                 </Typography>
-                                <IconButton size="small" onClick={() => setIsEditingDiscount(true)}>
+                                <IconButton size="small" onClick={handleTaxEditClick}>
                                     <EditIcon fontSize="small" />
                                 </IconButton>
                             </Box>
                         )}
-                    </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                            Tax 12%
-                        </Typography>
                         <Typography variant="body2">Rs {taxAmount.toFixed(2)}</Typography>
                     </Box>
 
@@ -361,7 +449,7 @@ const OrderDetail = ({ handleEditItem }) => {
                 </Box>
 
                 {/* Action Buttons */}
-                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                <Box sx={{ mt: 1, display: 'flex', gap: 1, px: 1 }}>
                     <Button
                         variant="outlined"
                         sx={{
@@ -379,7 +467,7 @@ const OrderDetail = ({ handleEditItem }) => {
                         onClick={handleSendToKitchen}
                         sx={{
                             flex: 2,
-                            borderColor: '1px solid #3F4E4F',
+                            borderColor: '#3F4E4F',
                             color: '#555',
                             textTransform: 'none',
                         }}
@@ -419,127 +507,111 @@ const OrderDetail = ({ handleEditItem }) => {
                     },
                 }}
             >
-                <div
-                    style={{
-                        fontFamily: 'Arial, sans-serif',
-                        padding: '20px',
-                        backgroundColor: '#FFFFFF',
-                        // minHeight: '100vh'
-                    }}
-                >
-                    {/* Header with back button and title */}
-                    <div className="d-flex align-items-center mb-4">
-                        <Typography
-                            variant="h5"
-                            style={{
-                                fontWeight: 500,
-                                color: '#3F4E4F',
-                                fontSize: '30px',
+                <Box sx={{ padding: 3 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 500, color: '#3F4E4F', fontSize: '30px', mb: 3 }}>
+                        Apply Discount
+                    </Typography>
+
+                    <Box mb={2}>
+                        <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
+                            Discount Rate
+                        </Typography>
+                        <TextField fullWidth name="discountValue" type="number" value={tempFormData.discountValue} onChange={(e) => setTempFormData((prev) => ({ ...prev, discountValue: e.target.value }))} placeholder={tempFormData.discountType === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs'} size="small" />
+                    </Box>
+
+                    <Box mb={3}>
+                        <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
+                            Discount Method
+                        </Typography>
+                        <TextField select fullWidth name="discountType" value={tempFormData.discountType} onChange={(e) => setTempFormData((prev) => ({ ...prev, discountType: e.target.value }))} size="small">
+                            <MenuItem key="percentage" value="percentage">
+                                Percentage (%)
+                            </MenuItem>
+                            <MenuItem key="amount" value="amount">
+                                Fixed Amount (Rs)
+                            </MenuItem>
+                        </TextField>
+                    </Box>
+
+                    <Box display="flex" justifyContent="flex-end">
+                        <Button
+                            variant="contained"
+                            onClick={() => setOpenDiscountModal(false)}
+                            sx={{
+                                backgroundColor: '#F14C35',
+                                color: '#FFFFFF',
+                                textTransform: 'none',
+                                fontSize: '14px',
+                                mr: 1,
+                                '&:hover': { backgroundColor: '#d8432f' },
                             }}
                         >
-                            Apply Discount
-                        </Typography>
-                    </div>
+                            Cancel
+                        </Button>
 
-                    {/* Form Card */}
-                    <Paper
-                        elevation={0}
-                        style={{
-                            maxWidth: '600px',
-                            margin: '0 auto',
-                            padding: '10px',
-                            borderRadius: '4px',
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                const val = Number(tempFormData.discountValue || 0);
+                                const calcDiscount = tempFormData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
+                                setFormData(tempFormData);
+                                setDiscount(calcDiscount);
+                                setOpenDiscountModal(false);
+                            }}
+                            sx={{
+                                backgroundColor: '#003366',
+                                color: '#FFFFFF',
+                                textTransform: 'none',
+                                fontSize: '14px',
+                                px: 3,
+                                '&:hover': { backgroundColor: '#002244' },
+                            }}
+                        >
+                            Apply
+                        </Button>
+                    </Box>
+                </Box>
+            </Dialog>
+
+            {/* Notes Popup Modal */}
+            <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+                <DialogContent sx={{ position: 'relative' }}>
+                    {/* Close Icon */}
+                    <IconButton
+                        onClick={handleClose}
+                        sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            color: '#888',
+                            zIndex: 1,
                         }}
                     >
-                        <form>
-                            {/* Guest Name */}
-                            <Box mb={2}>
-                                <Typography
-                                    variant="body1"
-                                    style={{
-                                        marginBottom: '8px',
-                                        color: '#121212',
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    Discount Rate
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    name="guestName"
-                                    value={formData.guestName}
-                                    onChange={handleChange}
-                                    placeholder="e.g. Enter Discount in Price"
-                                    variant="outlined"
-                                    size="small"
-                                    style={{ marginBottom: '8px' }}
-                                    InputProps={{
-                                        style: { fontSize: '14px' },
-                                    }}
-                                />
-                            </Box>
+                        <CloseIcon />
+                    </IconButton>
 
-                            {/* Phone */}
-                            <Box mb={2}>
-                                <Typography
-                                    variant="body1"
-                                    style={{
-                                        marginBottom: '8px',
-                                        color: '#121212',
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    Discount Method
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    placeholder="e.g. Discount in Percentage %"
-                                    variant="outlined"
-                                    size="small"
-                                    style={{ marginBottom: '8px' }}
-                                    InputProps={{
-                                        style: { fontSize: '14px' },
-                                        endAdornment: <ArrowDropDownIcon style={{ color: '#121212' }} />,
-                                    }}
-                                />
-                            </Box>
-
-                            {/* Action Buttons */}
-                            <Box display="flex" justifyContent="flex-end">
-                                <Button
-                                    variant="text"
-                                    style={{
-                                        backgroundColor: '#F14C35',
-                                        marginRight: '10px',
-                                        color: '#FFFFFF',
-                                        textTransform: 'none',
-                                        fontSize: '14px',
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    style={{
-                                        backgroundColor: '#003366',
-                                        color: 'white',
-                                        textTransform: 'none',
-                                        fontSize: '14px',
-                                        padding: '6px 16px',
-                                    }}
-                                >
-                                    Apply
-                                </Button>
-                            </Box>
-                        </form>
-                    </Paper>
-                </div>
+                    {/* Note Fields */}
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: '#0c3b5c' }}>
+                                Kitchen Note
+                            </Typography>
+                            <TextField fullWidth multiline minRows={6} name="kitchen_note" placeholder="Instructions to chef will be displayed in kitchen along order details" value={notes.kitchen_note} onChange={handleNoteChange} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: '#0c3b5c' }}>
+                                Staff Note
+                            </Typography>
+                            <TextField fullWidth multiline minRows={6} name="staff_note" placeholder="Staff note for internal use" value={notes.staff_note} onChange={handleNoteChange} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: '#0c3b5c' }}>
+                                Payment Note
+                            </Typography>
+                            <TextField fullWidth multiline minRows={6} name="payment_note" placeholder="Payment note for internal use" value={notes.payment_note} onChange={handleNoteChange} />
+                        </Box>
+                    </Box>
+                </DialogContent>
             </Dialog>
         </Box>
     );

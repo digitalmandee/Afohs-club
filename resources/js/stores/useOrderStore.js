@@ -67,6 +67,9 @@ export const useOrderStore = create((set, get) => ({
         payment_method: 'cash',
         cash_total: 0,
         customer_change: 0,
+        kitchen_note: '',
+        staff_note: '',
+        payment_note: '',
     },
 
     resetOrderDetails: () =>
@@ -85,15 +88,19 @@ export const useOrderStore = create((set, get) => ({
                 payment_method: 'cash',
                 cash_total: 0,
                 customer_change: 0,
+                kitchen_note: '',
+                staff_note: '',
+                payment_note: '',
             },
         })),
-    setInitialOrder: ({ orderNo, memberTypes, floorTables, time }) =>
+    setInitialOrder: ({ orderNo, memberTypes, floorTables, time, table }) =>
         set((state) => ({
             orderDetails: {
                 ...state.orderDetails,
                 order_no: orderNo,
                 membership_type: memberTypes[0]?.id ?? '',
                 floor: floorTables[0]?.id ?? '',
+                table: table ?? '',
                 time: time ?? dayjs().format('HH:mm'),
             },
         })),
@@ -103,6 +110,13 @@ export const useOrderStore = create((set, get) => ({
             orderDetails: {
                 ...state.orderDetails,
                 [key]: value,
+            },
+        })),
+    clearOrderItems: () =>
+        set((state) => ({
+            orderDetails: {
+                ...state.orderDetails,
+                order_items: [],
             },
         })),
 

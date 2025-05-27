@@ -26,7 +26,9 @@ class Member extends Model
         'card_expiry_date',
         'from_date',
         'to_date',
+        'picture',
         'member_image',
+        'qr_code'
     ];
 
     // public function userDetail()

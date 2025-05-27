@@ -1358,7 +1358,10 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             <Typography variant="subtitle2" color="text.secondary" mb={1}>
                                                 Payment Method
                                             </Typography>
-                                            <Typography variant="body1">Cash</Typography>
+                                            <Typography variant="subtitle2" color="text.secondary">
+                                                Total Cash
+                                            </Typography>
+                                            {/* <Typography variant="body1">Total Cash</Typography> */}
                                         </Grid>
                                         <Grid item xs={6} sx={{ textAlign: 'right' }}>
                                             <Typography variant="subtitle2" color="text.secondary" mb={1}>

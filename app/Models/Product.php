@@ -21,6 +21,8 @@ class Product extends Model
         'cost_of_goods_sold',
         'current_stock',
         'minimal_stock',
+        'discount',
+        'discount_type',
         'notify_when_out_of_stock',
         'available_order_types',
         'status'

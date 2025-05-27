@@ -1,33 +1,32 @@
 'use client';
 
-import {
-    Add as AddIcon,
-    ChevronRight as ChevronRightIcon,
-    RadioButtonUnchecked as CircleIcon,
-    Close as CloseIcon,
-    CallMerge as MergeIcon,
-    OpenWith as MoveIcon,
-} from '@mui/icons-material';
-import {
-    Box,
-    Divider,
-    IconButton,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemSecondaryAction,
-    ListItemText,
-    Paper,
-    Switch,
-    Typography,
-} from '@mui/material';
+import { useOrderStore } from '@/stores/useOrderStore';
+import { router } from '@inertiajs/react';
+import { Add as AddIcon, ChevronRight as ChevronRightIcon, RadioButtonUnchecked as CircleIcon, Close as CloseIcon, CallMerge as MergeIcon, OpenWith as MoveIcon } from '@mui/icons-material';
+import { Box, Divider, IconButton, List, ListItem, ListItemIcon, ListItemSecondaryAction, ListItemText, Paper, Switch, Typography } from '@mui/material';
 import { useState } from 'react';
 
-const AddReservation = ({ tableName = 'Table', onClose }) => {
+const AddReservation = ({ table = {}, tableName = 'Table', onClose }) => {
+    const { handleOrderTypeChange, handleOrderDetailChange } = useOrderStore();
     const [notAvailableActive, setNotAvailableActive] = useState(false);
 
     const handleToggleNotAvailable = () => {
         setNotAvailableActive(!notAvailableActive);
+    };
+
+    const handleAddNewReservation = () => {
+        handleOrderTypeChange('reservation');
+        // handleOrderDetailChange('floor', table?.floor_id);
+        // handleOrderDetailChange('table', table?.id);
+
+        router.visit(route('order.new'), {
+            data: {
+                table: table?.id,
+                floor: table?.floor_id,
+            },
+            preserveScroll: true,
+            preserveState: true,
+        });
     };
 
     return (
@@ -55,7 +54,7 @@ const AddReservation = ({ tableName = 'Table', onClose }) => {
                         Actions
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
-                        Actions for {tableName}
+                        Actions for {table?.table_no}
                     </Typography>
                 </Box>
                 <IconButton onClick={onClose} size="small">
@@ -70,6 +69,7 @@ const AddReservation = ({ tableName = 'Table', onClose }) => {
                 {/* Add New Reservation */}
                 <ListItem
                     button
+                    onClick={handleAddNewReservation}
                     sx={{
                         py: 1.5,
                         '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' },
