@@ -191,6 +191,14 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Finance/Dashboard');
     })->name('finance.dashboard');
 
+    Route::get('/finance/add/transaction', function () {
+        return Inertia::render('App/Admin/Finance/AddTransaction');
+    })->name('finance.addtransaction');
+
+    Route::get('/finance/transaction', function () {
+        return Inertia::render('App/Admin/Finance/Transaction');
+    })->name('finance.transaction');
+
     //Cards Routes
     // Route::get('/card/dashboard', function () {
     //     return Inertia::render('App/Admin/Card/Dashboard');
