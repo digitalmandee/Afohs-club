@@ -22,6 +22,7 @@ const OrderDetail = ({ handleEditItem }) => {
     const [isEditingTax, setIsEditingTax] = useState(false);
     const [tempTax, setTempTax] = useState('');
     const [open, setOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [notes, setNotes] = useState({
         kitchen_note: '',
         staff_note: '',
@@ -77,12 +78,13 @@ const OrderDetail = ({ handleEditItem }) => {
     };
 
     const subtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
-    const taxRate = setting?.tax ? setting.tax / 100 : 0.12;
+    const taxRate = setting?.tax ? setting.tax / 100 : 0;
     const taxAmount = subtotal * taxRate;
     const discountAmount = formData.discountType === 'percentage' ? subtotal * (Number(formData.discountValue || 0) / 100) : Number(formData.discountValue || 0);
     const total = subtotal + taxAmount - discountAmount;
 
-    const handleSendToKitchen = () => {
+    const handleSendToKitchen = async () => {
+        setIsLoading(true);
         const payload = {
             ...orderDetails,
             price: subtotal,
@@ -99,12 +101,14 @@ const OrderDetail = ({ handleEditItem }) => {
                 enqueueSnackbar('Your order has been successfully sent to the kitchen!', {
                     variant: 'success',
                 });
+                setIsLoading(false);
             },
             onError: (errors) => {
                 const errorMessage = Object.values(errors).join(', ') || 'Something went wrong';
                 enqueueSnackbar(`Failed to send order: ${errorMessage}`, {
                     variant: 'error',
                 });
+                setIsLoading(false);
             },
         });
     };
@@ -146,6 +150,71 @@ const OrderDetail = ({ handleEditItem }) => {
         setDiscount(0);
         setNotes({ kitchen_note: '', staff_note: '', payment_note: '' });
     };
+
+    const handleApplyDiscount = () => {
+        const val = Number(tempFormData.discountValue || 0);
+        const calcDiscount = tempFormData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
+        setFormData(tempFormData);
+        setDiscount(calcDiscount);
+        setOpenDiscountModal(false);
+    };
+
+    useEffect(() => {
+        if (!openDiscountModal) return;
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleApplyDiscount();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [openDiscountModal, tempFormData, subtotal]);
+
+    // keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            const tag = document.activeElement.tagName.toLowerCase();
+            if (tag === 'input' || tag === 'textarea') return;
+
+            const key = e.key.toLowerCase();
+
+            if (e.ctrlKey && !e.shiftKey) {
+                switch (key) {
+                    case 'd':
+                        e.preventDefault();
+                        openDiscountDialog();
+                        break;
+                    case 'e':
+                        e.preventDefault();
+                        handleTaxEditClick();
+                        break;
+                    case 'k':
+                        if (orderDetails.order_items.length > 0 && orderDetails.member) {
+                            e.preventDefault();
+                            handleSendToKitchen();
+                        }
+                        break;
+                    case 'l':
+                        e.preventDefault();
+                        handleClearOrderItems();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            if (e.shiftKey && key === 'n') {
+                e.preventDefault();
+                handleOpen(); // open note/description dialog
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [openDiscountDialog, handleTaxEditClick, handleSendToKitchen, handleClearOrderItems, handleOpen, orderDetails]);
 
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: '80vh' }}>
@@ -430,7 +499,7 @@ const OrderDetail = ({ handleEditItem }) => {
                         ) : (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography variant="body2" color="text.secondary">
-                                    Tax {setting?.tax || 12}%
+                                    Tax {setting?.tax || 0}%
                                 </Typography>
                                 <IconButton size="small" onClick={handleTaxEditClick}>
                                     <EditIcon fontSize="small" />
@@ -465,6 +534,8 @@ const OrderDetail = ({ handleEditItem }) => {
                         variant="outlined"
                         disabled={orderDetails.order_items.length === 0 || !orderDetails.member}
                         onClick={handleSendToKitchen}
+                        loading={isLoading}
+                        loadingPosition="start"
                         sx={{
                             flex: 2,
                             borderColor: '#3F4E4F',
@@ -498,8 +569,6 @@ const OrderDetail = ({ handleEditItem }) => {
                 PaperProps={{
                     style: {
                         position: 'absolute',
-                        top: 0,
-                        right: 0,
                         m: 0,
                         width: '600px',
                         borderRadius: 2,
@@ -551,13 +620,7 @@ const OrderDetail = ({ handleEditItem }) => {
 
                         <Button
                             variant="contained"
-                            onClick={() => {
-                                const val = Number(tempFormData.discountValue || 0);
-                                const calcDiscount = tempFormData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
-                                setFormData(tempFormData);
-                                setDiscount(calcDiscount);
-                                setOpenDiscountModal(false);
-                            }}
+                            onClick={handleApplyDiscount}
                             sx={{
                                 backgroundColor: '#003366',
                                 color: '#FFFFFF',
