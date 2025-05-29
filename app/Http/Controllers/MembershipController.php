@@ -208,12 +208,11 @@ class MembershipController extends Controller
                 $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'member_images');
             }
 
-            // $qrCodeData = route('member.profile', ['id' => $primaryUser->id]);
+            $qrCodeData = route('member.profile', ['id' => $primaryUser->id]);
 
-            // Log::info(QrCode::format('png')->size(300)->generate($qrCodeData));
-
-            // // Create QR code image and save it
-            // $qrImagePath = FileHelper::saveImage(QrCode::format('png')->size(300)->generate($qrCodeData), 'qr_codes');
+            // Create QR code image and save it
+            $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
+            $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'qr_codes');
 
             // Create primary member record
             Member::create([
@@ -228,7 +227,7 @@ class MembershipController extends Controller
                 'from_date' => $validated['from_date'],
                 'to_date' => $validated['to_date'],
                 'picture' => $memberImagePath,
-                // 'qr_code' => $qrImagePath
+                'qr_code' => $qrImagePath
             ]);
 
             // Handle family members

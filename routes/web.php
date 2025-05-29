@@ -6,6 +6,7 @@ use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\CardController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MembershipInvoiceController;
 use App\Http\Controllers\PaymentController;
@@ -199,9 +200,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('finance.transaction');
 
     //Cards Routes
-    Route::get('/card/dashboard', function () {
-        return Inertia::render('App/Admin/Card/Dashboard');
-    })->name('cards.dashboard');
+    // Route::get('/card/dashboard', function () {
+    //     return Inertia::render('App/Admin/Card/Dashboard');
+    // })->name('cards.dashboard');
+    Route::get('/card/dashboard', [CardController::class, 'index'])->name('cards.dashboard');
+
     // member
     // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
     // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');

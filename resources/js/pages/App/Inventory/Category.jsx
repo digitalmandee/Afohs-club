@@ -1,5 +1,3 @@
-'use client';
-
 import SideNav from '@/Components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { router, useForm, usePage } from '@inertiajs/react';
@@ -266,7 +264,7 @@ export default function Category({ categoriesList }) {
                                         <Grid item xs={12} sm={9} md={9} sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                 <img
-                                                    src={category.image ? tenantAsset(category.image) : '/placeholder.jpg'}
+                                                    src={category.image ? tenantAsset(category.image) : '/assets/dish.png'}
                                                     alt={category.name}
                                                     style={{
                                                         width: '100%',
