@@ -332,14 +332,14 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         const channel = window.Echo.channel('orders');
 
         channel.listen('.order.created', (e) => {
-            console.log('New order received:', e);
+            // console.log('New order received:', e);
 
             // Add new order to the top
             setFilteredOrder((prev) => [{ ...e, checked: e.status === 'completed' }, ...prev]);
 
             // Play notification sound
             try {
-                new Audio('/notification.mp3').play().catch(console.error);
+                new Audio('/notifications.wav').play().catch(console.error);
             } catch (e) {
                 console.log('Audio notification not available');
             }
