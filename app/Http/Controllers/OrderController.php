@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderCreated;
 use App\Models\Category;
 use App\Models\Floor;
 use App\Models\Invoices;
@@ -154,7 +155,6 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            Log::info('Order Started');
             // Order creation or update
             $order = Order::updateOrCreate(
                 ['id' => $request->id],
@@ -237,6 +237,12 @@ class OrderController extends Controller
             ]);
 
             DB::commit();
+
+            // Load relationships for broadcasting
+            $order->load(['table', 'orderItems']);
+
+            // Broadcast the event
+            broadcast(new OrderCreated($order));
 
             // Print the orders per kitchen
             $this->printOrdersForKitchens($groupedByKitchen, $order);

@@ -11,6 +11,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useCallback, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { enqueueSnackbar } from 'notistack';
 dayjs.extend(utc);
 
 const drawerWidthOpen = 240;
@@ -19,16 +20,9 @@ const drawerWidthClosed = 110;
 const OrderManagement = ({ kitchenOrders, flash }) => {
     const [open, setOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
+    const [isConnected, setIsConnected] = useState(false);
     const [activeTab, setActiveTab] = useState('All Order');
-    const [checkedItems, setCheckedItems] = useState(
-        (kitchenOrders || []).reduce((acc, order) => {
-            acc[order.id] = order.order_items.map((item) => ({
-                id: item.id,
-                checked: item.status === 'completed',
-            }));
-            return acc;
-        }, {}),
-    );
+    const [checkedItems, setCheckedItems] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -58,63 +52,64 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         return formatTime(diffSeconds);
     };
 
+    useEffect(() => {
+        setCheckedItems((prev) => {
+            return (filteredOrder || []).reduce((acc, order) => {
+                acc[order.id] = order.order_items.map((item) => ({
+                    id: item.id,
+                    checked: item.status === 'completed',
+                }));
+                return acc;
+            }, {});
+        });
+    }, [filteredOrder]);
+
     // State to track timers for each order
-    const [timers, setTimers] = useState(
-        (kitchenOrders || []).reduce((acc, order) => {
-            let seconds = 0;
-            if (order.status === 'in_progress' && order.order_time) {
-                try {
-                    const startTime = new Date(order.order_time);
-
-                    const currentTime = new Date();
-
-                    seconds = Math.floor((currentTime - startTime) / 1000);
-                    if (seconds < 0) seconds = 0; // Prevent negative time
-                } catch (e) {
-                    console.error(`Invalid order_time for order ${order.id}: ${order.order_time}`, e);
-                    seconds = 0;
-                }
-            }
-            console.log(order.id, order.status, order.order_time, order.end_time);
-
-            acc[order.id] = {
-                running: order.status === 'in_progress',
-                seconds,
-                totalTime: order.status === 'completed' && order.order_time && order.end_time ? calculateTotalTime(order.order_time, order.end_time) : '00:00:00',
-            };
-            return acc;
-        }, {}),
-    );
+    const [timers, setTimers] = useState({});
 
     useEffect(() => {
-        if (flash?.success) {
-            setSnackbarMessage(flash.success);
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
-        } else if (flash?.error) {
-            setSnackbarMessage(flash.error);
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
-        }
-    }, [flash]);
+        setTimers(
+            (filteredOrder || []).reduce((acc, order) => {
+                let seconds = 0;
+                if (order.status === 'in_progress' && order.order_time) {
+                    try {
+                        const startTime = new Date(order.order_time);
+
+                        const currentTime = new Date();
+
+                        seconds = Math.floor((currentTime - startTime) / 1000);
+                        if (seconds < 0) seconds = 0; // Prevent negative time
+                    } catch (e) {
+                        console.error(`Invalid order_time for order ${order.id}: ${order.order_time}`, e);
+                        seconds = 0;
+                    }
+                }
+                // console.log(order.id, order.status, order.order_time, order.end_time);
+
+                acc[order.id] = {
+                    running: order.status === 'in_progress',
+                    seconds,
+                    totalTime: order.status === 'completed' && order.order_time && order.end_time ? calculateTotalTime(order.order_time, order.end_time) : '00:00:00',
+                };
+                return acc;
+            }, {}),
+        );
+    }, [filteredOrder]);
 
     // Timer effect to update running timers
     useEffect(() => {
         const interval = setInterval(() => {
             setTimers((prev) => {
                 const updated = { ...prev };
-                kitchenOrders.forEach((order) => {
+
+                filteredOrder.forEach((order) => {
                     if (order.status === 'in_progress' && order.order_time) {
                         try {
                             const startTime = dayjs.utc(order.order_time);
                             const currentTime = dayjs.utc();
-                            const seconds = Math.floor(currentTime.diff(startTime, 'second'));
-
-                            // const startTime = new Date(order.order_time);
-                            // const currentTime = new Date();
-                            // let seconds = Math.floor((currentTime - startTime) / 1000);
+                            let seconds = Math.floor(currentTime.diff(startTime, 'second'));
+                            // console.log(seconds);
                             if (seconds < 0) seconds = 0;
-
                             updated[order.id] = {
                                 ...updated[order.id],
                                 seconds,
@@ -124,12 +119,20 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                         }
                     }
                 });
+
                 return updated;
             });
         }, 1000); // Update every second
-
         return () => clearInterval(interval); // Clean up on unmount
-    }, [kitchenOrders]);
+    }, [filteredOrder]);
+
+    useEffect(() => {
+        if (flash?.success) {
+            enqueueSnackbar(flash.success, { variant: 'success' });
+        } else if (flash?.error) {
+            enqueueSnackbar(flash.error, { variant: 'error' });
+        }
+    }, [flash]);
 
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
@@ -183,17 +186,17 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
     const tabs = [
         { id: 'All Order', count: null },
-        { id: 'pending', count: kitchenOrders?.filter((o) => o.status === 'pending').length || 0 },
-        { id: 'in_progress', count: kitchenOrders?.filter((o) => o.status === 'in_progress').length || 0 },
-        { id: 'completed', count: kitchenOrders?.filter((o) => o.status === 'completed').length || 0 },
-        { id: 'refund', count: kitchenOrders?.filter((o) => o.status === 'refund').length || 0 },
+        { id: 'pending', count: filteredOrder?.filter((o) => o.status === 'pending').length || 0 },
+        { id: 'in_progress', count: filteredOrder?.filter((o) => o.status === 'in_progress').length || 0 },
+        { id: 'completed', count: filteredOrder?.filter((o) => o.status === 'completed').length || 0 },
+        { id: 'refund', count: filteredOrder?.filter((o) => o.status === 'refund').length || 0 },
     ];
 
     const datePeriods = ['Yesterday', 'Last Week', 'Last Month', 'Last 3 Month', 'Last Year', 'Custom Date'];
     const statusOptions = ['All', 'New Order', 'Refund', 'Process', 'Done'];
     const orderTypeOptions = ['All', 'Dine', 'Pickup', 'Delivery', 'Takeaway', 'Reservation'];
 
-    const filteredOrders = (kitchenOrders || []).filter((order) => {
+    const filteredOrders = (filteredOrder || []).filter((order) => {
         if (activeTab === 'All Order') {
             return true;
         } else {
@@ -244,7 +247,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
             e.preventDefault();
             setLoadingOrders((prev) => ({ ...prev, [orderId]: true })); // Set loading for this order
 
-            const order = kitchenOrders.find((o) => o.id === orderId);
+            const order = filteredOrder.find((o) => o.id === orderId);
             const newOrderStatus = order.status === 'pending' ? 'in_progress' : 'completed';
 
             // Preserve cancelled status for items
@@ -303,17 +306,15 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                     });
                 },
                 onError: (errors) => {
-                    console.error('Status update error:', errors);
-                    setSnackbarMessage('Failed to update statuses: ' + (errors.status || 'Unknown error'));
-                    setSnackbarSeverity('error');
-                    setSnackbarOpen(true);
+                    // console.error('Status update error:', errors);
+                    enqueueSnackbar('Failed to update statuses: ' + (errors.status || 'Unknown error'), { variant: 'error' });
                 },
                 onFinish: () => {
                     setLoadingOrders((prev) => ({ ...prev, [orderId]: false })); // Reset loading for this order
                 },
             });
         },
-        [checkedItems, setFilteredOrder, kitchenOrders, filteredOrder],
+        [checkedItems, setFilteredOrder, filteredOrder],
     );
 
     const handleToggle = (itemId, variants) => {
@@ -325,6 +326,77 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
             }));
         }
     };
+
+    useEffect(() => {
+        // Listen for new orders
+        const channel = window.Echo.channel('orders');
+
+        channel.listen('.order.created', (e) => {
+            console.log('New order received:', e);
+
+            // Add new order to the top
+            setFilteredOrder((prev) => [{ ...e, checked: e.status === 'completed' }, ...prev]);
+
+            // Play notification sound
+            try {
+                new Audio('/notification.mp3').play().catch(console.error);
+            } catch (e) {
+                console.log('Audio notification not available');
+            }
+        });
+
+        // Listen for order status updates
+        // channel.listen('.order.status.updated', (e) => {
+        //     console.log('Order status updated:', e);
+
+        //     setOrders((prevOrders) =>
+        //         prevOrders.map((order) =>
+        //             order.id === e.id
+        //                 ? {
+        //                       ...order,
+        //                       status: e.status,
+        //                       order_time: e.order_time || order.order_time,
+        //                       end_time: e.end_time || order.end_time,
+        //                       order_items: e.order_items || order.order_items,
+        //                       updated_at: e.updated_at,
+        //                   }
+        //                 : order,
+        //         ),
+        //     );
+
+        //     // Update timer based on status
+        //     setTimers((prev) => {
+        //         const updated = { ...prev };
+        //         if (e.status === 'in_progress') {
+        //             updated[e.id] = {
+        //                 running: true,
+        //                 seconds: 0,
+        //             };
+        //         } else if (e.status === 'completed') {
+        //             updated[e.id] = {
+        //                 running: false,
+        //                 seconds: prev[e.id]?.seconds || 0,
+        //             };
+        //         }
+        //         return updated;
+        //     });
+        // });
+
+        // Connection status listeners
+        window.Echo.connector.pusher.connection.bind('connected', () => {
+            console.log('Connected to Pusher');
+            setIsConnected(true);
+        });
+
+        window.Echo.connector.pusher.connection.bind('disconnected', () => {
+            console.log('Disconnected from Pusher');
+            setIsConnected(false);
+        });
+
+        return () => {
+            window.Echo.leaveChannel('orders');
+        };
+    }, []);
 
     return (
         <>
@@ -376,8 +448,6 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
 
                     <div className="row m-1 p-2" style={{ backgroundColor: '#fbfbfb', borderRadius: '10px' }}>
                         {filteredOrders.map((order) => {
-                            const OrderItem = order.order_items?.slice(-1)[0];
-
                             return (
                                 <div key={order.id} className="col-md-3 mb-3">
                                     <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
@@ -414,7 +484,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                         marginRight: '8px',
                                                     }}
                                                 >
-                                                    <Typography variant="body2">{order.table_id}</Typography>
+                                                    <Typography variant="body2">{order.table?.table_no}</Typography>
                                                 </div>
                                                 <IconButton size="small" style={{ color: 'white' }}>
                                                     {order.order_type === 'dine_in' ? <RestaurantIcon /> : order.order_type === 'delivery' ? <DeliveryDiningIcon /> : order.order_type === 'take_away' ? <TakeoutDiningIcon /> : null}
