@@ -4,6 +4,7 @@ import { ArrowBack, ArrowForward, Check } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -11,28 +12,98 @@ const drawerWidthClosed = 110;
 const Payment = ({ member, onBack }) => {
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({
-        user_id: '1',
-        subscriptionType: 'One Time',
+        user_id: member?.id,
+        subscriptionType: 'one_time',
         inputAmount: '0',
         customerCharges: '0.00',
+        paymentMethod: 'cash',
+        receipt: null,
     });
+
     const [error, setError] = useState('');
 
-    // Extract minimum amount from nested member data safely
-    const minAmount = parseFloat(member?.member?.member_type?.fee) || 0;
+    const subscriptionTypes = [
+        { label: 'One Time', value: 'one_time' },
+        { label: 'Monthly', value: 'monthly' },
+        { label: 'Annual', value: 'annual' },
+    ];
+
+    const getMinimumAmount = () => {
+        const { subscriptionType } = formData;
+        const memberType = member?.member?.member_type;
+
+        const fee = parseFloat(memberType?.fee || 0);
+        const maintenance = parseFloat(memberType?.maintenance_fee || 0);
+        const discountType = memberType?.discount_type;
+        const discountValue = parseFloat(memberType?.discount_value || 0);
+        const baseDuration = parseInt(memberType?.duration || 1);
+
+        let totalWithoutDiscount = 0;
+        let duration = baseDuration;
+
+        if (subscriptionType === 'one_time') {
+            totalWithoutDiscount = (fee + maintenance) * baseDuration;
+        } else if (subscriptionType === 'monthly') {
+            totalWithoutDiscount = fee + maintenance;
+            duration = 1;
+        } else if (subscriptionType === 'annual') {
+            totalWithoutDiscount = (fee + maintenance) * 12;
+            duration = 12;
+        }
+
+        let totalWithDiscount = totalWithoutDiscount;
+
+        if (discountType === '%') {
+            totalWithDiscount -= (totalWithoutDiscount * discountValue) / 100;
+        } else if (discountType === 'Rs') {
+            totalWithDiscount -= discountValue;
+        }
+
+        return {
+            amount: totalWithoutDiscount,
+            total: totalWithDiscount,
+            duration,
+        };
+    };
+
+    const { total } = getMinimumAmount();
+    const minAmount = total;
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, files } = e.target;
 
-        // Parse input amount as float
+        if (name === 'receipt') {
+            setFormData((prev) => ({ ...prev, receipt: files[0] }));
+            return;
+        }
+
         if (name === 'inputAmount') {
-            const inputValue = parseFloat(value) || 0;
-            const charges = inputValue - minAmount;
+            let inputValue = parseFloat(value) || 0;
+            inputValue = Math.round(inputValue); // Round to nearest whole number
+            const charges = inputValue - Math.round(minAmount);
             setFormData((prev) => ({
                 ...prev,
-                inputAmount: value,
-                customerCharges: charges > 0 ? charges.toFixed(2) : '0.00', // no negative charges
+                inputAmount: inputValue.toString(),
+                customerCharges: charges > 0 ? charges.toString() : '0',
             }));
+            return;
+        } else if (name === 'subscriptionType') {
+            const newFormData = {
+                ...formData,
+                subscriptionType: value,
+            };
+
+            const { total: newMinAmount } = getMinimumAmount(); // Recalculate with new type
+            const inputValue = Math.round(parseFloat(newFormData.inputAmount) || 0);
+            const charges = inputValue - Math.round(newMinAmount);
+
+            setFormData({
+                ...newFormData,
+                inputAmount: inputValue.toString(),
+                customerCharges: charges > 0 ? charges.toString() : '0',
+            });
+
+            return;
         } else {
             setFormData((prev) => ({ ...prev, [name]: value }));
         }
@@ -42,41 +113,52 @@ const Payment = ({ member, onBack }) => {
         setFormData((prev) => ({ ...prev, inputAmount: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const inputAmount = parseFloat(formData.inputAmount);
+        const inputAmount = parseFloat(formData.inputAmount || '0');
+        const { amount, total, duration } = getMinimumAmount();
 
-        // Basic validation
         if (!formData.inputAmount || inputAmount <= 0) {
             setError('Please enter a valid amount.');
             return;
         }
 
-        // Validate against minimum amount
-        if (inputAmount < minAmount) {
-            setError(`Amount must be at least Rs ${minAmount.toFixed(2)}.`);
+        if (inputAmount < total) {
+            setError(`Amount must be at least Rs ${total.toFixed(2)}.`);
             return;
         }
 
-        const paymentData = {
-            user_id: member?.id || formData.user_id,
-            subscription_type: formData.subscriptionType,
-            amount: inputAmount,
-            customer_charges: parseFloat(formData.customerCharges),
-        };
+        const data = new FormData();
+        data.append('user_id', formData.user_id);
+        data.append('subscription_type', formData.subscriptionType);
+        data.append('amount', amount);
+        data.append('total_amount', inputAmount);
+        data.append('member_type_id', member?.member?.member_type?.id);
+        data.append('customer_charges', parseFloat(formData.customerCharges));
+        data.append('payment_method', formData.paymentMethod);
+        data.append('duration', duration);
 
-        // console.log('Sending payment data:', paymentData);
+        if (formData.paymentMethod === 'credit_card' && formData.receipt) {
+            data.append('receipt', formData.receipt);
+        }
 
-        router.post(route('membership.payment.store'), paymentData, {
-            onSuccess: () => {
+        try {
+            const response = await axios.post(route('membership.payment.store'), data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (response.status === 200) {
                 setError('');
                 router.visit(route('membership.history'));
-            },
-            onError: (errors) => {
-                setError('Payment failed: ' + (errors.message || 'Please check the form data.'));
-            },
-        });
+            } else {
+                setError('Payment failed: ' + (response.data?.message || 'Please check the form data.'));
+            }
+        } catch (error) {
+            setError('Payment failed: ' + (error.response?.data?.message || 'Please check the form data.'));
+        }
     };
 
     return (
@@ -164,7 +246,13 @@ const Payment = ({ member, onBack }) => {
                                 Name: {member.first_name} {member.last_name}
                             </Typography>
                             <Typography sx={{ mb: 1 }}>Email: {member.email}</Typography>
-                            <Typography>Membership Number: {member.userDetail?.members[0]?.membership_number}</Typography>
+                            {/* {JSON.stringify(member.member?.member_type, null, 2)} */}
+                            <Typography>Membership Type: {member.member?.member_type?.name}</Typography>
+                            <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
+                                Subscription Fee: Rs {parseFloat(member?.member?.member_type?.fee || 0).toFixed(2)} <br />
+                                Maintenance Fee: Rs {parseFloat(member?.member?.member_type?.maintenance_fee || 0).toFixed(2)} <br />
+                                Total ({formData.subscriptionType}): Rs {minAmount.toFixed(2)}
+                            </Typography>
                         </Paper>
                     )}
 
@@ -175,23 +263,32 @@ const Payment = ({ member, onBack }) => {
                                 Payment Method
                             </Typography>
                         </Box>
+                        <Typography variant="h6" sx={{ fontSize: '1.125rem', mb: 2, color: '#666' }}>
+                            Payment Method
+                        </Typography>
+
+                        <RadioGroup row name="paymentMethod" value={formData.paymentMethod} onChange={handleInputChange} sx={{ mb: 4 }}>
+                            <FormControlLabel value="cash" control={<Radio />} label="Cash" />
+                            <FormControlLabel value="credit_card" control={<Radio />} label="Credit Card" />
+                        </RadioGroup>
+
                         <Typography variant="h6" sx={{ fontSize: '1.125rem', mb: 3, color: '#666' }}>
                             Payment Subscription
                         </Typography>
 
                         <Box className="d-flex gap-3 mb-4">
                             <RadioGroup row name="subscriptionType" value={formData.subscriptionType} onChange={handleInputChange}>
-                                {['One Time', 'Monthly', 'Annual'].map((type) => (
+                                {subscriptionTypes.map(({ label, value }) => (
                                     <Box
-                                        key={type}
+                                        key={value}
                                         className="d-flex align-items-center p-2 border"
                                         sx={{
                                             borderRadius: '4px',
-                                            bgcolor: formData.subscriptionType === type ? '#f0f0f0' : 'transparent',
+                                            bgcolor: formData.subscriptionType === value ? '#f0f0f0' : 'transparent',
                                             borderColor: '#ccc',
                                         }}
                                     >
-                                        <FormControlLabel value={type} control={<Radio sx={{ color: '#1976d2' }} />} label={type} sx={{ margin: 0, '& .MuiTypography-root': { fontSize: '0.875rem' } }} />
+                                        <FormControlLabel value={value} control={<Radio sx={{ color: '#1976d2' }} />} label={label} sx={{ margin: 0, '& .MuiTypography-root': { fontSize: '0.875rem' } }} />
                                     </Box>
                                 ))}
                             </RadioGroup>
@@ -220,13 +317,13 @@ const Payment = ({ member, onBack }) => {
                                                 width: '100%',
                                             },
                                         }}
-                                        inputProps={{ type: 'text', pattern: '[0-9.]*' }}
+                                        inputProps={{ type: 'number', step: '1', min: '0' }}
                                     />
                                 </Box>
                                 {/* Show minimum amount below input */}
                                 {minAmount > 0 && (
                                     <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
-                                        Minimum Amount: Rs {minAmount.toFixed(2)}
+                                        Minimum Amount: Rs {Math.round(minAmount)}
                                     </Typography>
                                 )}
                             </Box>
@@ -235,7 +332,7 @@ const Payment = ({ member, onBack }) => {
                                     Customer Charges
                                 </Typography>
                                 <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
-                                    Rs {formData.customerCharges}
+                                    Rs {Math.round(formData.customerCharges)}
                                 </Typography>
                             </Box>
                         </Box>
@@ -246,7 +343,7 @@ const Payment = ({ member, onBack }) => {
                                     key={value}
                                     variant="outlined"
                                     className="p-2"
-                                    onClick={() => handleQuickAmount(value === 'Exact money' ? minAmount : value)}
+                                    onClick={() => handleQuickAmount(value === 'Exact money' ? Math.round(minAmount) : parseInt(value))}
                                     sx={{
                                         textTransform: 'none',
                                         borderColor: '#ccc',
@@ -264,6 +361,15 @@ const Payment = ({ member, onBack }) => {
                             <Typography color="error" sx={{ mb: 2 }}>
                                 {error}
                             </Typography>
+                        )}
+
+                        {formData.paymentMethod === 'credit_card' && (
+                            <Box sx={{ mb: 4 }}>
+                                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                    Upload Receipt
+                                </Typography>
+                                <input type="file" name="receipt" accept="image/*,application/pdf" onChange={handleInputChange} style={{ display: 'block' }} />
+                            </Box>
                         )}
 
                         <Box className="d-flex justify-content-end">

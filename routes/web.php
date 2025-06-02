@@ -215,15 +215,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
-    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
 
     // Members types
-    Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+    Route::get('/admin/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
     Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
     Route::post('/members/member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
     Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
     Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
+    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
     //payment
     Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');
