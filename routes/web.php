@@ -161,6 +161,38 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/AddHoled');
     })->name('employee.addholed');
 
+    Route::get('/employee/payroll/deduction/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Deduction');
+    })->name('employee.deduction');
+
+    Route::get('/employee/payroll/add/deduction', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddDeduction');
+    })->name('employee.adddeduction');
+
+    Route::get('/employee/payroll/reimbursements', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Reimbursement');
+    })->name('employee.reimbursement');
+
+    Route::get('/employee/payroll/add/reimbursements', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddReimbursement');
+    })->name('employee.addreimbursement');
+
+    Route::get('/employee/payroll/leaves/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Leave');
+    })->name('employee.leave');
+
+    Route::get('/employee/payroll/leaves/Initialize', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Initialize');
+    })->name('employee.initialize');
+
+    Route::get('/employee/payroll/cheque/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Cheque');
+    })->name('employee.cheque');
+
+    Route::get('/employee/payroll/add/cheque', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddCheque');
+    })->name('employee.addcheque');
+
     //Subscription Routes
     Route::get('/subscription/dashboard', function () {
         return Inertia::render('App/Admin/Subscription/Dashboard');
