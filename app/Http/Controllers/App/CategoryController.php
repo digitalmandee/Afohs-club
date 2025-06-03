@@ -17,20 +17,9 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
-        $category_id = $request->query('category_id');
-
-        $query = Product::latest()->with(['category', 'variants', 'variants.values']);
-
-        if ($category_id) {
-            $query->where('category_id', $category_id);
-        }
-
-        // $productLists = $query->get();
-
-        $categoriesList = Category::select('id', 'name', 'image')->get(); // ← Make sure this line is present
+        $categoriesList = Category::where('tenant_id', tenant()->id)->select('id', 'name', 'image')->withCount('products')->get(); // ← Make sure this line is present
 
         return Inertia::render('App/Inventory/Category', [
-            // 'productLists' => $productLists,
             'categoriesList' => $categoriesList, // ← Make sure this key matches the React destructuring
         ]);
     }

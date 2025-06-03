@@ -16,6 +16,7 @@ class ProductFactory extends Factory
     {
         return [
             'name' => $this->faker->word(),
+            'tenant_id' => null,
             'menu_code' => $this->faker->bothify('MC-###'),
             'description' => $this->faker->paragraph(),
             'kitchen_id' => User::role('kitchen', 'web')->inRandomOrder()->value('id'),

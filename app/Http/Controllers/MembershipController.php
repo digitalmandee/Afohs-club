@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\CardPayment;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Member;
@@ -321,8 +322,19 @@ class MembershipController extends Controller
         }
     }
 
-    // Show Public Profile
+    // Get Member Invoices
+    public function getMemberInvoices($id)
+    {
+        $invoice = CardPayment::where('user_id', $id)->first();
 
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice not found'], 404);
+        }
+
+        return response()->json(['invoice' => $invoice]);
+    }
+
+    // Show Public Profile
     public function viewProfile($id)
     {
         $user = User::with(['member', 'member.memberType', 'userDetail'])->findOrFail($id);

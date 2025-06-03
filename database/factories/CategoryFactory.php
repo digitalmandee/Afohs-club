@@ -15,13 +15,17 @@ class CategoryFactory extends Factory
         return [
             'name' => $this->faker->word(),
             'image' => 'assets/cimage.png',
+            'tenant_id' => null,
         ];
     }
 
     public function configure()
     {
         return $this->afterCreating(function (Category $category) {
-            Product::factory()->count(6)->create(['category_id' => $category->id]);
+            Product::factory()->count(6)->create([
+                'category_id' => $category->id,
+                'tenant_id' => $category->tenant_id,
+            ]);
         });
     }
 }

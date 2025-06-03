@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -82,12 +83,10 @@ class OrderController extends Controller
     public function orderManagement(Request $request)
     {
         $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,kitchen_id,order_item,status', 'user:id,name,member_type_id', 'user.memberType'])->latest()->get();
-        $categoriesList = Category::select('id', 'name')->get();
-        return Inertia::render('App/Order/Management/Dashboard', [
-            'orders' => $orders,
-            'categoriesList' => $categoriesList,
+        $categoriesList = Category::where('tenant_id', tenant()->id)->select('id', 'name')->get();
+        $allrestaurants = Tenant::select('id', 'name')->get();
 
-        ]);
+        return Inertia::render('App/Order/Management/Dashboard', compact('orders', 'categoriesList', 'allrestaurants'));
     }
 
     public function savedOrder()
@@ -102,7 +101,11 @@ class OrderController extends Controller
     public function orderMenu(Request $request)
     {
         $totalSavedOrders = Order::where('status', 'saved')->count();
-        return Inertia::render('App/Order/OrderMenu', compact('totalSavedOrders'));
+        $allrestaurants = Tenant::select('id', 'name')->get();
+        $activeTenantId = tenant()->id;
+        $latestCategory = Category::where('tenant_id', $activeTenantId)->latest()->first();
+        $firstCategoryId = $latestCategory->id ?? null;
+        return Inertia::render('App/Order/OrderMenu', compact('totalSavedOrders', 'allrestaurants', 'activeTenantId', 'firstCategoryId'));
     }
 
     // Get next order number
@@ -402,9 +405,11 @@ class OrderController extends Controller
         return response()->json(['success' => true, 'products' => $products], 200);
     }
 
-    public function getCategories()
+    public function getCategories(Request $request)
     {
-        $categories = Category::latest()->get();
+        $tenantId = $request->query('tenant_id');
+        Log::info($tenantId);
+        $categories = Category::where('tenant_id', $tenantId)->latest()->get();
 
         return response()->json(['categories' => $categories]);
     }

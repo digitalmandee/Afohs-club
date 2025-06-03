@@ -214,6 +214,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+
+    // get member invoice
+    Route::get('member-invoices/{id}', [MembershipController::class, 'getMemberInvoices'])->name('member-invoices');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
 
 

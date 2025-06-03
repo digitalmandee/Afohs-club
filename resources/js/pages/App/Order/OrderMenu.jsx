@@ -5,7 +5,7 @@ import { tenantAsset } from '@/helpers/asset';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
-import { Avatar, Badge, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography } from '@mui/material';
+import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
@@ -16,13 +16,14 @@ import VariantSelectorDialog from './VariantSelectorDialog';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const OrderMenu = ({ totalSavedOrders }) => {
+const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [open, setOpen] = useState(false);
 
     // const [showPayment, setShowPayment] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState(2);
+    const [selectedCategory, setSelectedCategory] = useState(firstCategoryId || '');
+    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId);
     const [variantProductId, setVariantProductId] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [activeView, setActiveView] = useState('orderDetail');
@@ -102,8 +103,8 @@ const OrderMenu = ({ totalSavedOrders }) => {
     };
 
     useEffect(() => {
-        axios.get(route('products.categories')).then((res) => setCategories(res.data.categories));
-    }, []);
+        axios.get(route('products.categories'), { params: { tenant_id: selectedRestaurant } }).then((res) => setCategories(res.data.categories));
+    }, [selectedRestaurant]);
 
     useEffect(() => {
         axios
@@ -132,20 +133,34 @@ const OrderMenu = ({ totalSavedOrders }) => {
                     }}
                 >
                     {/* Header */}
-                    <Box
-                        sx={{
-                            py: 1,
-                            // px: 3,
-                            display: 'flex',
-                            alignItems: 'center',
-                            // borderBottom: "1px solid #e0e0e0",
-                            // bgcolor: "white",
-                        }}
-                    >
-                        <IconButton onClick={() => router.visit(route('order.new'))} sx={{ mr: 1 }}>
-                            <ArrowBack />
-                        </IconButton>
-                        <Typography sx={{ color: '#3F4E4F', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, pr: 2 }}>
+                        <Box
+                            sx={{
+                                // px: 3,
+                                display: 'flex',
+                                alignItems: 'center',
+                                // borderBottom: "1px solid #e0e0e0",
+                                // bgcolor: "white",
+                            }}
+                        >
+                            <IconButton onClick={() => router.visit(route('order.new'))} sx={{ mr: 1 }}>
+                                <ArrowBack />
+                            </IconButton>
+                            <Typography sx={{ color: '#3F4E4F', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
+                        </Box>
+                        <Box>
+                            <FormControl fullWidth>
+                                <InputLabel id="restuarant-label">Restuarants</InputLabel>
+                                <Select labelId="restuarant-label" value={selectedRestaurant} size="small" label="Restuarants" onChange={(e) => setSelectedRestaurant(e.target.value)}>
+                                    {allrestaurants.length > 0 &&
+                                        allrestaurants.map((item, index) => (
+                                            <MenuItem value={item.id} key={index}>
+                                                {item.name}
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
                     </Box>
 
                     {variantPopupOpen && (

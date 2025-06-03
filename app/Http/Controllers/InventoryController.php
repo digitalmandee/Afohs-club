@@ -28,8 +28,10 @@ class InventoryController extends Controller
             $query->where('category_id', $category_id);
         }
 
+        $query->where('tenant_id', tenant()->id);
+
         $productLists = $query->get();
-        $categoriesList = Category::select('id', 'name')->get();
+        $categoriesList = Category::select('id', 'name')->where('tenant_id', tenant()->id)->get();
 
         return Inertia::render('App/Inventory/Dashboard', compact('productLists', 'categoriesList'));
     }
@@ -93,6 +95,7 @@ class InventoryController extends Controller
             'base_price' => $request->input('base_price'),
             'description' => $request->input('description'),
             'images' => $imagePaths,
+            'tenant_id' => tenant()->id,
         ]);
 
         // Handle variants if passed as an object
@@ -249,10 +252,7 @@ class InventoryController extends Controller
                     ->delete();
             }
 
-            ProductVariant::where('product_id', $id)
-                ->whereNotIn('id', $submittedVariantIds)
-                ->orWhereDoesntHave('values')
-                ->delete();
+            ProductVariant::where('product_id', $id)->whereNotIn('id', $submittedVariantIds)->orWhereDoesntHave('values')->delete();
         }
 
         return redirect()->back()->with('success', 'Product updated.');

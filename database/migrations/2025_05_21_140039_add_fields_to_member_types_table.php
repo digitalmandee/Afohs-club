@@ -12,7 +12,7 @@ return new class extends Migration
             $table->integer('duration')->nullable(); // Change to integer if not already
             $table->decimal('fee', 10, 2)->nullable();
             $table->decimal('maintenance_fee', 10, 2)->nullable();
-            $table->enum('discount_type', ['percentage', 'amount'])->default(0);
+            $table->enum('discount_type', ['percentage', 'amount'])->default('percentage');
             $table->decimal('discount_value', 10, 2)->default(0);
             $table->text('discount_authorized')->nullable();
             $table->json('benefit')->nullable(); // Change to JSON for array storage

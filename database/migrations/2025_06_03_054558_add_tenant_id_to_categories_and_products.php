@@ -11,19 +11,26 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::table('categories', function (Blueprint $table) {
+            $table->string('tenant_id')->nullable();
+        });
+
         Schema::table('products', function (Blueprint $table) {
-            $table->decimal('discount', 8, 2)->default(0)->after('minimal_stock');
+            $table->string('tenant_id')->nullable();
         });
     }
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
+        Schema::table('categories', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
         Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('discount');
+            $table->dropForeign(['tenant_id']);
         });
     }
 };
