@@ -14,7 +14,7 @@ class CategoryFactory extends Factory
     {
         return [
             'name' => $this->faker->word(),
-            'image' => 'assets/cimage.png',
+            // 'image' => 'assets/cimage.png',
             'tenant_id' => null,
         ];
     }
