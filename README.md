@@ -26,11 +26,39 @@ Login URL: http://localhost:8000/login
 Email: superadmin@gmail.com
 Password: 12345678
 
-Tenant (Afohs):
-ID: 12345678
-URL: http://afohs.localhost:8000
-Login URL: http://afohs.localhost:8000/login
-Email: afohs@gmail.com
+Tenant (Afohs Restaurant 1):
+id: 12345671
+URL: http://localhost:8000/afohs-restaurant-1
+Login URL: http://localhost:8000/afohs-restaurant-1/login
+Email: afohs1@gmail.com
+Password: 123456
+
+Tenant (Afohs Restaurant 2):
+id: 12345682
+URL: http://localhost:8000/afohs-restaurant-2
+Login URL: http://localhost:8000/afohs-restaurant-2/login
+Email: afohs2@gmail.com
+Password: 123456
+
+Tenant (Afohs Restaurant 3):
+id: 12345693
+URL: http://localhost:8000/afohs-restaurant-3
+Login URL: http://localhost:8000/afohs-restaurant-3/login
+Email: afohs3@gmail.com
+Password: 123456
+
+Tenant (Afohs Restaurant 4):
+id: 12345704
+URL: http://localhost:8000/afohs-restaurant-4
+Login URL: http://localhost:8000/afohs-restaurant-4/login
+Email: afohs4@gmail.com
+Password: 123456
+
+Tenant (Afohs Restaurant 5):
+id: 12345715
+URL: http://localhost:8000/afohs-restaurant-5
+Login URL: http://localhost:8000/afohs-restaurant-5/login
+Email: afohs5@gmail.com
 Password: 123456
 
 ==============================================================

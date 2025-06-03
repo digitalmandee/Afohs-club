@@ -62,55 +62,55 @@ class RestuarantDatabaseSeeder extends Seeder
             ]);
 
 
-            $tenant->run(function () use (&$globalUserId, $tenant, $i, $tenantPassword, $subdomain) {
-                // Admin
-                $admin = User::create([
-                    'user_id' => $globalUserId++,
-                    'name' => $tenant->name,
-                    'email' => $tenant->email,
-                    'password' => bcrypt($tenantPassword),
-                    'tenant_id' => $tenant->id
-                ]);
-                $admin->assignRole('admin');
+            // $tenant->run(function () use (&$globalUserId, $tenant, $i, $tenantPassword, $subdomain) {
+            // Admin
+            $admin = User::create([
+                'user_id' => $globalUserId++,
+                'name' => $tenant->name,
+                'email' => $tenant->email,
+                'password' => bcrypt($tenantPassword),
+                'tenant_id' => $tenant->id
+            ]);
+            $admin->assignRole('admin');
 
-                // Employees
-                User::factory()->count(2)->create()->each(function ($user) use (&$globalUserId, $tenant) {
-                    $user->update(['user_id' => $globalUserId++, 'password' => bcrypt('123456'), 'tenant_id' => $tenant->id]);
-                    $user->assignRole('employee');
-                });
-
-                // Waiters
-                User::factory()->count(2)->create()->each(function ($user) use (&$globalUserId, $tenant) {
-                    $user->update(['user_id' => $globalUserId++, 'password' => bcrypt('123456'), 'tenant_id' => $tenant->id]);
-                    $user->assignRole('waiter');
-                });
-
-                // Kitchen
-                $kitchen = User::create([
-                    'name' => "kitchen $i",
-                    'user_id' => $globalUserId++,
-                    'email' => "kitchen$i@gmail.com",
-                    'password' => bcrypt('123456'),
-                    'tenant_id' => $tenant->id
-                ]);
-
-                $kitchen->assignRole('kitchen');
-
-                KitchenDetail::create([
-                    'kitchen_id' => $kitchen->id,
-                ]);
-
-                // Customers
-                User::factory()->count(5)->create()->each(function ($user) use (&$globalUserId, $tenant) {
-                    $user->update(['user_id' => $globalUserId++, 'password' => bcrypt('123456'), 'member_type_id' => MemberType::pluck('id')->random(), 'tenant_id' => $tenant->id]);
-                    $user->assignRole('user');
-                });
+            // Employees
+            User::factory()->count(2)->create()->each(function ($user) use (&$globalUserId, $tenant) {
+                $user->update(['user_id' => $globalUserId++, 'password' => bcrypt('123456'), 'tenant_id' => $tenant->id]);
+                $user->assignRole('employee');
             });
+
+            // Waiters
+            User::factory()->count(2)->create()->each(function ($user) use (&$globalUserId, $tenant) {
+                $user->update(['user_id' => $globalUserId++, 'password' => bcrypt('123456'), 'tenant_id' => $tenant->id]);
+                $user->assignRole('waiter');
+            });
+
+            // Kitchen
+            $kitchen = User::create([
+                'name' => "kitchen $i",
+                'user_id' => $globalUserId++,
+                'email' => "kitchen$i@gmail.com",
+                'password' => bcrypt('123456'),
+                'tenant_id' => $tenant->id
+            ]);
+
+            $kitchen->assignRole('kitchen');
+
+            KitchenDetail::create([
+                'kitchen_id' => $kitchen->id,
+            ]);
+
+            // Customers
+            User::factory()->count(5)->create()->each(function ($user) use (&$globalUserId, $tenant) {
+                $user->update(['user_id' => $globalUserId++, 'password' => bcrypt('123456'), 'member_type_id' => MemberType::pluck('id')->random(), 'tenant_id' => $tenant->id]);
+                $user->assignRole('user');
+            });
+            // });
             // Format the output
             $output = <<<TEXT
 
             Tenant ({$tenant->name}):
-                id:        12345678
+                id:        $admin->user_id
                 URL:       http://localhost:8000/{$subdomain}
                 Login URL: http://localhost:8000/{$subdomain}/login
                 Email:     {$tenant->email}
