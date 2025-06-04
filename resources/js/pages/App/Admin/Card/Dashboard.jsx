@@ -12,72 +12,72 @@ import SubscriptionCardComponent from '../Subscription/UserCard';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const CardsDashboard = ({ membersData }) => {
+const CardsDashboard = ({ members = [] }) => {
     // Modal state
     const [open, setOpen] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
-    console.log('membersData', membersData);
+    console.log('membersData', members);
 
     // Sample data
-    const members = [
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Expired',
-            card: 'View',
-            invoice: 'View',
-        },
-    ];
+    // const members = [
+    //     {
+    //         id: 'AFOHS-1235',
+    //         name: 'Zahid Ullah',
+    //         category: 'GYM',
+    //         type: 'Monthly',
+    //         start_date: 'Apr 01-2025',
+    //         expiry: 'Jul 10-2027',
+    //         status: 'Active',
+    //         card: 'View',
+    //         invoice: 'View',
+    //     },
+    //     {
+    //         id: 'AFOHS-1235',
+    //         name: 'Zahid Ullah',
+    //         category: 'GYM',
+    //         type: 'Monthly',
+    //         start_date: 'Apr 01-2025',
+    //         expiry: 'Jul 10-2027',
+    //         status: 'Active',
+    //         card: 'View',
+    //         invoice: 'View',
+    //     },
+    //     {
+    //         id: 'AFOHS-1235',
+    //         name: 'Zahid Ullah',
+    //         category: 'GYM',
+    //         type: 'Monthly',
+    //         start_date: 'Apr 01-2025',
+    //         expiry: 'Jul 10-2027',
+    //         status: 'Active',
+    //         card: 'View',
+    //         invoice: 'View',
+    //     },
+    //     {
+    //         id: 'AFOHS-1235',
+    //         name: 'Zahid Ullah',
+    //         category: 'GYM',
+    //         type: 'Monthly',
+    //         start_date: 'Apr 01-2025',
+    //         expiry: 'Jul 10-2027',
+    //         status: 'Active',
+    //         card: 'View',
+    //         invoice: 'View',
+    //     },
+    //     {
+    //         id: 'AFOHS-1235',
+    //         name: 'Zahid Ullah',
+    //         category: 'GYM',
+    //         type: 'Monthly',
+    //         start_date: 'Apr 01-2025',
+    //         expiry: 'Jul 10-2027',
+    //         status: 'Expired',
+    //         card: 'View',
+    //         invoice: 'View',
+    //     },
+    // ];
 
     return (
         <>
@@ -218,13 +218,13 @@ const CardsDashboard = ({ membersData }) => {
                                                     setOpenProfileModal(true); // open the modal
                                                 }}
                                             >
-                                                {member.id}
+                                                {member.user_id}
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.category}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.start_date}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.expiry}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.card_issue_date}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.card_expiry_date}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
@@ -234,7 +234,7 @@ const CardsDashboard = ({ membersData }) => {
                                                     }}
                                                     onClick={(e) => showMemberDetails(member, e)}
                                                 >
-                                                    {member.status}
+                                                    {member?.member?.card_status}
                                                     {member.status === 'Suspend' && (
                                                         // <Warning
                                                         //     style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
