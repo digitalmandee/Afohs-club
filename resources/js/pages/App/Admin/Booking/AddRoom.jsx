@@ -6,28 +6,252 @@ import {
     TextField,
     Button,
     Paper,
-    Grid,
     IconButton,
-    InputAdornment
+    InputAdornment,
+    MenuItem,
+    Select
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav'
+import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
+import { enqueueSnackbar } from 'notistack';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import dayjs from 'dayjs';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const RoomEventManager = () => {
     const [open, setOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('room'); // 'room' or 'events'
+    const [activeTab, setActiveTab] = useState('room');
     const [photoUrl, setPhotoUrl] = useState(null);
     const fileInputRef = useRef(null);
     const { url } = usePage();
     const query = new URLSearchParams(url.split('?')[1]);
     const type = query.get('type');
+
+    // Room Form state
+    const [roomForm, setRoomForm] = useState({
+        name: '',
+        number_of_beds: '',
+        max_capacity: '',
+        price_per_night: '',
+        number_of_bathrooms: '',
+        photo: null,
+    });
+
+    const [roomErrors, setRoomErrors] = useState({
+        name: '',
+        number_of_beds: '',
+        max_capacity: '',
+        price_per_night: '',
+        number_of_bathrooms: '',
+    });
+
+    // Event Form state
+    const [eventForm, setEventForm] = useState({
+        title: '',
+        date_time: null,
+        max_capacity: '',
+        price_per_person: '',
+        pricing_type: 'Price Per Person',
+        status: '',
+        location: '',
+        photo: null,
+    });
+
+    const [eventErrors, setEventErrors] = useState({
+        title: '',
+        date_time: '',
+        max_capacity: '',
+        price_per_person: '',
+        pricing_type: '',
+        status: '',
+        location: '',
+    });
+
+    const handleRoomInputChange = (e) => {
+        const { name, value } = e.target;
+        setRoomForm({ ...roomForm, [name]: value });
+        setRoomErrors({ ...roomErrors, [name]: '' });
+    };
+
+    const handleEventInputChange = (e) => {
+        const { name, value } = e.target;
+        setEventForm({ ...eventForm, [name]: value });
+        setEventErrors({ ...eventErrors, [name]: '' });
+    };
+
+    const handlePhotoChange = (e, formType) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => setPhotoUrl(e.target.result);
+            reader.readAsDataURL(file);
+            if (formType === 'room') {
+                setRoomForm({ ...roomForm, photo: file });
+            } else {
+                setEventForm({ ...eventForm, photo: file });
+            }
+        }
+    };
+
+    const handleRoomSubmit = (e) => {
+        e.preventDefault();
+
+        const newErrors = {};
+        let hasErrors = false;
+
+        if (!roomForm.name.trim()) {
+            newErrors.name = 'Room name is required';
+            hasErrors = true;
+        }
+        if (!roomForm.number_of_beds.trim()) {
+            newErrors.number_of_beds = 'Number of beds is required';
+            hasErrors = true;
+        }
+        if (!roomForm.max_capacity.trim()) {
+            newErrors.max_capacity = 'Max capacity is required';
+            hasErrors = true;
+        }
+        if (!roomForm.price_per_night.trim()) {
+            newErrors.price_per_night = 'Price per night is required';
+            hasErrors = true;
+        }
+        if (!roomForm.number_of_bathrooms.trim()) {
+            newErrors.number_of_bathrooms = 'Number of bathrooms is required';
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            setRoomErrors(newErrors);
+            return;
+        }
+
+        const data = new FormData();
+        Object.entries(roomForm).forEach(([key, value]) => {
+            if (value !== null) data.append(key, value);
+        });
+
+        router.post(route('rooms.store'), data, {
+            onSuccess: () => {
+                setRoomForm({
+                    name: '',
+                    number_of_beds: '',
+                    max_capacity: '',
+                    price_per_night: '',
+                    number_of_bathrooms: '',
+                    photo: null,
+                });
+                setPhotoUrl(null);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+                setRoomErrors({
+                    name: '',
+                    number_of_beds: '',
+                    max_capacity: '',
+                    price_per_night: '',
+                    number_of_bathrooms: '',
+                });
+                enqueueSnackbar('Room added successfully', { variant: 'success' });
+            },
+            onError: (serverErrors) => {
+                setRoomErrors({ ...roomErrors, ...serverErrors });
+            },
+        });
+    };
+
+    const handleEventSubmit = (e) => {
+        e.preventDefault();
+
+        const newErrors = {};
+        let hasErrors = false;
+
+        if (!eventForm.title.trim()) {
+            newErrors.title = 'Event title is required';
+            hasErrors = true;
+        }
+        if (!eventForm.date_time) {
+            newErrors.date_time = 'Date and time are required';
+            hasErrors = true;
+        }
+        if (!eventForm.max_capacity.trim()) {
+            newErrors.max_capacity = 'Max capacity is required';
+            hasErrors = true;
+        }
+        if (!eventForm.price_per_person.trim()) {
+            newErrors.price_per_person = 'Price is required';
+            hasErrors = true;
+        }
+        if (!eventForm.pricing_type) {
+            newErrors.pricing_type = 'Pricing type is required';
+            hasErrors = true;
+        }
+        if (!eventForm.status.trim()) {
+            newErrors.status = 'Status is required';
+            hasErrors = true;
+        }
+        if (!eventForm.location.trim()) {
+            newErrors.location = 'Location is required';
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            setEventErrors(newErrors);
+            return;
+        }
+
+        const data = new FormData();
+        data.append('title', eventForm.title);
+        data.append('date_time', eventForm.date_time.format('YYYY-MM-DD HH:mm:ss'));
+        data.append('max_capacity', eventForm.max_capacity);
+        data.append('price_per_person', eventForm.price_per_person);
+        data.append('pricing_type', eventForm.pricing_type);
+        data.append('status', eventForm.status);
+        data.append('location', eventForm.location);
+        if (eventForm.photo) {
+            data.append('photo', eventForm.photo);
+        }
+
+        router.post(route('events.store'), data, {
+            onSuccess: () => {
+                setEventForm({
+                    title: '',
+                    date_time: null,
+                    max_capacity: '',
+                    price_per_person: '',
+                    pricing_type: 'Price Per Person',
+                    status: '',
+                    location: '',
+                    photo: null,
+                });
+                setPhotoUrl(null);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+                setEventErrors({
+                    title: '',
+                    date_time: '',
+                    max_capacity: '',
+                    price_per_person: '',
+                    pricing_type: '',
+                    status: '',
+                    location: '',
+                });
+                enqueueSnackbar('Event added successfully', { variant: 'success' });
+            },
+            onError: (serverErrors) => {
+                setEventErrors({ ...eventErrors, ...serverErrors });
+            },
+        });
+    };
 
     useEffect(() => {
         if (type === 'event') {
@@ -42,12 +266,10 @@ const RoomEventManager = () => {
     };
 
     const handlePhotoUpload = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setPhotoUrl(e.target.result);
-            };
-            reader.readAsDataURL(e.target.files[0]);
+        if (activeTab === 'room') {
+            handlePhotoChange(e, 'room');
+        } else {
+            handlePhotoChange(e, 'event');
         }
     };
 
@@ -57,6 +279,11 @@ const RoomEventManager = () => {
 
     const handleDeletePhoto = () => {
         setPhotoUrl(null);
+        if (activeTab === 'room') {
+            setRoomForm({ ...roomForm, photo: null });
+        } else {
+            setEventForm({ ...eventForm, photo: null });
+        }
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -86,7 +313,6 @@ const RoomEventManager = () => {
                     </Box>
                     <Box sx={{ maxWidth: 600, margin: '0 auto', border: '1px solid #E3E3E3', bgcolor: '#FFFFFF' }}>
                         <Paper sx={{ p: 3 }}>
-
                             {/* Photo Upload Section */}
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                                 <Box
@@ -176,7 +402,7 @@ const RoomEventManager = () => {
                             {/* Form Fields */}
                             {activeTab === 'room' ? (
                                 // Room Form
-                                <Box>
+                                <Box component="form" onSubmit={handleRoomSubmit}>
                                     <Box sx={{ mb: 2 }}>
                                         <Typography sx={{
                                             mb: 1,
@@ -186,9 +412,14 @@ const RoomEventManager = () => {
                                         }}>Room Name</Typography>
                                         <TextField
                                             fullWidth
+                                            name="name"
+                                            value={roomForm.name}
+                                            onChange={handleRoomInputChange}
                                             placeholder="e.g : Standard"
                                             variant="outlined"
                                             size="small"
+                                            error={!!roomErrors.name}
+                                            helperText={roomErrors.name}
                                         />
                                     </Box>
 
@@ -201,9 +432,14 @@ const RoomEventManager = () => {
                                         }}>No. of Beds</Typography>
                                         <TextField
                                             fullWidth
+                                            name="number_of_beds"
+                                            value={roomForm.number_of_beds}
+                                            onChange={handleRoomInputChange}
                                             placeholder="e.g : 3"
                                             variant="outlined"
                                             size="small"
+                                            error={!!roomErrors.number_of_beds}
+                                            helperText={roomErrors.number_of_beds}
                                         />
                                     </Box>
 
@@ -216,9 +452,14 @@ const RoomEventManager = () => {
                                         }}>Max Capacity</Typography>
                                         <TextField
                                             fullWidth
+                                            name="max_capacity"
+                                            value={roomForm.max_capacity}
+                                            onChange={handleRoomInputChange}
                                             placeholder="e.g : 2 Adults"
                                             variant="outlined"
                                             size="small"
+                                            error={!!roomErrors.max_capacity}
+                                            helperText={roomErrors.max_capacity}
                                         />
                                     </Box>
 
@@ -231,9 +472,14 @@ const RoomEventManager = () => {
                                         }}>Price Per Night</Typography>
                                         <TextField
                                             fullWidth
+                                            name="price_per_night"
+                                            value={roomForm.price_per_night}
+                                            onChange={handleRoomInputChange}
                                             placeholder="e.g : 100$"
                                             variant="outlined"
                                             size="small"
+                                            error={!!roomErrors.price_per_night}
+                                            helperText={roomErrors.price_per_night}
                                         />
                                     </Box>
 
@@ -246,59 +492,140 @@ const RoomEventManager = () => {
                                         }}>No. of Bathroom</Typography>
                                         <TextField
                                             fullWidth
+                                            name="number_of_bathrooms"
+                                            value={roomForm.number_of_bathrooms}
+                                            onChange={handleRoomInputChange}
                                             placeholder="e.g : 1"
                                             variant="outlined"
                                             size="small"
+                                            error={!!roomErrors.number_of_bathrooms}
+                                            helperText={roomErrors.number_of_bathrooms}
                                         />
+                                    </Box>
+
+                                    {/* Action Buttons */}
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
+                                        <Button
+                                            variant="text"
+                                            sx={{
+                                                color: '#000',
+                                                mr: 2,
+                                                textTransform: 'none',
+                                                fontWeight: 'normal'
+                                            }}
+                                            onClick={() => window.history.back()}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            sx={{
+                                                backgroundColor: '#0a3d62',
+                                                color: 'white',
+                                                textTransform: 'none',
+                                                '&:hover': {
+                                                    backgroundColor: '#0c2d48',
+                                                },
+                                                fontWeight: 'normal',
+                                                px: 4
+                                            }}
+                                        >
+                                            Save
+                                        </Button>
                                     </Box>
                                 </Box>
                             ) : (
                                 // Events Form
-                                <Box>
+                                <Box component="form" onSubmit={handleEventSubmit}>
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="body1" sx={{ mb: 1 }}>Event Title</Typography>
                                         <TextField
                                             fullWidth
+                                            name="title"
+                                            value={eventForm.title}
+                                            onChange={handleEventInputChange}
                                             placeholder="e.g : Annual Gala"
                                             variant="outlined"
                                             size="small"
+                                            error={!!eventErrors.title}
+                                            helperText={eventErrors.title}
                                         />
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="body1" sx={{ mb: 1 }}>Date & Time</Typography>
-                                        <TextField
-                                            fullWidth
-                                            placeholder="e.g : Apr 10, 10:00 PM"
-                                            variant="outlined"
-                                            size="small"
-                                            InputProps={{
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <CalendarTodayIcon fontSize="small" />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <DemoContainer components={['DateTimePicker']}>
+                                                <DateTimePicker
+                                                    value={eventForm.date_time}
+                                                    onChange={(newValue) => setEventForm({ ...eventForm, date_time: newValue })}
+                                                    slotProps={{
+                                                        textField: {
+                                                            size: 'small',
+                                                            sx: {
+                                                                '& .MuiInputBase-root': {
+                                                                    height: 40,
+                                                                },
+                                                            },
+                                                            error: !!eventErrors.date_time,
+                                                            helperText: eventErrors.date_time,
+                                                        },
+                                                    }}
+                                                />
+                                            </DemoContainer>
+                                        </LocalizationProvider>
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="body1" sx={{ mb: 1 }}>Max Capacity</Typography>
                                         <TextField
                                             fullWidth
+                                            name="max_capacity"
+                                            value={eventForm.max_capacity}
+                                            onChange={handleEventInputChange}
                                             placeholder="e.g : 50 People"
                                             variant="outlined"
                                             size="small"
+                                            error={!!eventErrors.max_capacity}
+                                            helperText={eventErrors.max_capacity}
                                         />
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>Price Per Person</Typography>
-                                        <TextField
+                                        <Typography variant="body1" sx={{ mb: 1 }}>Pricing Type</Typography>
+                                        <Select
                                             fullWidth
-                                            placeholder="e.g : 100$"
+                                            name="pricing_type"
+                                            value={eventForm.pricing_type}
+                                            onChange={handleEventInputChange}
                                             variant="outlined"
                                             size="small"
+                                            sx={{ height: 40 }}
+                                            error={!!eventErrors.pricing_type}
+                                        >
+                                            <MenuItem value="Price Per Person">Price Per Person</MenuItem>
+                                            <MenuItem value="Fixed Price">Fixed Price</MenuItem>
+                                        </Select>
+                                        {!!eventErrors.pricing_type && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                                                {eventErrors.pricing_type}
+                                            </Typography>
+                                        )}
+                                    </Box>
+
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="body1" sx={{ mb: 1 }}>{eventForm.pricing_type}</Typography>
+                                        <TextField
+                                            fullWidth
+                                            name="price_per_person"
+                                            value={eventForm.price_per_person}
+                                            onChange={handleEventInputChange}
+                                            placeholder={eventForm.pricing_type === 'Fixed Price' ? 'e.g : 1000$' : 'e.g : 100'}
+                                            variant="outlined"
+                                            size="small"
+                                            error={!!eventErrors.price_per_person}
+                                            helperText={eventErrors.price_per_person}
                                         />
                                     </Box>
 
@@ -306,16 +633,22 @@ const RoomEventManager = () => {
                                         <Typography variant="body1" sx={{ mb: 1 }}>Status</Typography>
                                         <TextField
                                             fullWidth
+                                            name="status"
+                                            value={eventForm.status}
+                                            onChange={handleEventInputChange}
                                             placeholder="e.g : Upcoming"
                                             variant="outlined"
                                             size="small"
                                             InputProps={{
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <KeyboardArrowDownIcon />
-                                                    </InputAdornment>
-                                                ),
+                                                endAdornment: <
+                                                    InputAdornment
+                                                    position="end"
+                                                >
+                                                    <KeyboardArrowDownIcon />
+                                                </InputAdornment>
                                             }}
+                                            error={!!eventErrors.status}
+                                            helperText={eventErrors.status}
                                         />
                                     </Box>
 
@@ -323,6 +656,9 @@ const RoomEventManager = () => {
                                         <Typography variant="body1" sx={{ mb: 1 }}>Location</Typography>
                                         <TextField
                                             fullWidth
+                                            name="location"
+                                            value={eventForm.location}
+                                            onChange={handleEventInputChange}
                                             placeholder="e.g : Main Hall"
                                             variant="outlined"
                                             size="small"
@@ -331,42 +667,47 @@ const RoomEventManager = () => {
                                                     <InputAdornment position="end">
                                                         <KeyboardArrowDownIcon />
                                                     </InputAdornment>
-                                                ),
+                                                )
                                             }}
+                                            error={!!eventErrors.location}
+                                            helperText={eventErrors.location}
                                         />
+                                    </Box>
+
+
+                                    {/* Action Buttons */}
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '4' }}>
+                                        <Button
+                                            variant="text"
+                                            sx={{
+                                                color: '#000',
+                                                mr: 2,
+                                                textTransform: 'none',
+                                                fontWeight: 'normal'
+                                            }}
+                                            onClick={() => window.history.back()}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            sx={{
+                                                backgroundColor: '#0a3d62',
+                                                color: 'white',
+                                                textTransform: 'none',
+                                                '&:hover': {
+                                                    backgroundColor: '#0c2d48',
+                                                },
+                                                fontWeight: 'normal',
+                                                px: 4,
+                                            }}
+                                        >
+                                            Save
+                                        </Button>
                                     </Box>
                                 </Box>
                             )}
-
-                            {/* Action Buttons */}
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-                                <Button
-                                    variant="text"
-                                    sx={{
-                                        color: '#000',
-                                        mr: 2,
-                                        textTransform: 'none',
-                                        fontWeight: 'normal'
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        backgroundColor: '#0a3d62',
-                                        color: 'white',
-                                        textTransform: 'none',
-                                        '&:hover': {
-                                            backgroundColor: '#0c2d48',
-                                        },
-                                        fontWeight: 'normal',
-                                        px: 4
-                                    }}
-                                >
-                                    Save
-                                </Button>
-                            </Box>
                         </Paper>
                     </Box>
                 </div>

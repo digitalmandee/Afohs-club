@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             FloorDatabaseSeeder::class,
             KitchenDatabaseSeeder::class,
             ProductDatabaseSeeder::class,
+            RoomSeeder::class,
             // OrderDatabaseSeeder::class
         ]);
     }
