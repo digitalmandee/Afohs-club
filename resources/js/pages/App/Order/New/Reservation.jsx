@@ -12,7 +12,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { enqueueSnackbar } from 'notistack';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const ReservationDialog = () => {
     const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
@@ -143,6 +143,20 @@ const ReservationDialog = () => {
         const options = { hour: '2-digit', minute: '2-digit', hour12: true };
         return date.toLocaleString('en-US', options);
     }
+
+    const isDisabled = !orderDetails.member;
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'm' && !isDisabled) {
+                e.preventDefault(); // Optional: prevent browser behavior
+                router.visit(route('order.menu'));
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isDisabled, router]);
 
     return (
         <>
@@ -523,7 +537,7 @@ const ReservationDialog = () => {
                                 '&:hover': { bgcolor: '#072a42' },
                                 textTransform: 'none',
                             }}
-                            disabled={!orderDetails.member}
+                            disabled={isDisabled}
                             onClick={() => router.visit(route('order.menu'))}
                         >
                             Choose Menu

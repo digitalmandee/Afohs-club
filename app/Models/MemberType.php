@@ -13,7 +13,8 @@ class MemberType extends Model
         'duration',
         'fee',
         'maintenance_fee',
-        'discount',
+        'discount_type',
+        'discount_value',
         'discount_authorized',
         'benefit',
     ];

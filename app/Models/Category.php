@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Category extends Model
 {
@@ -12,6 +13,7 @@ class Category extends Model
     protected $fillable = [
         'name',
         'image',
+        'tenant_id',
     ];
 
     public function products()

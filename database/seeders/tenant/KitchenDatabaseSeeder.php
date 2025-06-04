@@ -15,19 +15,19 @@ class KitchenDatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        for ($i = 1; $i <= 5; $i++) {
-            $kitchen = User::create([
-                'name' => "kitchen $i",
-                'user_id' => 1234569 . $i,
-                'email' => "kitchen$i@kitchen",
-                'password' => bcrypt('123456'),
-            ]);
+        // for ($i = 1; $i <= 5; $i++) {
+        //     $kitchen = User::create([
+        //         'name' => "kitchen $i",
+        //         'user_id' => 1234590 . $i,
+        //         'email' => "kitchen$i@kitchen",
+        //         'password' => bcrypt('123456'),
+        //     ]);
 
-            $kitchen->assignRole(Role::findByName('kitchen', 'web'));
+        //     $kitchen->assignRole(Role::findByName('kitchen', 'web'));
 
-            KitchenDetail::create([
-                'kitchen_id' => $kitchen->id,
-            ]);
-        }
+        //     KitchenDetail::create([
+        //         'kitchen_id' => $kitchen->id,
+        //     ]);
+        // }
     }
 }

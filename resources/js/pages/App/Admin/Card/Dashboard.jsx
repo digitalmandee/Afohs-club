@@ -5,6 +5,8 @@ import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
+import CardFilter from "./Filter";
+import UserCardComponent from "./UserCard";
 import SubscriptionFilter from '../Subscription/Filter';
 import InvoiceSlip from '../Subscription/Invoice';
 import SubscriptionCardComponent from '../Subscription/UserCard';
@@ -269,6 +271,15 @@ const CardsDashboard = ({ members = [] }) => {
                             </Table>
                         </TableContainer>
                     </div>
+                    <UserCardComponent
+                        open={openCardModal}
+                        onClose={() => setOpenCardModal(false)}
+                    />
+
+                    <CardFilter
+                        open={openFilterModal}
+                        onClose={() => setOpenFilterModal(false)}
+                    />
                     <SubscriptionCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} />
 
                     <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />

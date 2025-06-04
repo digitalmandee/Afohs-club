@@ -155,6 +155,11 @@ Route::group([
         Route::get('/kitchens/{id}/edit', [KitchenController::class, 'edit'])->name('kitchens.edit');
         Route::post('/kitchens', [KitchenController::class, 'store'])->name('kitchens.store');
         Route::put('/kitchens/{id}/update', [KitchenController::class, 'update'])->name('kitchens.update');
+
+
+        Route::get('/test', function () {
+            return Inertia::render('App/Test');
+        })->name('test');
     });
 
     // Login Authentication Routes

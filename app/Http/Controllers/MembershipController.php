@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\CardPayment;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Member;
@@ -18,14 +19,11 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MembershipController extends Controller
 {
-
-
-
     public function index()
     {
-        $member = User::role('user', 'web')->whereNull('parent_user_id')->with('userDetail', 'member.memberType')->get();
+        $member = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
 
-        $total_members = User::role('user', 'web')->whereNull('parent_user_id')->count();
+        $total_members = User::role('user')->whereNull('parent_user_id')->count();
         $total_payment = MembershipInvoice::where('status', 'paid')->sum('amount');
 
         return Inertia::render('App/Admin/Membership/Dashboard', compact('member', 'total_members', 'total_payment'));
@@ -166,6 +164,8 @@ class MembershipController extends Controller
                 'member_type_id' => $member_type_id,
             ]);
 
+            $primaryUser->assignRole('user');
+
             // Create UserDetail for primary user
             UserDetail::create([
                 'user_id' => $primaryUser->id,
@@ -208,12 +208,11 @@ class MembershipController extends Controller
                 $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'member_images');
             }
 
-            // $qrCodeData = route('member.profile', ['id' => $primaryUser->id]);
+            $qrCodeData = route('member.profile', ['id' => $primaryUser->id]);
 
-            // Log::info(QrCode::format('png')->size(300)->generate($qrCodeData));
-
-            // // Create QR code image and save it
-            // $qrImagePath = FileHelper::saveImage(QrCode::format('png')->size(300)->generate($qrCodeData), 'qr_codes');
+            // Create QR code image and save it
+            $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
+            $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'qr_codes');
 
             // Create primary member record
             Member::create([
@@ -228,7 +227,7 @@ class MembershipController extends Controller
                 'from_date' => $validated['from_date'],
                 'to_date' => $validated['to_date'],
                 'picture' => $memberImagePath,
-                // 'qr_code' => $qrImagePath
+                'qr_code' => $qrImagePath
             ]);
 
             // Handle family members
@@ -323,8 +322,19 @@ class MembershipController extends Controller
         }
     }
 
-    // Show Public Profile
+    // Get Member Invoices
+    public function getMemberInvoices($id)
+    {
+        $invoice = CardPayment::where('user_id', $id)->first();
 
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice not found'], 404);
+        }
+
+        return response()->json(['invoice' => $invoice]);
+    }
+
+    // Show Public Profile
     public function viewProfile($id)
     {
         $user = User::with(['member', 'member.memberType', 'userDetail'])->findOrFail($id);
