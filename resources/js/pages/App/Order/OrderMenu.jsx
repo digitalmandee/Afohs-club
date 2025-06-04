@@ -152,12 +152,13 @@ const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCate
                             <FormControl fullWidth>
                                 <InputLabel id="restuarant-label">Restuarants</InputLabel>
                                 <Select labelId="restuarant-label" value={selectedRestaurant} size="small" label="Restuarants" onChange={(e) => setSelectedRestaurant(e.target.value)}>
-                                    {allrestaurants.length > 0 &&
-                                        allrestaurants.map((item, index) => (
-                                            <MenuItem value={item.id} key={index}>
-                                                {item.name}
-                                            </MenuItem>
-                                        ))}
+                                    {allrestaurants && allrestaurants.length > 0
+                                        ? allrestaurants.map((item, index) => (
+                                              <MenuItem value={item.id} key={index}>
+                                                  {item.name}
+                                              </MenuItem>
+                                          ))
+                                        : ''}
                                 </Select>
                             </FormControl>
                         </Box>
@@ -391,7 +392,7 @@ const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCate
                                                         },
                                                     }}
                                                 >
-                                                    {product.images.length > 0 && (
+                                                    {product.images && product.images.length > 0 && (
                                                         <Box
                                                             sx={{
                                                                 width: 40,
