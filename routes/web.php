@@ -191,6 +191,14 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Finance/Dashboard');
     })->name('finance.dashboard');
 
+    Route::get('/finance/add/transaction', function () {
+        return Inertia::render('App/Admin/Finance/AddTransaction');
+    })->name('finance.addtransaction');
+
+    Route::get('/finance/transaction', function () {
+        return Inertia::render('App/Admin/Finance/Transaction');
+    })->name('finance.transaction');
+
     //Cards Routes
     // Route::get('/card/dashboard', function () {
     //     return Inertia::render('App/Admin/Card/Dashboard');
@@ -206,16 +214,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+
+    // get member invoice
+    Route::get('member-invoices/{id}', [MembershipController::class, 'getMemberInvoices'])->name('member-invoices');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
-    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
 
     // Members types
-    Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+    Route::get('/admin/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
     Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
     Route::post('/members/member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
     Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
     Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
+    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
     //payment
     Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');

@@ -286,17 +286,21 @@ const SubscriptionDashboard = () => {
                                             </TableCell>
 
                                             <TableCell>
-                                                <Button style={{ color: "#0C67AA", textDecoration: "underline", textTransform: "none" }}
-                                                    onClick={() => {
-                                                        setOpenCardModal(true); // open the modal
+                                                <span
+                                                    style={{
+                                                        backgroundColor:'transparent',
+                                                        color: "#0C67AA",
+                                                        textDecoration: "underline",
+                                                        cursor: "pointer"
                                                     }}
+                                                    onClick={() => setOpenCardModal(true)}
                                                 >
                                                     View
-                                                </Button>
+                                                </span>
                                             </TableCell>
                                             <TableCell>
-                                                <Button onClick={()=>setOpenInvoiceModal(true)} 
-                                                sx={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>{member.invoice}</Button>
+                                                <Button onClick={() => setOpenInvoiceModal(true)}
+                                                    sx={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>{member.invoice}</Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}

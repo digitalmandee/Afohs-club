@@ -4,7 +4,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import { Autocomplete, Box, Button, Grid, InputAdornment, TextField, Typography } from '@mui/material';
 import axios from 'axios';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const TakeAwayDialog = () => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
@@ -50,6 +50,20 @@ const TakeAwayDialog = () => {
         handleOrderDetailChange(field, value);
         // setErrors({ ...errors, [field]: '' }); // Clear error on change
     };
+
+    const isDisabled = !orderDetails.member;
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'm' && !isDisabled) {
+                e.preventDefault(); // Optional: prevent browser behavior
+                router.visit(route('order.menu'));
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isDisabled, router]);
 
     return (
         <Box>
@@ -149,7 +163,7 @@ const TakeAwayDialog = () => {
                         },
                         textTransform: 'none',
                     }}
-                    disabled={!orderDetails.member}
+                    disabled={isDisabled}
                     onClick={() => router.visit(route('order.menu'))}
                 >
                     Choose Menu

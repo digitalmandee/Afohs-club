@@ -2,16 +2,17 @@
 
 import { tenantAsset } from '@/helpers/asset';
 import { Search } from '@mui/icons-material';
-import { Avatar, Badge, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography } from '@mui/material';
+import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 
-const AddItems = ({ setOrderItems, orderItems, setShowAddItem }) => {
+const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants }) => {
     const [selectedCategory, setSelectedCategory] = useState(1);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
+    const [selectedRestaurant, setSelectedRestaurant] = useState(allrestaurants[0]?.id);
 
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
@@ -64,8 +65,8 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem }) => {
     };
 
     useEffect(() => {
-        axios.get(route('products.categories')).then((res) => setCategories(res.data.categories));
-    }, []);
+        axios.get(route('products.categories'), { params: { tenant_id: selectedRestaurant } }).then((res) => setCategories(res.data.categories));
+    }, [selectedRestaurant]);
 
     useEffect(() => {
         axios.get(route('products.bycategory', { category_id: selectedCategory })).then((res) => setProducts(res.data.products));
@@ -83,17 +84,31 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem }) => {
                     }}
                 >
                     {/* Header */}
-                    <Box
-                        sx={{
-                            py: 1,
-                            px: 3,
-                            display: 'flex',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Button variant="outlined" size="small" onClick={() => setShowAddItem(false)} sx={{ textTransform: 'none' }}>
-                            Close Add Item
-                        </Button>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, px: 3 }}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Button variant="outlined" size="small" onClick={() => setShowAddItem(false)} sx={{ textTransform: 'none' }}>
+                                Close Add Item
+                            </Button>
+                        </Box>
+
+                        <Box>
+                            <FormControl fullWidth>
+                                <InputLabel id="restuarant-label">Restuarants</InputLabel>
+                                <Select labelId="restuarant-label" size="small" value={selectedRestaurant} label="Restuarants" onChange={(e) => setSelectedRestaurant(e.target.value)}>
+                                    {allrestaurants.length > 0 &&
+                                        allrestaurants.map((item, index) => (
+                                            <MenuItem value={item.id} key={index}>
+                                                {item.name}
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
                     </Box>
 
                     {variantPopupOpen && variantProduct && (
