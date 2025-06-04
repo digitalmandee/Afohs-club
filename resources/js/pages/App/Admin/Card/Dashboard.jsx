@@ -20,66 +20,8 @@ const CardsDashboard = ({ members = [] }) => {
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
+    const [selectedMember, setSelectedMember] = useState(null); // New state for selected member
     console.log('membersData', members);
-
-    // Sample data
-    // const members = [
-    //     {
-    //         id: 'AFOHS-1235',
-    //         name: 'Zahid Ullah',
-    //         category: 'GYM',
-    //         type: 'Monthly',
-    //         start_date: 'Apr 01-2025',
-    //         expiry: 'Jul 10-2027',
-    //         status: 'Active',
-    //         card: 'View',
-    //         invoice: 'View',
-    //     },
-    //     {
-    //         id: 'AFOHS-1235',
-    //         name: 'Zahid Ullah',
-    //         category: 'GYM',
-    //         type: 'Monthly',
-    //         start_date: 'Apr 01-2025',
-    //         expiry: 'Jul 10-2027',
-    //         status: 'Active',
-    //         card: 'View',
-    //         invoice: 'View',
-    //     },
-    //     {
-    //         id: 'AFOHS-1235',
-    //         name: 'Zahid Ullah',
-    //         category: 'GYM',
-    //         type: 'Monthly',
-    //         start_date: 'Apr 01-2025',
-    //         expiry: 'Jul 10-2027',
-    //         status: 'Active',
-    //         card: 'View',
-    //         invoice: 'View',
-    //     },
-    //     {
-    //         id: 'AFOHS-1235',
-    //         name: 'Zahid Ullah',
-    //         category: 'GYM',
-    //         type: 'Monthly',
-    //         start_date: 'Apr 01-2025',
-    //         expiry: 'Jul 10-2027',
-    //         status: 'Active',
-    //         card: 'View',
-    //         invoice: 'View',
-    //     },
-    //     {
-    //         id: 'AFOHS-1235',
-    //         name: 'Zahid Ullah',
-    //         category: 'GYM',
-    //         type: 'Monthly',
-    //         start_date: 'Apr 01-2025',
-    //         expiry: 'Jul 10-2027',
-    //         status: 'Expired',
-    //         card: 'View',
-    //         invoice: 'View',
-    //     },
-    // ];
 
     return (
         <>
@@ -96,9 +38,6 @@ const CardsDashboard = ({ members = [] }) => {
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
-                            {/* <IconButton>
-                                <ArrowBack />
-                            </IconButton> */}
                             <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#3F4E4F', fontSize: '30px' }}>Card Dashboard</Typography>
                         </div>
                     </div>
@@ -216,13 +155,13 @@ const CardsDashboard = ({ members = [] }) => {
                                             <TableCell
                                                 sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
                                                 onClick={() => {
-                                                    setSelectMember(member); // save the clicked member
+                                                    setSelectedMember(member); // save the clicked member
                                                     setOpenProfileModal(true); // open the modal
                                                 }}
                                             >
                                                 {member.user_id}
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.first_name}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.card_issue_date}</TableCell>
@@ -230,17 +169,16 @@ const CardsDashboard = ({ members = [] }) => {
                                             <TableCell>
                                                 <span
                                                     style={{
-                                                        color: member.status === 'Active' ? '#2e7d32' : member.status === 'Suspend' ? '#FFA90B' : '#d32f2f',
+                                                        color: member?.member?.card_status
+                                                            === 'active' ? '#2e7d32' : member.member?.card_status
+                                                                === 'inactive' ? '#FFA90B' : '#d32f2f',
                                                         fontWeight: 'medium',
                                                         cursor: 'pointer',
                                                     }}
                                                     onClick={(e) => showMemberDetails(member, e)}
                                                 >
                                                     {member?.member?.card_status}
-                                                    {member.status === 'Suspend' && (
-                                                        // <Warning
-                                                        //     style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
-                                                        // />
+                                                    {member.status === 'inactive' && (
                                                         <img
                                                             src="/assets/system-expired.png"
                                                             alt=""
@@ -259,7 +197,8 @@ const CardsDashboard = ({ members = [] }) => {
                                                 <Button
                                                     style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
                                                     onClick={() => {
-                                                        setOpenCardModal(true); // open the modal
+                                                        setSelectedMember(member); // Set the selected member
+                                                        setOpenCardModal(true); // Open the modal
                                                     }}
                                                 >
                                                     View
@@ -271,20 +210,14 @@ const CardsDashboard = ({ members = [] }) => {
                             </Table>
                         </TableContainer>
                     </div>
-                    <UserCardComponent
-                        open={openCardModal}
-                        onClose={() => setOpenCardModal(false)}
-                    />
+                    <CardFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    <SubscriptionCardComponent member={selectedMember} open={openCardModal} onClose={() => setOpenCardModal(false)} />
 
-                    <CardFilter
-                        open={openFilterModal}
-                        onClose={() => setOpenFilterModal(false)}
-                    />
-                    <SubscriptionCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} />
+                    {/* <UserCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} /> */}
 
-                    <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    {/* <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} /> */}
 
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} />
+                    {/* <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} /> */}
                 </div>
             </div>
         </>

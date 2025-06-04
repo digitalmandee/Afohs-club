@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Drawer, Grid, Container } from '@mui/material';
 import { Print, Close, Send } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,7 +15,7 @@ const InvoiceSlip = ({ open, onClose, member }) => {
                 .then((response) => {
                     console.log('InvoiceSlip response:', response.data);
                 })
-                .catch((error) => {});
+                .catch((error) => { });
             // console.log('InvoiceSlip member:', JSON.stringify(member, null, 2));
         }
     }, [open, member]);
