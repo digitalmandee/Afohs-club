@@ -218,6 +218,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Subscription/AddSports');
     })->name('subscription.addsports');
 
+    //Kitchen Routes
+    Route::get('/kitchen/category/dashboard', function () {
+        return Inertia::render('App/Admin/Kitchen/Dashboard');
+    })->name('kitchen.dashboard');
+
+    Route::get('/kitchen/category/add/new/kitchen', function () {
+        return Inertia::render('App/Admin/Kitchen/AddKitchen');
+    })->name('kitchen.addkitchen');
+
+    Route::get('/kitchen/category/customer/history', function () {
+        return Inertia::render('App/Admin/Kitchen/History');
+    })->name('kitchen.history');
+
     //Finance Routes
     Route::get('/finance/dashboard', function () {
         return Inertia::render('App/Admin/Finance/Dashboard');
