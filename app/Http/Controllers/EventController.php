@@ -11,7 +11,7 @@ class EventController extends Controller
     // Show form + existing event data
     public function create()
     {
-        $events = Event::latest()->get();
+        $events = BookingEvents::latest()->get();
         return Inertia::render('App/Admin/Booking/AddRoom', [
             'events' => $events,
         ]);
@@ -21,12 +21,12 @@ class EventController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
+            'event_name' => 'required|string|max:255',
             'date_time' => 'required|string',
             'max_capacity' => 'required|integer|min:1',
             'price_per_person' => 'required|numeric|min:0',
-            'pricing_type' => 'required|in:Price Per Person,Fixed Price',
-            'status' => 'required|string|max:255',
+            'pricing_type' => 'required|in:fixed,per person',
+            'status' => 'required|in:pending,upcomming,completed',
             'location' => 'required|string|max:255',
             'photo' => 'nullable|image|max:2048',
         ]);
@@ -37,7 +37,7 @@ class EventController extends Controller
         }
 
         BookingEvents::create([
-            'title' => $request->title,
+            'event_name' => $request->event_name,
             'date_time' => $request->date_time,
             'max_capacity' => $request->max_capacity,
             'price_per_person' => $request->price_per_person,
@@ -47,6 +47,6 @@ class EventController extends Controller
             'photo_path' => $path,
         ]);
 
-        return redirect()->route('rooms.add')->with('success', 'Event added successfully.');
+        return redirect()->route('events.add')->with('success', 'Event added successfully.');
     }
 }

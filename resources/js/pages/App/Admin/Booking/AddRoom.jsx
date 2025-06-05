@@ -12,7 +12,6 @@ import {
     Select
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -56,18 +55,18 @@ const RoomEventManager = () => {
 
     // Event Form state
     const [eventForm, setEventForm] = useState({
-        title: '',
+        event_name: '',
         date_time: null,
         max_capacity: '',
         price_per_person: '',
-        pricing_type: 'Price Per Person',
+        pricing_type: 'per person',
         status: '',
         location: '',
         photo: null,
     });
 
     const [eventErrors, setEventErrors] = useState({
-        title: '',
+        event_name: '',
         date_time: '',
         max_capacity: '',
         price_per_person: '',
@@ -174,8 +173,8 @@ const RoomEventManager = () => {
         const newErrors = {};
         let hasErrors = false;
 
-        if (!eventForm.title.trim()) {
-            newErrors.title = 'Event title is required';
+        if (!eventForm.event_name.trim()) {
+            newErrors.event_name = 'Event name is required';
             hasErrors = true;
         }
         if (!eventForm.date_time) {
@@ -209,7 +208,7 @@ const RoomEventManager = () => {
         }
 
         const data = new FormData();
-        data.append('title', eventForm.title);
+        data.append('event_name', eventForm.event_name);
         data.append('date_time', eventForm.date_time.format('YYYY-MM-DD HH:mm:ss'));
         data.append('max_capacity', eventForm.max_capacity);
         data.append('price_per_person', eventForm.price_per_person);
@@ -223,11 +222,11 @@ const RoomEventManager = () => {
         router.post(route('events.store'), data, {
             onSuccess: () => {
                 setEventForm({
-                    title: '',
+                    event_name: '',
                     date_time: null,
                     max_capacity: '',
                     price_per_person: '',
-                    pricing_type: 'Price Per Person',
+                    pricing_type: 'per person',
                     status: '',
                     location: '',
                     photo: null,
@@ -237,7 +236,7 @@ const RoomEventManager = () => {
                     fileInputRef.current.value = '';
                 }
                 setEventErrors({
-                    title: '',
+                    event_name: '',
                     date_time: '',
                     max_capacity: '',
                     price_per_person: '',
@@ -539,17 +538,17 @@ const RoomEventManager = () => {
                                 // Events Form
                                 <Box component="form" onSubmit={handleEventSubmit}>
                                     <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>Event Title</Typography>
+                                        <Typography variant="body1" sx={{ mb: 1 }}>Event Name</Typography>
                                         <TextField
                                             fullWidth
-                                            name="title"
-                                            value={eventForm.title}
+                                            name="event_name"
+                                            value={eventForm.event_name}
                                             onChange={handleEventInputChange}
                                             placeholder="e.g : Annual Gala"
                                             variant="outlined"
                                             size="small"
-                                            error={!!eventErrors.title}
-                                            helperText={eventErrors.title}
+                                            error={!!eventErrors.event_name}
+                                            helperText={eventErrors.event_name}
                                         />
                                     </Box>
 
@@ -604,8 +603,8 @@ const RoomEventManager = () => {
                                             sx={{ height: 40 }}
                                             error={!!eventErrors.pricing_type}
                                         >
-                                            <MenuItem value="Price Per Person">Price Per Person</MenuItem>
-                                            <MenuItem value="Fixed Price">Fixed Price</MenuItem>
+                                            <MenuItem value="per person">Per Person</MenuItem>
+                                            <MenuItem value="fixed">Fixed</MenuItem>
                                         </Select>
                                         {!!eventErrors.pricing_type && (
                                             <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
@@ -615,13 +614,13 @@ const RoomEventManager = () => {
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body1" sx={{ mb: 1 }}>{eventForm.pricing_type}</Typography>
+                                        <Typography variant="body1" sx={{ mb: 1 }}>{eventForm.pricing_type === 'fixed' ? 'Fixed Price' : 'Price Per Person'}</Typography>
                                         <TextField
                                             fullWidth
                                             name="price_per_person"
                                             value={eventForm.price_per_person}
                                             onChange={handleEventInputChange}
-                                            placeholder={eventForm.pricing_type === 'Fixed Price' ? 'e.g : 1000$' : 'e.g : 100'}
+                                            placeholder={eventForm.pricing_type === 'fixed' ? 'e.g : 1000$' : 'e.g : 100'}
                                             variant="outlined"
                                             size="small"
                                             error={!!eventErrors.price_per_person}
@@ -631,52 +630,53 @@ const RoomEventManager = () => {
 
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="body1" sx={{ mb: 1 }}>Status</Typography>
-                                        <TextField
+                                        <Select
                                             fullWidth
                                             name="status"
                                             value={eventForm.status}
                                             onChange={handleEventInputChange}
-                                            placeholder="e.g : Upcoming"
                                             variant="outlined"
                                             size="small"
-                                            InputProps={{
-                                                endAdornment: <
-                                                    InputAdornment
-                                                    position="end"
-                                                >
-                                                    <KeyboardArrowDownIcon />
-                                                </InputAdornment>
-                                            }}
+                                            sx={{ height: 40 }}
                                             error={!!eventErrors.status}
-                                            helperText={eventErrors.status}
-                                        />
+                                        >
+                                            <MenuItem value="pending">Pending</MenuItem>
+                                            <MenuItem value="upcomming">Upcoming</MenuItem>
+                                            <MenuItem value="completed">Completed</MenuItem>
+                                        </Select>
+                                        {!!eventErrors.status && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                                                {eventErrors.status}
+                                            </Typography>
+                                        )}
                                     </Box>
 
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="body1" sx={{ mb: 1 }}>Location</Typography>
-                                        <TextField
+                                        <Select
                                             fullWidth
                                             name="location"
                                             value={eventForm.location}
                                             onChange={handleEventInputChange}
-                                            placeholder="e.g : Main Hall"
                                             variant="outlined"
                                             size="small"
-                                            InputProps={{
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <KeyboardArrowDownIcon />
-                                                    </InputAdornment>
-                                                )
-                                            }}
+                                            sx={{ height: 40 }}
                                             error={!!eventErrors.location}
-                                            helperText={eventErrors.location}
-                                        />
+                                        >
+                                            <MenuItem value="Main Hall">Main Hall</MenuItem>
+                                            <MenuItem value="Conference Room">Conference Room</MenuItem>
+                                            <MenuItem value="Outdoor Area">Outdoor Area</MenuItem>
+                                            <MenuItem value="Ballroom">Ballroom</MenuItem>
+                                        </Select>
+                                        {!!eventErrors.location && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                                                {eventErrors.location}
+                                            </Typography>
+                                        )}
                                     </Box>
 
-
                                     {/* Action Buttons */}
-                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '4' }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
                                         <Button
                                             variant="text"
                                             sx={{

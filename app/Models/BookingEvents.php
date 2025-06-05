@@ -10,7 +10,7 @@ class BookingEvents extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title',
+        'event_name',
         'date_time',
         'max_capacity',
         'pricing_type',
