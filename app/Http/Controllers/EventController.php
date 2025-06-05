@@ -3,17 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\BookingEvents;
+use App\Models\EventLocation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class EventController extends Controller
 {
-    // Show form + existing event data
+    // // Show form + existing event data
+    // public function index()
+    // {
+    //     $locations = EventLocation::all();
+    //     return Inertia::render('App/Admin/Booking/AddRoom', [
+    //         'eventLocation' => $locations,
+    //     ]);
+    // }
     public function create()
     {
         $events = BookingEvents::latest()->get();
+        $locations = EventLocation::all();
         return Inertia::render('App/Admin/Booking/AddRoom', [
             'events' => $events,
+            'locations' => $locations,
         ]);
     }
 
@@ -48,5 +58,53 @@ class EventController extends Controller
         ]);
 
         return redirect()->route('events.add')->with('success', 'Event added successfully.');
+    }
+
+    // Show event locations page
+    public function locations()
+    {
+        $locations = EventLocation::all();
+        return Inertia::render('App/Admin/Booking/AddRoom', [
+            'locations' => $locations,
+        ]);
+    }
+
+    // Store new event location
+    public function storeLocation(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:event_locations,name',
+        ]);
+
+        EventLocation::create([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->back()->with('success', 'Location added successfully.');
+    }
+
+    // Update event location
+    public function updateLocation(Request $request, $id)
+    {
+        $location = EventLocation::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255|unique:event_locations,name,' . $id,
+        ]);
+
+        $location->update([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->back()->with('success', 'Location updated successfully.');
+    }
+
+    // Delete event location
+    public function deleteLocation($id)
+    {
+        $location = EventLocation::findOrFail($id);
+        $location->delete();
+
+        return redirect()->back()->with('success', 'Location deleted successfully.');
     }
 }

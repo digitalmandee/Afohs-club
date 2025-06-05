@@ -2,6 +2,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\EventLocation;
+
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,17 +13,29 @@ class RoomController extends Controller
     public function index()
     {
         $rooms = Room::latest()->get();
-        return Inertia::render('App/Admin/Booking/AddRoom', [
+
+        return Inertia::render('App/Admin/Booking/RoomManage', [
             'rooms' => $rooms,
         ]);
     }
+     // Show form + existing event data
+    // public function index()
+    // {
+    //     return Inertia::render('App/Admin/Booking/AddRoom', [
+    //         'eventLocation' => $locations,
+    //     ]);
+    // }
 
     // Show form + existing room data
     public function create()
     {
         $rooms = Room::latest()->get();
+        $locations = EventLocation::all();
+
         return Inertia::render('App/Admin/Booking/AddRoom', [
             'rooms' => $rooms,
+            'locations' => $locations,
+
         ]);
     }
 

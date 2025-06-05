@@ -160,13 +160,14 @@ const roomTypes = [
     },
 ];
 
-const RoomScreen = () => {
+const RoomScreen = ({ rooms }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showResultsModal, setShowResultsModal] = useState(false);
     const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
+    console.log('rooms', rooms);
 
     const filteredBookings = bookingsData.filter((booking) => booking.type.toLowerCase().includes(searchTerm.toLowerCase()));
 
