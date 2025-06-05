@@ -78,20 +78,31 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('membership.addmembertype');
 
 
-//   Route::get('/rooms/dashboard', function () {
-//         return Inertia::render('App/Admin/Booking/RoomManage');
-//     })->name('rooms.manage');
 
-
-    //Admin Room Booking Routes
-    // Route::get('/location/show', [EventController::class, 'index'])->name('location');
+    // Admin Room Booking Routes
     Route::get('/rooms/dashboard', [RoomController::class, 'index'])->name('rooms.manage');
+    Route::get('/rooms/manage', [RoomController::class, 'allRooms'])->name('rooms.all');
     Route::get('/booking/add/room', [RoomController::class, 'create'])->name('rooms.add');
     Route::post('/booking/room/store', [RoomController::class, 'store'])->name('rooms.store');
+    Route::get('/rooms/edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit');
+    Route::put('/rooms/{id}', [RoomController::class, 'update'])->name('rooms.update');
+    Route::delete('/rooms/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+
+// Route::get('/events/dashboard', function () {
+//         return Inertia::render('App/Admin/Booking/EventManage');
+//     })->name('events.manage');
 
     //Admin Events Booking Routes
+    Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
     Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
+    // Add routes for edit and delete
+    Route::get('/events/edit/{id}', [EventController::class, 'edit'])->name('events.edit');
+    Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
+    Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
+
+
+    // location
     Route::get('/events/locations', [EventController::class, 'locations'])->name('events.locations');
     Route::post('/events/locations', [EventController::class, 'storeLocation'])->name('events.locations.store');
     Route::put('/events/locations/{id}', [EventController::class, 'updateLocation'])->name('events.locations.update');
@@ -111,9 +122,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('rooms.booking');
 
 
-    Route::get('/events/manage', function () {
-        return Inertia::render('App/Admin/Booking/EventManage');
-    })->name('events.manage');
 
 
     //Admin Employee Routes

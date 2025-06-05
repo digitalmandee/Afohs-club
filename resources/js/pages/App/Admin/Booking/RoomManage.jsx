@@ -1,7 +1,7 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { Add, ArrowBack, Bathroom, Bed, FilterAlt, Person, Search } from '@mui/icons-material';
-import { Box, Button, Grid, IconButton, Paper, ThemeProvider, Typography, createTheme } from '@mui/material';
+import { Box, Button, Grid, IconButton, Paper, ThemeProvider, Typography, createTheme, Link } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 import { Badge, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap';
@@ -253,226 +253,77 @@ const RoomScreen = ({ rooms }) => {
                         </Box>
 
                         <Box sx={{ mb: 2 }}>
+                            <Box textAlign="right" pb={2} >
+                                <Link
+                                    href="/rooms/manage"
+                                    underline="none"
+                                    sx={{
+                                        color: '#0a3d62',
+                                        fontWeight: 500,
+                                        fontSize: '16px',
+                                    }}
+                                >
+                                    View All
+                                </Link>
+                            </Box>
+
+
                             <Grid container spacing={2}>
-                                {/* Deluxe Room */}
-                                <Grid item xs={12} sm={6}>
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            borderRadius: 1,
-                                            overflow: 'hidden',
-                                            display: 'flex',
-                                            height: '100px',
-                                            bgcolor: '#FFFFFF',
-                                        }}
-                                    >
-                                        {/* Wrap image in a flex box */}
-                                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                            <img src="/assets/room-img.png" alt="" style={{ width: '117px', height: '77px' }} />
-                                        </Box>
+                                {rooms.slice(0, 4).map((roomTypes, index) => (
+                                    <>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper
+                                                elevation={0}
+                                                sx={{
+                                                    borderRadius: 1,
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    height: '100px',
+                                                    bgcolor: '#FFFFFF',
+                                                }}
+                                            >
+                                                <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                                                    <img src={'/' + roomTypes?.photo_path} alt="" style={{ width: '117px', height: '77px' }} />
+                                                </Box>
 
-                                        <Box sx={{ p: 2, width: '80%' }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Typography variant="h6" fontWeight="medium">
-                                                    {roomTypes[0].type}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    <Box component="span" fontWeight="bold" color="text.primary">
-                                                        {roomTypes[3].price}$
+                                                <Box sx={{ p: 2, width: '80%' }}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                        <Typography variant="h6" fontWeight="medium">
+                                                            {roomTypes.name}
+                                                        </Typography>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            <Box component="span" fontWeight="bold" color="text.primary">
+                                                                {roomTypes.price_per_night}$
+                                                            </Box>
+                                                            /per night
+                                                        </Typography>
                                                     </Box>
-                                                    /per night
-                                                </Typography>
-                                            </Box>
 
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Bed fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].beds} Beds
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Person fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].guests} Guest
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Bathroom fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].bathrooms} Bathroom
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-                                </Grid>
-
-                                {/* Standard Room */}
-                                <Grid item xs={12} sm={6}>
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            borderRadius: 1,
-                                            overflow: 'hidden',
-                                            display: 'flex',
-                                            height: '100px',
-                                            bgcolor: '#FFFFFF',
-                                        }}
-                                    >
-                                        {/* Wrap image in a flex box */}
-                                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                            <img src="/assets/room-img.png" alt="" style={{ width: '117px', height: '77px' }} />
-                                        </Box>
-
-                                        <Box sx={{ p: 2, width: '80%' }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Typography variant="h6" fontWeight="medium">
-                                                    {roomTypes[1].type}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    <Box component="span" fontWeight="bold" color="text.primary">
-                                                        {roomTypes[3].price}$
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <Bed fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {roomTypes.number_of_beds} Beds
+                                                            </Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <Person fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {roomTypes.max_capacity} Guest
+                                                            </Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <Bathroom fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {roomTypes.number_of_bathrooms} Bathroom
+                                                            </Typography>
+                                                        </Box>
                                                     </Box>
-                                                    /per night
-                                                </Typography>
-                                            </Box>
-
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Bed fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].beds} Beds
-                                                    </Typography>
                                                 </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Person fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].guests} Guest
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Bathroom fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].bathrooms} Bathroom
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-                                </Grid>
-                            </Grid>
-                        </Box>
-
-                        <Box>
-                            <Grid container spacing={2}>
-                                {/* Suit Room */}
-                                <Grid item xs={12} sm={6}>
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            borderRadius: 1,
-                                            overflow: 'hidden',
-                                            display: 'flex',
-                                            height: '100px',
-                                            bgcolor: '#FFFFFF',
-                                        }}
-                                    >
-                                        {/* Wrap image in a flex box */}
-                                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                            <img src="/assets/room-img.png" alt="" style={{ width: '117px', height: '77px' }} />
-                                        </Box>
-
-                                        <Box sx={{ p: 2, width: '80%' }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Typography variant="h6" fontWeight="medium">
-                                                    {roomTypes[2].type}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    <Box component="span" fontWeight="bold" color="text.primary">
-                                                        {roomTypes[3].price}$
-                                                    </Box>
-                                                    /per night
-                                                </Typography>
-                                            </Box>
-
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Bed fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].beds} Beds
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Person fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].guests} Guest
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Bathroom fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].bathrooms} Bathroom
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-                                </Grid>
-
-                                {/* Family Room */}
-                                <Grid item xs={12} sm={6}>
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            borderRadius: 1,
-                                            overflow: 'hidden',
-                                            display: 'flex',
-                                            height: '100px',
-                                            bgcolor: '#FFFFFF',
-                                        }}
-                                    >
-                                        {/* Wrap image in a flex box */}
-                                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                            <img src="/assets/room-img.png" alt="" style={{ width: '117px', height: '77px' }} />
-                                        </Box>
-
-                                        <Box sx={{ p: 2, width: '80%' }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Typography variant="h6" fontWeight="medium">
-                                                    {roomTypes[3].type}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    <Box component="span" fontWeight="bold" color="text.primary">
-                                                        {roomTypes[3].price}$
-                                                    </Box>
-                                                    /per night
-                                                </Typography>
-                                            </Box>
-
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Bed fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].beds} Beds
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Person fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].guests} Guest
-                                                    </Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Bathroom fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {roomTypes[3].bathrooms} Bathroom
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-                                </Grid>
+                                            </Paper>
+                                        </Grid>
+                                    </>
+                                ))}
                             </Grid>
                         </Box>
 
@@ -619,21 +470,6 @@ const RoomScreen = ({ rooms }) => {
                                 <RoomBookingFilter />
                             </Modal.Body>
                         </Modal>
-
-                        {/* Room/Event Availability Dialog */}
-                        {/* <Modal
-                            show={showAvailabilityModal}
-                            onHide={handleCloseAvailabilityModal}
-                            dialogClassName="custom-dialog-right"
-                        >
-                            <Modal.Body style={{ padding: 0, height: "100vh", overflowY: "auto" }}>
-                                {showAvailableRooms ? (
-                                    <AvailableRooms />
-                                ) : (
-                                    <RoomEventModal onFind={handleShowAvailableRooms} />
-                                )}
-                            </Modal.Body>
-                        </Modal> */}
                     </Container>
                 </ThemeProvider>
             </div>

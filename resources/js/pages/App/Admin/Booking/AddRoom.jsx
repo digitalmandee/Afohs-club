@@ -140,6 +140,8 @@ const RoomEventManager = ({ locations }) => {
         });
 
         router.post(route('rooms.store'), data, {
+            forceFormData: true,
+        }, {
             onSuccess: () => {
                 setRoomForm({
                     name: '',
@@ -161,6 +163,7 @@ const RoomEventManager = ({ locations }) => {
                     number_of_bathrooms: '',
                 });
                 enqueueSnackbar('Room added successfully', { variant: 'success' });
+                router.visit('/rooms/dashboard');
             },
             onError: (serverErrors) => {
                 setRoomErrors({ ...roomErrors, ...serverErrors });
@@ -246,6 +249,7 @@ const RoomEventManager = ({ locations }) => {
                     location: '',
                 });
                 enqueueSnackbar('Event added successfully', { variant: 'success' });
+                router.visit('/events/dashboard');
             },
             onError: (serverErrors) => {
                 setEventErrors({ ...eventErrors, ...serverErrors });
