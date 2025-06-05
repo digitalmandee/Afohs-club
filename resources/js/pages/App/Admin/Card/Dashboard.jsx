@@ -14,72 +14,14 @@ import SubscriptionCardComponent from '../Subscription/UserCard';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const CardsDashboard = ({ membersData }) => {
+const CardsDashboard = ({ members = [] }) => {
     // Modal state
     const [open, setOpen] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
-    console.log('membersData', membersData);
-
-    // Sample data
-    const members = [
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Expired',
-            card: 'View',
-            invoice: 'View',
-        },
-    ];
+    const [selectedMember, setSelectedMember] = useState(null); // New state for selected member
+    console.log('membersData', members);
 
     return (
         <>
@@ -96,9 +38,6 @@ const CardsDashboard = ({ membersData }) => {
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
-                            {/* <IconButton>
-                                <ArrowBack />
-                            </IconButton> */}
                             <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#3F4E4F', fontSize: '30px' }}>Card Dashboard</Typography>
                         </div>
                     </div>
@@ -216,31 +155,30 @@ const CardsDashboard = ({ membersData }) => {
                                             <TableCell
                                                 sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
                                                 onClick={() => {
-                                                    setSelectMember(member); // save the clicked member
+                                                    setSelectedMember(member); // save the clicked member
                                                     setOpenProfileModal(true); // open the modal
                                                 }}
                                             >
-                                                {member.id}
+                                                {member.user_id}
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.category}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.first_name}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.start_date}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.expiry}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.card_issue_date}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.card_expiry_date}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
-                                                        color: member.status === 'Active' ? '#2e7d32' : member.status === 'Suspend' ? '#FFA90B' : '#d32f2f',
+                                                        color: member?.member?.card_status
+                                                            === 'active' ? '#2e7d32' : member.member?.card_status
+                                                                === 'inactive' ? '#FFA90B' : '#d32f2f',
                                                         fontWeight: 'medium',
                                                         cursor: 'pointer',
                                                     }}
                                                     onClick={(e) => showMemberDetails(member, e)}
                                                 >
-                                                    {member.status}
-                                                    {member.status === 'Suspend' && (
-                                                        // <Warning
-                                                        //     style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
-                                                        // />
+                                                    {member?.member?.card_status}
+                                                    {member.status === 'inactive' && (
                                                         <img
                                                             src="/assets/system-expired.png"
                                                             alt=""
@@ -259,7 +197,8 @@ const CardsDashboard = ({ membersData }) => {
                                                 <Button
                                                     style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
                                                     onClick={() => {
-                                                        setOpenCardModal(true); // open the modal
+                                                        setSelectedMember(member); // Set the selected member
+                                                        setOpenCardModal(true); // Open the modal
                                                     }}
                                                 >
                                                     View
@@ -271,20 +210,14 @@ const CardsDashboard = ({ membersData }) => {
                             </Table>
                         </TableContainer>
                     </div>
-                    <UserCardComponent
-                        open={openCardModal}
-                        onClose={() => setOpenCardModal(false)}
-                    />
+                    <CardFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    <SubscriptionCardComponent member={selectedMember} open={openCardModal} onClose={() => setOpenCardModal(false)} />
 
-                    <CardFilter
-                        open={openFilterModal}
-                        onClose={() => setOpenFilterModal(false)}
-                    />
-                    <SubscriptionCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} />
+                    {/* <UserCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} /> */}
 
-                    <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    {/* <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} /> */}
 
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} />
+                    {/* <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} /> */}
                 </div>
             </div>
         </>
