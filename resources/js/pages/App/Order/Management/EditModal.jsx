@@ -4,7 +4,7 @@ import { useState } from 'react';
 import AddItems from './AddItem';
 import VariantSelectorDialog from '../VariantSelectorDialog';
 
-function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSave }) {
+function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSave, allrestaurants }) {
     const [showAddItem, setShowAddItem] = useState(false);
     const [variantPopupOpen, setVariantPopupOpen] = useState(false);
     const [variantProductId, setVariantProductId] = useState(null);
@@ -336,7 +336,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 overflow: 'auto',
                             }}
                         >
-                            <AddItems orderItems={orderItems} setOrderItems={setOrderItems} setShowAddItem={setShowAddItem} />
+                            <AddItems allrestaurants={allrestaurants} orderItems={orderItems} setOrderItems={setOrderItems} setShowAddItem={setShowAddItem} />
                         </Box>
                     )}
                 </DialogContent>

@@ -91,6 +91,20 @@ const DineDialog = ({ memberTypes, floorTables }) => {
           })
         : [];
 
+    const isDisabled = !orderDetails.member || !orderDetails.waiter || !orderDetails.table;
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'm' && !isDisabled) {
+                e.preventDefault(); // Optional: prevent browser behavior
+                router.visit(route('order.menu'));
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isDisabled, router]);
+
     return (
         <Box>
             <Box sx={{ px: 2, mb: 2 }}>
@@ -407,7 +421,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                         },
                         textTransform: 'none',
                     }}
-                    disabled={!orderDetails.member || !orderDetails.waiter || !orderDetails.table}
+                    disabled={isDisabled}
                     onClick={() => router.visit(route('order.menu'))}
                 >
                     Choose Menu

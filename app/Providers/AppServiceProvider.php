@@ -6,6 +6,7 @@ use App\Http\Middleware\AuthenticateTenant;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Schema::defaultStringLength(191);
         Route::aliasMiddleware('auth.tenant.custom', AuthenticateTenant::class);
         Event::listen(TenancyInitialized::class, function (TenancyInitialized $event) {
             URL::defaults(['tenant' => tenant('id')]);

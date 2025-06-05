@@ -79,7 +79,7 @@ const UserCardComponent = ({ open, onClose }) => {
                             <Grid item xs={4}>
                                 <Box>
                                     <Typography variant="caption" color="text.secondary">
-                                        Name
+                                        Nameasdasd
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
                                         Zahid Ullah
@@ -125,9 +125,9 @@ const UserCardComponent = ({ open, onClose }) => {
                     </MembershipFooter>
                 </MembershipCard>
             </Box>
-            <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap:2 }}>
-                <Button variant="text" color="inherit" 
-                onClick={onClose}
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button variant="text" color="inherit"
+                    onClick={onClose}
                 >
                     Close
                 </Button>

@@ -6,14 +6,13 @@ import { useEffect, useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
 import OrderFilter from './Filter';
-import axios from 'axios';
 import { router } from '@inertiajs/react';
 import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ orders, categoriesList = [] }) => {
+const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
@@ -332,6 +331,7 @@ const Dashboard = ({ orders, categoriesList = [] }) => {
                     </Drawer>
                     <EditOrderModal
                         open={openModal}
+                        allrestaurants={allrestaurants}
                         onClose={() => {
                             setOpenModal(false);
                             setOrderItems([]);

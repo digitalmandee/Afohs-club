@@ -94,7 +94,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                                         Membership ID
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.user_detail?.members?.[0]?.membership_number || 'N/A'}
+                                        {member?.member?.membership_number || 'N/A'}
                                     </Typography>
                                 </Box>
                             </Grid>
@@ -104,12 +104,12 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                                         Valid Until
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.user_detail?.members?.[0]?.card_expiry_date ? new Date(member.user_detail.members[0].card_expiry_date).toLocaleDateString() : 'N/A'}
+                                        {member?.member?.card_expiry_date ? new Date(member.member?.card_expiry_date).toLocaleDateString() : 'N/A'}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ mt: 1 }}>
                                     <img
-                                        src="/qr-code.png"
+                                        src={'/' + member?.member?.qr_code}
                                         alt="QR Code"
                                         style={{
                                             width: 100,
@@ -124,7 +124,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
 
                     <MembershipFooter>
                         <Typography variant="h6" fontWeight="medium">
-                            {member?.user_detail?.members?.[0]?.member_type?.name || 'Member'}
+                            {member?.member?.member_type?.name || 'Member'}
                         </Typography>
                     </MembershipFooter>
                 </MembershipCard>
@@ -133,7 +133,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                 <Button variant="text" color="inherit" onClick={onClose}>
                     Close
                 </Button>
-                <Button variant="text" color="primary" disabled={member?.user_detail?.members?.[0]?.card_status !== 'Expired' && member?.user_detail?.members?.[0]?.card_status !== 'Suspend'}>
+                <Button variant="text" color="primary" disabled={member?.member?.card_status !== 'Expired' && member?.member?.card_status !== 'Suspend'}>
                     Send Remind
                 </Button>
                 <Button

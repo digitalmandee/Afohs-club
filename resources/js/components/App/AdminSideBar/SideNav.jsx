@@ -153,7 +153,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Membership Type',
-                    path: '/members/member-types',
+                    path: route('member-types.index'),
                 },
                 {
                     text: 'Finance',
@@ -220,7 +220,7 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Transaction',
                     path: route('finance.transaction'),
                 },
-            ]
+            ],
         },
 
         {
@@ -243,11 +243,11 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Sports Category',
                     path: route('subscription.sports'),
                 },
-            ]
+            ],
         },
         {
             text: 'Cards',
-            icon: <FaRegAddressCard style={{ width: 25, height: 25 }}/>,
+            icon: <FaRegAddressCard style={{ width: 25, height: 25 }} />,
             path: route('cards.dashboard'),
         },
         {
