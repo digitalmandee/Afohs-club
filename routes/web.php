@@ -171,6 +171,38 @@ Route::post('/events', [EventController::class, 'store'])->name('events.store');
         return Inertia::render('App/Admin/Employee/Payroll/AddHoled');
     })->name('employee.addholed');
 
+    Route::get('/employee/payroll/deduction/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Deduction');
+    })->name('employee.deduction');
+
+    Route::get('/employee/payroll/add/deduction', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddDeduction');
+    })->name('employee.adddeduction');
+
+    Route::get('/employee/payroll/reimbursements', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Reimbursement');
+    })->name('employee.reimbursement');
+
+    Route::get('/employee/payroll/add/reimbursements', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddReimbursement');
+    })->name('employee.addreimbursement');
+
+    Route::get('/employee/payroll/leaves/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Leave');
+    })->name('employee.leave');
+
+    Route::get('/employee/payroll/leaves/Initialize', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Initialize');
+    })->name('employee.initialize');
+
+    Route::get('/employee/payroll/cheque/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Cheque');
+    })->name('employee.cheque');
+
+    Route::get('/employee/payroll/add/cheque', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddCheque');
+    })->name('employee.addcheque');
+
     //Subscription Routes
     Route::get('/subscription/dashboard', function () {
         return Inertia::render('App/Admin/Subscription/Dashboard');
@@ -195,6 +227,19 @@ Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::get('/admin/subscription/add/sports/category', function () {
         return Inertia::render('App/Admin/Subscription/AddSports');
     })->name('subscription.addsports');
+
+    //Kitchen Routes
+    Route::get('/kitchen/category/dashboard', function () {
+        return Inertia::render('App/Admin/Kitchen/Dashboard');
+    })->name('kitchen.dashboard');
+
+    Route::get('/kitchen/category/add/new/kitchen', function () {
+        return Inertia::render('App/Admin/Kitchen/AddKitchen');
+    })->name('kitchen.addkitchen');
+
+    Route::get('/kitchen/category/customer/history', function () {
+        return Inertia::render('App/Admin/Kitchen/History');
+    })->name('kitchen.history');
 
     //Finance Routes
     Route::get('/finance/dashboard', function () {
