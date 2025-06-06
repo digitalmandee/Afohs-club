@@ -26,7 +26,7 @@ import HoledEmployeeFilter from './HoledFilter';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
-const HoledSalary = () => {
+const ChequeList = () => {
     const [open, setOpen] = useState(false);
     const [openEmployeeEditModal, setOpenEmployeeEditModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
@@ -49,28 +49,28 @@ const HoledSalary = () => {
     const employeeData = [
         {
             name: 'John Doe',
-            reason: 'Bank detail missing',
-            status: "Pending"
+            Amount: '10,000',
+            status: "Un-Paid"
         },
         {
             name: 'John Doe',
-            reason: 'Bank detail missing issue arised yesterday',
-            status: "Resolve"
+            Amount: '10,000',
+            status: "Un-Paid"
         },
         {
             name: 'John Doe',
-            reason: 'Bank detail missing issue arised yesterday',
-            status: "Resolve"
+            Amount: '10,000',
+            status: "Paid"
         },
         {
             name: 'John Doe',
-            reason: 'Bank detail missing issue arised yesterday',
-            status: "Resolve"
+            Amount: '10,000',
+            status: "Un-Paid"
         },
         {
             name: 'John Doe',
-            reason: 'Bank detail missing issue arised yesterday',
-            status: "Resolve"
+            Amount: '10,000',
+            status: "Paid"
         },
     ];
     return (
@@ -102,7 +102,7 @@ const HoledSalary = () => {
                                 <ArrowBack />
                             </IconButton>
                             <Typography sx={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px', marginLeft: 2 }}>
-                                Holed Salary
+                                Cheque List
                             </Typography>
                         </Box>
 
@@ -143,9 +143,6 @@ const HoledSalary = () => {
                                         backgroundColor: 'transparent',
                                         height: 40
                                     }}
-                                    onClick={() => {
-                                        setOpenFilterModal(true);
-                                    }}
                                 >
                                     Filter
                                 </Button>
@@ -161,7 +158,7 @@ const HoledSalary = () => {
                                         minWidth: '40px', // optional: makes it more icon-sized
                                         padding: '7px',    // optional: tighter padding for icon-only button
                                     }}
-                                    onClick={() => router.visit('/employee/payroll/add/holed/employee')}
+                                    onClick={() => router.visit('/employee/payroll/add/cheque')}
                                 >
                                     <AddIcon />
                                 </Button>
@@ -175,9 +172,6 @@ const HoledSalary = () => {
                                         backgroundColor: 'transparent',
                                         minWidth: '40px', // optional: makes it more icon-sized
                                         padding: '7px',    // optional: tighter padding for icon-only button
-                                    }}
-                                    onClick={() => {
-                                        setOpenFilter(true);
                                     }}
                                 >
                                     <ArrowDownwardIcon />
@@ -202,7 +196,7 @@ const HoledSalary = () => {
                                 <TableHead style={{ backgroundColor: '#E5E5EA' }}>
                                     <TableRow>
                                         <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Name</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Reason</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Amount</TableCell>
                                         <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Status</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -216,15 +210,11 @@ const HoledSalary = () => {
                                     ) : (
                                         employeeData.map((employee, index) => (
                                             <TableRow key={index}>
-                                                <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C', cursor: 'pointer' }}
-                                                    onClick={() => {
-                                                        setOpenEmployeeEditModal(true); // open the modal
-                                                    }}
-                                                >
+                                                <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C', }}>
                                                     {employee.name}
                                                 </TableCell>
                                                 <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                    {employee.reason}
+                                                    {employee.Amount}
                                                 </TableCell>
                                                 <TableCell>
                                                     <span
@@ -232,8 +222,8 @@ const HoledSalary = () => {
                                                             fontWeight: 500,
                                                             fontSize: '16px',
                                                             color: '#6C6C6C',
-                                                            backgroundColor: employee.status === 'Pending' ? "#B0DEFF" : "#063455",
-                                                            color: employee.status === 'Pending' ? "black" : "#FFFFFF",
+                                                            backgroundColor: employee.status === 'Paid' ? "#B0DEFF" : "#063455",
+                                                            color: employee.status === 'Paid' ? "black" : "#FFFFFF",
                                                             borderRadius: '12px',
                                                             padding: '2px 12px',
                                                             fontSize: '12px',
@@ -251,151 +241,9 @@ const HoledSalary = () => {
                         </TableContainer>
                     </div>
                 </Box>
-                <Dialog
-                    open={openEmployeeEditModal}
-                    onClose={() => setOpenEmployeeEditModal(false)}
-                    fullWidth
-                    maxWidth="sm"
-                    PaperProps={{
-                        style: {
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            m: 0,
-                            width: '600px',
-                            borderRadius: 2,
-                            p: 2
-                        },
-                    }}
-                >
-                    <div style={{
-                        fontFamily: 'Arial, sans-serif',
-                        padding: '20px',
-                        backgroundColor: '#FFFFFF',
-                        // minHeight: '100vh'
-                    }}>
-                        {/* Header with back button and title */}
-                        <div className="d-flex align-items-center mb-4">
-                            <Typography variant="h5" style={{
-                                fontWeight: 500,
-                                color: '#3F4E4F',
-                                fontSize: '30px'
-                            }}>
-                                Hold Employee Edit
-                            </Typography>
-                        </div>
-
-                        {/* Form Card */}
-                        <Paper
-                            elevation={0}
-                            style={{
-                                maxWidth: '600px',
-                                margin: '0 auto',
-                                borderRadius: '4px',
-                                marginTop: 12
-                            }}
-                        >
-                            <form>
-
-                                {/* Phone */}
-                                <Box mb={2}>
-                                    <Typography
-                                        variant="body1"
-                                        style={{
-                                            marginBottom: '8px',
-                                            color: '#121212',
-                                            fontSize: '14px',
-                                            fontWeight: 500
-                                        }}
-                                    >
-                                        Status
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        placeholder="e.g. Salary"
-                                        variant="outlined"
-                                        size="small"
-                                        style={{ marginBottom: '8px' }}
-                                        InputProps={{
-                                            style: { fontSize: '14px' },
-                                            endAdornment: (
-                                                <ArrowDropDownIcon style={{ color: '#121212' }} />
-                                            ),
-                                        }}
-                                    />
-                                </Box>
-
-                                <Box mb={2}>
-                                    <Typography
-                                        variant="body1"
-                                        style={{
-                                            marginBottom: '8px',
-                                            color: '#121212',
-                                            fontSize: '14px',
-                                            fontWeight: 500
-                                        }}
-                                    >
-                                        Reason
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        name="guestName"
-                                        value={formData.guestName}
-                                        onChange={handleChange}
-                                        placeholder="e.g. Enter Bank Details"
-                                        variant="outlined"
-                                        size="small"
-                                        multiline
-                                        minRows={4} // adjust until it's around 90px in height
-                                        style={{ marginBottom: '8px' }}
-                                        InputProps={{
-                                            style: { fontSize: '14px' }
-                                        }}
-                                    />
-                                </Box>
-
-                                {/* Action Buttons */}
-                                <Box display="flex"
-                                    justifyContent="flex-end">
-                                    <Button
-                                        variant="text"
-                                        style={{
-                                            backgroundColor: '#F14C35',
-                                            marginRight: '10px',
-                                            color: '#FFFFFF',
-                                            textTransform: 'none',
-                                            fontSize: '14px'
-                                        }}
-                                    >
-                                        Delete
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        style={{
-                                            backgroundColor: '#003366',
-                                            color: 'white',
-                                            textTransform: 'none',
-                                            fontSize: '14px',
-                                            padding: '6px 16px'
-                                        }}
-                                    >
-                                        Save
-                                    </Button>
-                                </Box>
-                            </form>
-                        </Paper>
-                    </div>
-                </Dialog>
-                <HoledEmployeeFilter
-                    open={openFilterModal}
-                    onClose={() => setOpenFilterModal(false)} />
             </div>
         </>
     )
 }
 
-export default HoledSalary
+export default ChequeList

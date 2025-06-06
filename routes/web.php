@@ -10,6 +10,9 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserMemberController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\EventController;
+use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -75,6 +78,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
 
     //Admin Booking Routes
+    Route::get('/booking/room/all', [RoomController::class, 'index'])->name('rooms.index');
+    Route::get('/booking/add/room', [RoomController::class, 'create'])->name('rooms.add');
+    Route::post('/booking/room/store', [RoomController::class, 'store'])->name('rooms.store');
+
+    Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
+    Route::post('/events', [EventController::class, 'store'])->name('events.store');
+
+
+
+
     Route::get('/booking/dashboard', function () {
         return Inertia::render('App/Admin/Booking/Dashboard');
     })->name('rooms.dashboard');
@@ -87,13 +100,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Booking/RoomBooking');
     })->name('rooms.booking');
 
-    Route::get('/booking/add/room', function () {
-        return Inertia::render('App/Admin/Booking/AddRoom');
-    })->name('rooms.add');
-
     Route::get('/rooms/manage', function () {
         return Inertia::render('App/Admin/Booking/RoomManage');
     })->name('rooms.manage');
+
+
 
     Route::get('/events/manage', function () {
         return Inertia::render('App/Admin/Booking/EventManage');
@@ -158,6 +169,38 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/AddHoled');
     })->name('employee.addholed');
 
+    Route::get('/employee/payroll/deduction/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Deduction');
+    })->name('employee.deduction');
+
+    Route::get('/employee/payroll/add/deduction', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddDeduction');
+    })->name('employee.adddeduction');
+
+    Route::get('/employee/payroll/reimbursements', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Reimbursement');
+    })->name('employee.reimbursement');
+
+    Route::get('/employee/payroll/add/reimbursements', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddReimbursement');
+    })->name('employee.addreimbursement');
+
+    Route::get('/employee/payroll/leaves/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Leave');
+    })->name('employee.leave');
+
+    Route::get('/employee/payroll/leaves/Initialize', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Initialize');
+    })->name('employee.initialize');
+
+    Route::get('/employee/payroll/cheque/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Cheque');
+    })->name('employee.cheque');
+
+    Route::get('/employee/payroll/add/cheque', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddCheque');
+    })->name('employee.addcheque');
+
     //Subscription Routes
     Route::get('/admin/subscription/dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard');
     Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
@@ -177,6 +220,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/subscription/add/sports/category', function () {
         return Inertia::render('App/Admin/Subscription/AddSports');
     })->name('subscription.addsports');
+
+    //Kitchen Routes
+    Route::get('/kitchen/category/dashboard', function () {
+        return Inertia::render('App/Admin/Kitchen/Dashboard');
+    })->name('kitchen.dashboard');
+
+    Route::get('/kitchen/category/add/new/kitchen', function () {
+        return Inertia::render('App/Admin/Kitchen/AddKitchen');
+    })->name('kitchen.addkitchen');
+
+    Route::get('/kitchen/category/customer/history', function () {
+        return Inertia::render('App/Admin/Kitchen/History');
+    })->name('kitchen.history');
 
     //Finance Routes
     Route::get('/finance/dashboard', function () {

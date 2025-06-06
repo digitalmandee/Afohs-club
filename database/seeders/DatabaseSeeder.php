@@ -25,6 +25,8 @@ class DatabaseSeeder extends Seeder
             KitchenDatabaseSeeder::class,
             ProductDatabaseSeeder::class,
             MemberCategorySeeder::class,
+            RoomSeeder::class,
+            BookingEventSeeder::class,
             // OrderDatabaseSeeder::class
         ]);
     }

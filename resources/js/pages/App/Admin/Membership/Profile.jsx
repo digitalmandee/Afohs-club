@@ -26,10 +26,10 @@ const MemberProfileModal = ({ open, onClose, member, memberData, memberTypesData
                 types.length > 0
                     ? types
                     : [
-                          { id: 1, name: 'Member' },
-                          { id: 2, name: 'Affiliated Member' },
-                          { id: 3, name: 'Applied Member' },
-                      ],
+                        { id: 1, name: 'Member' },
+                        { id: 2, name: 'Affiliated Member' },
+                        { id: 3, name: 'Applied Member' },
+                    ],
             );
         }
     }, [open, memberData]);
@@ -65,8 +65,8 @@ const MemberProfileModal = ({ open, onClose, member, memberData, memberTypesData
             const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
             const headers = csrfTokenElement
                 ? {
-                      'X-CSRF-TOKEN': csrfTokenElement.getAttribute('content'),
-                  }
+                    'X-CSRF-TOKEN': csrfTokenElement.getAttribute('content'),
+                }
                 : {};
             await axios.put(
                 `/api/members/${memberId}/status`,

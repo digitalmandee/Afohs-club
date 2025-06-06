@@ -23,7 +23,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState } from 'react';
-import { FaRegAddressCard } from 'react-icons/fa';
+import { FaRegAddressCard } from "react-icons/fa";
+import { FaKitchenSet } from "react-icons/fa6";
 import MemberIcon from '@/components/App/Icons/Member';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
@@ -252,6 +253,20 @@ export default function SideNav({ open, setOpen }) {
             text: 'Cards',
             icon: <FaRegAddressCard style={{ width: 25, height: 25 }} />,
             path: route('cards.dashboard'),
+        },
+        {
+            text: 'Kitchen',
+            icon: <FaKitchenSet style={{width:25, height:25}}/>,
+            children: [
+                {
+                    text: 'Dashboard',
+                    path: route('kitchen.dashboard'),
+                },
+                {
+                    text: 'Customer History',
+                    path: route('kitchen.history'),
+                },
+            ],
         },
         {
             text: 'Tenant',
