@@ -88,12 +88,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::put('/rooms/{id}', [RoomController::class, 'update'])->name('rooms.update');
     Route::delete('/rooms/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
 
-// Route::get('/events/dashboard', function () {
-//         return Inertia::render('App/Admin/Booking/EventManage');
-//     })->name('events.manage');
+    // Route::get('/events/dashboard', function () {
+    //         return Inertia::render('App/Admin/Booking/EventManage');
+    //     })->name('events.manage');
 
     //Admin Events Booking Routes
     Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
+    Route::get('/events/manage', [EventController::class, 'allEvents'])->name('events.all');
     Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     // Add routes for edit and delete
