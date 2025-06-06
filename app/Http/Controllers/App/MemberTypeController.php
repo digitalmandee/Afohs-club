@@ -29,7 +29,8 @@ class MemberTypeController extends Controller
             'duration' => 'required|integer', // In months
             'fee' => 'required|numeric',
             'maintenance_fee' => 'required|numeric',
-            'discount' => 'nullable|numeric',
+            'discount_type' => 'required|in:percentage,amount',
+            'discount_value' => 'nullable|numeric',
             'discount_authorized' => 'required|string|max:255',
             'benefit' => 'required|array', // Validate as array
         ]);
@@ -39,7 +40,8 @@ class MemberTypeController extends Controller
             'duration',
             'fee',
             'maintenance_fee',
-            'discount',
+            'discount_type',
+            'discount_value',
             'discount_authorized',
             'benefit',
         ]);

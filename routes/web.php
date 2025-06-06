@@ -3,16 +3,13 @@
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\NewPasswordController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\CardController;
+use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MembershipController;
-use App\Http\Controllers\MembershipInvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserMemberController;
-use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -162,13 +159,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('employee.addholed');
 
     //Subscription Routes
-    Route::get('/subscription/dashboard', function () {
-        return Inertia::render('App/Admin/Subscription/Dashboard');
-    })->name('subscription.dashboard');
-
-    Route::get('/admin/add/subscription', function () {
-        return Inertia::render('App/Admin/Subscription/AddSubscription');
-    })->name('subscription.addsubscription');
+    Route::get('/admin/subscription/dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard');
+    Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
 
     Route::get('/admin/manage/subscription', function () {
         return Inertia::render('App/Admin/Subscription/Management');
@@ -227,6 +219,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
     Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
     Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
+
+    // Member Categories
+    Route::resource('/admin/members/member-categories', MemberCategoryController::class)->except('show');
 
     //payment
     Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');

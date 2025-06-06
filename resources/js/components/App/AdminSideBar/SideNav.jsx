@@ -155,6 +155,10 @@ export default function SideNav({ open, setOpen }) {
                     path: route('member-types.index'),
                 },
                 {
+                    text: 'Membership Category',
+                    path: route('member-categories.index'),
+                },
+                {
                     text: 'Finance',
                     path: route('membership.finance'),
                 },
