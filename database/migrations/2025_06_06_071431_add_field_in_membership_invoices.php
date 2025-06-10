@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('membership_invoices', function (Blueprint $table) {
             $table->string('invoice_no')->unique()->nullable()->after('id');
-            $table->string('invoice_type')->after('user_id')->after('invoice_no');
+            $table->string('invoice_type')->after('invoice_no');
             $table->string('discount_amount')->nullable()->after('subscription_type');
             $table->string('discount_details')->nullable()->after('discount_amount');
             $table->date('paid_for_month')->nullable()->after('customer_charges');

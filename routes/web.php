@@ -258,6 +258,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
     // Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
 
+    Route::get('/membership/filter', [MembershipController::class, 'filterMember'])->name('membership.filter');
+
     Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
