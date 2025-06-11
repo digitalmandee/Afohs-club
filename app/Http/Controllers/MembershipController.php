@@ -334,6 +334,23 @@ class MembershipController extends Controller
         return response()->json(['invoice' => $invoice]);
     }
 
+    // Filter Member
+    public function filterMember(Request $request)
+    {
+        $query = $request->input('query');
+
+        $members = User::role('user')->where(function ($q) use ($query) {
+            $q->where('user_id', 'like', "%{$query}%")
+                ->orWhere('first_name', 'like', "%{$query}%")
+                ->orWhere('last_name', 'like', "%{$query}%")
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
+                ->orWhereRaw("CONCAT(first_name, ' ', middle_name, ' ', last_name) LIKE ?", ["%{$query}%"]);
+        })->select('id', 'user_id', 'first_name', 'middle_name', 'last_name', 'email')->get();
+
+        return response()->json(['results' => $members]);
+    }
+
+
     // Show Public Profile
     public function viewProfile($id)
     {

@@ -100,11 +100,12 @@ class RestuarantDatabaseSeeder extends Seeder
                 'kitchen_id' => $kitchen->id,
             ]);
 
-            // Customers
-            User::factory()->count(5)->create()->each(function ($user) use (&$globalUserId, $tenant) {
-                $user->update(['user_id' => $globalUserId++, 'password' => bcrypt('123456'), 'member_type_id' => MemberType::pluck('id')->random(), 'tenant_id' => $tenant->id]);
-                $user->assignRole('user');
-            });
+            // // Customers
+            // User::factory()->count(5)->create()->each(function ($user) use (&$globalUserId, $tenant) {
+            //     $user->update(['user_id' => $globalUserId++, 'password' => bcrypt('123456'), 'member_type_id' => MemberType::pluck('id')->random(), 'tenant_id' => $tenant->id]);
+            //     $user->assignRole('user');
+            // });
+
             // });
             // Format the output
             $output = <<<TEXT
