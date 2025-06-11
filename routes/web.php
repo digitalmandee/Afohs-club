@@ -3,13 +3,11 @@
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\NewPasswordController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\CardController;
+use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MembershipController;
-use App\Http\Controllers\MembershipInvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\RoomController;
@@ -182,14 +180,41 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/AddHoled');
     })->name('employee.addholed');
 
-    //Subscription Routes
-    Route::get('/subscription/dashboard', function () {
-        return Inertia::render('App/Admin/Subscription/Dashboard');
-    })->name('subscription.dashboard');
+    Route::get('/employee/payroll/deduction/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Deduction');
+    })->name('employee.deduction');
 
-    Route::get('/admin/add/subscription', function () {
-        return Inertia::render('App/Admin/Subscription/AddSubscription');
-    })->name('subscription.addsubscription');
+    Route::get('/employee/payroll/add/deduction', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddDeduction');
+    })->name('employee.adddeduction');
+
+    Route::get('/employee/payroll/reimbursements', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Reimbursement');
+    })->name('employee.reimbursement');
+
+    Route::get('/employee/payroll/add/reimbursements', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddReimbursement');
+    })->name('employee.addreimbursement');
+
+    Route::get('/employee/payroll/leaves/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Leave');
+    })->name('employee.leave');
+
+    Route::get('/employee/payroll/leaves/Initialize', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Initialize');
+    })->name('employee.initialize');
+
+    Route::get('/employee/payroll/cheque/list', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/Cheque');
+    })->name('employee.cheque');
+
+    Route::get('/employee/payroll/add/cheque', function () {
+        return Inertia::render('App/Admin/Employee/Payroll/AddCheque');
+    })->name('employee.addcheque');
+
+    //Subscription Routes
+    Route::get('/admin/subscription/dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard');
+    Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
 
     Route::get('/admin/manage/subscription', function () {
         return Inertia::render('App/Admin/Subscription/Management');
@@ -206,6 +231,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/subscription/add/sports/category', function () {
         return Inertia::render('App/Admin/Subscription/AddSports');
     })->name('subscription.addsports');
+
+    //Kitchen Routes
+    Route::get('/kitchen/category/dashboard', function () {
+        return Inertia::render('App/Admin/Kitchen/Dashboard');
+    })->name('kitchen.dashboard');
+
+    Route::get('/kitchen/category/add/new/kitchen', function () {
+        return Inertia::render('App/Admin/Kitchen/AddKitchen');
+    })->name('kitchen.addkitchen');
+
+    Route::get('/kitchen/category/customer/history', function () {
+        return Inertia::render('App/Admin/Kitchen/History');
+    })->name('kitchen.history');
 
     //Finance Routes
     Route::get('/finance/dashboard', function () {
@@ -225,6 +263,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
 
 
+    Route::get('/membership/filter', [MembershipController::class, 'filterMember'])->name('membership.filter');
+
     Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
@@ -242,6 +282,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
     Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
     Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
+
+    // Member Categories
+    Route::resource('/admin/members/member-categories', MemberCategoryController::class)->except('show');
 
     //payment
     Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');

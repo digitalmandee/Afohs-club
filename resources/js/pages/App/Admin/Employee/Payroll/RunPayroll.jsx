@@ -71,7 +71,10 @@ const RunPayrollDashboard = () => {
     const visibleMonths = timelineData.slice(startMonthIndex, startMonthIndex + 5)
     const cardRoutes = {
         "Salary Revisions": "/employee/payroll/salary/revision",
-        "Holed Employ": "/employee/payroll/holed/salary"
+        "Holed Employ": "/employee/payroll/holed/salary",
+        "Deduction": "/employee/payroll/deduction/list",
+        "Leaves": "/employee/payroll/leaves/list",
+        "Cheque": "/employee/payroll/cheque/list",
     };
 
 

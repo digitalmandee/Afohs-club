@@ -4,22 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class MembershipInvoice extends Model
+class FinancialInvoice extends Model
 {
     protected $fillable = [
-        'user_id',
         'invoice_no',
-        'invoice_type',
+        'customer_id',
+        'member_id',
         'subscription_type',
-        'amount',
-        'customer_charges',
+        'invoice_type',
         'discount_amount',
         'discount_details',
+        'amount',
         'total_price',
+        'customer_charges',
+        'issue_date',
+        'due_date',
         'paid_for_month',
         'payment_method',
         'payment_date',
-        'receipt',
+        'reciept',
+        'data',
         'status'
     ];
 
