@@ -77,17 +77,36 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
 
 
-    //Admin Booking Routes
-    Route::get('/booking/room/all', [RoomController::class, 'index'])->name('rooms.index');
+    // Admin Room Booking Routes
+    Route::get('/rooms/dashboard', [RoomController::class, 'index'])->name('rooms.manage');
+    Route::get('/rooms/manage', [RoomController::class, 'allRooms'])->name('rooms.all');
     Route::get('/booking/add/room', [RoomController::class, 'create'])->name('rooms.add');
     Route::post('/booking/room/store', [RoomController::class, 'store'])->name('rooms.store');
+    Route::get('/rooms/edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit');
+    Route::put('/rooms/{id}', [RoomController::class, 'update'])->name('rooms.update');
+    Route::delete('/rooms/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
 
+// Route::get('/events/dashboard', function () {
+//         return Inertia::render('App/Admin/Booking/EventManage');
+//     })->name('events.manage');
+
+    //Admin Events Booking Routes
+    Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
     Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
+    // Add routes for edit and delete
+    Route::get('/events/edit/{id}', [EventController::class, 'edit'])->name('events.edit');
+    Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
+    Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
 
 
+    // location
+    Route::get('/events/locations', [EventController::class, 'locations'])->name('events.locations');
+    Route::post('/events/locations', [EventController::class, 'storeLocation'])->name('events.locations.store');
+    Route::put('/events/locations/{id}', [EventController::class, 'updateLocation'])->name('events.locations.update');
+    Route::delete('/events/locations/{id}', [EventController::class, 'deleteLocation'])->name('events.locations.delete');
 
-
+    //Admin Booking Routes
     Route::get('/booking/dashboard', function () {
         return Inertia::render('App/Admin/Booking/Dashboard');
     })->name('rooms.dashboard');
@@ -100,15 +119,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Booking/RoomBooking');
     })->name('rooms.booking');
 
-    Route::get('/rooms/manage', function () {
-        return Inertia::render('App/Admin/Booking/RoomManage');
-    })->name('rooms.manage');
 
-
-
-    Route::get('/events/manage', function () {
-        return Inertia::render('App/Admin/Booking/EventManage');
-    })->name('events.manage');
 
 
     //Admin Employee Routes
@@ -247,16 +258,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Finance/Transaction');
     })->name('finance.transaction');
 
-    //Cards Routes
-    // Route::get('/card/dashboard', function () {
-    //     return Inertia::render('App/Admin/Card/Dashboard');
-    // })->name('cards.dashboard');
+
     Route::get('/card/dashboard', [CardController::class, 'index'])->name('cards.dashboard');
 
-    // member
-    // Route::get('/members', [MembersController::class, 'index'])->name('members.index');
-    // Route::resource('/members/member-types', MemberTypeController::class)->except('show', 'edit');
-    // Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
+
 
     Route::get('/membership/filter', [MembershipController::class, 'filterMember'])->name('membership.filter');
 
@@ -298,9 +303,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/AddForm-3');
     })->name('membership.add3');
 
-    // Route::get('/admin/membership/history', function () {
-    //     return Inertia::render('App/Admin/Membership/History');
-    // })->name('membership.history');
 
     Route::get('/admin/membership/guest/history', function () {
         return Inertia::render('App/Admin/Membership/Guest');
@@ -314,17 +316,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/Checkout');
     })->name('membership.checkout');
 
-    // Route::get('/admin/all/members', function () {
-    //     return Inertia::render('App/Admin/Membership/Members');
-    // })->name('membership.members');
+
 
     Route::get('/admin/membership/visit/detail', function () {
         return Inertia::render('App/Admin/Membership/Detail');
     })->name('membership.detail');
 
-    // Route::get('/admin/membership/all.members', function () {
-    //     return Inertia::render('App/Admin/Membership/MemberType');
-    // })->name('membership.membertype');
+
 
     Route::get('/admin/membership/full/detail', function () {
         return Inertia::render('App/Admin/Membership/CompleteDetail');
