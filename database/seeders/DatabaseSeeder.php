@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             MemberCategorySeeder::class,
             RoomSeeder::class,
             BookingEventSeeder::class,
+            BookingSeeder::class,
             // OrderDatabaseSeeder::class
         ]);
     }

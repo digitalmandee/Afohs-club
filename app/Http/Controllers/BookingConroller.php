@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\BookingEvents;
+use App\Models\Booking;
 use Inertia\Inertia;
 
 use Illuminate\Http\Request;
@@ -11,9 +11,10 @@ class BookingConroller extends Controller
 {
      public function index()
     {
-        $events = BookingEvents::latest()->get();
+        $booking = Booking::latest()->get();
         return Inertia::render('App/Admin/Booking/Dashboard', [
-            'events' => $events,
+            'booking' => $booking,
         ]);
+        //  return Booking::latest()->get();
     }
 }

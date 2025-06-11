@@ -130,7 +130,7 @@ class EventController extends Controller
     public function locations()
     {
         $locations = EventLocation::all();
-        return Inertia::render('App/Admin/Booking/AddRoom', [
+        return Inertia::render('App/Admin/Booking/EventLoction', [
             'locations' => $locations,
         ]);
     }
