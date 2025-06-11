@@ -86,9 +86,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::put('/rooms/{id}', [RoomController::class, 'update'])->name('rooms.update');
     Route::delete('/rooms/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
 
-// Route::get('/events/dashboard', function () {
-//         return Inertia::render('App/Admin/Booking/EventManage');
-//     })->name('events.manage');
+    // Route::get('/events/dashboard', function () {
+    //         return Inertia::render('App/Admin/Booking/EventManage');
+    //     })->name('events.manage');
 
     //Admin Events Booking Routes
     Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
@@ -214,7 +214,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     //Subscription Routes
     Route::get('/admin/subscription/dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard');
+    Route::get('/admin/subscription/payment', [SubscriptionController::class, 'payment'])->name('subscriptions.payment');
+    Route::post('/admin/subscription/payment/store', [SubscriptionController::class, 'paymentStore'])->name('subscriptions.payment.store');
     Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
+    Route::post('/admin/subscription/store', [SubscriptionController::class, 'store'])->name('subscriptions.store');
 
     Route::get('/admin/manage/subscription', function () {
         return Inertia::render('App/Admin/Subscription/Management');

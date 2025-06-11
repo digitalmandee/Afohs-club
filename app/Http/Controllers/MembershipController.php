@@ -339,13 +339,16 @@ class MembershipController extends Controller
     {
         $query = $request->input('query');
 
-        $members = User::role('user')->where(function ($q) use ($query) {
+        $members = User::role('user')->whereNotNull('first_name')->where(function ($q) use ($query) {
             $q->where('user_id', 'like', "%{$query}%")
+                ->orWhere('email', 'like', "%{$query}%")
                 ->orWhere('first_name', 'like', "%{$query}%")
                 ->orWhere('last_name', 'like', "%{$query}%")
                 ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
                 ->orWhereRaw("CONCAT(first_name, ' ', middle_name, ' ', last_name) LIKE ?", ["%{$query}%"]);
-        })->select('id', 'user_id', 'first_name', 'middle_name', 'last_name', 'email')->get();
+        })->select('id', 'user_id', 'first_name', 'middle_name', 'last_name', 'email', 'phone_number')->get();
+
+        Log::info($members);
 
         return response()->json(['results' => $members]);
     }
