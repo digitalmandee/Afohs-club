@@ -20,7 +20,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
     const queryParams = new URLSearchParams(url.split('?')[1]);
     const categoryId = queryParams.get('category_id');
 
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openFilter, setOpenFilter] = useState(false);
     const [openProductDetail, setOpenProductDetail] = useState(false);
     const [openAddMenu, setOpenAddMenu] = useState(false);

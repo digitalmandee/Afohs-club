@@ -37,7 +37,7 @@ const AddNewKitchen = () => {
                     minHeight: '100vh'
                 }}
             >
-                <Box sx={{ display: "flex", alignItems: "center", ml: 2, pt:2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", ml: 3, pt:2 }}>
                     <IconButton style={{ color: "#3F4E4F" }}
                         onClick={() => window.history.back()}
                     >
@@ -47,7 +47,7 @@ const AddNewKitchen = () => {
                         Add New Kitchen
                     </h2>
                 </Box>
-                <Box sx={{ maxWidth: 600, mx: "auto", px: 3, py:5, border: '1px solid #E3E3E3', bgcolor: '#FFFFFF', mt:5 }}>
+                <Box sx={{ maxWidth: 600, mx: "auto", px: 3, py:5, border: '1px solid #E3E3E3', bgcolor: '#FFFFFF' }}>
                     {/* <Paper elevation={0} sx={{ px: 3, borderRadius: 1 }}> */}
                     <Grid container spacing={2}>
                         {/* Profile Picture */}

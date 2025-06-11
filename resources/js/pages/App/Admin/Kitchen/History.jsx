@@ -271,7 +271,9 @@ const CustomerHistory = () => {
                     PaperProps={{
                         sx: {
                             width: 550,
-                            top: 0,
+                            height:'97vh',
+                            top: 10,
+                            right:10,
                             padding: 2,
                             bgcolor: '#E3F2FD',
                         },
