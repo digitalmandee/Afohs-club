@@ -222,11 +222,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     //Subscription Routes
     Route::get('/admin/subscription/dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard');
+    Route::get('/admin/subscription/payment', [SubscriptionController::class, 'payment'])->name('subscriptions.payment');
+    Route::post('/admin/subscription/payment/store', [SubscriptionController::class, 'paymentStore'])->name('subscriptions.payment.store');
     Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
+    Route::post('/admin/subscription/store', [SubscriptionController::class, 'store'])->name('subscriptions.store');
 
-    Route::get('/admin/manage/subscription', function () {
-        return Inertia::render('App/Admin/Subscription/Management');
-    })->name('subscription.management');
+    Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
 
     Route::get('/admin/manage/monthly/fee', function () {
         return Inertia::render('App/Admin/Subscription/Monthly');

@@ -37,7 +37,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const GuestHistory = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     // State for search input
     const [searchTerm, setSearchTerm] = useState('');
 

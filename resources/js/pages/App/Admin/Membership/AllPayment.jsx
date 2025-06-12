@@ -25,7 +25,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const MembersFinance = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     // State for payment data
     const [payments, setPayments] = useState([
         {

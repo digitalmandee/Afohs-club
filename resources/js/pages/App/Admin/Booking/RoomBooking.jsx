@@ -32,6 +32,7 @@ const RoomBooking = ({ next_booking_id }) => {
     // Main state for booking type
     const [open, setOpen] = useState(false);
     const [bookingType, setBookingType] = useState(initialBookingType)
+
     const [currentStep, setCurrentStep] = useState(1)
     const [paymentMethod, setPaymentMethod] = useState("cash")
     const [showSuccessModal, setShowSuccessModal] = useState(false)

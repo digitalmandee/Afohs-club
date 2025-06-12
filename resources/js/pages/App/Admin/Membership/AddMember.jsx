@@ -11,7 +11,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AddMember = ({ onNext, onBack }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [formData, setFormData] = useState({
         nameOfType: '',
         duration: '',

@@ -18,7 +18,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const OrderManagement = ({ kitchenOrders, flash }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [filterOpen, setFilterOpen] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
     const [activeTab, setActiveTab] = useState('All Order');

@@ -11,7 +11,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const CustomerLists = ({ users }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [orderModalOpen, setOrderModalOpen] = useState(false);
     const [currentOrder, setCurrentOrder] = useState({

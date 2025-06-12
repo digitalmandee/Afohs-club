@@ -9,7 +9,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const MembersHistory = ({ membersdata = [] }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     // State for search input
     const [searchTerm, setSearchTerm] = useState('');
 

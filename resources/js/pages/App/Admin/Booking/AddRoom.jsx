@@ -27,7 +27,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const RoomEventManager = ({ locations }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [activeTab, setActiveTab] = useState('room');
     const [photoUrl, setPhotoUrl] = useState(null);
     const fileInputRef = useRef(null);

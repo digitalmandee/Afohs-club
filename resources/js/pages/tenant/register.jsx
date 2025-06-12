@@ -9,7 +9,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const Register = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         name: '',
         email: '',
