@@ -54,6 +54,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                 }}
             >
                 {/* Order Detailss */}
+                {/* {JSON.stringify(orderDetails)} */}
                 <Box
                     sx={{
                         display: 'flex',
@@ -323,7 +324,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                 </Box>
             </div>
 
-            <div
+            {/* <div
                 style={{
                     position: 'fixed',
                     bottom: '0',
@@ -337,7 +338,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
             >
                 <div style={{ width: '40px', height: '40px', backgroundColor: 'red', borderRadius: '50%', cursor: 'pointer' }} onClick={() => setShowData(!showData)}></div>
                 {showData && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(orderDetails, null, 2)}</pre>}
-            </div>
+            </div> */}
         </>
     );
 };

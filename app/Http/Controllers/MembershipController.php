@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\CardPayment;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Member;
@@ -18,14 +19,11 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MembershipController extends Controller
 {
-
-
-
     public function index()
     {
-        $member = User::role('user', 'web')->whereNull('parent_user_id')->with('userDetail', 'member.memberType')->get();
+        $member = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
 
-        $total_members = User::role('user', 'web')->whereNull('parent_user_id')->count();
+        $total_members = User::role('user')->whereNull('parent_user_id')->count();
         $total_payment = MembershipInvoice::where('status', 'paid')->sum('amount');
 
         return Inertia::render('App/Admin/Membership/Dashboard', compact('member', 'total_members', 'total_payment'));
@@ -165,6 +163,8 @@ class MembershipController extends Controller
                 'user_id' => $this->getUserNo(),
                 'member_type_id' => $member_type_id,
             ]);
+
+            $primaryUser->assignRole('user');
 
             // Create UserDetail for primary user
             UserDetail::create([
@@ -322,8 +322,19 @@ class MembershipController extends Controller
         }
     }
 
-    // Show Public Profile
+    // Get Member Invoices
+    public function getMemberInvoices($id)
+    {
+        $invoice = CardPayment::where('user_id', $id)->first();
 
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice not found'], 404);
+        }
+
+        return response()->json(['invoice' => $invoice]);
+    }
+
+    // Show Public Profile
     public function viewProfile($id)
     {
         $user = User::with(['member', 'member.memberType', 'userDetail'])->findOrFail($id);

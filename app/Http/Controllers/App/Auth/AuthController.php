@@ -16,7 +16,11 @@ class AuthController extends Controller
             'user_id' => 'required|numeric',
         ]);
 
-        $user = User::where('user_id', $request->user_id)->first();
+        $user = User::where('user_id', $request->user_id)
+            ->whereHas('roles', function ($query) {
+                $query->where('name', '<>', 'super-admin');
+            })
+            ->first();
 
         if (!$user) {
             return back()->withErrors(['user_id' => 'Employee ID not found.'])->withInput();

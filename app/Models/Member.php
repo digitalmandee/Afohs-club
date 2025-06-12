@@ -10,6 +10,7 @@ class Member extends Model
         'user_id',
         'primary_member_id', // Added
         'member_type_id',
+        'member_type',
         'full_name',
         'relation',
         'cnic',
@@ -28,7 +29,8 @@ class Member extends Model
         'to_date',
         'picture',
         'member_image',
-        'qr_code'
+        'qr_code',
+        'payment_id'
     ];
 
     // public function userDetail()

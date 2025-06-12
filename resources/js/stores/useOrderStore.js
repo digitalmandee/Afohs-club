@@ -55,9 +55,9 @@ export const useOrderStore = create((set, get) => ({
         order_no: '',
         order_type: 'dineIn',
         membership_type: '',
-        member: null,
+        member: {},
         person_count: 1,
-        waiter: null,
+        waiter: {},
         table: '',
         floor: '',
         date: new Date(),
@@ -76,9 +76,9 @@ export const useOrderStore = create((set, get) => ({
         set((state) => ({
             orderDetails: {
                 ...state.orderDetails,
-                member: null,
+                member: {},
                 person_count: 1,
-                waiter: null,
+                waiter: {},
                 table: '',
                 floor: '',
                 date: new Date(),

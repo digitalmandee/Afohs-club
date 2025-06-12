@@ -55,11 +55,13 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
 
     return (
         <>
-            <Box component="form"
+            <Box
+                component="form"
                 onSubmit={(e) => {
                     e.preventDefault();
                     handleSignIn();
-                }}>
+                }}
+            >
                 {/* Logo */}
                 <Box
                     sx={{
@@ -202,7 +204,7 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                                     bgcolor: 'rgba(0,0,0,0.04)',
                                 },
                             }}
-                            onClick={() => router.visit('/')}
+                            onClick={() => setActiveTab('employee-signin')}
                         >
                             Back
                         </Button>

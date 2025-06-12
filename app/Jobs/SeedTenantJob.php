@@ -27,14 +27,14 @@ class SeedTenantJob implements ShouldQueue
     public function handle(): void
     {
         $this->tenant->run(function () {
-            $user = User::create([
-                'user_id' => 12345678,
-                'name' => $this->tenant->name,
-                'email' => $this->tenant->email,
-                'password' => $this->tenant->password,
-            ]);
+            // $user = User::create([
+            //     'user_id' => 12345678,
+            //     'name' => $this->tenant->name,
+            //     'email' => $this->tenant->email,
+            //     'password' => $this->tenant->password,
+            // ]);
 
-            $user->assignRole('admin');
+            // $user->assignRole('admin');
         });
     }
 }

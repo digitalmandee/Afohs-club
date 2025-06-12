@@ -259,9 +259,9 @@ export default function Category({ categoriesList }) {
                                     '&:hover': { background: '#F6F6F6' },
                                 }}
                             >
-                                <CardContent sx={{ p: 3 }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
+                                <CardContent sx={{ p: 3 }}>
                                     <Grid container alignItems="center" justifyContent="space-between">
-                                        <Grid item xs={12} sm={9} md={9} sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Grid item xs={12} sm={9} md={9} sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
                                             <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                 <img
                                                     src={category.image ? tenantAsset(category.image) : '/assets/dish.png'}

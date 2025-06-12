@@ -52,7 +52,6 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
     const [activeCategory, setActiveCategory] = useState('All Menus');
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredProducts, setFilteredProducts] = useState([]);
-    const [showConfirmation, setShowConfirmation] = useState(false);
 
     // Sorting states
     const [sortingOptions, setSortingOptions] = useState({
@@ -62,21 +61,13 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
         purchase: null,
     });
 
-    // Category and stock filters
-    const [categoryFilter, setCategoryFilter] = useState('All');
-    const [stockFilter, setStockFilter] = useState('All');
-
     // Product data
     const [products, setProducts] = useState(productLists || []);
 
     // Add new state variables for Stock and Update Stock modals
     const [openStockModal, setOpenStockModal] = useState(false);
     const [openUpdateStockModal, setOpenUpdateStockModal] = useState(false);
-    const [openEditMenu, setOpenEditMenu] = useState(false);
-    const [editMenuStep, setEditMenuStep] = useState(1);
-    const [openAdjustPrice, setOpenAdjustPrice] = useState(false);
     const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
-    const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
     // Filter products based on active category
@@ -95,57 +86,6 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
 
         setFilteredProducts(filtered);
     }, [activeCategory, searchTerm, products]);
-
-    // Apply filters from the filter modal
-    const applyFilters = () => {
-        let filtered = [...products];
-
-        // Apply category filter
-        if (categoryFilter !== 'All') {
-            filtered = filtered.filter((product) => product.category === categoryFilter);
-        }
-
-        // Apply stock filter
-        if (stockFilter !== 'All') {
-            filtered = filtered.filter((product) => (stockFilter === 'Ready' ? product.stock.status === 'Ready Stock' : stockFilter === 'Out of Stock' ? product.stock.status === 'Out of Stock' : stockFilter === 'Afohs at Home' ? product.category === 'Afohs at Home' : true));
-        }
-
-        // Apply sorting
-        if (sortingOptions.name === 'ascending') {
-            filtered.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortingOptions.name === 'descending') {
-            filtered.sort((a, b) => b.name.localeCompare(a.name));
-        }
-
-        if (sortingOptions.price === 'ascending') {
-            filtered.sort((a, b) => a.base_price - b.base_price);
-        } else if (sortingOptions.price === 'descending') {
-            filtered.sort((a, b) => b.base_price - a.base_price);
-        }
-
-        setFilteredProducts(filtered);
-        setOpenFilter(false);
-    };
-
-    // Reset all filters
-    const resetFilters = () => {
-        setSortingOptions({
-            name: null,
-            price: null,
-            date: null,
-            purchase: null,
-        });
-        setCategoryFilter('All');
-        setStockFilter('All');
-    };
-
-    // Toggle sorting option
-    const toggleSorting = (field, direction) => {
-        setSortingOptions((prev) => ({
-            ...prev,
-            [field]: prev[field] === direction ? null : direction,
-        }));
-    };
 
     // Handle category button click
     const handleCategoryClick = (category) => {
@@ -172,21 +112,8 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
     };
 
     // Handle Add Menu modal
-    const handleAddMenuOpen = () => {
-        setOpenAddMenu(true);
-    };
-
     const handleAddMenuClose = () => {
         setOpenAddMenu(false);
-    };
-
-    const handleCloseConfirmation = () => {
-        setShowConfirmation(false);
-    };
-
-    // Add handlers for Stock modal
-    const handleViewStock = () => {
-        setOpenStockModal(true);
     };
 
     const handleCloseStockModal = () => {
@@ -208,52 +135,11 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
         setOpenUpdateStockModal(false);
         // Here you would update the product's stock data
         // For now, we'll just show a success message
-        setShowConfirmation(true);
-    };
-
-    // Edit Menu handlers
-    const handleEditMenuOpen = () => {
-        setEditMenuStep(1);
-        setOpenEditMenu(true);
-    };
-
-    const handleEditMenuClose = () => {
-        setOpenEditMenu(false);
-    };
-
-    const handleEditMenuNextStep = () => {
-        setEditMenuStep(2);
-    };
-
-    const handleEditMenuPreviousStep = () => {
-        setEditMenuStep(1);
-    };
-
-    const handleSaveEditMenu = () => {
-        // Here you would update the product data
-        setOpenEditMenu(false);
-        setShowConfirmation(true);
-    };
-
-    // Adjust Price handlers
-    const handleAdjustPriceOpen = () => {
-        setOpenAdjustPrice(true);
-    };
-
-    const handleAdjustPriceClose = () => {
-        setOpenAdjustPrice(false);
-    };
-
-    const handleSaveAdjustPrice = () => {
-        // Here you would update the product's price data
-        setOpenAdjustPrice(false);
-        setShowConfirmation(true);
     };
 
     // Delete Product handlers
     const handleDeleteConfirmOpen = () => {
         setOpenDeleteConfirm(true);
-        setDeleteConfirmText('');
     };
 
     const handleDeleteConfirmClose = () => {

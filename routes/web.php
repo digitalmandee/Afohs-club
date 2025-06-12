@@ -12,6 +12,8 @@ use App\Http\Controllers\MembershipInvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserMemberController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\EventController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -78,6 +80,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
 
     //Admin Booking Routes
+    Route::get('/booking/room/all', [RoomController::class, 'index'])->name('rooms.index');
+    Route::get('/booking/add/room', [RoomController::class, 'create'])->name('rooms.add');
+    Route::post('/booking/room/store', [RoomController::class, 'store'])->name('rooms.store');
+
+Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
+Route::post('/events', [EventController::class, 'store'])->name('events.store');
+
+
+
+
     Route::get('/booking/dashboard', function () {
         return Inertia::render('App/Admin/Booking/Dashboard');
     })->name('rooms.dashboard');
@@ -90,13 +102,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Booking/RoomBooking');
     })->name('rooms.booking');
 
-    Route::get('/booking/add/room', function () {
-        return Inertia::render('App/Admin/Booking/AddRoom');
-    })->name('rooms.add');
-
     Route::get('/rooms/manage', function () {
         return Inertia::render('App/Admin/Booking/RoomManage');
     })->name('rooms.manage');
+
+
 
     Route::get('/events/manage', function () {
         return Inertia::render('App/Admin/Booking/EventManage');
@@ -259,16 +269,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+
+    // get member invoice
+    Route::get('member-invoices/{id}', [MembershipController::class, 'getMemberInvoices'])->name('member-invoices');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
-    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
 
     // Members types
-    Route::get('/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+    Route::get('/admin/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
     Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
     Route::post('/members/member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
     Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
     Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
+    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
     //payment
     Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');

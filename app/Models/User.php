@@ -27,7 +27,8 @@ class User extends Authenticatable
         'middle_name',
         'last_name',
         'password',
-        'parent_user_id'
+        'parent_user_id',
+        'tenant_id',
     ];
 
     /**
@@ -69,6 +70,14 @@ class User extends Authenticatable
     public function userDetail()
     {
         return $this->hasOne(UserDetail::class);
+    }
+
+    /**
+     * Get the Card Payments.
+     */
+    public function cardPayment()
+    {
+        return $this->hasOne(CardPayment::class);
     }
 
     /**
