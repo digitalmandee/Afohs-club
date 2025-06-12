@@ -16,9 +16,9 @@ const MembershipFooter = styled(Box)(({ theme }) => ({
     textAlign: 'center',
 }));
 
-const SubscriptionCardComponent = ({ open, onClose, member = [] }) => {
+const SubscriptionCardComponent = ({ open, onClose, subscription }) => {
+    if (!subscription) return null; // optionally handle null case
     // Debug: Log the member prop to verify its structure
-    console.log('Member in card:', member);
 
     return (
         <Drawer
@@ -86,7 +86,7 @@ const SubscriptionCardComponent = ({ open, onClose, member = [] }) => {
                                         Name
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.first_name || 'N/A'}
+                                        {subscription.user?.first_name ? subscription.user?.first_name + ' ' + subscription.user?.last_name : 'N/A'}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ mt: 2 }}>
@@ -94,7 +94,7 @@ const SubscriptionCardComponent = ({ open, onClose, member = [] }) => {
                                         Membership ID
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.member?.membership_number || 'N/A'}
+                                        {subscription.user?.user_id || 'N/A'}
                                     </Typography>
                                 </Box>
                             </Grid>
@@ -104,12 +104,12 @@ const SubscriptionCardComponent = ({ open, onClose, member = [] }) => {
                                         Valid Until
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.member?.card_expiry_date ? new Date(member.member?.card_expiry_date).toLocaleDateString() : 'N/A'}
+                                        {subscription?.expiry_date ? new Date(subscription?.expiry_date).toLocaleDateString() : 'N/A'}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ mt: 1 }}>
                                     <img
-                                        src={'/' + member?.member?.qr_code}
+                                        src={'/' + subscription?.qr_code}
                                         alt="QR Code"
                                         style={{
                                             width: 100,
@@ -124,7 +124,7 @@ const SubscriptionCardComponent = ({ open, onClose, member = [] }) => {
 
                     <MembershipFooter>
                         <Typography variant="h6" fontWeight="medium">
-                            {member?.member?.member_type?.name || 'Member'}
+                            {subscription.category?.name || 'Member'} Subscription
                         </Typography>
                     </MembershipFooter>
                 </MembershipCard>
@@ -133,7 +133,7 @@ const SubscriptionCardComponent = ({ open, onClose, member = [] }) => {
                 <Button variant="text" color="inherit" onClick={onClose}>
                     Close
                 </Button>
-                <Button variant="text" color="primary" disabled={member?.member?.card_status !== 'Expired' && member?.member?.card_status !== 'Suspend'}>
+                <Button variant="text" color="primary" disabled={subscription.status !== 'Expired' && subscription.status !== 'Suspend'}>
                     Send Remind
                 </Button>
                 <Button

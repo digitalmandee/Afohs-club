@@ -11,71 +11,13 @@ import SubscriptionCardComponent from './UserCard';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const SubscriptionDashboard = () => {
+const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalRevenue }) => {
     // Modal state
     const [open, setOpen] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
-
-    // Sample data
-    const members = [
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Active',
-            card: 'View',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Monthly',
-            start_date: 'Apr 01-2025',
-            expiry: 'Jul 10-2027',
-            status: 'Expired',
-            card: 'View',
-            invoice: 'View',
-        },
-    ];
+    const [selectedSubscription, setSelectedSubscription] = useState(null);
 
     return (
         <>
@@ -124,7 +66,7 @@ const SubscriptionDashboard = () => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Active Member</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>320</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>2</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -137,7 +79,7 @@ const SubscriptionDashboard = () => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>New Subscribers Today</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>10</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{newSubscriptionsToday}</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -150,7 +92,7 @@ const SubscriptionDashboard = () => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Revenue</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>300,00</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{totalRevenue}</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -209,75 +151,80 @@ const SubscriptionDashboard = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {members.map((member) => (
-                                        <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell
-                                                sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    setSelectMember(member); // save the clicked member
-                                                    setOpenProfileModal(true); // open the modal
-                                                }}
-                                            >
-                                                {member.id}
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.category}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.start_date}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.expiry}</TableCell>
-                                            <TableCell>
-                                                <span
-                                                    style={{
-                                                        color: member.status === 'Active' ? '#2e7d32' : member.status === 'Suspend' ? '#FFA90B' : '#d32f2f',
-                                                        fontWeight: 'medium',
-                                                        cursor: 'pointer',
+                                    {subscriptions &&
+                                        subscriptions.length > 0 &&
+                                        subscriptions.map((subscription) => (
+                                            <TableRow key={subscription.id} style={{ borderBottom: '1px solid #eee' }}>
+                                                <TableCell
+                                                    sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
+                                                    onClick={() => {
+                                                        setSelectMember(subscription); // save the clicked member
+                                                        setOpenProfileModal(true); // open the modal
                                                     }}
-                                                    onClick={(e) => showMemberDetails(member, e)}
                                                 >
-                                                    {member.status}
-                                                    {member.status === 'Suspend' && (
-                                                        // <Warning
-                                                        //     style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
-                                                        // />
-                                                        <img
-                                                            src="/assets/system-expired.png"
-                                                            alt=""
-                                                            style={{
-                                                                width: 25,
-                                                                height: 25,
-                                                                marginLeft: 2,
-                                                                marginBottom: 5,
-                                                            }}
-                                                        />
-                                                    )}
-                                                </span>
-                                            </TableCell>
+                                                    {subscription.invoice_id}
+                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.user?.first_name + ' ' + subscription.user?.last_name}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.category?.name}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.subscription_type}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.start_date}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.expiry_date}</TableCell>
+                                                <TableCell>
+                                                    <span
+                                                        style={{
+                                                            color: subscription.status === 'active' ? '#2e7d32' : subscription.status === 'Suspend' ? '#FFA90B' : '#d32f2f',
+                                                            fontWeight: 'medium',
+                                                            cursor: 'pointer',
+                                                        }}
+                                                        onClick={(e) => showMemberDetails(subscription, e)}
+                                                    >
+                                                        {subscription.status}
+                                                        {subscription.status === 'Suspend' && (
+                                                            // <Warning
+                                                            //     style={{ color: "#ed6c02", fontSize: "16px", marginLeft: "5px", verticalAlign: "middle" }}
+                                                            // />
+                                                            <img
+                                                                src="/assets/system-expired.png"
+                                                                alt=""
+                                                                style={{
+                                                                    width: 25,
+                                                                    height: 25,
+                                                                    marginLeft: 2,
+                                                                    marginBottom: 5,
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </span>
+                                                </TableCell>
 
-                                            <TableCell>
-                                                <span
-                                                    style={{
-                                                        backgroundColor: 'transparent',
-                                                        color: '#0C67AA',
-                                                        textDecoration: 'underline',
-                                                        cursor: 'pointer',
-                                                    }}
-                                                    onClick={() => setOpenCardModal(true)}
-                                                >
-                                                    View
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button onClick={() => setOpenInvoiceModal(true)} sx={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>
-                                                    {member.invoice}
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                                <TableCell>
+                                                    <span
+                                                        style={{
+                                                            backgroundColor: 'transparent',
+                                                            color: '#0C67AA',
+                                                            textDecoration: 'underline',
+                                                            cursor: 'pointer',
+                                                        }}
+                                                        onClick={() => {
+                                                            setSelectedSubscription(subscription);
+                                                            setOpenCardModal(true);
+                                                        }}
+                                                    >
+                                                        View
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button onClick={() => setOpenInvoiceModal(true)} sx={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>
+                                                        View
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
                     </div>
-                    <SubscriptionCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} />
+                    <SubscriptionCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} subscription={selectedSubscription} />
 
                     <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
 

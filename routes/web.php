@@ -219,9 +219,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
     Route::post('/admin/subscription/store', [SubscriptionController::class, 'store'])->name('subscriptions.store');
 
-    Route::get('/admin/manage/subscription', function () {
-        return Inertia::render('App/Admin/Subscription/Management');
-    })->name('subscription.management');
+    Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
 
     Route::get('/admin/manage/monthly/fee', function () {
         return Inertia::render('App/Admin/Subscription/Monthly');

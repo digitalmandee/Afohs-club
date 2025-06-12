@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -78,7 +79,7 @@ const Payment = ({ invoice, member, onBack }) => {
         }
 
         try {
-            const response = await axios.post(route('subscription.payment.store'), data, {
+            const response = await axios.post(route('subscriptions.payment.store'), data, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -86,11 +87,14 @@ const Payment = ({ invoice, member, onBack }) => {
 
             if (response.status === 200) {
                 setError('');
-                router.visit(route('subscription.history'));
+                enqueueSnackbar('Payment successful', { variant: 'success' });
+                router.visit(route('subscription.dashboard'));
             } else {
                 setError('Payment failed: ' + (response.data?.message || 'Please check the form data.'));
             }
         } catch (error) {
+            console.log(error);
+
             setError('Payment failed: ' + (error.response?.data?.message || 'Please check the form data.'));
         }
     };
