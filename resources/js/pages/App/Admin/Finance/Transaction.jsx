@@ -27,7 +27,7 @@ const drawerWidthClosed = 110;
 
 const Transaction = () => {
     // Modal state
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
 
     // Sample data

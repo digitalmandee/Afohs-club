@@ -25,7 +25,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const ViewFullDetails = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     // Member details
     const memberDetails = {
         name: 'Zahid Ullah',

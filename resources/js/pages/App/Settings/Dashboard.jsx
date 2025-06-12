@@ -114,7 +114,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const SettingDashboard = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [activeButton, setActiveButton] = useState(null);
     const [activeModal, setActiveModal] = useState(null);
     const [storeImage, setStoreImage] = useState(null);

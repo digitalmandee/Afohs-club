@@ -16,7 +16,7 @@ const drawerWidthClosed = 110;
 
 const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
     // Modal state
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
     const [selectedMember, setSelectedMember] = useState(null);

@@ -27,7 +27,7 @@ import HoledEmployeeFilter from './HoledFilter';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 const HoledSalary = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openEmployeeEditModal, setOpenEmployeeEditModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [formData, setFormData] = useState({

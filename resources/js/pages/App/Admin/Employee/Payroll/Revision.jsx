@@ -24,7 +24,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 const SalaryRevision = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [formData, setFormData] = useState({
         guestName: '',
         phone: '',

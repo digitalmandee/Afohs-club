@@ -23,7 +23,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const CheckOut = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     // Guest details
     const guestDetails = {
         name: 'Zahid Ullah',

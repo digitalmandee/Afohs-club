@@ -128,7 +128,7 @@ const bookingsData = [
 ];
 
 const BookingDashboard = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showResultsModal, setShowResultsModal] = useState(false);

@@ -9,7 +9,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const RunPayrollDashboard = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [startMonthIndex, setStartMonthIndex] = useState(0)
 
     const generateTimelineData = () => {

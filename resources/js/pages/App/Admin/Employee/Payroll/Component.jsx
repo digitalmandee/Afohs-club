@@ -22,7 +22,7 @@ import { router } from '@inertiajs/react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 const SalaryComponent = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     const employeeData = [
         {

@@ -26,7 +26,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 const DeductionList = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openEmployeeEditModal, setOpenEmployeeEditModal] = useState(false);
     const [formData, setFormData] = useState({
         guestName: '',

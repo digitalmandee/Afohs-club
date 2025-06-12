@@ -25,7 +25,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const Dashboard = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [date, setDate] = useState('Apr-2025');
 
     const members = [

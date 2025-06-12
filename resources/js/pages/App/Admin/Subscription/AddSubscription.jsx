@@ -12,7 +12,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AddSubscriptionInformation = ({ categories, invoice_no }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     const today = new Date().toISOString().split('T')[0];
 
