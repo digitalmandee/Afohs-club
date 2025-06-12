@@ -9,7 +9,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const MembersFinance = ({ membersdata = [] }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     // State for filter modal
     const [openFilter, setOpenFilter] = useState(false);
 

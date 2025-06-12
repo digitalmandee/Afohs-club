@@ -12,7 +12,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const MembersType = ({ memberTypesData }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTypes, setMemberTypes] = useState(memberTypesData || []); // State to manage member types dynamically

@@ -28,7 +28,7 @@ const drawerWidthClosed = 110;
 
 const SubscriptionDashboard = () => {
     // Modal state
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false)
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);

@@ -14,7 +14,7 @@ const drawerWidthClosed = 110;
 
 const ManagementDashboard = () => {
     // Modal state
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
 
     const handleOpenModal = (member, event, type = 'actions') => {

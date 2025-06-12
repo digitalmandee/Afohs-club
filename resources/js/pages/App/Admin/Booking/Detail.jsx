@@ -10,7 +10,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const BookingDetail = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openPrice, setOpenPrice] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 

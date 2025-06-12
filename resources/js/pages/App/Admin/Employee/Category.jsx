@@ -23,7 +23,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const LeaveCategory = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     // Member types data
     const leaveTypes = [
         {
