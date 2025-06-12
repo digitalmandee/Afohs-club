@@ -28,8 +28,8 @@ Password: 12345678
 
 Tenant (Afohs Restaurant 1):
 id: 12345671
-URL: http://localhost:8000/afohs-restaurant-1
-Login URL: http://localhost:8000/afohs-restaurant-1/login
+URL: http://localhost:8000/afohs
+Login URL: http://localhost:8000/afohs/login
 Email: afohs1@gmail.com
 Password: 123456
 
