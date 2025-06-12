@@ -251,7 +251,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
     );
 };
 
-const BookingDashboard = () => {
+const BookingDashboard = ({ data }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
@@ -259,19 +259,21 @@ const BookingDashboard = () => {
     const [showFilter, setShowFilter] = useState(false);
     const [adults, setAdults] = useState(2);
     const [filteredBookings, setFilteredBookings] = useState(bookingsData);
+    console.log("Data", data);
+    // console.log("roomsEvents", roomsEvent);
 
-    const [bookings, setBookings] = useState([]);
+    // const [bookings, setBookings] = useState([]);
 
-    useEffect(() => {
-        axios.get('/booking/dashboard')
-            .then(res => {
-                console.log('Fetched bookings:', res.data);
-                setBookings(res.data);
-            })
-            .catch(error => {
-                console.error('Error fetching bookings:', error);
-            });
-    }, []);
+    // useEffect(() => {
+    //     axios.get('/booking/dashboard')
+    //         .then(res => {
+    //             console.log('Fetched bookings:', res.data);
+    //             setBookings(res.data);
+    //         })
+    //         .catch(error => {
+    //             console.error('Error fetching bookings:', error);
+    //         });
+    // }, []);
 
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
@@ -571,8 +573,8 @@ const BookingDashboard = () => {
                             </Col>
                         </Row>
 
-                        {searchedBookings.length > 0 ? (
-                            searchedBookings.map((booking, index) => (
+                        {data.bookingsData.length > 0 ? (
+                            data.bookingsData.map((booking, index) => (
                                 <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }}>
                                     <Card.Body className="p-2">
                                         <Row>
@@ -591,7 +593,7 @@ const BookingDashboard = () => {
                                                     <div>
                                                         <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.type}</Typography>
                                                         <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
-                                                            Created on {booking.created}
+                                                            Created on {booking.checkid}
                                                         </Typography>
                                                     </div>
                                                     <Badge

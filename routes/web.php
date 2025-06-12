@@ -110,7 +110,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     //Admin Booking Routes
     Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
+    Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
     Route::get('/room/booking', [BookingController::class, 'booking'])->name('rooms.booking');
+    Route::post('/room/booking', [BookingController::class, 'store'])->name('rooms.booking.store');
 
 
     // Route::get('/room/booking', function () {
