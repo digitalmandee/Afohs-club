@@ -7,7 +7,7 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 
 
-class BookingConroller extends Controller
+class BookingController extends Controller
 {
      public function index()
     {
@@ -15,6 +15,12 @@ class BookingConroller extends Controller
         return Inertia::render('App/Admin/Booking/Dashboard', [
             'booking' => $booking,
         ]);
-        //  return Booking::latest()->get();
+    }
+     public function booking()
+    {
+        $booking = Booking::latest()->get();
+        return Inertia::render('App/Admin/Booking/RoomBooking', [
+            'booking' => $booking,
+        ]);
     }
 }

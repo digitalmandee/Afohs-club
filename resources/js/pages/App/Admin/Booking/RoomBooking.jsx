@@ -48,6 +48,7 @@ const RoomBooking = () => {
         accountNumber: "",
         accountName: "",
         notes: "",
+        bookingFor: "mainGuest" // New field for booking ratio
     })
 
     // Receipt ref for printing
@@ -162,6 +163,7 @@ const RoomBooking = () => {
             accountNumber: "",
             accountName: "",
             notes: "",
+            bookingFor: "mainGuest" // Reset new field
         })
     }
 
@@ -236,7 +238,6 @@ const RoomBooking = () => {
                                     backgroundColor: "#FFFFFF",
                                     width: "300px",
                                     top: "50%",
-                                    // transform: "translateY(-50%)",
                                     zIndex: 1,
                                 }}
                             ></div>
@@ -294,7 +295,7 @@ const RoomBooking = () => {
                                             style={{
                                                 cursor: "pointer",
                                                 backgroundColor: bookingType === "room" ? "#B0DEFF" : "transparent",
-                                                border: bookingType === "room" ? "1px solid #063455" : "1px solid #dee2e6", // default border color
+                                                border: bookingType === "room" ? "1px solid #063455" : "1px solid #dee2e6",
                                             }}
                                         >
                                             <div className="d-flex justify-content-center mb-2">
@@ -313,7 +314,7 @@ const RoomBooking = () => {
                                             style={{
                                                 cursor: "pointer",
                                                 backgroundColor: bookingType === "events" ? "#B0DEFF" : "transparent",
-                                                border: bookingType === "events" ? "1px solid #063455" : "1px solid #dee2e6", // default border color
+                                                border: bookingType === "events" ? "1px solid #063455" : "1px solid #dee2e6",
                                             }}
                                         >
                                             <div className="d-flex justify-content-center mb-2">
@@ -329,7 +330,7 @@ const RoomBooking = () => {
                                         <div
                                             className="form-control"
                                             style={{
-                                                backgroundColor: "#e9ecef", // matches disabled input bg
+                                                backgroundColor: "#e9ecef",
                                                 color: "#7F7F7F",
                                                 border: "none",
                                                 borderRadius: "4px",
@@ -427,7 +428,7 @@ const RoomBooking = () => {
                                                         color: '#121212',
                                                         fontSize: '14px',
                                                         fontWeight: 400
-                                                    }}>{bookingType === "room" ? "Person" : "Rooms"}</Form.Label>
+                                                    }}>Person</Form.Label>
                                                     <InputGroup>
                                                         <Button
                                                             variant="outline-secondary"
@@ -550,6 +551,33 @@ const RoomBooking = () => {
                                             </Row>
                                         </>
                                     )}
+
+                                    <Form.Group className="mb-3">
+                                        <Form.Label className="small" style={{
+                                            color: '#121212',
+                                            fontSize: '14px',
+                                            fontWeight: 400
+                                        }}>Who are you booking for?</Form.Label>
+                                        <div className="d-flex flex-column">
+                                            <Form.Check
+                                                type="radio"
+                                                label="I'm the main guest"
+                                                name="bookingFor"
+                                                value="mainGuest"
+                                                checked={formData.bookingFor === "mainGuest"}
+                                                onChange={handleInputChange}
+                                                className="mb-2"
+                                            />
+                                            <Form.Check
+                                                type="radio"
+                                                label="I'm booking for someone else"
+                                                name="bookingFor"
+                                                value="someoneElse"
+                                                checked={formData.bookingFor === "someoneElse"}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                    </Form.Group>
 
                                     <div className="d-flex justify-content-end mt-4">
                                         <Button variant="light" className="me-2 border">

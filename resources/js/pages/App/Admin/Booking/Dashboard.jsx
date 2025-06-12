@@ -342,9 +342,9 @@ const BookingDashboard = () => {
                                         borderRadius: '0px',
                                     }}
                                     onClick={handleOpenBookingModal}
-                                >
-                                    <h1>Booking Dashboard</h1>
-                                    <pre>{JSON.stringify(bookings, null, 2)}</pre>
+                                >Booking
+                                    {/* <h1>Booking Dashboard</h1> */}
+                                    {/*<pre>{JSON.stringify(bookings, null, 2)}</pre> */}
                                 </Button>
                             </Col>
                         </Row>
