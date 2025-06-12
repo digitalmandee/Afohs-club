@@ -1,53 +1,192 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {
-    TextField,
-    Button,
-    Typography,
-    Box,
-    Paper,
-    InputAdornment,
-    Select,
-    MenuItem,
-    FormControl
-} from '@mui/material';
-import {
-    ArrowBack as ArrowBackIcon,
-    KeyboardArrowDown as KeyboardArrowDownIcon
-} from '@mui/icons-material';
+import { TextField, Button, Typography, Box, Paper, InputAdornment, Select, MenuItem, FormControl, Autocomplete } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from '@mui/icons-material';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import SearchIcon from '@mui/icons-material/Search';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const AddSubscriptionInformation = () => {
+const AddSubscriptionInformation = ({ categories, invoice_no }) => {
     const [open, setOpen] = useState(true);
-    // State for form fields
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const [loading, setLoading] = useState(false);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [members, setMembers] = useState([]);
+
     const [formData, setFormData] = useState({
-        guestName: '',
+        customer: {},
+        email: '',
         phone: '',
-        clubName: '',
-        authorizedBy: '',
-        checkInDate: '',
-        checkInTime: ''
+        category: '',
+        subscriptionType: '',
+        startDate: today,
+        expiryDate: '',
+        amount: 0,
     });
 
-    // Handle input changes
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
+    const [errors, setErrors] = useState({});
+
+    const subscriptionTypes = [
+        { label: 'One Time', value: 'one_time' },
+        { label: 'Monthly', value: 'monthly' },
+        { label: 'Annual', value: 'annual' },
+    ];
+
+    const searchUser = useCallback(async (query) => {
+        if (!query) return []; // Don't make a request if the query is empty.
+        setSearchLoading(true);
+        try {
+            const response = await axios.get(route('membership.filter'), {
+                params: { query },
+            });
+            setMembers(response.data.results);
+        } catch (error) {
+            console.error('Error fetching search results:', error);
+            return [];
+        } finally {
+            setSearchLoading(false);
+        }
+    }, []);
+
+    const handleSearch = async (event) => {
+        const query = event?.target?.value;
+        if (query) {
+            await searchUser(query);
+        } else {
+            setMembers([]);
+        }
+    };
+    const handleSearchChange = (event, value) => {
+        setFormData((prev) => ({
+            ...prev,
+            email: value?.email || '',
+            phone: value?.phone_number || '',
+            customer: value || {},
+        }));
     };
 
-    // Handle form submission
+    const calculateExpiry = (startDate, type) => {
+        const date = new Date(startDate);
+        if (type === 'monthly') {
+            date.setMonth(date.getMonth() + 1);
+        } else if (type === 'annual') {
+            date.setFullYear(date.getFullYear() + 1);
+        } else {
+            return '';
+        }
+        return date.toISOString().split('T')[0];
+    };
+
+    useEffect(() => {
+        if (formData.startDate && formData.subscriptionType && formData.subscriptionType !== 'one_time') {
+            const newExpiry = calculateExpiry(formData.startDate, formData.subscriptionType);
+            setFormData((prev) => ({
+                ...prev,
+                expiryDate: newExpiry,
+            }));
+        }
+    }, []);
+
+    useEffect(() => {
+        if (formData.startDate && formData.subscriptionType !== 'one_time') {
+            const newExpiry = calculateExpiry(formData.startDate, formData.subscriptionType);
+            setFormData((prev) => ({
+                ...prev,
+                expiryDate: newExpiry,
+            }));
+        }
+    }, [formData.startDate, formData.subscriptionType]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        let updatedData = { ...formData, [name]: value };
+
+        if (name === 'subscriptionType') {
+            if (value === 'one_time') {
+                updatedData.expiryDate = ''; // Manual entry required
+            } else if (value === 'monthly' && formData.startDate) {
+                const newDate = new Date(formData.startDate);
+                newDate.setMonth(newDate.getMonth() + 1);
+                updatedData.expiryDate = newDate.toISOString().split('T')[0];
+            } else if (value === 'annual' && formData.startDate) {
+                const newDate = new Date(formData.startDate);
+                newDate.setFullYear(newDate.getFullYear() + 1);
+                updatedData.expiryDate = newDate.toISOString().split('T')[0];
+            }
+        }
+
+        if (name === 'startDate' && formData.subscriptionType !== 'one_time') {
+            const newDate = new Date(value);
+            if (formData.subscriptionType === 'monthly') {
+                newDate.setMonth(newDate.getMonth() + 1);
+            } else if (formData.subscriptionType === 'annual') {
+                newDate.setFullYear(newDate.getFullYear() + 1);
+            }
+            updatedData.expiryDate = newDate.toISOString().split('T')[0];
+        }
+
+        // compute total if category and subscriptionType exist
+        const selectedCategory = categories.find((cat) => cat.id == (name === 'category' ? value : formData.category));
+        const subscriptionType = name === 'subscriptionType' ? value : formData.subscriptionType;
+
+        if (selectedCategory && subscriptionType) {
+            const baseFee = parseFloat(selectedCategory.fee || 0);
+            const subFee = parseFloat(selectedCategory.subscription_fee || 0);
+
+            if (subscriptionType === 'one_time') {
+                updatedData.amount = baseFee;
+            } else if (subscriptionType === 'monthly') {
+                updatedData.amount = subFee;
+            } else if (subscriptionType === 'annual') {
+                updatedData.amount = subFee * 12;
+            }
+        }
+
+        setFormData(updatedData);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
-        // Add your form submission logic here
+
+        // Simple front-end validation
+        const newErrors = {};
+        if (!formData.customer) newErrors.customer = 'Name is required';
+        if (!formData.email) newErrors.email = 'Email is required';
+        if (!formData.phone) newErrors.phone = 'Phone is required';
+        if (!formData.category) newErrors.category = 'Category is required';
+        if (!formData.subscriptionType) newErrors.subscriptionType = 'Subscription type is required';
+        if (!formData.startDate) newErrors.startDate = 'Start date is required';
+        if (formData.subscriptionType !== 'one_time') {
+            if (!formData.expiryDate) newErrors.expiryDate = 'Expiry date is required';
+        }
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length === 0) {
+            setLoading(true);
+            axios
+                .post(route('subscriptions.store'), formData)
+                .then((response) => {
+                    enqueueSnackbar('Form submitted successfully.', { variant: 'success' });
+                    router.visit(route('subscriptions.payment', { invoice_no: response.data.invoice_no }));
+                })
+                .catch((error) => {
+                    enqueueSnackbar('Failed to submit form.', { variant: 'error' });
+                    console.error('Error submitting form:', error);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+            // Add your submit logic (e.g. Inertia POST)
+        }
     };
 
     return (
@@ -61,29 +200,35 @@ const AddSubscriptionInformation = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <div style={{
-                    fontFamily: 'Arial, sans-serif',
-                    padding: '20px',
-                    backgroundColor: '#f5f5f5',
-                    minHeight: '100vh'
-                }}>
+                <div
+                    style={{
+                        fontFamily: 'Arial, sans-serif',
+                        padding: '20px',
+                        backgroundColor: '#f5f5f5',
+                        minHeight: '100vh',
+                    }}
+                >
                     {/* Header with back button and title */}
                     <div className="d-flex align-items-center mb-4">
-                        <ArrowBackIcon style={{
-                            cursor: 'pointer',
-                            marginRight: '10px',
-                            color: '#555',
-                            fontSize: '24px'
-                        }} />
-                        <Typography variant="h5" style={{
-                            fontWeight: 500,
-                            color: '#333',
-                            fontSize: '24px'
-                        }}>
+                        <ArrowBackIcon
+                            style={{
+                                cursor: 'pointer',
+                                marginRight: '10px',
+                                color: '#555',
+                                fontSize: '24px',
+                            }}
+                        />
+                        <Typography
+                            variant="h5"
+                            style={{
+                                fontWeight: 500,
+                                color: '#333',
+                                fontSize: '24px',
+                            }}
+                        >
                             Add New Subscription
                         </Typography>
                     </div>
-
                     {/* Form Card */}
                     <Paper
                         elevation={1}
@@ -91,11 +236,10 @@ const AddSubscriptionInformation = () => {
                             maxWidth: '630px',
                             margin: '0 auto',
                             padding: '30px',
-                            borderRadius: '4px'
+                            borderRadius: '4px',
                         }}
                     >
                         <form onSubmit={handleSubmit}>
-
                             <Box
                                 mb={3}
                                 sx={{
@@ -122,31 +266,53 @@ const AddSubscriptionInformation = () => {
                                         color: '#063455',
                                         fontSize: '16px',
                                         fontWeight: 500,
-                                        ml:1
+                                        ml: 1,
                                     }}
                                 >
-                                    202233
+                                    #{invoice_no}
                                 </Typography>
                             </Box>
-
                             {/* Guest Name */}
                             <Box mb={3}>
-                                <TextField
+                                <Autocomplete
                                     fullWidth
-                                    name="guestName"
-                                    value={formData.guestName}
-                                    onChange={handleChange}
-                                    placeholder="Search by name, member and type"
-                                    variant="outlined"
+                                    freeSolo
                                     size="small"
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <SearchIcon sx={{ fontSize: 20, color: '#999' }} />
-                                            </InputAdornment>
-                                        ),
-                                        style: { fontSize: '14px' },
-                                    }}
+                                    options={members}
+                                    value={formData.customer}
+                                    name="customer"
+                                    loading={searchLoading}
+                                    getOptionLabel={(option) => [option?.first_name, option?.middle_name, option?.last_name].filter(Boolean).join(' ') || ''}
+                                    isOptionEqualToValue={(option, value) => option?.user_id === value?.user_id}
+                                    onInputChange={handleSearch}
+                                    onChange={handleSearchChange}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            fullWidth
+                                            placeholder="Search by name, ID, or email"
+                                            variant="outlined"
+                                            size="small"
+                                            name="customer"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <SearchIcon sx={{ fontSize: 20, color: '#999' }} />
+                                                    </InputAdornment>
+                                                ),
+                                                style: { fontSize: '14px' },
+                                            }}
+                                        />
+                                    )}
+                                    renderOption={(props, option) => (
+                                        <li {...props}>
+                                            <span>
+                                                {option.first_name} ({option.user_id})
+                                            </span>
+                                            <span style={{ color: 'gray', fontSize: '0.875rem', marginLeft: '8px' }}>{option.email}</span>
+                                        </li>
+                                    )}
                                 />
                             </Box>
 
@@ -159,22 +325,24 @@ const AddSubscriptionInformation = () => {
                                             marginBottom: '8px',
                                             color: '#333',
                                             fontSize: '14px',
-                                            fontWeight: 500
+                                            fontWeight: 500,
                                         }}
                                     >
                                         Email
                                     </Typography>
                                     <TextField
                                         fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
+                                        name="email"
+                                        value={formData.email}
                                         onChange={handleChange}
                                         placeholder="Enter Email"
                                         variant="outlined"
                                         size="small"
                                         style={{ marginBottom: '8px' }}
+                                        error={!!errors.email}
+                                        helperText={errors.email}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     />
                                 </div>
@@ -185,22 +353,24 @@ const AddSubscriptionInformation = () => {
                                             marginBottom: '8px',
                                             color: '#333',
                                             fontSize: '14px',
-                                            fontWeight: 500
+                                            fontWeight: 500,
                                         }}
                                     >
                                         Contact Number
                                     </Typography>
                                     <TextField
                                         fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
+                                        name="phone"
+                                        value={formData.phone}
                                         onChange={handleChange}
                                         placeholder="Enter you contact number"
                                         variant="outlined"
                                         size="small"
                                         style={{ marginBottom: '8px' }}
+                                        error={!!errors.phone}
+                                        helperText={errors.phone}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     />
                                 </div>
@@ -214,7 +384,7 @@ const AddSubscriptionInformation = () => {
                                         marginBottom: '8px',
                                         color: '#333',
                                         fontSize: '14px',
-                                        fontWeight: 500
+                                        fontWeight: 500,
                                     }}
                                 >
                                     Subscribers Category
@@ -223,33 +393,39 @@ const AddSubscriptionInformation = () => {
                                     <TextField
                                         select
                                         fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
+                                        name="category"
+                                        value={formData.category}
                                         onChange={handleChange}
                                         placeholder="Choose Category"
                                         variant="outlined"
                                         size="small"
                                         style={{ marginBottom: '8px' }}
+                                        error={!!errors.category}
+                                        helperText={errors.category}
                                         SelectProps={{
                                             displayEmpty: true,
                                             renderValue: (selected) => {
                                                 if (!selected) {
-                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>e.g. Select member from list type name / ID</span>;
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
                                                 }
-                                                return selected;
+                                                const item = categories.find((item) => item.id == Number(selected));
+                                                return item ? item.name : '';
                                             },
-                                            IconComponent: KeyboardArrowDownIcon
+                                            IconComponent: KeyboardArrowDownIcon,
                                         }}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     >
                                         <MenuItem value="">
                                             <em>None</em>
                                         </MenuItem>
-                                        <MenuItem value="Member 1">Member 1</MenuItem>
-                                        <MenuItem value="Member 2">Member 2</MenuItem>
-                                        <MenuItem value="Member 3">Member 3</MenuItem>
+                                        {categories.length > 0 &&
+                                            categories.map((item, index) => (
+                                                <MenuItem key={index} value={item.id}>
+                                                    {item.name}
+                                                </MenuItem>
+                                            ))}
                                     </TextField>
                                 </FormControl>
                             </Box>
@@ -262,7 +438,7 @@ const AddSubscriptionInformation = () => {
                                         marginBottom: '8px',
                                         color: '#333',
                                         fontSize: '14px',
-                                        fontWeight: 500
+                                        fontWeight: 500,
                                     }}
                                 >
                                     Selection Type
@@ -271,33 +447,38 @@ const AddSubscriptionInformation = () => {
                                     <TextField
                                         select
                                         fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
+                                        name="subscriptionType"
+                                        value={formData.subscriptionType}
                                         onChange={handleChange}
                                         placeholder="Choose type"
                                         variant="outlined"
                                         size="small"
                                         style={{ marginBottom: '8px' }}
+                                        error={!!errors.subscriptionType}
+                                        helperText={errors.subscriptionType}
                                         SelectProps={{
                                             displayEmpty: true,
                                             renderValue: (selected) => {
                                                 if (!selected) {
-                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>e.g. Select member from list type name / ID</span>;
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Type</span>;
                                                 }
-                                                return selected;
+                                                const item = subscriptionTypes.find((item) => item.value == selected);
+                                                return item ? item.label : '';
                                             },
-                                            IconComponent: KeyboardArrowDownIcon
+                                            IconComponent: KeyboardArrowDownIcon,
                                         }}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     >
                                         <MenuItem value="">
                                             <em>None</em>
                                         </MenuItem>
-                                        <MenuItem value="Member 1">Member 1</MenuItem>
-                                        <MenuItem value="Member 2">Member 2</MenuItem>
-                                        <MenuItem value="Member 3">Member 3</MenuItem>
+                                        {subscriptionTypes.map((item, index) => (
+                                            <MenuItem key={index} value={item.value}>
+                                                {item.label}
+                                            </MenuItem>
+                                        ))}
                                     </TextField>
                                 </FormControl>
                             </Box>
@@ -311,22 +492,27 @@ const AddSubscriptionInformation = () => {
                                             marginBottom: '8px',
                                             color: '#333',
                                             fontSize: '14px',
-                                            fontWeight: 500
+                                            fontWeight: 500,
                                         }}
                                     >
                                         Start Date
                                     </Typography>
                                     <TextField
                                         fullWidth
-                                        name="checkInDate"
+                                        name="startDate"
                                         type="date"
-                                        value={formData.checkInDate}
+                                        value={formData.startDate}
                                         onChange={handleChange}
                                         placeholder="Default"
                                         variant="outlined"
                                         size="small"
+                                        error={!!errors.startDate}
+                                        helperText={errors.startDate}
+                                        inputProps={{
+                                            min: new Date().toISOString().split('T')[0], // Disable past dates
+                                        }}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     />
                                 </div>
@@ -337,52 +523,71 @@ const AddSubscriptionInformation = () => {
                                             marginBottom: '8px',
                                             color: '#333',
                                             fontSize: '14px',
-                                            fontWeight: 500
+                                            fontWeight: 500,
                                         }}
                                     >
                                         Expire Date
                                     </Typography>
                                     <TextField
                                         fullWidth
-                                        name="checkInDate"
+                                        name="expiryDate"
                                         type="date"
-                                        value={formData.checkInDate}
+                                        value={formData.expiryDate}
                                         onChange={handleChange}
                                         placeholder="Default"
                                         variant="outlined"
                                         size="small"
-                                        InputProps={{
-                                            style: { fontSize: '14px' }
+                                        error={!!errors.expiryDate}
+                                        helperText={errors.expiryDate}
+                                        inputProps={{
+                                            min: formData.startDate || new Date().toISOString().split('T')[0], // Disable past dates
                                         }}
                                     />
                                 </div>
                             </Box>
                             {/* Action Buttons */}
-                            <Box className="d-flex justify-content-end">
-                                <Button
-                                    variant="text"
+                            <Box className="d-flex justify-content-between">
+                                <Box
                                     style={{
-                                        marginRight: '10px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        fontSize: '20px',
+                                        fontWeight: 500,
                                         color: '#333',
-                                        textTransform: 'none',
-                                        fontSize: '14px'
                                     }}
                                 >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    style={{
-                                        backgroundColor: '#003366',
-                                        color: 'white',
-                                        textTransform: 'none',
-                                        fontSize: '14px',
-                                        padding: '6px 16px'
-                                    }}
-                                >
-                                    Save
-                                </Button>
+                                    Total Amount: &nbsp;
+                                    <span style={{ fontWeight: 'bold' }}>{formData.amount}</span>
+                                </Box>
+                                <Box className="d-flex justify-content-end">
+                                    <Button
+                                        variant="text"
+                                        style={{
+                                            marginRight: '10px',
+                                            color: '#333',
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        disabled={loading}
+                                        loading={loading}
+                                        loadingPosition="start"
+                                        style={{
+                                            backgroundColor: '#003366',
+                                            color: 'white',
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                            padding: '6px 16px',
+                                        }}
+                                    >
+                                        Save & Next
+                                    </Button>
+                                </Box>
                             </Box>
                         </form>
                     </Paper>

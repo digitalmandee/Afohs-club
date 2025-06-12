@@ -133,6 +133,10 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Events',
                     path: route('events.manage'),
                 },
+                {
+                    text: 'Event Location',
+                    path: route('events.locations'),
+                },
             ],
         },
         {
@@ -154,6 +158,10 @@ export default function SideNav({ open, setOpen }) {
                 {
                     text: 'Membership Type',
                     path: route('member-types.index'),
+                },
+                {
+                    text: 'Membership Category',
+                    path: route('member-categories.index'),
                 },
                 {
                     text: 'Finance',

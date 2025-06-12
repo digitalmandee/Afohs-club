@@ -126,7 +126,6 @@ const roomTypes = [
         capacity: 100,
         time: 'May 20, 10:00 AM',
         price: 150,
-        badge: 'Complete',
         color: '#0B4837',
     },
     {
@@ -136,18 +135,18 @@ const roomTypes = [
         capacity: 80,
         time: 'March 25, 06:00 PM',
         price: 150,
-        badge: 'Upcoming',
         color: '#129BFF',
     },
 ];
 
-const EventScreen = () => {
+const EventScreen = ({ events }) => {
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showResultsModal, setShowResultsModal] = useState(false);
     const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
+    console.log('events', events);
 
     const filteredBookings = bookingsData.filter((booking) => booking.type.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -234,8 +233,7 @@ const EventScreen = () => {
 
                         <Box sx={{ mb: 2 }}>
                             <Grid container spacing={2}>
-                                {roomTypes.map((room, index) => {
-                                    console.log('Room Color:', room.color);
+                                {events.map((events, index) => {
                                     return (
                                         <Grid item xs={12} sm={6} key={index}>
                                             <Paper
@@ -249,8 +247,12 @@ const EventScreen = () => {
                                                 }}
                                             >
                                                 {/* Image */}
+                                                {/* <img src="/assets/room-img.png" alt="" style={{ width: '117px', height: '77px' }} /> */}
+                                                {/* <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                                                    <img src={'/' + events?.photo_path} alt="" style={{ width: '117px', height: '77px' }} />
+                                                </Box> */}
                                                 <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                                    <img src="/assets/room-img.png" alt="" style={{ width: '117px', height: '77px' }} />
+                                                    <img src={'/' + events?.photo_path} alt="" style={{ width: '117px', height: '77px' }} />
                                                 </Box>
 
                                                 {/* Content */}
@@ -264,49 +266,35 @@ const EventScreen = () => {
                                                         }}
                                                     >
                                                         <Typography variant="h6" fontWeight="medium">
-                                                            {room.type}
+                                                            {events.event_name}
                                                         </Typography>
-                                                        <Badge
-                                                            style={{
-                                                                backgroundColor: room.color, // Make sure this is used
-                                                                color: 'white',
-                                                                padding: '6px 14px',
-                                                                borderRadius: '0px',
-                                                                fontSize: '0.85rem',
-                                                                fontWeight: 500,
-                                                                minWidth: '100px',
-                                                                textAlign: 'center',
-                                                                cursor: 'pointer',
-                                                            }}
-                                                        >
-                                                            {room.badge}
-                                                        </Badge>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
+                                                            <Box component="span" fontWeight="bold" color="text.primary">
+                                                                {events.price_per_person} RS.
+                                                            </Box>
+                                                            /{events.pricing_type}
+                                                        </Typography>
                                                     </Box>
 
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
-                                                        <Box component="span" fontWeight="bold" color="text.primary">
-                                                            {room.price}$
-                                                        </Box>
-                                                        /per night
-                                                    </Typography>
+
 
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, mt: 2 }}>
                                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                             <LocationOnIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
                                                             <Typography variant="body2" color="text.secondary">
-                                                                {room.area}
+                                                                {events.location}
                                                             </Typography>
                                                         </Box>
                                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                             <PeopleIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
                                                             <Typography variant="body2" color="text.secondary">
-                                                                {room.capacity} Capacity
+                                                                {events.max_capacity} Capacity
                                                             </Typography>
                                                         </Box>
                                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                             <AccessTimeIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
                                                             <Typography variant="body2" color="text.secondary">
-                                                                {room.time}
+                                                                {events.date_time}
                                                             </Typography>
                                                         </Box>
                                                     </Box>

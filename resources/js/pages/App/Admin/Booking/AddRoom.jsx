@@ -9,7 +9,7 @@ import {
     IconButton,
     InputAdornment,
     MenuItem,
-    Select
+    Select,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -26,14 +26,15 @@ import dayjs from 'dayjs';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const RoomEventManager = () => {
+const RoomEventManager = ({ locations }) => {
     const [open, setOpen] = useState(true);
     const [activeTab, setActiveTab] = useState('room');
     const [photoUrl, setPhotoUrl] = useState(null);
     const fileInputRef = useRef(null);
-    const { url } = usePage();
+    const { url, props } = usePage();
     const query = new URLSearchParams(url.split('?')[1]);
     const type = query.get('type');
+    console.log('eventLocation', locations);
 
     // Room Form state
     const [roomForm, setRoomForm] = useState({
@@ -139,6 +140,8 @@ const RoomEventManager = () => {
         });
 
         router.post(route('rooms.store'), data, {
+            forceFormData: true,
+        }, {
             onSuccess: () => {
                 setRoomForm({
                     name: '',
@@ -160,6 +163,7 @@ const RoomEventManager = () => {
                     number_of_bathrooms: '',
                 });
                 enqueueSnackbar('Room added successfully', { variant: 'success' });
+                router.visit('/rooms/dashboard');
             },
             onError: (serverErrors) => {
                 setRoomErrors({ ...roomErrors, ...serverErrors });
@@ -245,6 +249,7 @@ const RoomEventManager = () => {
                     location: '',
                 });
                 enqueueSnackbar('Event added successfully', { variant: 'success' });
+                router.visit('/events/dashboard');
             },
             onError: (serverErrors) => {
                 setEventErrors({ ...eventErrors, ...serverErrors });
@@ -663,10 +668,9 @@ const RoomEventManager = () => {
                                             sx={{ height: 40 }}
                                             error={!!eventErrors.location}
                                         >
-                                            <MenuItem value="Main Hall">Main Hall</MenuItem>
-                                            <MenuItem value="Conference Room">Conference Room</MenuItem>
-                                            <MenuItem value="Outdoor Area">Outdoor Area</MenuItem>
-                                            <MenuItem value="Ballroom">Ballroom</MenuItem>
+                                            {props.locations && props.locations.map((loc) => (
+                                                <MenuItem key={loc.id} value={loc.name}>{loc.name}</MenuItem>
+                                            ))}
                                         </Select>
                                         {!!eventErrors.location && (
                                             <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>

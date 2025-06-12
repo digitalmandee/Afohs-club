@@ -15,8 +15,6 @@ class UserController extends Controller
         $memberType = $request->input('member_type');
         $roleType = $request->input('role', 'user');
 
-        Log::info($query);
-
         $members = User::role($roleType, 'web')
             ->where(function ($queryBuilder) use ($query) {
                 $queryBuilder->where('name', 'like', "%{$query}%")

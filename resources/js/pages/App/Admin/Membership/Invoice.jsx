@@ -3,6 +3,7 @@ import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, T
 import { Print, Close, Send } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
+import { toWords } from 'number-to-words';
 
 const InvoiceSlip = ({ open, onClose, member }) => {
     const [invoice, setInvoice] = useState(null);
@@ -10,12 +11,19 @@ const InvoiceSlip = ({ open, onClose, member }) => {
     // Debug member prop
     useEffect(() => {
         if (open) {
+            setLoading(true);
             axios
                 .get(route('member-invoices', member.id))
                 .then((response) => {
-                    console.log('InvoiceSlip response:', response.data);
+                    setInvoice(response.data.invoice);
+                    console.log('InvoiceSlip response:', response.data.invoice);
                 })
-                .catch((error) => { });
+                .catch((error) => {
+                    console.error('InvoiceSlip error:', error);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
             // console.log('InvoiceSlip member:', JSON.stringify(member, null, 2));
         }
     }, [open, member]);
@@ -102,196 +110,208 @@ const InvoiceSlip = ({ open, onClose, member }) => {
                         </Grid>
                     </Grid>
 
-                    {/* Bill To and Details Section */}
-                    <Grid container spacing={2} sx={{ mb: 4 }}>
-                        <Grid item xs={6}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
-                                Bill To {member?.user_id ? `- ${member.user_id}` : ''}
-                            </Typography>
-                            <Box sx={{ ml: 0 }}>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Name: </span>
-                                    {invoiceData.billTo.name}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Category: </span>
-                                    {invoiceData.billTo.category}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Membership #: </span>
-                                    {invoiceData.billTo.membershipId}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Contact #: </span>
-                                    {invoiceData.billTo.contactNumber}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>City: </span>
-                                    {invoiceData.billTo.city}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Family Member: </span>
-                                    {invoiceData.billTo.familyMember}
-                                </Typography>
-                            </Box>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
-                                DETAILS
-                            </Typography>
-                            <Box sx={{ ml: 0 }}>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Invoice #: </span>
-                                    {invoiceData.details.invoiceNumber}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Issue Date: </span>
-                                    {invoiceData.details.issueDate}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
-                                    {invoiceData.details.paymentMethod}
-                                </Typography>
-                            </Box>
-                        </Grid>
-                    </Grid>
+                    {loading ? (
+                        'Loading...'
+                    ) : invoice ? (
+                        <>
+                            {/* Bill To and Details Section */}
+                            <Grid container spacing={2} sx={{ mb: 4 }}>
+                                <Grid item xs={6}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
+                                        Bill To {member?.user_id ? `- ${member.user_id}` : ''}
+                                    </Typography>
+                                    <Box sx={{ ml: 0 }}>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>Name: </span>
+                                            {member.first_name} {member.middle_name} {member.last_name}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>Category: </span>
+                                            {member.member.member_type?.name}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>Membership #: </span>
+                                            {member.user_id}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>Contact #: </span>
+                                            {member.phone_number}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>City: </span>
+                                            {member.user_detail?.current_city}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>Family Member: </span>
+                                            {invoiceData.billTo.familyMember}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
+                                        DETAILS
+                                    </Typography>
+                                    <Box sx={{ ml: 0 }}>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>Invoice #: </span>
+                                            {invoice.invoice_number}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>Issue Date: </span>
+                                            {new Date(invoice.created_at).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                            })}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
+                                            {invoice.payment_method}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            </Grid>
 
-                    {/* Invoice Table */}
-                    <TableContainer component={Paper} elevation={0} sx={{ mb: 3 }}>
-                        <Table sx={{ minWidth: 650 }} size="small">
-                            <TableHead>
-                                <TableRow sx={{ backgroundColor: '#f9f9f9' }}>
-                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>SR #</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Description</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Invoice Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Remaining Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Paid Amount</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {invoiceData.items.map((item) => (
-                                    <TableRow key={item.srNo}>
-                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.srNo}</TableCell>
-                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.description}</TableCell>
-                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.invoiceAmount}</TableCell>
-                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.remainingAmount}</TableCell>
-                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.paidAmount}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                            {/* Invoice Table */}
+                            <TableContainer component={Paper} elevation={0} sx={{ mb: 3 }}>
+                                <Table sx={{ minWidth: 650 }} size="small">
+                                    <TableHead>
+                                        <TableRow sx={{ backgroundColor: '#f9f9f9' }}>
+                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>SR #</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Description</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Invoice Amount</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Remaining Amount</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Paid Amount</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {/* {invoiceData.items.map((item) => ( */}
+                                        <TableRow>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>1</TableCell>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.member_type?.name}</TableCell>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.total_amount}</TableCell>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.customer_charges}</TableCell>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.amount_paid}</TableCell>
+                                        </TableRow>
+                                        {/* ))} */}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
 
-                    {/* Summary Section */}
-                    <Grid container justifyContent="flex-end" sx={{ mb: 3 }}>
-                        <Grid item xs={12} sm={6} md={4}>
-                            <Box sx={{ pt: 1 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
-                                    <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
-                                        Grand Total
+                            {/* Summary Section */}
+                            <Grid container justifyContent="flex-end" sx={{ mb: 3 }}>
+                                <Grid item xs={12} sm={6} md={4}>
+                                    <Box sx={{ pt: 1 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                                Grand Total
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                                                Rs {invoice.total_amount}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                                Remaining Amount
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                                                Rs {invoice.customer_charges}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                                Paid Amount
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                                                Rs {invoice.amount_paid}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+
+                            {/* Notes Section */}
+                            <Grid container spacing={2} sx={{ mb: 3 }}>
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '13px' }}>
+                                        Note:
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontSize: '13px' }}>
-                                        Rs {invoiceData.summary.grandTotal.toFixed(0)}
+                                        {invoiceData.note}
                                     </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
-                                    <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
-                                        Remaining Amount
-                                    </Typography>
+                                    <Box sx={{ mt: 2 }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '13px' }}>
+                                            Sent By: {invoiceData.sentBy}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={6}>
                                     <Typography variant="body2" sx={{ fontSize: '13px' }}>
-                                        Rs {invoiceData.summary.remainingAmount.toFixed(2)}
+                                        {invoiceData.paymentNote}
                                     </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
-                                    <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
-                                        Paid Amount
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', mt: 0.5, textTransform: 'uppercase', fontSize: '13px' }}>
+                                        AMOUNT IN WORDS: {toWords(invoice.total_amount)}
                                     </Typography>
-                                    <Typography variant="body2" sx={{ fontSize: '13px' }}>
-                                        Rs {invoiceData.summary.paidAmount}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Grid>
-                    </Grid>
+                                </Grid>
+                            </Grid>
 
-                    {/* Notes Section */}
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid item xs={6}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '13px' }}>
-                                Note:
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontSize: '13px' }}>
-                                {invoiceData.note}
-                            </Typography>
-                            <Box sx={{ mt: 2 }}>
-                                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '13px' }}>
-                                    Sent By: {invoiceData.sentBy}
-                                </Typography>
+                            {/* Action Buttons */}
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    gap: 1,
+                                    borderTop: '1px solid #eee',
+                                    pt: 2,
+                                }}
+                            >
+                                <Button
+                                    variant="outlined"
+                                    sx={{
+                                        textTransform: 'none',
+                                        borderColor: '#ddd',
+                                        color: '#555',
+                                        '&:hover': {
+                                            borderColor: '#bbb',
+                                            backgroundColor: '#f5f5f5',
+                                        },
+                                    }}
+                                    onClick={onClose}
+                                >
+                                    Close
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    sx={{
+                                        textTransform: 'none',
+                                        borderColor: '#ddd',
+                                        color: '#555',
+                                        '&:hover': {
+                                            borderColor: '#bbb',
+                                            backgroundColor: '#f5f5f5',
+                                        },
+                                    }}
+                                >
+                                    Send Remind
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<Print />}
+                                    sx={{
+                                        textTransform: 'none',
+                                        backgroundColor: '#003366',
+                                        '&:hover': {
+                                            backgroundColor: '#002244',
+                                        },
+                                    }}
+                                >
+                                    Print
+                                </Button>
                             </Box>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="body2" sx={{ fontSize: '13px' }}>
-                                {invoiceData.paymentNote}
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '13px' }}>
-                                AMOUNT IN WORDS: {invoiceData.amountInWords}
-                            </Typography>
-                        </Grid>
-                    </Grid>
-
-                    {/* Action Buttons */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            gap: 1,
-                            borderTop: '1px solid #eee',
-                            pt: 2,
-                        }}
-                    >
-                        <Button
-                            variant="outlined"
-                            sx={{
-                                textTransform: 'none',
-                                borderColor: '#ddd',
-                                color: '#555',
-                                '&:hover': {
-                                    borderColor: '#bbb',
-                                    backgroundColor: '#f5f5f5',
-                                },
-                            }}
-                            onClick={onClose}
-                        >
-                            Close
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            sx={{
-                                textTransform: 'none',
-                                borderColor: '#ddd',
-                                color: '#555',
-                                '&:hover': {
-                                    borderColor: '#bbb',
-                                    backgroundColor: '#f5f5f5',
-                                },
-                            }}
-                        >
-                            Send Remind
-                        </Button>
-                        <Button
-                            variant="contained"
-                            startIcon={<Print />}
-                            sx={{
-                                textTransform: 'none',
-                                backgroundColor: '#003366',
-                                '&:hover': {
-                                    backgroundColor: '#002244',
-                                },
-                            }}
-                        >
-                            Print
-                        </Button>
-                    </Box>
+                        </>
+                    ) : (
+                        ''
+                    )}
                 </Paper>
             </Container>
         </Drawer>

@@ -12,7 +12,7 @@ import SubscriptionFilter from './Filter';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const ManagementDashboard = () => {
+const ManagementDashboard = ({ subscriptions }) => {
     // Modal state
     const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
@@ -33,65 +33,9 @@ const ManagementDashboard = () => {
         setOpenModal(false);
     };
 
-    const handleCancelMembership = () => {
-        handleCloseModal();
-    };
-
-    const handleSuspendMembership = () => {
-        handleCloseModal();
-    };
-
     const showMemberDetails = (member, event) => {
         handleOpenModal(member, event, 'details');
     };
-
-    const members = [
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            start_date: "Apr 01-2025",
-            expiry: "Jul 10-2027",
-            status: "Active",
-        },
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            start_date: "Apr 01-2025",
-            expiry: "Jul 10-2027",
-            status: "Expired",
-        },
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            start_date: "Apr 01-2025",
-            expiry: "Jul 10-2027",
-            status: "Active",
-        },
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            start_date: "Apr 01-2025",
-            expiry: "Jul 10-2027",
-            status: "Active",
-        },
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            start_date: "Apr 01-2025",
-            expiry: "Jul 10-2027",
-            status: "Expired",
-        },
-    ]
 
     return (
         <>
@@ -131,10 +75,10 @@ const ManagementDashboard = () => {
                         }}
                     >
                         {[
-                            { title: 'Total Subscriptions', value: 400, icon: PeopleIcon },
-                            { title: 'Active', value: 20934, image: '/assets/ticks.png' },
-                            { title: 'Expired', value: 8735, image: '/assets/cross.png' },
-                            { title: 'Total Revenue', value: 3000, image: '/assets/refresh.png' },
+                            { title: 'Total Subscriptions', value: 0, icon: PeopleIcon },
+                            { title: 'Active', value: 0, image: '/assets/ticks.png' },
+                            { title: 'Expired', value: 0, image: '/assets/cross.png' },
+                            { title: 'Total Revenue', value: 0, image: '/assets/refresh.png' },
                         ].map((item, index) => (
                             <div key={index} style={{ flex: 1 }}>
                                 <Card
@@ -204,7 +148,7 @@ const ManagementDashboard = () => {
                                         color: '#333',
                                         textTransform: 'none',
                                         backgroundColor: 'transparent',
-                                        marginRight: 10
+                                        marginRight: 10,
                                     }}
                                     onClick={() => {
                                         setOpenFilterModal(true); // open the modal
@@ -242,45 +186,45 @@ const ManagementDashboard = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {members.map((member) => (
-                                        <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.user_id}</TableCell>
-                                            <TableCell>
-                                                <div className="d-flex align-items-center">
-                                                    {/* <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.first_name} style={{ marginRight: '10px' }} /> */}
-                                                    <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name || 'N/A'}</Typography>
-
+                                    {subscriptions &&
+                                        subscriptions.length > 0 &&
+                                        subscriptions.map((subscription) => (
+                                            <TableRow key={subscription.id} style={{ borderBottom: '1px solid #eee' }}>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>AFOHS-{subscription.invoice_id}</TableCell>
+                                                <TableCell>
+                                                    <div className="d-flex align-items-center">
+                                                        {/* <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.first_name} style={{ marginRight: '10px' }} /> */}
+                                                        <div>
+                                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.user?.first_name + ' ' + subscription.user?.last_name || 'N/A'}</Typography>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.category}</TableCell>
-                                            <TableCell>
-                                                <span
-                                                    style={{
-                                                        color: '#7F7F7F', fontWeight: 400, fontSize: '14px'
-                                                    }}
-                                                    onClick={(e) => showMemberDetails(user, e)}
-                                                >
-                                                    {member.type}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                {member.start_date}
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                {member.expiry}
-                                            </TableCell>
-                                            <TableCell>
-
-                                                <span style={{
-                                                    color: member.status === 'Active' ? '#178F6F' : '#F14C35'
-                                                }}>
-                                                    {member.status}
-                                                </span>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.category?.name}</TableCell>
+                                                <TableCell>
+                                                    <span
+                                                        style={{
+                                                            color: '#7F7F7F',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                        }}
+                                                        onClick={(e) => showMemberDetails(user, e)}
+                                                    >
+                                                        {subscription.subscription_type}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.start_date}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.expiry_date}</TableCell>
+                                                <TableCell>
+                                                    <span
+                                                        style={{
+                                                            color: subscription.status === 'active' ? '#178F6F' : '#F14C35',
+                                                        }}
+                                                    >
+                                                        {subscription.status}
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>

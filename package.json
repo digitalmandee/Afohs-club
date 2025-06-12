@@ -59,6 +59,7 @@
         "laravel-vite-plugin": "^1.0",
         "lucide-react": "^0.475.0",
         "notistack": "^3.0.2",
+        "number-to-words": "^1.2.4",
         "react": "^19.0.0",
         "react-bootstrap": "^2.10.9",
         "react-dnd": "^16.0.1",

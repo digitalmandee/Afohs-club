@@ -17,8 +17,8 @@ const AddMember = ({ onNext, onBack }) => {
         duration: '',
         fee: '',
         maintenanceFee: '',
-        discountRs: '',
-        discountPercent: '',
+        discountType: 'percentage',
+        discountValue: '',
         discountAuthorizedBy: '',
         benefit: '', // Comma-separated string
     });
@@ -39,13 +39,14 @@ const AddMember = ({ onNext, onBack }) => {
             duration: formData.duration ? parseInt(formData.duration, 10) : null,
             fee: formData.fee ? parseFloat(formData.fee) : null,
             maintenance_fee: formData.maintenanceFee ? parseFloat(formData.maintenanceFee) : null,
-            discount: formData.discountRs ? parseFloat(formData.discountRs) : null,
+            discount_type: formData.discountType,
+            discount_value: formData.discountValue ? parseFloat(formData.discountValue) : 0,
             discount_authorized: formData.discountAuthorizedBy,
             benefit: formData.benefit ? formData.benefit.split(',').map((b) => b.trim()) : [],
         };
 
         try {
-            const response = await axios.post('/members/member-types/store', dataToSubmit, {
+            await axios.post('/members/member-types/store', dataToSubmit, {
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
                 },
@@ -57,11 +58,12 @@ const AddMember = ({ onNext, onBack }) => {
                 duration: '',
                 fee: '',
                 maintenanceFee: '',
-                discountRs: '',
-                discountPercent: '',
+                discountType: 'percentage',
+                discountValue: '',
                 discountAuthorizedBy: '',
                 benefit: '',
             });
+
             window.location.href = '/members/member-types';
         } catch (error) {
             console.error('Failed to save:', error.response?.data);
@@ -121,17 +123,21 @@ const AddMember = ({ onNext, onBack }) => {
                         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Discount (Rs)
+                                    Discount Type
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="e.g. 30" size="small" name="discountRs" value={formData.discountRs} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField select SelectProps={{ native: true }} fullWidth size="small" name="discountType" value={formData.discountType} onChange={handleInputChange}>
+                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="amount">Amount (Rs)</option>
+                                </TextField>
                             </Box>
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Discount (%)
+                                    Discount Value
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="e.g. 30" size="small" name="discountPercent" value={formData.discountPercent} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="e.g. 30" size="small" name="discountValue" value={formData.discountValue} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} type="number" />
                             </Box>
                         </Box>
+
                         <Box sx={{ mb: 2 }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>
                                 Discount Authorized by
