@@ -13,7 +13,7 @@ export default function AddKitchen({ userNo, customer = null }) {
     const phoneNumber = customer?.phone_number || '';
     const [phoneCountryCodeFromData, phoneNumberWithoutCode] = phoneNumber.includes('-') ? phoneNumber.split('-') : [phoneNumber.match(/^\+\d+/)?.[0] || '+702', phoneNumber.replace(/^\+\d+/, '').trim()];
 
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [isEditMode, setIsEditMode] = useState(!!customer);
     const [phoneCountryCode, setPhoneCountryCode] = useState(phoneCountryCodeFromData);
 

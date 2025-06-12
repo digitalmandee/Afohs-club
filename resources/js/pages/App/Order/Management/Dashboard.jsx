@@ -13,7 +13,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);

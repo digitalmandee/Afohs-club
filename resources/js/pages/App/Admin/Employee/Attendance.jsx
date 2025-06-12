@@ -30,7 +30,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AttendanceDashboard = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openFilter, setOpenFilter] = useState(false);
 
     const employeeData = [

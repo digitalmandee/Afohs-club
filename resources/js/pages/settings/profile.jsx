@@ -11,7 +11,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const Profile = ({ mustVerifyEmail, status }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const { auth } = usePage().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({

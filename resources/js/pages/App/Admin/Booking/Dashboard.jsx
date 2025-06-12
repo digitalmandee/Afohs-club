@@ -252,7 +252,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
 };
 
 const BookingDashboard = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showAvailableRooms, setShowAvailableRooms] = useState(false);

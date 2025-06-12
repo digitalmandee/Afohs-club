@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
-            $table->json('category')->nullable();
             $table->string('subscription_type')->nullable();
+            $table->json('category')->nullable();
             $table->date('start_date');
             $table->date('expiry_date');
-            $table->string('status')->nullable();
+            $table->enum('status', ['active', 'in_active', 'expired', 'suspended', 'cancelled'])->nullable();
             $table->timestamps();
         });
     }

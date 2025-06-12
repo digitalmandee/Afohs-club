@@ -6,15 +6,17 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import SearchIcon from '@mui/icons-material/Search';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AddSubscriptionInformation = ({ categories, invoice_no }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     const today = new Date().toISOString().split('T')[0];
 
+    const [loading, setLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
     const [members, setMembers] = useState([]);
 
@@ -26,6 +28,7 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
         subscriptionType: '',
         startDate: today,
         expiryDate: '',
+        amount: 0,
     });
 
     const [errors, setErrors] = useState({});
@@ -43,8 +46,6 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
             const response = await axios.get(route('membership.filter'), {
                 params: { query },
             });
-            console.log(response.data.results);
-
             setMembers(response.data.results);
         } catch (error) {
             console.error('Error fetching search results:', error);
@@ -54,13 +55,21 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
         }
     }, []);
 
-    const handleSearch = async (event, role) => {
+    const handleSearch = async (event) => {
         const query = event?.target?.value;
         if (query) {
             await searchUser(query);
         } else {
             setMembers([]);
         }
+    };
+    const handleSearchChange = (event, value) => {
+        setFormData((prev) => ({
+            ...prev,
+            email: value?.email || '',
+            phone: value?.phone_number || '',
+            customer: value || {},
+        }));
     };
 
     const calculateExpiry = (startDate, type) => {
@@ -95,9 +104,8 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
         }
     }, [formData.startDate, formData.subscriptionType]);
 
-    const handleChange = (e, yes) => {
+    const handleChange = (e) => {
         const { name, value } = e.target;
-        console.log(name, yes);
 
         let updatedData = { ...formData, [name]: value };
 
@@ -125,6 +133,23 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
             updatedData.expiryDate = newDate.toISOString().split('T')[0];
         }
 
+        // compute total if category and subscriptionType exist
+        const selectedCategory = categories.find((cat) => cat.id == (name === 'category' ? value : formData.category));
+        const subscriptionType = name === 'subscriptionType' ? value : formData.subscriptionType;
+
+        if (selectedCategory && subscriptionType) {
+            const baseFee = parseFloat(selectedCategory.fee || 0);
+            const subFee = parseFloat(selectedCategory.subscription_fee || 0);
+
+            if (subscriptionType === 'one_time') {
+                updatedData.amount = baseFee;
+            } else if (subscriptionType === 'monthly') {
+                updatedData.amount = subFee;
+            } else if (subscriptionType === 'annual') {
+                updatedData.amount = subFee * 12;
+            }
+        }
+
         setFormData(updatedData);
     };
 
@@ -139,12 +164,27 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
         if (!formData.category) newErrors.category = 'Category is required';
         if (!formData.subscriptionType) newErrors.subscriptionType = 'Subscription type is required';
         if (!formData.startDate) newErrors.startDate = 'Start date is required';
-        if (!formData.expiryDate) newErrors.expiryDate = 'Expiry date is required';
+        if (formData.subscriptionType !== 'one_time') {
+            if (!formData.expiryDate) newErrors.expiryDate = 'Expiry date is required';
+        }
 
         setErrors(newErrors);
 
         if (Object.keys(newErrors).length === 0) {
-            console.log('Form submitted:', formData);
+            setLoading(true);
+            axios
+                .post(route('subscriptions.store'), formData)
+                .then((response) => {
+                    enqueueSnackbar('Form submitted successfully.', { variant: 'success' });
+                    router.visit(route('subscriptions.payment', { invoice_no: response.data.invoice_no }));
+                })
+                .catch((error) => {
+                    enqueueSnackbar('Failed to submit form.', { variant: 'error' });
+                    console.error('Error submitting form:', error);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
             // Add your submit logic (e.g. Inertia POST)
         }
     };
@@ -189,7 +229,6 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
                             Add New Subscription
                         </Typography>
                     </div>
-                    {/* {JSON.stringify()} */}
                     {/* Form Card */}
                     <Paper
                         elevation={1}
@@ -233,8 +272,6 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
                                     #{invoice_no}
                                 </Typography>
                             </Box>
-                            {JSON.stringify(formData.customer)}
-                            {/* {JSON.stringify(members)} */}
                             {/* Guest Name */}
                             <Box mb={3}>
                                 <Autocomplete
@@ -244,17 +281,16 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
                                     options={members}
                                     value={formData.customer}
                                     name="customer"
-                                    getOptionLabel={(option) => option?.first_name + ' ' + option?.middle_name + ' ' + option?.last_name || ''}
-                                    onInputChange={(event, value) => handleSearch(event)}
-                                    onChange={(event, value) => handleChange(event, 'yes')}
                                     loading={searchLoading}
-                                    // error={!!errors.customer}
-                                    // helperText={errors.customer}
+                                    getOptionLabel={(option) => [option?.first_name, option?.middle_name, option?.last_name].filter(Boolean).join(' ') || ''}
+                                    isOptionEqualToValue={(option, value) => option?.user_id === value?.user_id}
+                                    onInputChange={handleSearch}
+                                    onChange={handleSearchChange}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
                                             fullWidth
-                                            placeholder="Search by name, member and type"
+                                            placeholder="Search by name, ID, or email"
                                             variant="outlined"
                                             size="small"
                                             name="customer"
@@ -272,9 +308,9 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
                                     renderOption={(props, option) => (
                                         <li {...props}>
                                             <span>
-                                                {option.first_name}({option.user_id})
+                                                {option.first_name} ({option.user_id})
                                             </span>
-                                            <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
+                                            <span style={{ color: 'gray', fontSize: '0.875rem', marginLeft: '8px' }}>{option.email}</span>
                                         </li>
                                     )}
                                 />
@@ -510,31 +546,48 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
                                 </div>
                             </Box>
                             {/* Action Buttons */}
-                            <Box className="d-flex justify-content-end">
-                                <Button
-                                    variant="text"
+                            <Box className="d-flex justify-content-between">
+                                <Box
                                     style={{
-                                        marginRight: '10px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        fontSize: '20px',
+                                        fontWeight: 500,
                                         color: '#333',
-                                        textTransform: 'none',
-                                        fontSize: '14px',
                                     }}
                                 >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    style={{
-                                        backgroundColor: '#003366',
-                                        color: 'white',
-                                        textTransform: 'none',
-                                        fontSize: '14px',
-                                        padding: '6px 16px',
-                                    }}
-                                >
-                                    Save
-                                </Button>
+                                    Total Amount: &nbsp;
+                                    <span style={{ fontWeight: 'bold' }}>{formData.amount}</span>
+                                </Box>
+                                <Box className="d-flex justify-content-end">
+                                    <Button
+                                        variant="text"
+                                        style={{
+                                            marginRight: '10px',
+                                            color: '#333',
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        disabled={loading}
+                                        loading={loading}
+                                        loadingPosition="start"
+                                        style={{
+                                            backgroundColor: '#003366',
+                                            color: 'white',
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                            padding: '6px 16px',
+                                        }}
+                                    >
+                                        Save & Next
+                                    </Button>
+                                </Box>
                             </Box>
                         </form>
                     </Paper>

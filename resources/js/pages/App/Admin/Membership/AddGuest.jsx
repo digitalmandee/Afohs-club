@@ -22,7 +22,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AddGuestInformation = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     // State for form fields
     const [formData, setFormData] = useState({
         guestName: '',

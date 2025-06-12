@@ -12,7 +12,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, today_profit = 0, today_profit_margin = 0, total_transactions, total_orders, order_types }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [showReserve, setShowReserve] = useState(false);
     const [showOrder, setShowOrder] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);

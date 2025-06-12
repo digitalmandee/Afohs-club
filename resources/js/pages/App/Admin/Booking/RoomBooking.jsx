@@ -22,7 +22,7 @@ const drawerWidthClosed = 110;
 
 const RoomBooking = () => {
     // Main state for booking type
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [bookingType, setBookingType] = useState("room")
     const [currentStep, setCurrentStep] = useState(1)
     const [paymentMethod, setPaymentMethod] = useState("cash")

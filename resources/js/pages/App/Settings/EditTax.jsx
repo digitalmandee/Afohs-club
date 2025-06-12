@@ -12,7 +12,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 export default function AddressType() {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const { flash } = usePage().props;
     const dialogContentRef = useRef(null);
 

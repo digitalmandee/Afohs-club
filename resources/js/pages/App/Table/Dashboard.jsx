@@ -113,7 +113,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const TableManagement = ({ floorsdata, tablesData }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [selectedFloor, setSelectedFloor] = useState(1);
     const today = new Date();
     const [selectedDate, setSelectedDate] = useState({

@@ -31,8 +31,8 @@ class FinancialInvoice extends Model
         'data' => 'array'
     ];
 
-    public function user()
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'customer_id', 'id');
     }
 }

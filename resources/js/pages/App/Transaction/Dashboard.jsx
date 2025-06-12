@@ -409,7 +409,7 @@ const trackingSteps = [
 ];
 
 function TransactionDashboard({ Invoices, totalOrders }) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [activeTab, setActiveTab] = useState('all');
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openOrderDetailModal, setOpenOrderDetailModal] = useState(false);

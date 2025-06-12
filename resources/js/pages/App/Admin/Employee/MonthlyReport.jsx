@@ -10,7 +10,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AttendanceMonthyReport = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const currentDate = new Date();
     const [month, setMonth] = useState(currentDate.getMonth() + 1);
     const [year, setYear] = useState(currentDate.getFullYear());

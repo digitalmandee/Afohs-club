@@ -19,7 +19,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
 
     const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails } = useOrderStore();
 
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [showData, setShowData] = useState(false);
 
     // get weeks in month

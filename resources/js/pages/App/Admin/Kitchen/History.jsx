@@ -27,7 +27,7 @@ import OrderHistory from './Order';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 const CustomerHistory = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openProfile, setOpenProfile] = useState(false);
     const [profileView, setProfileView] = useState('customer');
 
@@ -271,7 +271,9 @@ const CustomerHistory = () => {
                     PaperProps={{
                         sx: {
                             width: 550,
-                            top: 0,
+                            height:'97vh',
+                            top: 10,
+                            right:10,
                             padding: 2,
                             bgcolor: '#E3F2FD',
                         },
