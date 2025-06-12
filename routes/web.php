@@ -12,6 +12,7 @@ use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\BookingConroller;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -92,6 +93,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     //Admin Events Booking Routes
     Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
+    Route::get('/events/manage', [EventController::class, 'allEvents'])->name('events.all');
     Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     // Add routes for edit and delete
@@ -107,9 +109,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::delete('/events/locations/{id}', [EventController::class, 'deleteLocation'])->name('events.locations.delete');
 
     //Admin Booking Routes
-    Route::get('/booking/dashboard', function () {
-        return Inertia::render('App/Admin/Booking/Dashboard');
-    })->name('rooms.dashboard');
+    Route::get('/booking/dashboard', [BookingConroller::class, 'index'])->name('rooms.dashboard');
+    // Route::get('/booking/dashboard', function () {
+    //     return Inertia::render('App/Admin/Booking/Dashboard');
+    // })->name('rooms.dashboard');
 
     Route::get('/booking/details', function () {
         return Inertia::render('App/Admin/Booking/Detail');
