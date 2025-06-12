@@ -39,7 +39,7 @@ const RoomBooking = ({ next_booking_id }) => {
 
     // Form data states
     const [formData, setFormData] = useState({
-        bookingId: 'MEM' + next_booking_id,
+        bookingId: next_booking_id,
         memberId: "",
         fullName: "",
         contactNumber: "",
