@@ -159,6 +159,18 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key.toLowerCase() === 'enter') {
+                e.preventDefault(); // Optional: prevent browser behavior
+                handlePayNow();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [router]);
+
+    useEffect(() => {
         if (activePaymentMethod === 'split_payment') {
             const totalPaid = parseFloat(cashAmount || 0) + parseFloat(creditCardAmount || 0) + parseFloat(bankTransferAmount || 0);
             const change = (totalPaid - invoiceData.total_price).toFixed(2);

@@ -148,9 +148,13 @@ const ReservationDialog = () => {
 
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (e.ctrlKey && e.key.toLowerCase() === 'm' && !isDisabled) {
+            if (e.key === 'F10' && !isDisabled) {
                 e.preventDefault(); // Optional: prevent browser behavior
                 router.visit(route('order.menu'));
+            }
+            if (e.key === 'F9') {
+                e.preventDefault(); // Optional: prevent browser behavior
+                handleSaveOrder();
             }
         };
 
