@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Container, Button, Form, InputGroup, Modal, Card, Row, Col } from "react-bootstrap"
 import {
     ArrowBack,
@@ -15,22 +15,31 @@ import {
 import { IconButton, Divider, Box } from "@mui/material"
 import "bootstrap/dist/css/bootstrap.min.css"
 import SideNav from '@/components/App/AdminSideBar/SideNav'
-import { router } from "@inertiajs/react"
+import { router, usePage } from "@inertiajs/react"
+import axios from 'axios'
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const RoomBooking = () => {
+const RoomBooking = ({ next_booking_id }) => {
+    // Access query parameters
+    const { props } = usePage();
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialBookingType = urlParams.get('type') === 'event' ? 'events' : 'room';
+    console.log('next_booking_id', next_booking_id);
+    // console.log('booking-id', booking?.[0].booking_id);
+
     // Main state for booking type
-    const [open, setOpen] = useState(true);
-    const [bookingType, setBookingType] = useState("room")
+    const [open, setOpen] = useState(false);
+    const [bookingType, setBookingType] = useState(initialBookingType)
+
     const [currentStep, setCurrentStep] = useState(1)
     const [paymentMethod, setPaymentMethod] = useState("cash")
     const [showSuccessModal, setShowSuccessModal] = useState(false)
 
     // Form data states
     const [formData, setFormData] = useState({
-        bookingId: "#001",
+        bookingId: next_booking_id,
         memberId: "",
         fullName: "",
         contactNumber: "",
@@ -48,6 +57,9 @@ const RoomBooking = () => {
         accountNumber: "",
         accountName: "",
         notes: "",
+        bookingFor: "mainGuest",
+        checkin: "",
+        checkout: ""
     })
 
     // Receipt ref for printing
@@ -110,13 +122,37 @@ const RoomBooking = () => {
     }
 
     // Handle book now button
-    const handleBookNow = () => {
-        setCurrentStep(2)
+    const handleBookNow = async () => {
+        try {
+            const bookingData = {
+                bookingId: formData.bookingId,
+                memberId: formData.memberId,
+                bookingType: bookingType === 'room' ? 'room' : 'event',
+                bookingFor: formData.bookingFor === 'mainGuest' ? 'main_guest' : 'other',
+                personCount: formData.personCount,
+                roomCount: formData.roomCount,
+                totalPayment: parseFloat(formData.totalPayment) || 0,
+                eventName: formData.eventName || null,
+                eventDate: formData.eventDate || null,
+                eventTime: formData.eventTime || null,
+                checkin: formData.checkin || null,
+                checkout: formData.checkout || null
+            };
+
+            const response = await axios.post('/room/booking', bookingData);
+            console.log('Booking ID:', response.data.booking_id); // Log booking_id
+            setCurrentStep(2);
+            setShowSuccessModal(true);
+        } catch (error) {
+            console.error('Error saving booking:', error);
+            alert('Failed to save booking. Please try again.');
+        }
     }
 
     // Handle pay now button
     const handlePayNow = () => {
-        setShowSuccessModal(true)
+        // No database interaction, just proceed with UI flow
+        setShowSuccessModal(true);
     }
 
     // Handle back button
@@ -144,7 +180,7 @@ const RoomBooking = () => {
         setBookingType("room")
         setPaymentMethod("cash")
         setFormData({
-            bookingId: "#001",
+            bookingId: "",
             memberId: "",
             fullName: "",
             contactNumber: "",
@@ -162,6 +198,9 @@ const RoomBooking = () => {
             accountNumber: "",
             accountName: "",
             notes: "",
+            bookingFor: "mainGuest",
+            checkin: "",
+            checkout: ""
         })
     }
 
@@ -236,7 +275,6 @@ const RoomBooking = () => {
                                     backgroundColor: "#FFFFFF",
                                     width: "300px",
                                     top: "50%",
-                                    // transform: "translateY(-50%)",
                                     zIndex: 1,
                                 }}
                             ></div>
@@ -286,50 +324,14 @@ const RoomBooking = () => {
                                     color: '#121212',
                                     fontSize: '16px',
                                 }}>Choose Booking Type</h6>
-                                <Row className="mb-4 gx-3">
-                                    <Col md={6} className="mb-3 mb-md-0">
-                                        <div
-                                            className={`border rounded p-3 text-center`}
-                                            onClick={() => handleBookingTypeSelect("room")}
-                                            style={{
-                                                cursor: "pointer",
-                                                backgroundColor: bookingType === "room" ? "#B0DEFF" : "transparent",
-                                                border: bookingType === "room" ? "1px solid #063455" : "1px solid #dee2e6", // default border color
-                                            }}
-                                        >
-                                            <div className="d-flex justify-content-center mb-2">
-                                                <img src="/assets/room.png" alt="" style={{
-                                                    width: 24,
-                                                    height: 24
-                                                }} />
-                                            </div>
-                                            <div>Room</div>
-                                        </div>
-                                    </Col>
-                                    <Col md={6}>
-                                        <div
-                                            className={`border rounded p-3 text-center`}
-                                            onClick={() => handleBookingTypeSelect("events")}
-                                            style={{
-                                                cursor: "pointer",
-                                                backgroundColor: bookingType === "events" ? "#B0DEFF" : "transparent",
-                                                border: bookingType === "events" ? "1px solid #063455" : "1px solid #dee2e6", // default border color
-                                            }}
-                                        >
-                                            <div className="d-flex justify-content-center mb-2">
-                                                <EventNote style={{ color: "#555" }} />
-                                            </div>
-                                            <div>Events</div>
-                                        </div>
-                                    </Col>
-                                </Row>
+
 
                                 <Form>
                                     <Form.Group className="mb-4">
                                         <div
                                             className="form-control"
                                             style={{
-                                                backgroundColor: "#e9ecef", // matches disabled input bg
+                                                backgroundColor: "#e9ecef",
                                                 color: "#7F7F7F",
                                                 border: "none",
                                                 borderRadius: "4px",
@@ -420,59 +422,95 @@ const RoomBooking = () => {
                                     </Row>
 
                                     {bookingType === "room" ? (
-                                        <Row className="mb-3 gx-3">
-                                            <Col md={6} className="mb-3 mb-md-0">
-                                                <Form.Group>
-                                                    <Form.Label className="small" style={{
-                                                        color: '#121212',
-                                                        fontSize: '14px',
-                                                        fontWeight: 400
-                                                    }}>{bookingType === "room" ? "Person" : "Rooms"}</Form.Label>
-                                                    <InputGroup>
-                                                        <Button
-                                                            variant="outline-secondary"
-                                                            onClick={() => handleCountChange("personCount", "subtract")}
-                                                            className="border"
-                                                        >
-                                                            <Remove fontSize="small" />
-                                                        </Button>
+                                        <>
+                                            <Row className="mb-3 gx-3">
+                                                <Col md={6} className="mb-3 mb-md-0">
+                                                    <Form.Group>
+                                                        <Form.Label className="small" style={{
+                                                            color: '#121212',
+                                                            fontSize: '14px',
+                                                            fontWeight: 400
+                                                        }}>Person</Form.Label>
+                                                        <InputGroup>
+                                                            <Button
+                                                                variant="outline-secondary"
+                                                                onClick={() => handleCountChange("personCount", "subtract")}
+                                                                className="border"
+                                                            >
+                                                                <Remove fontSize="small" />
+                                                            </Button>
+                                                            <Form.Control
+                                                                type="text"
+                                                                className="text-center border-top border-bottom border-0"
+                                                                value={formData.personCount}
+                                                                readOnly
+                                                            />
+                                                            <Button
+                                                                variant="outline-secondary"
+                                                                onClick={() => handleCountChange("personCount", "add")}
+                                                                className="border"
+                                                            >
+                                                                <Add fontSize="small" />
+                                                            </Button>
+                                                        </InputGroup>
+                                                    </Form.Group>
+                                                </Col>
+                                                <Col md={6}>
+                                                    <Form.Group>
+                                                        <Form.Label className="small" style={{
+                                                            color: '#121212',
+                                                            fontSize: '14px',
+                                                            fontWeight: 400
+                                                        }}>Total Payment</Form.Label>
+                                                        <InputGroup>
+                                                            <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
+                                                            <Form.Control
+                                                                type="text"
+                                                                placeholder="Auto fill"
+                                                                name="totalPayment"
+                                                                value={formData.totalPayment}
+                                                                onChange={handleInputChange}
+                                                                className="border"
+                                                            />
+                                                        </InputGroup>
+                                                    </Form.Group>
+                                                </Col>
+                                            </Row>
+                                            <Row className="mb-3 gx-3">
+                                                <Col md={6} className="mb-3 mb-md-0">
+                                                    <Form.Group>
+                                                        <Form.Label className="small" style={{
+                                                            color: '#121212',
+                                                            fontSize: '14px',
+                                                            fontWeight: 400
+                                                        }}>Check-in Date</Form.Label>
                                                         <Form.Control
-                                                            type="text"
-                                                            className="text-center border-top border-bottom border-0"
-                                                            value={formData.personCount}
-                                                            readOnly
-                                                        />
-                                                        <Button
-                                                            variant="outline-secondary"
-                                                            onClick={() => handleCountChange("personCount", "add")}
-                                                            className="border"
-                                                        >
-                                                            <Add fontSize="small" />
-                                                        </Button>
-                                                    </InputGroup>
-                                                </Form.Group>
-                                            </Col>
-                                            <Col md={6}>
-                                                <Form.Group>
-                                                    <Form.Label className="small" style={{
-                                                        color: '#121212',
-                                                        fontSize: '14px',
-                                                        fontWeight: 400
-                                                    }}>Total Payment</Form.Label>
-                                                    <InputGroup>
-                                                        <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
-                                                        <Form.Control
-                                                            type="text"
-                                                            placeholder="Auto fill"
-                                                            name="totalPayment"
-                                                            value={formData.totalPayment}
+                                                            type="date"
+                                                            name="checkin"
+                                                            value={formData.checkin}
                                                             onChange={handleInputChange}
                                                             className="border"
                                                         />
-                                                    </InputGroup>
-                                                </Form.Group>
-                                            </Col>
-                                        </Row>
+                                                    </Form.Group>
+                                                </Col>
+                                                <Col md={6}>
+                                                    <Form.Group>
+                                                        <Form.Label className="small" style={{
+                                                            color: '#121212',
+                                                            fontSize: '14px',
+                                                            fontWeight: 400
+                                                        }}>Check-out Date</Form.Label>
+                                                        <Form.Control
+                                                            type="date"
+                                                            name="checkout"
+                                                            value={formData.checkout}
+                                                            onChange={handleInputChange}
+                                                            className="border"
+                                                        />
+                                                    </Form.Group>
+                                                </Col>
+                                            </Row>
+                                        </>
                                     ) : (
                                         <>
                                             <Row className="mb-3 gx-3">
@@ -550,6 +588,33 @@ const RoomBooking = () => {
                                             </Row>
                                         </>
                                     )}
+
+                                    <Form.Group className="mb-3">
+                                        <Form.Label className="small" style={{
+                                            color: '#121212',
+                                            fontSize: '14px',
+                                            fontWeight: 400
+                                        }}>Who are you booking for?</Form.Label>
+                                        <div className="d-flex flex-column">
+                                            <Form.Check
+                                                type="radio"
+                                                label="I'm the main guest"
+                                                name="bookingFor"
+                                                value="mainGuest"
+                                                checked={formData.bookingFor === "mainGuest"}
+                                                onChange={handleInputChange}
+                                                className="mb-2"
+                                            />
+                                            <Form.Check
+                                                type="radio"
+                                                label="I'm booking for someone else"
+                                                name="bookingFor"
+                                                value="someoneElse"
+                                                checked={formData.bookingFor === "someoneElse"}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                    </Form.Group>
 
                                     <div className="d-flex justify-content-end mt-4">
                                         <Button variant="light" className="me-2 border">

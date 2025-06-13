@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Col, Card, Button, Form, Badge, Modal } from 'react-bootstrap';
 import { Search, FilterAlt } from '@mui/icons-material';
-import { ThemeProvider, createTheme, Box, Typography } from '@mui/material';
+import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import DatePicker from "react-multi-date-picker";
@@ -154,9 +154,9 @@ const bookingsData = [
 ];
 
 const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
+    const [bookingType, setBookingType] = useState('room');
     const [values, setValues] = useState([
         new DateObject().subtract(4, "days"),
-        new DateObject().add(4, "days")
     ]);
     const [showGuestsModal, setShowGuestsModal] = useState(false);
 
@@ -178,7 +178,20 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
 
     return (
         <div style={{ padding: '10px', borderRadius: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 1fr 120px', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                <FormControl >
+                    <InputLabel id="booking-label">Booking Type</InputLabel>
+                    <Select
+                        labelId="booking-label"
+                        id="booking-select"
+                        value={bookingType}
+                        label="Booking Type"
+                    // onChange={handleChange}
+                    >
+                        <MenuItem value="room">Room</MenuItem>
+                        <MenuItem value="event">Event</MenuItem>
+                    </Select>
+                </FormControl>
                 <div
                     style={{
                         flex: 1,
@@ -193,7 +206,9 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
                 >
                     <span>📅</span>
                     <DatePicker
+                        placeholder="CheckIn to CheckOut"
                         value={values}
+                        dateSeparator=" to "
                         onChange={handleRangeSelect}
                         range
                         rangeHover
@@ -251,27 +266,30 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
     );
 };
 
-const BookingDashboard = () => {
-    const [open, setOpen] = useState(true);
+const BookingDashboard = ({ data }) => {
+    const [open, setOpen] = useState(false);
+
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
     const [adults, setAdults] = useState(2);
     const [filteredBookings, setFilteredBookings] = useState(bookingsData);
+    console.log("Data", data);
+    // console.log("roomsEvents", roomsEvent);
 
-    const [bookings, setBookings] = useState([]);
+    // const [bookings, setBookings] = useState([]);
 
-    useEffect(() => {
-        axios.get('/booking/dashboard')
-            .then(res => {
-                console.log('Fetched bookings:', res.data);
-                setBookings(res.data);
-            })
-            .catch(error => {
-                console.error('Error fetching bookings:', error);
-            });
-    }, []);
+    // useEffect(() => {
+    //     axios.get('/booking/dashboard')
+    //         .then(res => {
+    //             console.log('Fetched bookings:', res.data);
+    //             setBookings(res.data);
+    //         })
+    //         .catch(error => {
+    //             console.error('Error fetching bookings:', error);
+    //         });
+    // }, []);
 
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
@@ -342,9 +360,9 @@ const BookingDashboard = () => {
                                         borderRadius: '0px',
                                     }}
                                     onClick={handleOpenBookingModal}
-                                >
-                                    <h1>Booking Dashboard</h1>
-                                    <pre>{JSON.stringify(bookings, null, 2)}</pre>
+                                >Booking
+                                    {/* <h1>Booking Dashboard</h1> */}
+                                    {/*<pre>{JSON.stringify(bookings, null, 2)}</pre> */}
                                 </Button>
                             </Col>
                         </Row>
@@ -571,8 +589,8 @@ const BookingDashboard = () => {
                             </Col>
                         </Row>
 
-                        {searchedBookings.length > 0 ? (
-                            searchedBookings.map((booking, index) => (
+                        {data.bookingsData.length > 0 ? (
+                            data.bookingsData.map((booking, index) => (
                                 <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }}>
                                     <Card.Body className="p-2">
                                         <Row>
@@ -589,9 +607,9 @@ const BookingDashboard = () => {
                                             <Col md={10}>
                                                 <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                                                     <div>
-                                                        <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.type}</Typography>
+                                                        <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type}</Typography>
                                                         <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
-                                                            Created on {booking.created}
+                                                            Created on {booking.checkin}
                                                         </Typography>
                                                     </div>
                                                     <Badge
@@ -619,7 +637,7 @@ const BookingDashboard = () => {
                                                             Booking ID
                                                         </Typography>
                                                         <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                            {booking.bookingId}
+                                                            {booking.booking_id}
                                                         </Typography>
                                                     </Col>
                                                     <Col md={4} sm={6} className="mb-2">
@@ -651,7 +669,7 @@ const BookingDashboard = () => {
                                                             Adults
                                                         </Typography>
                                                         <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                            {booking.adults}
+                                                            {booking.persons}
                                                         </Typography>
                                                     </Col>
                                                 </Row>
