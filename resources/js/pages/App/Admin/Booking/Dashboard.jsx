@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Col, Card, Button, Form, Badge, Modal } from 'react-bootstrap';
 import { Search, FilterAlt } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import DatePicker from 'react-multi-date-picker';
@@ -98,21 +99,15 @@ const dialogStyles = `
 }
 `;
 
-const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
+const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => {
     const [bookingType, setBookingType] = useState('room'); // room or event
     const [values, setValues] = useState([new DateObject(), new DateObject().add(1, 'days')]);
-    const [showGuestsModal, setShowGuestsModal] = useState(false);
+    const [showPersonInput, setShowPersonInput] = useState(false);
+    const [filterApplied, setFilterApplied] = useState(false);
+    const [initialAdults] = useState(adults);
 
     const handleRangeSelect = (newValues) => {
         setValues(newValues);
-    };
-
-    const handleGuestsClick = () => {
-        setShowGuestsModal(true);
-    };
-
-    const handleCloseGuestsModal = () => {
-        setShowGuestsModal(false);
     };
 
     const handleSearch = () => {
@@ -120,17 +115,22 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
         const checkin = values[0]?.format?.('YYYY-MM-DD');
         const checkout = values[1]?.format?.('YYYY-MM-DD');
 
-        onSearch({
-            bookingType,
-            checkin,
-            checkout,
-            persons: adults,
-        });
+        onSearch({ bookingType, checkin, checkout, persons: adults });
+        setFilterApplied(true);
+    };
+
+    const handleClear = () => {
+        setBookingType('room');
+        setValues([new DateObject(), new DateObject().add(1, 'days')]);
+        setAdults(initialAdults);
+        setFilterApplied(false);
+        clearFilter(false);
+        onSearch({ bookingType: 'room', checkin: '', checkout: '', persons: initialAdults });
     };
 
     return (
         <div style={{ padding: '10px', borderRadius: '4px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 1fr 120px', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 1fr 120px 60px', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
                 {/* Booking Type Select */}
                 <FormControl>
                     <InputLabel id="booking-label">Booking Type</InputLabel>
@@ -141,63 +141,54 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
                 </FormControl>
 
                 {/* Date picker range */}
-                <div
-                    style={{
-                        flex: 1,
-                        backgroundColor: '#fff',
-                        padding: '5px',
-                        borderRadius: '4px',
-                        marginRight: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                    }}
-                >
+                <div style={{ flex: '1', backgroundColor: '#fff', padding: '5px', borderRadius: '4px', marginRight: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span>📅</span>
                     <DatePicker placeholder="CheckIn to CheckOut" value={values} dateSeparator=" to " onChange={handleRangeSelect} range rangeHover style={{ width: '100%', height: '40px', fontSize: '16px' }} />
                 </div>
 
-                {/* Guests picker */}
+                {/* Guests picker with direct input */}
                 <div
-                    style={{
-                        flex: '1',
-                        backgroundColor: '#fff',
-                        padding: '9px',
-                        borderRadius: '4px',
-                        position: 'relative',
+                    style={{ flex: '1', backgroundColor: '#fff', padding: '9px', borderRadius: '4px', position: 'relative' }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowPersonInput((prev) => !prev);
                     }}
-                    onClick={handleGuestsClick}
                 >
                     <span style={{ marginRight: '5px' }}>👤</span>
                     <span style={{ cursor: 'pointer', display: 'inline-block', padding: '5px' }}>{`Total Person: ${adults}`}</span>
                     <span style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)' }}> ▼ </span>
+
+                    {showPersonInput && (
+                        <input
+                            type="number"
+                            min="0"
+                            value={adults}
+                            onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                                position: 'absolute',
+                                bottom: '-50px',
+                                left: '0',
+                                padding: '5px',
+                                width: '100px',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                                background: '#fff',
+                            }}
+                        />
+                    )}
                 </div>
 
                 {/* Search button */}
                 <Button style={{ backgroundColor: '#063455', color: '#fff', padding: '10px 15px', borderRadius: '4px', marginLeft: '10px' }} onClick={handleSearch}>
                     Search
                 </Button>
-            </div>
 
-            {/* Modal for adding guests */}
-            <Modal show={showGuestsModal} onHide={handleCloseGuestsModal} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Edit Guests</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form>
-                        <Form.Group controlId="formAdults">
-                            <Form.Label>Adults</Form.Label>
-                            <Form.Control type="number" value={adults} onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))} min="0" />
-                        </Form.Group>
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseGuestsModal}>
-                        Done
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+                {/* Clear button (only show if filter applied) */}
+                <Button variant="danger" style={{ padding: '10px', borderRadius: '4px' }} onClick={handleClear}>
+                    <HighlightOffIcon />
+                </Button>
+            </div>
         </div>
     );
 };
@@ -207,7 +198,6 @@ const BookingDashboard = ({ data }) => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
-    const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchResultsFilter, setSearchResultsFilter] = useState(false);
@@ -219,31 +209,24 @@ const BookingDashboard = ({ data }) => {
         setShowAvailabilityModal(true);
     };
 
-    const handleCloseAvailabilityModal = () => {
-        setShowAvailabilityModal(false);
-        setShowAvailableRooms(false);
-    };
-
-    const handleShowAvailableRooms = () => {
-        setShowAvailableRooms(true);
-    };
-
-    const handleFilterClose = () => setShowFilter(false);
     const handleFilterShow = () => setShowFilter(true);
 
     const handleSearch = async (searchParams) => {
+        setLoading(true);
         try {
             // Send GET request with search parameters
             const response = await axios.get(route('booking.search'), {
                 params: searchParams,
             });
 
-            setBookingType(searchParams.type);
+            setBookingType(searchParams.bookingType);
 
             setSearchResultsFilter(true);
             setSearchResults(response.data);
         } catch (error) {
             console.error('Error fetching search results', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -444,7 +427,7 @@ const BookingDashboard = ({ data }) => {
 
                         <Row className="mb-4 align-items-center">
                             <Col>
-                                <CustomDateRangePicker adults={adults} setAdults={setAdults} onSearch={handleSearch} />
+                                <CustomDateRangePicker adults={adults} setAdults={setAdults} onSearch={handleSearch} clearFilter={setSearchResultsFilter} />
                             </Col>
                         </Row>
 

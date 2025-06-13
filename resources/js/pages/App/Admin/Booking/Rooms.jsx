@@ -13,14 +13,13 @@ const AvailableRooms = ({ data, type }) => {
         <>
             <Box sx={{ px: 2, py: 1, pt: 2 }}>
                 <Typography sx={{ px: 2, fontSize: '20px', fontWeight: 500, color: '#121212' }}>{type === 'room' ? 'Available Rooms' : 'Available Events'}</Typography>
-
                 <Box sx={{ p: 1, mt: 3, maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
                     {data && data.length > 0 ? (
                         data.map((item, index) => (
                             <div key={index} className="border mb-3 p-2" style={{ height: 88, border: '1px solid #E3E3E3' }} onClick={type === 'room' ? () => router.visit(route('rooms.booking')) : undefined}>
                                 <Row style={{ cursor: 'pointer' }}>
-                                    <Col xs={3}>
-                                        <img src={item.image || '/placeholder.svg'} alt={type === 'room' ? item.type : item.name} style={{ width: 100, height: 67, borderRadius: '4px' }} />
+                                    <Col xs={2}>
+                                        <img src={item.image ? '/' + item.image : '/placeholder.svg'} alt={type === 'room' ? item.type : item.name} style={{ width: 100, height: 67, borderRadius: '4px' }} />
                                     </Col>
                                     <Col xs={9}>
                                         {type === 'room' ? (
@@ -28,29 +27,29 @@ const AvailableRooms = ({ data, type }) => {
                                                 <div className="d-flex justify-content-between">
                                                     <h5 style={{ fontWeight: 400, fontSize: '18px', color: '#121212', marginBottom: '5px' }}>{item.type}</h5>
                                                     <div>
-                                                        <span style={{ fontWeight: 'bold' }}>{item.price}$</span>
+                                                        <span style={{ fontWeight: 'bold' }}>{item.price_per_night} Rs</span>
                                                         <span style={{ color: '#6c757d', fontSize: '0.9rem' }}>/Per night</span>
                                                     </div>
                                                 </div>
                                                 <div className="d-flex mt-3" style={{ gap: 5 }}>
                                                     <div className="me-4">
                                                         <HotelIcon style={{ color: '#A5A5A5', width: 20, height: 14 }} />
-                                                        <small style={{ color: '#6c757d' }}>{item.beds} Beds</small>
+                                                        <small style={{ color: '#6c757d' }}>{item.number_of_beds} Beds</small>
                                                     </div>
                                                     <div className="me-4">
                                                         <PeopleIcon style={{ color: '#A5A5A5', width: 20, height: 14 }} />
-                                                        <small style={{ color: '#6c757d' }}>{item.guests} Guests</small>
+                                                        <small style={{ color: '#6c757d' }}>{item.max_capacity} Guests</small>
                                                     </div>
                                                     <div>
                                                         <BathtubIcon style={{ color: '#A5A5A5', width: 20, height: 14 }} />
-                                                        <small style={{ color: '#6c757d' }}>{item.bathrooms} Bathroom</small>
+                                                        <small style={{ color: '#6c757d' }}>{item.number_of_bathrooms} Bathroom</small>
                                                     </div>
                                                 </div>
                                             </>
                                         ) : (
                                             <>
                                                 <div className="d-flex justify-content-between align-items-start">
-                                                    <h5 style={{ fontWeight: 400, fontSize: '20px', color: '#121212' }}>{item.name}</h5>
+                                                    <h5 style={{ fontWeight: 400, fontSize: '20px', color: '#121212' }}>{item.event_name}</h5>
                                                     <div>
                                                         <Badge bg={item.status === 'Complete' ? 'success' : 'primary'} style={{ padding: '5px 10px', borderRadius: '0px' }}>
                                                             {item.status}
@@ -58,7 +57,7 @@ const AvailableRooms = ({ data, type }) => {
                                                     </div>
                                                 </div>
                                                 <div style={{ marginTop: '-12px' }}>
-                                                    <span style={{ fontWeight: '400', fontSize: '12px' }}>{item.price}$</span>
+                                                    <span style={{ fontWeight: '400', fontSize: '12px' }}>{item.price_per_person} Rs</span>
                                                     <span style={{ color: '#A5A5A5', fontSize: '12px' }}>/Per Person</span>
                                                 </div>
                                                 <div className="d-flex mt-1">
@@ -68,11 +67,11 @@ const AvailableRooms = ({ data, type }) => {
                                                     </div>
                                                     <div className="me-3">
                                                         <PeopleIcon style={{ color: '#A5A5A5', width: '20px', height: '14px' }} />
-                                                        <small style={{ color: '#6c757d' }}>{item.capacity} Capacity</small>
+                                                        <small style={{ color: '#6c757d' }}>{item.max_capacity} Capacity</small>
                                                     </div>
                                                     <div>
                                                         <HistoryIcon style={{ color: '#A5A5A5', width: '20px', height: '14px' }} />
-                                                        <small style={{ color: '#6c757d' }}>{item.date}</small>
+                                                        <small style={{ color: '#6c757d' }}>{item.date_time}</small>
                                                     </div>
                                                 </div>
                                             </>
