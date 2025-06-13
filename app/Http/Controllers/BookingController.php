@@ -3,55 +3,87 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\Room ;
-use App\Models\BookingEvents ;
+use App\Models\Room;
+use App\Models\BookingEvents;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
-   public function index()
-{
-    $bookings = Booking::latest()->get();
-    $rooms = Room::latest()->get();
-    $events = BookingEvents::latest()->get();
+    public function index()
+    {
+        $bookings = Booking::latest()->get();
+        $rooms = Room::latest()->get();
+        $events = BookingEvents::latest()->get();
 
-    $data = [
-        'bookingsData' => $bookings,
-        'rooms' => $rooms,
-        'events' => $events,
-    ];
+        $data = [
+            'bookingsData' => $bookings,
+            'rooms' => $rooms,
+            'events' => $events,
+        ];
 
-    return Inertia::render('App/Admin/Booking/Dashboard', [
-        'data' => $data,
-    ]);
-}
+        return Inertia::render('App/Admin/Booking/Dashboard', [
+            'data' => $data,
+        ]);
+    }
 
-//     public function roomsAndEvents()
-// {
-//     $rooms = Room::latest()->get()->toArray();
-//     $events = BookingEvents::latest()->get()->toArray();
+    public function search(Request $request)
+    {
+        $type = $request->query('bookingType'); // 'room' or 'event'
+        $checkin = $request->query('checkin'); // Y-m-d
+        $checkout = $request->query('checkout'); // Y-m-d
+        $persons = $request->query('persons'); // int
 
-//     $roomsEvents = [
-//         'rooms' => $rooms,
-//         'events' => $events,
-//     ];
+        $conflicted = Booking::query()
+            ->where('booking_Type', $type)
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where(function ($query) use ($checkin, $checkout) {
+                $query->where('checkin', '<', $checkout)
+                    ->where('checkout', '>', $checkin);
+            })
+            ->pluck('type_id');
 
-//     return Inertia::render('App/Admin/Booking/Dashboard', [
-//         'roomsEvent' => $roomsEvents,
-//     ]);
-// }
+        if ($type == 'room') {
+            $available = Room::query()
+                ->whereNotIn('id', $conflicted)
+                ->where('max_capacity', '>', $persons)
+                ->get();
+        } else { // event
+            $available = BookingEvents::query()
+                ->whereNotIn('id', $conflicted)
+                ->where('max_capacity', '>', $persons)
+                ->get();
+        }
+
+        return response()->json($available);
+    }
+
+
+    //     public function roomsAndEvents()
+    // {
+    //     $rooms = Room::latest()->get()->toArray();
+    //     $events = BookingEvents::latest()->get()->toArray();
+
+    //     $roomsEvents = [
+    //         'rooms' => $rooms,
+    //         'events' => $events,
+    //     ];
+
+    //     return Inertia::render('App/Admin/Booking/Dashboard', [
+    //         'roomsEvent' => $roomsEvents,
+    //     ]);
+    // }
 
 
     public function booking()
-{
-    $booking = Booking::latest()->get();
-    return Inertia::render('App/Admin/Booking/RoomBooking', [
-        'booking' => $booking,
-        'next_booking_id' => $this->getBookingId()
-    ]);
-}
+    {
+        $booking = Booking::latest()->get();
+        return Inertia::render('App/Admin/Booking/RoomBooking', [
+            'booking' => $booking,
+            'next_booking_id' => $this->getBookingId()
+        ]);
+    }
 
     public function store(Request $request)
     {

@@ -114,13 +114,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/room/booking', [BookingController::class, 'booking'])->name('rooms.booking');
     Route::post('/room/booking', [BookingController::class, 'store'])->name('rooms.booking.store');
 
+    // Booking Search
+    Route::get('/booking/search', [BookingController::class, 'search'])->name('booking.search');
 
-    // Route::get('/room/booking', function () {
-    //     return Inertia::render('App/Admin/Booking/RoomBooking');
-    // })->name('rooms.booking');
-    // Route::get('/booking/dashboard', function () {
-    //     return Inertia::render('App/Admin/Booking/Dashboard');
-    // })->name('rooms.dashboard');
 
     Route::get('/booking/details', function () {
         return Inertia::render('App/Admin/Booking/Detail');

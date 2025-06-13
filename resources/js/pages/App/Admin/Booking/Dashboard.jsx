@@ -5,8 +5,8 @@ import { Search, FilterAlt } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import DatePicker from "react-multi-date-picker";
-import { DateObject } from "react-multi-date-picker";
+import DatePicker from 'react-multi-date-picker';
+import { DateObject } from 'react-multi-date-picker';
 import RoomEventModal from './RoomEvent';
 import BookingFilter from './Filter';
 import AvailableRooms from './Rooms';
@@ -98,70 +98,13 @@ const dialogStyles = `
 }
 `;
 
-const bookingsData = [
-    {
-        id: 1,
-        type: 'Deluxe Room',
-        created: 'March 25th 2025, 3:30 PM',
-        bookingId: 'ROM0232',
-        duration: 'March 25th 2025 to March 26th 2025',
-        startDate: new DateObject('2025-03-25'),
-        endDate: new DateObject('2025-03-26'),
-        adults: 3,
-        rooms: 2,
-        nights: 1,
-        status: 'Confirmed',
-    },
-    {
-        id: 2,
-        type: 'Standard Room',
-        created: 'March 25th 2025, 3:30 PM',
-        bookingId: 'ROM0233',
-        duration: 'March 25th 2025 to March 27th 2025',
-        startDate: new DateObject('2025-03-25'),
-        endDate: new DateObject('2025-03-27'),
-        adults: 1,
-        rooms: 1,
-        nights: 2,
-        status: 'Confirmed',
-    },
-    {
-        id: 3,
-        type: 'Suite Room',
-        created: 'March 25th 2025, 3:30 PM',
-        bookingId: 'ROM0234',
-        duration: 'June 7th 2025 to June 9th 2025',
-        startDate: new DateObject('2025-06-07'),
-        endDate: new DateObject('2025-06-09'),
-        adults: 3,
-        rooms: 1,
-        nights: 2,
-        status: 'Pending',
-    },
-    {
-        id: 4,
-        type: 'Executive Room',
-        created: 'June 1st 2025, 10:00 AM',
-        bookingId: 'ROM0235',
-        duration: 'June 10th 2025 to June 12th 2025',
-        startDate: new DateObject('2025-06-10'),
-        endDate: new DateObject('2025-06-12'),
-        adults: 2,
-        rooms: 1,
-        nights: 2,
-        status: 'Confirmed',
-    },
-];
-
 const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
-    const [bookingType, setBookingType] = useState('room');
-    const [values, setValues] = useState([
-        new DateObject().subtract(4, "days"),
-    ]);
+    const [bookingType, setBookingType] = useState('room'); // room or event
+    const [values, setValues] = useState([new DateObject(), new DateObject().add(1, 'days')]);
     const [showGuestsModal, setShowGuestsModal] = useState(false);
 
-    const handleRangeSelect = (values) => {
-        setValues(values);
+    const handleRangeSelect = (newValues) => {
+        setValues(newValues);
     };
 
     const handleGuestsClick = () => {
@@ -173,25 +116,31 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
     };
 
     const handleSearch = () => {
-        onSearch(values, adults);
+        // Prepare dates in proper format
+        const checkin = values[0]?.format?.('YYYY-MM-DD');
+        const checkout = values[1]?.format?.('YYYY-MM-DD');
+
+        onSearch({
+            bookingType,
+            checkin,
+            checkout,
+            persons: adults,
+        });
     };
 
     return (
         <div style={{ padding: '10px', borderRadius: '4px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 1fr 120px', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
-                <FormControl >
+                {/* Booking Type Select */}
+                <FormControl>
                     <InputLabel id="booking-label">Booking Type</InputLabel>
-                    <Select
-                        labelId="booking-label"
-                        id="booking-select"
-                        value={bookingType}
-                        label="Booking Type"
-                    // onChange={handleChange}
-                    >
+                    <Select labelId="booking-label" id="booking-select" value={bookingType} label="Booking Type" onChange={(e) => setBookingType(e.target.value)}>
                         <MenuItem value="room">Room</MenuItem>
                         <MenuItem value="event">Event</MenuItem>
                     </Select>
                 </FormControl>
+
+                {/* Date picker range */}
                 <div
                     style={{
                         flex: 1,
@@ -205,40 +154,32 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
                     }}
                 >
                     <span>📅</span>
-                    <DatePicker
-                        placeholder="CheckIn to CheckOut"
-                        value={values}
-                        dateSeparator=" to "
-                        onChange={handleRangeSelect}
-                        range
-                        rangeHover
-                        style={{ width: '100%', height: '40px', fontSize: '16px' }}
-                    />
+                    <DatePicker placeholder="CheckIn to CheckOut" value={values} dateSeparator=" to " onChange={handleRangeSelect} range rangeHover style={{ width: '100%', height: '40px', fontSize: '16px' }} />
                 </div>
 
-                <div style={{ flex: 1, backgroundColor: '#fff', padding: '9px', borderRadius: '4px', position: 'relative' }} onClick={handleGuestsClick}>
-                    <span style={{ marginRight: '5px' }}>👤</span>
-                    <span
-                        style={{ cursor: 'pointer', display: 'inline-block', padding: '5px' }}
-                    >
-                        {`Total Person: ${adults}`}
-                    </span>
-                    <span style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)' }}>▼</span>
-                </div>
-                <Button
+                {/* Guests picker */}
+                <div
                     style={{
-                        backgroundColor: '#063455',
-                        borderColor: '#063455',
-                        color: '#fff',
-                        padding: '10px 15px',
+                        flex: '1',
+                        backgroundColor: '#fff',
+                        padding: '9px',
                         borderRadius: '4px',
-                        marginLeft: '10px',
+                        position: 'relative',
                     }}
-                    onClick={handleSearch}
+                    onClick={handleGuestsClick}
                 >
+                    <span style={{ marginRight: '5px' }}>👤</span>
+                    <span style={{ cursor: 'pointer', display: 'inline-block', padding: '5px' }}>{`Total Person: ${adults}`}</span>
+                    <span style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)' }}> ▼ </span>
+                </div>
+
+                {/* Search button */}
+                <Button style={{ backgroundColor: '#063455', color: '#fff', padding: '10px 15px', borderRadius: '4px', marginLeft: '10px' }} onClick={handleSearch}>
                     Search
                 </Button>
             </div>
+
+            {/* Modal for adding guests */}
             <Modal show={showGuestsModal} onHide={handleCloseGuestsModal} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Edit Guests</Modal.Title>
@@ -247,12 +188,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch }) => {
                     <Form>
                         <Form.Group controlId="formAdults">
                             <Form.Label>Adults</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={adults}
-                                onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
-                                min="0"
-                            />
+                            <Form.Control type="number" value={adults} onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))} min="0" />
                         </Form.Group>
                     </Form>
                 </Modal.Body>
@@ -273,23 +209,11 @@ const BookingDashboard = ({ data }) => {
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [searchResultsFilter, setSearchResultsFilter] = useState(false);
     const [adults, setAdults] = useState(2);
-    const [filteredBookings, setFilteredBookings] = useState(bookingsData);
-    console.log("Data", data);
-    // console.log("roomsEvents", roomsEvent);
-
-    // const [bookings, setBookings] = useState([]);
-
-    // useEffect(() => {
-    //     axios.get('/booking/dashboard')
-    //         .then(res => {
-    //             console.log('Fetched bookings:', res.data);
-    //             setBookings(res.data);
-    //         })
-    //         .catch(error => {
-    //             console.error('Error fetching bookings:', error);
-    //         });
-    // }, []);
+    const [bookingType, setBookingType] = useState('room');
+    const [searchResults, setSearchResults] = useState([]);
 
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
@@ -307,33 +231,21 @@ const BookingDashboard = ({ data }) => {
     const handleFilterClose = () => setShowFilter(false);
     const handleFilterShow = () => setShowFilter(true);
 
-    const handleSearch = (dateRange, adults) => {
-        const [startDate, endDate] = dateRange;
-        if (!startDate || !endDate) return;
+    const handleSearch = async (searchParams) => {
+        try {
+            // Send GET request with search parameters
+            const response = await axios.get(route('booking.search'), {
+                params: searchParams,
+            });
 
-        const filtered = bookingsData.filter((booking) => {
-            const bookingStart = booking.startDate;
-            const bookingEnd = booking.endDate;
+            setBookingType(searchParams.type);
 
-            // Convert DateObject to JavaScript Date for comparison
-            const searchStart = startDate.toDate();
-            const searchEnd = endDate.toDate();
-            const bookStart = bookingStart.toDate();
-            const bookEnd = bookingEnd.toDate();
-
-            // Check for date overlap
-            const dateMatch = (
-                searchStart <= bookEnd && searchEnd >= bookStart
-            );
-            const adultsMatch = booking.adults === adults;
-            return dateMatch && adultsMatch;
-        });
-        setFilteredBookings(filtered);
+            setSearchResultsFilter(true);
+            setSearchResults(response.data);
+        } catch (error) {
+            console.error('Error fetching search results', error);
+        }
     };
-
-    const searchedBookings = filteredBookings.filter((booking) =>
-        booking.type.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     return (
         <>
@@ -360,7 +272,8 @@ const BookingDashboard = ({ data }) => {
                                         borderRadius: '0px',
                                     }}
                                     onClick={handleOpenBookingModal}
-                                >Booking
+                                >
+                                    Booking
                                     {/* <h1>Booking Dashboard</h1> */}
                                     {/*<pre>{JSON.stringify(bookings, null, 2)}</pre> */}
                                 </Button>
@@ -531,171 +444,168 @@ const BookingDashboard = ({ data }) => {
 
                         <Row className="mb-4 align-items-center">
                             <Col>
-                                <CustomDateRangePicker
-                                    adults={adults}
-                                    setAdults={setAdults}
-                                    onSearch={handleSearch}
-                                />
+                                <CustomDateRangePicker adults={adults} setAdults={setAdults} onSearch={handleSearch} />
                             </Col>
                         </Row>
 
-                        <Row className="mb-3 align-items-center">
-                            <Col>
-                                <Typography variant="h6" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '24px' }}>
-                                    Recently Booking
-                                </Typography>
-                            </Col>
-                            <Col xs="auto" className="d-flex gap-3">
-                                <div style={{ position: 'relative', width: '400px', border: '1px solid #121212' }}>
-                                    <Form.Control
-                                        placeholder="Search"
-                                        aria-label="Search"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        style={{
-                                            paddingLeft: '2rem',
-                                            borderColor: '#ced4da',
-                                            borderRadius: '4px',
-                                            height: '38px',
-                                            fontSize: '0.9rem',
-                                        }}
-                                    />
-                                    <Search
-                                        style={{
-                                            position: 'absolute',
-                                            left: '8px',
-                                            top: '53%',
-                                            transform: 'translateY(-50%)',
-                                            color: '#adb5bd',
-                                            fontSize: '1.5rem',
-                                            pointerEvents: 'none',
-                                        }}
-                                    />
-                                </div>
-
-                                <Button
-                                    variant="outline-secondary"
-                                    className="d-flex align-items-center gap-1"
-                                    style={{
-                                        border: '1px solid #3F4E4F',
-                                        borderRadius: '0px',
-                                        backgroundColor: 'transparent',
-                                        color: '#495057',
-                                    }}
-                                    onClick={handleFilterShow}
-                                >
-                                    <FilterAlt fontSize="small" /> Filter
-                                </Button>
-                            </Col>
-                        </Row>
-
-                        {data.bookingsData.length > 0 ? (
-                            data.bookingsData.map((booking, index) => (
-                                <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }}>
-                                    <Card.Body className="p-2">
-                                        <Row>
-                                            <Col md={2} className="d-flex justify-content-center">
-                                                <img
-                                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
-                                                    alt={booking.type}
-                                                    style={{
-                                                        width: '100%',
-                                                        objectFit: 'cover',
-                                                    }}
-                                                />
-                                            </Col>
-                                            <Col md={10}>
-                                                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                                                    <div>
-                                                        <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type}</Typography>
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
-                                                            Created on {booking.checkin}
-                                                        </Typography>
-                                                    </div>
-                                                    <Badge
-                                                        onClick={() => router.visit(route('rooms.dashboard'))}
-                                                        bg=""
-                                                        style={{
-                                                            backgroundColor: booking.status === 'Confirmed' ? '#0e5f3c' : '#842029',
-                                                            color: 'white',
-                                                            padding: '6px 14px',
-                                                            borderRadius: '6px',
-                                                            fontSize: '0.85rem',
-                                                            fontWeight: 500,
-                                                            minWidth: '100px',
-                                                            textAlign: 'center',
-                                                            cursor: 'pointer',
-                                                            borderRadius: '0px',
-                                                        }}
-                                                    >
-                                                        {booking.status}
-                                                    </Badge>
-                                                </div>
-                                                <Row className="text-start mt-2">
-                                                    <Col md={3} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                            Booking ID
-                                                        </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                            {booking.booking_id}
-                                                        </Typography>
-                                                    </Col>
-                                                    <Col md={4} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                            Duration
-                                                        </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                            {booking.duration}
-                                                        </Typography>
-                                                    </Col>
-                                                    <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                            Room
-                                                        </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                            {booking.rooms}
-                                                        </Typography>
-                                                    </Col>
-                                                    <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                            Night
-                                                        </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                            {booking.nights}
-                                                        </Typography>
-                                                    </Col>
-                                                    <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                            Adults
-                                                        </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                            {booking.persons}
-                                                        </Typography>
-                                                    </Col>
-                                                </Row>
-                                            </Col>
-                                        </Row>
-                                    </Card.Body>
-                                </Card>
-                            ))
-                        ) : (
-                            <Typography>No bookings found for the selected criteria.</Typography>
+                        {/* Loading Indicator */}
+                        {loading && (
+                            <div className="p-4">
+                                <Typography> Loading...</Typography>
+                            </div>
                         )}
 
-                        <Modal show={showFilter} onHide={handleFilterClose} dialogClassName="custom-dialog-right" backdrop={true} keyboard={true}>
-                            <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
-                                <BookingFilter />
-                            </Modal.Body>
-                        </Modal>
+                        {!loading && !searchResultsFilter && (
+                            <>
+                                <Row className="mb-3 align-items-center">
+                                    <Col>
+                                        <Typography variant="h6" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '24px' }}>
+                                            Recently Booking
+                                        </Typography>
+                                    </Col>
+                                    <Col xs="auto" className="d-flex gap-3">
+                                        <div style={{ position: 'relative', width: '400px', border: '1px solid #121212' }}>
+                                            <Form.Control
+                                                placeholder="Search"
+                                                aria-label="Search"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                style={{
+                                                    paddingLeft: '2rem',
+                                                    borderColor: '#ced4da',
+                                                    borderRadius: '4px',
+                                                    height: '38px',
+                                                    fontSize: '0.9rem',
+                                                }}
+                                            />
+                                            <Search
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: '8px',
+                                                    top: '53%',
+                                                    transform: 'translateY(-50%)',
+                                                    color: '#adb5bd',
+                                                    fontSize: '1.5rem',
+                                                    pointerEvents: 'none',
+                                                }}
+                                            />
+                                        </div>
 
-                        <Modal show={showAvailabilityModal} onHide={handleCloseAvailabilityModal} dialogClassName="custom-dialog-right">
-                            <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
-                                {showAvailableRooms ? <AvailableRooms /> : <RoomEventModal onFind={handleShowAvailableRooms} />}
-                            </Modal.Body>
-                        </Modal>
+                                        <Button
+                                            variant="outline-secondary"
+                                            className="d-flex align-items-center gap-1"
+                                            style={{
+                                                border: '1px solid #3F4E4F',
+                                                borderRadius: '0px',
+                                                backgroundColor: 'transparent',
+                                                color: '#495057',
+                                            }}
+                                            onClick={handleFilterShow}
+                                        >
+                                            <FilterAlt fontSize="small" /> Filter
+                                        </Button>
+                                    </Col>
+                                </Row>
+
+                                {!searchResultsFilter && data.bookingsData.length > 0 ? (
+                                    data.bookingsData.map((booking, index) => (
+                                        <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }}>
+                                            <Card.Body className="p-2">
+                                                <Row>
+                                                    <Col md={2} className="d-flex justify-content-center">
+                                                        <img
+                                                            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
+                                                            alt={booking.type}
+                                                            style={{
+                                                                width: '100%',
+                                                                objectFit: 'cover',
+                                                            }}
+                                                        />
+                                                    </Col>
+                                                    <Col md={10}>
+                                                        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                                                            <div>
+                                                                <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type}</Typography>
+                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
+                                                                    Created on {booking.checkin}
+                                                                </Typography>
+                                                            </div>
+                                                            <Badge
+                                                                onClick={() => router.visit(route('rooms.dashboard'))}
+                                                                bg=""
+                                                                style={{
+                                                                    backgroundColor: booking.status === 'Confirmed' ? '#0e5f3c' : '#842029',
+                                                                    color: 'white',
+                                                                    padding: '6px 14px',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '0.85rem',
+                                                                    fontWeight: 500,
+                                                                    minWidth: '100px',
+                                                                    textAlign: 'center',
+                                                                    cursor: 'pointer',
+                                                                    borderRadius: '0px',
+                                                                }}
+                                                            >
+                                                                {booking.status}
+                                                            </Badge>
+                                                        </div>
+                                                        <Row className="text-start mt-2">
+                                                            <Col md={3} sm={6} className="mb-2">
+                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                    Booking ID
+                                                                </Typography>
+                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                    {booking.booking_id}
+                                                                </Typography>
+                                                            </Col>
+                                                            <Col md={4} sm={6} className="mb-2">
+                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                    Duration
+                                                                </Typography>
+                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                    {booking.duration}
+                                                                </Typography>
+                                                            </Col>
+                                                            <Col md={2} sm={6} className="mb-2">
+                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                    Room
+                                                                </Typography>
+                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                    {booking.rooms}
+                                                                </Typography>
+                                                            </Col>
+                                                            <Col md={2} sm={6} className="mb-2">
+                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                    Night
+                                                                </Typography>
+                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                    {booking.nights}
+                                                                </Typography>
+                                                            </Col>
+                                                            <Col md={2} sm={6} className="mb-2">
+                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                    Adults
+                                                                </Typography>
+                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                    {booking.persons}
+                                                                </Typography>
+                                                            </Col>
+                                                        </Row>
+                                                    </Col>
+                                                </Row>
+                                            </Card.Body>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <Typography>No bookings found for the selected criteria.</Typography>
+                                )}
+                            </>
+                        )}
+
+                        {!loading && searchResultsFilter && <AvailableRooms data={searchResults} type={bookingType} />}
                     </Container>
                 </ThemeProvider>
-            </div >
+            </div>
         </>
     );
 };
