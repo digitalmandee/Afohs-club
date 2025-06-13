@@ -8,7 +8,9 @@ import BathtubIcon from '@mui/icons-material/Bathtub';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import HistoryIcon from '@mui/icons-material/History';
 
-const AvailableRooms = ({ data, type }) => {
+const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
+    const nights = (new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24);
+
     return (
         <>
             <Box sx={{ px: 2, py: 1, pt: 2 }}>
@@ -16,7 +18,7 @@ const AvailableRooms = ({ data, type }) => {
                 <Box sx={{ p: 1, mt: 3, maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
                     {data && data.length > 0 ? (
                         data.map((item, index) => (
-                            <div key={index} className="border mb-3 p-2" style={{ height: 88, border: '1px solid #E3E3E3' }} onClick={type === 'room' ? () => router.visit(route('rooms.booking')) : undefined}>
+                            <div key={index} className="border mb-3 p-2" style={{ height: 88, border: '1px solid #E3E3E3' }} onClick={() => router.visit(route('rooms.booking', { type_id: item.id, type, checkin, checkout, persons }))}>
                                 <Row style={{ cursor: 'pointer' }}>
                                     <Col xs={2}>
                                         <img src={item.image ? '/' + item.image : '/placeholder.svg'} alt={type === 'room' ? item.type : item.name} style={{ width: 100, height: 67, borderRadius: '4px' }} />
@@ -25,7 +27,7 @@ const AvailableRooms = ({ data, type }) => {
                                         {type === 'room' ? (
                                             <>
                                                 <div className="d-flex justify-content-between">
-                                                    <h5 style={{ fontWeight: 400, fontSize: '18px', color: '#121212', marginBottom: '5px' }}>{item.type}</h5>
+                                                    <h5 style={{ fontWeight: 400, fontSize: '18px', color: '#121212', marginBottom: '5px' }}>Rooms ({checkin && checkout && <span style={{ fontWeight: 'bold', color: '#121212' }}>{item.price_per_night * nights} Rs Total</span>})</h5>
                                                     <div>
                                                         <span style={{ fontWeight: 'bold' }}>{item.price_per_night} Rs</span>
                                                         <span style={{ color: '#6c757d', fontSize: '0.9rem' }}>/Per night</span>

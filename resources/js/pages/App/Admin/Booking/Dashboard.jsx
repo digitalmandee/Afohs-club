@@ -202,6 +202,8 @@ const BookingDashboard = ({ data }) => {
     const [loading, setLoading] = useState(false);
     const [searchResultsFilter, setSearchResultsFilter] = useState(false);
     const [adults, setAdults] = useState(2);
+    const [checkin, setCheckIn] = useState('');
+    const [checkout, setCheckOut] = useState('');
     const [bookingType, setBookingType] = useState('room');
     const [searchResults, setSearchResults] = useState([]);
 
@@ -220,6 +222,8 @@ const BookingDashboard = ({ data }) => {
             });
 
             setBookingType(searchParams.bookingType);
+            setCheckIn(searchParams.checkin);
+            setCheckOut(searchParams.checkout);
 
             setSearchResultsFilter(true);
             setSearchResults(response.data);
@@ -246,20 +250,6 @@ const BookingDashboard = ({ data }) => {
                         <Row className="mb-4 align-items-center">
                             <Col>
                                 <Typography style={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>Dashboard</Typography>
-                            </Col>
-                            <Col xs="auto" className="d-flex gap-2">
-                                <Button
-                                    style={{
-                                        backgroundColor: '#063455',
-                                        borderColor: '#063455',
-                                        borderRadius: '0px',
-                                    }}
-                                    onClick={handleOpenBookingModal}
-                                >
-                                    Booking
-                                    {/* <h1>Booking Dashboard</h1> */}
-                                    {/*<pre>{JSON.stringify(bookings, null, 2)}</pre> */}
-                                </Button>
                             </Col>
                         </Row>
 
@@ -306,7 +296,7 @@ const BookingDashboard = ({ data }) => {
                                             <Box>
                                                 <Typography sx={{ color: '#C6C6C6', fontSize: '14px' }}>Total Booking</Typography>
                                                 <Typography sx={{ fontSize: '24px' }} className="m-0">
-                                                    320
+                                                    {data?.totalBookings || 0}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -354,7 +344,7 @@ const BookingDashboard = ({ data }) => {
                                             <Box>
                                                 <Typography sx={{ color: '#C6C6C6', fontSize: '14px' }}>Total Room Booking</Typography>
                                                 <Typography sx={{ fontSize: '24px' }} className="m-0">
-                                                    320
+                                                    {data?.totalRoomBookings || 0}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -362,11 +352,11 @@ const BookingDashboard = ({ data }) => {
                                         <Row>
                                             <Col>
                                                 <Typography sx={{ color: '#C6C6C6', fontSize: '12px' }}>Available Rooms</Typography>
-                                                <Typography variant="h6">280</Typography>
+                                                <Typography variant="h6">{data?.availableRoomsToday || 0}</Typography>
                                             </Col>
                                             <Col>
                                                 <Typography sx={{ color: '#C6C6C6', fontSize: '12px' }}>Total Rooms</Typography>
-                                                <Typography variant="h6">40</Typography>
+                                                <Typography variant="h6">{data?.totalRooms || 0}</Typography>
                                             </Col>
                                         </Row>
                                     </Card.Body>
@@ -413,13 +403,13 @@ const BookingDashboard = ({ data }) => {
                                             <Box>
                                                 <Typography sx={{ color: '#C6C6C6', fontSize: '14px' }}>Total Event Booking</Typography>
                                                 <Typography variant="h5" className="m-0">
-                                                    320
+                                                    {data?.totalEventBookings || 0}
                                                 </Typography>
                                             </Box>
                                         </Box>
                                         <hr className="border-top" style={{ marginTop: 13 }} />
                                         <Typography sx={{ color: '#C6C6C6', fontSize: '12px' }}>Available Event</Typography>
-                                        <Typography variant="h6">2</Typography>
+                                        <Typography variant="h6">{data?.availableEventsToday || 0}</Typography>
                                     </Card.Body>
                                 </Card>
                             </Col>
@@ -585,7 +575,7 @@ const BookingDashboard = ({ data }) => {
                             </>
                         )}
 
-                        {!loading && searchResultsFilter && <AvailableRooms data={searchResults} type={bookingType} />}
+                        {!loading && searchResultsFilter && <AvailableRooms data={searchResults} type={bookingType} checkin={checkin} checkout={checkout} persons={adults} />}
                     </Container>
                 </ThemeProvider>
             </div>

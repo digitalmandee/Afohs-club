@@ -174,8 +174,6 @@ const Payment = ({ invoice, member, onBack }) => {
                         </Box>
                     </Paper>
 
-                    {JSON.stringify(invoice, null, 2)}
-
                     {/* Member Details */}
                     {invoice && (
                         <Paper sx={{ p: 2, mb: 4, boxShadow: 'none', border: '1px solid #e0e0e0', borderRadius: '4px' }}>
