@@ -24,67 +24,10 @@ import { router } from '@inertiajs/react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = () => {
+const Dashboard = ({ FinancialInvoice }) => {
     const [open, setOpen] = useState(true);
     const [date, setDate] = useState('Apr-2025');
-
-    const members = [
-        {
-            id: "AFOHS-1235",
-            name: "Zahid Ullah",
-            category: "GYM",
-            type: "Cash",
-            amount: "5000",
-            date: "Jul 10-2027",
-            contact: "0987654321",
-            added_by: "Admin",
-            invoice: "View"
-        },
-        {
-            id: "AFOHS-1235",
-            name: "Zahid Ullah",
-            category: "GYM",
-            type: "Cash",
-            amount: "5000",
-            date: "Jul 10-2027",
-            contact: "0987654321",
-            added_by: "Admin",
-            invoice: "View"
-        },
-        {
-            id: "AFOHS-1235",
-            name: "Zahid Ullah",
-            category: "GYM",
-            type: "Cash",
-            amount: "5000",
-            date: "Jul 10-2027",
-            contact: "0987654321",
-            added_by: "Admin",
-            invoice: "View"
-        },
-        {
-            id: "AFOHS-1235",
-            name: "Zahid Ullah",
-            category: "GYM",
-            type: "Cash",
-            amount: "5000",
-            date: "Jul 10-2027",
-            contact: "0987654321",
-            added_by: "Admin",
-            invoice: "View"
-        },
-        {
-            id: "AFOHS-1235",
-            name: "Zahid Ullah",
-            category: "GYM",
-            type: "Cash",
-            amount: "5000",
-            date: "Jul 10-2027",
-            contact: "0987654321",
-            added_by: "Admin",
-            invoice: "View"
-        },
-    ]
+    console.log('FinancialInvoice:', FinancialInvoice);
 
     return (
         <>
@@ -102,7 +45,6 @@ const Dashboard = () => {
                         <Row className="align-items-center mb-4">
                             <Col xs="auto">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    {/* <ArrowBack style={{ color: '#555', marginRight: '15px', cursor: 'pointer' }} /> */}
                                     <h2 style={{ margin: 0, fontWeight: '500', color: '#3F4E4F', fontSize: '30px' }}>Finance Dashboard</h2>
                                 </div>
                             </Col>
@@ -155,7 +97,7 @@ const Dashboard = () => {
                                         width: '200px',
                                         color: 'white',
                                     }}
-                                    onClick={()=>router.visit('/finance/add/transaction')}
+                                    onClick={() => router.visit('/finance/add/transaction')}
                                 >
                                     <span style={{ marginRight: '5px', fontSize: '20px' }}>+</span> Add Transaction
                                 </Button>
@@ -190,6 +132,8 @@ const Dashboard = () => {
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
                                             <div style={{
+
+
                                                 backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
@@ -370,7 +314,6 @@ const Dashboard = () => {
                             </Col>
                         </Row>
 
-
                         {/* Recent Transactions */}
                         <Row className="mb-3">
                             <Col xs={6}>
@@ -408,41 +351,38 @@ const Dashboard = () => {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {members.map((member) => (
-                                                <TableRow key={member.id} style={{ borderBottom: "1px solid #eee" }}>
+                                            {FinancialInvoice.map((invoice) => (
+                                                <TableRow key={invoice.id} style={{ borderBottom: "1px solid #eee" }}>
                                                     <TableCell
                                                         sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
                                                         onClick={() => {
-                                                            setSelectMember(member); // save the clicked member
+                                                            setSelectMember(invoice); // save the clicked invoice
                                                             setOpenProfileModal(true); // open the modal
                                                         }}
                                                     >
-                                                        {member.id}
-                                                    </TableCell>
-                                                    <TableCell
-                                                        sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {member.name}
+                                                        {invoice.invoice_no}
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {member.category}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.amount}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.date}</TableCell>
-                                                    <TableCell style={{
-                                                        color: '#7F7F7F',
-                                                        fontWeight: 500,
-                                                        fontSize: '14px'
-                                                    }}>
-                                                        {member.contact}
+                                                        {invoice.member_id}
                                                     </TableCell>
-                                                    <TableCell style={{
-                                                        color: '#7F7F7F',
-                                                        fontWeight: 500,
-                                                        fontSize: '14px'
-                                                    }}>
-                                                        {member.added_by}
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        {invoice.data?.category?.name || 'N/A'}
                                                     </TableCell>
-
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        {invoice.payment_method}
+                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        {invoice.amount}
+                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        {invoice.payment_date}
+                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>
+                                                        N/A
+                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>
+                                                        N/A
+                                                    </TableCell>
                                                     <TableCell>
                                                         <span
                                                             style={{
@@ -452,7 +392,7 @@ const Dashboard = () => {
                                                             }}
                                                             onClick={() => setOpenCardModal(true)}
                                                         >
-                                                            {member.invoice}
+                                                            View
                                                         </span>
                                                     </TableCell>
                                                 </TableRow>

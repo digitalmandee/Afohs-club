@@ -160,7 +160,6 @@ class MembershipController extends Controller
                 'middle_name' => $validated['middle_name'],
                 'last_name' => $validated['last_name'],
                 'phone_number' => $validated['mobile_number_a'],
-                'user_id' => $this->getUserNo(),
                 'member_type_id' => $member_type_id,
             ]);
 
@@ -289,11 +288,6 @@ class MembershipController extends Controller
                     ]);
                 }
             }
-
-            MembershipInvoice::create([
-                'user_id' => $primaryUser->id,
-                'total_price' => $memberType->fee,
-            ]);
 
             DB::commit();
 
