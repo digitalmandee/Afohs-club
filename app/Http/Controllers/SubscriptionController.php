@@ -112,7 +112,7 @@ class SubscriptionController extends Controller
         DB::beginTransaction();
 
         $recieptPath = null;
-        if ($request->payment_method == 'card' && $request->has('reciept')) {
+        if ($request->payment_method == 'credit_card' && $request->has('reciept')) {
             $recieptPath = FileHelper::saveImage($request->file('reciept'), 'reciepts');
         }
 

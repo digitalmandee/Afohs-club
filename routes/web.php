@@ -111,16 +111,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     //Admin Booking Routes
     Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
     Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
-    Route::get('/room/booking', [BookingController::class, 'booking'])->name('rooms.booking');
+    Route::get('/booking/new', [BookingController::class, 'booking'])->name('rooms.booking');
+    Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
     Route::post('/room/booking', [BookingController::class, 'store'])->name('rooms.booking.store');
 
+    // Booking Search
+    Route::get('/booking/search', [BookingController::class, 'search'])->name('booking.search');
 
-    // Route::get('/room/booking', function () {
-    //     return Inertia::render('App/Admin/Booking/RoomBooking');
-    // })->name('rooms.booking');
-    // Route::get('/booking/dashboard', function () {
-    //     return Inertia::render('App/Admin/Booking/Dashboard');
-    // })->name('rooms.dashboard');
 
     Route::get('/booking/details', function () {
         return Inertia::render('App/Admin/Booking/Detail');
