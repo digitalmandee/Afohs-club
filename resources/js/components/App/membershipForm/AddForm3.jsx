@@ -9,7 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 
-const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading, currentFamilyMember, setCurrentFamilyMember, membershipData, setMembershipData, familyMembers, setFamilyMembers }) => {
+const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading, currentFamilyMember, setCurrentFamilyMember, membershipData, setMembershipData, familyMembers, setFamilyMembers, membercategories }) => {
     const [open, setOpen] = useState(false);
     const [memberType, setMemberType] = useState(1);
     const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
@@ -276,11 +276,21 @@ const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading, currentF
                                             value={membershipData.membership_category}
                                             onChange={handleMembershipDataChange}
                                             displayEmpty
-                                            renderValue={(selected) => {
-                                                if (!selected) {
-                                                    return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
-                                                }
-                                                return selected;
+                                            // renderValue={(selected) => {
+                                            //     if (!selected) {
+                                            //         return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
+                                            //     }
+                                            //     return selected;
+                                            // }}
+                                            SelectProps={{
+                                                displayEmpty: true,
+                                                renderValue: (selected) => {
+                                                    if (!selected) {
+                                                        return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
+                                                    }
+                                                    const item = membercategories.find((item) => item.id == Number(selected));
+                                                    return item ? item.name : '';
+                                                },
                                             }}
                                             sx={{
                                                 '& .MuiOutlinedInput-notchedOutline': {
@@ -288,10 +298,11 @@ const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading, currentF
                                                 },
                                             }}
                                         >
-                                            <MenuItem value="Category 1">Category 1</MenuItem>
-                                            <MenuItem value="Category 2">Category 2</MenuItem>
-                                            <MenuItem value="Category 3">Category 3</MenuItem>
-                                            <MenuItem value="Family">Family</MenuItem>
+                                            {membercategories?.map((item) => (
+                                                <MenuItem value={item.id} key={item.id}>
+                                                    {item.name}
+                                                </MenuItem>
+                                            ))}
                                         </Select>
                                     </FormControl>
                                 </Box>
@@ -733,10 +744,11 @@ const AddForm3 = ({ onSubmit, onBack, memberTypesData, userNo, loading, currentF
                                                             },
                                                         }}
                                                     >
-                                                        <MenuItem value="Category 1">Category 1</MenuItem>
-                                                        <MenuItem value="Category 2">Category 2</MenuItem>
-                                                        <MenuItem value="Category 3">Category 3</MenuItem>
-                                                        <MenuItem value="Family">Family</MenuItem>
+                                                        {membercategories?.map((item) => (
+                                                            <MenuItem value={item.id} key={item.id}>
+                                                                {item.name}
+                                                            </MenuItem>
+                                                        ))}
                                                     </Select>
                                                 </FormControl>
                                             </Box>
