@@ -20,6 +20,7 @@ import {
     Paper
 } from '@mui/material';
 import { router } from '@inertiajs/react';
+import InvoiceSlip from '../Subscription/Invoice';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -27,7 +28,19 @@ const drawerWidthClosed = 110;
 const Dashboard = ({ FinancialInvoice }) => {
     const [open, setOpen] = useState(true);
     const [date, setDate] = useState('Apr-2025');
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
     console.log('FinancialInvoice:', FinancialInvoice);
+
+    // Calculate metrics from FinancialInvoice
+    const totalMembers = new Set(FinancialInvoice?.map(i => i.member_id).filter(id => id !== null)).size;
+    const activeMembers = FinancialInvoice?.filter(i => i.data?.status === 'in_active' && new Date(i.data?.expiry_date) > new Date()).length || 0;
+    const expiredMembers = FinancialInvoice?.filter(i => i.data?.expiry_date && new Date(i.data.expiry_date) <= new Date()).length || 0;
+    const canceledMembers = FinancialInvoice?.filter(i => i.status === 'unpaid' && i.data?.expiry_date && new Date(i.data.expiry_date) <= new Date()).length || 0;
+    const totalRevenue = FinancialInvoice?.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.paid_amount, 0) || 0;
+
+    // Format number with commas
+    const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
     return (
         <>
@@ -46,6 +59,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                             <Col xs="auto">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <h2 style={{ margin: 0, fontWeight: '500', color: '#3F4E4F', fontSize: '30px' }}>Finance Dashboard</h2>
+                                    <pre>{JSON.stringify(FinancialInvoice, null, 2)}</pre>
                                 </div>
                             </Col>
                             <Col className="d-flex justify-content-end align-items-center">
@@ -123,7 +137,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                         </div>
                                         <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400, marginBottom: '5px' }}>Total Members</div>
-                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>30</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>{totalMembers}</div>
                                     </Card.Body>
                                 </Card>
                             </Col>
@@ -132,8 +146,6 @@ const Dashboard = ({ FinancialInvoice }) => {
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
                                             <div style={{
-
-
                                                 backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
@@ -146,7 +158,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                         </div>
                                         <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400, marginBottom: '5px' }}>Active Members</div>
-                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>20</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>{activeMembers}</div>
                                     </Card.Body>
                                 </Card>
                             </Col>
@@ -167,7 +179,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                         </div>
                                         <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400, marginBottom: '5px' }}>Expired Members</div>
-                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>05</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>{expiredMembers}</div>
                                     </Card.Body>
                                 </Card>
                             </Col>
@@ -188,7 +200,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                         </div>
                                         <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400, marginBottom: '5px' }}>Canceled Members</div>
-                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>05</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>{canceledMembers}</div>
                                     </Card.Body>
                                 </Card>
                             </Col>
@@ -214,7 +226,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                             <div>
                                                 <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400, }}>Total Revenue</div>
-                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Pkr 320,000</div>
+                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Pkr {formatNumber(totalRevenue)}</div>
                                             </div>
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
@@ -280,12 +292,12 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                             <div>
                                                 <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Membership Revenue</div>
-                                                <div style={{ fontSize: '20px', fontWeight: 500, marginBottom: '10px' }}>Pkr 320,000</div>
+                                                <div style={{ fontSize: '20px', fontWeight: 500, marginBottom: '10px' }}>Pkr {formatNumber(totalRevenue)}</div>
                                             </div>
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '10px' }}>
                                             <div style={{ fontSize: '12px', fontWeight: 400, color: '#C6C6C6' }}>Subscription Revenue</div>
-                                            <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Pkr 280,00</div>
+                                            <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Pkr {formatNumber(totalRevenue)}</div>
                                         </div>
                                     </Card.Body>
                                 </Card>
@@ -317,7 +329,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                         {/* Recent Transactions */}
                         <Row className="mb-3">
                             <Col xs={6}>
-                                <h5 style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recent Transaction</h5>
+                                <h5 style={{ fontWeight: '500', fontSize: '24px', color: '#000000' }}>Recent Transaction</h5>
                             </Col>
                             <Col xs={6} className="text-end">
                                 <Button
@@ -351,7 +363,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {FinancialInvoice.map((invoice) => (
+                                            {(FinancialInvoice || []).slice(0, 5).map((invoice) => (
                                                 <TableRow key={invoice.id} style={{ borderBottom: "1px solid #eee" }}>
                                                     <TableCell
                                                         sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
@@ -366,22 +378,22 @@ const Dashboard = ({ FinancialInvoice }) => {
                                                         {invoice.member_id}
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {invoice.data?.category?.name || 'N/A'}
+                                                        {invoice.subscription_type || 'N/A'}
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {invoice.payment_method}
+                                                        {invoice.payment_method.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                         {invoice.amount}
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {invoice.payment_date}
+                                                        {new Date(invoice.payment_date).toLocaleDateString()}
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>
-                                                        N/A
+                                                        {invoice.user?.phone_number ?? 'N/A'}
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>
-                                                        N/A
+                                                        {invoice.user?.name ?? 'N/A'}
                                                     </TableCell>
                                                     <TableCell>
                                                         <span
@@ -390,7 +402,10 @@ const Dashboard = ({ FinancialInvoice }) => {
                                                                 textDecoration: "underline",
                                                                 cursor: "pointer"
                                                             }}
-                                                            onClick={() => setOpenCardModal(true)}
+                                                            onClick={() => {
+                                                                setSelectedInvoice(invoice);
+                                                                setOpenInvoiceModal(true);
+                                                            }}
                                                         >
                                                             View
                                                         </span>
@@ -403,6 +418,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                             </Col>
                         </Row>
                     </Container>
+                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />
                 </div>
             </div>
         </>

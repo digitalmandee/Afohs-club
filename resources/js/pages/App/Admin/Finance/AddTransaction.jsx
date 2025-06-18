@@ -16,18 +16,30 @@ import {
 } from '@mui/icons-material';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import SearchIcon from '@mui/icons-material/Search';
+import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 260;
 const drawerWidthClosed = 120;
 
-const AddTransactionInformation = ({ categories2, paymentMethods, subscriptionTypes }) => {
+// Define payment methods from financial_invoices table enum
+const paymentMethods = ['cash', 'credit_card', 'bank', 'split_payment'];
+
+// Define subscription types
+const subscriptionTypes = [
+    { label: 'One Time', value: 'one_time' },
+    { label: 'Monthly', value: 'monthly' },
+    { label: 'Annual', value: 'annual' },
+];
+
+const AddTransactionInformation = ({ categories2 }) => {
     const [open, setOpen] = useState(true);
     const today = new Date().toISOString().split('T')[0];
 
     // State for form fields
     const [formData, setFormData] = useState({
-        guestName: '',
-        phone: '',
+        customer: { id: 2, user_id: 1212, name: 'test2', email: 'test@example.com', phone: '1234567890' },
+        guestName: 'test2',
+        phone: '1234567890',
         category: '',
         subscriptionType: '',
         paymentType: '',
@@ -36,10 +48,6 @@ const AddTransactionInformation = ({ categories2, paymentMethods, subscriptionTy
         amount: 0,
     });
     const [errors, setErrors] = useState({});
-
-    // console.log('Categories:', categories2);
-    // console.log('Payment Methods:', paymentMethods);
-    // console.log('Subscription Types:', subscriptionTypes);
 
     // Calculate expiry date based on start date and subscription type
     const calculateExpiry = (startDate, type) => {
@@ -127,15 +135,23 @@ const AddTransactionInformation = ({ categories2, paymentMethods, subscriptionTy
 
         if (Object.keys(newErrors).length === 0) {
             try {
-                useEffect(() => {
-                    const token = document.querySelector('meta[name="csrf-token"]')?.content;
-                    if (token) {
-                        axios.defaults.headers.common['X-CSRF-Token'] = token;
-                    }
-                }, []);
+                const response = await axios.post('/finance/add/transaction', formData);
+                router.visit('/finance/dashboard');
                 console.log('Transaction added successfully:', response.data);
+                // Optionally redirect or reset form
+                setFormData({
+                    guestName: '',
+                    phone: '',
+                    category: '',
+                    subscriptionType: '',
+                    paymentType: '',
+                    startDate: today,
+                    expiryDate: '',
+                    amount: 0,
+                });
             } catch (error) {
-                console.log('Error adding transaction:', error);
+                console.error('Error adding transaction:', error.response?.data || error.message);
+                setErrors(error.response?.data?.errors || { general: 'Failed to add transaction' });
             }
         }
     };
@@ -225,8 +241,8 @@ const AddTransactionInformation = ({ categories2, paymentMethods, subscriptionTy
                                             variant="outlined"
                                             size="small"
                                             style={{ marginBottom: '8px' }}
-                                            error={!!errors.guestName}
-                                            helperText={errors.guestName}
+                                            // error={!!errors.guestName}
+                                            // helperText={errors.guestName}
                                             InputProps={{
                                                 style: { fontSize: '14px' }
                                             }}

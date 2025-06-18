@@ -17,39 +17,71 @@ import {
 import { Print, Close, Send } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const InvoiceSlip = ({ open, onClose }) => {
-    // Sample data
-    const invoiceData = {
+const InvoiceSlip = ({ open, onClose, data }) => {
+    // Use data prop or fallback to empty object to prevent errors
+    const invoiceData = data ? {
         billTo: {
-            name: 'Zahid Ullah',
-            category: 'Member',
-            membershipId: '23423',
-            contactNumber: '0324234234',
-            city: 'Lahore',
-            familyMember: 'Non'
+            name: data.user?.name || 'N/A', // Fallback if member name isn't provided
+            category: data.subscription_type || 'Member',
+            membershipId: data.member_id || 'N/A',
+            contactNumber: data.user?.phone_number || 'N/A',
+            city: data.city || 'N/A',
+            familyMember: data.family_member || 'Non'
         },
         details: {
-            invoiceNumber: '7171',
-            issueDate: '12/04/2025',
-            paymentMethod: 'On Cash'
+            invoiceNumber: data.invoice_no || 'N/A',
+            issueDate: data.payment_date ? new Date(data.payment_date).toLocaleDateString() : 'N/A',
+            paymentMethod: data.payment_method || 'N/A'
         },
         items: [
             {
                 srNo: 1,
-                description: 'Member Charges',
-                invoiceAmount: 1000,
-                remainingAmount: 500,
-                paidAmount: 500
+                description: data.subscription_type || 'Invoice Charges',
+                invoiceAmount: data.amount || 0,
+                remainingAmount: data.remaining_amount || 0, // Placeholder, adjust if available
+                paidAmount: data.paid_amount || data.amount || 0 // Assume full amount paid if not specified
             }
         ],
         summary: {
-            grandTotal: 5000,
-            remainingAmount: 5.00,
-            paidAmount: 500
+            grandTotal: data.amount || 0,
+            remainingAmount: data.remaining_amount || 0,
+            paidAmount: data.paid_amount || data.amount || 0
         },
-        note: 'This is the computer generated receipt. It does no required any signature or stamp.',
+        note: 'This is the computer generated receipt. It does not require any signature or stamp.',
         paymentNote: 'If paid by credit card or cheque, 5% sub charges will be added to the total amount.',
-        amountInWords: 'Ten thousand, five hundred',
+        amountInWords: data.amount_in_words || 'N/A', // Fallback if not provided
+        sentBy: data.sent_by || 'Admin'
+    } : {
+        billTo: {
+            name: 'N/A',
+            category: 'Member',
+            membershipId: 'N/A',
+            contactNumber: 'N/A',
+            city: 'N/A',
+            familyMember: 'Non'
+        },
+        details: {
+            invoiceNumber: 'N/A',
+            issueDate: 'N/A',
+            paymentMethod: 'N/A'
+        },
+        items: [
+            {
+                srNo: 1,
+                description: 'N/A',
+                invoiceAmount: 0,
+                remainingAmount: 0,
+                paidAmount: 0
+            }
+        ],
+        summary: {
+            grandTotal: 0,
+            remainingAmount: 0,
+            paidAmount: 0
+        },
+        note: 'This is the computer generated receipt. It does not require any signature or stamp.',
+        paymentNote: 'If paid by credit card or cheque, 5% sub charges will be added to the total amount.',
+        amountInWords: 'N/A',
         sentBy: 'Admin'
     };
 
@@ -264,6 +296,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                                     borderColor: '#bbb',
                                     backgroundColor: '#f5f5f5'
                                 }
+
                             }}
                         >
                             Send Remind
@@ -277,14 +310,15 @@ const InvoiceSlip = ({ open, onClose }) => {
                                 '&:hover': {
                                     backgroundColor: '#002244'
                                 }
+
                             }}
                         >
                             Print
                         </Button>
                     </Box>
                 </Paper>
-            </Container>
-        </Drawer>
+            </Container >
+        </Drawer >
     );
 };
 

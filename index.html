@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Membership Card</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                justify-content: center;
+                background-color: #f5f5f5;
+            }
+
+            .membership-card {
+                width: 560px;
+                border: 1px solid #e3e3e3;
+                border-radius: 12px;
+                box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+                background-color: white;
+                overflow: hidden;
+            }
+
+            .card-content {
+                padding: 24px;
+            }
+
+            .logo {
+                height: 40px;
+                margin-bottom: 16px;
+            }
+
+            .info-grid {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .section {
+                flex: 1;
+            }
+
+            .avatar-section {
+                max-width: 100px;
+            }
+
+            .avatar {
+                width: 100px;
+                height: 120px;
+                border-radius: 4px;
+                border: 1px solid #eee;
+                object-fit: cover;
+            }
+
+            .qr-code {
+                width: 100px;
+                height: 100px;
+                object-fit: contain;
+                margin-top: 8px;
+            }
+
+            .label {
+                font-size: 12px;
+                color: #757575;
+                margin-bottom: 4px;
+            }
+
+            .value {
+                font-size: 16px;
+                font-weight: bold;
+                color: #0a3d62;
+                margin-bottom: 16px;
+            }
+
+            .footer {
+                background-color: #0a3d62;
+                color: white;
+                padding: 16px;
+                text-align: center;
+                font-size: 20px;
+                font-weight: 500;
+            }
+
+            @media print {
+                body {
+                    background-color: white;
+                    padding: 0;
+                }
+
+                .membership-card {
+                    box-shadow: none;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="membership-card">
+            <div class="card-content">
+                <img src="/assets/Logo.png" alt="AFOHS CLUB" class="logo" />
+
+                <div class="info-grid">
+                    <!-- Avatar -->
+                    <div class="section avatar-section">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1.PNG-DAILsdTgi3B4Lf6K9sR35Uu3o71eJ6.png" alt="Member Photo" class="avatar" />
+                    </div>
+
+                    <!-- Name + Membership ID -->
+                    <div class="section">
+                        <div class="label">Name</div>
+                        <div class="value">${member?.first_name || 'N/A'}</div>
+
+                        <div class="label">Membership ID</div>
+                        <div class="value">${member?.member?.membership_number || 'N/A'}</div>
+                    </div>
+
+                    <!-- Valid Until + QR -->
+                    <div class="section">
+                        <div class="label">Valid Until</div>
+                        <div class="value">${member?.member?.card_expiry_date ? new Date(member.member.card_expiry_date).toLocaleDateString() : 'N/A'}</div>
+
+                        <img src="/${member?.member?.qr_code || ''}" alt="QR Code" class="qr-code" />
+                    </div>
+                </div>
+            </div>
+            <div class="footer">${member?.member?.member_type?.name || 'Member'}</div>
+        </div>
+    </body>
+</html>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment } from '@mui/material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment, Pagination } from '@mui/material';
 import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -10,10 +10,14 @@ import TransactionFilter from './Filter';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Transaction = () => {
+const Transaction = ({ FinancialData }) => {
     // Modal state
     const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
+    const [page, setPage] = useState(1);
+    const rowsPerPage = 6;
+
+    console.log("FinancialData", FinancialData);
 
     // Sample data
     const members = [
@@ -74,6 +78,9 @@ const Transaction = () => {
         },
     ];
 
+    // Calculate total pages
+    const totalPages = Math.ceil((FinancialData || []).length / rowsPerPage);
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -85,7 +92,7 @@ const Transaction = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+                <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: 'auto' }}>
                     {/* Recently Joined Section */}
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -152,7 +159,7 @@ const Transaction = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {members.map((member) => (
+                                    {(FinancialData || []).slice((page - 1) * rowsPerPage, page * rowsPerPage).map((member) => (
                                         <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell
                                                 sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
@@ -161,13 +168,13 @@ const Transaction = () => {
                                                     setOpenProfileModal(true); // open the modal
                                                 }}
                                             >
-                                                {member.id}
+                                                {member.invoice_no}
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.category}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.member_id}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.subscription_type}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.payment_method.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.amount}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.date}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}> {new Date(member.payment_date).toLocaleDateString()}</TableCell>
                                             <TableCell
                                                 style={{
                                                     color: '#7F7F7F',
@@ -175,7 +182,7 @@ const Transaction = () => {
                                                     fontSize: '14px',
                                                 }}
                                             >
-                                                {member.contact}
+                                                {member.user?.phone_number}
                                             </TableCell>
                                             <TableCell
                                                 style={{
@@ -184,21 +191,19 @@ const Transaction = () => {
                                                     fontSize: '14px',
                                                 }}
                                             >
-                                                {member.added_by}
+                                                {member.user?.name}
                                             </TableCell>
-
                                             <TableCell>
                                                 <span
                                                     style={{
                                                         background: '#063455',
                                                         color: '#FFFFFF',
-                                                        // textDecoration: "underline",
                                                         cursor: 'pointer',
                                                         padding: 10,
                                                     }}
                                                     onClick={() => setOpenCardModal(true)}
                                                 >
-                                                    {member.invoice}
+                                                    view
                                                 </span>
                                             </TableCell>
                                         </TableRow>
@@ -206,6 +211,14 @@ const Transaction = () => {
                                 </TableBody>
                             </Table>
                         </TableContainer>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+                            <Pagination
+                                count={totalPages}
+                                page={page}
+                                onChange={(event, value) => setPage(value)}
+                                color="primary"
+                            />
+                        </div>
                     </div>
                     <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
                 </div>

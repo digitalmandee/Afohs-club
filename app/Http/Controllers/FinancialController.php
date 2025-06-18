@@ -6,21 +6,28 @@ use App\Models\FinancialInvoice;
 use App\Models\MemberCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class FinancialController extends Controller
 {
-      public function index()
+    public function index()
     {
-        $FinancialInvoice = FinancialInvoice::latest()->get();
+        $FinancialInvoice = FinancialInvoice::with(['user' => function ($query) {
+            $query->select('id', 'phone_number','name');
+        }])->latest()->get();
         return Inertia::render('App/Admin/Finance/Dashboard', [
             'FinancialInvoice' => $FinancialInvoice,
         ]);
     }
-    // public function index()
-    // {
-    //     $FinancialInvoice = FinancialInvoice::where('status', 'active')->get();
-    //     return Inertia::render('App/Admin/Finance/Dashboard', compact('FinancialInvoice'));
-    // }
+    public function getTransaction()
+    {
+        $FinancialData = FinancialInvoice::with(['user' => function ($query) {
+            $query->select('id', 'phone_number','name');
+        }])->latest()->get();
+        return Inertia::render('App/Admin/Finance/Transaction', [
+            'FinancialData' => $FinancialData,
+        ]);
+    }
 
     public function create()
     {
@@ -28,20 +35,8 @@ class FinancialController extends Controller
                                    ->where('status', 'active')
                                    ->get();
 
-        // Define payment methods from financial_invoices table enum
-        $paymentMethods = ['cash', 'credit_card', 'bank', 'split_payment'];
-
-        // Define subscription types
-        $subscriptionTypes = [
-            ['label' => 'One Time', 'value' => 'one_time'],
-            ['label' => 'Monthly', 'value' => 'monthly'],
-            ['label' => 'Annual', 'value' => 'annual'],
-        ];
-
         return Inertia::render('App/Admin/Finance/AddTransaction', [
             'categories2' => $categories,
-            'paymentMethods' => $paymentMethods,
-            'subscriptionTypes' => $subscriptionTypes,
         ]);
     }
 
@@ -60,20 +55,18 @@ class FinancialController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // Find category for subscription_type
         $category = MemberCategory::find($request->category);
         $subscription_type = $category ? $category->name : null;
+        $member_id = Auth::user()->id;
 
-        // Generate a unique invoice number
-        $invoice_no = 'INV-' . time();
-
-        // Save to financial_invoices table
-        FinancialInvoice::create([
-            'invoice_no' => $invoice_no,
-            'customer_id' => null,
+        // Create the invoice without invoice_no and customer_id initially
+        $invoice = FinancialInvoice::create([
+            'invoice_no' => null,
+            'customer_id' => $request->customer['id'] ?? null,
+            'member_id' => $member_id,
             'guest_name' => $request->guestName,
             'subscription_type' => $subscription_type,
             'invoice_type' => 'subscription',
@@ -91,7 +84,10 @@ class FinancialController extends Controller
             ]),
         ]);
 
+        $invoice->update([
+            'invoice_no' => $invoice->id,
+        ]);
+
         return redirect()->route('finance.dashboard')->with('success', 'Transaction added successfully');
     }
-
 }
