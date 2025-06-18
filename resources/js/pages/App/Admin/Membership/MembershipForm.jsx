@@ -18,7 +18,7 @@ const drawerWidthClosed = 110;
 const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(3);
     const [formsData1, setFormsData1] = useState({
         email: '',
         first_name: '',
@@ -59,7 +59,52 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
             permanent_country: '',
             country: '',
         },
+        member: {
+            member_type_id: '',
+            membership_category: '',
+            membership_date: new Date().toISOString().split('T')[0],
+            card_issue_date: new Date().toISOString().split('T')[0],
+            card_expiry_date: '',
+            from_date: new Date().toISOString().split('T')[0],
+            to_date: '',
+            card_status: 'active',
+        },
+        family_members: [],
     });
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        if (name.startsWith('user_details.')) {
+            const field = name.split('.')[1];
+            setFormsData1((prev) => ({
+                ...prev,
+                user_details: {
+                    ...prev.user_details,
+                    [field]: value,
+                },
+            }));
+        } else if (name.startsWith('member.')) {
+            const field = name.split('.')[1];
+            setFormsData1((prev) => ({
+                ...prev,
+                member: {
+                    ...prev.member,
+                    [field]: value,
+                },
+            }));
+        } else if (name.startsWith('family_members.')) {
+            const index = parseInt(name.split('.')[1], 10);
+            setFormsData1((prev) => ({
+                ...prev,
+                family_members: prev.family_members.map((member, i) => (i === index ? { ...member, [name.split('.')[2]]: value } : member)),
+            }));
+        } else {
+            setFormsData1((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+        }
+    };
 
     const [formsData, setFormsData] = useState({
         // Form 1
@@ -96,28 +141,6 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
         permanentCountry: 'India',
         // Form 3
     });
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-
-        if (name.startsWith('user_details.')) {
-            // It's a field within `user_details`
-            const field = name.split('.')[1];
-            setFormsData1((prev) => ({
-                ...prev,
-                user_details: {
-                    ...prev.user_details,
-                    [field]: value,
-                },
-            }));
-        } else {
-            // It's a top-level field
-            setFormsData1((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
-        }
-    };
 
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
         user_id: userNo + 1,
@@ -264,7 +287,7 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
                 <div className="">
                     {step === 1 && <AddForm1 setData={setFormsData1} data={formsData1} handleChange={handleChange} userNo={userNo} onNext={(data) => handleNext('step1', data)} />}
                     {step === 2 && <AddForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} setFormData={setFormsData} formData={formsData} onNext={(data) => handleNext('step2', data)} onBack={() => setStep(1)} />}
-                    {step === 3 && <AddForm3 setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} setMembershipData={setMembershipData} membershipData={membershipData} setFamilyMembers={setFamilyMembers} familyMembers={familyMembers} userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
+                    {step === 3 && <AddForm3 setData={setFormsData1} data={formsData1} handleChange={handleChange} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} setMembershipData={setMembershipData} membershipData={membershipData} setFamilyMembers={setFamilyMembers} familyMembers={familyMembers} userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
                 </div>
             </div>
         </>
