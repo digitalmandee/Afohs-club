@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import TransactionFilter from './Filter';
+import InvoiceSlip from '../Membership/Invoice';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -14,69 +15,13 @@ const Transaction = ({ FinancialData }) => {
     // Modal state
     const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
+    const [openProfileModal, setOpenProfileModal] = useState(false); // Added for profile modal
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false); // State for InvoiceSlip modal
     const [page, setPage] = useState(1);
+    const [selectMember, setSelectMember] = useState(null); // State for selected member
     const rowsPerPage = 6;
 
     console.log("FinancialData", FinancialData);
-
-    // Sample data
-    const members = [
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Cash',
-            amount: '5000',
-            date: 'Jul 10-2027',
-            contact: '0987654321',
-            added_by: 'Admin',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Cash',
-            amount: '5000',
-            date: 'Jul 10-2027',
-            contact: '0987654321',
-            added_by: 'Admin',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Cash',
-            amount: '5000',
-            date: 'Jul 10-2027',
-            contact: '0987654321',
-            added_by: 'Admin',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Cash',
-            amount: '5000',
-            date: 'Jul 10-2027',
-            contact: '0987654321',
-            added_by: 'Admin',
-            invoice: 'View',
-        },
-        {
-            id: 'AFOHS-1235',
-            name: 'Zahid Ullah',
-            category: 'GYM',
-            type: 'Cash',
-            amount: '5000',
-            date: 'Jul 10-2027',
-            contact: '0987654321',
-            added_by: 'Admin',
-            invoice: 'View',
-        },
-    ];
 
     // Calculate total pages
     const totalPages = Math.ceil((FinancialData || []).length / rowsPerPage);
@@ -164,8 +109,8 @@ const Transaction = ({ FinancialData }) => {
                                             <TableCell
                                                 sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
                                                 onClick={() => {
-                                                    setSelectMember(member); // save the clicked member
-                                                    setOpenProfileModal(true); // open the modal
+                                                    setSelectMember(member); // Save the clicked member
+                                                    setOpenProfileModal(true); // Open the modal
                                                 }}
                                             >
                                                 {member.invoice_no}
@@ -194,16 +139,15 @@ const Transaction = ({ FinancialData }) => {
                                                 {member.user?.name}
                                             </TableCell>
                                             <TableCell>
-                                                <span
-                                                    style={{
-                                                        color: "#0C67AA",
-                                                        textDecoration: "underline",
-                                                        cursor: "pointer"
+                                                <Button
+                                                    style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
+                                                    onClick={() => {
+                                                        setSelectMember(member); // Save the clicked member
+                                                        setOpenInvoiceModal(true); // Open invoice modal
                                                     }}
-                                                    onClick={() => setOpenCardModal(true)}
                                                 >
-                                                    view
-                                                </span>
+                                                    View
+                                                </Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -220,6 +164,7 @@ const Transaction = ({ FinancialData }) => {
                         </div>
                     </div>
                     <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} member={selectMember} />
                 </div>
             </div>
         </>

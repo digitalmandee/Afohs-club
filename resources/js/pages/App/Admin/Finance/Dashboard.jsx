@@ -31,7 +31,6 @@ const Dashboard = ({ FinancialInvoice }) => {
     const [date, setDate] = useState('Apr-2025');
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
-    console.log('FinancialInvoice:', FinancialInvoice);
     const [allRevenue, setAllRevenue] = useState(0);
     const [roomRevenue, setRoomRevenue] = useState(0);
     const [eventRevenue, setEventRevenue] = useState(0);
@@ -54,9 +53,7 @@ const Dashboard = ({ FinancialInvoice }) => {
             });
     }, []);
 
-    console.log('AllRevenue', allRevenue);
-    console.log('RoomRevenue', roomRevenue);
-    console.log('EventRevenue', eventRevenue);
+
 
     // Calculate metrics from FinancialInvoice
     const totalMembers = new Set(FinancialInvoice?.map(i => i.member_id).filter(id => id !== null)).size;
