@@ -21,7 +21,7 @@ class SubscriptionController extends Controller
         $newSubscriptionsToday = Subscription::where('status', 'active')->whereDate('created_at', today())->count();
         $totalRevenue = FinancialInvoice::where('status', 'paid')->where('invoice_type', 'subscription')->sum('total_price');
         // subscriptions
-        $subscriptions = Subscription::with('user:id,user_id,first_name,last_name,email')->latest()->take(5)->get();
+        $subscriptions = Subscription::with('user:id,user_id,first_name,last_name,email,phone_number')->latest()->take(5)->get();
 
         return Inertia::render('App/Admin/Subscription/Dashboard', compact('subscriptions', 'newSubscriptionsToday', 'totalRevenue'));
     }

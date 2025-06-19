@@ -1,5 +1,5 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {
     Container, Row, Col, Card, Button, Form
@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { router } from '@inertiajs/react';
 import InvoiceSlip from '../Subscription/Invoice';
+import axios from 'axios';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -31,6 +32,31 @@ const Dashboard = ({ FinancialInvoice }) => {
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     console.log('FinancialInvoice:', FinancialInvoice);
+    const [allRevenue, setAllRevenue] = useState(0);
+    const [roomRevenue, setRoomRevenue] = useState(0);
+    const [eventRevenue, setEventRevenue] = useState(0);
+    const [memberShipRevenue, setMemberShipRevenue] = useState(0);
+    const [subscriptionRevenue, setSubscriptionRevenue] = useState(0);
+    const [foodRevenue, setFoodRevenue] = useState(0);
+
+    useEffect(() => {
+        axios.get('/api/finance/totalRevenue')
+            .then(response => {
+                setAllRevenue(response.data.totalRevenue);
+                setRoomRevenue(response.data.roomRevenue);
+                setEventRevenue(response.data.eventRevenue);
+                setMemberShipRevenue(response.data.memberShipRevenue);
+                setSubscriptionRevenue(response.data.subscriptionRevenue);
+                setFoodRevenue(response.data.foodRevenue);
+            })
+            .catch(error => {
+                console.error('Error fetching revenue:', error);
+            });
+    }, []);
+
+    console.log('AllRevenue', allRevenue);
+    console.log('RoomRevenue', roomRevenue);
+    console.log('EventRevenue', eventRevenue);
 
     // Calculate metrics from FinancialInvoice
     const totalMembers = new Set(FinancialInvoice?.map(i => i.member_id).filter(id => id !== null)).size;
@@ -59,7 +85,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                             <Col xs="auto">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <h2 style={{ margin: 0, fontWeight: '500', color: '#3F4E4F', fontSize: '30px' }}>Finance Dashboard</h2>
-                                    <pre>{JSON.stringify(FinancialInvoice, null, 2)}</pre>
+                                    {/* <pre>{JSON.stringify(FinancialInvoice, null, 2)}</pre> */}
                                 </div>
                             </Col>
                             <Col className="d-flex justify-content-end align-items-center">
@@ -226,7 +252,9 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                             <div>
                                                 <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400, }}>Total Revenue</div>
-                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Pkr {formatNumber(totalRevenue)}</div>
+                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>
+                                                    Pkr {allRevenue?.toLocaleString() || 0}
+                                                </div>
                                             </div>
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
@@ -255,18 +283,22 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                             <div>
                                                 <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Booking Revenue</div>
-                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Pkr 320,000</div>
+                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>
+                                                    Pkr {(+roomRevenue + +eventRevenue).toLocaleString()}
+                                                </div>
+
+
                                             </div>
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
                                             <Row>
                                                 <Col>
                                                     <div style={{ fontSize: '12px', color: '#C6C6C6', fontWeight: 400, marginTop: 10 }}>Room Rev</div>
-                                                    <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Pkr 280,00</div>
+                                                    <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Pkr {roomRevenue}</div>
                                                 </Col>
                                                 <Col>
                                                     <div style={{ fontSize: '12px', color: '#C6C6C6', fontWeight: 400, marginTop: 10 }}>Event Rev</div>
-                                                    <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Pkr 200,000</div>
+                                                    <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Pkr {eventRevenue}</div>
                                                 </Col>
                                             </Row>
                                         </div>
@@ -291,13 +323,13 @@ const Dashboard = ({ FinancialInvoice }) => {
                                                 <CardMembership />
                                             </div>
                                             <div>
-                                                <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Membership Revenue</div>
-                                                <div style={{ fontSize: '20px', fontWeight: 500, marginBottom: '10px' }}>Pkr {formatNumber(totalRevenue)}</div>
+                                                <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Membership Rev</div>
+                                                <div style={{ fontSize: '20px', fontWeight: 500, marginBottom: '10px' }}>Pkr {memberShipRevenue}</div>
                                             </div>
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '10px' }}>
                                             <div style={{ fontSize: '12px', fontWeight: 400, color: '#C6C6C6' }}>Subscription Revenue</div>
-                                            <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Pkr {formatNumber(totalRevenue)}</div>
+                                            <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Pkr {subscriptionRevenue}</div>
                                         </div>
                                     </Card.Body>
                                 </Card>
@@ -320,7 +352,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             </div>
                                         </div>
                                         <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 500, marginTop: '10px' }}>Food Revenue</div>
-                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>Pkr 230,00</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 700, color: '#FFFFFF' }}>Pkr {foodRevenue}</div>
                                     </Card.Body>
                                 </Card>
                             </Col>

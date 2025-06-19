@@ -19,6 +19,42 @@ class FinancialController extends Controller
             'FinancialInvoice' => $FinancialInvoice,
         ]);
     }
+    public function fetchRevenue()
+{
+    $totalRevenue = FinancialInvoice::where('status', 'paid')
+        ->sum('total_price');
+
+    $roomRevenue = FinancialInvoice::where('status', 'paid')
+        ->where('invoice_type', 'room')
+        ->sum('total_price');
+
+    $eventRevenue = FinancialInvoice::where('status', 'paid')
+        ->where('invoice_type', 'event')
+        ->sum('total_price');
+
+    $memberShipRevenue = FinancialInvoice::where('status', 'paid')
+        ->where('invoice_type', 'membership')
+        ->sum('total_price');
+
+    $subscriptionRevenue = FinancialInvoice::where('status', 'paid')
+        ->where('invoice_type', 'subscription')
+        ->sum('total_price');
+
+    $foodRevenue = FinancialInvoice::where('status', 'paid')
+        ->where('invoice_type', 'food')
+        ->sum('total_price');
+
+    return response()->json([
+        'totalRevenue' => $totalRevenue,
+        'roomRevenue' => $roomRevenue,
+        'eventRevenue' => $eventRevenue,
+        'memberShipRevenue' => $memberShipRevenue,
+        'subscriptionRevenue' => $subscriptionRevenue,
+        'foodRevenue' => $foodRevenue,
+    ]);
+}
+
+
     public function getTransaction()
     {
         $FinancialData = FinancialInvoice::with(['user' => function ($query) {

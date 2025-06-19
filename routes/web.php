@@ -231,20 +231,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
      //Financial Routes
     Route::get('/finance/dashboard', [FinancialController::class, 'index'])->name('finance.dashboard');
     Route::get('/finance/transaction', [FinancialController::class, 'getTransaction'])->name('finance.transaction');
+    Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
+
+
     Route::get('/finance/add/transaction', [FinancialController::class, 'create'])->name('finance.addtransaction');
     Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.addtransaction');
 
-    // Route::get('/finance/dashboard', function () {
-    //     return Inertia::render('App/Admin/Finance/Dashboard');
-    // })->name('finance.dashboard');
 
-    // Route::get('/finance/add/transaction', function () {
-    //     return Inertia::render('App/Admin/Finance/AddTransaction');
-    // })->name('finance.addtransaction');
-
-    // Route::get('/finance/transaction', function () {
-    //     return Inertia::render('App/Admin/Finance/Transaction');
-    // })->name('finance.transaction');
     Route::get('/admin/manage/monthly/fee', function () {
         return Inertia::render('App/Admin/Subscription/Monthly');
     })->name('subscription.monthly');

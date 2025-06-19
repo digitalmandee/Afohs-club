@@ -196,10 +196,9 @@ const Transaction = ({ FinancialData }) => {
                                             <TableCell>
                                                 <span
                                                     style={{
-                                                        background: '#063455',
-                                                        color: '#FFFFFF',
-                                                        cursor: 'pointer',
-                                                        padding: 10,
+                                                        color: "#0C67AA",
+                                                        textDecoration: "underline",
+                                                        cursor: "pointer"
                                                     }}
                                                     onClick={() => setOpenCardModal(true)}
                                                 >
