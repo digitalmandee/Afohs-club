@@ -7,6 +7,7 @@ use App\Models\CardPayment;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Member;
+use App\Models\MemberCategory;
 use App\Models\MembershipInvoice;
 use App\Models\MemberType;
 use Illuminate\Http\Request;
@@ -39,7 +40,8 @@ class MembershipController extends Controller
     {
         $userNo = $this->getUserNo();
         $memberTypesData = MemberType::all();
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('userNo', 'memberTypesData'));
+        $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('userNo', 'memberTypesData', 'membercategories'));
     }
     public function allMembers()
     {

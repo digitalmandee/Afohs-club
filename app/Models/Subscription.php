@@ -21,4 +21,9 @@ class Subscription extends Model
     {
         return $this->belongsTo(UserDetail::class);
     }
+
+    public function invoice()
+    {
+        return $this->hasOne(FinancialInvoice::class, 'id', 'invoice_id');
+    }
 }

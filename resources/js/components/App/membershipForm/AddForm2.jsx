@@ -3,26 +3,19 @@ import { TextField, Button, Paper, Typography, Grid, Box, IconButton } from '@mu
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-
+const AddForm2 = ({ setData, data, handleChange, onNext, onBack, formData }) => {
     const handleSubmit = (e) => {
         e.preventDefault(); // Prevent default form submission
         // Basic validation
         const missingFields = [];
-        if (!formData.mobileNumberA) missingFields.push('Mobile Number (A)');
-        if (!formData.personalEmail) missingFields.push('Personal Email');
-        if (!formData.currentAddress) missingFields.push('Current Address');
+        if (!data.user_details.mobile_number_a) missingFields.push('Mobile Number (A)');
+        if (!data.email) missingFields.push('Personal Email');
+        if (!data.user_details.current_address) missingFields.push('Current Address');
 
         if (missingFields.length > 0) {
             alert(`Please fill all required fields: ${missingFields.join(', ')}`);
             return;
         }
-
-        console.log('Form2 Data:', formData); // Debug log
         onNext(formData);
     };
 
@@ -126,7 +119,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (A)*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="mobileNumberA" value={formData.mobileNumberA} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_a" value={data.user_details.mobile_number_a} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Mobile Number (B) */}
@@ -134,7 +127,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (B)
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="mobileNumberB" value={formData.mobileNumberB} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_b" value={data.user_details.mobile_number_b} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Mobile Number (C) */}
@@ -142,7 +135,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (C)
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="mobileNumberC" value={formData.mobileNumberC} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_c" value={data.user_details.mobile_number_c} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Telephone Number */}
@@ -150,7 +143,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Telephone Number
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter telephone number" size="small" name="telephoneNumber" value={formData.telephoneNumber} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter telephone number" size="small" name="user_details.telephone_number" value={data.user_details.telephone_number} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Personal Email */}
@@ -158,7 +151,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Personal Email*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="member1@gmail.com" size="small" name="personalEmail" value={formData.personalEmail} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="member1@gmail.com" size="small" name="email" value={data.email} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Critical Email */}
@@ -166,7 +159,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Critical Email
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="member2@gmail.com" size="small" name="criticalEmail" value={formData.criticalEmail} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="member2@gmail.com" size="small" name="user_details.critical_email" value={data.user_details.critical_email} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
                             </Grid>
 
@@ -184,7 +177,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Name
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter Full Name" size="small" name="emergencyName" value={formData.emergencyName} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter Full Name" size="small" name="user_details.emergency_name" value={data.user_details.emergency_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Relation */}
@@ -192,7 +185,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Relation
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter Relationship" size="small" name="emergencyRelation" value={formData.emergencyRelation} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter Relationship" size="small" name="user_details.emergency_relation" value={data.user_details.emergency_relation} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Contact Number */}
@@ -200,7 +193,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Contact Number
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="emergencyContact" value={formData.emergencyContact} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.emergency_contact" value={data.user_details.emergency_contact} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
                             </Grid>
                         </Paper>
@@ -223,7 +216,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Address*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="currentAddress" value={formData.currentAddress} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="user_details.current_address" value={data.user_details.current_address} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* City */}
@@ -231,7 +224,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         City
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="currentCity" value={formData.currentCity} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="user_details.current_city" value={data.user_details.current_city} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Country */}
@@ -239,7 +232,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Country
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter country name e.g. Pakistan" size="small" name="currentCountry" value={formData.currentCountry} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter country name e.g. Pakistan" size="small" name="user_details.current_country" value={data.user_details.current_country} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
                             </Grid>
 
@@ -257,7 +250,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Address
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="permanentAddress" value={formData.permanentAddress} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="user_details.permanent_address" value={data.user_details.permanent_address} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* City */}
@@ -265,7 +258,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         City
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="permanentCity" value={formData.permanentCity} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="user_details.permanent_city" value={data.user_details.permanent_city} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Country */}
@@ -273,7 +266,7 @@ const AddForm2 = ({ onNext, onBack, formData, setFormData }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Country
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter country name e.g. Pakistan" size="small" name="permanentCountry" value={formData.permanentCountry} onChange={handleInputChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter country name e.g. Pakistan" size="small" name="user_details.permanent_country" value={data.user_details.permanent_country} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
                             </Grid>
 

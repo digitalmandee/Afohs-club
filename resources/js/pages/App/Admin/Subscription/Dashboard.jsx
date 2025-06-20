@@ -217,8 +217,23 @@ const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalReve
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
+                                                    {/* View button can stay here if you need it */}
                                                     <Button onClick={() => setOpenInvoiceModal(true)} sx={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>
                                                         View
+                                                    </Button>
+                                                    <Button
+                                                        disabled={subscription?.invoice?.status !== 'unpaid'}
+                                                        onClick={() => handleSendNotification(subscription.id)}
+                                                        variant="contained"
+                                                        style={{
+                                                            backgroundColor: '#063455',
+                                                            color: 'white',
+                                                            textTransform: 'none',
+                                                            borderRadius: '4px',
+                                                            height: 40,
+                                                        }}
+                                                    >
+                                                        Notify
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>

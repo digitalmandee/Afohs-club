@@ -36,6 +36,7 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
     const subscriptionTypes = [
         { label: 'One Time', value: 'one_time' },
         { label: 'Monthly', value: 'monthly' },
+        { label: 'Quarter', value: 'quarter' },
         { label: 'Annual', value: 'annual' },
     ];
 
@@ -76,6 +77,9 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
         const date = new Date(startDate);
         if (type === 'monthly') {
             date.setMonth(date.getMonth() + 1);
+        } else if (type === 'quarter') {
+            // 3 months
+            date.setMonth(date.getMonth() + 3);
         } else if (type === 'annual') {
             date.setFullYear(date.getFullYear() + 1);
         } else {
@@ -111,14 +115,16 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
 
         if (name === 'subscriptionType') {
             if (value === 'one_time') {
-                updatedData.expiryDate = ''; // Manual entry required
-            } else if (value === 'monthly' && formData.startDate) {
+                updatedData.expiryDate = '';
+            } else if (formData.startDate) {
                 const newDate = new Date(formData.startDate);
-                newDate.setMonth(newDate.getMonth() + 1);
-                updatedData.expiryDate = newDate.toISOString().split('T')[0];
-            } else if (value === 'annual' && formData.startDate) {
-                const newDate = new Date(formData.startDate);
-                newDate.setFullYear(newDate.getFullYear() + 1);
+                if (value === 'monthly') {
+                    newDate.setMonth(newDate.getMonth() + 1);
+                } else if (value === 'quarter') {
+                    newDate.setMonth(newDate.getMonth() + 3);
+                } else if (value === 'annual') {
+                    newDate.setFullYear(newDate.getFullYear() + 1);
+                }
                 updatedData.expiryDate = newDate.toISOString().split('T')[0];
             }
         }
@@ -127,6 +133,8 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
             const newDate = new Date(value);
             if (formData.subscriptionType === 'monthly') {
                 newDate.setMonth(newDate.getMonth() + 1);
+            } else if (formData.subscriptionType === 'quarter') {
+                newDate.setMonth(newDate.getMonth() + 3);
             } else if (formData.subscriptionType === 'annual') {
                 newDate.setFullYear(newDate.getFullYear() + 1);
             }
@@ -145,6 +153,8 @@ const AddSubscriptionInformation = ({ categories, invoice_no }) => {
                 updatedData.amount = baseFee;
             } else if (subscriptionType === 'monthly') {
                 updatedData.amount = subFee;
+            } else if (subscriptionType === 'quarter') {
+                updatedData.amount = subFee * 3;
             } else if (subscriptionType === 'annual') {
                 updatedData.amount = subFee * 12;
             }
