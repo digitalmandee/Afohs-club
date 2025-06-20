@@ -260,7 +260,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Kitchen',
-            icon: <FaKitchenSet style={{width:25, height:25}}/>,
+            icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
             children: [
                 {
                     text: 'Dashboard',
@@ -421,7 +421,8 @@ export default function SideNav({ open, setOpen }) {
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden', // hide overflow at root
-                        backgroundColor: '#121212', // Optional: set background here
+                        backgroundColor: '#FFFFFF',
+                        color: '#242220',
                     },
                 }}
             >
@@ -435,14 +436,13 @@ export default function SideNav({ open, setOpen }) {
                         position: 'sticky',
                         top: 0,
                         zIndex: 1000,
-                        backgroundColor: '#121212', // match the drawer bg
                     }}
                 >
                     <img
                         src={open ? '/assets/Logo.png' : '/assets/slogo.png'}
                         alt="Sidebar Logo"
                         style={{
-                            width: open ? '180px' : '80px',
+                            width: open ? '100px' : '60px',
                             transition: 'width 0.3s ease-in-out',
                         }}
                     />
@@ -482,8 +482,16 @@ export default function SideNav({ open, setOpen }) {
                                                 justifyContent: open ? 'initial' : 'center',
                                                 mx: open ? 0.5 : 3,
                                                 borderRadius: '12px',
-                                                backgroundColor: isSelected ? '#333' : 'transparent',
-                                                '&:hover': { backgroundColor: '#444' },
+                                                backgroundColor: isSelected ? '#063455' : 'transparent',
+                                                '&:hover': {
+                                                    backgroundColor: '#063455',
+                                                    '& .MuiTypography-root': {
+                                                        color: '#FFFFFF', // text color on hover
+                                                    },
+                                                    '& .MuiListItemIcon-root svg': {
+                                                        fill: '#FFFFFF', // icon color on hover
+                                                    }
+                                                },
                                             }}
                                         >
                                             <ListItemIcon
@@ -493,7 +501,7 @@ export default function SideNav({ open, setOpen }) {
                                                     mr: open ? 0.8 : 'auto',
                                                     ml: open ? -2 : 0,
                                                     '& svg': {
-                                                        fill: isSelected ? 'orange' : '#fff',
+                                                        fill: isSelected ? '#FFFFFF' : '#242220', // For MUI/React icons
                                                     },
                                                 }}
                                             >
@@ -501,17 +509,21 @@ export default function SideNav({ open, setOpen }) {
                                             </ListItemIcon>
                                             <ListItemText
                                                 primary={text}
+                                                primaryTypographyProps={{
+                                                    fontSize: '0.9rem',
+                                                    color: isSelected ? '#FFFFFF' : '#242220',
+                                                }}
                                                 sx={{
-                                                    color: isSelected ? 'orange' : '#fff',
                                                     opacity: open ? 1 : 0,
                                                 }}
                                             />
                                             {children && open && (
                                                 <KeyboardArrowRightIcon
+                                                    className="dropdown-arrow"
                                                     sx={{
                                                         transform: isDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
                                                         transition: 'transform 0.2s',
-                                                        fill: '#fff',
+                                                        fill: '#000000',
                                                         ml: 21.5,
                                                     }}
                                                 />
@@ -541,14 +553,25 @@ export default function SideNav({ open, setOpen }) {
                                                                     justifyContent: 'initial',
                                                                     mx: 3,
                                                                     borderRadius: '12px',
-                                                                    backgroundColor: isChildSelected ? '#333' : 'transparent',
-                                                                    '&:hover': { backgroundColor: '#444' },
+                                                                    backgroundColor: isChildSelected ? '#063455' : 'transparent',
+                                                                    '&:hover': {
+                                                                        backgroundColor: '#063455',
+                                                                        '& .MuiTypography-root': {
+                                                                            color: '#FFFFFF', // text color on hover
+                                                                        },
+                                                                        '& .dropdown-arrow': {
+                                                                            fill: '#FFFFFF', // ← change arrow color to white on hover
+                                                                        },
+                                                                    },
                                                                 }}
                                                             >
                                                                 <ListItemText
                                                                     primary={child.text}
+                                                                    primaryTypographyProps={{
+                                                                        fontSize: '0.9rem',
+                                                                        color: isSelected ? '#FFFFFF' : '#242220',
+                                                                    }}
                                                                     sx={{
-                                                                        color: isChildSelected ? 'orange' : '#fff',
                                                                         opacity: open ? 1 : 0,
                                                                     }}
                                                                 />

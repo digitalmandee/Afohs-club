@@ -13,6 +13,7 @@ import Divider from '@mui/material/Divider';
 import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
+import { IoPeople } from "react-icons/io5";
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -33,6 +34,7 @@ import TableIcon from '@/components/App/Icons/TableManagement';
 import CategoryIcon from '@mui/icons-material/Category';
 import AddressType from '../Icons/AddressType';
 import { MdManageHistory } from 'react-icons/md';
+import { FaUser } from "react-icons/fa";
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -112,38 +114,43 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index'), permission: 'order' },
         {
             text: 'Table Management',
-            icon: <TableIcon />,
+            icon: (
+                <img
+                    src="/assets/Tablemanage.svg"
+                    alt="Table Icon"
+                    className="svg-img-icon"
+                />
+            ),
             path: route('table.management'),
             permission: 'order',
         },
         {
-            text: 'Kitchen',
-            icon: <KitchenIcon />,
-            path: route('kitchen.index'),
-            permission: 'kitchen',
-        },
-        {
             text: 'Order Management',
-            icon: <MdManageHistory />,
+            icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
             path: route('order.management'),
             permission: 'order',
         },
         {
             text: 'Kitchens',
-            icon: <KitchenIcon />,
+            icon: (
+                <img src='/assets/Kitchen.svg'
+                    alt='Kitchen icon'
+                    className="svg-img-icon"
+                />
+            ),
             path: route('kitchens.index'),
             permission: 'order',
         },
         {
             text: 'Members',
-            icon: <MemberIcon />,
+            icon: <IoPeople style={{ height: 20, width: 20 }} />,
             path: route('members.index'),
             permission: 'order',
         },
 
         {
             text: 'Members Types',
-            icon: <MemberIcon />,
+            icon: <FaUser style={{ width: 16, height: 16 }} />,
             path: route('member-types.index'),
             permission: 'order',
         },
@@ -159,7 +166,6 @@ export default function SideNav({ open, setOpen }) {
             path: route('setting.index'),
             permission: 'order',
         },
-        // { text: 'Settings', icon: <SettingsIcon />, path: route('settings'), permission: 'order' },
     ];
 
     return (
@@ -321,7 +327,8 @@ export default function SideNav({ open, setOpen }) {
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden', // hide overflow at root
-                        backgroundColor: '#121212', // Optional: set background here
+                        backgroundColor: '#FFFFFF', // ← White background
+                        color: '#242220',
                     },
                 }}
             >
@@ -335,14 +342,14 @@ export default function SideNav({ open, setOpen }) {
                         position: 'sticky',
                         top: 0,
                         zIndex: 1000,
-                        backgroundColor: '#121212', // match the drawer bg
+                        // backgroundColor: '#121212',
                     }}
                 >
                     <img
                         src={open ? '/assets/Logo.png' : '/assets/slogo.png'}
                         alt="Sidebar Logo"
                         style={{
-                            width: open ? '180px' : '80px',
+                            width: open ? '100px' : '60px',
                             transition: 'width 0.3s ease-in-out',
                         }}
                     />
@@ -398,9 +405,11 @@ export default function SideNav({ open, setOpen }) {
                         {menuItems
                             .filter((item) => auth.permissions.includes(item.permission))
                             .map(({ text, icon, path }) => {
-                                const isSelected = url === path;
+                                const pathOnly = new URL(path, window.location.origin).pathname;
+                                const isSelected = url.startsWith(pathOnly);
+
                                 return (
-                                    <ListItem key={text} disablePadding sx={{ display: 'block', p: 0.5 }}>
+                                    <ListItem key={text} disablePadding sx={{ display: 'block', py: 0.2 }}>
                                         <ListItemButton
                                             onClick={() => router.visit(path)}
                                             sx={{
@@ -408,18 +417,36 @@ export default function SideNav({ open, setOpen }) {
                                                 justifyContent: open ? 'initial' : 'center',
                                                 mx: 3,
                                                 borderRadius: '12px',
-                                                backgroundColor: isSelected ? '#333' : 'transparent',
-                                                '&:hover': { backgroundColor: '#444' },
+                                                fontSize: '0.8rem',
+                                                backgroundColor: isSelected ? '#063455' : 'transparent',
+                                                '&:hover': {
+                                                    backgroundColor: '#063455',
+                                                    '& .MuiTypography-root': {
+                                                        color: '#FFFFFF', // text color on hover
+                                                    },
+                                                    '& .svg-img-icon': {
+                                                        filter: 'invert(100%)', // only for image icons
+                                                    },
+                                                    '& .MuiListItemIcon-root svg': {
+                                                        fill: '#FFFFFF', // icon color on hover
+                                                    }
+                                                },
                                             }}
                                         >
                                             <ListItemIcon
                                                 sx={{
                                                     minWidth: 0,
-                                                    justifyContent: 'center',
-                                                    ml: open ? -1 : 0,
+                                                    // justifyContent: 'center',
+                                                    ml: open ? -1 : 0.3,
                                                     mr: open ? 1 : 'auto',
+                                                    '& .svg-img-icon': {
+                                                        width: 25,
+                                                        height: 25,
+                                                        transition: 'filter 0.3s ease',
+                                                        filter: isSelected ? 'invert(100%)' : 'invert(0%)', // white if selected, black otherwise
+                                                    },
                                                     '& svg': {
-                                                        fill: isSelected ? 'orange' : '#fff',
+                                                        fill: isSelected ? '#FFFFFF' : '#242220', // For MUI/React icons
                                                     },
                                                 }}
                                             >
@@ -427,11 +454,15 @@ export default function SideNav({ open, setOpen }) {
                                             </ListItemIcon>
                                             <ListItemText
                                                 primary={text}
+                                                primaryTypographyProps={{
+                                                    fontSize: '0.9rem',
+                                                    color: isSelected ? '#FFFFFF' : '#242220',
+                                                }}
                                                 sx={{
-                                                    color: isSelected ? 'orange' : '#fff',
                                                     opacity: open ? 1 : 0,
                                                 }}
                                             />
+
                                         </ListItemButton>
                                     </ListItem>
                                 );

@@ -1191,7 +1191,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                             sx={{
                                                 fontWeight: '500',
                                                 color: '#121212',
-                                                fontSize: '18px',
+                                                fontSize: drawerWidthOpen ? '16px' : '18px',
                                             }}
                                         >
                                             Order Queue
@@ -1200,9 +1200,9 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                             src="/assets/arrowicon.png"
                                             alt=""
                                             style={{
-                                                height: '30px',
-                                                width: '30px',
-                                                marginLeft: '10px',
+                                                height: '22px',
+                                                width: '22px',
+                                                marginLeft: drawerWidthOpen ? '5px' : '0px',
                                                 cursor: 'pointer',
                                             }}
                                             onClick={() => router.visit('/order/queue')}
