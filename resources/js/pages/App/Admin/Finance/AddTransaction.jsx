@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {
     TextField,
@@ -6,8 +7,6 @@ import {
     Typography,
     Box,
     Paper,
-    InputAdornment,
-    Select,
     MenuItem,
     FormControl
 } from '@mui/material';
@@ -19,36 +18,151 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import SearchIcon from '@mui/icons-material/Search';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+const drawerWidthOpen = 260;
+const drawerWidthClosed = 120;
 
-const AddTransactionInformation = () => {
+// Define payment methods from financial_invoices table enum
+const paymentMethods = ['cash', 'credit_card', 'bank', 'split_payment'];
+
+// Define subscription types
+const subscriptionTypes = [
+    { label: 'One Time', value: 'one_time' },
+    { label: 'Monthly', value: 'monthly' },
+    { label: 'Annual', value: 'annual' },
+];
+
+const AddTransactionInformation = ({ categories2 }) => {
     const [open, setOpen] = useState(true);
+    const today = new Date().toISOString().split('T')[0];
+
     // State for form fields
     const [formData, setFormData] = useState({
-        guestName: '',
-        phone: '',
-        clubName: '',
-        authorizedBy: '',
-        checkInDate: '',
-        checkInTime: ''
+        customer: { id: 2, user_id: 1212, name: 'test2', email: 'test@example.com', phone: '1234567890' },
+        guestName: 'test2',
+        phone: '1234567890',
+        category: '',
+        subscriptionType: '',
+        paymentType: '',
+        startDate: today,
+        expiryDate: '',
+        amount: 0,
     });
+    const [errors, setErrors] = useState({});
+
+    // Calculate expiry date based on start date and subscription type
+    const calculateExpiry = (startDate, type) => {
+        const date = new Date(startDate);
+        if (type === 'monthly') {
+            date.setMonth(date.getMonth() + 1);
+        } else if (type === 'annual') {
+            date.setFullYear(date.getFullYear() + 1);
+        } else {
+            return '';
+        }
+        return date.toISOString().split('T')[0];
+    };
 
     // Handle input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
+
+        let updatedData = { ...formData, [name]: value };
+
+        // Update expiry date for monthly/annual subscriptions
+        if (name === 'subscriptionType') {
+            if (value === 'one_time') {
+                updatedData.expiryDate = '';
+            } else if (value === 'monthly' && formData.startDate) {
+                updatedData.expiryDate = calculateExpiry(formData.startDate, 'monthly');
+            } else if (value === 'annual' && formData.startDate) {
+                updatedData.expiryDate = calculateExpiry(formData.startDate, 'annual');
+            }
+        }
+
+        // Update expiry date when start date changes
+        if (name === 'startDate' && formData.subscriptionType !== 'one_time') {
+            updatedData.expiryDate = calculateExpiry(value, formData.subscriptionType);
+        }
+
+        // Compute total amount based on category and subscription type
+        const selectedCategory = categories2.find((cat) => cat.id === Number(name === 'category' ? value : formData.category));
+        const subscriptionType = name === 'subscriptionType' ? value : formData.subscriptionType;
+
+        if (selectedCategory && subscriptionType) {
+            const baseFee = parseFloat(selectedCategory.fee || 0);
+            const subFee = parseFloat(selectedCategory.subscription_fee || 0);
+
+            if (subscriptionType === 'one_time') {
+                updatedData.amount = baseFee;
+            } else if (subscriptionType === 'monthly') {
+                updatedData.amount = subFee;
+            } else if (subscriptionType === 'annual') {
+                updatedData.amount = subFee * 12;
+            }
+        }
+
+        setFormData(updatedData);
     };
 
+    // Update expiry date when subscription type or start date changes
+    useEffect(() => {
+        if (formData.startDate && formData.subscriptionType !== 'one_time') {
+            const newExpiry = calculateExpiry(formData.startDate, formData.subscriptionType);
+            setFormData((prev) => ({
+                ...prev,
+                expiryDate: newExpiry,
+            }));
+        }
+    }, [formData.startDate, formData.subscriptionType]);
+
     // Handle form submission
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
-        // Add your form submission logic here
+
+        // Simple front-end validation
+        const newErrors = {};
+        if (!formData.guestName) newErrors.guestName = 'Name is required';
+        if (!formData.phone) newErrors.phone = 'Contact number is required';
+        if (!formData.category) newErrors.category = 'Category is required';
+        if (!formData.subscriptionType) newErrors.subscriptionType = 'Selection type is required';
+        if (!formData.paymentType) newErrors.paymentType = 'Payment type is required';
+        if (!formData.startDate) newErrors.startDate = 'Start date is required';
+        if (formData.subscriptionType !== 'one_time' && !formData.expiryDate) {
+            newErrors.expiryDate = 'Expiry date is required';
+        }
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length === 0) {
+            try {
+                const response = await axios.post('/finance/add/transaction', formData);
+                router.visit('/finance/dashboard');
+                console.log('Transaction added successfully:', response.data);
+                // Optionally redirect or reset form
+                setFormData({
+                    guestName: '',
+                    phone: '',
+                    category: '',
+                    subscriptionType: '',
+                    paymentType: '',
+                    startDate: today,
+                    expiryDate: '',
+                    amount: 0,
+                });
+            } catch (error) {
+                console.error('Error adding transaction:', error.response?.data || error.message);
+                setErrors(error.response?.data?.errors || { general: 'Failed to add transaction' });
+            }
+        }
     };
+
+    // Set up CSRF token for axios
+    useEffect(() => {
+        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (token) {
+            axios.defaults.headers.common['X-CSRF-Token'] = token;
+        }
+    }, []);
 
     return (
         <>
@@ -57,31 +171,37 @@ const AddTransactionInformation = () => {
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    marginTop: '2rem',
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <div style={{
-                    fontFamily: 'Arial, sans-serif',
-                    padding: '20px',
-                    backgroundColor: '#f5f5f5',
-                    minHeight: '100vh'
-                }}>
+                <div
+                    style={{
+                        fontFamily: 'Arial, sans-serif',
+                        padding: '20px',
+                        backgroundColor: '#FFF',
+                        minHeight: '100vh'
+                    }}
+                >
                     {/* Header with back button and title */}
                     <div className="d-flex align-items-center mb-4">
                         <ArrowBackIcon
-                        onClick={() => window.history.back()}
-                        style={{
-                            cursor: 'pointer',
-                            marginRight: '10px',
-                            color: '#555',
-                            fontSize: '24px'
-                        }} />
-                        <Typography variant="h5" style={{
-                            fontWeight: 500,
-                            color: '#333',
-                            fontSize: '24px'
-                        }}>
+                            onClick={() => window.history.back()}
+                            style={{
+                                cursor: 'pointer',
+                                marginRight: '10px',
+                                color: '#555',
+                                fontSize: '24px'
+                            }}
+                        />
+                        <Typography
+                            variant="h5"
+                            style={{
+                                fontWeight: '600',
+                                color: '#555',
+                                fontSize: '24px'
+                            }}
+                        >
                             Add New Transaction
                         </Typography>
                     </div>
@@ -97,62 +217,69 @@ const AddTransactionInformation = () => {
                         }}
                     >
                         <form onSubmit={handleSubmit}>
-                            <Box mb={1} className="d-flex gap-3">
-                                <div style={{ flex: 1 }}>
-                                    <Typography
-                                        variant="body1"
-                                        style={{
-                                            marginBottom: '8px',
-                                            color: '#333',
-                                            fontSize: '14px',
-                                            fontWeight: 500
-                                        }}
-                                    >
-                                        Name
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
-                                        onChange={handleChange}
-                                        placeholder="Enter Name"
-                                        variant="outlined"
-                                        size="small"
-                                        style={{ marginBottom: '8px' }}
-                                        InputProps={{
-                                            style: { fontSize: '14px' }
-                                        }}
-                                    />
+                            {/* Name and Contact Number */}
+                            <div className="mb-3">
+                                <div className="d-flex gap-3">
+                                    <div style={{ flex: 1 }}>
+                                        <Typography
+                                            variant="body1"
+                                            style={{
+                                                marginBottom: '8px',
+                                                color: '#333',
+                                                fontSize: '14px',
+                                                fontWeight: '500'
+                                            }}
+                                        >
+                                            Name
+                                        </Typography>
+                                        <TextField
+                                            fullWidth
+                                            name="guestName"
+                                            value={formData.guestName}
+                                            onChange={handleChange}
+                                            placeholder="Enter Name"
+                                            variant="outlined"
+                                            size="small"
+                                            style={{ marginBottom: '8px' }}
+                                            // error={!!errors.guestName}
+                                            // helperText={errors.guestName}
+                                            InputProps={{
+                                                style: { fontSize: '14px' }
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <Typography
+                                            variant="body1"
+                                            style={{
+                                                marginBottom: '8px',
+                                                color: '#333',
+                                                fontSize: '14px',
+                                                fontWeight: '500'
+                                            }}
+                                        >
+                                            Contact Number
+                                        </Typography>
+                                        <TextField
+                                            fullWidth
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleChange}
+                                            placeholder="Enter your contact number"
+                                            variant="outlined"
+                                            size="small"
+                                            style={{ marginBottom: '8px' }}
+                                            error={!!errors.phone}
+                                            helperText={errors.phone}
+                                            InputProps={{
+                                                style: { fontSize: '14px' }
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <Typography
-                                        variant="body1"
-                                        style={{
-                                            marginBottom: '8px',
-                                            color: '#333',
-                                            fontSize: '14px',
-                                            fontWeight: 500
-                                        }}
-                                    >
-                                        Contact Number
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
-                                        onChange={handleChange}
-                                        placeholder="Enter you contact number"
-                                        variant="outlined"
-                                        size="small"
-                                        style={{ marginBottom: '8px' }}
-                                        InputProps={{
-                                            style: { fontSize: '14px' }
-                                        }}
-                                    />
-                                </div>
-                            </Box>
+                            </div>
 
-                            {/* Club Name */}
+                            {/* Category */}
                             <Box mb={1}>
                                 <Typography
                                     variant="body1"
@@ -169,20 +296,22 @@ const AddTransactionInformation = () => {
                                     <TextField
                                         select
                                         fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
+                                        name="category"
+                                        value={formData.category}
                                         onChange={handleChange}
-                                        placeholder="Choose Category"
                                         variant="outlined"
                                         size="small"
                                         style={{ marginBottom: '8px' }}
+                                        error={!!errors.category}
+                                        helperText={errors.category}
                                         SelectProps={{
                                             displayEmpty: true,
                                             renderValue: (selected) => {
                                                 if (!selected) {
-                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>e.g. Select member from list type name / ID</span>;
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>e.g. Select category</span>;
                                                 }
-                                                return selected;
+                                                const item = categories2.find((item) => item.id === Number(selected));
+                                                return item ? item.name : '';
                                             },
                                             IconComponent: KeyboardArrowDownIcon
                                         }}
@@ -193,14 +322,69 @@ const AddTransactionInformation = () => {
                                         <MenuItem value="">
                                             <em>None</em>
                                         </MenuItem>
-                                        <MenuItem value="Member 1">Member 1</MenuItem>
-                                        <MenuItem value="Member 2">Member 2</MenuItem>
-                                        <MenuItem value="Member 3">Member 3</MenuItem>
+                                        {categories2.map((item) => (
+                                            <MenuItem key={item.id} value={item.id}>
+                                                {item.name}
+                                            </MenuItem>
+                                        ))}
                                     </TextField>
                                 </FormControl>
                             </Box>
 
-                            {/* Authorized By */}
+                            {/* Selection Type */}
+                            <Box mb={1}>
+                                <Typography
+                                    variant="body1"
+                                    style={{
+                                        marginBottom: '8px',
+                                        color: '#333',
+                                        fontSize: '14px',
+                                        fontWeight: 500
+                                    }}
+                                >
+                                    Selection Type
+                                </Typography>
+                                <FormControl fullWidth size="small">
+                                    <TextField
+                                        select
+                                        fullWidth
+                                        name="subscriptionType"
+                                        value={formData.subscriptionType}
+                                        onChange={handleChange}
+                                        placeholder="Choose type"
+                                        variant="outlined"
+                                        size="small"
+                                        style={{ marginBottom: '8px' }}
+                                        error={!!errors.subscriptionType}
+                                        helperText={errors.subscriptionType}
+                                        SelectProps={{
+                                            displayEmpty: true,
+                                            renderValue: (selected) => {
+                                                if (!selected) {
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>e.g. Select type</span>;
+                                                }
+                                                const item = subscriptionTypes.find((item) => item.value === selected);
+                                                return item ? item.label : '';
+                                            },
+                                            IconComponent: KeyboardArrowDownIcon
+                                        }}
+                                        InputProps={{
+                                            style: { fontSize: '14px' }
+                                        }}
+                                    >
+                                        <MenuItem value="">
+                                            <em>None</em>
+                                        </MenuItem>
+                                        {subscriptionTypes.map((item) => (
+                                            <MenuItem key={item.value} value={item.value}>
+                                                {item.label}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                </FormControl>
+                            </Box>
+
+                            {/* Payment Type */}
                             <Box mb={1}>
                                 <Typography
                                     variant="body1"
@@ -217,20 +401,22 @@ const AddTransactionInformation = () => {
                                     <TextField
                                         select
                                         fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
+                                        name="paymentType"
+                                        value={formData.paymentType}
                                         onChange={handleChange}
                                         placeholder="Choose type"
                                         variant="outlined"
                                         size="small"
                                         style={{ marginBottom: '8px' }}
+                                        error={!!errors.paymentType}
+                                        helperText={errors.paymentType}
                                         SelectProps={{
                                             displayEmpty: true,
                                             renderValue: (selected) => {
                                                 if (!selected) {
-                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>e.g. Select member from list type name / ID</span>;
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>e.g. Select payment type</span>;
                                                 }
-                                                return selected;
+                                                return selected.replace('_', ' ').toUpperCase();
                                             },
                                             IconComponent: KeyboardArrowDownIcon
                                         }}
@@ -241,14 +427,16 @@ const AddTransactionInformation = () => {
                                         <MenuItem value="">
                                             <em>None</em>
                                         </MenuItem>
-                                        <MenuItem value="Member 1">Member 1</MenuItem>
-                                        <MenuItem value="Member 2">Member 2</MenuItem>
-                                        <MenuItem value="Member 3">Member 3</MenuItem>
+                                        {paymentMethods.map((method) => (
+                                            <MenuItem key={method} value={method}>
+                                                {method.replace('_', ' ').toUpperCase()}
+                                            </MenuItem>
+                                        ))}
                                     </TextField>
                                 </FormControl>
                             </Box>
 
-                            {/* Check-In Date and Time */}
+                            {/* Start Date and Expiry Date */}
                             <Box mb={2} className="d-flex gap-3">
                                 <div style={{ flex: 1 }}>
                                     <Typography
@@ -260,16 +448,21 @@ const AddTransactionInformation = () => {
                                             fontWeight: 500
                                         }}
                                     >
-                                        Amount
+                                        Start Date
                                     </Typography>
                                     <TextField
                                         fullWidth
-                                        type="text"
-                                        value={formData.checkInDate}
+                                        name="startDate"
+                                        type="date"
+                                        value={formData.startDate}
                                         onChange={handleChange}
-                                        placeholder="Enter Amount"
                                         variant="outlined"
                                         size="small"
+                                        error={!!errors.startDate}
+                                        helperText={errors.startDate}
+                                        inputProps={{
+                                            min: today
+                                        }}
                                         InputProps={{
                                             style: { fontSize: '14px' }
                                         }}
@@ -285,17 +478,21 @@ const AddTransactionInformation = () => {
                                             fontWeight: 500
                                         }}
                                     >
-                                        Date & Time
+                                        Expire Date
                                     </Typography>
                                     <TextField
                                         fullWidth
-                                        name="checkInDate"
+                                        name="expiryDate"
                                         type="date"
-                                        value={formData.checkInDate}
+                                        value={formData.expiryDate}
                                         onChange={handleChange}
-                                        placeholder="Default"
                                         variant="outlined"
                                         size="small"
+                                        error={!!errors.expiryDate}
+                                        helperText={errors.expiryDate}
+                                        inputProps={{
+                                            min: formData.startDate || today
+                                        }}
                                         InputProps={{
                                             style: { fontSize: '14px' }
                                         }}
@@ -303,6 +500,7 @@ const AddTransactionInformation = () => {
                                 </div>
                             </Box>
 
+                            {/* Total Amount */}
                             <Box mb={1}>
                                 <Typography
                                     variant="body1"
@@ -313,20 +511,25 @@ const AddTransactionInformation = () => {
                                         fontWeight: 500
                                     }}
                                 >
-                                    Added By
+                                    Total Amount
                                 </Typography>
                                 <FormControl fullWidth size="small">
                                     <TextField
                                         fullWidth
-                                        name="authorizedBy"
-                                        value={formData.authorizedBy}
+                                        type="number"
+                                        name="amount"
+                                        value={formData.amount}
                                         onChange={handleChange}
-                                        placeholder="Choose type"
+                                        placeholder="Enter Amount"
                                         variant="outlined"
                                         size="small"
                                         style={{ marginBottom: '8px' }}
-                                    >
-                                    </TextField>
+                                        error={!!errors.amount}
+                                        helperText={errors.amount}
+                                        InputProps={{
+                                            style: { fontSize: '14px' }
+                                        }}
+                                    />
                                 </FormControl>
                             </Box>
 
@@ -340,6 +543,7 @@ const AddTransactionInformation = () => {
                                         textTransform: 'none',
                                         fontSize: '14px'
                                     }}
+                                    onClick={() => window.history.back()}
                                 >
                                     Cancel
                                 </Button>

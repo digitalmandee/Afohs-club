@@ -108,6 +108,7 @@ const RoomEventManager = ({ locations }) => {
         const newErrors = {};
         let hasErrors = false;
 
+        // Client-side validation
         if (!roomForm.name.trim()) {
             newErrors.name = 'Room name is required';
             hasErrors = true;
@@ -134,14 +135,19 @@ const RoomEventManager = ({ locations }) => {
             return;
         }
 
+        // Create FormData and ensure numeric fields are converted
         const data = new FormData();
-        Object.entries(roomForm).forEach(([key, value]) => {
-            if (value !== null) data.append(key, value);
-        });
+        data.append('name', roomForm.name);
+        data.append('number_of_beds', parseInt(roomForm.number_of_beds) || 0);
+        data.append('max_capacity', parseInt(roomForm.max_capacity) || 0);
+        data.append('price_per_night', parseFloat(roomForm.price_per_night) || 0);
+        data.append('number_of_bathrooms', parseInt(roomForm.number_of_bathrooms) || 0);
+        if (roomForm.photo) {
+            data.append('photo', roomForm.photo);
+        }
 
         router.post(route('rooms.store'), data, {
             forceFormData: true,
-        }, {
             onSuccess: () => {
                 setRoomForm({
                     name: '',
@@ -166,7 +172,12 @@ const RoomEventManager = ({ locations }) => {
                 router.visit('/rooms/dashboard');
             },
             onError: (serverErrors) => {
+                console.error('Server errors:', serverErrors); // Log errors for debugging
                 setRoomErrors({ ...roomErrors, ...serverErrors });
+                enqueueSnackbar('Failed to add room. Please check the form.', { variant: 'error' });
+            },
+            onFinish: () => {
+                console.log('Request completed'); // Log request completion
             },
         });
     };

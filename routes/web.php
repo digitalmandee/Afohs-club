@@ -13,6 +13,7 @@ use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\FinancialController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -226,6 +227,17 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
 
+
+     //Financial Routes
+    Route::get('/finance/dashboard', [FinancialController::class, 'index'])->name('finance.dashboard');
+    Route::get('/finance/transaction', [FinancialController::class, 'getTransaction'])->name('finance.transaction');
+    Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
+
+
+    Route::get('/finance/add/transaction', [FinancialController::class, 'create'])->name('finance.addtransaction');
+    Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.addtransaction');
+
+
     Route::get('/admin/manage/monthly/fee', function () {
         return Inertia::render('App/Admin/Subscription/Monthly');
     })->name('subscription.monthly');
@@ -251,18 +263,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Kitchen/History');
     })->name('kitchen.history');
 
-    //Finance Routes
-    Route::get('/finance/dashboard', function () {
-        return Inertia::render('App/Admin/Finance/Dashboard');
-    })->name('finance.dashboard');
 
-    Route::get('/finance/add/transaction', function () {
-        return Inertia::render('App/Admin/Finance/AddTransaction');
-    })->name('finance.addtransaction');
 
-    Route::get('/finance/transaction', function () {
-        return Inertia::render('App/Admin/Finance/Transaction');
-    })->name('finance.transaction');
+
 
 
     Route::get('/card/dashboard', [CardController::class, 'index'])->name('cards.dashboard');
