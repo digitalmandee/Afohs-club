@@ -8,12 +8,12 @@ return new class extends Migration {
     {
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Room Name (e.g., Standard)
-            $table->unsignedTinyInteger('number_of_beds'); // e.g., 3
-            $table->unsignedInteger('max_capacity'); // e.g., "2 Adults"
-            $table->decimal('price_per_night', 8, 2); // e.g., 100.00
-            $table->unsignedTinyInteger('number_of_bathrooms'); // e.g., 1
-            $table->string('photo_path')->nullable(); // Store uploaded image path
+            $table->string('name');
+            $table->bigInteger('number_of_beds');
+            $table->bigInteger('max_capacity');
+            $table->bigInteger('price_per_night');
+            $table->bigInteger('number_of_bathrooms');
+            $table->string('photo_path')->nullable();
             $table->timestamps();
         });
     }

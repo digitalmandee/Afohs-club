@@ -94,7 +94,7 @@ const handlePrintReceipt = (member, invoice) => {
                       Lahore, Pakistan
                     </div>
                   </div>
-                  <div class="grid-item-right">
+                  <div class="grid-item-center">
                     <div class="typography-h6" style="color: #333;">Invoice</div>
                   </div>
                 </div>

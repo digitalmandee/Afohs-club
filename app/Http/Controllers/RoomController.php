@@ -45,11 +45,11 @@ class RoomController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'number_of_beds' => 'required|integer|min:1',
-            'max_capacity' => 'required|integer|min:1',
-            'price_per_night' => 'required|numeric|min:0',
-            'number_of_bathrooms' => 'required|integer|min:0',
-            'photo' => 'nullable|image|max:2048',
+            'number_of_beds' => 'required|integer',
+            'max_capacity' => 'required|integer',
+            'price_per_night' => 'required|numeric',
+            'number_of_bathrooms' => 'required|integer',
+            'photo' => 'nullable|image|max:4096',
         ]);
 
         $path = null;
@@ -88,11 +88,11 @@ class RoomController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'number_of_beds' => 'required|integer|min:1',
-            'max_capacity' => 'required|integer|min:1',
-            'price_per_night' => 'required|numeric|min:0',
-            'number_of_bathrooms' => 'required|integer|min:0',
-            'photo' => 'nullable|image|max:2048',
+            'number_of_beds' => 'required|integer',
+            'max_capacity' => 'required|integer',
+            'price_per_night' => 'required|numeric',
+            'number_of_bathrooms' => 'required|integer',
+            'photo' => 'nullable|image|max:4096',
         ]);
 
         $path = $room->photo_path;
@@ -118,9 +118,9 @@ class RoomController extends Controller
         $room = Room::findOrFail($id);
 
         // Delete the photo if it exists
-        if ($room->photo_path) {
-            FileHelper::deleteImage($room->photo_path);
-        }
+        // if ($room->photo_path) {
+        //     FileHelper::deleteImage($room->photo_path);
+        // }
 
         $room->delete();
 

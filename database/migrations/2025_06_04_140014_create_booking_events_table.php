@@ -15,9 +15,9 @@ return new class extends Migration
              $table->id();
             $table->string('event_name')->require();
             $table->string('date_time')->nullable();
-            $table->integer('max_capacity')->nullable();
-             $table->enum('pricing_type',['fixed','per person'])->nullable();
-            $table->decimal('price_per_person', 8, 2)->nullable();
+            $table->bigInteger('max_capacity')->nullable();
+            $table->enum('pricing_type',['fixed','per person'])->nullable();
+            $table->bigInteger('price_per_person')->nullable();
             $table->enum('status',['pending','upcomming','completed'])->nullable();
             $table->string('location')->nullable();
             $table->string('photo_path')->nullable();

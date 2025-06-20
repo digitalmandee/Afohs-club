@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Booking extends Model
 {
@@ -25,4 +26,14 @@ class Booking extends Model
         'total_payment',
         'status',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function typeable(): MorphTo
+    {
+        return $this->morphTo(__FUNCTION__, 'booking_type', 'type_id');
+    }
 }

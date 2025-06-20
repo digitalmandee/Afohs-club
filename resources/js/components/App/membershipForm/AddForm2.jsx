@@ -3,7 +3,7 @@ import { TextField, Button, Paper, Typography, Grid, Box, IconButton } from '@mu
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const AddForm2 = ({ setData, data, handleChange, onNext, onBack, formData }) => {
+const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
     const handleSubmit = (e) => {
         e.preventDefault(); // Prevent default form submission
         // Basic validation
@@ -16,7 +16,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, formData }) => 
             alert(`Please fill all required fields: ${missingFields.join(', ')}`);
             return;
         }
-        onNext(formData);
+        onNext();
     };
 
     return (
