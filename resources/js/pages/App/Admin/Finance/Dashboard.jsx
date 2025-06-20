@@ -23,6 +23,13 @@ import { router } from '@inertiajs/react';
 import InvoiceSlip from '../Subscription/Invoice';
 import axios from 'axios';
 
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs from 'dayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
+
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
@@ -98,29 +105,30 @@ const Dashboard = ({ FinancialInvoice }) => {
                                         width: '250px',
                                     }}
                                 >
-                                    <TextField
-                                        value={date}
-                                        onChange={(e) => setDate(e.target.value)}
-                                        variant="standard"
-                                        InputProps={{
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <CalendarToday fontSize="small" style={{ color: '#777' }} />
-                                                </InputAdornment>
-                                            ),
-                                            disableUnderline: true,
-                                        }}
-                                        inputProps={{
-                                            style: {
-                                                textAlign: 'left',
-                                                paddingRight: '8px',
-                                                color: '#333',
-                                                fontWeight: 500,
-                                            },
-                                        }}
-                                        placeholder="Apr-2025"
-                                        style={{ width: '220px' }}
-                                    />
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DemoContainer components={['DatePicker']}>
+                                            <DatePicker
+                                                views={['month']}
+                                                // views={['year', 'month']},
+                                                label="Select Month"
+                                                sx={{ width: '100%' }}
+                                                format="MMM-YYYY"
+                                                value={dayjs(date)}
+                                                onChange={(newValue) => setDate(newValue)}
+                                                slotProps={{
+                                                    textField: {
+                                                        size: 'small',
+                                                        sx: {
+                                                            '& .MuiInputBase-root': {
+                                                                height: 40,
+                                                            },
+                                                        },
+                                                    },
+                                                }}
+                                            />
+                                        </DemoContainer>
+                                    </LocalizationProvider>
+
                                 </div>
 
                                 <Button
