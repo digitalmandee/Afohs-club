@@ -12,6 +12,7 @@ use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 use Stancl\Tenancy\Events\TenancyInitialized;
 use Stancl\Tenancy\Tenancy;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Relation::morphMap([
+        'room' => \App\Models\Room::class,
+        'event' => \App\Models\BookingEvents::class,
+    ]);
         // Schema::defaultStringLength(191);
         Route::aliasMiddleware('auth.tenant.custom', AuthenticateTenant::class);
         Event::listen(TenancyInitialized::class, function (TenancyInitialized $event) {
