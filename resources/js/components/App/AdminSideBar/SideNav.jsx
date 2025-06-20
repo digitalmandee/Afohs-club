@@ -102,15 +102,47 @@ export default function SideNav({ open, setOpen }) {
     const [profileView, setProfileView] = React.useState('profile');
 
     const [openDropdown, setOpenDropdown] = useState({});
+    const [hoveredDropdown, setHoveredDropdown] = useState(null); // Track hovered dropdown for popup
+    const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
+    const hidePopupTimer = React.useRef(null);
+
     const toggleDropdown = (text) => {
         if (!open) return; // Prevent toggling if drawer is closed
         setOpenDropdown((prev) => ({ ...prev, [text]: !prev[text] }));
     };
 
-    // const menuItems = [
-    //     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-    //     { text: 'Room & Booking Event', icon: <CalendarMonthIcon />, path: '/booking/dashboard' },
-    // ];
+    // Helper to show popup
+    const handleDropdownMouseEnter = (text, e) => {
+        if (hidePopupTimer.current) {
+            clearTimeout(hidePopupTimer.current);
+            hidePopupTimer.current = null;
+        }
+        const rect = e.currentTarget.getBoundingClientRect();
+        setHoveredDropdown(text);
+        setPopupPosition({
+            top: rect.top + window.scrollY,
+            left: rect.right + 8,
+        });
+    };
+    // Helper to hide popup with delay
+    const handleDropdownMouseLeave = (text) => {
+        hidePopupTimer.current = setTimeout(() => {
+            setHoveredDropdown((curr) => (curr === text ? null : curr));
+        }, 120);
+    };
+    const handlePopupMouseEnter = (text) => {
+        if (hidePopupTimer.current) {
+            clearTimeout(hidePopupTimer.current);
+            hidePopupTimer.current = null;
+        }
+        setHoveredDropdown(text);
+    };
+    const handlePopupMouseLeave = (text) => {
+        hidePopupTimer.current = setTimeout(() => {
+            setHoveredDropdown((curr) => (curr === text ? null : curr));
+        }, 120);
+    };
+
     const menuItems = [
         {
             text: 'Dashboard',
@@ -455,17 +487,16 @@ export default function SideNav({ open, setOpen }) {
                     sx={{
                         flexGrow: 1,
                         overflowY: 'auto',
-                        scrollbarWidth: 'none', // Firefox
-                        '&::-webkit-scrollbar': { display: 'none' }, // Chrome & Safari
+                        scrollbarWidth: 'none',
+                        '&::-webkit-scrollbar': { display: 'none' },
                     }}
                 >
                     <List sx={{ mt: 2 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
                             const isSelected = url === path || (children && children.some((child) => url === child.path));
-                            // Main ListItem (with or without dropdown)
                             return (
-                                <Box key={text}>
+                                <Box key={text} sx={{ position: 'relative' }}>
                                     <ListItem disablePadding sx={{ display: 'block', p: 0.5 }}>
                                         <ListItemButton
                                             onClick={() => {
@@ -477,6 +508,8 @@ export default function SideNav({ open, setOpen }) {
                                                     router.visit(path);
                                                 }
                                             }}
+                                            onMouseEnter={(!open && children) ? (e) => handleDropdownMouseEnter(text, e) : undefined}
+                                            onMouseLeave={(!open && children) ? () => handleDropdownMouseLeave(text) : undefined}
                                             sx={{
                                                 minHeight: 50,
                                                 justifyContent: open ? 'initial' : 'center',
@@ -531,7 +564,7 @@ export default function SideNav({ open, setOpen }) {
                                         </ListItemButton>
                                     </ListItem>
 
-                                    {/* Submenu Rendering */}
+                                    {/* Submenu Rendering (Expanded) */}
                                     {children && open && isDropdownOpen && (
                                         <Collapse in={isDropdownOpen} timeout="auto" unmountOnExit>
                                             <List component="div" disablePadding>
@@ -541,10 +574,7 @@ export default function SideNav({ open, setOpen }) {
                                                         <ListItem
                                                             key={child.text}
                                                             disablePadding
-                                                            sx={{
-                                                                mt: 1,
-                                                                pl: 1,
-                                                            }}
+                                                            sx={{ mt: 1, pl: 1 }}
                                                         >
                                                             <ListItemButton
                                                                 onClick={() => router.visit(child.path)}
@@ -581,6 +611,56 @@ export default function SideNav({ open, setOpen }) {
                                                 })}
                                             </List>
                                         </Collapse>
+                                    )}
+
+                                    {/* Popup Submenu (Collapsed) */}
+                                    {children && !open && hoveredDropdown === text && (
+                                        <Box
+                                            onMouseEnter={() => handlePopupMouseEnter(text)}
+                                            onMouseLeave={() => handlePopupMouseLeave(text)}
+                                            sx={{
+                                                position: 'fixed',
+                                                top: popupPosition.top,
+                                                left: popupPosition.left,
+                                                zIndex: 2000,
+                                                background: '#222',
+                                                borderRadius: 2,
+                                                boxShadow: 3,
+                                                minWidth: 180,
+                                                py: 1,
+                                            }}
+                                        >
+                                            <List component="div" disablePadding>
+                                                {children.map((child) => {
+                                                    const isChildSelected = url === child.path;
+                                                    return (
+                                                        <ListItem
+                                                            key={child.text}
+                                                            disablePadding
+                                                            sx={{ pl: 1 }}
+                                                        >
+                                                            <ListItemButton
+                                                                onClick={() => {
+                                                                    router.visit(child.path);
+                                                                    setHoveredDropdown(null);
+                                                                }}
+                                                                sx={{
+                                                                    minHeight: 40,
+                                                                    borderRadius: '8px',
+                                                                    backgroundColor: isChildSelected ? '#333' : 'transparent',
+                                                                    '&:hover': { backgroundColor: '#444' },
+                                                                }}
+                                                            >
+                                                                <ListItemText
+                                                                    primary={child.text}
+                                                                    sx={{ color: isChildSelected ? 'orange' : '#fff' }}
+                                                                />
+                                                            </ListItemButton>
+                                                        </ListItem>
+                                                    );
+                                                })}
+                                            </List>
+                                        </Box>
                                     )}
                                 </Box>
                             );

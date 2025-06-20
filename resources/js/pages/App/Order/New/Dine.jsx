@@ -95,8 +95,8 @@ const DineDialog = ({ memberTypes, floorTables }) => {
 
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (e.ctrlKey && e.key.toLowerCase() === 'm' && !isDisabled) {
-                e.preventDefault(); // Optional: prevent browser behavior
+            if (e.key === 'F10' && !isDisabled) {
+                e.preventDefault();
                 router.visit(route('order.menu'));
             }
         };

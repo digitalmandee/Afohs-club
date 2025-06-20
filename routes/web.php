@@ -12,6 +12,8 @@ use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\FinancialController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -92,6 +94,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     //Admin Events Booking Routes
     Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
+    Route::get('/events/manage', [EventController::class, 'allEvents'])->name('events.all');
     Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     // Add routes for edit and delete
@@ -107,17 +110,20 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::delete('/events/locations/{id}', [EventController::class, 'deleteLocation'])->name('events.locations.delete');
 
     //Admin Booking Routes
-    Route::get('/booking/dashboard', function () {
-        return Inertia::render('App/Admin/Booking/Dashboard');
-    })->name('rooms.dashboard');
+    Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
+    Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
+    Route::get('/booking/new', [BookingController::class, 'booking'])->name('rooms.booking');
+    Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
+    Route::post('/room/booking', [BookingController::class, 'store'])->name('rooms.booking.store');
+
+    // Booking Search
+    Route::get('/booking/search', [BookingController::class, 'search'])->name('booking.search');
+
 
     Route::get('/booking/details', function () {
         return Inertia::render('App/Admin/Booking/Detail');
     })->name('rooms.details');
 
-    Route::get('/room/booking', function () {
-        return Inertia::render('App/Admin/Booking/RoomBooking');
-    })->name('rooms.booking');
 
 
 
@@ -221,6 +227,17 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
 
+
+     //Financial Routes
+    Route::get('/finance/dashboard', [FinancialController::class, 'index'])->name('finance.dashboard');
+    Route::get('/finance/transaction', [FinancialController::class, 'getTransaction'])->name('finance.transaction');
+    Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
+
+
+    Route::get('/finance/add/transaction', [FinancialController::class, 'create'])->name('finance.addtransaction');
+    Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.addtransaction');
+
+
     Route::get('/admin/manage/monthly/fee', function () {
         return Inertia::render('App/Admin/Subscription/Monthly');
     })->name('subscription.monthly');
@@ -246,18 +263,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Kitchen/History');
     })->name('kitchen.history');
 
-    //Finance Routes
-    Route::get('/finance/dashboard', function () {
-        return Inertia::render('App/Admin/Finance/Dashboard');
-    })->name('finance.dashboard');
 
-    Route::get('/finance/add/transaction', function () {
-        return Inertia::render('App/Admin/Finance/AddTransaction');
-    })->name('finance.addtransaction');
 
-    Route::get('/finance/transaction', function () {
-        return Inertia::render('App/Admin/Finance/Transaction');
-    })->name('finance.transaction');
+
 
 
     Route::get('/card/dashboard', [CardController::class, 'index'])->name('cards.dashboard');

@@ -213,9 +213,9 @@ const CardsDashboard = ({ members = [] }) => {
                     <CardFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
                     <SubscriptionCardComponent member={selectedMember} open={openCardModal} onClose={() => setOpenCardModal(false)} />
 
-                    {/* <UserCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} /> */}
+                    <UserCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectedMember} />
 
-                    {/* <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} /> */}
+                    <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
 
                     {/* <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} /> */}
                 </div>

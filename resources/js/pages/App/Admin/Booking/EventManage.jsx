@@ -4,7 +4,7 @@ import { Add, ArrowBack, FilterAlt, Search } from '@mui/icons-material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PeopleIcon from '@mui/icons-material/People';
-import { Box, Button, Grid, IconButton, Paper, ThemeProvider, Typography, createTheme } from '@mui/material';
+import { Box, Button, Grid, IconButton, Link, Paper, ThemeProvider, Typography, createTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 import { Badge, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap';
@@ -232,8 +232,21 @@ const EventScreen = ({ events }) => {
                         </Box>
 
                         <Box sx={{ mb: 2 }}>
+                            <Box textAlign="right" pb={2} >
+                                <Link
+                                    href="/events/manage"
+                                    underline="none"
+                                    sx={{
+                                        color: '#0a3d62',
+                                        fontWeight: 500,
+                                        fontSize: '16px',
+                                    }}
+                                >
+                                    View All
+                                </Link>
+                            </Box>
                             <Grid container spacing={2}>
-                                {events.map((events, index) => {
+                                {events.slice(0, 4).map((events, index) => {
                                     return (
                                         <Grid item xs={12} sm={6} key={index}>
                                             <Paper

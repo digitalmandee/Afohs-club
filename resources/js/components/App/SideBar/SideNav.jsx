@@ -35,6 +35,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import AddressType from '../Icons/AddressType';
 import { MdManageHistory } from 'react-icons/md';
 import { FaUser } from "react-icons/fa";
+import { useEffect } from 'react';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -167,6 +168,18 @@ export default function SideNav({ open, setOpen }) {
             permission: 'order',
         },
     ];
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'F12') {
+                e.preventDefault(); // Optional: prevent browser behavior
+                router.visit(route('order.management'));
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [router]);
 
     return (
         <Box sx={{ display: 'flex' }}>

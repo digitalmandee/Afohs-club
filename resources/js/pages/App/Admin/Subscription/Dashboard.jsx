@@ -12,6 +12,8 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalRevenue }) => {
+    console.log('subscriptions', subscriptions);
+
     // Modal state
     const [open, setOpen] = useState(true);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
@@ -102,6 +104,7 @@ const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalReve
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Added</Typography>
+
                             <div className="d-flex">
                                 <TextField
                                     placeholder="Search by name, member type etc"
@@ -214,8 +217,23 @@ const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalReve
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
+                                                    {/* View button can stay here if you need it */}
                                                     <Button onClick={() => setOpenInvoiceModal(true)} sx={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>
                                                         View
+                                                    </Button>
+                                                    <Button
+                                                        disabled={subscription?.invoice?.status !== 'unpaid'}
+                                                        onClick={() => handleSendNotification(subscription.id)}
+                                                        variant="contained"
+                                                        style={{
+                                                            backgroundColor: '#063455',
+                                                            color: 'white',
+                                                            textTransform: 'none',
+                                                            borderRadius: '4px',
+                                                            height: 40,
+                                                        }}
+                                                    >
+                                                        Notify
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -228,7 +246,7 @@ const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalReve
 
                     <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
 
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} />
+                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedSubscription} />
                 </div>
             </div>
         </>

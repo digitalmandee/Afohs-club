@@ -18,6 +18,13 @@ class EventController extends Controller
             'events' => $events,
         ]);
     }
+    public function allEvents()
+    {
+        $events = BookingEvents::latest()->get();
+        return Inertia::render('App/Admin/Booking/AllEvents', [
+            'events' => $events,
+        ]);
+    }
 
     public function create()
     {
@@ -123,7 +130,7 @@ class EventController extends Controller
     public function locations()
     {
         $locations = EventLocation::all();
-        return Inertia::render('App/Admin/Booking/AddRoom', [
+        return Inertia::render('App/Admin/Booking/EventLoction', [
             'locations' => $locations,
         ]);
     }
