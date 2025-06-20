@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Container, Row, Col, Card, Button, Form, Badge, Modal } from 'react-bootstrap';
+import { Container, Row, Button, Form, Badge, Card, Col } from 'react-bootstrap';
 import { Search, FilterAlt } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
@@ -8,11 +8,12 @@ import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import DatePicker from 'react-multi-date-picker';
 import { DateObject } from 'react-multi-date-picker';
-import RoomEventModal from './RoomEvent';
-import BookingFilter from './Filter';
+// import RoomEventModal from './RoomEventModal';
+// import BookingFilterModal from './FilterModal';
 import AvailableRooms from './Rooms';
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 import axios from 'axios';
+import dayjs from 'dayjs';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -52,7 +53,7 @@ const dialogStyles = `
   overflow-y: auto;
   border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 0,0, 0.3);
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -98,6 +99,254 @@ const dialogStyles = `
   }
 }
 `;
+
+const handlePrintReceipt = (booking) => {
+    if (!booking) return;
+
+    const durationInDays = booking.booking_type === 'room' ? dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day') : null;
+
+    const content = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice</title>
+    <style>
+        /* (your original styles, unchanged) */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 930px;
+            margin: 0 auto;
+        }
+        .container {
+            margin-top: 16px;
+            margin-bottom: 32px;
+        }
+        .paper {
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .grid-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .grid-item {
+            flex: 1;
+            min-width: 0;
+        }
+        .grid-item-left {
+            flex: 0 0 33.33%;
+            display: flex;
+            align-items: center;
+        }
+        .grid-item-center {
+            flex: 0 0 33.33%;
+            text-align: center;
+        }
+        .grid-item-right {
+            flex: 0 0 33.33%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .logo {
+            height: 60px;
+        }
+        .typography-h6 {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .typography-body2 {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.4;
+        }
+        .typography-body2-bold {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .grid-container-details {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .grid-item-half {
+            flex: 0 0 50%;
+        }
+        .subtitle1 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .table-container {
+            margin-bottom: 24px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .table-head {
+            background-color: #f9f9f9;
+        }
+        .table-cell {
+            padding: 12px;
+            font-weight: bold;
+        }
+        .table-body-cell {
+            padding: 12px;
+        }
+        .summary-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+        }
+        .summary-box {
+            width: 33.33%;
+            padding-top: 8px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .notes-container {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .notes-item {
+            flex: 0 0 50%;
+        }
+        .amount-in-words {
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="paper">
+
+            <!-- Header -->
+            <div class="grid-container">
+                <div class="grid-item-left">
+                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo" />
+                </div>
+                <div class="grid-item-center">
+                    <div class="typography-h6" style="color: #003366">Afohs Club</div>
+                    <div class="typography-body2">
+                        PAF Falcon complex, Gulberg III,<br />
+                        Lahore, Pakistan
+                    </div>
+                </div>
+                <div class="grid-item-right">
+                    <div class="typography-h6" style="color: #333">Invoice</div>
+                </div>
+            </div>
+
+            <!-- Bill To and Details Section -->
+            <div class="grid-container-details">
+                <div class="grid-item-half">
+                    <div class="subtitle1">Bill To - 12345</div>
+                    <div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Name: </span>John Doe</div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Category: </span>Gold</div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Membership #: </span>12345</div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Contact #: </span>+92-300-1234567</div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">City: </span>Lahore</div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Family Member: </span>Jane Doe</div>
+                    </div>
+                </div>
+                <div class="grid-item-half">
+                    <div class="subtitle1">DETAILS</div>
+                    <div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Invoice #: </span>INV-000123</div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Issue Date: </span>June 20, 2025</div>
+                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Payment Method: </span>Credit Card</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Table -->
+            <div class="table-container">
+                <table class="table">
+                    <thead class="table-head">
+                        <tr>
+                            <th class="table-cell">SR #</th>
+                            <th class="table-cell">Description</th>
+                            <th class="table-cell">Invoice Amount</th>
+                            <th class="table-cell">Remaining Amount</th>
+                            <th class="table-cell">Paid Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="table-body-cell">1</td>
+                            <td class="table-body-cell">Membership Fee - Gold</td>
+                            <td class="table-body-cell">10,000</td>
+                            <td class="table-body-cell">2,000</td>
+                            <td class="table-body-cell">8,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary Section -->
+            <div class="summary-container">
+                <div class="summary-box">
+                    <div class="summary-row">
+                        <span class="typography-body2-bold">Grand Total</span>
+                        <span class="typography-body2">Rs 10,000</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="typography-body2-bold">Remaining Amount</span>
+                        <span class="typography-body2">Rs 2,000</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="typography-body2-bold">Paid Amount</span>
+                        <span class="typography-body2">Rs 8,000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="notes-container">
+                <div class="notes-item">
+                    <div class="typography-body2-bold" style="margin-bottom: 4px">Note:</div>
+                    <div class="typography-body2">This is a computer-generated receipt. It does not require any signature or stamp.</div>
+                    <div style="margin-top: 16px">
+                        <div class="typography-body2-bold" style="margin-bottom: 4px">Sent By: Admin</div>
+                    </div>
+                </div>
+                <div class="notes-item">
+                    <div class="typography-body2">If paid by credit card or cheque, 5% surcharge will be added to the total amount.</div>
+                    <div class="amount-in-words">AMOUNT IN WORDS: TEN THOUSAND RUPEES ONLY</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+};
 
 const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => {
     const [bookingType, setBookingType] = useState('room'); // room or event
@@ -193,7 +442,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
     );
 };
 
-const BookingDashboard = ({ data }) => {
+const BookingDashboard = ({ data, user }) => {
     const [open, setOpen] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -210,6 +459,7 @@ const BookingDashboard = ({ data }) => {
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
     };
+    console.log('user', user);
 
     const handleFilterShow = () => setShowFilter(true);
 
@@ -481,94 +731,106 @@ const BookingDashboard = ({ data }) => {
                                 </Row>
 
                                 {!searchResultsFilter && data.bookingsData.length > 0 ? (
-                                    data.bookingsData.map((booking, index) => (
-                                        <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }}>
-                                            <Card.Body className="p-2">
-                                                <Row>
-                                                    <Col md={2} className="d-flex justify-content-center">
-                                                        <img
-                                                            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
-                                                            alt={booking.type}
-                                                            style={{
-                                                                width: '100%',
-                                                                objectFit: 'cover',
-                                                            }}
-                                                        />
-                                                    </Col>
-                                                    <Col md={10}>
-                                                        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                                                            <div>
-                                                                <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type}</Typography>
-                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
-                                                                    Created on {booking.checkin}
-                                                                </Typography>
-                                                            </div>
-                                                            <Badge
-                                                                onClick={() => router.visit(route('rooms.dashboard'))}
-                                                                bg=""
+                                    data.bookingsData.map((booking, index) => {
+                                        const durationInDays = dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day');
+
+                                        return (
+                                            <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handlePrintReceipt(booking)}>
+                                                <Card.Body className="p-2">
+                                                    <Row>
+                                                        <Col md={2} className="d-flex justify-content-center">
+                                                            <img
+                                                                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
+                                                                alt={booking.type}
                                                                 style={{
-                                                                    backgroundColor: booking.status === 'Confirmed' ? '#0e5f3c' : '#842029',
-                                                                    color: 'white',
-                                                                    padding: '6px 14px',
-                                                                    borderRadius: '6px',
-                                                                    fontSize: '0.85rem',
-                                                                    fontWeight: 500,
-                                                                    minWidth: '100px',
-                                                                    textAlign: 'center',
-                                                                    cursor: 'pointer',
-                                                                    borderRadius: '0px',
+                                                                    width: '100%',
+                                                                    objectFit: 'cover',
                                                                 }}
-                                                            >
-                                                                {booking.status}
-                                                            </Badge>
-                                                        </div>
-                                                        <Row className="text-start mt-2">
-                                                            <Col md={3} sm={6} className="mb-2">
-                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                    Booking ID
-                                                                </Typography>
-                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                    {booking.booking_id}
-                                                                </Typography>
-                                                            </Col>
-                                                            <Col md={4} sm={6} className="mb-2">
-                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                    Duration
-                                                                </Typography>
-                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                    {booking.duration}
-                                                                </Typography>
-                                                            </Col>
-                                                            <Col md={2} sm={6} className="mb-2">
-                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                    Room
-                                                                </Typography>
-                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                    {booking.rooms}
-                                                                </Typography>
-                                                            </Col>
-                                                            <Col md={2} sm={6} className="mb-2">
-                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                    Night
-                                                                </Typography>
-                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                    {booking.nights}
-                                                                </Typography>
-                                                            </Col>
-                                                            <Col md={2} sm={6} className="mb-2">
-                                                                <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                    Adults
-                                                                </Typography>
-                                                                <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                    {booking.persons}
-                                                                </Typography>
-                                                            </Col>
-                                                        </Row>
-                                                    </Col>
-                                                </Row>
-                                            </Card.Body>
-                                        </Card>
-                                    ))
+                                                            />
+                                                        </Col>
+                                                        <Col md={10}>
+                                                            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                                                                <div>
+                                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type}</Typography>
+                                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
+                                                                        Created on {booking.checkin}
+                                                                    </Typography>
+                                                                </div>
+                                                                <Badge
+                                                                    onClick={() => router.visit(route('rooms.dashboard'))}
+                                                                    bg=""
+                                                                    style={{
+                                                                        backgroundColor: booking.status === 'confirmed' ? '#0e5f3c' : '#842029',
+                                                                        color: 'white',
+                                                                        padding: '6px 14px',
+                                                                        borderRadius: '6px',
+                                                                        fontSize: '0.85rem',
+                                                                        fontWeight: 500,
+                                                                        minWidth: '100px',
+                                                                        textAlign: 'center',
+                                                                        cursor: 'pointer',
+                                                                        borderRadius: '0px',
+                                                                    }}
+                                                                >
+                                                                    {booking.status}
+                                                                </Badge>
+                                                            </div>
+                                                            <Row className="text-start mt-2">
+                                                                <Col md={3} sm={6} className="mb-2">
+                                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                        Booking ID
+                                                                    </Typography>
+                                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                        # {booking.booking_id}
+                                                                    </Typography>
+                                                                </Col>
+                                                                <Col md={4} sm={6} className="mb-2">
+                                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                        Duration
+                                                                    </Typography>
+                                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                        {booking.booking_type === 'room' ? durationInDays + " Days" : booking.checkin}
+                                                                    </Typography>
+                                                                </Col>
+                                                                <Col md={2} sm={6} className="mb-2">
+                                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                        {booking.booking_type === 'room' ? 'Room' : 'Event'}
+                                                                    </Typography>
+                                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                        {booking.booking_type === 'room' ? booking.typeable.name : booking.typeable.event_name}
+                                                                    </Typography>
+                                                                </Col>
+                                                                <Col md={2} sm={6} className="mb-2">
+                                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                        {booking.booking_type === 'room' ? 'Price Per Night' : 'Price Per Person'}
+                                                                    </Typography>
+                                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                        {booking.booking_type === 'room' ? booking.typeable.price_per_night : booking.typeable.price_per_person}
+                                                                    </Typography>
+                                                                </Col>
+                                                                <Col md={2} sm={6} className="mb-2">
+                                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                        Total Payment
+                                                                    </Typography>
+                                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                        {booking.total_payment}
+                                                                    </Typography>
+                                                                </Col>
+                                                                <Col md={2} sm={6} className="mb-2">
+                                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                                        Adults
+                                                                    </Typography>
+                                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                                        {booking.persons}
+                                                                    </Typography>
+                                                                </Col>
+                                                            </Row>
+                                                        </Col>
+                                                    </Row>
+                                                </Card.Body>
+                                            </Card>
+                                        );
+                                    })
                                 ) : (
                                     <Typography>No bookings found for the selected criteria.</Typography>
                                 )}

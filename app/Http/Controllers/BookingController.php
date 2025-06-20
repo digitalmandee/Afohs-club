@@ -11,12 +11,13 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::latest()->get();
+        $bookings = Booking::with('typeable')->latest()->get();
         $totalBookings = Booking::count();
         $totalRoomBookings = Booking::where('booking_type', 'room')->count();
         $totalEventBookings = Booking::where('booking_type', 'event')->count();
@@ -64,8 +65,10 @@ class BookingController extends Controller
             'totalEventBookings' => $totalEventBookings,
         ];
 
+
         return Inertia::render('App/Admin/Booking/Dashboard', [
             'data' => $data,
+
         ]);
     }
 
@@ -181,7 +184,7 @@ class BookingController extends Controller
 
         $invoice_no = $this->getInvoiceNo();
         $member_id = Auth::user()->id;
-
+        Log::info($invoice_no);
         FinancialInvoice::create([
             'invoice_no' => $invoice_no,
             'customer_id' => $request->customer['id'],
@@ -245,8 +248,8 @@ class BookingController extends Controller
 
     private function getInvoiceNo()
     {
-        $invoiceNo = (int)FinancialInvoice::max('invoice_no');
-        $invoiceNo = $invoiceNo + 1;
-        return $invoiceNo;
+        $lastInvoice = FinancialInvoice::orderBy('invoice_no', 'desc')->first();
+        Log::info($lastInvoice);
+        return $lastInvoice ? $lastInvoice->invoice_no + 1 : 1;
     }
 }

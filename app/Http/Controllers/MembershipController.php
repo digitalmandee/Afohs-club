@@ -292,11 +292,6 @@ class MembershipController extends Controller
                 }
             }
 
-            MembershipInvoice::create([
-                'user_id' => $primaryUser->id,
-                'total_price' => $memberType->fee,
-            ]);
-
             DB::commit();
 
             return response()->json(['message' => 'Membership created successfully.', 'member_id' => $primaryUser->id]);

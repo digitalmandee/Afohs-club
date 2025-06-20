@@ -41,8 +41,8 @@ class EventController extends Controller
         $request->validate([
             'event_name' => 'required|string|max:255',
             'date_time' => 'required|string',
-            'max_capacity' => 'required|integer|min:1',
-            'price_per_person' => 'required|numeric|min:0',
+            'max_capacity' => 'required|integer',
+            'price_per_person' => 'required|numeric',
             'pricing_type' => 'required|in:fixed,per person',
             'status' => 'required|in:pending,upcomming,completed',
             'location' => 'required|string|max:255',
@@ -85,11 +85,11 @@ class EventController extends Controller
         $request->validate([
             'event_name' => 'required|string|max:255',
             'date_time' => 'required|string',
-            'max_capacity' => 'required|integer|min:1',
-            'price_per_person' => 'required|numeric|min:0',
+            'max_capacity' => 'required|integer',
+            'price_per_person' => 'required|numeric',
             'pricing_type' => 'required|in:fixed,per person',
             'status' => 'required|in:pending,upcomming,completed',
-            'location' => 'required|string|max:255',
+            'location' => 'required|string',
             'photo' => 'nullable|image|max:2048',
         ]);
 

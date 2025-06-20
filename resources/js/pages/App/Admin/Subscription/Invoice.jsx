@@ -16,40 +16,310 @@ import {
 } from '@mui/material';
 import { Print, Close, Send } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import PrintIcon from '@mui/icons-material/Print';
 
-const InvoiceSlip = ({ open, onClose }) => {
-    // Sample data
-    const invoiceData = {
+const handlePrintReceipt = (data) => {
+    if (!data) return;
+
+    const invoiceData = data ? {
         billTo: {
-            name: 'Zahid Ullah',
-            category: 'Member',
-            membershipId: '23423',
-            contactNumber: '0324234234',
-            city: 'Lahore',
-            familyMember: 'Non'
+            name: `${data.user?.first_name || ''} ${data.user?.last_name || ''}`.trim() || 'N/A',
+            category: data.subscription_type || 'Member',
+            membershipId: data.member_id || 'N/A',
+            contactNumber: data.user?.phone_number || 'N/A',
+            city: data.userDetail?.currentCity || 'N/A',
+            familyMember: data.userDetail?.family_member || 'Non'
         },
         details: {
-            invoiceNumber: '7171',
-            issueDate: '12/04/2025',
-            paymentMethod: 'On Cash'
+            invoiceNumber: data.invoice_id || 'N/A',
+            issueDate: data.start_date ? new Date(data.start_date).toLocaleDateString() : 'N/A',
+            paymentMethod: data.payment_method || 'N/A'
         },
         items: [
             {
                 srNo: 1,
-                description: 'Member Charges',
-                invoiceAmount: 1000,
-                remainingAmount: 500,
-                paidAmount: 500
+                description: data.subscription_type || 'Invoice Charges',
+                invoiceAmount: data.amount || data.category?.subscription_fee || 0,
+                remainingAmount: data.remaining_amount || 0,
+                paidAmount: data.paid_amount || data.amount || data.category?.subscription_fee || 0
             }
         ],
         summary: {
-            grandTotal: 5000,
-            remainingAmount: 5.00,
-            paidAmount: 500
+            grandTotal: data.amount || data.category?.subscription_fee || 0,
+            remainingAmount: data.remaining_amount || 0,
+            paidAmount: data.paid_amount || data.amount || data.category?.subscription_fee || 0
         },
-        note: 'This is the computer generated receipt. It does no required any signature or stamp.',
+        note: 'This is the computer generated receipt. It does not require any signature or stamp.',
         paymentNote: 'If paid by credit card or cheque, 5% sub charges will be added to the total amount.',
-        amountInWords: 'Ten thousand, five hundred',
+        amountInWords: data.amount_in_words || 'N/A',
+        sentBy: data.sent_by || 'Admin'
+    } : {
+        billTo: {
+            name: 'N/A',
+            category: 'Member',
+            membershipId: 'N/A',
+            contactNumber: 'N/A',
+            city: 'N/A',
+            familyMember: 'Non'
+        },
+        details: {
+            invoiceNumber: 'N/A',
+            issueDate: 'N/A',
+            paymentMethod: 'N/A'
+        },
+        items: [
+            {
+                srNo: 1,
+                description: 'N/A',
+                invoiceAmount: 0,
+                remainingAmount: 0,
+                paidAmount: 0
+            }
+        ],
+        summary: {
+            grandTotal: 0,
+            remainingAmount: 0,
+            paidAmount: 0
+        },
+        note: 'This is the computer generated receipt. It does not require any signature or stamp.',
+        paymentNote: 'If paid by credit card or cheque, 5% sub charges will be added to the total amount.',
+        amountInWords: 'N/A',
+        sentBy: 'Admin'
+    };
+
+    const printWindow = window.open('', '_blank');
+
+    const content = `
+        <html>
+          <head>
+            <title>Invoice</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; max-width: 930px; margin: 0 auto; }
+              .container { margin-top: 16px; margin-bottom: 32px; }
+              .paper { border-radius: 4px; position: relative; overflow: hidden; }
+              .grid-container { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0; }
+              .grid-item { flex: 1; min-width: 0; }
+              .grid-item-left { flex: 0 0 33.33%; display: flex; align-items: center; }
+              .grid-item-center { flex: 0 0 33.33%; text-align: center; }
+              .grid-item-right { flex: 0 0 33.33%; display: flex; justify-content: flex-end; align-items: center; }
+              .logo { height: 60px; }
+              .typography-h6 { font-size: 18px; font-weight: bold; }
+              .typography-body2 { font-size: 12px; color: #555; line-height: 1.4; }
+              .typography-body2-bold { font-size: 13px; font-weight: bold; }
+              .grid-container-details { display: flex; gap: 16px; margin-bottom: 32px; }
+              .grid-item-half { flex: 0 0 50%; }
+              .subtitle1 { font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+              .table-container { margin-bottom: 24px; }
+              .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+              .table-head { background-color: #f9f9f9; }
+              .table-cell { padding: 12px; font-weight: bold; }
+              .table-body-cell { padding: 12px; }
+              .summary-container { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+              .summary-box { width: 33.33%; padding-top: 8px; }
+              .summary-row { display: flex; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #eee; }
+              .notes-container { display: flex; gap: 16px; margin-bottom: 24px; }
+              .notes-item { flex: 0 0 50%; }
+              .amount-in-words { font-size: 13px; font-weight: bold; margin-top: 4px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="paper">
+                <!-- Header -->
+                <div class="grid-container">
+                  <div class="grid-item-left">
+                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo"/>
+                  </div>
+                  <div class="grid-item-center">
+                    <div class="typography-h6" style="color: #003366;">Afohs Club</div>
+                    <div class="typography-body2">
+                      PAF Falcon complex, Gulberg III,<br />
+                      Lahore, Pakistan
+                    </div>
+                  </div>
+                  <div class="grid-item-right">
+                    <div class="typography-h6" style="color: #333;">Invoice</div>
+                  </div>
+                </div>
+
+                <!-- Bill To and Details Section -->
+                <div class="grid-container-details">
+                  <div class="grid-item-half">
+                    <div class="subtitle1">Bill To</div>
+                    <div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Name : </span>${invoiceData.billTo.name}
+                      </div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Category : </span>${invoiceData.billTo.category}
+                      </div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Membership # : </span>${invoiceData.billTo.membershipId}
+                      </div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Contact # : </span>${invoiceData.billTo.contactNumber}
+                      </div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">City : </span>${invoiceData.billTo.city}
+                      </div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Family Member : </span>${invoiceData.billTo.familyMember}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="grid-item-half">
+                    <div class="subtitle1">DETAILS</div>
+                    <div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Invoice # : </span>${invoiceData.details.invoiceNumber}
+                      </div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Issue Date : </span>${invoiceData.details.issueDate}
+                      </div>
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Payment Method : </span>${invoiceData.details.paymentMethod}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Invoice Table -->
+                <div class="table-container">
+                  <table class="table">
+                    <thead class="table-head">
+                      <tr>
+                        <th class="table-cell">SR #</th>
+                        <th class="table-cell">Description</th>
+                        <th class="table-cell">Invoice Amount</th>
+                        <th class="table-cell">Remaining Amount</th>
+                        <th class="table-cell">Paid Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${invoiceData.items.map(item => `
+                        <tr>
+                          <td class="table-body-cell">${item.srNo}</td>
+                          <td class="table-body-cell">${item.description}</td>
+                          <td class="table-body-cell">${item.invoiceAmount}</td>
+                          <td class="table-body-cell">${item.remainingAmount}</td>
+                          <td class="table-body-cell">${item.paidAmount}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Summary Section -->
+                <div class="summary-container">
+                  <div class="summary-box">
+                    <div class="summary-row">
+                      <span class="typography-body2-bold">Grand Total</span>
+                      <span class="typography-body2">Rs ${invoiceData.summary.grandTotal.toFixed(0)}</span>
+                    </div>
+                    <div class="summary-row">
+                      <span class="typography-body2-bold">Remaining Amount</span>
+                      <span class="typography-body2">Rs ${invoiceData.summary.remainingAmount.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-row">
+                      <span class="typography-body2-bold">Paid Amount</span>
+                      <span class="typography-body2">Rs ${invoiceData.summary.paidAmount}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Notes Section -->
+                <div class="notes-container">
+                  <div class="notes-item">
+                    <div class="typography-body2-bold" style="margin-bottom: 4px;">Note:</div>
+                    <div class="typography-body2">${invoiceData.note}</div>
+                    <div style="margin-top: 16px;">
+                      <div class="typography-body2-bold" style="margin-bottom: 4px;">Send By : ${invoiceData.sentBy}</div>
+                    </div>
+                  </div>
+                  <div class="notes-item">
+                    <div class="typography-body2">${invoiceData.paymentNote}</div>
+                    <div class="amount-in-words">AMOUNT IN WORDS : ${invoiceData.amountInWords}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+    `;
+
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+};
+
+const InvoiceSlip = ({ open, onClose, data }) => {
+    const invoiceData = data ? {
+        billTo: {
+            name: `${data.user?.first_name || ''} ${data.user?.last_name || ''}`.trim() || 'N/A',
+            category: data.subscription_type || 'Member',
+            membershipId: data.member_id || 'N/A',
+            contactNumber: data.user?.phone_number || 'N/A',
+            city: data.userDetail?.currentCity || 'N/A',
+            familyMember: data.userDetail?.family_member || 'Non'
+        },
+        details: {
+            invoiceNumber: data.invoice_id || 'N/A',
+            issueDate: data.start_date ? new Date(data.start_date).toLocaleDateString() : 'N/A',
+            paymentMethod: data.payment_method || 'N/A'
+        },
+        items: [
+            {
+                srNo: 1,
+                description: data.subscription_type || 'Invoice Charges',
+                invoiceAmount: data.amount || data.category?.subscription_fee || 0,
+                remainingAmount: data.remaining_amount || 0,
+                paidAmount: data.paid_amount || data.amount || data.category?.subscription_fee || 0
+            }
+        ],
+        summary: {
+            grandTotal: data.amount || data.category?.subscription_fee || 0,
+            remainingAmount: data.remaining_amount || 0,
+            paidAmount: data.paid_amount || data.amount || data.category?.subscription_fee || 0
+        },
+        note: 'This is the computer generated receipt. It does not require any signature or stamp.',
+        paymentNote: 'If paid by credit card or cheque, 5% sub charges will be added to the total amount.',
+        amountInWords: data.amount_in_words || 'N/A',
+        sentBy: data.sent_by || 'Admin'
+    } : {
+        billTo: {
+            name: 'N/A',
+            category: 'Member',
+            membershipId: 'N/A',
+            contactNumber: 'N/A',
+            city: 'N/A',
+            familyMember: 'Non'
+        },
+        details: {
+            invoiceNumber: 'N/A',
+            issueDate: 'N/A',
+            paymentMethod: 'N/A'
+        },
+        items: [
+            {
+                srNo: 1,
+                description: 'N/A',
+                invoiceAmount: 0,
+                remainingAmount: 0,
+                paidAmount: 0
+            }
+        ],
+        summary: {
+            grandTotal: 0,
+            remainingAmount: 0,
+            paidAmount: 0
+        },
+        note: 'This is the computer generated receipt. It does not require any signature or stamp.',
+        paymentNote: 'If paid by credit card or cheque, 5% sub charges will be added to the total amount.',
+        amountInWords: 'N/A',
         sentBy: 'Admin'
     };
 
@@ -59,7 +329,7 @@ const InvoiceSlip = ({ open, onClose }) => {
             open={open}
             onClose={onClose}
             ModalProps={{
-                keepMounted: true, // improves performance
+                keepMounted: true,
             }}
             PaperProps={{
                 sx: {
@@ -178,7 +448,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                     <Grid container justifyContent="flex-end" sx={{ mb: 3 }}>
                         <Grid item xs={12} sm={6} md={4}>
                             <Box sx={{ pt: 1 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee', }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
                                         Grand Total
                                     </Typography>
@@ -186,7 +456,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                                         Rs {invoiceData.summary.grandTotal.toFixed(0)}
                                     </Typography>
                                 </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee', }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
                                         Remaining Amount
                                     </Typography>
@@ -194,7 +464,7 @@ const InvoiceSlip = ({ open, onClose }) => {
                                         Rs {invoiceData.summary.remainingAmount.toFixed(2)}
                                     </Typography>
                                 </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee', }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
                                         Paid Amount
                                     </Typography>
@@ -270,14 +540,8 @@ const InvoiceSlip = ({ open, onClose }) => {
                         </Button>
                         <Button
                             variant="contained"
-                            startIcon={<Print />}
-                            sx={{
-                                textTransform: 'none',
-                                backgroundColor: '#003366',
-                                '&:hover': {
-                                    backgroundColor: '#002244'
-                                }
-                            }}
+                            startIcon={<PrintIcon />}
+                            onClick={() => handlePrintReceipt(data)}
                         >
                             Print
                         </Button>

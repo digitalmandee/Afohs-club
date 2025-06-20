@@ -289,7 +289,7 @@ const RoomBooking = ({ booking, invoice, next_booking_id }) => {
             >
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
-                    <IconButton style={{ color: '#3F4E4F' }} onClick={() => router.visit('/admin/booking/dashboard')}>
+                    <IconButton style={{ color: '#3F4E4F' }} onClick={() => router.visit('/booking/dashboard')}>
                         <ArrowBack />
                     </IconButton>
                     <h2 className="mb-0 fw-normal" style={{ color: '#3F4E4F', fontSize: '30px' }}>

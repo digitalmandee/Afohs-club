@@ -17,6 +17,10 @@ class Subscription extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function userDetail()
+    {
+        return $this->belongsTo(UserDetail::class);
+    }
 
     public function invoice()
     {
