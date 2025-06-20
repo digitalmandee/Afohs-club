@@ -46,7 +46,8 @@ class MembershipController extends Controller
     public function allMembers()
     {
         $users = User::with([
-            'userDetail.members.memberType'
+            'userDetail',
+            'member.memberType'
         ])->get();
 
         return Inertia::render('App/Admin/Membership/Members', [

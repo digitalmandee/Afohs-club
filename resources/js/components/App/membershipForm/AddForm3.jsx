@@ -9,27 +9,54 @@ import EditIcon from '@mui/icons-material/Edit';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 
-const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesData, userNo, loading, currentFamilyMember, setCurrentFamilyMember, membershipData, setMembershipData, familyMembers, setFamilyMembers, membercategories }) => {
-    const [open, setOpen] = useState(false);
-    const [memberType, setMemberType] = useState(1);
-    const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
+const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, userNo, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
+    const [showFamilyMember, setShowFamilyMember] = useState(false);
 
     const [submitError, setSubmitError] = useState('');
-
-    const handleMemberTypeChange = (event) => {
-        setMemberType(event.target.value);
-    };
-
-    const handleMembershipDataChange = (e) => {
-        const { name, value } = e.target;
-        setMembershipData((prev) => ({ ...prev, [name]: value }));
-    };
 
     const handleFamilyMemberChange = (field, value) => {
         setCurrentFamilyMember({
             ...currentFamilyMember,
             [field]: value,
         });
+    };
+
+    const AddFamilyMember = () => {
+        const maxUserId = data.family_members.length ? Math.max(...data.family_members.map((f) => f.user_id)) : userNo;
+
+        setCurrentFamilyMember((prev) => ({
+            ...prev,
+            user_id: maxUserId + 1,
+            member_type_id: data.member.member_type_id,
+            membership_category: data.member.membership_category,
+            start_date: data.member.card_issue_date,
+            end_date: data.member.card_expire_date,
+        }));
+        setShowFamilyMember(true);
+    };
+
+    const handleSaveFamilyMember = () => {
+        if (!currentFamilyMember.full_name || !currentFamilyMember.relation || !currentFamilyMember.email) {
+            alert('Please fill required family member fields: Full Name, Relation, and Email');
+            return;
+        }
+        handleChangeData('family_members', [...data.family_members, currentFamilyMember]);
+        // setFamilyMembers([...familyMembers, currentFamilyMember]);
+        setCurrentFamilyMember({
+            user_id: userNo + 1,
+            full_name: '',
+            relation: '',
+            cnic: '',
+            phone_number: '',
+            email: '',
+            member_type_id: '',
+            membership_category: '',
+            start_date: '',
+            end_date: '',
+            picture: null,
+            picture_preview: null,
+        });
+        setShowFamilyMember(false);
     };
 
     const handleImageUpload = (event) => {
@@ -51,88 +78,62 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
         }
     };
 
-    const handleAddFamilyMember = () => {
-        if (!currentFamilyMember.full_name || !currentFamilyMember.relation || !currentFamilyMember.email) {
-            alert('Please fill required family member fields: Full Name, Relation, and Email');
-            return;
-        }
-        setFamilyMembers([...familyMembers, currentFamilyMember]);
-        setCurrentFamilyMember({
-            user_id: userNo + 1,
-            full_name: '',
-            relation: '',
-            cnic: '',
-            phone_number: '',
-            email: '',
-            membership_type: '',
-            membership_category: '',
-            start_date: '',
-            end_date: '',
-            picture: null,
-            picture_preview: null,
-        });
-        setShowFamilyMemberForm(false);
-    };
-
     const handleDeleteFamilyMember = (index) => {
-        const updatedMembers = [...familyMembers];
+        const updatedMembers = [...data.family_members];
         updatedMembers.splice(index, 1);
-        setFamilyMembers(updatedMembers);
+        handleChangeData('family_members', updatedMembers);
     };
 
     const handleEditFamilyMember = (index) => {
-        setCurrentFamilyMember(familyMembers[index]);
+        setCurrentFamilyMember(data.family_members[index]);
         handleDeleteFamilyMember(index);
-        setShowFamilyMemberForm(true);
+        setShowFamilyMember(true);
     };
 
     const handleCancelFamilyMember = () => {
-        setShowFamilyMemberForm(false);
-        setFamilyMembers([]); // Clear family members on cancel
+        setShowFamilyMember(false);
+        // handleChangeData('family_members', []);
+        // setFamilyMembers([]); // Clear family members on cancel
     };
 
     const handleSubmit = async () => {
         const missingFields = [];
         const allowedMemberTypes = memberTypesData.map((type) => type.id);
 
-        console.log(allowedMemberTypes);
-        console.log(memberType);
-
         // Validate required fields
-        if (!memberType || !allowedMemberTypes.includes(Number(memberType))) {
+        if (!data.member.member_type_id || !allowedMemberTypes.includes(Number(data.member.member_type_id))) {
             missingFields.push('Member Type (must be one of: ' + allowedMemberTypes.join(', ') + ')');
         }
-        if (!membershipData.membership_number) {
+        if (!data.member.membership_number) {
             missingFields.push('Membership Number');
         }
-        if (!membershipData.membership_date) {
+        if (!data.member.membership_date) {
             missingFields.push('Membership Date');
         } else {
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(membershipData.membership_date)) {
+            if (!dateRegex.test(data.member.membership_date)) {
                 missingFields.push('Membership Date (must be in YYYY-MM-DD format)');
             }
         }
 
         if (missingFields.length > 0) {
             alert(`Please fill all required fields correctly: ${missingFields.join(', ')}`);
-            console.log('Validation failed:', { memberType, membership_number: membershipData.membership_number, membership_date: membershipData.membership_date });
             return;
         }
 
         // Validate family members
-        const validFamilyMembers = familyMembers.filter((member) => member.full_name && member.relation && member.email);
+        const validFamilyMembers = data.family_members.filter((member) => member.full_name && member.relation && member.email);
 
         const dataToSave = {
-            member_type: memberType,
-            membership_category: membershipData.membership_category || '',
-            membership_number: String(membershipData.membership_number),
-            membership_date: membershipData.membership_date,
-            card_status: membershipData.card_status || '',
-            card_issue_date: membershipData.card_issue_date || '',
-            card_expiry_date: membershipData.card_expiry_date || '',
-            from_date: membershipData.from_date || '',
-            to_date: membershipData.to_date || '',
+            member_type: data.member.member_type_id,
+            membership_category: data.member.membership_category || '',
+            membership_number: String(data.member.membership_number),
+            membership_date: data.member.membership_date,
+            card_status: data.member.card_status || '',
+            card_issue_date: data.member.card_issue_date || '',
+            card_expiry_date: data.member.card_expiry_date || '',
+            from_date: data.member.from_date || '',
+            to_date: data.member.to_date || '',
             family_members: validFamilyMembers,
         };
 
@@ -257,7 +258,7 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                         p: 1,
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        bgcolor: memberType == type.id ? '#fff' : 'transparent',
+                                                        bgcolor: data.member.member_type_id == type.id ? '#fff' : 'transparent',
                                                     }}
                                                 >
                                                     <Radio checked={data.member.member_type_id == type.id} onChange={handleChange} value={type.id} name="member.member_type_id" sx={{ color: '#1976d2' }} />
@@ -283,7 +284,6 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                         return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
                                                     }
                                                     const item = membercategories.find((item) => item.id == Number(selected));
-                                                    console.log(item);
 
                                                     return item ? item.name : '';
                                                 },
@@ -333,9 +333,9 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="membership_date"
-                                                value={membershipData.membership_date}
-                                                onChange={handleMembershipDataChange}
+                                                name="member.membership_date"
+                                                value={data.member.membership_date}
+                                                onChange={handleChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -349,9 +349,9 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
                                             <FormControl fullWidth variant="outlined">
                                                 <Select
-                                                    name="card_status"
-                                                    value={membershipData.card_status}
-                                                    onChange={handleMembershipDataChange}
+                                                    name="member.card_status"
+                                                    value={data.member.card_status}
+                                                    onChange={handleChange}
                                                     displayEmpty
                                                     renderValue={(selected) => {
                                                         if (!selected) {
@@ -365,8 +365,8 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                         },
                                                     }}
                                                 >
-                                                    <MenuItem value="Active">Active</MenuItem>
-                                                    <MenuItem value="Inactive">Inactive</MenuItem>
+                                                    <MenuItem value="active">Active</MenuItem>
+                                                    <MenuItem value="inactive">Inactive</MenuItem>
                                                 </Select>
                                             </FormControl>
                                         </Box>
@@ -383,9 +383,9 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="card_issue_date"
-                                                value={membershipData.card_issue_date}
-                                                onChange={handleMembershipDataChange}
+                                                name="member.card_issue_date"
+                                                value={data.member.card_issue_date}
+                                                onChange={handleChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -403,9 +403,9 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="card_expiry_date"
-                                                value={membershipData.card_expiry_date}
-                                                onChange={handleMembershipDataChange}
+                                                name="member.card_expiry_date"
+                                                value={data.member.card_expiry_date}
+                                                onChange={handleChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -426,9 +426,9 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="from_date"
-                                                value={membershipData.from_date}
-                                                onChange={handleMembershipDataChange}
+                                                name="member.from_date"
+                                                value={data.member.from_date}
+                                                onChange={handleChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -446,9 +446,9 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="to_date"
-                                                value={membershipData.to_date}
-                                                onChange={handleMembershipDataChange}
+                                                name="member.to_date"
+                                                value={data.member.to_date}
+                                                onChange={handleChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
@@ -463,7 +463,7 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                     variant="contained"
                                     sx={{
                                         mt: 2,
-                                        bgcolor: showFamilyMemberForm ? '#90caf9' : '#e3f2fd',
+                                        bgcolor: showFamilyMember ? '#90caf9' : '#e3f2fd',
                                         color: '#000',
                                         textTransform: 'none',
                                         '&:hover': {
@@ -474,7 +474,7 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                         width: '100%',
                                         py: 1.5,
                                     }}
-                                    onClick={() => setShowFamilyMemberForm(true)}
+                                    onClick={AddFamilyMember}
                                 >
                                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                         <Typography sx={{ fontWeight: 500 }}>Add Family Member</Typography>
@@ -485,10 +485,10 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                     <ChevronRightIcon />
                                 </Button>
 
-                                {familyMembers.length > 0 && (
+                                {data.family_members.length > 0 && (
                                     <Box sx={{ mt: 3 }}>
                                         <Typography sx={{ mb: 1, fontWeight: 500 }}>Added Family Members</Typography>
-                                        {familyMembers.map((member, index) => (
+                                        {data.family_members.map((member, index) => (
                                             <Box
                                                 key={index}
                                                 sx={{
@@ -518,7 +518,7 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                 )}
                             </Grid>
 
-                            {showFamilyMemberForm && (
+                            {showFamilyMember && (
                                 <Grid item xs={12} md={6}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                                         <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
@@ -697,13 +697,15 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                 <FormControl fullWidth variant="outlined">
                                                     <Select
                                                         displayEmpty
-                                                        value={currentFamilyMember.membership_type}
-                                                        onChange={(e) => handleFamilyMemberChange('membership_type', e.target.value)}
+                                                        value={currentFamilyMember.member_type_id}
+                                                        readOnly
+                                                        // onChange={(e) => handleFamilyMemberChange('member_type_id', e.target.value)}
                                                         renderValue={(selected) => {
                                                             if (!selected) {
                                                                 return <Typography sx={{ color: '#757575' }}>Choose Type</Typography>;
                                                             }
-                                                            return selected;
+                                                            const item = memberTypesData.find((item) => item.id == Number(selected));
+                                                            return item ? item.name : '';
                                                         }}
                                                         sx={{
                                                             '& .MuiOutlinedInput-notchedOutline': {
@@ -712,7 +714,7 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                         }}
                                                     >
                                                         {memberTypesData.map((type) => (
-                                                            <MenuItem key={type.name} value={type.name}>
+                                                            <MenuItem key={type.id} value={type.id}>
                                                                 {type.name}
                                                             </MenuItem>
                                                         ))}
@@ -735,7 +737,8 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                             if (!selected) {
                                                                 return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
                                                             }
-                                                            return selected;
+                                                            const item = membercategories.find((item) => item.id == Number(selected));
+                                                            return item ? item.name : '';
                                                         }}
                                                         sx={{
                                                             '& .MuiOutlinedInput-notchedOutline': {
@@ -743,11 +746,13 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                             },
                                                         }}
                                                     >
-                                                        {membercategories?.map((item) => (
-                                                            <MenuItem value={item.id} key={item.id}>
-                                                                {item.name}
-                                                            </MenuItem>
-                                                        ))}
+                                                        {membercategories
+                                                            ?.filter((item) => item.id === data.member.membership_category)
+                                                            .map((item) => (
+                                                                <MenuItem value={item.id} key={item.id}>
+                                                                    {item.name}
+                                                                </MenuItem>
+                                                            ))}
                                                     </Select>
                                                 </FormControl>
                                             </Box>
@@ -818,7 +823,7 @@ const AddForm3 = ({ setData, data, handleChange, onSubmit, onBack, memberTypesDa
                                                 },
                                                 textTransform: 'none',
                                             }}
-                                            onClick={handleAddFamilyMember}
+                                            onClick={handleSaveFamilyMember}
                                         >
                                             Save Members
                                         </Button>
