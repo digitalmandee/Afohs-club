@@ -246,6 +246,7 @@ const RoomScreen = ({ rooms }) => {
                                             bgcolor: '#063455',
                                         },
                                     }}
+                                    onClick={() => router.visit('/booking/dashboard')}
                                 >
                                     Booking
                                 </Button>
