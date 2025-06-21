@@ -8,12 +8,8 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
     const [showImageButtons, setShowImageButtons] = useState(false);
     // const [title, setTitle] = useState('');
     // const [gender, setGender] = useState('');
-    const [titleOpen, setTitleOpen] = useState(false);
-    const [genderOpen, setGenderOpen] = useState(false);
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
-    const [title, setTitle] = useState('Mr');
-    const [gender, setGender] = useState('Male');
     const [formErrors, setFormErrors] = useState({});
 
     const handleImageUpload = (event) => {
@@ -60,14 +56,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
             return; // Stop submission if errors exist
         }
 
-        const dataToSave = {
-            title,
-            gender,
-            memberImage,
-        };
-
-        console.log('AddForm1 Data:', dataToSave); // Debug
-        onNext(dataToSave);
+        onNext();
     };
 
     return (
