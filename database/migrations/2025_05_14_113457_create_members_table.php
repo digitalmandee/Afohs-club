@@ -28,7 +28,6 @@ return new class extends Migration
             $table->string('relation')->nullable(); // For family members
             // $table->string('cnic')->nullable(); // For family members
             // $table->string('phone_number')->nullable(); // For family members
-            $table->string('membership_type')->nullable(); // For family members
             $table->date('start_date')->nullable(); // For family members
             $table->date('end_date')->nullable(); // For family members
             $table->string('picture')->nullable(); // For family members
