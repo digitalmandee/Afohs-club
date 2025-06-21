@@ -19,22 +19,13 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
     const [open, setOpen] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
-    const [selectedMember, setSelectedMember] = useState(null);
-    const [modalType, setModalType] = useState('actions');
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
-    const [showAlert, setShowAlert] = useState(false);
     const [openProfileModal, setOpenProfileModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false); // State for InvoiceSlip modal
     const [selectMember, setSelectMember] = useState(null);
-    const [detailsData] = useState({
-        reason: 'Violation of rules',
-        duration: '30 Month',
-        fromDate: 'Apr 1, 2025',
-        toDate: 'Apr 30, 2025',
-    });
 
     // console.log('Member prop:', member); // Debug: Log the member prop
 
@@ -44,9 +35,7 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
             top: rect.top + window.scrollY,
             left: rect.left + window.scrollX,
         };
-        setSelectedMember(member);
         setModalPosition(position);
-        setModalType(type);
         setOpenModal(true);
     };
 
@@ -56,18 +45,10 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
 
     const handleCancelMembership = () => {
         setCancelModalOpen(false);
-        setShowAlert(false);
-        setTimeout(() => {
-            setShowAlert(true);
-        }, 100);
     };
 
     const handleConfirmSuspend = () => {
         setSuspensionModalOpen(false);
-        setShowAlert(false);
-        setTimeout(() => {
-            setShowAlert(true);
-        }, 100);
     };
 
     const showMemberDetails = (member, event) => {

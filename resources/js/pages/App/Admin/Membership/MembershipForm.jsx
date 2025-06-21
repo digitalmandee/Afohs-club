@@ -25,7 +25,6 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
         middle_name: '',
         last_name: '',
         phone_number: '',
-        member_type_id: '',
         profile_photo: '',
         user_details: {
             coa_account: '',
@@ -177,16 +176,28 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
         await axios
             .post(route('membership.store'), formData2)
             .then((response) => {
-                const memberId = response.data.member_id;
+                const invoiceNo = response.data.invoice_no;
 
                 enqueueSnackbar('Membership created successfully.', { variant: 'success' });
 
                 // Redirect with query param
-                router.visit(route('membership.allpayment') + `?member_id=${memberId}`);
+                router.visit(route('membership.allpayment') + `?invoice_no=${invoiceNo}`);
             })
             .catch((error) => {
-                console.error(error);
-                enqueueSnackbar('Something went wrong.', { variant: 'error' });
+                if (error.response && error.response.status === 422 && error.response.data.errors) {
+                    const errors = error.response.data.errors;
+
+                    // Loop through each field and show individual errors
+                    Object.keys(errors).forEach((field) => {
+                        const label = field.replace(/\./g, ' → ');
+                        errors[field].forEach((message) => {
+                            enqueueSnackbar(`${label}: ${message}`, { variant: 'error' });
+                        });
+                    });
+                } else {
+                    console.error(error);
+                    enqueueSnackbar('Something went wrong.', { variant: 'error' });
+                }
             })
             .finally(() => {
                 setLoading(false);

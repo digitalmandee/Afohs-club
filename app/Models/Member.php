@@ -30,7 +30,11 @@ class Member extends Model
         'picture',
         'member_image',
         'qr_code',
-        'payment_id'
+        'invoice_id'
+    ];
+
+    protected $casts = [
+        'category_ids' => 'array'
     ];
 
     // public function userDetail()

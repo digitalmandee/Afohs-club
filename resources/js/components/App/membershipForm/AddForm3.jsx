@@ -145,9 +145,7 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
         if (!data.member.member_type_id || !allowedMemberTypes.includes(Number(data.member.member_type_id))) {
             missingFields.push('Member Type (must be one of: ' + allowedMemberTypes.join(', ') + ')');
         }
-        if (!data.member.membership_number) {
-            missingFields.push('Membership Number');
-        }
+
         if (!data.member.membership_date) {
             missingFields.push('Membership Date');
         } else {
@@ -162,24 +160,8 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
             return;
         }
 
-        // Validate family members
-        const validFamilyMembers = data.family_members.filter((member) => member.full_name && member.relation && member.email);
-
-        const dataToSave = {
-            member_type: data.member.member_type_id,
-            membership_category: data.member.membership_category || '',
-            membership_number: String(data.member.membership_number),
-            membership_date: data.member.membership_date,
-            card_status: data.member.card_status || '',
-            card_issue_date: data.member.card_issue_date || '',
-            card_expiry_date: data.member.card_expiry_date || '',
-            from_date: data.member.from_date || '',
-            to_date: data.member.to_date || '',
-            family_members: validFamilyMembers,
-        };
-
         try {
-            await onSubmit(dataToSave);
+            await onSubmit();
             setSubmitError('');
             // router.visit('/admin/membership/all/payments');
         } catch (error) {
