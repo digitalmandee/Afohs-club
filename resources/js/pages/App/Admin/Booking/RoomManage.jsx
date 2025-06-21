@@ -100,7 +100,7 @@ const RoomScreen = ({ rooms, data }) => {
     const [showResultsModal, setShowResultsModal] = useState(false);
     const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
-    console.log('rooms', data);
+    // console.log('rooms', data);
 
     // TODO: Replaced static bookingsData with data.bookingsData from props
     const filteredBookings = data.bookingsData.filter((booking) =>
