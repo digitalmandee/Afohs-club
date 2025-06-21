@@ -810,7 +810,7 @@ const BookingDashboard = ({ data }) => {
                                                                         {booking.booking_type === 'room' ? 'Room' : 'Event'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable.name : booking.typeable.event_name}
+                                                                        {booking.booking_type === 'room' ? booking.typeable.name : booking.typeable?.event_name}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
@@ -818,7 +818,7 @@ const BookingDashboard = ({ data }) => {
                                                                         {booking.booking_type === 'room' ? 'Price Per Night' : 'Price Per Person'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable.price_per_night : booking.typeable.price_per_person}
+                                                                        {booking.booking_type === 'room' ? booking.typeable.price_per_night : booking.typeable?.price_per_person}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
