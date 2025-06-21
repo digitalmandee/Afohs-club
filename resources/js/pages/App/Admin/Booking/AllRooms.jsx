@@ -6,6 +6,8 @@ import {
     Paper,
     Grid,
     IconButton,
+    Dialog,
+    Button,
 } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import Bed from '@mui/icons-material/Bed';
@@ -21,22 +23,14 @@ const drawerWidthClosed = 110;
 
 const AllRooms = ({ rooms }) => {
     const [open, setOpen] = React.useState(false);
+    const [confirmDialog, setConfirmDialog] = React.useState({ open: false, roomId: null });
 
     const handleEdit = (id) => {
         router.visit(`/rooms/edit/${id}`);
     };
 
     const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this room?')) {
-            router.delete(`/rooms/${id}`, {
-                onSuccess: () => {
-                    enqueueSnackbar('Room deleted successfully', { variant: 'success' });
-                },
-                onError: () => {
-                    enqueueSnackbar('Failed to delete room', { variant: 'error' });
-                },
-            });
-        }
+        setConfirmDialog({ open: true, roomId: id });
     };
 
     return (
@@ -63,7 +57,7 @@ const AllRooms = ({ rooms }) => {
                     </Box>
                     <Box sx={{ mb: 2 }}>
                         <Grid container spacing={2}>
-                            {rooms.map((room, index) => (
+                            {rooms.map((room) => (
                                 <Grid item xs={12} key={room.id}>
                                     <Paper
                                         elevation={0}
@@ -134,6 +128,47 @@ const AllRooms = ({ rooms }) => {
                     </Box>
                 </div>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={confirmDialog.open}
+                onClose={() => setConfirmDialog({ open: false, roomId: null })}
+            >
+                <Box sx={{ p: 3, width: 300 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Confirm Deletion
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                        Are you sure you want to delete this room?
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <Button
+                            onClick={() => setConfirmDialog({ open: false, roomId: null })}
+                            color="inherit"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => {
+                                router.delete(`/rooms/${confirmDialog.roomId}`, {
+                                    onSuccess: () => {
+                                        enqueueSnackbar('Room deleted successfully', { variant: 'success' });
+                                        setConfirmDialog({ open: false, roomId: null });
+                                    },
+                                    onError: () => {
+                                        enqueueSnackbar('Failed to delete room', { variant: 'error' });
+                                        setConfirmDialog({ open: false, roomId: null });
+                                    },
+                                });
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    </Box>
+                </Box>
+            </Dialog>
         </>
     );
 };
