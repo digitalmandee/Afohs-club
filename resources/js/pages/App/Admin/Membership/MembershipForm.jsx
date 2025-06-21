@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Typography, Button, IconButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -18,7 +18,7 @@ const drawerWidthClosed = 110;
 const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState(3);
+    const [step, setStep] = useState(1);
     const [formsData1, setFormsData1] = useState({
         email: '',
         first_name: '',
@@ -72,41 +72,15 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
         family_members: [],
     });
 
-    const handleChangeData = ({ name, value }) => {
-        if (name.startsWith('user_details.')) {
-            const field = name.split('.')[1];
-            setFormsData1((prev) => ({
-                ...prev,
-                user_details: {
-                    ...prev.user_details,
-                    [field]: value,
-                },
-            }));
-        } else if (name.startsWith('member.')) {
-            const field = name.split('.')[1];
-            setFormsData1((prev) => ({
-                ...prev,
-                member: {
-                    ...prev.member,
-                    [field]: value,
-                },
-            }));
-        } else if (name.startsWith('family_members.')) {
-            const index = parseInt(name.split('.')[1], 10);
-            setFormsData1((prev) => ({
-                ...prev,
-                family_members: prev.family_members.map((member, i) => (i === index ? { ...member, [name.split('.')[2]]: value } : member)),
-            }));
-        } else {
-            setFormsData1((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
-        }
+    const handleChangeData = (name, value) => {
+        addDataInState(name, value);
     };
     const handleChange = (e) => {
         const { name, value } = e.target;
+        addDataInState(name, value);
+    };
 
+    const addDataInState = (name, value) => {
         if (name.startsWith('user_details.')) {
             const field = name.split('.')[1];
             setFormsData1((prev) => ({
@@ -153,6 +127,35 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
         }
     };
 
+    useEffect(() => {
+        const { card_issue_date, card_expiry_date } = formsData1.member;
+
+        if (!card_issue_date || !card_expiry_date) return;
+
+        const issueDate = new Date(card_issue_date);
+        const expiryDate = new Date(card_expiry_date);
+
+        formsData1.family_members.forEach((fm, idx) => {
+            const start = new Date(fm.start_date);
+            const end = new Date(fm.end_date);
+            console.log(issueDate, expiryDate);
+            console.log('yes');
+
+            if (isNaN(start) || isNaN(end)) return; // Skip invalid
+
+            const isFuture = start > expiryDate && end > expiryDate;
+            const isInRange = start >= issueDate && end <= expiryDate;
+
+            if (isFuture) {
+                console.error(`❌ Family member at index ${idx} has dates in the future beyond new card expiry`);
+            } else if (!isInRange && end > expiryDate) {
+                console.warn(`⚠️ Family member at index ${idx} has range partly outside the card date range`);
+            } else {
+                console.log(`✅ Family member at index ${idx} is within date range`);
+            }
+        });
+    }, [formsData1.member.card_issue_date, formsData1.member.card_expiry_date, formsData1.family_members]);
+
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
         user_id: '',
         full_name: '',
@@ -168,89 +171,8 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
         picture_preview: null,
     });
 
-    const [familyMembers, setFamilyMembers] = useState([]);
-
-    const [formData, setFormData] = useState({
-        step1: {},
-        step2: {},
-        step3: {},
-    });
-    console.log('memberTypesData', memberTypesData);
-
-    const handleNext = (stepKey) => {
-        // setFormData((prev) => ({ ...prev, [stepKey]: data }));
-        if (stepKey === 'step1') setStep(2);
-        if (stepKey === 'step2') setStep(3);
-    };
-
-    const handleFinalSubmit = async (stepKey, data) => {
-        setFormData((prev) => ({ ...prev, [stepKey]: data }));
-        // Transform familyMembers to match backend validation keys
-        const transformedFamilyMembers = (data.family_members || []).map((member) => ({
-            full_name: member.full_name || '',
-            relation: member.relation || '',
-            cnic: member.cnic || '',
-            phone_number: member.phone_number || '',
-            email: member.email || '',
-            membership_type: member.membership_type || '',
-            membership_category: member.membership_category || '',
-            start_date: member.start_date || '',
-            end_date: member.end_date || '',
-            picture: member.picture || '', // Base64 string
-        }));
-
-        const fullData = {
-            application_number: userNo ?? 0,
-            profile_photo: formData.step1.profile_photo,
-            first_name: formData.step1.firstName || '',
-            middle_name: formData.step1.middleName || '',
-            last_name: formData.step1.lastName || '',
-            name_comments: formData.step1.nameComments || '',
-            guardian_name: formData.step1.fatherHusbandName || '',
-            guardian_membership: formData.step1.fatherMembershipNo || '',
-            nationality: formData.step1.nationality || '',
-            cnic_no: formData.step1.cnicNo || '',
-            passport_no: formData.step1.passportNo || '',
-            gender: formData.step1.gender || '',
-            ntn: formData.step1.ntn || '',
-            date_of_birth: formData.step1.dateOfBirth || '',
-            education: formData.step1.education ? [formData.step1.education] : [],
-            membership_reason: formData.step1.membershipReason || '',
-            coa_account: formData.step1.coaAccount || '',
-            title: formData.step1.title || '',
-            mobile_number_a: formData.step2.mobileNumberA || '',
-            mobile_number_b: formData.step2.mobileNumberB || '',
-            mobile_number_c: formData.step2.mobileNumberC || '',
-            telephone_number: formData.step2.telephoneNumber || '',
-            personal_email: formData.step2.personalEmail || '',
-            critical_email: formData.step2.criticalEmail || '',
-            emergency_name: formData.step2.emergencyName || '',
-            emergency_relation: formData.step2.emergencyRelation || '',
-            emergency_contact: formData.step2.emergencyContact || '',
-            current_address: formData.step2.currentAddress || '',
-            current_city: formData.step2.currentCity || '',
-            current_country: formData.step2.currentCountry || '',
-            permanent_address: formData.step2.permanentAddress || '',
-            permanent_city: formData.step2.permanentCity || '',
-            permanent_country: formData.step2.permanentCountry || '',
-            member_type: data.member_type || '',
-            membership_category: data.membership_category || '',
-            membership_number: data.membership_number || '',
-            membership_date: data.membership_date || '',
-            card_status: data.card_status || '',
-            card_issue_date: data.card_issue_date || '',
-            card_expiry_date: data.card_expiry_date || '',
-            from_date: data.from_date || '',
-            to_date: data.to_date || '',
-            family_members: transformedFamilyMembers,
-        };
-
-        console.log('Submitting fullData:', fullData);
-        setLoading(true);
-
-        console.log('fullData: ', fullData);
-
-        const formData2 = await objectToFormData(fullData);
+    const handleFinalSubmit = async () => {
+        const formData2 = objectToFormData(formsData1);
 
         await axios
             .post(route('membership.store'), formData2)
@@ -284,9 +206,9 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
             >
                 {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                 <div className="">
-                    {step === 1 && <AddForm1 setData={setFormsData1} data={formsData1} handleChange={handleChange} userNo={userNo} onNext={() => handleNext('step1')} />}
-                    {step === 2 && <AddForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} onNext={() => handleNext('step2')} onBack={() => setStep(1)} />}
-                    {step === 3 && <AddForm3 setData={setFormsData1} data={formsData1} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} setFamilyMembers={setFamilyMembers} familyMembers={familyMembers} userNo={userNo} memberTypesData={memberTypesData} onSubmit={(data) => handleFinalSubmit('step3', data)} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
+                    {step === 1 && <AddForm1 setData={setFormsData1} data={formsData1} handleChange={handleChange} userNo={userNo} onNext={() => setStep(2)} />}
+                    {step === 2 && <AddForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+                    {step === 3 && <AddForm3 setData={setFormsData1} data={formsData1} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} userNo={userNo} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
                 </div>
             </div>
         </>

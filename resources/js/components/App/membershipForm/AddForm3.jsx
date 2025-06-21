@@ -13,6 +13,7 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
     const [showFamilyMember, setShowFamilyMember] = useState(false);
 
     const [submitError, setSubmitError] = useState('');
+    const [familyMemberErrors, setFamilyMemberErrors] = useState({});
 
     const handleFamilyMemberChange = (field, value) => {
         setCurrentFamilyMember({
@@ -28,7 +29,6 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
             ...prev,
             user_id: maxUserId + 1,
             member_type_id: data.member.member_type_id,
-            membership_category: data.member.membership_category,
             start_date: data.member.card_issue_date,
             end_date: data.member.card_expire_date,
         }));
@@ -36,12 +36,52 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
     };
 
     const handleSaveFamilyMember = () => {
-        if (!currentFamilyMember.full_name || !currentFamilyMember.relation || !currentFamilyMember.email) {
-            alert('Please fill required family member fields: Full Name, Relation, and Email');
+        const errors = {};
+
+        // Required fields
+        if (!currentFamilyMember.full_name) {
+            errors.full_name = 'Full Name is required';
+        }
+        if (!currentFamilyMember.relation) {
+            errors.relation = 'Relation is required';
+        }
+        if (!currentFamilyMember.email) {
+            errors.email = 'Email is required';
+        }
+
+        // Email uniqueness check
+        const mainEmail = data.email?.trim().toLowerCase();
+        const memberEmail = currentFamilyMember.email?.trim().toLowerCase();
+
+        if (memberEmail === mainEmail) {
+            errors.email = 'Family member email must not be same as member email';
+        }
+
+        const emailAlreadyUsed = data.family_members.some((fm) => fm.email?.trim().toLowerCase() === memberEmail);
+
+        if (emailAlreadyUsed) {
+            errors.email = 'This email is already added to another family member';
+        }
+
+        // Date validations
+        const issueDate = new Date(data.member.card_issue_date);
+        const expiryDate = new Date(data.member.card_expiry_date);
+        const start = new Date(currentFamilyMember.start_date);
+        const end = new Date(currentFamilyMember.end_date);
+
+        if (currentFamilyMember.start_date && currentFamilyMember.end_date && start > expiryDate && end > expiryDate) {
+            errors.date = 'Start and End dates are beyond card expiry';
+        } else if (currentFamilyMember.start_date && currentFamilyMember.end_date && !(start >= issueDate && end <= expiryDate)) {
+            errors.date = 'Family member dates are outside the valid card date range';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setFamilyMemberErrors(errors);
             return;
         }
+
+        // All good: proceed
         handleChangeData('family_members', [...data.family_members, currentFamilyMember]);
-        // setFamilyMembers([...familyMembers, currentFamilyMember]);
         setCurrentFamilyMember({
             user_id: userNo + 1,
             full_name: '',
@@ -57,6 +97,7 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
             picture_preview: null,
         });
         setShowFamilyMember(false);
+        setFamilyMemberErrors({}); // Clear errors
     };
 
     const handleImageUpload = (event) => {
@@ -598,6 +639,8 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                     variant="outlined"
                                                     value={currentFamilyMember.full_name}
                                                     onChange={(e) => handleFamilyMemberChange('full_name', e.target.value)}
+                                                    error={!!familyMemberErrors.full_name}
+                                                    helperText={familyMemberErrors.full_name}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
@@ -609,7 +652,7 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                         <Grid item xs={6}>
                                             <Box sx={{ mb: 3 }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Relation with Primary*</Typography>
-                                                <FormControl fullWidth variant="outlined">
+                                                <FormControl fullWidth variant="outlined" error={!!familyMemberErrors.relation}>
                                                     <Select
                                                         displayEmpty
                                                         value={currentFamilyMember.relation}
@@ -631,6 +674,11 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                         <MenuItem value="Parent">Parent</MenuItem>
                                                         <MenuItem value="Sibling">Sibling</MenuItem>
                                                     </Select>
+                                                    {!!familyMemberErrors.relation && (
+                                                        <Typography variant="caption" color="error">
+                                                            {familyMemberErrors.relation}
+                                                        </Typography>
+                                                    )}
                                                 </FormControl>
                                             </Box>
                                         </Grid>
@@ -645,6 +693,8 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                     placeholder="Enter Email"
                                                     variant="outlined"
                                                     value={currentFamilyMember.email}
+                                                    error={!!familyMemberErrors.email}
+                                                    helperText={familyMemberErrors.email}
                                                     onChange={(e) => handleFamilyMemberChange('email', e.target.value)}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
@@ -725,7 +775,7 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                     </Grid>
 
                                     <Grid container spacing={2}>
-                                        <Grid item xs={6}>
+                                        <Grid item xs={12}>
                                             <Box sx={{ mb: 3 }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category</Typography>
                                                 <FormControl fullWidth variant="outlined">
@@ -746,6 +796,9 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                             },
                                                         }}
                                                     >
+                                                        <MenuItem value="">
+                                                            <em>None</em>
+                                                        </MenuItem>
                                                         {membercategories
                                                             ?.filter((item) => item.id === data.member.membership_category)
                                                             .map((item) => (
@@ -776,9 +829,6 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                 />
                                             </Box>
                                         </Grid>
-                                    </Grid>
-
-                                    <Grid container spacing={2}>
                                         <Grid item xs={6}>
                                             <Box sx={{ mb: 3 }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>End Date</Typography>
@@ -799,6 +849,13 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                             </Box>
                                         </Grid>
                                     </Grid>
+
+                                    {/* Date error shown separately */}
+                                    {familyMemberErrors.date && (
+                                        <Typography color="error" variant="body2">
+                                            {familyMemberErrors.date}
+                                        </Typography>
+                                    )}
 
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                                         <Button
