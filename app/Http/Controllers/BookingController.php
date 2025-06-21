@@ -17,10 +17,11 @@ class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::with('typeable')->latest()->get();
+        $bookings = Booking::with('typeable','user')->latest()->get();
         $totalBookings = Booking::count();
         $totalRoomBookings = Booking::where('booking_type', 'room')->count();
         $totalEventBookings = Booking::where('booking_type', 'event')->count();
+
 
         $rooms = Room::latest()->get();
         $events = BookingEvents::latest()->get();

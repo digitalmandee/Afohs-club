@@ -442,7 +442,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
     );
 };
 
-const BookingDashboard = ({ data, user }) => {
+const BookingDashboard = ({ data }) => {
     const [open, setOpen] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -459,7 +459,6 @@ const BookingDashboard = ({ data, user }) => {
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
     };
-    console.log('user', user);
 
     const handleFilterShow = () => setShowFilter(true);
 
@@ -684,6 +683,7 @@ const BookingDashboard = ({ data, user }) => {
                                     <Col>
                                         <Typography variant="h6" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '24px' }}>
                                             Recently Booking
+                                            <pre>{JSON.stringify(data.bookingsData, null, 2)}</pre>
                                         </Typography>
                                     </Col>
                                     <Col xs="auto" className="d-flex gap-3">
