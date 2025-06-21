@@ -1,6 +1,8 @@
+<!doctype html>
 <html>
     <head>
-        <title>Invoice</title>
+        <title>Booking Invoice</title>
+        <!-- TODO: Temporary invoice modifications for dynamic data and table removal -->
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -20,7 +22,6 @@
             .grid-container {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 16px;
                 margin-bottom: 32px;
                 padding-bottom: 16px;
                 border-bottom: 1px solid #f0f0f0;
@@ -73,24 +74,6 @@
                 font-weight: bold;
                 margin-bottom: 8px;
             }
-            .table-container {
-                margin-bottom: 24px;
-            }
-            .table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 13px;
-            }
-            .table-head {
-                background-color: #f9f9f9;
-            }
-            .table-cell {
-                padding: 12px;
-                font-weight: bold;
-            }
-            .table-body-cell {
-                padding: 12px;
-            }
             .summary-container {
                 display: flex;
                 justify-content: flex-end;
@@ -137,72 +120,82 @@
                             Lahore, Pakistan
                         </div>
                     </div>
-                    <div class="grid-item-right">
-                        <div class="typography-h6" style="color: #333">Invoice</div>
+                    <div class="grid-item-center">
+                        <div class="typography-h6" style="color: #333">Booking Invoice</div>
                     </div>
                 </div>
 
                 <!-- Bill To and Details Section -->
                 <div class="grid-container-details">
                     <div class="grid-item-half">
-                        <div class="subtitle1">Bill To ${invoiceData.billTo.membershipId !== 'N/A' ? '- ' + invoiceData.billTo.membershipId : ''}</div>
+                        <!-- TODO: Updated field names to match data structure -->
+                        <div class="subtitle1">Bill To - ${booking.booking_id || 'N/A'}</div>
                         <div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Name: </span>${invoiceData.billTo.name}</div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Category: </span>${invoiceData.billTo.category}</div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Membership #: </span>${invoiceData.billTo.membershipId}</div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Contact #: </span>${invoiceData.billTo.contactNumber}</div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">City: </span>${invoiceData.billTo.city}</div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Family Member: </span>${invoiceData.billTo.familyMember}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Guest Name: </span>${booking.user?.name || 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Membership Type: </span>${booking.user?.member_type_id ? 'Member ' + booking.user.member_type_id : 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Membership ID: </span>${booking.user?.user_id || 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Phone Number: </span>${booking.user?.phone_number || 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Email: </span>${booking.user?.email || 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Booking For: </span>${booking.booking_for || 'N/A'}</div>
                         </div>
                     </div>
                     <div class="grid-item-half">
-                        <div class="subtitle1">DETAILS</div>
+                        <!-- TODO: Updated field names and added dynamic booking details -->
+                        <div class="subtitle1">Booking Details</div>
                         <div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Invoice #: </span>${invoiceData.details.invoiceNumber}</div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Issue Date: </span>${new Date(invoiceData.details.issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', })}</div>
-                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Payment Method: </span>${invoiceData.details.paymentMethod}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_id ? booking.booking_id.padStart(6, '0') : 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Issue Date: </span>${booking.created_at ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Room Name' : 'Event Name'}: </span>${booking.typeable?.name || booking.typeable?.event_name || 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Check-in: </span>${booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Check-out: </span>${booking.checkout && booking.booking_type === 'room' ? dayjs(booking.checkout).format('MMMM D, YYYY') : 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Booking For: </span>${booking.persons || 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
+                            <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Invoice Table -->
-                <div class="table-container">
-                    <table class="table">
-                        <thead class="table-head">
-                            <tr>
-                                <th class="table-cell">SR #</th>
-                                <th class="table-cell">Description</th>
-                                <th class="table-cell">Invoice Amount</th>
-                                <th class="table-cell">Remaining Amount</th>
-                                <th class="table-cell">Paid Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="table-body-cell">${invoice.invoice_number}</td>
-                                <td class="table-body-cell">${invoice.member_type?.name}</td>
-                                <td class="table-body-cell">${invoice.total_amount}</td>
-                                <td class="table-body-cell">${invoice.customer_charges}</td>
-                                <td class="table-body-cell">${invoice.amount_paid}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <!-- TODO: Table section removed as per request; restore if needed -->
+                <!--
+            <div class="table-container">
+                <table class="table">
+                    <thead class="table-head">
+                        <tr>
+                            <th class="table-cell">SR #</th>
+                            <th class="table-cell">Description</th>
+                            <th class="table-cell">Invoice Amount</th>
+                            <th class="table-cell">Remaining Amount</th>
+                            <th class="table-cell">Paid Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="table-body-cell">1</td>
+                            <td class="table-body-cell">${booking.booking_type === 'room' ? 'Room Booking' : 'Event Booking'} - ${booking.typeable?.name || booking.typeable?.event_name}</td>
+                            <td class="table-body-cell">${booking.total_payment}</td>
+                            <td class="table-body-cell">${booking.remaining_amount || '0'}</td>
+                            <td class="table-body-cell">${booking.paid_amount || booking.total_payment}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            -->
 
                 <!-- Summary Section -->
                 <div class="summary-container">
                     <div class="summary-box">
                         <div class="summary-row">
-                            <span class="typography-body2-bold">Grand Total</span>
-                            <span class="typography-body2">Rs ${invoice.total_amount}</span>
+                            <span class="typography-body2-bold">Total Amount</span>
+                            <span class="typography-body2">Rs ${booking.total_payment || '0'}</span>
                         </div>
                         <div class="summary-row">
-                            <span class="typography-body2-bold">Remaining Amount</span>
-                            <span class="typography-body2">Rs ${invoice.customer_charges}</span>
+                            <span class="typography-body2-bold">Balance Due</span>
+                            <span class="typography-body2">Rs ${booking.remaining_amount || '0'}</span>
                         </div>
                         <div class="summary-row">
-                            <span class="typography-body2-bold">Paid Amount</span>
-                            <span class="typography-body2">Rs ${invoice.amount_paid}</span>
+                            <span class="typography-body2-bold">Amount Paid</span>
+                            <span class="typography-body2">Rs ${booking.paid_amount || booking.total_payment || '0'}</span>
                         </div>
                     </div>
                 </div>
@@ -218,7 +211,7 @@
                     </div>
                     <div class="notes-item">
                         <div class="typography-body2">If paid by credit card or cheque, 5% surcharge will be added to the total amount.</div>
-                        <div class="amount-in-words">AMOUNT IN WORDS: ${toWords(invoice.total_amount)}</div>
+                        <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.total_payment || 0)} RUPEES ONLY</div>
                     </div>
                 </div>
             </div>
