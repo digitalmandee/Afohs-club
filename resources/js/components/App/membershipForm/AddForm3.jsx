@@ -882,8 +882,8 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                 }}
                                 onClick={handleSubmit}
                                 loading={loading}
-                                disabled={loading}
                                 loadingPosition="start"
+                                disabled={loading}
                             >
                                 Save & Submit
                             </Button>

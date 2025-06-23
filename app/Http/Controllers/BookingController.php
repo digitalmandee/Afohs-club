@@ -229,7 +229,7 @@ class BookingController extends Controller
         $invoice->status = 'paid';
         $invoice->save();
 
-        $subscription = Booking::find($invoice->data['id']);
+        $subscription = Booking::find($invoice->data[0]['id']);
         $subscription->status = 'confirmed';
         $subscription->save();
 

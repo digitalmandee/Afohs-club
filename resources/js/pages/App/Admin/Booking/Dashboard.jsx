@@ -238,21 +238,31 @@ const generateInvoiceContent = (booking) => {
                     <div class="subtitle1">Booking Details</div>
                     <div class="two-column">
                         <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_id ? booking.booking_id.padStart(6, '0') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.created_at ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Room Name' : 'Event Name'}: </span>${booking.typeable?.name || booking.typeable?.event_name || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.typeable?.max_capacity || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Number of Beds' : 'location'}: </span>${booking.typeable?.number_of_beds || booking.typeable?.location || 'N/A'}</div>
-                        ${booking.booking_type === 'room' && booking.typeable?.number_of_bathrooms ? `
-                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.typeable.number_of_bathrooms}</div>
-                        ` : ''} ${booking.booking_type === 'room' ? `
+                        ${
+                            booking.booking_type === 'room' && booking.typeable?.number_of_bathrooms
+                                ? `
+                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.typeable?.number_of_bathrooms}</div>
+                        `
+                                : ''
+                        } ${
+                            booking.booking_type === 'room'
+                                ? `
                         <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.checkout ? dayjs(booking.checkout).format('MMMM D, YYYY') : 'N/A'}</div>
-                        ` : booking.booking_type === 'event' ? `
-                        <div class="typography-body2"><span style="font-weight: bold">Event Date: </span>${booking.typeable?.date_time ? dayjs(booking.typeable.date_time).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Event Time: </span>${booking.typeable?.date_time ? dayjs(booking.typeable.date_time).format('h:mm A') : 'N/A'}</div>
-                        ` : ''}
+                        `
+                                : booking.booking_type === 'event'
+                                  ? `
+                        <div class="typography-body2"><span style="font-weight: bold">Event Date: </span>${booking.typeable?.date_time ? dayjs(booking.typeable?.date_time).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Event Time: </span>${booking.typeable?.date_time ? dayjs(booking.typeable?.date_time).format('h:mm A') : 'N/A'}</div>
+                        `
+                                  : ''
+                        }
                         <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
                     </div>
@@ -333,7 +343,6 @@ const numberToWords = (num) => {
 const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => {
     const [bookingType, setBookingType] = useState('room');
     const [values, setValues] = useState([new DateObject(), new DateObject().add(1, 'days')]);
-    const [showPersonInput, setShowPersonInput] = useState(false);
     const [filterApplied, setFilterApplied] = useState(false);
     const [initialAdults] = useState(adults);
 
@@ -359,7 +368,15 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
 
     return (
         <div style={{ padding: '10px', borderRadius: '4px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 1fr 120px 60px', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: '200px 1fr 1fr 120px 60px',
+                    gap: '10px',
+                    alignItems: 'center',
+                    marginBottom: '10px',
+                }}
+            >
                 <FormControl>
                     <InputLabel id="booking-label">Booking Type</InputLabel>
                     <Select labelId="booking-label" id="booking-select" value={bookingType} label="Booking Type" onChange={(e) => setBookingType(e.target.value)}>
@@ -367,43 +384,65 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                         <MenuItem value="event">Event</MenuItem>
                     </Select>
                 </FormControl>
-                <div style={{ flex: '1', backgroundColor: '#fff', padding: '5px', borderRadius: '4px', marginRight: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+                <div
+                    style={{
+                        flex: '1',
+                        backgroundColor: '#fff',
+                        padding: '5px',
+                        borderRadius: '4px',
+                        marginRight: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                    }}
+                >
                     <span>📅</span>
                     <DatePicker placeholder="CheckIn to CheckOut" value={values} dateSeparator=" to " onChange={handleRangeSelect} range rangeHover style={{ width: '100%', height: '40px', fontSize: '16px' }} />
                 </div>
+
+                {/* 👤 Direct Input for Person */}
                 <div
-                    style={{ flex: '1', backgroundColor: '#fff', padding: '9px', borderRadius: '4px', position: 'relative' }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setShowPersonInput((prev) => !prev);
+                    style={{
+                        flex: '1',
+                        backgroundColor: '#fff',
+                        padding: '5px 10px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
                     }}
                 >
-                    <span style={{ marginRight: '5px' }}>👤</span>
-                    <span style={{ cursor: 'pointer', display: 'inline-block', padding: '5px' }}>{`Total Person: ${adults}`}</span>
-                    <span style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)' }}> ▼ </span>
-                    {showPersonInput && (
-                        <input
-                            type="number"
-                            min="0"
-                            value={adults}
-                            onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                                position: 'absolute',
-                                bottom: '-50px',
-                                left: '0',
-                                padding: '5px',
-                                width: '100px',
-                                border: '1px solid #ccc',
-                                borderRadius: '4px',
-                                background: '#fff',
-                            }}
-                        />
-                    )}
+                    <span>👤</span>
+                    <span style={{ whiteSpace: 'nowrap' }}>Total Person:</span>
+                    <input
+                        type="number"
+                        min="0"
+                        value={adults}
+                        onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
+                        style={{
+                            width: '80px',
+                            padding: '5px 8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                        }}
+                        placeholder="0"
+                    />
                 </div>
-                <Button style={{ backgroundColor: '#063455', color: '#fff', padding: '10px 15px', borderRadius: '4px', marginLeft: '10px' }} onClick={handleSearch}>
+
+                <Button
+                    style={{
+                        backgroundColor: '#063455',
+                        color: '#fff',
+                        padding: '10px 15px',
+                        borderRadius: '4px',
+                        marginLeft: '10px',
+                    }}
+                    onClick={handleSearch}
+                >
                     Search
                 </Button>
+
                 <Button variant="danger" style={{ padding: '10px', borderRadius: '4px' }} onClick={handleClear}>
                     <HighlightOffIcon />
                 </Button>
@@ -653,13 +692,7 @@ const BookingDashboard = ({ data }) => {
                         </Row>
 
                         {/* TODO: Remove invoice modal when reverting to original print functionality */}
-                        <Modal
-                            show={showInvoiceModal}
-                            onHide={handleCloseInvoice}
-                            className="custom-dialog-right"
-                            size="lg"
-                            aria-labelledby="invoice-modal-title"
-                        >
+                        <Modal show={showInvoiceModal} onHide={handleCloseInvoice} className="custom-dialog-right" size="lg" aria-labelledby="invoice-modal-title">
                             <Modal.Body>
                                 <div dangerouslySetInnerHTML={{ __html: selectedBooking ? generateInvoiceContent(selectedBooking) : '' }} />
                             </Modal.Body>
@@ -802,7 +835,7 @@ const BookingDashboard = ({ data }) => {
                                                                         Duration
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? durationInDays + " Days" : booking.checkin}
+                                                                        {booking.booking_type === 'room' ? durationInDays + ' Days' : booking.checkin}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
@@ -810,7 +843,7 @@ const BookingDashboard = ({ data }) => {
                                                                         {booking.booking_type === 'room' ? 'Room' : 'Event'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable.name : booking.typeable?.event_name}
+                                                                        {booking.booking_type === 'room' ? booking.typeable?.name : booking.typeable?.event_name}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
@@ -818,7 +851,7 @@ const BookingDashboard = ({ data }) => {
                                                                         {booking.booking_type === 'room' ? 'Price Per Night' : 'Price Per Person'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable.price_per_night : booking.typeable?.price_per_person}
+                                                                        {booking.booking_type === 'room' ? booking.typeable?.price_per_night : booking.typeable?.price_per_person}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">

@@ -248,6 +248,8 @@ const MembershipDashboard = ({ memberTypesData, user, membercategories }) => {
                 const invoiceNo = response.data?.invoice_no || user.invoice_id;
                 if (!isEditMode) {
                     router.visit(route('membership.allpayment') + `?invoice_no=${invoiceNo}`);
+                } else {
+                    router.visit(route('membership.dashboard'));
                 }
             })
             .catch((error) => {

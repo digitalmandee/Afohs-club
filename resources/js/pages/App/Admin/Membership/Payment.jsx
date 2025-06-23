@@ -11,6 +11,7 @@ const drawerWidthClosed = 110;
 
 const Payment = ({ invoice, onBack }) => {
     const [open, setOpen] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         user_id: invoice.user_id,
         subscriptionType: 'one_time',
@@ -197,6 +198,7 @@ const Payment = ({ invoice, onBack }) => {
             data.append('receipt', formData.receipt);
         }
 
+        setLoading(true);
         try {
             const response = await axios.post(route('membership.payment.store'), data, {
                 headers: {
@@ -212,6 +214,8 @@ const Payment = ({ invoice, onBack }) => {
             }
         } catch (error) {
             setError('Payment failed: ' + (error.response?.data?.message || 'Please check the form data.'));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -444,6 +448,9 @@ const Payment = ({ invoice, onBack }) => {
                                 variant="contained"
                                 className="d-flex align-items-center"
                                 onClick={handleSubmit}
+                                loading={loading}
+                                disabled={loading}
+                                loadingPosition="start"
                                 sx={{
                                     bgcolor: '#0c4b6e',
                                     '&:hover': {
