@@ -5,15 +5,13 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import SubscriptionFilter from './Filter';
-import InvoiceSlip from './Invoice';
 import SubscriptionCardComponent from './UserCard';
+import InvoiceSlip from '../Membership/Invoice';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalRevenue }) => {
-    console.log('subscriptions', subscriptions);
-
     // Modal state
     const [open, setOpen] = useState(true);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
@@ -218,7 +216,13 @@ const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalReve
                                                 </TableCell>
                                                 <TableCell>
                                                     {/* View button can stay here if you need it */}
-                                                    <Button onClick={() => setOpenInvoiceModal(true)} sx={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>
+                                                    <Button
+                                                        onClick={() => {
+                                                            setSelectedSubscription(subscription);
+                                                            setOpenInvoiceModal(true);
+                                                        }}
+                                                        sx={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
+                                                    >
                                                         View
                                                     </Button>
                                                     <Button
@@ -246,7 +250,7 @@ const SubscriptionDashboard = ({ subscriptions, newSubscriptionsToday, totalReve
 
                     <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
 
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedSubscription} />
+                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectedSubscription?.invoice_id} />
                 </div>
             </div>
         </>

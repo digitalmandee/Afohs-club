@@ -34,6 +34,7 @@ class Member extends Model
     ];
 
     protected $casts = [
+        'member_type' => 'array',
         'category_ids' => 'array'
     ];
 

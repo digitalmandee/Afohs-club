@@ -103,9 +103,7 @@ const RoomScreen = ({ rooms, data }) => {
     // console.log('rooms', data);
 
     // TODO: Replaced static bookingsData with data.bookingsData from props
-    const filteredBookings = data.bookingsData.filter((booking) =>
-        (booking.typeable?.name || booking.typeable?.event_name || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredBookings = data.bookingsData.filter((booking) => (booking.typeable?.name || booking.typeable?.event_name || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
@@ -228,7 +226,7 @@ const RoomScreen = ({ rooms, data }) => {
                                                     </Typography>
                                                     <Typography variant="body2" color="text.secondary">
                                                         <Box component="span" fontWeight="bold" color="text.primary">
-                                                            {roomTypes.price_per_night}$
+                                                            {roomTypes.price_per_night} Rs
                                                         </Box>
                                                         /per night
                                                     </Typography>
@@ -315,9 +313,7 @@ const RoomScreen = ({ rooms, data }) => {
                         {/* TODO: Updated to use filteredBookings from data.bookingsData */}
                         {filteredBookings.length > 0 ? (
                             filteredBookings.map((booking, index) => {
-                                const durationInDays = booking.booking_type === 'room' && booking.checkin && booking.checkout
-                                    ? dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day')
-                                    : null;
+                                const durationInDays = booking.booking_type === 'room' && booking.checkin && booking.checkout ? dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day') : null;
 
                                 return (
                                     <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }} onClick={() => handleShowInvoice(booking)}>
@@ -336,15 +332,12 @@ const RoomScreen = ({ rooms, data }) => {
                                                 <Col md={10}>
                                                     <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                                                         <div>
-                                                            <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>
-                                                                {booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}
-                                                            </Typography>
+                                                            <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}</Typography>
                                                             <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
                                                                 Created on {booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}
                                                             </Typography>
                                                         </div>
                                                         <Badge
-
                                                             bg=""
                                                             style={{
                                                                 backgroundColor: booking.status === 'confirmed' ? '#0e5f3c' : '#842029',
@@ -375,9 +368,7 @@ const RoomScreen = ({ rooms, data }) => {
                                                                 Duration
                                                             </Typography>
                                                             <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                {booking.booking_type === 'room' && durationInDays !== null
-                                                                    ? `${durationInDays} Day${durationInDays !== 1 ? 's' : ''}`
-                                                                    : booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}
+                                                                {booking.booking_type === 'room' && durationInDays !== null ? `${durationInDays} Day${durationInDays !== 1 ? 's' : ''}` : booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}
                                                             </Typography>
                                                         </Col>
                                                         <Col md={2} sm={6} className="mb-2">

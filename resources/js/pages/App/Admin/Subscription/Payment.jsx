@@ -13,7 +13,7 @@ const drawerWidthClosed = 110;
 const Payment = ({ invoice, member, onBack }) => {
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({
-        user_id: invoice?.customer?.id,
+        user_id: invoice?.user_id,
         inputAmount: invoice?.total_price?.toString() || '0',
         customerCharges: '0.00',
         paymentMethod: 'cash',
@@ -23,6 +23,8 @@ const Payment = ({ invoice, member, onBack }) => {
     const [error, setError] = useState('');
 
     const minAmount = parseFloat(invoice.total_price || 0);
+
+    const subscriptionData = Array.isArray(invoice.data) ? invoice.data.find((entry) => entry.invoice_type === 'subscription') : null;
 
     const handleInputChange = (e) => {
         const { name, value, files } = e.target;
@@ -70,6 +72,7 @@ const Payment = ({ invoice, member, onBack }) => {
         data.append('user_id', formData.user_id);
         data.append('amount', invoice.amount); // or any other base you need
         data.append('total_amount', inputAmount);
+        data.append('subscription_id', subscriptionData?.id);
         data.append('invoice_no', invoice.invoice_no); // optionally link to invoice
         data.append('customer_charges', parseFloat(formData.customerCharges));
         data.append('payment_method', formData.paymentMethod);
@@ -185,8 +188,12 @@ const Payment = ({ invoice, member, onBack }) => {
                             </Typography>
                             <Typography sx={{ mb: 1 }}>Email: {invoice.customer?.email}</Typography>
                             <Typography>Membership Type: {invoice.customer?.member?.member_type?.name}</Typography>
-                            <Typography>Subscription Category: {invoice.data?.category?.name}</Typography>
-                            <Typography>Subscription Type: {invoice.subscription_type}</Typography>
+                            {subscriptionData && (
+                                <>
+                                    <Typography>Subscription Category: {subscriptionData.category?.name}</Typography>
+                                    <Typography>Subscription Type: {invoice.subscription_type}</Typography>
+                                </>
+                            )}
                             <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
                                 Amount: Rs {invoice.amount} <br />
                                 Total: Rs {invoice.total_price}

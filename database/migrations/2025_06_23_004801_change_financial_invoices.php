@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('members', function (Blueprint $table) {
-            // Add additional_data JSON column
-            $table->json('additional_data')->nullable()->after('member_type_id');
+        Schema::table('financial_invoices', function (Blueprint $table) {
+            $table->bigInteger('invoice_no')->change();
         });
     }
 
@@ -22,9 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('members', function (Blueprint $table) {
-            // Drop additional_data
-            $table->dropColumn('additional_data');
+        Schema::table('financial_invoices', function (Blueprint $table) {
+            $table->string('invoice_no')->change();
         });
     }
 };

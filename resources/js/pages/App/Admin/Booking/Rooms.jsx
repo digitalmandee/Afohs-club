@@ -27,7 +27,9 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
                                         {type === 'room' ? (
                                             <>
                                                 <div className="d-flex justify-content-between">
-                                                    <h5 style={{ fontWeight: 400, fontSize: '18px', color: '#121212', marginBottom: '5px' }}>Rooms ({checkin && checkout && <span style={{ fontWeight: 'bold', color: '#121212' }}>{item.price_per_night * nights} Rs Total</span>})</h5>
+                                                    <h5 style={{ fontWeight: 400, fontSize: '18px', color: '#121212', marginBottom: '5px' }}>
+                                                        {item.name} ({checkin && checkout && <span style={{ fontWeight: 'bold', color: '#121212' }}>{item.price_per_night * nights} Rs Total</span>})
+                                                    </h5>
                                                     <div>
                                                         <span style={{ fontWeight: 'bold' }}>{item.price_per_night} Rs</span>
                                                         <span style={{ color: '#6c757d', fontSize: '0.9rem' }}>/Per night</span>

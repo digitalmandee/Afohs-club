@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Inertia\Inertia;
 use App\Models\FinancialInvoice;
 use App\Models\MemberCategory;
@@ -13,52 +14,52 @@ class FinancialController extends Controller
     public function index()
     {
         $FinancialInvoice = FinancialInvoice::with(['user' => function ($query) {
-            $query->select('id', 'phone_number','name');
+            $query->select('id', 'phone_number', 'name');
         }])->latest()->get();
         return Inertia::render('App/Admin/Finance/Dashboard', [
             'FinancialInvoice' => $FinancialInvoice,
         ]);
     }
     public function fetchRevenue()
-{
-    $totalRevenue = FinancialInvoice::where('status', 'paid')
-        ->sum('total_price');
+    {
+        $totalRevenue = FinancialInvoice::where('status', 'paid')
+            ->sum('total_price');
 
-    $roomRevenue = FinancialInvoice::where('status', 'paid')
-        ->where('invoice_type', 'room')
-        ->sum('total_price');
+        $roomRevenue = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'event_booking')
+            ->sum('total_price');
 
-    $eventRevenue = FinancialInvoice::where('status', 'paid')
-        ->where('invoice_type', 'event')
-        ->sum('total_price');
+        $eventRevenue = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'room_booking')
+            ->sum('total_price');
 
-    $memberShipRevenue = FinancialInvoice::where('status', 'paid')
-        ->where('invoice_type', 'membership')
-        ->sum('total_price');
+        $memberShipRevenue = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'membership')
+            ->sum('total_price');
 
-    $subscriptionRevenue = FinancialInvoice::where('status', 'paid')
-        ->where('invoice_type', 'subscription')
-        ->sum('total_price');
+        $subscriptionRevenue = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'subscription')
+            ->sum('total_price');
 
-    $foodRevenue = FinancialInvoice::where('status', 'paid')
-        ->where('invoice_type', 'food')
-        ->sum('total_price');
+        $foodRevenue = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'food')
+            ->sum('total_price');
 
-    return response()->json([
-        'totalRevenue' => $totalRevenue,
-        'roomRevenue' => $roomRevenue,
-        'eventRevenue' => $eventRevenue,
-        'memberShipRevenue' => $memberShipRevenue,
-        'subscriptionRevenue' => $subscriptionRevenue,
-        'foodRevenue' => $foodRevenue,
-    ]);
-}
+        return response()->json([
+            'totalRevenue' => $totalRevenue,
+            'roomRevenue' => $roomRevenue,
+            'eventRevenue' => $eventRevenue,
+            'memberShipRevenue' => $memberShipRevenue,
+            'subscriptionRevenue' => $subscriptionRevenue,
+            'foodRevenue' => $foodRevenue,
+        ]);
+    }
 
 
     public function getTransaction()
     {
         $FinancialData = FinancialInvoice::with(['user' => function ($query) {
-            $query->select('id', 'phone_number','name');
+            $query->select('id', 'phone_number', 'name');
         }])->latest()->get();
         return Inertia::render('App/Admin/Finance/Transaction', [
             'FinancialData' => $FinancialData,
@@ -68,8 +69,8 @@ class FinancialController extends Controller
     public function create()
     {
         $categories = MemberCategory::select(['id', 'name', 'fee', 'subscription_fee', 'status'])
-                                   ->where('status', 'active')
-                                   ->get();
+            ->where('status', 'active')
+            ->get();
 
         return Inertia::render('App/Admin/Finance/AddTransaction', [
             'categories2' => $categories,
@@ -125,5 +126,19 @@ class FinancialController extends Controller
         ]);
 
         return redirect()->route('finance.dashboard')->with('success', 'Transaction added successfully');
+    }
+
+    // Get Member Invoices
+    public function getFinancialInvoices($id)
+    {
+        $invoice = FinancialInvoice::where('id', $id)->with('customer:id,user_id,first_name,last_name,email,phone_number', 'customer.member', 'customer.member.memberType', 'customer.userDetail:id,user_id,current_city')->first();
+
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice not found'], 404);
+        }
+
+        $invoice->customer->loadCount('familyMembers');
+
+        return response()->json(['invoice' => $invoice]);
     }
 }
