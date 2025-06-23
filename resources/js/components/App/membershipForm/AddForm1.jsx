@@ -2,12 +2,13 @@ import { useState, useRef } from 'react';
 import { TextField, Button, Select, MenuItem, FormControl, Paper, Typography, Grid, Box, IconButton, InputAdornment, OutlinedInput } from '@mui/material';
 import { ArrowBack, Add, Delete, Edit, KeyboardArrowRight, KeyboardArrowDown } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
     const [memberImage, setMemberImage] = useState(null);
     const [showImageButtons, setShowImageButtons] = useState(false);
-    // const [title, setTitle] = useState('');
-    // const [gender, setGender] = useState('');
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});
@@ -45,8 +46,9 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
         if (!data.first_name) errors.first_name = 'First Name is required';
         if (!data.last_name) errors.last_name = 'Last Name is required';
         if (!data.user_details.guardian_name) errors.guardian_name = 'Father/Husband Name is required';
+        if (!data.user_details.nationality) errors.nationality = 'Nationality is required';
+        if (!data.user_details.gender) errors.gender = 'Gender is required';
         if (!data.user_details.cnic_no) errors.cnic_no = 'CNIC No is required';
-        if (!data.user_details.passport_no) errors.passport_no = 'Passport No is required';
         if (!data.user_details.date_of_birth) errors.date_of_birth = 'Date of Birth is required';
         else if (dateError) errors.date_of_birth = dateError;
 
@@ -309,9 +311,9 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                             {/* Nationality */}
                             <Grid item xs={6}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Nationality
+                                    Nationality*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter Nationality e.g. Pakistan" size="small" name="user_details.nationality" value={data.user_details.nationality} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter Nationality e.g. Pakistan" size="small" name="user_details.nationality" value={data.user_details.nationality} error={!!formErrors.nationality} helperText={formErrors.nationality} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* CNIC No */}
@@ -319,15 +321,15 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     CNIC No*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter CNIC Number (13 digits)" size="small" name="user_details.cnic_no" value={data.user_details.cnic_no} error={!!formErrors.cnic_no} helperText={formErrors.cnic_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" type="number" placeholder="Enter CNIC Number (13 digits)" size="small" name="user_details.cnic_no" value={data.user_details.cnic_no} error={!!formErrors.cnic_no} helperText={formErrors.cnic_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Passport No */}
                             <Grid item xs={6}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Passport No*
+                                    Passport No
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="user_details.passport_no" value={data.user_details.passport_no} error={!!formErrors.passport_no} helperText={formErrors.passport_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="user_details.passport_no" value={data.user_details.passport_no} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Gender */}
@@ -335,9 +337,9 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Gender
                                 </Typography>
-                                <FormControl fullWidth size="small">
+                                <FormControl fullWidth size="small" error={!!formErrors.gender}>
                                     <Select
-                                        value={data.user_details.gender}
+                                        value={data.user_details.gender || ''}
                                         name="user_details.gender"
                                         onChange={handleChange}
                                         displayEmpty
@@ -347,12 +349,21 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                                             }
                                             return selected;
                                         }}
+                                        inputProps={{ 'aria-label': 'Without label' }}
                                         IconComponent={() => <KeyboardArrowDown sx={{ position: 'absolute', right: 8, pointerEvents: 'none' }} />}
                                     >
+                                        <MenuItem value="" disabled>
+                                            Choose Gender
+                                        </MenuItem>
                                         <MenuItem value="Male">Male</MenuItem>
                                         <MenuItem value="Female">Female</MenuItem>
                                         <MenuItem value="Other">Other</MenuItem>
                                     </Select>
+                                    {formErrors.gender && (
+                                        <Typography variant="caption" color="error">
+                                            {formErrors.gender}
+                                        </Typography>
+                                    )}
                                 </FormControl>
                             </Grid>
 
@@ -369,7 +380,32 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Date of Birth*
                                 </Typography>
-                                <TextField fullWidth type="date" InputLabelProps={{ shrink: true }} variant="outlined" size="small" name="user_details.date_of_birth" value={data.user_details.date_of_birth || ''} onChange={handleChange} error={!!formErrors.date_of_birth || !!dateError} helperText={formErrors.date_of_birth || dateError} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Date of Birth"
+                                        format="YYYY-MM-DD"
+                                        value={data.user_details.date_of_birth ? dayjs(data.user_details.date_of_birth) : null}
+                                        onChange={(newValue) =>
+                                            handleChange({
+                                                target: {
+                                                    name: 'user_details.date_of_birth',
+                                                    value: newValue ? newValue.format('YYYY-MM-DD') : '',
+                                                },
+                                            })
+                                        }
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                variant: 'outlined',
+                                                size: 'small',
+                                                name: 'user_details.date_of_birth',
+                                                error: !!formErrors.date_of_birth || !!dateError,
+                                                helperText: formErrors.date_of_birth || dateError,
+                                                sx: { '& .MuiOutlinedInput-root': { borderRadius: '4px' } },
+                                            },
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Grid>
 
                             {/* Education */}

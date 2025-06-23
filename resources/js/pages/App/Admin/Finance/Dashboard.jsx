@@ -1,24 +1,9 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {
-    Container, Row, Col, Card, Button, Form
-} from 'react-bootstrap';
-import {
-    ArrowBack, People, CheckCircle, Timer, Cancel,
-    BarChart, EventNote, CardMembership, Fastfood, Print,
-    CalendarToday
-} from '@mui/icons-material';
-import {
-    IconButton, TextField, InputAdornment,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper
-} from '@mui/material';
+import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
+import { ArrowBack, People, CheckCircle, Timer, Cancel, BarChart, EventNote, CardMembership, Fastfood, Print, CalendarToday } from '@mui/icons-material';
+import { IconButton, TextField, InputAdornment, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import { router } from '@inertiajs/react';
 import InvoiceSlip from '../Subscription/Invoice';
 import axios from 'axios';
@@ -28,7 +13,6 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -46,8 +30,9 @@ const Dashboard = ({ FinancialInvoice }) => {
     const [foodRevenue, setFoodRevenue] = useState(0);
 
     useEffect(() => {
-        axios.get('/api/finance/totalRevenue')
-            .then(response => {
+        axios
+            .get('/api/finance/totalRevenue')
+            .then((response) => {
                 setAllRevenue(response.data.totalRevenue);
                 setRoomRevenue(response.data.roomRevenue);
                 setEventRevenue(response.data.eventRevenue);
@@ -55,19 +40,17 @@ const Dashboard = ({ FinancialInvoice }) => {
                 setSubscriptionRevenue(response.data.subscriptionRevenue);
                 setFoodRevenue(response.data.foodRevenue);
             })
-            .catch(error => {
+            .catch((error) => {
                 console.error('Error fetching revenue:', error);
             });
     }, []);
 
-
-
     // Calculate metrics from FinancialInvoice
-    const totalMembers = new Set(FinancialInvoice?.map(i => i.member_id).filter(id => id !== null)).size;
-    const activeMembers = FinancialInvoice?.filter(i => i.data?.status === 'in_active' && new Date(i.data?.expiry_date) > new Date()).length || 0;
-    const expiredMembers = FinancialInvoice?.filter(i => i.data?.expiry_date && new Date(i.data.expiry_date) <= new Date()).length || 0;
-    const canceledMembers = FinancialInvoice?.filter(i => i.status === 'unpaid' && i.data?.expiry_date && new Date(i.data.expiry_date) <= new Date()).length || 0;
-    const totalRevenue = FinancialInvoice?.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.paid_amount, 0) || 0;
+    const totalMembers = new Set(FinancialInvoice?.map((i) => i.member_id).filter((id) => id !== null)).size;
+    const activeMembers = FinancialInvoice?.filter((i) => i.data?.status === 'in_active' && new Date(i.data?.expiry_date) > new Date()).length || 0;
+    const expiredMembers = FinancialInvoice?.filter((i) => i.data?.expiry_date && new Date(i.data.expiry_date) <= new Date()).length || 0;
+    const canceledMembers = FinancialInvoice?.filter((i) => i.status === 'unpaid' && i.data?.expiry_date && new Date(i.data.expiry_date) <= new Date()).length || 0;
+    const totalRevenue = FinancialInvoice?.filter((i) => i.status === 'paid').reduce((sum, i) => sum + i.paid_amount, 0) || 0;
 
     // Format number with commas
     const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -128,7 +111,6 @@ const Dashboard = ({ FinancialInvoice }) => {
                                             />
                                         </DemoContainer>
                                     </LocalizationProvider>
-
                                 </div>
 
                                 <Button
@@ -155,15 +137,17 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
-                                            <div style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    backgroundColor: '#202728',
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
                                                 <People />
                                             </div>
                                         </div>
@@ -176,15 +160,17 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
-                                            <div style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    backgroundColor: '#202728',
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
                                                 <CheckCircle />
                                             </div>
                                         </div>
@@ -197,15 +183,17 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
-                                            <div style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    backgroundColor: '#202728',
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
                                                 <Timer />
                                             </div>
                                         </div>
@@ -218,15 +206,17 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
-                                            <div style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    backgroundColor: '#202728',
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
                                                 <Cancel />
                                             </div>
                                         </div>
@@ -243,23 +233,23 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
                                     <Card.Body style={{ height: '150px' }}>
                                         <div className="d-flex gap-3">
-                                            <div style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginTop: '10px'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    backgroundColor: '#202728',
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    marginTop: '10px',
+                                                }}
+                                            >
                                                 <BarChart />
                                             </div>
                                             <div>
-                                                <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400, }}>Total Revenue</div>
-                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>
-                                                    Pkr {allRevenue?.toLocaleString() || 0}
-                                                </div>
+                                                <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Revenue</div>
+                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Pkr {allRevenue?.toLocaleString() || 0}</div>
                                             </div>
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
@@ -274,25 +264,23 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
                                     <Card.Body style={{ height: '150px' }}>
                                         <div className="d-flex gap-3">
-                                            <div style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginTop: '10px'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    backgroundColor: '#202728',
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    marginTop: '10px',
+                                                }}
+                                            >
                                                 <EventNote />
                                             </div>
                                             <div>
                                                 <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Booking Revenue</div>
-                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>
-                                                    Pkr {(+roomRevenue + +eventRevenue).toLocaleString()}
-                                                </div>
-
-
+                                                <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Pkr {(+roomRevenue + +eventRevenue).toLocaleString()}</div>
                                             </div>
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
@@ -315,16 +303,18 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
                                     <Card.Body style={{ height: '150px' }}>
                                         <div className="d-flex gap-3">
-                                            <div style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginTop: '10px'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    backgroundColor: '#202728',
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    marginTop: '10px',
+                                                }}
+                                            >
                                                 <CardMembership />
                                             </div>
                                             <div>
@@ -341,18 +331,20 @@ const Dashboard = ({ FinancialInvoice }) => {
                             </Col>
 
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none', }}>
+                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
                                     <Card.Body className="d-flex flex-column justify-content-center align-items-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
-                                            <div style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    backgroundColor: '#202728',
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
                                                 <Fastfood />
                                             </div>
                                         </div>
@@ -373,7 +365,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                     style={{
                                         backgroundColor: '#063455',
                                         border: 'none',
-                                        padding: '8px 15px'
+                                        padding: '8px 15px',
                                     }}
                                 >
                                     <Print style={{ marginRight: '5px', fontSize: '18px' }} /> Print
@@ -384,10 +376,10 @@ const Dashboard = ({ FinancialInvoice }) => {
                         {/* Transactions Table */}
                         <Row>
                             <Col>
-                                <TableContainer component={Paper} style={{ boxShadow: "none" }}>
+                                <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
                                     <Table>
                                         <TableHead>
-                                            <TableRow style={{ backgroundColor: "#E5E5EA", height: '60px' }}>
+                                            <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
                                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice ID</TableCell>
                                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
                                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Category</TableCell>
@@ -401,7 +393,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                         </TableHead>
                                         <TableBody>
                                             {(FinancialInvoice || []).slice(0, 5).map((invoice) => (
-                                                <TableRow key={invoice.id} style={{ borderBottom: "1px solid #eee" }}>
+                                                <TableRow key={invoice.id} style={{ borderBottom: '1px solid #eee' }}>
                                                     <TableCell
                                                         sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
                                                         onClick={() => {
@@ -411,33 +403,19 @@ const Dashboard = ({ FinancialInvoice }) => {
                                                     >
                                                         {invoice.invoice_no}
                                                     </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {invoice.member_id}
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {invoice.subscription_type || 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {invoice.payment_method.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {invoice.amount}
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {new Date(invoice.payment_date).toLocaleDateString()}
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>
-                                                        {invoice.user?.phone_number ?? 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>
-                                                        {invoice.user?.name ?? 'N/A'}
-                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.member_id}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.subscription_type || 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.payment_method}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.amount}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{new Date(invoice.payment_date).toLocaleDateString()}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>{invoice.user?.phone_number ?? 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>{invoice.user?.name ?? 'N/A'}</TableCell>
                                                     <TableCell>
                                                         <span
                                                             style={{
-                                                                color: "#0C67AA",
-                                                                textDecoration: "underline",
-                                                                cursor: "pointer"
+                                                                color: '#0C67AA',
+                                                                textDecoration: 'underline',
+                                                                cursor: 'pointer',
                                                             }}
                                                             onClick={() => {
                                                                 setSelectedInvoice(invoice);

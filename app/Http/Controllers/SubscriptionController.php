@@ -47,7 +47,7 @@ class SubscriptionController extends Controller
             'category' => 'required|exists:member_categories,id',
             'subscriptionType' => 'required|in:one_time,monthly,annual,quarter',
             'startDate' => 'required|date',
-            'expiryDate' => 'required|date|after_or_equal:start_date',
+            'expiryDate' => 'nullable|date|after_or_equal:start_date',
         ]);
 
         $category = MemberCategory::find($request->category);
