@@ -170,10 +170,12 @@ class MembershipController extends Controller
             $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
             $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'qr_codes');
 
+            $memberType = MemberType::find($request->member['member_type_id']);
             // Create primary member record
             Member::create([
                 'user_id' => $primaryUser->id,
                 'member_type_id' => $request->member_type_id,
+                'member_type' => $memberType,
                 'membership_date' => $request->member['membership_date'],
                 'card_status' => $request->member['card_status'],
                 'card_issue_date' => $request->member['card_issue_date'],
@@ -243,10 +245,8 @@ class MembershipController extends Controller
                 }
             }
 
-            $memberType = MemberType::find($request->member['member_type_id']);
             $memberTypeArray = $memberType->toArray(); // includes all fields from DB
-            $subscriptionArray = $subscription ? $subscription->toArray() : null; // includes all fields from DB
-            $subscriptionArray['amount'] = 0;
+            $subscriptionArray = $subscription ? $subscription->toArray() : ['amount' => 0]; // includes all fields from DB
             $memberTypeArray['amount'] = 0;
 
             // Create membership invoice

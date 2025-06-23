@@ -326,7 +326,7 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
                     <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={member} />
                     <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={member} />
                     <MemberFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} member={selectMember} />
+                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.member?.invoice_id} />
                 </div>
             </div>
         </>

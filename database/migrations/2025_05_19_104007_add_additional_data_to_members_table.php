@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('members', function (Blueprint $table) {
             // Add additional_data JSON column
-            $table->json('additional_data')->nullable()->after('member_type_id');
+            $table->json('member_type')->nullable()->after('member_type_id');
         });
     }
 
@@ -24,7 +24,7 @@ return new class extends Migration
     {
         Schema::table('members', function (Blueprint $table) {
             // Drop additional_data
-            $table->dropColumn('additional_data');
+            $table->dropColumn('member_type');
         });
     }
 };

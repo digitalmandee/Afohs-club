@@ -228,7 +228,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
 
 
-     //Financial Routes
+    //Financial Routes
     Route::get('/finance/dashboard', [FinancialController::class, 'index'])->name('finance.dashboard');
     Route::get('/finance/transaction', [FinancialController::class, 'getTransaction'])->name('finance.transaction');
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
@@ -281,6 +281,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // get member invoice
     Route::get('member-invoices/{id}', [MembershipController::class, 'getMemberInvoices'])->name('member-invoices');
+    Route::get('financial-invoices/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
 
 
