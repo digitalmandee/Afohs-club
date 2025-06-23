@@ -9,6 +9,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 import { Badge, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap';
 import EventBookingFilter from './EventFilter';
+import dayjs from 'dayjs';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -49,12 +50,12 @@ const dialogStyles = `
   border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  scrollbar-width: none;         /* Firefox */
-  -ms-overflow-style: none;      /* IE 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .custom-dialog-right .modal-content::-webkit-scrollbar {
-  display: none;                 /* Chrome, Safari */
+  display: none;
 }
   .dialog-top-right {
     position: fixed !important;
@@ -63,7 +64,7 @@ const dialogStyles = `
     margin: 0 !important;
     transform: none !important;
     height: auto;
-    max-height: calc(100vh - 40px); /* prevent going off screen */
+    max-height: calc(100vh - 40px);
   }
 
   .dialog-top-right .modal-dialog {
@@ -79,12 +80,12 @@ const dialogStyles = `
     height: 100%;
     max-height: calc(100vh - 40px);
     overflow-y: auto;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE 10+ */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .dialog-top-right .modal-content::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
+    display: none;
   }
 
   @media (max-width: 600px) {
@@ -95,60 +96,18 @@ const dialogStyles = `
   }
 `;
 
-const bookingsData = [
-    {
-        id: 1,
-        type: 'Deluxe Room',
-        created: 'March 25th 2025, 3:30 PM',
-        bookingId: 'ROM0232',
-        duration: 'March 25th 2025 to March 26th 2025',
-        rooms: 2,
-        nights: 1,
-        status: 'Confirmed',
-    },
-    {
-        id: 2,
-        type: 'Standard Room',
-        created: 'March 25th 2025, 3:30 PM',
-        bookingId: 'ROM0232',
-        duration: 'March 25th 2025 to March 26th 2025',
-        rooms: 1,
-        nights: 1,
-        status: 'Confirmed',
-    },
-];
-
-const roomTypes = [
-    {
-        type: 'Annual Gala',
-        image: '/assets/room-img.png',
-        area: 'Main Hall',
-        capacity: 100,
-        time: 'May 20, 10:00 AM',
-        price: 150,
-        color: '#0B4837',
-    },
-    {
-        type: 'Sports Night',
-        image: '/assets/room-img.png',
-        area: 'Ground Area',
-        capacity: 80,
-        time: 'March 25, 06:00 PM',
-        price: 150,
-        color: '#129BFF',
-    },
-];
-
-const EventScreen = ({ events }) => {
+const EventScreen = ({ events, data }) => {
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showResultsModal, setShowResultsModal] = useState(false);
     const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
-    console.log('events', events);
+    console.log('events', data);
 
-    const filteredBookings = bookingsData.filter((booking) => booking.type.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredBookings = data.bookingsData.filter((booking) =>
+        booking.typeable?.event_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
@@ -156,7 +115,7 @@ const EventScreen = ({ events }) => {
 
     const handleCloseAvailabilityModal = () => {
         setShowAvailabilityModal(false);
-        setShowAvailableRooms(false); // reset view on close
+        setShowAvailableRooms(false);
     };
 
     const handleShowAvailableRooms = () => {
@@ -165,6 +124,10 @@ const EventScreen = ({ events }) => {
 
     const handleFilterClose = () => setShowFilter(false);
     const handleFilterShow = () => setShowFilter(true);
+
+    const handleShowInvoice = (booking) => {
+        console.log('Show invoice for booking:', booking);
+    };
 
     return (
         <>
@@ -197,7 +160,7 @@ const EventScreen = ({ events }) => {
                                         fontWeight: 500,
                                     }}
                                 >
-                                    Events
+                                    Booking
                                 </Typography>
                             </Box>
                             <Box sx={{ display: 'flex', gap: 2 }}>
@@ -232,7 +195,7 @@ const EventScreen = ({ events }) => {
                         </Box>
 
                         <Box sx={{ mb: 2 }}>
-                            <Box textAlign="right" pb={2} >
+                            <Box textAlign="right" pb={2}>
                                 <Link
                                     href="/events/manage"
                                     underline="none"
@@ -246,84 +209,76 @@ const EventScreen = ({ events }) => {
                                 </Link>
                             </Box>
                             <Grid container spacing={2}>
-                                {events.slice(0, 4).map((events, index) => {
-                                    return (
-                                        <Grid item xs={12} sm={6} key={index}>
-                                            <Paper
-                                                elevation={0}
-                                                sx={{
-                                                    borderRadius: 1,
-                                                    overflow: 'hidden',
-                                                    display: 'flex',
-                                                    height: '100px',
-                                                    bgcolor: '#FFFFFF',
-                                                }}
-                                            >
-                                                {/* Image */}
-                                                {/* <img src="/assets/room-img.png" alt="" style={{ width: '117px', height: '77px' }} /> */}
-                                                {/* <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                                    <img src={'/' + events?.photo_path} alt="" style={{ width: '117px', height: '77px' }} />
-                                                </Box> */}
-                                                <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                                    <img src={'/' + events?.photo_path} alt="" style={{ width: '117px', height: '77px' }} />
+                                {events.slice(0, 4).map((event, index) => (
+                                    <Grid item xs={12} sm={6} key={index}>
+                                        <Paper
+                                            elevation={0}
+                                            sx={{
+                                                borderRadius: 1,
+                                                overflow: 'hidden',
+                                                display: 'flex',
+                                                height: '100px',
+                                                bgcolor: '#FFFFFF',
+                                            }}
+                                        >
+                                            <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                                                <img
+                                                    src={event.photo_path ? `/${event.photo_path}` : '/assets/placeholder.png'}
+                                                    alt={event.event_name || 'Event'}
+                                                    style={{ width: '117px', height: '77px' }}
+                                                />
+                                            </Box>
+                                            <Box sx={{ p: 2, width: '80%' }}>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        mt: -1,
+                                                    }}
+                                                >
+                                                    <Typography variant="h6" fontWeight="medium">
+                                                        {event.event_name || 'N/A'}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
+                                                        <Box component="span" fontWeight="bold" color="text.primary">
+                                                            {event.price_per_person ? `${event.price_per_person} RS.` : 'N/A'}
+                                                        </Box>
+                                                        /{event.pricing_type || 'person'}
+                                                    </Typography>
                                                 </Box>
-
-                                                {/* Content */}
-                                                <Box sx={{ p: 2, width: '80%' }}>
-                                                    <Box
-                                                        sx={{
-                                                            display: 'flex',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            mt: -1,
-                                                        }}
-                                                    >
-                                                        <Typography variant="h6" fontWeight="medium">
-                                                            {events.event_name}
-                                                        </Typography>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
-                                                            <Box component="span" fontWeight="bold" color="text.primary">
-                                                                {events.price_per_person} RS.
-                                                            </Box>
-                                                            /{events.pricing_type}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, mt: 2 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <LocationOnIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {event.location || 'N/A'}
                                                         </Typography>
                                                     </Box>
-
-
-
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, mt: 2 }}>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                            <LocationOnIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                {events.location}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                            <PeopleIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                {events.max_capacity} Capacity
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                            <AccessTimeIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                {events.date_time}
-                                                            </Typography>
-                                                        </Box>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <PeopleIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {event.max_capacity ? `${event.max_capacity} Capacity` : 'N/A'}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <AccessTimeIcon fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {event.date_time ? dayjs(event.date_time).format('MMM D, YYYY, h:mm A') : 'N/A'}
+                                                        </Typography>
                                                     </Box>
                                                 </Box>
-                                            </Paper>
-                                        </Grid>
-                                    );
-                                })}
+                                            </Box>
+                                        </Paper>
+                                    </Grid>
+                                ))}
                             </Grid>
                         </Box>
 
-                        {/* Search and Filter */}
                         <Row className="align-items-center mt-5 mb-3">
                             <Col>
                                 <Typography variant="h6" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '24px' }}>
                                     Recently Booking
+                                    {/* <pre>{JSON.stringify(data, null, 2)}</pre> */}
                                 </Typography>
                             </Col>
                             <Col xs="auto" className="d-flex gap-3">
@@ -353,7 +308,6 @@ const EventScreen = ({ events }) => {
                                         }}
                                     />
                                 </div>
-
                                 <Button
                                     variant="outline-secondary"
                                     className="d-flex align-items-center gap-1"
@@ -369,94 +323,108 @@ const EventScreen = ({ events }) => {
                                 </Button>
                             </Col>
                         </Row>
-                        {filteredBookings.map((booking, index) => (
-                            <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }}>
-                                <Card.Body className="p-2">
-                                    <Row>
-                                        {/* Room Image */}
-                                        <Col md={2} className="d-flex justify-content-center">
-                                            <img
-                                                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
-                                                alt={booking.type}
-                                                style={{
-                                                    width: '100%',
-                                                    objectFit: 'cover',
-                                                }}
-                                            />
-                                        </Col>
+                        {filteredBookings.map((booking, index) => {
+                            const durationInDays = booking.checkin && booking.checkout
+                                ? dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day')
+                                : null;
 
-                                        {/* Booking Info */}
-                                        <Col md={10}>
-                                            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                                                <div>
-                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>
-                                                        {booking.type}
-                                                    </Typography>
-                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
-                                                        Created on {booking.created}
-                                                    </Typography>
-                                                </div>
-                                                <Badge
-                                                    onClick={() => router.visit('/booking/details')}
-                                                    bg=""
+                            return (
+                                <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0' }} onClick={() => handleShowInvoice(booking)}>
+                                    <Card.Body className="p-2">
+                                        <Row>
+                                            <Col md={2} className="d-flex justify-content-center">
+                                                <img
+                                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
+                                                    alt={booking.booking_type}
                                                     style={{
-                                                        backgroundColor: booking.status === 'Confirmed' ? '#0e5f3c' : '#842029',
-                                                        color: 'white',
-                                                        padding: '6px 14px',
-                                                        borderRadius: '6px',
-                                                        fontSize: '0.85rem',
-                                                        fontWeight: 500,
-                                                        minWidth: '100px',
-                                                        textAlign: 'center',
-                                                        cursor: 'pointer',
-                                                        borderRadius: '0px',
+                                                        width: '100%',
+                                                        objectFit: 'cover',
                                                     }}
-                                                >
-                                                    {booking.status}
-                                                </Badge>
-                                            </div>
-
-                                            {/* Booking Details */}
-                                            <Row className="mt-2 text-start">
-                                                <Col md={3} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                        Booking ID
-                                                    </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                        {booking.bookingId}
-                                                    </Typography>
-                                                </Col>
-                                                <Col md={4} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                        Duration
-                                                    </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                        {booking.duration}
-                                                    </Typography>
-                                                </Col>
-                                                <Col md={2} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                        Room
-                                                    </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                        {booking.rooms}
-                                                    </Typography>
-                                                </Col>
-                                                <Col md={2} sm={6} className="mb-2">
-                                                    <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                        Night
-                                                    </Typography>
-                                                    <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                        {booking.nights}
-                                                    </Typography>
-                                                </Col>
-                                            </Row>
-                                        </Col>
-                                    </Row>
-                                </Card.Body>
-                            </Card>
-                        ))}
-
+                                                />
+                                            </Col>
+                                            <Col md={10}>
+                                                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                                                    <div>
+                                                        <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>
+                                                            {booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}
+                                                        </Typography>
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
+                                                            Created on {booking.created_at ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}
+                                                        </Typography>
+                                                    </div>
+                                                    <Badge
+                                                        bg=""
+                                                        style={{
+                                                            backgroundColor: booking.status === 'confirmed' ? '#0e5f3c' : '#842029',
+                                                            color: 'white',
+                                                            padding: '6px 14px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.85rem',
+                                                            fontWeight: 500,
+                                                            minWidth: '100px',
+                                                            textAlign: 'center',
+                                                            borderRadius: '0px',
+                                                        }}
+                                                    >
+                                                        {booking.status || 'N/A'}
+                                                    </Badge>
+                                                </div>
+                                                <Row className="text-start mt-2">
+                                                    <Col md={3} sm={6} className="mb-2">
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                            Booking ID
+                                                        </Typography>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                            # {booking.booking_id || 'N/A'}
+                                                        </Typography>
+                                                    </Col>
+                                                    <Col md={4} sm={6} className="mb-2">
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                            Duration
+                                                        </Typography>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                            {booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}
+                                                        </Typography>
+                                                    </Col>
+                                                    <Col md={2} sm={6} className="mb-2">
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                            Event
+                                                        </Typography>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                            {booking.typeable?.event_name || 'N/A'}
+                                                        </Typography>
+                                                    </Col>
+                                                    <Col md={2} sm={6} className="mb-2">
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                            Price Per Person
+                                                        </Typography>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                            {booking.typeable?.price_per_person ? `${booking.typeable.price_per_person} RS.` : 'N/A'}
+                                                        </Typography>
+                                                    </Col>
+                                                    <Col md={2} sm={6} className="mb-2">
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                            Total Payment
+                                                        </Typography>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                            {booking.total_payment ? `${booking.total_payment} RS.` : 'N/A'}
+                                                        </Typography>
+                                                    </Col>
+                                                    <Col md={2} sm={6} className="mb-2">
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                            Adults
+                                                        </Typography>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                            {booking.persons || 'N/A'}
+                                                        </Typography>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                                    </Card.Body>
+                                </Card>
+                            );
+                        })}
                         <Modal show={showFilter} onHide={handleFilterClose} dialogClassName="custom-dialog-right" backdrop={true} keyboard={true}>
                             <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
                                 <EventBookingFilter />
