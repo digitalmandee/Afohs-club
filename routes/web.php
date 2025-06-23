@@ -228,7 +228,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
 
 
-     //Financial Routes
+    //Financial Routes
     Route::get('/finance/dashboard', [FinancialController::class, 'index'])->name('finance.dashboard');
     Route::get('/finance/transaction', [FinancialController::class, 'getTransaction'])->name('finance.transaction');
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
@@ -276,11 +276,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
+    Route::get('/membership/edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
+    Route::post('/membership/update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+    Route::post('/membership/update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
 
     // get member invoice
     Route::get('member-invoices/{id}', [MembershipController::class, 'getMemberInvoices'])->name('member-invoices');
+    Route::get('financial-invoices/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
 
 

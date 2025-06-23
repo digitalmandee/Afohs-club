@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('members', function (Blueprint $table) {
-            // Add additional_data JSON column
-            $table->json('additional_data')->nullable()->after('member_type_id');
+            $table->json('category_ids')->nullable();
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('members', function (Blueprint $table) {
-            // Drop additional_data
-            $table->dropColumn('additional_data');
+            $table->dropColumn('category_ids');
         });
     }
 };

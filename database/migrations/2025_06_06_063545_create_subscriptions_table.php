@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->string('subscription_type')->nullable();
             $table->json('category')->nullable();
-            $table->date('start_date');
-            $table->date('expiry_date');
+            $table->date('start_date')->nullable();
+            $table->date('expiry_date')->nullable();
             $table->enum('status', ['active', 'in_active', 'expired', 'suspended', 'cancelled'])->nullable();
             $table->timestamps();
         });

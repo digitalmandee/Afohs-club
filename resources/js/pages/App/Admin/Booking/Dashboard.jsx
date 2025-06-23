@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Container, Row, Button, Form, Badge, Card, Col } from 'react-bootstrap';
+import { Container, Row, Button, Form, Badge, Card, Col, Modal } from 'react-bootstrap'; // Added Modal import for popup
 import { Search, FilterAlt } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
@@ -8,10 +8,7 @@ import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import DatePicker from 'react-multi-date-picker';
 import { DateObject } from 'react-multi-date-picker';
-// import RoomEventModal from './RoomEventModal';
-// import BookingFilterModal from './FilterModal';
 import AvailableRooms from './Rooms';
-// import { useEffect } from 'react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 
@@ -100,256 +97,241 @@ const dialogStyles = `
 }
 `;
 
-const handlePrintReceipt = (booking) => {
-    if (!booking) return;
+// TODO: Remove invoice popup logic and revert to original handlePrintReceipt after testing
+const generateInvoiceContent = (booking) => {
+    if (!booking) return '';
 
     const durationInDays = booking.booking_type === 'room' ? dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day') : null;
 
-    const content = `<!DOCTYPE html>
+    return `<!doctype html>
 <html>
-<head>
-    <title>Invoice</title>
-    <style>
-        /* (your original styles, unchanged) */
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 930px;
-            margin: 0 auto;
-        }
-        .container {
-            margin-top: 16px;
-            margin-bottom: 32px;
-        }
-        .paper {
-            border-radius: 4px;
-            position: relative;
-            overflow: hidden;
-        }
-        .grid-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 32px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .grid-item {
-            flex: 1;
-            min-width: 0;
-        }
-        .grid-item-left {
-            flex: 0 0 33.33%;
-            display: flex;
-            align-items: center;
-        }
-        .grid-item-center {
-            flex: 0 0 33.33%;
-            text-align: center;
-        }
-        .grid-item-right {
-            flex: 0 0 33.33%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-        }
-        .logo {
-            height: 60px;
-        }
-        .typography-h6 {
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .typography-body2 {
-            font-size: 12px;
-            color: #555;
-            line-height: 1.4;
-        }
-        .typography-body2-bold {
-            font-size: 13px;
-            font-weight: bold;
-        }
-        .grid-container-details {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .grid-item-half {
-            flex: 0 0 50%;
-        }
-        .subtitle1 {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .table-container {
-            margin-bottom: 24px;
-        }
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        .table-head {
-            background-color: #f9f9f9;
-        }
-        .table-cell {
-            padding: 12px;
-            font-weight: bold;
-        }
-        .table-body-cell {
-            padding: 12px;
-        }
-        .summary-container {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 24px;
-        }
-        .summary-box {
-            width: 33.33%;
-            padding-top: 8px;
-        }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 16px;
-            border-bottom: 1px solid #eee;
-        }
-        .notes-container {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .notes-item {
-            flex: 0 0 50%;
-        }
-        .amount-in-words {
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: 4px;
-            text-transform: uppercase;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="paper">
+    <head>
+        <title>Booking Invoice</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+                max-width: 930px;
+                margin: 0 auto;
+            }
+            .container {
+                margin-top: 16px;
 
-            <!-- Header -->
-            <div class="grid-container">
-                <div class="grid-item-left">
-                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo" />
+            }
+            .paper {
+                border-radius: 4px;
+                position: relative;
+                overflow: hidden;
+            }
+            .grid-container {
+                display: flex;
+                flex-wrap: wrap;
+                margin-bottom: 32px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .grid-item-left {
+                flex: 0 0 33.33%;
+                display: flex;
+                align-items: center;
+            }
+            .grid-item-center {
+                flex: 0 0 33.33%;
+                text-align: center;
+            }
+            .logo {
+                height: 60px;
+            }
+            .typography-h6 {
+                font-size: 18px;
+                font-weight: bold;
+            }
+            .typography-body3 {
+                font-size: 12px;
+                color: #555;
+                line-height: 1.4;
+            }
+            .typography-body2 {
+                font-size: 12px;
+                color: #555;
+                line-height: 0.6;
+            }
+            .typography-body2-bold {
+                font-size: 13px;
+                font-weight: bold;
+            }
+            .subtitle1 {
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 12px;
+            }
+            .summary-container {
+                display: flex;
+                justify-content: flex-end;
+                margin-bottom: 24px;
+            }
+            .summary-box {
+                width: 33.33%;
+                padding-top: 8px;
+            }
+            .summary-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 16px;
+                border-bottom: 1px solid #eee;
+            }
+            .notes-container {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+            .notes-item {
+                flex: 0 0 50%;
+            }
+            .amount-in-words {
+                font-size: 13px;
+                font-weight: bold;
+                margin-top: 4px;
+                text-transform: uppercase;
+            }
+            .two-column {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+            .two-column > div {
+                flex: 0 0 48%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="paper">
+                <!-- Header -->
+                <div class="grid-container">
+                    <div class="grid-item-left">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo" />
+                    </div>
+                    <div class="grid-item-center">
+                        <div class="typography-h6" style="color: #003366">Afohs Club</div>
+                        <div class="typography-body3">
+                            PAF Falcon complex, Gulberg III,<br />
+                            Lahore, Pakistan
+                        </div>
+                    </div>
+                    <div class="grid-item-center"><div class="typography-h6" style="color: #333; margin-top: 20px">${(booking.booking_type || 'Booking').charAt(0).toUpperCase() + (booking.booking_type || 'Booking').slice(1)} Booking</div></div>
                 </div>
-                <div class="grid-item-center">
-                    <div class="typography-h6" style="color: #003366">Afohs Club</div>
-                    <div class="typography-body2">
-                        PAF Falcon complex, Gulberg III,<br />
-                        Lahore, Pakistan
+
+                <!-- Bill To Section -->
+                <div style="margin-bottom: 20px">
+                    <div class="subtitle1">Bill To - ${booking.booking_id || 'N/A'}</div>
+                    <div class="two-column">
+                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.user?.name || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Membership ID: </span>${booking.user?.user_id || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Phone Number: </span>${booking.user?.phone_number || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Email: </span>${booking.user?.email || 'N/A'}</div>
                     </div>
                 </div>
-                <div class="grid-item-right">
-                    <div class="typography-h6" style="color: #333">Invoice</div>
+
+                <!-- Booking Details Section -->
+                <div style="margin-bottom: 2px">
+                    <div class="subtitle1">Booking Details</div>
+                    <div class="two-column">
+                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_id ? booking.booking_id.padStart(6, '0') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.created_at ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Room Name' : 'Event Name'}: </span>${booking.typeable?.name || booking.typeable?.event_name || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.typeable?.max_capacity || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Number of Beds' : 'location'}: </span>${booking.typeable?.number_of_beds || booking.typeable?.location || 'N/A'}</div>
+                        ${booking.booking_type === 'room' && booking.typeable?.number_of_bathrooms ? `
+                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.typeable.number_of_bathrooms}</div>
+                        ` : ''} ${booking.booking_type === 'room' ? `
+                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.checkout ? dayjs(booking.checkout).format('MMMM D, YYYY') : 'N/A'}</div>
+                        ` : booking.booking_type === 'event' ? `
+                        <div class="typography-body2"><span style="font-weight: bold">Event Date: </span>${booking.typeable?.date_time ? dayjs(booking.typeable.date_time).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Event Time: </span>${booking.typeable?.date_time ? dayjs(booking.typeable.date_time).format('h:mm A') : 'N/A'}</div>
+                        ` : ''}
+                        <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
+                    </div>
+                </div>
+
+                <!-- Summary and Notes sections remain unchanged -->
+                 <div class="summary-container">
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span class="typography-body2-bold">Total Amount</span>
+                    <span class="typography-body2">Rs ${booking.total_payment || '0'}</span>
+                </div>
+                <div class="summary-row">
+                    <span class="typography-body2-bold">Balance Due</span>
+                    <span class="typography-body2">Rs ${booking.remaining_amount || '0'}</span>
+                </div>
+                <div class="summary-row">
+                    <span class="typography-body2-bold">Amount Paid</span>
+                    <span class="typography-body2">Rs ${booking.paid_amount || booking.total_payment || '0'}</span>
                 </div>
             </div>
-
-            <!-- Bill To and Details Section -->
-            <div class="grid-container-details">
-                <div class="grid-item-half">
-                    <div class="subtitle1">Bill To - 12345</div>
-                    <div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Name: </span>John Doe</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Category: </span>Gold</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Membership #: </span>12345</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Contact #: </span>+92-300-1234567</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">City: </span>Lahore</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Family Member: </span>Jane Doe</div>
-                    </div>
-                </div>
-                <div class="grid-item-half">
-                    <div class="subtitle1">DETAILS</div>
-                    <div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Invoice #: </span>INV-000123</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Issue Date: </span>June 20, 2025</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Payment Method: </span>Credit Card</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Invoice Table -->
-            <div class="table-container">
-                <table class="table">
-                    <thead class="table-head">
-                        <tr>
-                            <th class="table-cell">SR #</th>
-                            <th class="table-cell">Description</th>
-                            <th class="table-cell">Invoice Amount</th>
-                            <th class="table-cell">Remaining Amount</th>
-                            <th class="table-cell">Paid Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="table-body-cell">1</td>
-                            <td class="table-body-cell">Membership Fee - Gold</td>
-                            <td class="table-body-cell">10,000</td>
-                            <td class="table-body-cell">2,000</td>
-                            <td class="table-body-cell">8,000</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Summary Section -->
-            <div class="summary-container">
-                <div class="summary-box">
-                    <div class="summary-row">
-                        <span class="typography-body2-bold">Grand Total</span>
-                        <span class="typography-body2">Rs 10,000</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="typography-body2-bold">Remaining Amount</span>
-                        <span class="typography-body2">Rs 2,000</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="typography-body2-bold">Paid Amount</span>
-                        <span class="typography-body2">Rs 8,000</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notes Section -->
-            <div class="notes-container">
-                <div class="notes-item">
-                    <div class="typography-body2-bold" style="margin-bottom: 4px">Note:</div>
-                    <div class="typography-body2">This is a computer-generated receipt. It does not require any signature or stamp.</div>
-                    <div style="margin-top: 16px">
-                        <div class="typography-body2-bold" style="margin-bottom: 4px">Sent By: Admin</div>
-                    </div>
-                </div>
-                <div class="notes-item">
-                    <div class="typography-body2">If paid by credit card or cheque, 5% surcharge will be added to the total amount.</div>
-                    <div class="amount-in-words">AMOUNT IN WORDS: TEN THOUSAND RUPEES ONLY</div>
-                </div>
-            </div>
-
         </div>
-    </div>
-</body>
+
+        <div class="notes-container">
+            <div class="notes-item">
+                <div class="typography-body2-bold" style="margin-bottom: 4px">Note:</div>
+                <div class="typography-body3">This is a computer-generated receipt. It does not require any signature or stamp.</div>
+                <div style="margin-top: 16px">
+                    <div class="typography-body2-bold" style="margin-bottom: 4px">Sent By: Admin</div>
+                </div>
+            </div>
+            <div class="notes-item">
+                <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.total_payment || 0)} RUPEES ONLY</div>
+            </div>
+            </div>
+        </div>
+    </body>
 </html>
 `;
+};
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(content);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-    }, 250);
+// TODO: Remove this utility function when reverting to original print functionality
+const numberToWords = (num) => {
+    const units = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+    const teens = ['TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN', 'SIXTEEN', 'SEVENTEEN', 'EIGHTEEN', 'NINETEEN'];
+    const tens = ['', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY', 'EIGHTY', 'NINETY'];
+    const thousands = ['', 'THOUSAND', 'MILLION', 'BILLION'];
+
+    if (num === 0) return 'ZERO';
+    let word = '';
+    let i = 0;
+
+    while (num > 0) {
+        let chunk = num % 1000;
+        if (chunk) {
+            let chunkWord = '';
+            if (chunk >= 100) {
+                chunkWord += units[Math.floor(chunk / 100)] + ' HUNDRED ';
+                chunk %= 100;
+            }
+            if (chunk >= 20) {
+                chunkWord += tens[Math.floor(chunk / 10)] + ' ';
+                chunk %= 10;
+            }
+            if (chunk >= 10) {
+                chunkWord += teens[chunk - 10] + ' ';
+            } else if (chunk > 0) {
+                chunkWord += units[chunk] + ' ';
+            }
+            word = chunkWord + thousands[i] + (word ? ' ' : '') + word;
+        }
+        num = Math.floor(num / 1000);
+        i++;
+    }
+    return word.trim();
 };
 
 const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => {
-    const [bookingType, setBookingType] = useState('room'); // room or event
+    const [bookingType, setBookingType] = useState('room');
     const [values, setValues] = useState([new DateObject(), new DateObject().add(1, 'days')]);
     const [showPersonInput, setShowPersonInput] = useState(false);
     const [filterApplied, setFilterApplied] = useState(false);
@@ -360,10 +342,8 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
     };
 
     const handleSearch = () => {
-        // Prepare dates in proper format
         const checkin = values[0]?.format?.('YYYY-MM-DD');
         const checkout = values[1]?.format?.('YYYY-MM-DD');
-
         onSearch({ bookingType, checkin, checkout, persons: adults });
         setFilterApplied(true);
     };
@@ -380,7 +360,6 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
     return (
         <div style={{ padding: '10px', borderRadius: '4px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 1fr 120px 60px', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
-                {/* Booking Type Select */}
                 <FormControl>
                     <InputLabel id="booking-label">Booking Type</InputLabel>
                     <Select labelId="booking-label" id="booking-select" value={bookingType} label="Booking Type" onChange={(e) => setBookingType(e.target.value)}>
@@ -388,14 +367,10 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                         <MenuItem value="event">Event</MenuItem>
                     </Select>
                 </FormControl>
-
-                {/* Date picker range */}
                 <div style={{ flex: '1', backgroundColor: '#fff', padding: '5px', borderRadius: '4px', marginRight: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span>📅</span>
                     <DatePicker placeholder="CheckIn to CheckOut" value={values} dateSeparator=" to " onChange={handleRangeSelect} range rangeHover style={{ width: '100%', height: '40px', fontSize: '16px' }} />
                 </div>
-
-                {/* Guests picker with direct input */}
                 <div
                     style={{ flex: '1', backgroundColor: '#fff', padding: '9px', borderRadius: '4px', position: 'relative' }}
                     onClick={(e) => {
@@ -406,7 +381,6 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                     <span style={{ marginRight: '5px' }}>👤</span>
                     <span style={{ cursor: 'pointer', display: 'inline-block', padding: '5px' }}>{`Total Person: ${adults}`}</span>
                     <span style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)' }}> ▼ </span>
-
                     {showPersonInput && (
                         <input
                             type="number"
@@ -427,13 +401,9 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                         />
                     )}
                 </div>
-
-                {/* Search button */}
                 <Button style={{ backgroundColor: '#063455', color: '#fff', padding: '10px 15px', borderRadius: '4px', marginLeft: '10px' }} onClick={handleSearch}>
                     Search
                 </Button>
-
-                {/* Clear button (only show if filter applied) */}
                 <Button variant="danger" style={{ padding: '10px', borderRadius: '4px' }} onClick={handleClear}>
                     <HighlightOffIcon />
                 </Button>
@@ -442,9 +412,8 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
     );
 };
 
-const BookingDashboard = ({ data, user }) => {
+const BookingDashboard = ({ data }) => {
     const [open, setOpen] = useState(false);
-
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
@@ -455,26 +424,38 @@ const BookingDashboard = ({ data, user }) => {
     const [checkout, setCheckOut] = useState('');
     const [bookingType, setBookingType] = useState('room');
     const [searchResults, setSearchResults] = useState([]);
+    // TODO: Remove invoice modal state when reverting to original print functionality
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    // TODO: Remove selected booking state when reverting to original print functionality
+    const [selectedBooking, setSelectedBooking] = useState(null);
 
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
     };
-    console.log('user', user);
 
     const handleFilterShow = () => setShowFilter(true);
+
+    // TODO: Remove invoice modal handler when reverting to original print functionality
+    const handleShowInvoice = (booking) => {
+        setSelectedBooking(booking);
+        setShowInvoiceModal(true);
+    };
+
+    // TODO: Remove invoice modal close handler when reverting to original print functionality
+    const handleCloseInvoice = () => {
+        setShowInvoiceModal(false);
+        setSelectedBooking(null);
+    };
 
     const handleSearch = async (searchParams) => {
         setLoading(true);
         try {
-            // Send GET request with search parameters
             const response = await axios.get(route('booking.search'), {
                 params: searchParams,
             });
-
             setBookingType(searchParams.bookingType);
             setCheckIn(searchParams.checkin);
             setCheckOut(searchParams.checkout);
-
             setSearchResultsFilter(true);
             setSearchResults(response.data);
         } catch (error) {
@@ -671,10 +652,43 @@ const BookingDashboard = ({ data, user }) => {
                             </Col>
                         </Row>
 
-                        {/* Loading Indicator */}
+                        {/* TODO: Remove invoice modal when reverting to original print functionality */}
+                        <Modal
+                            show={showInvoiceModal}
+                            onHide={handleCloseInvoice}
+                            className="custom-dialog-right"
+                            size="lg"
+                            aria-labelledby="invoice-modal-title"
+                        >
+                            <Modal.Body>
+                                <div dangerouslySetInnerHTML={{ __html: selectedBooking ? generateInvoiceContent(selectedBooking) : '' }} />
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={handleCloseInvoice}>
+                                    Close
+                                </Button>
+                                {/* TODO: Optional - Keep print button if needed during testing */}
+                                <Button
+                                    variant="primary"
+                                    onClick={() => {
+                                        const printWindow = window.open('', '_blank');
+                                        printWindow.document.write(`${generateInvoiceContent(selectedBooking)}`);
+                                        printWindow.document.close();
+                                        printWindow.focus();
+                                        setTimeout(() => {
+                                            printWindow.print();
+                                            printWindow.close();
+                                        }, 250);
+                                    }}
+                                >
+                                    Save in PDF
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+
                         {loading && (
                             <div className="p-4">
-                                <Typography> Loading...</Typography>
+                                <Typography>Loading...</Typography>
                             </div>
                         )}
 
@@ -713,7 +727,6 @@ const BookingDashboard = ({ data, user }) => {
                                                 }}
                                             />
                                         </div>
-
                                         <Button
                                             variant="outline-secondary"
                                             className="d-flex align-items-center gap-1"
@@ -735,7 +748,7 @@ const BookingDashboard = ({ data, user }) => {
                                         const durationInDays = dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day');
 
                                         return (
-                                            <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handlePrintReceipt(booking)}>
+                                            <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handleShowInvoice(booking)}>
                                                 <Card.Body className="p-2">
                                                     <Row>
                                                         <Col md={2} className="d-flex justify-content-center">
@@ -751,7 +764,7 @@ const BookingDashboard = ({ data, user }) => {
                                                         <Col md={10}>
                                                             <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                                                                 <div>
-                                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type}</Typography>
+                                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}</Typography>
                                                                     <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
                                                                         Created on {booking.checkin}
                                                                     </Typography>
@@ -797,7 +810,7 @@ const BookingDashboard = ({ data, user }) => {
                                                                         {booking.booking_type === 'room' ? 'Room' : 'Event'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable.name : booking.typeable.event_name}
+                                                                        {booking.booking_type === 'room' ? booking.typeable.name : booking.typeable?.event_name}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
@@ -805,7 +818,7 @@ const BookingDashboard = ({ data, user }) => {
                                                                         {booking.booking_type === 'room' ? 'Price Per Night' : 'Price Per Person'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable.price_per_night : booking.typeable.price_per_person}
+                                                                        {booking.booking_type === 'room' ? booking.typeable.price_per_night : booking.typeable?.price_per_person}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
