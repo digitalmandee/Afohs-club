@@ -28,6 +28,8 @@ import { FaKitchenSet } from "react-icons/fa6";
 import MemberIcon from '@/components/App/Icons/Member';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -150,7 +152,7 @@ export default function SideNav({ open, setOpen }) {
             path: route('dashboard'),
         },
         {
-            text: 'Room & Booking Event',
+            text: 'Room & Event',
             icon: <CalendarMonthIcon />,
             children: [
                 {
@@ -172,7 +174,7 @@ export default function SideNav({ open, setOpen }) {
             ],
         },
         {
-            text: 'Membership Booking',
+            text: 'Membership ',
             icon: <TiBusinessCard style={{ width: 25, height: 25 }} />,
             children: [
                 {
@@ -203,7 +205,7 @@ export default function SideNav({ open, setOpen }) {
         },
 
         {
-            text: 'Employee Management',
+            text: 'Employee HR',
             icon: <PeopleIcon />,
             children: [
                 {
@@ -321,7 +323,7 @@ export default function SideNav({ open, setOpen }) {
 
         {
             text: 'Settings',
-            icon: <PeopleIcon />,
+            icon: <SettingsIcon />,
             children: [
                 {
                     text: 'Profile settings',
@@ -335,7 +337,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Logout',
-            icon: <HomeIcon />,
+            icon: <LogoutIcon />,
             path: route('logout'),
         },
     ];
@@ -480,7 +482,7 @@ export default function SideNav({ open, setOpen }) {
                     />
                 </DrawerHeader>
 
-                <Divider sx={{ backgroundColor: '#4A4A4A', mt: open ? 2 : 0 }} />
+                {/* <Divider sx={{ backgroundColor: '#4A4A4A', mt: open ? 2 : 0 }} /> */}
 
                 {/* Scrollable Content */}
                 <Box
@@ -491,77 +493,91 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' },
                     }}
                 >
-                    <List sx={{ mt: 2 }}>
+                    <List sx={{ mt: 1 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
                             const isSelected = url === path || (children && children.some((child) => url === child.path));
                             return (
                                 <Box key={text} sx={{ position: 'relative' }}>
-                                    <ListItem disablePadding sx={{ display: 'block', p: 0.5 }}>
-                                        <ListItemButton
-                                            onClick={() => {
-                                                if (text === 'Logout') {
-                                                    router.post(route('logout'));
-                                                } else if (children) {
-                                                    toggleDropdown(text);
-                                                } else {
-                                                    router.visit(path);
-                                                }
-                                            }}
-                                            onMouseEnter={(!open && children) ? (e) => handleDropdownMouseEnter(text, e) : undefined}
-                                            onMouseLeave={(!open && children) ? () => handleDropdownMouseLeave(text) : undefined}
+                                    <ListItem disablePadding sx={{ display: 'block', px: 1 }}>
+                                        <Box
                                             sx={{
-                                                minHeight: 50,
-                                                justifyContent: open ? 'initial' : 'center',
-                                                mx: open ? 0.5 : 3,
                                                 borderRadius: '12px',
+                                                overflow: 'hidden',
                                                 backgroundColor: isSelected ? '#063455' : 'transparent',
                                                 '&:hover': {
                                                     backgroundColor: '#063455',
-                                                    '& .MuiTypography-root': {
-                                                        color: '#FFFFFF', // text color on hover
-                                                    },
-                                                    '& .MuiListItemIcon-root svg': {
-                                                        fill: '#FFFFFF', // icon color on hover
-                                                    }
                                                 },
                                             }}
                                         >
-                                            <ListItemIcon
+                                            <ListItemButton
+                                                onClick={() => {
+                                                    if (text === 'Logout') {
+                                                        router.post(route('logout'));
+                                                    } else if (children) {
+                                                        toggleDropdown(text);
+                                                    } else {
+                                                        router.visit(path);
+                                                    }
+                                                }}
+                                                onMouseEnter={(!open && children) ? (e) => handleDropdownMouseEnter(text, e) : undefined}
+                                                onMouseLeave={(!open && children) ? () => handleDropdownMouseLeave(text) : undefined}
                                                 sx={{
-                                                    minWidth: 0,
-                                                    justifyContent: 'center',
-                                                    mr: open ? 0.8 : 'auto',
-                                                    ml: open ? -2 : 0,
-                                                    '& svg': {
-                                                        fill: isSelected ? '#FFFFFF' : '#242220', // For MUI/React icons
+                                                    minHeight: 50,
+                                                    justifyContent: open ? 'initial' : 'center',
+                                                    mx: open ? 1 : 3,
+                                                    borderRadius: '12px',
+                                                    backgroundColor: isSelected ? '#063455' : 'transparent',
+                                                    '&:hover': {
+                                                        backgroundColor: '#063455',
+                                                        '& .MuiTypography-root': {
+                                                            color: '#FFFFFF',
+                                                        },
+                                                        '& .MuiListItemIcon-root svg': {
+                                                            fill: '#FFFFFF',
+                                                        },
+                                                        '& .dropdown-arrow': {
+                                                            fill: '#FFFFFF',
+                                                        },
                                                     },
                                                 }}
                                             >
-                                                {icon}
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                primary={text}
-                                                primaryTypographyProps={{
-                                                    fontSize: '0.9rem',
-                                                    color: isSelected ? '#FFFFFF' : '#242220',
-                                                }}
-                                                sx={{
-                                                    opacity: open ? 1 : 0,
-                                                }}
-                                            />
-                                            {children && open && (
-                                                <KeyboardArrowRightIcon
-                                                    className="dropdown-arrow"
+                                                <ListItemIcon
                                                     sx={{
-                                                        transform: isDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                                                        transition: 'transform 0.2s',
-                                                        fill: '#000000',
-                                                        ml: 21.5,
+                                                        minWidth: 0,
+                                                        justifyContent: 'center',
+                                                        mr: open ? 0.8 : 'auto',
+                                                        ml: open ? -2 : 0,
+                                                        '& svg': {
+                                                            fill: isSelected ? '#FFFFFF' : '#242220', // For MUI/React icons
+                                                        },
+                                                    }}
+                                                >
+                                                    {icon}
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={text}
+                                                    primaryTypographyProps={{
+                                                        fontSize: '0.9rem',
+                                                        color: isSelected ? '#FFFFFF' : '#242220',
+                                                    }}
+                                                    sx={{
+                                                        opacity: open ? 1 : 0,
                                                     }}
                                                 />
-                                            )}
-                                        </ListItemButton>
+                                                {children && open && (
+                                                    <KeyboardArrowRightIcon
+                                                        className="dropdown-arrow"
+                                                        sx={{
+                                                            transform: isDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                                            transition: 'transform 0.2s',
+                                                            fill: '#000000',
+                                                            ml: 19,
+                                                        }}
+                                                    />
+                                                )}
+                                            </ListItemButton>
+                                        </Box>
                                     </ListItem>
 
                                     {/* Submenu Rendering (Expanded) */}
