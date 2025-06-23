@@ -103,225 +103,195 @@ const generateInvoiceContent = (booking) => {
 
     const durationInDays = booking.booking_type === 'room' ? dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day') : null;
 
-    return `<!DOCTYPE html>
+    return `<!doctype html>
 <html>
-<head>
-    <title>Booking Invoice</title>
-    <!-- TODO: Temporary invoice modifications for dynamic data and table removal -->
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 930px;
-            margin: 0 auto;
-        }
-        .container {
-            margin-top: 16px;
-            margin-bottom: 32px;
-        }
-        .paper {
-            border-radius: 4px;
-            position: relative;
-            overflow: hidden;
-        }
-        .grid-container {
-            display: flex;
-            flex-wrap: wrap;
-            margin-bottom: 32px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .grid-item {
-            flex: 1;
-            min-width: 0;
-        }
-        .grid-item-left {
-            flex: 0 0 33.33%;
-            display: flex;
-            align-items: center;
-        }
-        .grid-item-center {
-            flex: 0 0 33.33%;
-            text-align: center;
-        }
-        .grid-item-right {
-            flex: 0 0 33.33%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-        }
-        .logo {
-            height: 60px;
-        }
-        .typography-h6 {
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .typography-body2 {
-            font-size: 12px;
-            color: #555;
-            line-height: 1.4;
-        }
-        .typography-body2-bold {
-            font-size: 13px;
-            font-weight: bold;
-        }
-        .grid-container-details {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .grid-item-half {
-            flex: 0 0 50%;
-        }
-        .subtitle1 {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .summary-container {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 24px;
-        }
-        .summary-box {
-            width: 33.33%;
-            padding-top: 8px;
-        }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 16px;
-            border-bottom: 1px solid #eee;
-        }
-        .notes-container {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .notes-item {
-            flex: 0 0 50%;
-        }
-        .amount-in-words {
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: 4px;
-            text-transform: uppercase;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="paper">
-            <!-- Header -->
-            <div class="grid-container">
-                <div class="grid-item-left">
-                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo"/>
-                </div>
-                <div class="grid-item-center">
-                    <div class="typography-h6" style="color: #003366;">Afohs Club</div>
-                    <div class="typography-body2">
-                        PAF Falcon complex, Gulberg III,<br />
-                        Lahore, Pakistan
-                    </div>
-                </div>
-                <div class="grid-item-center">
-                    <div class="typography-h6" style="color: #333;">Booking Invoice</div>
-                </div>
-            </div>
+    <head>
+        <title>Booking Invoice</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+                max-width: 930px;
+                margin: 0 auto;
+            }
+            .container {
+                margin-top: 16px;
 
-            <!-- Bill To and Details Section -->
-            <div class="grid-container-details">
-                <div class="grid-item-half">
-                    <!-- TODO: Updated field names to match data structure -->
+            }
+            .paper {
+                border-radius: 4px;
+                position: relative;
+                overflow: hidden;
+            }
+            .grid-container {
+                display: flex;
+                flex-wrap: wrap;
+                margin-bottom: 32px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .grid-item-left {
+                flex: 0 0 33.33%;
+                display: flex;
+                align-items: center;
+            }
+            .grid-item-center {
+                flex: 0 0 33.33%;
+                text-align: center;
+            }
+            .logo {
+                height: 60px;
+            }
+            .typography-h6 {
+                font-size: 18px;
+                font-weight: bold;
+            }
+            .typography-body3 {
+                font-size: 12px;
+                color: #555;
+                line-height: 1.4;
+            }
+            .typography-body2 {
+                font-size: 12px;
+                color: #555;
+                line-height: 0.6;
+            }
+            .typography-body2-bold {
+                font-size: 13px;
+                font-weight: bold;
+            }
+            .subtitle1 {
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 12px;
+            }
+            .summary-container {
+                display: flex;
+                justify-content: flex-end;
+                margin-bottom: 24px;
+            }
+            .summary-box {
+                width: 33.33%;
+                padding-top: 8px;
+            }
+            .summary-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 16px;
+                border-bottom: 1px solid #eee;
+            }
+            .notes-container {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+            .notes-item {
+                flex: 0 0 50%;
+            }
+            .amount-in-words {
+                font-size: 13px;
+                font-weight: bold;
+                margin-top: 4px;
+                text-transform: uppercase;
+            }
+            .two-column {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+            .two-column > div {
+                flex: 0 0 48%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="paper">
+                <!-- Header -->
+                <div class="grid-container">
+                    <div class="grid-item-left">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo" />
+                    </div>
+                    <div class="grid-item-center">
+                        <div class="typography-h6" style="color: #003366">Afohs Club</div>
+                        <div class="typography-body3">
+                            PAF Falcon complex, Gulberg III,<br />
+                            Lahore, Pakistan
+                        </div>
+                    </div>
+                    <div class="grid-item-center"><div class="typography-h6" style="color: #333; margin-top: 20px">${(booking.booking_type || 'Booking').charAt(0).toUpperCase() + (booking.booking_type || 'Booking').slice(1)} Booking</div></div>
+                </div>
+
+                <!-- Bill To Section -->
+                <div style="margin-bottom: 20px">
                     <div class="subtitle1">Bill To - ${booking.booking_id || 'N/A'}</div>
-                    <div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Guest Name: </span>${booking.user?.name || 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Membership Type: </span>${booking.user?.member_type_id ? 'Member ' + booking.user.member_type_id : 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Membership ID: </span>${booking.user?.user_id || 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Phone Number: </span>${booking.user?.phone_number || 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Email: </span>${booking.user?.email || 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Booking For: </span>${booking.booking_for || 'N/A'}</div>
+                    <div class="two-column">
+                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.user?.name || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Membership ID: </span>${booking.user?.user_id || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Phone Number: </span>${booking.user?.phone_number || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Email: </span>${booking.user?.email || 'N/A'}</div>
                     </div>
                 </div>
-                <div class="grid-item-half">
-                    <!-- TODO: Updated field names and added dynamic booking details -->
+
+                <!-- Booking Details Section -->
+                <div style="margin-bottom: 2px">
                     <div class="subtitle1">Booking Details</div>
-                    <div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_id ? booking.booking_id.padStart(6, '0') : 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Issue Date: </span>${booking.created_at ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Room Name' : 'Event Name'}: </span>${booking.typeable?.name || booking.typeable?.event_name || 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Check-in: </span>${booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Check-out: </span>${booking.checkout && booking.booking_type === 'room' ? dayjs(booking.checkout).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
-                        <div class="typography-body2" style="margin-bottom: 4px"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
+                    <div class="two-column">
+                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_id ? booking.booking_id.padStart(6, '0') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.created_at ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Room Name' : 'Event Name'}: </span>${booking.typeable?.name || booking.typeable?.event_name || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.typeable?.max_capacity || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Number of Beds' : 'location'}: </span>${booking.typeable?.number_of_beds || booking.typeable?.location || 'N/A'}</div>
+                        ${booking.booking_type === 'room' && booking.typeable?.number_of_bathrooms ? `
+                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.typeable.number_of_bathrooms}</div>
+                        ` : ''} ${booking.booking_type === 'room' ? `
+                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.checkout ? dayjs(booking.checkout).format('MMMM D, YYYY') : 'N/A'}</div>
+                        ` : booking.booking_type === 'event' ? `
+                        <div class="typography-body2"><span style="font-weight: bold">Event Date: </span>${booking.typeable?.date_time ? dayjs(booking.typeable.date_time).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Event Time: </span>${booking.typeable?.date_time ? dayjs(booking.typeable.date_time).format('h:mm A') : 'N/A'}</div>
+                        ` : ''}
+                        <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- TODO: Table section removed as per request; restore if needed -->
-            <!--
-            <div class="table-container">
-                <table class="table">
-                    <thead class="table-head">
-                        <tr>
-                            <th class="table-cell">SR #</th>
-                            <th class="table-cell">Description</th>
-                            <th class="table-cell">Invoice Amount</th>
-                            <th class="table-cell">Remaining Amount</th>
-                            <th class="table-cell">Paid Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="table-body-cell">1</td>
-                            <td class="table-body-cell">${booking.booking_type === 'room' ? 'Room Booking' : 'Event Booking'} - ${booking.typeable?.name || booking.typeable?.event_name}</td>
-                            <td class="table-body-cell">${booking.total_payment}</td>
-                            <td class="table-body-cell">${booking.remaining_amount || '0'}</td>
-                            <td class="table-body-cell">${booking.paid_amount || booking.total_payment}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            -->
-
-            <!-- Summary Section -->
-            <div class="summary-container">
-                <div class="summary-box">
-                    <div class="summary-row">
-                        <span class="typography-body2-bold">Total Amount</span>
-                        <span class="typography-body2">Rs ${booking.total_payment || '0'}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="typography-body2-bold">Balance Due</span>
-                        <span class="typography-body2">Rs ${booking.remaining_amount || '0'}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="typography-body2-bold">Amount Paid</span>
-                        <span class="typography-body2">Rs ${booking.paid_amount || booking.total_payment || '0'}</span>
-                    </div>
+                <!-- Summary and Notes sections remain unchanged -->
+                 <div class="summary-container">
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span class="typography-body2-bold">Total Amount</span>
+                    <span class="typography-body2">Rs ${booking.total_payment || '0'}</span>
                 </div>
-            </div>
-
-            <!-- Notes Section -->
-            <div class="notes-container">
-                <div class="notes-item">
-                    <div class="typography-body2-bold" style="margin-bottom: 4px">Note:</div>
-                    <div class="typography-body2">This is a computer-generated receipt. It does not require any signature or stamp.</div>
-                    <div style="margin-top: 16px">
-                        <div class="typography-body2-bold" style="margin-bottom: 4px">Sent By: Admin</div>
-                    </div>
+                <div class="summary-row">
+                    <span class="typography-body2-bold">Balance Due</span>
+                    <span class="typography-body2">Rs ${booking.remaining_amount || '0'}</span>
                 </div>
-                <div class="notes-item">
-                    <div class="typography-body2">If paid by credit card or cheque, 5% surcharge will be added to the total amount.</div>
-                    <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.total_payment || 0)} RUPEES ONLY</div>
+                <div class="summary-row">
+                    <span class="typography-body2-bold">Amount Paid</span>
+                    <span class="typography-body2">Rs ${booking.paid_amount || booking.total_payment || '0'}</span>
                 </div>
             </div>
         </div>
-    </div>
-</body>
-</html>`;
+
+        <div class="notes-container">
+            <div class="notes-item">
+                <div class="typography-body2-bold" style="margin-bottom: 4px">Note:</div>
+                <div class="typography-body3">This is a computer-generated receipt. It does not require any signature or stamp.</div>
+                <div style="margin-top: 16px">
+                    <div class="typography-body2-bold" style="margin-bottom: 4px">Sent By: Admin</div>
+                </div>
+            </div>
+            <div class="notes-item">
+                <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.total_payment || 0)} RUPEES ONLY</div>
+            </div>
+            </div>
+        </div>
+    </body>
+</html>
+`;
 };
 
 // TODO: Remove this utility function when reverting to original print functionality
@@ -728,7 +698,6 @@ const BookingDashboard = ({ data }) => {
                                     <Col>
                                         <Typography variant="h6" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '24px' }}>
                                             Recently Booking
-                                            <pre>{JSON.stringify(data.bookingsData, null, 2)}</pre>
                                         </Typography>
                                     </Col>
                                     <Col xs="auto" className="d-flex gap-3">
@@ -795,7 +764,7 @@ const BookingDashboard = ({ data }) => {
                                                         <Col md={10}>
                                                             <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                                                                 <div>
-                                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type}</Typography>
+                                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}</Typography>
                                                                     <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
                                                                         Created on {booking.checkin}
                                                                     </Typography>
@@ -841,7 +810,7 @@ const BookingDashboard = ({ data }) => {
                                                                         {booking.booking_type === 'room' ? 'Room' : 'Event'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable.name : booking.typeable.event_name}
+                                                                        {booking.booking_type === 'room' ? booking.typeable.name : booking.typeable?.event_name}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
@@ -849,7 +818,7 @@ const BookingDashboard = ({ data }) => {
                                                                         {booking.booking_type === 'room' ? 'Price Per Night' : 'Price Per Person'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable.price_per_night : booking.typeable.price_per_person}
+                                                                        {booking.booking_type === 'room' ? booking.typeable.price_per_night : booking.typeable?.price_per_person}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">

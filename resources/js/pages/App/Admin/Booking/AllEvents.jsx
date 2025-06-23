@@ -6,6 +6,8 @@ import {
     Paper,
     Grid,
     IconButton,
+    Dialog,
+    Button,
 } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -21,22 +23,14 @@ const drawerWidthClosed = 110;
 
 const AllEvents = ({ events }) => {
     const [open, setOpen] = React.useState(false);
+    const [confirmDialog, setConfirmDialog] = React.useState({ open: false, eventId: null });
 
     const handleEdit = (id) => {
         router.visit(`/events/edit/${id}`);
     };
 
     const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this event?')) {
-            router.delete(`/events/${id}`, {
-                onSuccess: () => {
-                    enqueueSnackbar('Event deleted successfully', { variant: 'success' });
-                },
-                onError: () => {
-                    enqueueSnackbar('Failed to delete event', { variant: 'error' });
-                },
-            });
-        }
+        setConfirmDialog({ open: true, eventId: id });
     };
 
     return (
@@ -63,8 +57,8 @@ const AllEvents = ({ events }) => {
                     </Box>
                     <Box sx={{ mb: 2 }}>
                         <Grid container spacing={2}>
-                            {events.map((event, index) => (
-                                <Grid item xs={12} key={index}>
+                            {events.map((event) => (
+                                <Grid item xs={12} key={event.id}>
                                     <Paper
                                         elevation={0}
                                         sx={{
@@ -132,6 +126,47 @@ const AllEvents = ({ events }) => {
                     </Box>
                 </div>
             </div>
+
+            <Dialog
+                open={confirmDialog.open}
+                onClose={() => setConfirmDialog({ open: false, eventId: null })}
+            >
+                <Box sx={{ p: 3, width: 300 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Confirm Deletion
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                        Are you sure you want to delete this event?
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <Button
+                            onClick={() => setConfirmDialog({ open: false, eventId: null })}
+                            color="inherit"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => {
+                                router.delete(`/events/${confirmDialog.eventId}`, {
+                                    preserveScroll: true,
+                                    onSuccess: () => {
+                                        enqueueSnackbar('Event deleted successfully', { variant: 'success' });
+                                        setConfirmDialog({ open: false, eventId: null });
+                                    },
+                                    onError: () => {
+                                        enqueueSnackbar('Failed to delete event', { variant: 'error' });
+                                        setConfirmDialog({ open: false, eventId: null });
+                                    },
+                                });
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    </Box>
+                </Box>
+            </Dialog>
         </>
     );
 };

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BookingEvents;
 use App\Models\EventLocation;
+use App\Models\Booking;
+use App\Models\Room;
+use App\Models\BookingEvents;
+use App\Models\FinancialInvoice;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Helpers\FileHelper;
@@ -11,13 +14,56 @@ use App\Helpers\FileHelper;
 
 class EventController extends Controller
 {
-    public function index()
-    {
-        $events = BookingEvents::latest()->get();
-        return Inertia::render('App/Admin/Booking/EventManage', [
-            'events' => $events,
-        ]);
-    }
+      public function index()
+{
+    // Only get bookings where booking_type is 'event'
+    $bookings = Booking::with('typeable', 'user')
+        ->where('booking_type', 'event')
+        ->latest()
+        ->get();
+
+    $totalBookings = Booking::count();
+    $totalRoomBookings = Booking::where('booking_type', 'room')->count();
+    $totalEventBookings = Booking::where('booking_type', 'event')->count();
+
+    $events = BookingEvents::latest()->get();
+    $totalEvents = $events->count();
+
+    // Determine unavailable events today
+    $conflictedEvents = Booking::query()
+        ->where('booking_type', 'event')
+        ->whereIn('status', ['confirmed', 'pending'])
+        ->where('checkin', '<', now()->addDay())
+        ->where('checkout', '>', now())
+        ->pluck('type_id')->unique();
+
+    $availableEventsToday = BookingEvents::query()
+        ->whereNotIn('id', $conflictedEvents)
+        ->count();
+
+    $data = [
+        'bookingsData' => $bookings, // Only event bookings
+        'events' => $events,
+        'totalEvents' => $totalEvents,
+        'availableEventsToday' => $availableEventsToday,
+        'totalBookings' => $totalBookings,
+        'totalRoomBookings' => $totalRoomBookings,
+        'totalEventBookings' => $totalEventBookings,
+    ];
+
+    return Inertia::render('App/Admin/Booking/EventManage', [
+        'data' => $data,
+        'events' => $events,
+    ]);
+}
+
+    // public function index()
+    // {
+    //     $events = BookingEvents::latest()->get();
+    //     return Inertia::render('App/Admin/Booking/EventManage', [
+    //         'events' => $events,
+    //     ]);
+    // }
     public function allEvents()
     {
         $events = BookingEvents::latest()->get();
