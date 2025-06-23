@@ -63,6 +63,10 @@ class SubscriptionController extends Controller
             'status' => 'in_active',
         ]);
 
+        $data = $subscription->toArray(); // Convert Eloquent model to array
+        $data['invoice_type'] = 'subscription'; // Add custom fiel
+        $data['amount'] = $request->amount; // Add custom fiel
+
         $invoice_no = $this->getInvoiceNo();
         $member_id = Auth::user()->id;
 
@@ -76,7 +80,7 @@ class SubscriptionController extends Controller
             'total_price' => $request->amount,
             'issue_date' => now(),
             'status' => 'unpaid',
-            'data' => $subscription
+            'data' => [$data]
         ]);
 
         $qrCodeData = route('member.profile', ['id' => $request->customer['id']]) . '?' . http_build_query(['subscription_id' => $subscription->id]);
@@ -125,7 +129,7 @@ class SubscriptionController extends Controller
         $invoice->status = 'paid';
         $invoice->save();
 
-        $subscription = Subscription::find($invoice->data['id']);
+        $subscription = Subscription::find($request->subscription_id);
         $subscription->status = 'active';
         $subscription->save();
 
@@ -136,7 +140,7 @@ class SubscriptionController extends Controller
 
     private function getInvoiceNo()
     {
-        $invoiceNo = (int)FinancialInvoice::max('invoice_no');
+        $invoiceNo = FinancialInvoice::max('invoice_no');
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
     }

@@ -53,7 +53,7 @@ class MembershipController extends Controller
 
     public function edit(Request $request)
     {
-        $user = User::where('id', $request->id)->with('userDetails', 'member', 'member.memberType')->first();
+        $user = User::where('id', $request->id)->with('userDetail', 'member', 'member.memberType')->first();
         $memberTypesData = MemberType::all();
         $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
         return Inertia::render('App/Admin/Membership/EditMembershipForm', compact('user', 'memberTypesData', 'membercategories'));
@@ -61,25 +61,15 @@ class MembershipController extends Controller
 
     public function allMembers()
     {
-        $users = User::with([
-            'userDetail',
-            'member.memberType'
-        ])->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
 
-        return Inertia::render('App/Admin/Membership/Members', [
-            'member' => $users,
-        ]);
+        return Inertia::render('App/Admin/Membership/Members', compact('members'));
     }
     public function membershipHistory()
     {
-        $users = User::with([
-            'userDetail',
-            'member.memberType'
-        ])->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
 
-        return Inertia::render('App/Admin/Membership/Members', [
-            'member' => $users,
-        ]);
+        return Inertia::render('App/Admin/Membership/Members', compact('members'));
     }
     public function paymentMembersHistory()
     {
@@ -292,6 +282,88 @@ class MembershipController extends Controller
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
             return response()->json(['error' => 'Failed to submit membership details: ' . $th->getMessage()], 500);
+        }
+    }
+
+    public function updateMember(Request $request)
+    {
+        try {
+            Log::info($request->all());
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'required|exists:users,id',
+                'email' => 'required|email|unique:users,email,' . $request->user_id,
+                'family_members' => 'array',
+                'family_members.*.email' => 'required|email|distinct|different:email|unique:users,email',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            DB::beginTransaction();
+
+            $user = User::findOrFail($request->user_id);
+
+            // Save new profile photo if uploaded
+            if ($request->hasFile('profile_photo')) {
+                $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'member_images');
+                $user->profile_photo = $memberImagePath;
+            }
+
+            // Update User basic info
+            $user->update([
+                'email' => $request->email,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'phone_number' => $request->user_details['mobile_number_a'],
+                'member_type_id' => $request->member['member_type_id'],
+            ]);
+
+            // Update UserDetail (assumes one-to-one relation)
+            $userDetail = $user->userDetail;
+
+            if ($userDetail) {
+                $userDetail->update([
+                    'coa_account' => $request->user_details['coa_account'],
+                    'title' => $request->user_details['title'],
+                    'application_number' => $request->user_details['application_number'],
+                    'name_comments' => $request->user_details['name_comments'],
+                    'guardian_name' => $request->user_details['guardian_name'],
+                    'guardian_membership' => $request->user_details['guardian_membership'],
+                    'nationality' => $request->user_details['nationality'],
+                    'cnic_no' => $request->user_details['cnic_no'],
+                    'passport_no' => $request->user_details['passport_no'],
+                    'gender' => $request->user_details['gender'],
+                    'ntn' => $request->user_details['ntn'],
+                    'date_of_birth' => $request->user_details['date_of_birth'],
+                    'education' => json_encode($request->user_details['education'] ?? []),
+                    'membership_reason' => $request->user_details['membership_reason'],
+                    'mobile_number_a' => $request->user_details['mobile_number_a'],
+                    'mobile_number_b' => $request->user_details['mobile_number_b'],
+                    'mobile_number_c' => $request->user_details['mobile_number_c'],
+                    'telephone_number' => $request->user_details['telephone_number'],
+                    'critical_email' => $request->user_details['critical_email'],
+                    'emergency_name' => $request->user_details['emergency_name'],
+                    'emergency_relation' => $request->user_details['emergency_relation'],
+                    'emergency_contact' => $request->user_details['emergency_contact'],
+                    'current_address' => $request->user_details['current_address'],
+                    'current_city' => $request->user_details['current_city'],
+                    'current_country' => $request->user_details['current_country'],
+                    'permanent_address' => $request->user_details['permanent_address'],
+                    'permanent_city' => $request->user_details['permanent_city'],
+                    'permanent_country' => $request->user_details['permanent_country'],
+                    'country' => $request->user_details['country'],
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json(['message' => 'Membership updated successfully.']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            Log::error('Error updating member: ' . $th->getMessage());
+            return response()->json(['error' => 'Failed to update membership details.'], 500);
         }
     }
 

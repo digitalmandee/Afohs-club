@@ -15,7 +15,6 @@ class UserDetail extends Model
         'user_id',
         'coa_account',
         'title',
-
         'state',
         'application_number',
         'name_comments',

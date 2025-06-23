@@ -17,7 +17,7 @@ class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::with('typeable','user')->latest()->get();
+        $bookings = Booking::with('typeable', 'user')->latest()->get();
         $totalBookings = Booking::count();
         $totalRoomBookings = Booking::where('booking_type', 'room')->count();
         $totalEventBookings = Booking::where('booking_type', 'event')->count();
@@ -183,9 +183,12 @@ class BookingController extends Controller
             'status' => 'pending',
         ]);
 
+        $data = $booking->toArray(); // Convert Eloquent model to array
+        $data['invoice_type'] = $bookingType === 'room' ? 'room_booking' : 'event_booking';
+        $data['amount'] = $request->totalPayment;
         $invoice_no = $this->getInvoiceNo();
         $member_id = Auth::user()->id;
-        Log::info($invoice_no);
+
         FinancialInvoice::create([
             'invoice_no' => $invoice_no,
             'customer_id' => $request->customer['id'],
@@ -195,7 +198,7 @@ class BookingController extends Controller
             'total_price' => $request->totalPayment,
             'issue_date' => now(),
             'status' => 'unpaid',
-            'data' => $booking
+            'data' => [$data]
         ]);
 
         DB::commit();
@@ -249,8 +252,8 @@ class BookingController extends Controller
 
     private function getInvoiceNo()
     {
-        $lastInvoice = FinancialInvoice::orderBy('invoice_no', 'desc')->first();
-        Log::info($lastInvoice);
-        return $lastInvoice ? $lastInvoice->invoice_no + 1 : 1;
+        $invoiceNo = FinancialInvoice::max('invoice_no');
+        $invoiceNo = $invoiceNo + 1;
+        return $invoiceNo;
     }
 }

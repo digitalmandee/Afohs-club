@@ -26,11 +26,11 @@ class FinancialController extends Controller
             ->sum('total_price');
 
         $roomRevenue = FinancialInvoice::where('status', 'paid')
-            ->where('invoice_type', 'room')
+            ->where('invoice_type', 'event_booking')
             ->sum('total_price');
 
         $eventRevenue = FinancialInvoice::where('status', 'paid')
-            ->where('invoice_type', 'event')
+            ->where('invoice_type', 'room_booking')
             ->sum('total_price');
 
         $memberShipRevenue = FinancialInvoice::where('status', 'paid')

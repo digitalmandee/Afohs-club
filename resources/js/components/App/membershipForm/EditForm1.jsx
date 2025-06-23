@@ -4,10 +4,14 @@ import { ArrowBack, Add, Delete, Edit, KeyboardArrowRight, KeyboardArrowDown } f
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const EditForm1 = ({ setData, data, handleChange, onNext, userNo, user }) => {
-    const [memberImage, setMemberImage] = useState(null);
+    const [memberImage, setMemberImage] = useState(() => {
+        if (data?.profile_photo && typeof data.profile_photo === 'string') {
+            // Use full URL if necessary
+            return `/${data.profile_photo}`;
+        }
+        return null;
+    });
     const [showImageButtons, setShowImageButtons] = useState(false);
-    // const [title, setTitle] = useState('');
-    // const [gender, setGender] = useState('');
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});
@@ -231,10 +235,6 @@ const EditForm1 = ({ setData, data, handleChange, onNext, userNo, user }) => {
                                 </Typography>
                                 <FormControl fullWidth size="small">
                                     <Select
-                                        // open={titleOpen}
-                                        // onOpen={() => setTitleOpen(true)}
-                                        // onClose={() => setTitleOpen(false)}
-                                        // onClick={() => setTitleOpen(!titleOpen)}
                                         value={data.user_details.title}
                                         name="user_details.title"
                                         onChange={handleChange}
@@ -369,7 +369,7 @@ const EditForm1 = ({ setData, data, handleChange, onNext, userNo, user }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Date of Birth*
                                 </Typography>
-                                <TextField fullWidth type="date" InputLabelProps={{ shrink: true }} variant="outlined" size="small" name="user_details.date_of_birth" value={data.user_details.date_of_birth || ''} onChange={handleChange} error={!!formErrors.date_of_birth || !!dateError} helperText={formErrors.date_of_birth || dateError} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth type="date" InputLabelProps={{ shrink: true }} variant="outlined" size="small" name="user_details.date_of_birth" value={data.user_details.date_of_birth ? data.user_details.date_of_birth.split('T')[0] : ''} onChange={handleChange} error={!!formErrors.date_of_birth || !!dateError} helperText={formErrors.date_of_birth || dateError} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Education */}

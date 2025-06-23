@@ -216,7 +216,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
 
     // Debug member prop
     useEffect(() => {
-        if (open) {
+        if (open && invoiceNo) {
             setLoading(true);
             axios
                 .get(route('financial-invoice', invoiceNo))
