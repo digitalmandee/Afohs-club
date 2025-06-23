@@ -9,10 +9,10 @@ import axios from 'axios';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Payment = ({ member, onBack }) => {
+const Payment = ({ invoice, onBack }) => {
     const [open, setOpen] = useState(true);
     const [formData, setFormData] = useState({
-        user_id: member?.id,
+        user_id: invoice.user_id,
         subscriptionType: 'one_time',
         inputAmount: '0',
         customerCharges: '0.00',
@@ -25,48 +25,85 @@ const Payment = ({ member, onBack }) => {
     const subscriptionTypes = [
         { label: 'One Time', value: 'one_time' },
         { label: 'Monthly', value: 'monthly' },
+        { label: 'Quarter', value: 'quarter' },
         { label: 'Annual', value: 'annual' },
     ];
 
     const getMinimumAmount = () => {
         const { subscriptionType } = formData;
-        const memberType = member?.member?.member_type;
 
-        const fee = parseFloat(memberType?.fee || 0);
-        const maintenance = parseFloat(memberType?.maintenance_fee || 0);
-        const discountType = memberType?.discount_type;
-        const discountValue = parseFloat(memberType?.discount_value || 0);
-        const baseDuration = parseInt(memberType?.duration || 1);
+        const memberData = invoice.data?.find((d) => d.invoice_type === 'membership');
+        const subscriptionData = invoice.data?.find((d) => d.invoice_type === 'subscription');
 
-        let totalWithoutDiscount = 0;
-        let duration = baseDuration;
+        let membershipTotal = 0;
+        let subscriptionTotal = 0;
+        let duration = 1;
 
-        if (subscriptionType === 'one_time') {
-            totalWithoutDiscount = (fee + maintenance) * baseDuration;
-        } else if (subscriptionType === 'monthly') {
-            totalWithoutDiscount = fee + maintenance;
-            duration = 1;
-        } else if (subscriptionType === 'annual') {
-            totalWithoutDiscount = (fee + maintenance) * 12;
-            duration = 12;
+        // Membership Calculation
+        if (memberData) {
+            const fee = parseFloat(memberData.fee || 0);
+            const maintenance = parseFloat(memberData.maintenance_fee || 0);
+            const discountType = memberData.discount_type;
+            const discountValue = parseFloat(memberData.discount_value || 0);
+            const baseDuration = parseInt(memberData.duration || 1);
+
+            let totalWithoutDiscount = 0;
+
+            if (subscriptionType === 'one_time') {
+                totalWithoutDiscount = (fee + maintenance) * baseDuration;
+                duration = baseDuration;
+            } else if (subscriptionType === 'monthly') {
+                totalWithoutDiscount = fee + maintenance;
+                duration = 1;
+            } else if (subscriptionType === 'quarter') {
+                totalWithoutDiscount = (fee + maintenance) * 3;
+                duration = 3;
+            } else if (subscriptionType === 'annual') {
+                totalWithoutDiscount = (fee + maintenance) * 12;
+                duration = 12;
+            }
+
+            membershipTotal = totalWithoutDiscount;
+
+            if (discountType === 'percentage') {
+                membershipTotal -= (totalWithoutDiscount * discountValue) / 100;
+            } else if (discountType === 'Rs') {
+                membershipTotal -= discountValue;
+            }
         }
 
-        let totalWithDiscount = totalWithoutDiscount;
+        // Subscription Calculation
+        if (subscriptionData) {
+            const category = subscriptionData.category || {};
+            const baseFee = parseFloat(category.fee || 0);
+            const subFee = parseFloat(category.subscription_fee || 0);
 
-        if (discountType === '%') {
-            totalWithDiscount -= (totalWithoutDiscount * discountValue) / 100;
-        } else if (discountType === 'Rs') {
-            totalWithDiscount -= discountValue;
+            if (subscriptionType === 'one_time') {
+                subscriptionTotal = baseFee;
+            } else if (subscriptionType === 'monthly') {
+                subscriptionTotal = subFee;
+            } else if (subscriptionType === 'quarter') {
+                subscriptionTotal = subFee * 3;
+            } else if (subscriptionType === 'annual') {
+                subscriptionTotal = subFee * 12;
+            }
+
+            // Optional: update duration if subscription is present
+            duration = subscriptionType === 'one_time' ? 1 : subscriptionType === 'monthly' ? 1 : subscriptionType === 'quarter' ? 3 : subscriptionType === 'annual' ? 12 : duration;
         }
+
+        const combinedTotal = membershipTotal + subscriptionTotal;
 
         return {
-            amount: totalWithoutDiscount,
-            total: totalWithDiscount,
+            amount: membershipTotal + subscriptionTotal, // pre-discounted membership and sub fees
+            total: combinedTotal,
             duration,
+            membershipTotal,
+            subscriptionTotal,
         };
     };
 
-    const { total } = getMinimumAmount();
+    const { total, membershipTotal, subscriptionTotal } = getMinimumAmount();
     const minAmount = total;
 
     const handleInputChange = (e) => {
@@ -88,17 +125,23 @@ const Payment = ({ member, onBack }) => {
             }));
             return;
         } else if (name === 'subscriptionType') {
-            const newFormData = {
-                ...formData,
-                subscriptionType: value,
-            };
+            let updatedData = { ...formData, subscriptionType: value };
+            if (value === 'one_time') {
+                updatedData.expiryDate = '';
+            } else if (formData.startDate) {
+                const newDate = new Date(formData.startDate);
+                if (value === 'monthly') newDate.setMonth(newDate.getMonth() + 1);
+                else if (value === 'quarter') newDate.setMonth(newDate.getMonth() + 3);
+                else if (value === 'annual') newDate.setFullYear(newDate.getFullYear() + 1);
+                updatedData.expiryDate = newDate.toISOString().split('T')[0];
+            }
 
-            const { total: newMinAmount } = getMinimumAmount(); // Recalculate with new type
-            const inputValue = Math.round(parseFloat(newFormData.inputAmount) || 0);
+            const { total: newMinAmount } = getMinimumAmount();
+            const inputValue = Math.round(parseFloat(updatedData.inputAmount) || 0);
             const charges = inputValue - Math.round(newMinAmount);
 
             setFormData({
-                ...newFormData,
+                ...updatedData,
                 inputAmount: inputValue.toString(),
                 customerCharges: charges > 0 ? charges.toString() : '0',
             });
@@ -106,6 +149,15 @@ const Payment = ({ member, onBack }) => {
             return;
         } else {
             setFormData((prev) => ({ ...prev, [name]: value }));
+        }
+
+        if (name === 'startDate' && formData.subscriptionType !== 'one_time') {
+            const newDate = new Date(value);
+            if (formData.subscriptionType === 'monthly') newDate.setMonth(newDate.getMonth() + 1);
+            else if (formData.subscriptionType === 'quarter') newDate.setMonth(newDate.getMonth() + 3);
+            else if (formData.subscriptionType === 'annual') newDate.setFullYear(newDate.getFullYear() + 1);
+            setFormData((prev) => ({ ...prev, startDate: value, expiryDate: newDate.toISOString().split('T')[0] }));
+            return;
         }
     };
 
@@ -130,11 +182,13 @@ const Payment = ({ member, onBack }) => {
         }
 
         const data = new FormData();
-        data.append('user_id', formData.user_id);
+        data.append('invoice_no', invoice.invoice_no);
         data.append('subscription_type', formData.subscriptionType);
+        data.append('subscription_amount', Math.round(subscriptionTotal));
+        data.append('membership_amount', Math.round(membershipTotal));
         data.append('amount', amount);
         data.append('total_amount', inputAmount);
-        data.append('member_type_id', member?.member?.member_type?.id);
+        data.append('member_type_id', invoice.member?.member_type?.id);
         data.append('customer_charges', parseFloat(formData.customerCharges));
         data.append('payment_method', formData.paymentMethod);
         data.append('duration', duration);
@@ -237,21 +291,34 @@ const Payment = ({ member, onBack }) => {
                     </Paper>
 
                     {/* Member Details */}
-                    {member && (
+                    {invoice && (
                         <Paper sx={{ p: 2, mb: 4, boxShadow: 'none', border: '1px solid #e0e0e0', borderRadius: '4px' }}>
                             <Typography variant="h6" sx={{ mb: 2, color: '#333' }}>
                                 Member Details
                             </Typography>
                             <Typography sx={{ mb: 1 }}>
-                                Name: {member.first_name} {member.last_name}
+                                Name: {invoice.customer?.first_name} {invoice.customer?.last_name}
                             </Typography>
-                            <Typography sx={{ mb: 1 }}>Email: {member.email}</Typography>
-                            {/* {JSON.stringify(member.member?.member_type, null, 2)} */}
-                            <Typography>Membership Type: {member.member?.member_type?.name}</Typography>
+                            <Typography sx={{ mb: 1 }}>Email: {invoice.customer?.email}</Typography>
+                            {/* <Typography>Membership Type: {invoice.data}</Typography> */}
                             <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
-                                Subscription Fee: Rs {parseFloat(member?.member?.member_type?.fee || 0).toFixed(2)} <br />
-                                Maintenance Fee: Rs {parseFloat(member?.member?.member_type?.maintenance_fee || 0).toFixed(2)} <br />
-                                Total ({formData.subscriptionType}): Rs {minAmount.toFixed(2)}
+                                {membershipTotal > 0 && (
+                                    <>
+                                        <strong>Membership:</strong>
+                                        <br />
+                                        Fee + Maintenance = Rs {Math.round(membershipTotal)}
+                                        <br />
+                                    </>
+                                )}
+                                {subscriptionTotal > 0 && (
+                                    <>
+                                        <strong>Subscription:</strong>
+                                        <br />
+                                        Fee = Rs {Math.round(subscriptionTotal)}
+                                        <br />
+                                    </>
+                                )}
+                                <strong>Total Payable:</strong> Rs {Math.round(total)}
                             </Typography>
                         </Paper>
                     )}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, Alert, Slide, InputAdornment, Snackbar } from '@mui/material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, Alert, Slide, InputAdornment, Snackbar, Menu, MenuItem } from '@mui/material';
 import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -10,22 +10,36 @@ import MemberProfileModal from './Profile';
 import MembershipCardComponent from './UserCard';
 import MemberFilter from './MemberFilter';
 import InvoiceSlip from './Invoice';
+import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+import ActivateMembershipDialog from './ActivateMembershipDialog';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
+const MembershipDashboard = ({ members = [], total_members, total_payment }) => {
     // Modal state
     const [open, setOpen] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [activateModalOpen, setActivateModalOpen] = useState(false);
     const [openProfileModal, setOpenProfileModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false); // State for InvoiceSlip modal
     const [selectMember, setSelectMember] = useState(null);
+    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
+    const [selectedMember, setSelectedMember] = useState(null);
+
+    const handleStatusClick = (event, member) => {
+        setStatusAnchorEl(event.currentTarget);
+        setSelectedMember(member);
+    };
+
+    const handleStatusClose = () => {
+        setStatusAnchorEl(null);
+    };
 
     // console.log('Member prop:', member); // Debug: Log the member prop
 
@@ -53,6 +67,21 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
 
     const showMemberDetails = (member, event) => {
         handleOpenModal(member, event, 'details');
+    };
+
+    const getAvailableStatusActions = (currentStatus) => {
+        const allStatuses = ['active', 'suspended', 'cancelled'];
+        return allStatuses.filter((status) => status.toLowerCase() !== currentStatus?.toLowerCase());
+    };
+
+    const handleStatusUpdate = (memberId, newStatus) => {
+        const foundMember = members.find((m) => m.id === memberId);
+        if (foundMember) {
+            console.log('Member found:', foundMember);
+            foundMember.member.card_status = newStatus;
+        } else {
+            console.log('Member not found:', memberId);
+        }
     };
 
     return (
@@ -165,7 +194,6 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
                                 </Button>
                             </div>
                         </div>
-
                         {/* Members Table */}
                         <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
                             <Table>
@@ -181,7 +209,7 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {member.map((user) => (
+                                    {members.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell
                                                 sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
@@ -203,29 +231,62 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell>
-                                                <span
-                                                    style={{
-                                                        color: user.member?.card_status === 'active' ? '#2e7d32' : user.member?.card_status === 'Suspend' ? '#FFA90B' : '#d32f2f',
-                                                        fontWeight: 'medium',
-                                                        cursor: 'pointer',
-                                                    }}
-                                                    onClick={(e) => showMemberDetails(user, e)}
-                                                >
-                                                    {user.member?.card_status || 'N/A'}
-                                                    {user.member?.card_status === 'Suspend' && (
-                                                        <img
-                                                            src="/assets/system-expired.png"
-                                                            alt=""
-                                                            style={{
-                                                                width: 25,
-                                                                height: 25,
-                                                                marginLeft: 2,
-                                                                marginBottom: 5,
-                                                            }}
-                                                        />
+                                                <PopupState variant="popover" popupId={`status-popup-${user.id}`}>
+                                                    {(popupState) => (
+                                                        <>
+                                                            <span
+                                                                style={{
+                                                                    color: user.member?.card_status === 'active' ? '#2e7d32' : user.member?.card_status === 'Suspend' ? '#FFA90B' : '#d32f2f',
+                                                                    fontWeight: 'medium',
+                                                                    cursor: 'pointer',
+                                                                }}
+                                                                {...bindTrigger(popupState)}
+                                                            >
+                                                                {user.member?.card_status || 'N/A'}
+                                                                {user.member?.card_status === 'suspended' && (
+                                                                    <img
+                                                                        src="/assets/system-expired.png"
+                                                                        alt=""
+                                                                        style={{
+                                                                            width: 25,
+                                                                            height: 25,
+                                                                            marginLeft: 2,
+                                                                            marginBottom: 5,
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                            </span>
+
+                                                            <Menu {...bindMenu(popupState)}>
+                                                                {getAvailableStatusActions(user.member?.card_status).map((statusOption) => (
+                                                                    <MenuItem
+                                                                        key={statusOption}
+                                                                        onClick={() => {
+                                                                            popupState.close();
+
+                                                                            if (statusOption === 'suspended') {
+                                                                                setSelectMember(user);
+                                                                                setSuspensionModalOpen(true);
+                                                                            } else if (statusOption === 'cancelled') {
+                                                                                setSelectMember(user);
+                                                                                setCancelModalOpen(true);
+                                                                            } else if (statusOption === 'active') {
+                                                                                setSelectMember(user);
+                                                                                setActivateModalOpen(true);
+                                                                                // Optional: trigger activate logic/modal here
+                                                                                console.log('Activate clicked');
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        {statusOption === 'active' ? 'Activate' : statusOption}
+                                                                    </MenuItem>
+                                                                ))}
+                                                            </Menu>
+                                                        </>
                                                     )}
-                                                </span>
+                                                </PopupState>
                                             </TableCell>
+
                                             <TableCell>
                                                 <Button
                                                     style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
@@ -264,67 +325,11 @@ const MembershipDashboard = ({ member = [], total_members, total_payment }) => {
                         </TableContainer>
                     </div>
 
-                    {/* Modal */}
-                    {openModal && (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                top: `${modalPosition.top - 115}px`,
-                                left: `${modalPosition.left - 333}px`,
-                                backgroundColor: 'white',
-                                borderRadius: '8px',
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                                padding: '16px',
-                            }}
-                        >
-                            <Box display="flex" justifyContent="flex-end">
-                                <IconButton size="small" onClick={handleCloseModal} style={{ padding: '4px' }}>
-                                    ×
-                                </IconButton>
-                            </Box>
-                            <div className="d-flex" style={{ gap: '10px' }}>
-                                <Button
-                                    variant="outlined"
-                                    style={{
-                                        borderColor: '#1976d2',
-                                        color: '#1976d2',
-                                        textTransform: 'none',
-                                        justifyContent: 'center',
-                                        padding: '8px 16px',
-                                    }}
-                                    onClick={() => {
-                                        handleCloseModal();
-                                        setTimeout(() => {
-                                            setCancelModalOpen(true);
-                                        }, 200);
-                                    }}
-                                >
-                                    Cancel Membership
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    style={{
-                                        backgroundColor: '#0a3d62',
-                                        textTransform: 'none',
-                                        justifyContent: 'center',
-                                        padding: '8px 16px',
-                                    }}
-                                    onClick={() => {
-                                        handleCloseModal();
-                                        setTimeout(() => {
-                                            setSuspensionModalOpen(true);
-                                        }, 200);
-                                    }}
-                                >
-                                    Suspend Membership
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                    <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} onConfirm={handleConfirmSuspend} />
-                    <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} />
-                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={member} />
-                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={member} />
+                    <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+                    <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+                    <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={members} />
+                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
                     <MemberFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
                     <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.member?.invoice_id} />
                 </div>

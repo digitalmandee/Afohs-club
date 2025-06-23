@@ -276,8 +276,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
+    Route::get('/membership/edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
+    Route::post('/membership/update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
 
     // get member invoice
     Route::get('member-invoices/{id}', [MembershipController::class, 'getMemberInvoices'])->name('member-invoices');

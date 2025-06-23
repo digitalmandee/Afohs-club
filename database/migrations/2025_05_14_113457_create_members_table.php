@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('membership_category')->nullable();
             $table->string('membership_number')->nullable()->unique();
             $table->date('membership_date')->nullable();
-            $table->enum('card_status', ['active', 'inactive'])->default('inactive')->nullable();
+            $table->enum('card_status', ['active', 'inactive', 'suspended', 'cancelled'])->default('inactive')->nullable();
             $table->date('card_issue_date')->nullable();
             $table->date('card_expiry_date')->nullable();
             $table->date('from_date')->nullable();

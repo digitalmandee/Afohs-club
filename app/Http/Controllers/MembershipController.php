@@ -11,6 +11,7 @@ use App\Models\UserDetail;
 use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\MembershipInvoice;
+use App\Models\MemberStatusHistory;
 use App\Models\MemberType;
 use App\Models\Subscription;
 use Carbon\Carbon;
@@ -28,12 +29,12 @@ class MembershipController extends Controller
 {
     public function index()
     {
-        $member = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
 
         $total_members = User::role('user')->whereNull('parent_user_id')->count();
         $total_payment = FinancialInvoice::where('invoice_type', 'membership')->where('status', 'paid')->sum('total_price');
 
-        return Inertia::render('App/Admin/Membership/Dashboard', compact('member', 'total_members', 'total_payment'));
+        return Inertia::render('App/Admin/Membership/Dashboard', compact('members', 'total_members', 'total_payment'));
     }
     public function getAllMemberTypes()
     {
@@ -49,6 +50,15 @@ class MembershipController extends Controller
         $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
         return Inertia::render('App/Admin/Membership/MembershipForm', compact('userNo', 'memberTypesData', 'membercategories'));
     }
+
+    public function edit(Request $request)
+    {
+        $user = User::where('id', $request->id)->with('userDetails', 'member', 'member.memberType')->first();
+        $memberTypesData = MemberType::all();
+        $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
+        return Inertia::render('App/Admin/Membership/EditMembershipForm', compact('user', 'memberTypesData', 'membercategories'));
+    }
+
     public function allMembers()
     {
         $users = User::with([
@@ -122,7 +132,7 @@ class MembershipController extends Controller
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
                 'phone_number' => $request->user_details['mobile_number_a'],
-                'member_type_id' => $request->member_type_id,
+                'member_type_id' => $request->member['member_type_id'],
                 'profile_photo' => $memberImagePath
             ]);
 
@@ -174,7 +184,7 @@ class MembershipController extends Controller
             // Create primary member record
             Member::create([
                 'user_id' => $primaryUser->id,
-                'member_type_id' => $request->member_type_id,
+                'member_type_id' => $request->member['member_type_id'],
                 'member_type' => $memberType,
                 'membership_date' => $request->member['membership_date'],
                 'card_status' => $request->member['card_status'],
@@ -189,11 +199,11 @@ class MembershipController extends Controller
 
             if ($request->member['membership_category']) {
                 $category = MemberCategory::find($request->member['membership_category']);
-                Subscription::create([
+                $subscription = Subscription::create([
                     'user_id' => $primaryUser->id,
                     'category' => $category,
-                    'start_date' => $request->from_date,
-                    'expiry_date' => $request->to_date,
+                    'start_date' => $request->member['from_date'] ?? Carbon::now(),
+                    'expiry_date' => $request->member['to_date'],
                     'status' => 'in_active',
                 ]);
             }
@@ -214,7 +224,7 @@ class MembershipController extends Controller
                         'password' => isset($validated['password']) ? $validated['password'] : null,
                         'first_name' => $familyMemberData['full_name'],
                         'phone_number' => $familyMemberData['phone_number'],
-                        'member_type_id' => $request->member->member_type_id,
+                        'member_type_id' => $request->member['member_type_id'],
                         'parent_user_id' => $primaryUser->id,
                         'profile_photo' => $familyMemberImagePath
                     ]);
@@ -235,19 +245,27 @@ class MembershipController extends Controller
                     ]);
 
                     Member::create([
-                        'user_id' => $primaryUser->id,
+                        'user_id' => $familyUser->id,
                         'category_ids' => [$familyMemberData['membership_category']],
                         'card_status' => $request->member['card_status'],
-                        'card_issue_date' => $familyMemberData['start_date'],
-                        'card_expiry_date' => $familyMemberData['end_date'],
+                        'card_issue_date' => $familyMemberData['start_date'] ?? null,
+                        'card_expiry_date' => $familyMemberData['end_date'] ?? null,
                         'qr_code' => $qrImagePath
                     ]);
                 }
             }
 
             $memberTypeArray = $memberType->toArray(); // includes all fields from DB
-            $subscriptionArray = $subscription ? $subscription->toArray() : ['amount' => 0]; // includes all fields from DB
             $memberTypeArray['amount'] = 0;
+            $memberTypeArray['invoice_type'] = 'membership';
+
+            $data = [$memberTypeArray];
+            if ($subscription) {
+                $subscriptionArray = $subscription->toArray();
+                $subscriptionArray['amount'] = 0;
+                $subscriptionArray['invoice_type'] = 'subscription';
+                $data[] = $subscriptionArray;
+            }
 
             // Create membership invoice
             $invoice = FinancialInvoice::create([
@@ -256,9 +274,12 @@ class MembershipController extends Controller
                 'member_id' => Auth::user()->id,
                 'invoice_type' => 'membership',
                 'issue_date' => Carbon::now(),
-                'data' => [$memberTypeArray, $subscriptionArray],
+                'data' => $data,
                 'status' => 'unpaid',
             ]);
+
+            $subscription->invoice_id = $invoice->id;
+            $subscription->save();
 
             // Add membership invoice id to member
             $member = Member::where('user_id', $primaryUser->id)->first();
@@ -332,6 +353,62 @@ class MembershipController extends Controller
         return Inertia::render('App/Membership/Show', ['user' => $user]);
     }
 
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'status' => 'required|in:active,suspended,cancelled',
+            'reason' => 'nullable|string',
+            'duration_type' => 'nullable|in:1Day,1Monthly,1Year,CustomDate',
+            'custom_end_date' => 'nullable|date',
+        ]);
+
+        Log::info($request->all());
+
+        $member = Member::findOrFail($request->member_id);
+
+        // Determine end date
+        $startDate = now();
+        $endDate = null;
+
+        if ($request->status === 'suspended') {
+            switch ($request->duration_type) {
+                case '1Day':
+                    $endDate = now()->addDay();
+                    break;
+                case '1Monthly':
+                    $endDate = now()->addMonth();
+                    break;
+                case '1Year':
+                    $endDate = now()->addYear();
+                    break;
+                case 'CustomDate':
+                    $endDate = Carbon::parse($request->custom_end_date);
+                    break;
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $member->update(['card_status' => $request->status]);
+
+            MemberStatusHistory::create([
+                'user_id' => $member->user_id,
+                'status' => $request->status,
+                'reason' => $request->reason,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ]);
+
+            DB::commit();
+            return response()->json(['message' => 'Status updated successfully']);
+        } catch (\Exception $e) {
+            Log::info($e);
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to update status'], 500);
+        }
+    }
+
     // User No
     private function getUserNo()
     {
@@ -342,7 +419,7 @@ class MembershipController extends Controller
 
     private function getInvoiceNo()
     {
-        $invoiceNo = (int)FinancialInvoice::max('invoice_no');
+        $invoiceNo = FinancialInvoice::max('invoice_no');
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
     }

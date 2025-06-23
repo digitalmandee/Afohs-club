@@ -314,7 +314,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Family Member: </span>
-                                            {/* {invoiceData.billTo.familyMember} */}
+                                            {invoice.customer?.family_members_count ?? 0}
                                         </Typography>
                                     </Box>
                                 </Grid>
@@ -338,7 +338,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
-                                            {invoice.payment_method ? invoice.payment_method : 'Cash'}
+                                            {invoice.payment_method?.replace('_', ' ') || 'Cash'}
                                         </Typography>
                                     </Box>
                                 </Grid>
@@ -363,7 +363,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                                 <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item?.name || item?.category?.name}</TableCell>
                                                 <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.amount}</TableCell>
                                                 <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.customer_charges}</TableCell>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.total_price}</TableCell>
+                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.status === 'paid' || invoice.status === 'overdue' ? item.amount : 0}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>

@@ -131,11 +131,13 @@ class FinancialController extends Controller
     // Get Member Invoices
     public function getFinancialInvoices($id)
     {
-        $invoice = FinancialInvoice::where('invoice_no', $id)->with('customer:id,user_id,first_name,last_name,email', 'customer.member', 'customer.member.memberType', 'customer.userDetail:id,user_id,current_city')->first();
+        $invoice = FinancialInvoice::where('id', $id)->with('customer:id,user_id,first_name,last_name,email,phone_number', 'customer.member', 'customer.member.memberType', 'customer.userDetail:id,user_id,current_city')->first();
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);
         }
+
+        $invoice->customer->loadCount('familyMembers');
 
         return response()->json(['invoice' => $invoice]);
     }
