@@ -19,6 +19,8 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
+    const [sameAsCurrent, setSameAsCurrent] = useState(false);
+
     const [formsData1, setFormsData1] = useState({
         email: '',
         first_name: '',
@@ -80,14 +82,23 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
     };
 
     const addDataInState = (name, value) => {
+        const updatedUserDetails = { ...formsData1.user_details };
+
         if (name.startsWith('user_details.')) {
             const field = name.split('.')[1];
+
+            updatedUserDetails[field] = value;
+
+            // Sync permanent address if checkbox is checked
+            if (sameAsCurrent) {
+                if (field === 'current_address') updatedUserDetails.permanent_address = value;
+                if (field === 'current_city') updatedUserDetails.permanent_city = value;
+                if (field === 'current_country') updatedUserDetails.permanent_country = value;
+            }
+
             setFormsData1((prev) => ({
                 ...prev,
-                user_details: {
-                    ...prev.user_details,
-                    [field]: value,
-                },
+                user_details: updatedUserDetails,
             }));
         } else if (name.startsWith('member.')) {
             const field = name.split('.')[1];
@@ -218,7 +229,7 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
                 {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                 <div className="">
                     {step === 1 && <AddForm1 setData={setFormsData1} data={formsData1} handleChange={handleChange} userNo={userNo} onNext={() => setStep(2)} />}
-                    {step === 2 && <AddForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+                    {step === 2 && <AddForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
                     {step === 3 && <AddForm3 setData={setFormsData1} data={formsData1} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} userNo={userNo} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
                 </div>
             </div>

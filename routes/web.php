@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
@@ -27,9 +28,7 @@ Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name(
 // Central auth-protected routes
 Route::middleware(['auth:web', 'verified'])->group(function () {
     // admin dashboard routes
-    Route::get('dashboard', function () {
-        return Inertia::render('App/Admin/Dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard');
 
     //Admin Employee Routes
     Route::get('/employee/department/list', function () {

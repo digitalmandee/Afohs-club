@@ -9,6 +9,7 @@ use App\Models\Member;
 use Inertia\Inertia;
 use App\Models\MembershipInvoice;
 use App\Models\MemberType;
+use App\Models\Subscription;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -88,6 +89,16 @@ class PaymentController extends Controller
                 'card_expiry_date' => $request->subscription_type === 'one_time' ? null : $expiryDate,
                 'card_status' => 'active'
             ]);
+
+            foreach ($invoice->data as $item) {
+                if ($item['invoice_type'] === 'subscription') {
+                    Subscription::where('id', $item['id'])->update([
+                        'subscription_type' => $request->subscription_type,
+                        'expiry_date' => $expiryDate,
+                        'status' => 'active',
+                    ]);
+                }
+            }
 
             DB::commit();
 

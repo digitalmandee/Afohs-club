@@ -1,21 +1,45 @@
 import { useState } from 'react';
-import { TextField, Button, Paper, Typography, Grid, Box, IconButton } from '@mui/material';
+import { TextField, Button, Paper, Typography, Grid, Box, IconButton, Checkbox, FormControlLabel, Autocomplete } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { countries } from '@/constants/countries';
 
-const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
+const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurrent, sameAsCurrent }) => {
+    const [formErrors, setFormErrors] = useState({});
+
+    const handleSameAddress = (e) => {
+        const checked = e.target.checked;
+        setSameAsCurrent(checked);
+
+        if (checked) {
+            setData((prev) => ({
+                ...prev,
+                user_details: {
+                    ...prev.user_details,
+                    permanent_address: prev.user_details.current_address || '',
+                    permanent_city: prev.user_details.current_city || '',
+                    permanent_country: prev.user_details.current_country || '',
+                },
+            }));
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault(); // Prevent default form submission
         // Basic validation
-        const missingFields = [];
-        if (!data.user_details.mobile_number_a) missingFields.push('Mobile Number (A)');
-        if (!data.email) missingFields.push('Personal Email');
-        if (!data.user_details.current_address) missingFields.push('Current Address');
+        const errors = {};
+        if (!data.user_details.mobile_number_a) errors.mobile_number_a = 'Mobile Number (A) is required';
+        if (!data.email) errors.email = 'Personal Email is required';
+        if (!data.user_details.current_address) errors.current_address = 'Address is required';
+        if (!data.user_details.current_city) errors.current_city = 'City is required';
+        if (!data.user_details.current_country) errors.current_country = 'Country is required';
 
-        if (missingFields.length > 0) {
-            alert(`Please fill all required fields: ${missingFields.join(', ')}`);
-            return;
+        setFormErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            return; // Stop submission if errors exist
         }
+
         onNext();
     };
 
@@ -119,7 +143,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (A)*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_a" value={data.user_details.mobile_number_a} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_a" value={data.user_details.mobile_number_a} error={!!formErrors.mobile_number_a} helperText={formErrors.mobile_number_a} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Mobile Number (B) */}
@@ -127,7 +151,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (B)
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_b" value={data.user_details.mobile_number_b} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_b" value={data.user_details.mobile_number_b} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Mobile Number (C) */}
@@ -135,7 +159,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (C)
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_c" value={data.user_details.mobile_number_c} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_c" value={data.user_details.mobile_number_c} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Telephone Number */}
@@ -143,7 +167,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Telephone Number
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter telephone number" size="small" name="user_details.telephone_number" value={data.user_details.telephone_number} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="number" placeholder="Enter telephone number" size="small" name="user_details.telephone_number" value={data.user_details.telephone_number} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Personal Email */}
@@ -151,7 +175,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Personal Email*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="member1@gmail.com" size="small" name="email" value={data.email} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="email" placeholder="member1@gmail.com" size="small" name="email" value={data.email} error={!!formErrors.email} helperText={formErrors.email} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Critical Email */}
@@ -193,7 +217,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Contact Number
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.emergency_contact" value={data.user_details.emergency_contact} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth type="number" variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.emergency_contact" value={data.user_details.emergency_contact} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
                             </Grid>
                         </Paper>
@@ -216,23 +240,38 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Address*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="user_details.current_address" value={data.user_details.current_address} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="user_details.current_address" value={data.user_details.current_address} error={!!formErrors.current_address} helperText={formErrors.current_address} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* City */}
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="body2" sx={{ mb: 1 }}>
-                                        City
+                                        City*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="user_details.current_city" value={data.user_details.current_city} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="user_details.current_city" value={data.user_details.current_city} error={!!formErrors.current_city} helperText={formErrors.current_city} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Country */}
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="body2" sx={{ mb: 1 }}>
-                                        Country
+                                        Country*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter country name e.g. Pakistan" size="small" name="user_details.current_country" value={data.user_details.current_country} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <Autocomplete
+                                        size="small"
+                                        fullWidth
+                                        options={countries}
+                                        getOptionLabel={(option) => option.label}
+                                        value={countries.find((c) => c.label === data.user_details.current_country) || null}
+                                        onChange={(e, newValue) => {
+                                            handleChange({
+                                                target: {
+                                                    name: 'user_details.current_country',
+                                                    value: newValue ? newValue.label : '',
+                                                },
+                                            });
+                                        }}
+                                        renderInput={(params) => <TextField {...params} label="Country*" error={!!formErrors.current_country} helperText={formErrors.current_country} />}
+                                    />
                                 </Grid>
                             </Grid>
 
@@ -242,6 +281,9 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     Permanent Address
                                 </Typography>
                                 <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
+                                <Box>
+                                    <FormControlLabel control={<Checkbox checked={sameAsCurrent} onChange={handleSameAddress} />} label="Same as Current Address" />
+                                </Box>
                             </Box>
 
                             <Grid container spacing={3}>
@@ -250,7 +292,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Address
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="user_details.permanent_address" value={data.user_details.permanent_address} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="user_details.permanent_address" value={data.user_details.permanent_address} onChange={handleChange} disabled={sameAsCurrent} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* City */}
@@ -258,7 +300,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         City
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="user_details.permanent_city" value={data.user_details.permanent_city} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="user_details.permanent_city" value={data.user_details.permanent_city} onChange={handleChange} disabled={sameAsCurrent} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Country */}
@@ -266,7 +308,23 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack }) => {
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Country
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter country name e.g. Pakistan" size="small" name="user_details.permanent_country" value={data.user_details.permanent_country} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <Autocomplete
+                                        size="small"
+                                        fullWidth
+                                        options={countries}
+                                        getOptionLabel={(option) => option.label}
+                                        value={countries.find((c) => c.label === data.user_details.permanent_country) || null}
+                                        onChange={(e, newValue) => {
+                                            handleChange({
+                                                target: {
+                                                    name: 'user_details.permanent_country',
+                                                    value: newValue ? newValue.label : '',
+                                                },
+                                            });
+                                        }}
+                                        disabled={sameAsCurrent}
+                                        renderInput={(params) => <TextField {...params} label="Country" />}
+                                    />
                                 </Grid>
                             </Grid>
 

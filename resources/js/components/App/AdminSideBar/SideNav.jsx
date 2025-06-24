@@ -23,8 +23,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState } from 'react';
-import { FaRegAddressCard } from "react-icons/fa";
-import { FaKitchenSet } from "react-icons/fa6";
+import { FaRegAddressCard } from 'react-icons/fa';
+import { FaKitchenSet } from 'react-icons/fa6';
 import MemberIcon from '@/components/App/Icons/Member';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
@@ -281,10 +281,10 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Monthly Fee',
                     path: route('subscription.monthly'),
                 },
-                {
-                    text: 'Sports Category',
-                    path: route('subscription.sports'),
-                },
+                // {
+                //     text: 'Sports Category',
+                //     path: route('subscription.sports'),
+                // },
             ],
         },
         {
@@ -587,11 +587,7 @@ export default function SideNav({ open, setOpen }) {
                                                 {children.map((child) => {
                                                     const isChildSelected = url === child.path;
                                                     return (
-                                                        <ListItem
-                                                            key={child.text}
-                                                            disablePadding
-                                                            sx={{ mt: 1, pl: 1 }}
-                                                        >
+                                                        <ListItem key={child.text} disablePadding sx={{ mt: 1, pl: 1 }}>
                                                             <ListItemButton
                                                                 onClick={() => router.visit(child.path)}
                                                                 sx={{
@@ -650,11 +646,7 @@ export default function SideNav({ open, setOpen }) {
                                                 {children.map((child) => {
                                                     const isChildSelected = url === child.path;
                                                     return (
-                                                        <ListItem
-                                                            key={child.text}
-                                                            disablePadding
-                                                            sx={{ pl: 1 }}
-                                                        >
+                                                        <ListItem key={child.text} disablePadding sx={{ pl: 1 }}>
                                                             <ListItemButton
                                                                 onClick={() => {
                                                                     router.visit(child.path);
@@ -667,10 +659,7 @@ export default function SideNav({ open, setOpen }) {
                                                                     '&:hover': { backgroundColor: '#444' },
                                                                 }}
                                                             >
-                                                                <ListItemText
-                                                                    primary={child.text}
-                                                                    sx={{ color: isChildSelected ? 'orange' : '#fff' }}
-                                                                />
+                                                                <ListItemText primary={child.text} sx={{ color: isChildSelected ? 'orange' : '#fff' }} />
                                                             </ListItemButton>
                                                         </ListItem>
                                                     );

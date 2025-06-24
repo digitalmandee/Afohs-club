@@ -268,11 +268,13 @@ class MembershipController extends Controller
                 'status' => 'unpaid',
             ]);
 
+            $subscription = Subscription::find($subscription->id);
             $subscription->invoice_id = $invoice->id;
             $subscription->save();
 
             // Add membership invoice id to member
             $member = Member::where('user_id', $primaryUser->id)->first();
+            Log::info($invoice->id);
             $member->invoice_id = $invoice->id;
             $member->save();
 
