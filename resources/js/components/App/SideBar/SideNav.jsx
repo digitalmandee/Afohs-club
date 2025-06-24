@@ -368,7 +368,7 @@ export default function SideNav({ open, setOpen }) {
                     />
                 </DrawerHeader>
 
-                <Divider sx={{ backgroundColor: '#4A4A4A', mt: open ? 2 : 0 }} />
+                {/* <Divider sx={{ backgroundColor: '#4A4A4A', mt: open ? 2 : 0 }} /> */}
 
                 {/* Scrollable Content */}
                 <Box
