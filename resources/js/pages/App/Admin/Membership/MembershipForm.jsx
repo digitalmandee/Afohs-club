@@ -66,8 +66,6 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
             membership_date: new Date().toISOString().split('T')[0],
             card_issue_date: new Date().toISOString().split('T')[0],
             card_expiry_date: '',
-            from_date: new Date().toISOString().split('T')[0],
-            to_date: '',
             card_status: 'active',
         },
         family_members: [],

@@ -46,7 +46,7 @@ class MembershipController extends Controller
     public function create()
     {
         $userNo = $this->getUserNo();
-        $memberTypesData = MemberType::all();
+        $memberTypesData = MemberType::select('id', 'name')->get();
         $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
         return Inertia::render('App/Admin/Membership/MembershipForm', compact('userNo', 'memberTypesData', 'membercategories'));
     }

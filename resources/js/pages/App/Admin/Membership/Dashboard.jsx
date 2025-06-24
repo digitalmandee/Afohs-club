@@ -111,7 +111,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                 height: 40,
                                 width: 170,
                             }}
-                            onClick={() => router.visit('/admin/add/personal/information')}
+                            onClick={() => router.visit(route('membership.add'))}
                         >
                             Add Member
                         </Button>

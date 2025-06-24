@@ -292,7 +292,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
     Route::post('/members/member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
     Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
-    Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
     Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
     // Member Categories

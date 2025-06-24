@@ -439,49 +439,6 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                     </Grid>
                                 </Grid>
 
-                                <Grid container spacing={2}>
-                                    <Grid item xs={6}>
-                                        <Box sx={{ mb: 3 }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>From</Typography>
-                                            <TextField
-                                                fullWidth
-                                                type="date"
-                                                InputLabelProps={{ shrink: true }}
-                                                placeholder="dd/mm/yyyy"
-                                                variant="outlined"
-                                                name="member.from_date"
-                                                value={data.member.from_date}
-                                                onChange={handleChange}
-                                                sx={{
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
-                                                    },
-                                                }}
-                                            />
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Box sx={{ mb: 3 }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>To</Typography>
-                                            <TextField
-                                                fullWidth
-                                                type="date"
-                                                InputLabelProps={{ shrink: true }}
-                                                placeholder="dd/mm/yyyy"
-                                                variant="outlined"
-                                                name="member.to_date"
-                                                value={data.member.to_date}
-                                                onChange={handleChange}
-                                                sx={{
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
-                                                    },
-                                                }}
-                                            />
-                                        </Box>
-                                    </Grid>
-                                </Grid>
-
                                 <Button
                                     variant="contained"
                                     sx={{
