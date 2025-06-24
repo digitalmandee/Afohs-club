@@ -187,8 +187,9 @@ export default function SideNav({ open, setOpen }) {
             <AppBar
                 position="fixed"
                 open={open}
+                elevation={0}
                 style={{
-                    backgroundColor: '#D3E1EB',
+                    backgroundColor: '#FFFFFF',
                     height: '80px',
                     justifyContent: 'center',
                     zIndex: 1000,
@@ -208,7 +209,8 @@ export default function SideNav({ open, setOpen }) {
                         edge="start"
                         sx={{
                             marginRight: 5,
-                            border: '1px solid #3F4E4F',
+                            backgroundColor: '#F0F5FF',
+                            border: 'none',
                             borderRadius: '2px',
                         }}
                     >
@@ -236,7 +238,8 @@ export default function SideNav({ open, setOpen }) {
                         <IconButton
                             onClick={() => setShowNotification(true)}
                             sx={{
-                                border: '1px solid #3F4E4F',
+                                backgroundColor: '#F0F5FF',
+                                border: 'none',
                                 borderRadius: '2px',
                                 p: 1.3,
                             }}

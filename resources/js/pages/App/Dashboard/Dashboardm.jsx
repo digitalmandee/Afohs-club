@@ -627,7 +627,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                     <Grid item xs={12}>
                                         <Paper
                                             sx={{
-                                                bgcolor: '#3F4E4F',
+                                                bgcolor: '#083152',
                                                 color: 'white',
                                                 p: 0,
                                                 // width: '320px',
@@ -759,7 +759,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                     <Grid item xs={6}>
                                         <Paper
                                             sx={{
-                                                bgcolor: '#3F4E4F',
+                                                bgcolor: '#083152',
                                                 color: 'white',
                                                 p: 2,
                                                 height: '148px',
@@ -829,7 +829,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                     <Grid item xs={6}>
                                         <Paper
                                             sx={{
-                                                bgcolor: '#3F4E4F',
+                                                bgcolor: '#083152',
                                                 color: 'white',
                                                 p: 2,
                                                 height: '148px',
