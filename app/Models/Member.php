@@ -8,7 +8,8 @@ class Member extends Model
 {
     protected $fillable = [
         'user_id',
-        'primary_member_id', // Added
+        'application_no',
+        // 'primary_member_id', // Added
         'member_type_id',
         'member_type',
         'full_name',
@@ -20,7 +21,7 @@ class Member extends Model
         'start_date',
         'end_date',
         'picture',
-        'membership_number',
+        'membership_no',
         'membership_date',
         'card_status',
         'card_issue_date',
@@ -37,6 +38,39 @@ class Member extends Model
         'member_type' => 'array',
         'category_ids' => 'array'
     ];
+
+    public static function generateNextMembershipNumber(): string
+    {
+        $year = now()->format('y');
+        $lastNumber = self::where('membership_no', 'like', '%-' . $year)
+            ->orderBy('id', 'desc')
+            ->pluck('membership_no')
+            ->map(function ($number) {
+                return (int) explode('-', $number)[0];
+            })
+            ->max() ?? 0;
+
+        $newSerial = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        return "$newSerial-$year";
+    }
+
+    public static function generateNextApplicationNo(): string
+    {
+        $last = self::whereNotNull('application_no')
+            ->pluck('application_no')
+            ->map(fn($no) => (int) $no)
+            ->max() ?? 0;
+
+        $next = $last + 1;
+
+        // Optional cap, e.g., if max is 99
+        if ($next > 99) {
+            throw new \Exception("Application number limit reached.");
+        }
+
+        return $next;
+    }
+
 
     // public function userDetail()
     // {

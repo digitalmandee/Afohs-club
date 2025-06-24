@@ -7,7 +7,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { router } from '@inertiajs/react';
 
-const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
+const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
     const [memberImage, setMemberImage] = useState(null);
     const [showImageButtons, setShowImageButtons] = useState(false);
     const [dateError, setDateError] = useState(''); // New state for date validation
@@ -169,7 +169,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                                 Application Number :
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                #{userNo}
+                                #{applicationNo}
                             </Typography>
                         </Box>
                     </Grid>

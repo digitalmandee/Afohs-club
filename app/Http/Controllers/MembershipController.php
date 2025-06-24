@@ -43,12 +43,16 @@ class MembershipController extends Controller
             'memberTypesData' => $memberTypes,
         ]);
     }
+
     public function create()
     {
         $userNo = $this->getUserNo();
+        $membershipNo = Member::generateNextMembershipNumber();
+        $applicationNo = Member::generateNextApplicationNo();
+
         $memberTypesData = MemberType::select('id', 'name')->get();
         $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('userNo', 'memberTypesData', 'membercategories'));
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('userNo', 'membershipNo', 'applicationNo', 'memberTypesData', 'membercategories'));
     }
 
     public function edit(Request $request)
@@ -116,7 +120,6 @@ class MembershipController extends Controller
 
             // Create primary user
             $primaryUser = User::create([
-                'user_id' => $this->getUserNo(),
                 'email' => $request->email,
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
@@ -133,7 +136,6 @@ class MembershipController extends Controller
                 'user_id' => $primaryUser->id,
                 'coa_account' => $request->user_details['coa_account'],
                 'title' => $request->user_details['title'],
-                'application_number' => $request->user_details['application_number'],
                 'name_comments' => $request->user_details['name_comments'],
                 'guardian_name' => $request->user_details['guardian_name'],
                 'guardian_membership' => $request->user_details['guardian_membership'],
@@ -162,6 +164,9 @@ class MembershipController extends Controller
                 'country' => $request->user_details['country'],
             ]);
 
+            $membershipNo = Member::generateNextMembershipNumber();
+            $applicationNo = Member::generateNextApplicationNo();
+
             // Handle primary member image
 
             $qrCodeData = route('member.profile', ['id' => $primaryUser->id]);
@@ -174,30 +179,21 @@ class MembershipController extends Controller
             // Create primary member record
             Member::create([
                 'user_id' => $primaryUser->id,
+                'application_no' => $applicationNo,
+                'membership_no' => $request->member['membership_no'] ?? $membershipNo,
                 'member_type_id' => $request->member['member_type_id'],
+                'member_category_id' => $request->member['membership_category'],
                 'member_type' => $memberType,
                 'membership_date' => $request->member['membership_date'],
                 'card_status' => $request->member['card_status'],
                 'card_issue_date' => $request->member['card_issue_date'],
                 'card_expiry_date' => $request->member['card_expiry_date'],
-                'from_date' => $request->member['from_date'],
-                'to_date' => $request->member['to_date'],
+                // 'from_date' => $request->member['from_date'],
+                // 'to_date' => $request->member['to_date'],
                 'qr_code' => $qrImagePath
             ]);
 
             $subscription = null;
-
-            if ($request->member['membership_category']) {
-                $category = MemberCategory::find($request->member['membership_category']);
-                $subscription = Subscription::create([
-                    'user_id' => $primaryUser->id,
-                    'category' => $category,
-                    'start_date' => $request->member['from_date'] ?? Carbon::now(),
-                    'expiry_date' => $request->member['to_date'],
-                    'status' => 'in_active',
-                ]);
-            }
-
 
             // Handle family members
             if (!empty($request->family_members)) {
@@ -214,18 +210,11 @@ class MembershipController extends Controller
                         'password' => isset($validated['password']) ? $validated['password'] : null,
                         'first_name' => $familyMemberData['full_name'],
                         'phone_number' => $familyMemberData['phone_number'],
-                        'member_type_id' => $request->member['member_type_id'],
                         'parent_user_id' => $primaryUser->id,
                         'profile_photo' => $familyMemberImagePath
                     ]);
 
                     $familyUser->assignRole('user');
-
-                    $qrCodeData = route('member.profile', ['id' => $familyUser->id]);
-
-                    // Create QR code image and save it
-                    $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
-                    $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'qr_codes');
 
                     // Create UserDetail for family member
                     UserDetail::create([
@@ -236,11 +225,10 @@ class MembershipController extends Controller
 
                     Member::create([
                         'user_id' => $familyUser->id,
-                        'category_ids' => [$familyMemberData['membership_category']],
+                        'application_no' => Member::generateNextApplicationNo(),
                         'card_status' => $request->member['card_status'],
-                        'card_issue_date' => $familyMemberData['start_date'] ?? null,
-                        'card_expiry_date' => $familyMemberData['end_date'] ?? null,
-                        'qr_code' => $qrImagePath
+                        'start_date' => $familyMemberData['start_date'] ?? null,
+                        'end_date' => $familyMemberData['end_date'] ?? null,
                     ]);
                 }
             }
@@ -268,13 +256,8 @@ class MembershipController extends Controller
                 'status' => 'unpaid',
             ]);
 
-            $subscription = Subscription::find($subscription->id);
-            $subscription->invoice_id = $invoice->id;
-            $subscription->save();
-
             // Add membership invoice id to member
             $member = Member::where('user_id', $primaryUser->id)->first();
-            Log::info($invoice->id);
             $member->invoice_id = $invoice->id;
             $member->save();
 
