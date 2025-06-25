@@ -98,6 +98,8 @@ const AppBar = styled(MuiAppBar, {
 export default function SideNav({ open, setOpen }) {
     const { url, component, props } = usePage();
 
+    const normalizePath = (fullPath) => new URL(fullPath, window.location.origin).pathname;
+
     const [showNotification, setShowNotification] = React.useState(false);
     const [showProfile, setShowProfile] = React.useState(false);
     const [showOrder, setShowOrder] = React.useState(false);
@@ -161,7 +163,24 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Rooms',
-                    path: route('rooms.manage'),
+                    children: [
+                        {
+                            text: 'Dashboard',
+                            path: route('rooms.manage'),
+                        },
+                        {
+                            text: 'Add Room',
+                            path: route('rooms.add'),
+                        },
+                        {
+                            text: 'All Rooms',
+                            path: route('rooms.all'),
+                        },
+                        {
+                            text: 'Room Types',
+                            path: route('room-types.index'),
+                        },
+                    ],
                 },
                 {
                     text: 'Events',
@@ -281,10 +300,10 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Monthly Fee',
                     path: route('subscription.monthly'),
                 },
-                // {
-                //     text: 'Sports Category',
-                //     path: route('subscription.sports'),
-                // },
+                {
+                    text: 'Sports Category',
+                    path: route('subscription.sports'),
+                },
             ],
         },
         {
@@ -307,7 +326,7 @@ export default function SideNav({ open, setOpen }) {
             ],
         },
         {
-            text: 'Tenant',
+            text: 'Restaurants',
             icon: <PeopleIcon />,
             children: [
                 {
@@ -315,7 +334,7 @@ export default function SideNav({ open, setOpen }) {
                     path: route('tenant.index'),
                 },
                 {
-                    text: 'Create Tenant',
+                    text: 'Create Restaurant',
                     path: route('tenant.create'),
                 },
             ],
@@ -499,7 +518,7 @@ export default function SideNav({ open, setOpen }) {
                     <List sx={{ mt: 1 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
-                            const isSelected = url === path || (children && children.some((child) => url === child.path));
+                            const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));
                             return (
                                 <Box key={text} sx={{ position: 'relative' }}>
                                     <ListItem disablePadding sx={{ display: 'block', px: 1 }}>
@@ -523,8 +542,8 @@ export default function SideNav({ open, setOpen }) {
                                                         router.visit(path);
                                                     }
                                                 }}
-                                                onMouseEnter={(!open && children) ? (e) => handleDropdownMouseEnter(text, e) : undefined}
-                                                onMouseLeave={(!open && children) ? () => handleDropdownMouseLeave(text) : undefined}
+                                                onMouseEnter={!open && children ? (e) => handleDropdownMouseEnter(text, e) : undefined}
+                                                onMouseLeave={!open && children ? () => handleDropdownMouseLeave(text) : undefined}
                                                 sx={{
                                                     minHeight: 50,
                                                     justifyContent: open ? 'initial' : 'center',
@@ -588,40 +607,93 @@ export default function SideNav({ open, setOpen }) {
                                         <Collapse in={isDropdownOpen} timeout="auto" unmountOnExit>
                                             <List component="div" disablePadding>
                                                 {children.map((child) => {
-                                                    const isChildSelected = url === child.path;
+                                                    const isChildSelected = url === normalizePath(child.path);
+                                                    const hasNested = child.children && child.children.length > 0;
+                                                    const isNestedOpen = openDropdown[child.text];
+
                                                     return (
-                                                        <ListItem key={child.text} disablePadding sx={{ mt: 1, pl: 1 }}>
-                                                            <ListItemButton
-                                                                onClick={() => router.visit(child.path)}
-                                                                sx={{
-                                                                    minHeight: 40,
-                                                                    justifyContent: 'initial',
-                                                                    mx: 3,
-                                                                    borderRadius: '12px',
-                                                                    backgroundColor: isChildSelected ? '#063455' : 'transparent',
-                                                                    '&:hover': {
-                                                                        backgroundColor: '#063455',
-                                                                        '& .MuiTypography-root': {
-                                                                            color: '#FFFFFF', // text color on hover
-                                                                        },
-                                                                        '& .dropdown-arrow': {
-                                                                            fill: '#FFFFFF', // ← change arrow color to white on hover
-                                                                        },
-                                                                    },
-                                                                }}
-                                                            >
-                                                                <ListItemText
-                                                                    primary={child.text}
-                                                                    primaryTypographyProps={{
-                                                                        fontSize: '0.9rem',
-                                                                        color: isSelected ? '#FFFFFF' : '#242220',
+                                                        <Box key={child.text} sx={{ my: 0.3 }}>
+                                                            <ListItem disablePadding sx={{ pl: 3 }}>
+                                                                <ListItemButton
+                                                                    onClick={() => {
+                                                                        if (hasNested) {
+                                                                            toggleDropdown(child.text);
+                                                                        } else {
+                                                                            router.visit(child.path);
+                                                                        }
                                                                     }}
                                                                     sx={{
-                                                                        opacity: open ? 1 : 0,
+                                                                        minHeight: 40,
+                                                                        borderRadius: '12px',
+                                                                        backgroundColor: isChildSelected ? '#063455' : 'transparent',
+                                                                        '&:hover': {
+                                                                            backgroundColor: '#063455',
+                                                                        },
+                                                                        '&:hover .MuiTypography-root': {
+                                                                            color: '#FFFFFF', // text color on hover
+                                                                        },
+                                                                        '&:hover .dropdown-arrow': {
+                                                                            fill: '#FFFFFF', // ← change arrow color to white on hover
+                                                                        },
                                                                     }}
-                                                                />
-                                                            </ListItemButton>
-                                                        </ListItem>
+                                                                >
+                                                                    <ListItemText
+                                                                        primary={child.text}
+                                                                        primaryTypographyProps={{
+                                                                            fontSize: '0.85rem',
+                                                                            color: isChildSelected ? '#FFFFFF' : '#242220',
+                                                                        }}
+                                                                    />
+                                                                    {hasNested && (
+                                                                        <KeyboardArrowRightIcon
+                                                                            className="dropdown-arrow"
+                                                                            sx={{
+                                                                                transform: isNestedOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                                                                transition: 'transform 0.2s',
+                                                                                fill: '#000',
+                                                                            }}
+                                                                        />
+                                                                    )}
+                                                                </ListItemButton>
+                                                            </ListItem>
+
+                                                            {/* Nested Submenu */}
+                                                            {hasNested && openDropdown[child.text] && (
+                                                                <Collapse in={openDropdown[child.text]} timeout="auto" unmountOnExit>
+                                                                    <List component="div" disablePadding>
+                                                                        {child.children.map((sub) => {
+                                                                            const isSubSelected = url === normalizePath(sub.path);
+                                                                            return (
+                                                                                <ListItem key={sub.text} disablePadding sx={{ pl: 5 }}>
+                                                                                    <ListItemButton
+                                                                                        onClick={() => router.visit(sub.path)}
+                                                                                        sx={{
+                                                                                            minHeight: 36,
+                                                                                            borderRadius: '12px',
+                                                                                            backgroundColor: isSubSelected ? '#063455' : 'transparent',
+                                                                                            '&:hover': {
+                                                                                                backgroundColor: '#063455',
+                                                                                            },
+                                                                                            '&:hover .MuiTypography-root': {
+                                                                                                color: '#FFFFFF',
+                                                                                            },
+                                                                                        }}
+                                                                                    >
+                                                                                        <ListItemText
+                                                                                            primary={sub.text}
+                                                                                            primaryTypographyProps={{
+                                                                                                fontSize: '0.8rem',
+                                                                                                color: isSubSelected ? '#FFFFFF' : '#242220',
+                                                                                            }}
+                                                                                        />
+                                                                                    </ListItemButton>
+                                                                                </ListItem>
+                                                                            );
+                                                                        })}
+                                                                    </List>
+                                                                </Collapse>
+                                                            )}
+                                                        </Box>
                                                     );
                                                 })}
                                             </List>
@@ -645,29 +717,7 @@ export default function SideNav({ open, setOpen }) {
                                                 py: 1,
                                             }}
                                         >
-                                            <List component="div" disablePadding>
-                                                {children.map((child) => {
-                                                    const isChildSelected = url === child.path;
-                                                    return (
-                                                        <ListItem key={child.text} disablePadding sx={{ pl: 1 }}>
-                                                            <ListItemButton
-                                                                onClick={() => {
-                                                                    router.visit(child.path);
-                                                                    setHoveredDropdown(null);
-                                                                }}
-                                                                sx={{
-                                                                    minHeight: 40,
-                                                                    borderRadius: '8px',
-                                                                    backgroundColor: isChildSelected ? '#333' : 'transparent',
-                                                                    '&:hover': { backgroundColor: '#444' },
-                                                                }}
-                                                            >
-                                                                <ListItemText primary={child.text} sx={{ color: isChildSelected ? 'orange' : '#fff' }} />
-                                                            </ListItemButton>
-                                                        </ListItem>
-                                                    );
-                                                })}
-                                            </List>
+                                            <HoverMenuList items={children} level={1} />
                                         </Box>
                                     )}
                                 </Box>
@@ -677,5 +727,76 @@ export default function SideNav({ open, setOpen }) {
                 </Box>
             </Drawer>
         </Box>
+    );
+}
+
+function HoverMenuList({ items, level }) {
+    const { url } = usePage();
+    const [hovered, setHovered] = useState(null);
+    const [position, setPosition] = useState({});
+
+    const handleMouseEnter = (text, event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        setHovered(text);
+        setPosition({
+            top: rect.top + window.scrollY,
+            left: rect.right + 3,
+        });
+    };
+
+    const handleMouseLeave = () => {
+        setHovered(null);
+    };
+
+    return (
+        <List component="div" disablePadding>
+            {items.map((item) => {
+                const isChildSelected = url === item.path;
+                const hasSub = item.children && item.children.length > 0;
+                return (
+                    <Box key={item.text} onMouseEnter={(e) => hasSub && handleMouseEnter(item.text, e)} onMouseLeave={() => hasSub && handleMouseLeave()}>
+                        <ListItem disablePadding sx={{ pl: level * 1 }}>
+                            <ListItemButton
+                                onClick={() => {
+                                    if (!hasSub) router.visit(item.path);
+                                }}
+                                sx={{
+                                    minHeight: 40,
+                                    borderRadius: '8px',
+                                    backgroundColor: isChildSelected ? '#333' : 'transparent',
+                                    '&:hover': { backgroundColor: '#444' },
+                                }}
+                            >
+                                <ListItemText
+                                    primary={item.text}
+                                    sx={{
+                                        color: isChildSelected ? 'orange' : '#fff',
+                                    }}
+                                />
+                            </ListItemButton>
+                        </ListItem>
+
+                        {/* Nested hover popup */}
+                        {hasSub && hovered === item.text && (
+                            <Box
+                                sx={{
+                                    position: 'fixed',
+                                    top: position.top,
+                                    left: position.left,
+                                    zIndex: 2000 + level,
+                                    background: '#222',
+                                    borderRadius: 2,
+                                    boxShadow: 3,
+                                    minWidth: 180,
+                                    py: 1,
+                                }}
+                            >
+                                <HoverMenuList items={item.children} level={level + 1} />
+                            </Box>
+                        )}
+                    </Box>
+                );
+            })}
+        </List>
     );
 }

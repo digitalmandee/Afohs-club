@@ -1,73 +1,76 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\Booking;
 use App\Models\BookingEvents;
 use App\Models\FinancialInvoice;
 use App\Models\Room;
 use App\Models\EventLocation;
 use App\Helpers\FileHelper;
+use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class RoomController extends Controller
 {
     public function index()
-{
-    $bookings = Booking::with('typeable')
-        ->where('booking_type', 'room')
-        ->latest()
-        ->get();
+    {
+        $bookings = Booking::with('typeable')
+            ->where('booking_type', 'room')
+            ->latest()
+            ->get();
 
-    $totalBookings = Booking::count();
-    $totalRoomBookings = Booking::where('booking_type', 'room')->count();
-    $totalEventBookings = Booking::where('booking_type', 'event')->count();
+        $totalBookings = Booking::count();
+        $totalRoomBookings = Booking::where('booking_type', 'room')->count();
+        $totalEventBookings = Booking::where('booking_type', 'event')->count();
 
-    $rooms = Room::latest()->get();
-    $events = BookingEvents::latest()->get();
+        $rooms = Room::latest()->get();
+        $events = BookingEvents::latest()->get();
 
-    $totalRooms = $rooms->count();
-    $totalEvents = $events->count();
+        $totalRooms = $rooms->count();
+        $totalEvents = $events->count();
 
-    $conflictedRooms = Booking::query()
-        ->where('booking_type', 'room')
-        ->whereIn('status', ['confirmed', 'pending'])
-        ->where('checkin', '<', now()->addDay())
-        ->where('checkout', '>', now())
-        ->pluck('type_id')->unique();
+        $conflictedRooms = Booking::query()
+            ->where('booking_type', 'room')
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where('checkin', '<', now()->addDay())
+            ->where('checkout', '>', now())
+            ->pluck('type_id')->unique();
 
-    $availableRoomsToday = Room::query()
-        ->whereNotIn('id', $conflictedRooms)
-        ->count();
+        $availableRoomsToday = Room::query()
+            ->whereNotIn('id', $conflictedRooms)
+            ->count();
 
-    $conflictedEvents = Booking::query()
-        ->where('booking_type', 'event')
-        ->whereIn('status', ['confirmed', 'pending'])
-        ->where('checkin', '<', now()->addDay())
-        ->where('checkout', '>', now())
-        ->pluck('type_id')->unique();
+        $conflictedEvents = Booking::query()
+            ->where('booking_type', 'event')
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where('checkin', '<', now()->addDay())
+            ->where('checkout', '>', now())
+            ->pluck('type_id')->unique();
 
-    $availableEventsToday = BookingEvents::query()
-        ->whereNotIn('id', $conflictedEvents)
-        ->count();
+        $availableEventsToday = BookingEvents::query()
+            ->whereNotIn('id', $conflictedEvents)
+            ->count();
 
-    $data = [
-        'bookingsData' => $bookings,
-        'rooms' => $rooms,
-        'events' => $events,
-        'totalRooms' => $totalRooms,
-        'totalEvents' => $totalEvents,
-        'availableRoomsToday' => $availableRoomsToday,
-        'availableEventsToday' => $availableEventsToday,
-        'totalBookings' => $totalBookings,
-        'totalRoomBookings' => $totalRoomBookings,
-        'totalEventBookings' => $totalEventBookings,
-    ];
+        $data = [
+            'bookingsData' => $bookings,
+            'rooms' => $rooms,
+            'events' => $events,
+            'totalRooms' => $totalRooms,
+            'totalEvents' => $totalEvents,
+            'availableRoomsToday' => $availableRoomsToday,
+            'availableEventsToday' => $availableEventsToday,
+            'totalBookings' => $totalBookings,
+            'totalRoomBookings' => $totalRoomBookings,
+            'totalEventBookings' => $totalEventBookings,
+        ];
 
-    return Inertia::render('App/Admin/Booking/RoomManage', [
-        'data' => $data,
-        'rooms' => $rooms,
-    ]);
-}
+        return Inertia::render('App/Admin/Booking/RoomManage', [
+            'data' => $data,
+            'rooms' => $rooms,
+        ]);
+    }
 
     // Show all rooms (optional)
     // public function index()
@@ -91,11 +94,11 @@ class RoomController extends Controller
     // Show form + existing room data
     public function create()
     {
-        $rooms = Room::latest()->get();
+        $roomTypes = RoomType::where('status', 'active')->select('id', 'name')->get();
         $locations = EventLocation::all();
 
         return Inertia::render('App/Admin/Booking/AddRoom', [
-            'rooms' => $rooms,
+            'roomTypes' => $roomTypes,
             'locations' => $locations,
         ]);
     }
@@ -108,6 +111,7 @@ class RoomController extends Controller
             'number_of_beds' => 'required|integer',
             'max_capacity' => 'required|integer',
             'price_per_night' => 'required|numeric',
+            'room_type_id' => 'required|exists:room_types,id',
             'number_of_bathrooms' => 'required|integer',
             'photo' => 'nullable|image|max:4096',
         ]);
@@ -119,6 +123,7 @@ class RoomController extends Controller
 
         Room::create([
             'name' => $request->name,
+            'room_type_id' => $request->room_type_id,
             'number_of_beds' => $request->number_of_beds,
             'max_capacity' => $request->max_capacity,
             'price_per_night' => $request->price_per_night,
