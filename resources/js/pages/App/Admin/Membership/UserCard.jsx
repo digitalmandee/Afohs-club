@@ -132,10 +132,10 @@ const handlePrintMembershipCard = (member) => {
                     <!-- Name + Membership ID -->
                     <div class="section">
                         <div class="label">Name</div>
-                        <div class="value">${member?.first_name || 'N/A'}</div>
+                        <div class="value">${member?.first_name + ' ' + member?.last_name || 'N/A'}</div>
 
                         <div class="label">Membership ID</div>
-                        <div class="value">${member?.user_id || 'N/A'}</div>
+                        <div class="value">${member?.member?.member_category?.name} ${member?.member?.membership_no || 'N/A'}</div>
                     </div>
 
                     <!-- Valid Until + QR -->
@@ -147,7 +147,7 @@ const handlePrintMembershipCard = (member) => {
                     </div>
                 </div>
             </div>
-            <div class="footer">${member?.member?.member_type?.name || 'Member'}</div>
+            <div class="footer">${member?.member?.member_type?.name} Member</div>
         </div>
     </body>
 </html>
@@ -222,7 +222,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                                         Name
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.first_name || 'N/A'}
+                                        {member?.first_name + ' ' + member?.last_name || 'N/A'}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ mt: 2 }}>
@@ -230,7 +230,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                                         Membership ID
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.user_id || 'N/A'}
+                                        {member?.member?.member_category?.name} {member?.member?.membership_no || 'N/A'}
                                     </Typography>
                                 </Box>
                             </Grid>
@@ -260,7 +260,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
 
                     <MembershipFooter>
                         <Typography variant="h6" fontWeight="medium">
-                            {member?.member?.member_type?.name || 'Member'}
+                            {member?.member?.member_type?.name} Member
                         </Typography>
                     </MembershipFooter>
                 </MembershipCard>

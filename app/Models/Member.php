@@ -11,13 +11,11 @@ class Member extends Model
         'application_no',
         // 'primary_member_id', // Added
         'member_type_id',
-        'member_type',
+        'member_category_id',
         'full_name',
         'relation',
         'cnic',
         'phone_number',
-        'membership_type',
-        'membership_category',
         'start_date',
         'end_date',
         'picture',
@@ -80,6 +78,11 @@ class Member extends Model
     public function memberType()
     {
         return $this->belongsTo(MemberType::class);
+    }
+
+    public function memberCategory()
+    {
+        return $this->belongsTo(MemberCategory::class);
     }
 
     public function primaryMember()

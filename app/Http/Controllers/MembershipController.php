@@ -29,7 +29,7 @@ class MembershipController extends Controller
 {
     public function index()
     {
-        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->get();
 
         $total_members = User::role('user')->whereNull('parent_user_id')->count();
         $total_payment = FinancialInvoice::where('invoice_type', 'membership')->where('status', 'paid')->sum('total_price');
@@ -65,13 +65,13 @@ class MembershipController extends Controller
 
     public function allMembers()
     {
-        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->get();
 
         return Inertia::render('App/Admin/Membership/Members', compact('members'));
     }
     public function membershipHistory()
     {
-        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType')->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->get();
 
         return Inertia::render('App/Admin/Membership/Members', compact('members'));
     }
@@ -175,7 +175,7 @@ class MembershipController extends Controller
             $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
             $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'qr_codes');
 
-            $memberType = MemberType::find($request->member['member_type_id']);
+            $memberCategory = MemberCategory::find($request->member['membership_category'], ['id', 'name', 'fee', 'subscription_fee']);
             // Create primary member record
             Member::create([
                 'user_id' => $primaryUser->id,
@@ -183,17 +183,12 @@ class MembershipController extends Controller
                 'membership_no' => $request->member['membership_no'] ?? $membershipNo,
                 'member_type_id' => $request->member['member_type_id'],
                 'member_category_id' => $request->member['membership_category'],
-                'member_type' => $memberType,
                 'membership_date' => $request->member['membership_date'],
                 'card_status' => $request->member['card_status'],
                 'card_issue_date' => $request->member['card_issue_date'],
                 'card_expiry_date' => $request->member['card_expiry_date'],
-                // 'from_date' => $request->member['from_date'],
-                // 'to_date' => $request->member['to_date'],
                 'qr_code' => $qrImagePath
             ]);
-
-            $subscription = null;
 
             // Handle family members
             if (!empty($request->family_members)) {
@@ -233,23 +228,19 @@ class MembershipController extends Controller
                 }
             }
 
-            $memberTypeArray = $memberType->toArray(); // includes all fields from DB
-            $memberTypeArray['amount'] = 0;
+            $memberTypeArray = $memberCategory->toArray(); // includes all fields from DB
+            $memberTypeArray['amount'] = $memberCategory->fee;
             $memberTypeArray['invoice_type'] = 'membership';
 
             $data = [$memberTypeArray];
-            if ($subscription) {
-                $subscriptionArray = $subscription->toArray();
-                $subscriptionArray['amount'] = 0;
-                $subscriptionArray['invoice_type'] = 'subscription';
-                $data[] = $subscriptionArray;
-            }
 
             // Create membership invoice
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->getInvoiceNo(),
                 'customer_id' => $primaryUser->id,
+                'amount' => $memberCategory->fee,
                 'member_id' => Auth::user()->id,
+                'subscription_type' => 'one_time',
                 'invoice_type' => 'membership',
                 'issue_date' => Carbon::now(),
                 'data' => $data,

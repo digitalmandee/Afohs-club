@@ -61,6 +61,8 @@ class PaymentController extends Controller
                 'amount' => $request->amount,
                 'total_price' => $request->total_amount,
                 'paid_amount' => $request->total_amount,
+                'discount_type' => $request->discount_type,
+                'discount_value' => $request->discount_type ? (float) $request->discount_value : 0,
                 'customer_charges' => $request->customer_charges,
                 'payment_method' => $request->payment_method,
                 'payment_date' => now(),
@@ -75,30 +77,12 @@ class PaymentController extends Controller
             foreach ($data as &$item) {
                 if ($item['invoice_type'] === 'membership') {
                     $item['amount'] = (float) $request->membership_amount;
-                } elseif ($item['invoice_type'] === 'subscription') {
-                    $item['amount'] = (float) $request->subscription_amount;
                 }
             }
 
             // Save updated data JSON back to invoice
             $invoice->data = $data;
             $invoice->save();
-
-            // Optional: Update user/member if needed
-            Member::where('user_id', $invoice->user_id)->update([
-                'card_expiry_date' => $request->subscription_type === 'one_time' ? null : $expiryDate,
-                'card_status' => 'active'
-            ]);
-
-            foreach ($invoice->data as $item) {
-                if ($item['invoice_type'] === 'subscription') {
-                    Subscription::where('id', $item['id'])->update([
-                        'subscription_type' => $request->subscription_type,
-                        'expiry_date' => $expiryDate,
-                        'status' => 'active',
-                    ]);
-                }
-            }
 
             DB::commit();
 

@@ -72,10 +72,10 @@ const MemberProfileModal = ({ open, onClose, member, memberData }) => {
                                 <Avatar src={member?.profile_photo || '/placeholder.svg'} sx={{ width: 80, height: 80, border: '2px solid #e0e0e0', mr: 2 }} />
                                 <Box>
                                     <Typography variant="h5" sx={{ fontWeight: 500 }}>
-                                        {member?.first_name || 'N/A'}
+                                        {member?.first_name + ' ' + member?.last_name || 'N/A'}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
-                                        Member ID: {member?.user_id || 'N/A'}
+                                        Member ID: {member?.member?.member_category?.name} {member?.member?.membership_no || 'N/A'}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -107,7 +107,7 @@ const MemberProfileModal = ({ open, onClose, member, memberData }) => {
                                 <Typography variant="body2" color="text.secondary">
                                     Joined
                                 </Typography>
-                                <Typography variant="body1">{member?.member?.created_at ? new Date(member.member.created_at).toLocaleDateString() : 'N/A'}</Typography>
+                                <Typography variant="body1">{member?.member?.created_at ? new Date(member.member.membership_date).toLocaleDateString() : 'N/A'}</Typography>
                             </Grid>
                         </Grid>
                     </Box>
