@@ -38,14 +38,14 @@ const CardsDashboard = ({ members = [] }) => {
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
-                            <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#3F4E4F', fontSize: '30px' }}>Card Dashboard</Typography>
+                            <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Card Dashboard</Typography>
                         </div>
                     </div>
 
                     {/* Stats Cards */}
                     <div className="row mb-4 mt-4">
                         <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#3F4E4F', color: 'white', height: '150px' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
                                 <CardContent className="text-center py-4">
                                     <div className="mb-2">
                                         <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
@@ -58,7 +58,7 @@ const CardsDashboard = ({ members = [] }) => {
                             </Card>
                         </div>
                         <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#3F4E4F', color: 'white', height: '150px' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
                                 <CardContent className="text-center py-4">
                                     <div className="mb-2">
                                         <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
@@ -71,7 +71,7 @@ const CardsDashboard = ({ members = [] }) => {
                             </Card>
                         </div>
                         <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#3F4E4F', color: 'white', height: '150px' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
                                 <CardContent className="text-center py-4">
                                     <div className="mb-2">
                                         <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
@@ -107,7 +107,7 @@ const CardsDashboard = ({ members = [] }) => {
                                     variant="outlined"
                                     startIcon={<FilterAlt />}
                                     style={{
-                                        border: '1px solid #3F4E4F',
+                                        border: '1px solid #063455',
                                         color: '#333',
                                         textTransform: 'none',
                                         backgroundColor: 'transparent',

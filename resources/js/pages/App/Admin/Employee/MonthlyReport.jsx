@@ -98,7 +98,7 @@ const AttendanceMonthyReport = () => {
                             <ArrowBack />
                         </IconButton> */}
                         <h5 className="mb-0 ms-2" style={{
-                            fontWeight:500, fontSize:'30px', color:'#3F4E4F'
+                            fontWeight:500, fontSize:'30px', color:'#063455'
                         }}>Attendance Monthly Report</h5>
                     </div>
 

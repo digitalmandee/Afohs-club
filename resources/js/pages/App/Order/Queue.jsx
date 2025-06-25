@@ -245,7 +245,7 @@ const OrderQueue = ({ orders2 }) => {
                                 <IconButton
                                     size="small"
                                     style={{
-                                        color: '#3F4E4F',
+                                        color: '#063455',
                                         width: 24,
                                         height: 24,
                                     }}
@@ -256,7 +256,7 @@ const OrderQueue = ({ orders2 }) => {
                                     variant="h5"
                                     className="ms-2"
                                     style={{
-                                        color: '#3F4E4F',
+                                        color: '#063455',
                                         fontSize: '30px',
                                         fontWeight: 500,
                                     }}

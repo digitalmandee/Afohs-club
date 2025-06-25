@@ -25,7 +25,7 @@ const Index = ({ tenants }) => {
             >
                 {/* Page Header */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: '#3F4E4F' }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
                         Tenant Management
                     </Typography>
                     <Button

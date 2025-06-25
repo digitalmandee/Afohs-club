@@ -86,7 +86,7 @@ const AttendanceDashboard = () => {
                                 sx={{
                                     fontWeight: 500,
                                     fontSize: '30px',
-                                    color: '#3F4E4F',
+                                    color: '#063455',
                                 }}
                             >
                                 Attendance Dashboard
@@ -118,7 +118,7 @@ const AttendanceDashboard = () => {
                                 <div key={index} style={{ flex: 1 }}>
                                     <Card
                                         style={{
-                                            backgroundColor: '#3F4E4F',
+                                            backgroundColor: '#063455',
                                             color: '#fff',
                                             borderRadius: '2px',
                                             height: '120px',
@@ -191,7 +191,7 @@ const AttendanceDashboard = () => {
                                     variant="outlined"
                                     startIcon={<FilterAlt />}
                                     style={{
-                                        border: '1px solid #3F4E4F',
+                                        border: '1px solid #063455',
                                         color: '#333',
                                         textTransform: 'none',
                                         backgroundColor: 'transparent',

@@ -538,7 +538,7 @@ const OrderDetail = ({ handleEditItem }) => {
                     }}
                 >
                     <Box sx={{ padding: 3 }}>
-                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#3F4E4F', fontSize: '30px', mb: 3 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#063455', fontSize: '30px', mb: 3 }}>
                             Apply Discount
                         </Typography>
 
@@ -659,7 +659,7 @@ const OrderDetail = ({ handleEditItem }) => {
                     loadingPosition="start"
                     sx={{
                         flex: 2,
-                        borderColor: '#3F4E4F',
+                        borderColor: '#063455',
                         color: '#555',
                         textTransform: 'none',
                     }}

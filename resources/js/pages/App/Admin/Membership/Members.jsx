@@ -109,7 +109,7 @@ const AllMembers = ({ members = [] }) => {
                                 sx={{
                                     fontWeight: 500,
                                     fontSize: '30px',
-                                    color: '#3F4E4F',
+                                    color: '#063455',
                                 }}
                             >
                                 All Members
@@ -136,7 +136,7 @@ const AllMembers = ({ members = [] }) => {
                             <div key={index} style={{ flex: 1 }}>
                                 <Card
                                     style={{
-                                        backgroundColor: '#3F4E4F',
+                                        backgroundColor: '#063455',
                                         color: '#fff',
                                         borderRadius: '2px',
                                         height: '150px',

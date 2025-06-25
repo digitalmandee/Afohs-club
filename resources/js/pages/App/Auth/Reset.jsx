@@ -169,7 +169,7 @@ const ResetPin = () => {
                                 sx={{
                                     fontWeight: 500,
                                     fontSize: "30px",
-                                    color: "#3F4E4F",
+                                    color: "#063455",
                                     mb: 1,
                                     textAlign: "flex-start",
                                 }}

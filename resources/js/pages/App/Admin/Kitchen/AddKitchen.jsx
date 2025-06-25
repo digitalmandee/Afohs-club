@@ -38,12 +38,12 @@ const AddNewKitchen = () => {
                 }}
             >
                 <Box sx={{ display: "flex", alignItems: "center", ml: 3, pt:2 }}>
-                    <IconButton style={{ color: "#3F4E4F" }}
+                    <IconButton style={{ color: "#063455" }}
                         onClick={() => window.history.back()}
                     >
                         <ArrowBack />
                     </IconButton>
-                    <h2 className="mb-0 fw-normal" style={{ color: "#3F4E4F", fontSize: '30px', fontWeight:500 }}>
+                    <h2 className="mb-0 fw-normal" style={{ color: "#063455", fontSize: '30px', fontWeight:500 }}>
                         Add New Kitchen
                     </h2>
                 </Box>

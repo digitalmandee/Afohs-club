@@ -39,7 +39,7 @@ const Profile = ({ mustVerifyEmail, status }) => {
                 <div style={{ maxWidth: '768px', margin: '0 auto' }}>
                     <Row className="align-items-center mb-4">
                         <Col>
-                            <Typography variant="h5" style={{ color: '#3F4E4F', fontWeight: 500 }}>
+                            <Typography variant="h5" style={{ color: '#063455', fontWeight: 500 }}>
                                 Profile Information
                             </Typography>
                         </Col>

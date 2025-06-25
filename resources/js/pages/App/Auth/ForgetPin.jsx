@@ -132,7 +132,7 @@ const ForgetPin = () => {
                                 variant="h5"
                                 sx={{
                                     fontWeight: 500,
-                                    color: '#3F4E4F',
+                                    color: '#063455',
                                     fontSize: '30px',
                                     mb: 0.5,
                                 }}

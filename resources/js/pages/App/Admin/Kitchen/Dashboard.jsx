@@ -68,7 +68,7 @@ const Dashboard = () => {
                             <Col xs="auto">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     {/* <ArrowBack style={{ color: '#555', marginRight: '15px', cursor: 'pointer' }} /> */}
-                                    <h2 className="mb-0 fw-normal" style={{ margin: 0, fontWeight: 500, color: '#3F4E4F', fontSize: '30px' }}>All Kitchen Display</h2>
+                                    <h2 className="mb-0 fw-normal" style={{ margin: 0, fontWeight: 500, color: '#063455', fontSize: '30px' }}>All Kitchen Display</h2>
                                 </div>
                             </Col>
                             <Col className="d-flex justify-content-end align-items-center">
@@ -97,7 +97,7 @@ const Dashboard = () => {
                                     <Card className="text-center shadow-sm" style={{ border: '1px solid #A4A4A4' }}>
                                         <Card.Body style={{ padding: '5px 10px' }}>
                                             <div className="d-flex justify-content-end">
-                                                <span style={{ cursor: 'pointer', color: '#3F4E4F', fontSize: '20px' }}>⋮</span>
+                                                <span style={{ cursor: 'pointer', color: '#063455', fontSize: '20px' }}>⋮</span>
                                             </div>
                                             <img
                                                 src={kitchen.icon}

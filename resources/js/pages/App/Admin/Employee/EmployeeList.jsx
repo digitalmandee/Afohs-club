@@ -91,12 +91,12 @@ const EmployeeList = () => {
                         pt: 5
                     }}>
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <IconButton style={{ color: "#3F4E4F" }}
+                            <IconButton style={{ color: "#063455" }}
                                 onClick={() => window.history.back()}
                             >
                                 <ArrowBack />
                             </IconButton>
-                            <h2 className="mb-0 fw-normal" style={{ color: "#3F4E4F", fontSize: '30px' }}>
+                            <h2 className="mb-0 fw-normal" style={{ color: "#063455", fontSize: '30px' }}>
                                 All Employees List
                             </h2>
                         </Box>

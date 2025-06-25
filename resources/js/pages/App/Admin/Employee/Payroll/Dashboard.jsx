@@ -85,7 +85,7 @@ const PayrollDashboard = () => {
                                 sx={{
                                     fontWeight: 500,
                                     fontSize: '30px',
-                                    color: '#3F4E4F',
+                                    color: '#063455',
                                 }}
                             >
                                 Payroll Dashboard
@@ -148,7 +148,7 @@ const PayrollDashboard = () => {
                                 >
                                     <Card
                                         style={{
-                                            backgroundColor: '#3F4E4F',
+                                            backgroundColor: '#063455',
                                             color: '#fff',
                                             borderRadius: '2px',
                                             height: '160px',
@@ -199,7 +199,7 @@ const PayrollDashboard = () => {
                         >
                             {/* Left Group: Search and Filter */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                <Typography sx={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>
+                                <Typography sx={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>
                                     Payroll Summary by Financial Year
                                 </Typography>
                             </div>

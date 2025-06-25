@@ -122,7 +122,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                     >
                         {/* Left - Heading */}
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <h2 className="fw-normal mb-0" style={{ color: '#3F4E4F', fontSize: '30px' }}>
+                            <h2 className="fw-normal mb-0" style={{ color: '#063455', fontSize: '30px' }}>
                                 Order Management
                             </h2>
                         </Box>

@@ -355,7 +355,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                 sx={{
                                     fontWeight: '500',
                                     fontSize: '30px',
-                                    color: '#3F4E4F',
+                                    color: '#063455',
                                 }}
                             >
                                 Table Management
@@ -376,7 +376,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                     <InputLabel
                                         id="dropdown-label"
                                         sx={{
-                                            color: '#3F4E4F',
+                                            color: '#063455',
                                             fontSize: '14px',
                                         }}
                                     >
@@ -388,8 +388,8 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                         label="Choose Option"
                                         onChange={handleChange}
                                         sx={{
-                                            border: '1px solid #3F4E4F',
-                                            color: '#3F4E4F',
+                                            border: '1px solid #063455',
+                                            color: '#063455',
                                             textTransform: 'none',
                                             height: 40,
                                             borderRadius: '0',
@@ -398,7 +398,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                                 border: 'none',
                                             },
                                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                border: '1px solid #3F4E4F',
+                                                border: '1px solid #063455',
                                             },
                                         }}
                                     >
@@ -416,8 +416,8 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                 startIcon={<Settings />}
                                 onClick={handleOpenSettings}
                                 sx={{
-                                    border: '1px solid #3F4E4F',
-                                    color: '#3F4E4F',
+                                    border: '1px solid #063455',
+                                    color: '#063455',
                                     textTransform: 'none',
                                     height: 40,
                                     borderRadius: '0',

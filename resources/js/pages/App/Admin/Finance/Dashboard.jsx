@@ -71,7 +71,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                         <Row className="align-items-center mb-4">
                             <Col xs="auto">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <h2 style={{ margin: 0, fontWeight: '500', color: '#3F4E4F', fontSize: '30px' }}>Finance Dashboard</h2>
+                                    <h2 style={{ margin: 0, fontWeight: '500', color: '#063455', fontSize: '30px' }}>Finance Dashboard</h2>
                                     {/* <pre>{JSON.stringify(FinancialInvoice, null, 2)}</pre> */}
                                 </div>
                             </Col>
@@ -134,7 +134,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                         {/* Metrics Cards - First Row */}
                         <Row className="mb-3 gx-2">
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
+                                <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
                                             <div
@@ -157,7 +157,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 </Card>
                             </Col>
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
+                                <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
                                             <div
@@ -180,7 +180,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 </Card>
                             </Col>
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
+                                <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
                                             <div
@@ -203,7 +203,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                 </Card>
                             </Col>
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
+                                <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
                                     <Card.Body className="text-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
                                             <div
@@ -230,7 +230,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                         {/* Metrics Cards - Second Row */}
                         <Row className="mb-4 gx-2">
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
+                                <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
                                     <Card.Body style={{ height: '150px' }}>
                                         <div className="d-flex gap-3">
                                             <div
@@ -261,7 +261,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                             </Col>
 
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
+                                <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
                                     <Card.Body style={{ height: '150px' }}>
                                         <div className="d-flex gap-3">
                                             <div
@@ -300,7 +300,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                             </Col>
 
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
+                                <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
                                     <Card.Body style={{ height: '150px' }}>
                                         <div className="d-flex gap-3">
                                             <div
@@ -331,7 +331,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                             </Col>
 
                             <Col md={3}>
-                                <Card style={{ backgroundColor: '#3F4E4F', color: 'white', border: 'none' }}>
+                                <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
                                     <Card.Body className="d-flex flex-column justify-content-center align-items-center" style={{ height: '150px' }}>
                                         <div className="d-flex justify-content-center mb-2">
                                             <div

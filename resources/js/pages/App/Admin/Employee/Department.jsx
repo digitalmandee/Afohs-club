@@ -97,7 +97,7 @@ const DashboardList = () => {
                                 sx={{
                                     fontWeight: 500,
                                     fontSize: '30px',
-                                    color: '#3F4E4F',
+                                    color: '#063455',
                                 }}
                             >
                                 Department List
