@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Room;
 use App\Models\BookingEvents;
 use App\Models\FinancialInvoice;
+use App\Models\RoomType;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,10 +67,12 @@ class BookingController extends Controller
             'totalEventBookings' => $totalEventBookings,
         ];
 
+        $roomTypes = RoomType::where('status', 'active')->select('id', 'name')->get();
+
 
         return Inertia::render('App/Admin/Booking/Dashboard', [
             'data' => $data,
-
+            'roomTypes' => $roomTypes
         ]);
     }
 
@@ -94,6 +97,7 @@ class BookingController extends Controller
             $available = Room::query()
                 ->whereNotIn('id', $conflicted)
                 ->where('max_capacity', '>', $persons)
+                ->with('roomType', 'categoryCharges', 'categoryCharges.Category')
                 ->get();
         } else { // event
             $available = BookingEvents::query()

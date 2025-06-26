@@ -14,4 +14,14 @@ class Room extends Model
         'photo_path',
         'room_type_id'
     ];
+
+    public function roomType()
+    {
+        return $this->belongsTo(RoomType::class);
+    }
+
+    public function categoryCharges()
+    {
+        return $this->hasMany(RoomCategoryCharge::class, 'room_id');
+    }
 }

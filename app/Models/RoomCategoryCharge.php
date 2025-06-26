@@ -10,4 +10,14 @@ class RoomCategoryCharge extends Model
     use SoftDeletes;
 
     protected $fillable = ['room_category_id', 'room_id', 'amount', 'status', 'created_by', 'updated_by', 'deleted_by'];
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+    public function Category()
+    {
+        return $this->belongsTo(RoomCategory::class);
+    }
 }
