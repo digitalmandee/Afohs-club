@@ -29,7 +29,7 @@ const CustomerDetail = ({ handleGoToHistory, onClose, open }) => {
         { name: 'Pick up & Delivery', color: '#B5CFB7' },
         { name: 'Delivery', color: '#CADABF' },
         { name: 'Catering', color: '#DEAC80' },
-        { name: 'Reservation', color: '#3F4E4F' },
+        { name: 'Reservation', color: '#063455' },
     ];
 
     // Calendar data - which days have which type of orders

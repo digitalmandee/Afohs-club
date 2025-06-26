@@ -146,7 +146,7 @@ const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCate
                             <IconButton onClick={() => router.visit(route('order.new'))} sx={{ mr: 1 }}>
                                 <ArrowBack />
                             </IconButton>
-                            <Typography sx={{ color: '#3F4E4F', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
+                            <Typography sx={{ color: '#063455', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
                         </Box>
                         <Box>
                             <FormControl fullWidth>

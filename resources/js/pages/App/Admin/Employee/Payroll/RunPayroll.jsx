@@ -92,7 +92,7 @@ const RunPayrollDashboard = () => {
                 <Container fluid className="py-4 px-4 bg-light min-vh-100">
                     <div className="mb-4">
                         <h5 className="mb-0 d-flex align-items-center" style={{
-                            color: '#3F4E4F',
+                            color: '#063455',
                             fontWeight: 500,
                             fontSize: '30px'
                         }}>
@@ -233,7 +233,7 @@ const RunPayrollDashboard = () => {
 
                         {/* Second Card - Total Gross Salary */}
                         <div style={{
-                            backgroundColor: '#3F4E4F',
+                            backgroundColor: '#063455',
                             color: 'white',
                             padding: '16px',
                             borderRadius: '4px',
@@ -262,7 +262,7 @@ const RunPayrollDashboard = () => {
 
                         {/* Third Card - Total Deduction */}
                         <div style={{
-                            backgroundColor: '#3F4E4F',
+                            backgroundColor: '#063455',
                             color: 'white',
                             padding: '16px',
                             borderRadius: '4px',

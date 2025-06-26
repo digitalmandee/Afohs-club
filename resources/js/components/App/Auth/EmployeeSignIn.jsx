@@ -91,7 +91,7 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                         variant="h5"
                         sx={{
                             fontWeight: 500,
-                            color: '#3F4E4F',
+                            color: '#063455',
                             fontSize: '30px',
                             mb: 3,
                         }}

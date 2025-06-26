@@ -167,7 +167,7 @@ const RoomEventModal = ({ handleCloseAvailabilityModal, onFind }) => {
                     <Button
                         variant="dark"
                         className="w-100"
-                        style={{ backgroundColor: "#3F4E4F", border: "none", padding: "10px" }}
+                        style={{ backgroundColor: "#063455", border: "none", padding: "10px" }}
                         onClick={onFind}
                     >
                         Find

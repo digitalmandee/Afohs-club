@@ -114,7 +114,7 @@ const EventLocation = () => {
             >
                 {/* Page Header */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: '#3F4E4F' }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
                         Event Locations
                     </Typography>
                     <Button
@@ -218,7 +218,7 @@ const EventLocation = () => {
                             borderRadius: 2,
                         }}
                     >
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#3F4E4F' }}>
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#063455' }}>
                             Add New Location
                         </Typography>
                         <form onSubmit={handleLocationSubmit}>
@@ -288,7 +288,7 @@ const EventLocation = () => {
                             borderRadius: 2,
                         }}
                     >
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#3F4E4F' }}>
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#063455' }}>
                             Edit Location
                         </Typography>
                         <form onSubmit={handleEditSubmit}>
@@ -358,7 +358,7 @@ const EventLocation = () => {
                             borderRadius: 2,
                         }}
                     >
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#3F4E4F' }}>
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#063455' }}>
                             Confirm Deletion
                         </Typography>
                         <Typography variant="body1" sx={{ mb: 2, color: '#6C6C6C' }}>

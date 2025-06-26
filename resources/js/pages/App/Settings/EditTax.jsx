@@ -117,7 +117,7 @@ export default function AddressType() {
                                     <IconButton onClick={() => router.visit(route('dashboard'))} sx={{ mr: 1 }}>
                                         <ArrowBackIcon fontSize="small" />
                                     </IconButton>
-                                    <Typography variant="h6" sx={{ fontWeight: 500, color: '#3F4E4F' }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 500, color: '#063455' }}>
                                         Edit Tax Rate
                                     </Typography>
                                 </Box>
@@ -131,7 +131,7 @@ export default function AddressType() {
                                     <Box>
                                         {/* Tax Input Field */}
                                         <Box sx={{ mb: 3 }}>
-                                            <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500, color: '#3F4E4F' }}>
+                                            <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500, color: '#063455' }}>
                                                 Tax Rate (%)
                                             </Typography>
                                             <TextField size="small" value={tax} onChange={handleTaxChange} onKeyDown={handleKeyDown} fullWidth placeholder="Enter tax percentage" inputProps={{ style: { textAlign: 'left' } }} sx={{ bgcolor: '#fff' }} />

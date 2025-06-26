@@ -45,7 +45,7 @@ const Register = () => {
                     <Container style={{ maxWidth: '700px', width: '100%' }}>
                         <Row className="align-items-center mb-4">
                             <Col>
-                                <Typography variant="h4" style={{ color: '#3F4E4F', fontWeight: 500 }}>
+                                <Typography variant="h4" style={{ color: '#063455', fontWeight: 500 }}>
                                     Tenant Registration
                                 </Typography>
                             </Col>

@@ -319,12 +319,12 @@ const AddProduct = ({ product, id }) => {
                 }}
             >
                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                    <ArrowBackIcon sx={{ fontSize: 24, color: '#3F4E4F', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index'))} />
+                    <ArrowBackIcon sx={{ fontSize: 24, color: '#063455', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index'))} />
                     <Typography
                         fontWeight="bold"
                         sx={{
                             fontSize: '30px',
-                            color: '#3F4E4F',
+                            color: '#063455',
                             marginLeft: 3,
                         }}
                     >

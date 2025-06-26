@@ -397,7 +397,7 @@ export default function SideNav({ open, setOpen }) {
                         {open ? (
                             <MenuOpenIcon
                                 sx={{
-                                    color: '#3F4E4F',
+                                    color: '#063455',
                                     width: '20px',
                                     height: '20',
                                 }}
@@ -405,7 +405,7 @@ export default function SideNav({ open, setOpen }) {
                         ) : (
                             <MenuIcon
                                 sx={{
-                                    color: '#3F4E4F',
+                                    color: '#063455',
                                     width: '20px',
                                     height: '20',
                                 }}
@@ -431,7 +431,7 @@ export default function SideNav({ open, setOpen }) {
                             orientation="vertical"
                             flexItem
                             sx={{
-                                backgroundColor: '#3F4E4F', // Set color to black
+                                backgroundColor: '#063455', // Set color to black
                                 height: '30px',
                                 width: '1px', // Increase thickness
                                 opacity: 1,

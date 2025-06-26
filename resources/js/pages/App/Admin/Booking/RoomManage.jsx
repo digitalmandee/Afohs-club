@@ -142,12 +142,12 @@ const RoomScreen = ({ rooms, data }) => {
                     >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <IconButton sx={{ mr: 1, color: '#3F4E4F' }}>
+                                <IconButton sx={{ mr: 1, color: '#063455' }}>
                                     <ArrowBack />
                                 </IconButton>
                                 <Typography
                                     sx={{
-                                        color: '#3F4E4F',
+                                        color: '#063455',
                                         fontSize: '30px',
                                         fontWeight: 500,
                                     }}
@@ -299,7 +299,7 @@ const RoomScreen = ({ rooms, data }) => {
                                     variant="outline-secondary"
                                     className="d-flex align-items-center gap-1"
                                     style={{
-                                        border: '1px solid #3F4E4F',
+                                        border: '1px solid #063455',
                                         borderRadius: '0px',
                                         backgroundColor: 'transparent',
                                         color: '#495057',

@@ -44,7 +44,7 @@ const BookingDetail = () => {
                         <IconButton edge="start" sx={{ mr: 1 }} onClick={() => router.visit('/booking/dashboard')}>
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '30px', color: '#3F4E4F' }}>
+                        <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
                             Booking Detail
                         </Typography>
                     </Box>

@@ -32,7 +32,7 @@ export default function Login({ status, canResetPassword }) {
                 sx={{
                     minHeight: '100vh',
                     width: '100%',
-                    backgroundImage: 'url("/assets/bgimage.png")', // Replace with your actual background image path
+                    bgcolor: '#0000',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     display: 'flex',
@@ -42,28 +42,25 @@ export default function Login({ status, canResetPassword }) {
                 }}
             >
                 <Paper
-                    elevation={3}
+                    elevation={5}
                     sx={{
                         width: '100%',
-                        maxWidth: 500,
+                        maxWidth: 320,
                         bgcolor: '#fff',
                         px: 4,
                         py: 5,
-                        borderRadius: 2,
+                        borderRadius: 4,
                         textAlign: 'center',
                     }}
                 >
                     {/* Logo */}
                     <Box mb={2}>
-                        <img src="/assets/logo.png" alt="Logo" style={{ height: 80, width:110 }} />
+                        <img src="/assets/logo.png" alt="Logo" style={{ height: 80, width: 110 }} />
                     </Box>
 
                     {/* Heading */}
-                    <Typography style={{ fontSize:'36px', fontWeight:500}}>
+                    <Typography style={{ fontSize: '32px', fontWeight: 500 }}>
                         Admin Login
-                    </Typography>
-                    <Typography mb={3} style={{fontSize:18, fontWeight:400, color:'#7F7F7F'}}>
-                        Hello, Enter your details here to login into dashboard
                     </Typography>
 
                     {/* Form */}

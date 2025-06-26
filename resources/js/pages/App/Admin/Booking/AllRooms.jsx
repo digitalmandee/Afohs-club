@@ -46,12 +46,12 @@ const AllRooms = ({ rooms }) => {
                 <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <IconButton
-                            sx={{ color: '#3F4E4F', mr: 1 }}
+                            sx={{ color: '#063455', mr: 1 }}
                             onClick={() => window.history.back()}
                         >
                             <ArrowBack />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ fontWeight: 500, fontSize: '30px', color: '#3F4E4F' }}>
+                        <Typography variant="h5" component="h1" sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
                             All Rooms ({rooms.length})
                         </Typography>
                     </Box>

@@ -41,7 +41,7 @@ const Transaction = ({ FinancialData }) => {
                     {/* Recently Joined Section */}
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <Typography style={{ fontWeight: 500, fontSize: '30px', color: '#3F4E4F' }}>Transaction</Typography>
+                            <Typography style={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Transaction</Typography>
                             <div className="d-flex">
                                 <TextField
                                     placeholder="Search by name, member type etc"
@@ -60,7 +60,7 @@ const Transaction = ({ FinancialData }) => {
                                     variant="outlined"
                                     startIcon={<FilterAlt />}
                                     style={{
-                                        border: '1px solid #3F4E4F',
+                                        border: '1px solid #063455',
                                         color: '#333',
                                         textTransform: 'none',
                                         backgroundColor: 'transparent',

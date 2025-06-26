@@ -60,7 +60,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                         fontWeight: 500,
                         fontSize: '30px',
                         mb: 1,
-                        color: '#3F4E4F',
+                        color: '#063455',
                     }}
                 >
                     Sign In
