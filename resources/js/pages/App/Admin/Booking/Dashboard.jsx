@@ -585,7 +585,7 @@ const BookingDashboard = ({ data }) => {
                     <Container fluid className="p-4 bg-light">
                         <Row className="mb-4 align-items-center">
                             <Col>
-                                <Typography style={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>Dashboard</Typography>
+                                <Typography style={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>Dashboard</Typography>
                             </Col>
                         </Row>
 
@@ -593,7 +593,7 @@ const BookingDashboard = ({ data }) => {
                             <Col md={4}>
                                 <Card
                                     style={{
-                                        backgroundColor: '#3F4E4F',
+                                        backgroundColor: '#063455',
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '2px',
@@ -643,7 +643,7 @@ const BookingDashboard = ({ data }) => {
                             <Col md={4}>
                                 <Card
                                     style={{
-                                        backgroundColor: '#3F4E4F',
+                                        backgroundColor: '#063455',
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '2px',
@@ -702,7 +702,7 @@ const BookingDashboard = ({ data }) => {
                             <Col md={4}>
                                 <Card
                                     style={{
-                                        backgroundColor: '#3F4E4F',
+                                        backgroundColor: '#063455',
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '2px',
@@ -830,7 +830,7 @@ const BookingDashboard = ({ data }) => {
                                             variant="outline-secondary"
                                             className="d-flex align-items-center gap-1"
                                             style={{
-                                                border: '1px solid #3F4E4F',
+                                                border: '1px solid #063455',
                                                 borderRadius: '0px',
                                                 backgroundColor: 'transparent',
                                                 color: '#495057',

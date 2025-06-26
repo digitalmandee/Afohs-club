@@ -163,7 +163,7 @@ const MembersFinance = () => {
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <ArrowBack sx={{ mr: 1, color: '#666' }} />
-                        <Typography sx={{ color: '#3F4E4F', fontWeight:500, fontSize:'30px' }}>
+                        <Typography sx={{ color: '#063455', fontWeight:500, fontSize:'30px' }}>
                             View All Payment Status
                         </Typography>
                     </Box>

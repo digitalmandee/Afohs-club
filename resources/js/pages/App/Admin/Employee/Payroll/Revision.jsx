@@ -118,10 +118,10 @@ const SalaryRevision = () => {
                     >
                         {/* Left: Back + Title */}
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <IconButton style={{ color: "#3F4E4F" }} onClick={() => window.history.back()}>
+                            <IconButton style={{ color: "#063455" }} onClick={() => window.history.back()}>
                                 <ArrowBack />
                             </IconButton>
-                            <Typography sx={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px' }}>
+                            <Typography sx={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>
                                 Salary Revision
                             </Typography>
                         </Box>
@@ -155,7 +155,7 @@ const SalaryRevision = () => {
                             <Button
                                 variant="outlined"
                                 style={{
-                                    border: '1px solid #3F4E4F',
+                                    border: '1px solid #063455',
                                     color: '#333',
                                     textTransform: 'none',
                                     backgroundColor: 'transparent',
@@ -281,7 +281,7 @@ const SalaryRevision = () => {
                         <div className="d-flex align-items-center mb-4">
                             <Typography variant="h5" style={{
                                 fontWeight: 500,
-                                color: '#3F4E4F',
+                                color: '#063455',
                                 fontSize: '30px'
                             }}>
                                 Edit Salary

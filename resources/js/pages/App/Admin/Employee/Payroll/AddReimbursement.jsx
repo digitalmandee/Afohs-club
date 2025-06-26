@@ -74,7 +74,7 @@ const AddReimburesementEmployee = () => {
                         />
                         <Typography variant="h5" style={{
                             fontWeight: 500,
-                            color: '#3F4E4F',
+                            color: '#063455',
                             fontSize: '30px'
                         }}>
                             Add New Reimbursement

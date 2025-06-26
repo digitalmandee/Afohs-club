@@ -39,12 +39,12 @@ const EmployeeInformationForm = () => {
                 }}
             >
                 <Box sx={{ display: "flex", alignItems: "center", ml: 5, pt: 5 }}>
-                    <IconButton style={{ color: "#3F4E4F" }}
+                    <IconButton style={{ color: "#063455" }}
                         onClick={() => window.history.back()}
                     >
                         <ArrowBack />
                     </IconButton>
-                    <h2 className="mb-0 fw-normal" style={{ color: "#3F4E4F", fontSize: '30px' }}>
+                    <h2 className="mb-0 fw-normal" style={{ color: "#063455", fontSize: '30px' }}>
                         Add Employee
                     </h2>
                 </Box>

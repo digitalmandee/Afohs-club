@@ -282,12 +282,12 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
 
                             <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
                                 <Button
-                                    variant="#3F4E4F"
+                                    variant="#063455"
                                     startIcon={<FilterIcon />}
                                     onClick={handleFilterOpen}
                                     sx={{
                                         borderRadius: 1,
-                                        border: 'solid 1px #3F4E4F',
+                                        border: 'solid 1px #063455',
                                         '&:hover': {
                                             backgroundColor: '#002A41',
                                             color: '#ffff',

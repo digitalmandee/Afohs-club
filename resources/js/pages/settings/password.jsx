@@ -55,7 +55,7 @@ const Password = () => {
                 <Container style={{ maxWidth: '600px', padding: '2rem' }}>
                     <Row className="align-items-center mb-4">
                         <Col>
-                            <Typography variant="h4" style={{ color: '#3F4E4F', fontWeight: 500 }}>
+                            <Typography variant="h4" style={{ color: '#063455', fontWeight: 500 }}>
                                 Password
                             </Typography>
                         </Col>

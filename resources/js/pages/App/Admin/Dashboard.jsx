@@ -59,7 +59,7 @@ const Dashboard = () => {
             >
                 <Box sx={{ p: 2, bgcolor: '#f5f5f5' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Typography sx={{ fontSize: '30px', fontWeight: 500, color: '#3F4E4F' }}>Dashboard</Typography>
+                        <Typography sx={{ fontSize: '30px', fontWeight: 500, color: '#063455' }}>Dashboard</Typography>
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <TextField
                                 select
@@ -154,7 +154,7 @@ const Dashboard = () => {
                                 <Grid item xs={5}>
                                     <Card
                                         sx={{
-                                            bgcolor: '#3F4E4F',
+                                            bgcolor: '#063455',
                                             color: 'white',
                                             borderRadius: '4px',
                                             height: '166px',
@@ -208,7 +208,7 @@ const Dashboard = () => {
                                 <Grid item xs={12} sm={7}>
                                     <Card
                                         sx={{
-                                            bgcolor: '#3F4E4F',
+                                            bgcolor: '#063455',
                                             color: 'white',
                                             height: '100%',
                                             borderRadius: '4px',
@@ -255,7 +255,7 @@ const Dashboard = () => {
                                 <Grid item xs={12} sm={2.5}>
                                     <Card
                                         sx={{
-                                            bgcolor: '#3F4E4F',
+                                            bgcolor: '#063455',
                                             color: 'white',
                                             borderRadius: '4px',
                                             height: '166px',
@@ -300,7 +300,7 @@ const Dashboard = () => {
                                 <Grid item xs={12} sm={2.5}>
                                     <Card
                                         sx={{
-                                            bgcolor: '#3F4E4F',
+                                            bgcolor: '#063455',
                                             color: 'white',
                                             borderRadius: '4px',
                                             height: '166px',

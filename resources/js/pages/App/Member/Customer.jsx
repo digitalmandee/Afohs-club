@@ -126,7 +126,7 @@ const CustomerDashboard = () => {
                 <Box sx={{ p: 3, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="h5" fontWeight="500" sx={{ mr: 1, color: '#3F4E4F', fontSize: '34px' }}>
+                            <Typography variant="h5" fontWeight="500" sx={{ mr: 1, color: '#063455', fontSize: '34px' }}>
                                 780
                             </Typography>
                             <Typography variant="h5" fontWeight="500" sx={{ mr: 3, color: '#7F7F7F', fontSize: '16px' }}>
@@ -145,7 +145,7 @@ const CustomerDashboard = () => {
                                             p: 0.5,
                                             width: 90,
                                             height: 40,
-                                            border: '1px solid #3F4E4F',
+                                            border: '1px solid #063455',
                                         }}
                                     >
                                         <Box
@@ -169,7 +169,7 @@ const CustomerDashboard = () => {
                                             variant="body2"
                                             fontWeight="500"
                                             sx={{
-                                                color: '#3F4E4F',
+                                                color: '#063455',
                                                 fontSize: '16px',
                                             }}
                                         >
@@ -213,11 +213,11 @@ const CustomerDashboard = () => {
                                 startIcon={<FilterAlt />}
                                 onClick={handleFilterOpen}
                                 sx={{
-                                    border: '1px solid #3F4E4F',
-                                    color: '#3F4E4F',
+                                    border: '1px solid #063455',
+                                    color: '#063455',
                                     bgcolor: 'transparent',
                                     '&:hover': {
-                                        borderColor: '#3F4E4F',
+                                        borderColor: '#063455',
                                         bgcolor: 'transparent',
                                     },
                                 }}

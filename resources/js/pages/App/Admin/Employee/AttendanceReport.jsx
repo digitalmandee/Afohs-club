@@ -104,13 +104,13 @@ const AttendanceReport = () => {
                     >
                         {/* Left: Back + Title */}
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                            {/* <IconButton style={{ color: "#3F4E4F" }} onClick={() => window.history.back()}>
+                            {/* <IconButton style={{ color: "#063455" }} onClick={() => window.history.back()}>
                                 <ArrowBack />
                             </IconButton> */}
                             <h2
                                 className="mb-0"
                                 style={{
-                                    color: "#3F4E4F",
+                                    color: "#063455",
                                     fontSize: '30px',
                                     fontWeight: 500
                                 }}
@@ -149,7 +149,7 @@ const AttendanceReport = () => {
                                 variant="outlined"
                                 startIcon={<FilterAlt />}
                                 style={{
-                                    border: '1px solid #3F4E4F',
+                                    border: '1px solid #063455',
                                     color: '#333',
                                     textTransform: 'none',
                                     backgroundColor: 'transparent',

@@ -145,12 +145,12 @@ const EditRoom = ({ room }) => {
                 <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <IconButton
-                            sx={{ color: '#3F4E4F' }}
+                            sx={{ color: '#063455' }}
                             onClick={() => window.history.back()}
                         >
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, fontSize: '30px', color: '#3F4E4F' }}>
+                        <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, fontSize: '30px', color: '#063455' }}>
                             Edit Room
                         </Typography>
                     </Box>

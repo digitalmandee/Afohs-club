@@ -289,10 +289,10 @@ const RoomBooking = ({ booking, invoice, next_booking_id }) => {
             >
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
-                    <IconButton style={{ color: '#3F4E4F' }} onClick={() => router.visit('/booking/dashboard')}>
+                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit('/booking/dashboard')}>
                         <ArrowBack />
                     </IconButton>
-                    <h2 className="mb-0 fw-normal" style={{ color: '#3F4E4F', fontSize: '30px' }}>
+                    <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
                         {currentStep === 1 ? (bookingType === 'room' ? 'Room Booking' : 'Event Booking') : paymentMethod === 'cash' ? 'Cash Payment' : 'Bank Payment'}
                     </h2>
                 </Box>

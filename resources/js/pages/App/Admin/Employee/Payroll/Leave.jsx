@@ -120,10 +120,10 @@ const LeavesList = () => {
                     >
                         {/* Left: Back + Title */}
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <IconButton style={{ color: "#3F4E4F", height: 24, width: 24 }} onClick={() => window.history.back()}>
+                            <IconButton style={{ color: "#063455", height: 24, width: 24 }} onClick={() => window.history.back()}>
                                 <ArrowBack />
                             </IconButton>
-                            <Typography sx={{ color: '#3F4E4F', fontWeight: 500, fontSize: '30px', marginLeft: 2 }}>
+                            <Typography sx={{ color: '#063455', fontWeight: 500, fontSize: '30px', marginLeft: 2 }}>
                                 Leaves List
                             </Typography>
                         </Box>
@@ -159,7 +159,7 @@ const LeavesList = () => {
                                     variant="outlined"
                                     startIcon={<FilterAlt />}
                                     style={{
-                                        border: '1px solid #3F4E4F',
+                                        border: '1px solid #063455',
                                         color: '#333',
                                         textTransform: 'none',
                                         backgroundColor: 'transparent',
