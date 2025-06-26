@@ -4,40 +4,44 @@ import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import { usePage } from '@inertiajs/react';
 
-const AddRoomModal = ({ open, handleClose, onSuccess, roomType }) => {
+const AddRoomMinibarModal = ({ open, handleClose, onSuccess, roomMinibar }) => {
     const [name, setName] = useState('');
+    const [amount, setAmount] = useState('');
     const [status, setStatus] = useState('active'); // ✅ Add status
     const { props } = usePage();
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (roomType) {
-            setName(roomType.name || '');
-            setStatus(roomType.status || 'active'); // ✅ prefill status if editing
+        if (roomMinibar) {
+            setName(roomMinibar.name || '');
+            setAmount(roomMinibar.amount || 0);
+            setStatus(roomMinibar.status || 'active'); // ✅ prefill status if editing
         } else {
             setName('');
+            setAmount(0);
             setStatus('active');
         }
-    }, [roomType]);
+    }, [roomMinibar]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const isEditing = !!roomType;
-        const url = isEditing ? route('room-types.update', { id: roomType.id }) : route('room-types.store');
+        const isEditing = !!roomMinibar;
+        const url = isEditing ? route('room-minibar.update', { id: roomMinibar.id }) : route('room-minibar.store');
         const method = isEditing ? 'put' : 'post';
 
         setLoading(true);
 
         try {
-            const res = await axios[method](url, { name, status });
+            const res = await axios[method](url, { name, amount, status });
 
-            enqueueSnackbar(roomType ? 'Room Type updated.' : 'Room Type created.', {
+            enqueueSnackbar(roomMinibar ? 'Room Minibar updated.' : 'Room Minibar created.', {
                 variant: 'success',
             });
 
             setName('');
+            setAmount(0);
             setStatus('active');
-            onSuccess(res.data?.data || { id: roomType?.id || Date.now(), name, status });
+            onSuccess(res.data?.data || { id: roomMinibar?.id || Date.now(), name, amount, status });
             handleClose();
         } catch (err) {
             enqueueSnackbar('Failed to save: ' + (err.response?.data?.message || err.message), {
@@ -66,10 +70,12 @@ const AddRoomModal = ({ open, handleClose, onSuccess, roomType }) => {
                 }}
             >
                 <Typography variant="h6" sx={{ mb: 3 }}>
-                    {roomType ? 'Edit Room Type' : 'Add Room Type'}
+                    {roomMinibar ? 'Edit Room Minibar' : 'Add Room Minibar'}
                 </Typography>
 
                 <TextField fullWidth label="Name of Type" value={name} onChange={(e) => setName(e.target.value)} required size="small" sx={{ mb: 3 }} />
+
+                <TextField fullWidth label="Charges" inputProps={{ min: 0 }} type="number" placeholder="Enter per day charges" value={amount} onChange={(e) => setAmount(e.target.value)} required size="small" sx={{ mb: 3 }} />
 
                 <FormControl fullWidth size="small" sx={{ mb: 3 }}>
                     <InputLabel>Status</InputLabel>
@@ -85,7 +91,7 @@ const AddRoomModal = ({ open, handleClose, onSuccess, roomType }) => {
                     </Button>
                     <Button type="submit" variant="contained" sx={{ backgroundColor: '#0c4b6e' }} disabled={loading}>
                         {loading ? <CircularProgress size={22} sx={{ color: 'white', mr: 1 }} /> : null}
-                        {roomType ? 'Update' : 'Create'}
+                        {roomMinibar ? 'Update' : 'Create'}
                     </Button>
                 </Box>
             </Box>
@@ -93,4 +99,4 @@ const AddRoomModal = ({ open, handleClose, onSuccess, roomType }) => {
     );
 };
 
-export default AddRoomModal;
+export default AddRoomMinibarModal;

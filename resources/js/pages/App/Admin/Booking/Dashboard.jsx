@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Button, Form, Badge, Card, Col, Modal } from 'react-bootstrap'; // Added Modal import for popup
 import { Search, FilterAlt } from '@mui/icons-material';
-import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem, Popper } from '@mui/material';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -11,6 +11,11 @@ import { DateObject } from 'react-multi-date-picker';
 import AvailableRooms from './Rooms';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { DateRange, DateRangePicker } from 'react-date-range';
+
+import 'react-date-range/dist/styles.css'; // main css file
+import 'react-date-range/dist/theme/default.css'; // theme css file
+import { addDays, format } from 'date-fns';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -345,6 +350,31 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
     const [values, setValues] = useState([new DateObject(), new DateObject().add(1, 'days')]);
     const [filterApplied, setFilterApplied] = useState(false);
     const [initialAdults] = useState(adults);
+    const [open, setOpen] = useState(false);
+    const anchorRef = useRef(null);
+    const popperRef = useRef(null);
+
+    const [range, setRange] = useState([
+        {
+            startDate: undefined,
+            endDate: undefined,
+            key: 'selection',
+        },
+    ]);
+
+    const handleClick = () => setOpen((prev) => !prev);
+
+    // ✅ use ClickAwayListener (Material UI way)
+    const handleClickAway = (event) => {
+        if (popperRef.current && !popperRef.current.contains(event.target) && anchorRef.current && !anchorRef.current.contains(event.target)) {
+            setOpen(false);
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickAway);
+        return () => document.removeEventListener('mousedown', handleClickAway);
+    }, []);
 
     const handleRangeSelect = (newValues) => {
         setValues(newValues);
@@ -366,6 +396,12 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
         onSearch({ bookingType: 'room', checkin: '', checkout: '', persons: initialAdults });
     };
 
+    const startDate = range[0]?.startDate;
+    const endDate = range[0]?.endDate;
+
+    // Format display label
+    const displayText = startDate && endDate ? `${format(startDate, 'dd MMM yyyy')} — ${format(endDate, 'dd MMM yyyy')}` : 'Check-in date — Check-out date';
+
     return (
         <div style={{ padding: '10px', borderRadius: '4px' }}>
             <div
@@ -385,7 +421,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                     </Select>
                 </FormControl>
 
-                <div
+                <Box
                     style={{
                         flex: '1',
                         backgroundColor: '#fff',
@@ -396,10 +432,40 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                         alignItems: 'center',
                         gap: '8px',
                     }}
+                    sx={
+                        {
+                            // '&>.date-range>*': {
+                            //     width: '100%',
+                            //     height: '40px',
+                            //     fontSize: '16px',
+                            // },
+                        }
+                    }
                 >
                     <span>📅</span>
-                    <DatePicker placeholder="CheckIn to CheckOut" value={values} dateSeparator=" to " onChange={handleRangeSelect} range rangeHover style={{ width: '100%', height: '40px', fontSize: '16px' }} />
-                </div>
+                    <div className="date-range" style={{ width: '100%' }}>
+                        <Box>
+                            <Button ref={anchorRef} onClick={handleClick} variant="outlined">
+                                {displayText}
+                            </Button>
+
+                            <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
+                                <Box ref={popperRef} sx={{ bgcolor: 'background.paper', p: 2, zIndex: 1300 }}>
+                                    <DateRange
+                                        editableDateInputs={true}
+                                        onChange={(item) => setRange([item.selection])}
+                                        moveRangeOnFirstSelection={false}
+                                        ranges={range}
+                                        months={2} // 👈 shows 2 calendars
+                                        showSelectionPreview={false} // ✅ avoids hover/preview effects
+                                        showDateDisplay={false}
+                                        direction="horizontal" // 👈 side by side
+                                    />
+                                </Box>
+                            </Popper>
+                        </Box>
+                    </div>
+                </Box>
 
                 {/* 👤 Direct Input for Person */}
                 <div

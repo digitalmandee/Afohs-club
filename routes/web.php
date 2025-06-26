@@ -15,6 +15,9 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\RoomCategoryController;
+use App\Http\Controllers\RoomChargesTypeController;
+use App\Http\Controllers\RoomMiniBarController;
 use App\Http\Controllers\RoomTypeController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
@@ -92,6 +95,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             // Route::get('/types', [RoomController::class, 'mamageTypes'])->name('rooms.types');
         });
         Route::resource('room-types', RoomTypeController::class)->except(['create', 'edit', 'show']);
+        Route::resource('room-categories', RoomCategoryController::class)->except(['create', 'edit', 'show']);
+        Route::resource('room-charges-type', RoomChargesTypeController::class)->except(['create', 'edit', 'show']);
+        Route::resource('room-minibar', RoomMiniBarController::class)->except(['create', 'edit', 'show']);
     });
 
     // Route::get('/events/dashboard', function () {

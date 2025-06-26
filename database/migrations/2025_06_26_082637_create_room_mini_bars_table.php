@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('room_types', function (Blueprint $table) {
+        Schema::create('room_mini_bars', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->bigInteger('amount');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->bigInteger('created_by')->nullable();
             $table->bigInteger('updated_by')->nullable();
@@ -28,8 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('room_types');
+        Schema::dropIfExists('room_mini_bars');
     }
 };
-
-/*******  c4673a19-5079-46fe-8a4b-d5ead821df0c  *******/

@@ -21,13 +21,18 @@ class RoomTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:room_types,name',
+            'status' => 'required|in:active,inactive', // ✅ validate status
         ]);
 
         $roomType = RoomType::create([
             'name' => $request->name,
+            'status' => $request->status, // ✅ store status
         ]);
 
-        return response()->json(['message' => 'Room Type created successfully.', 'data' => $roomType], 201);
+        return response()->json([
+            'message' => 'Room Type created successfully.',
+            'data' => $roomType,
+        ], 201);
     }
 
     // Update an existing room type
@@ -37,13 +42,18 @@ class RoomTypeController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255|unique:room_types,name,' . $roomType->id,
+            'status' => 'required|in:active,inactive', // ✅ validate status
         ]);
 
         $roomType->update([
             'name' => $request->name,
+            'status' => $request->status, // ✅ update status
         ]);
 
-        return response()->json(['message' => 'Room Type updated successfully.', 'data' => $roomType], 200);
+        return response()->json([
+            'message' => 'Room Type updated successfully.',
+            'data' => $roomType,
+        ], 200);
     }
 
     // Delete a room type
