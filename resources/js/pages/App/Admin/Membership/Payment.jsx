@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TextField, Button, Typography, Box, IconButton, Radio, RadioGroup, FormControlLabel, Paper } from '@mui/material';
+import { TextField, Button, Typography, Box, IconButton, Radio, RadioGroup, FormControlLabel, Paper, Grid } from '@mui/material';
 import { ArrowBack, ArrowForward, Check } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -19,6 +19,8 @@ const Payment = ({ invoice, onBack }) => {
         customerCharges: '0.00',
         paymentMethod: 'cash',
         receipt: null,
+        discountType: '', // 'fixed' or 'percentage'
+        discountValue: '', // value of the discount
     });
 
     const [error, setError] = useState('');
@@ -31,80 +33,50 @@ const Payment = ({ invoice, onBack }) => {
     ];
 
     const getMinimumAmount = () => {
-        const { subscriptionType } = formData;
+        const { subscriptionType, discountType, discountValue } = formData;
 
         const memberData = invoice.data?.find((d) => d.invoice_type === 'membership');
-        const subscriptionData = invoice.data?.find((d) => d.invoice_type === 'subscription');
 
         let membershipTotal = 0;
-        let subscriptionTotal = 0;
         let duration = 1;
 
-        // Membership Calculation
         if (memberData) {
-            const fee = parseFloat(memberData.fee || 0);
-            const maintenance = parseFloat(memberData.maintenance_fee || 0);
-            const discountType = memberData.discount_type;
-            const discountValue = parseFloat(memberData.discount_value || 0);
-            const baseDuration = parseInt(memberData.duration || 1);
-
-            let totalWithoutDiscount = 0;
-
-            if (subscriptionType === 'one_time') {
-                totalWithoutDiscount = (fee + maintenance) * baseDuration;
-                duration = baseDuration;
-            } else if (subscriptionType === 'monthly') {
-                totalWithoutDiscount = fee + maintenance;
-                duration = 1;
-            } else if (subscriptionType === 'quarter') {
-                totalWithoutDiscount = (fee + maintenance) * 3;
-                duration = 3;
-            } else if (subscriptionType === 'annual') {
-                totalWithoutDiscount = (fee + maintenance) * 12;
-                duration = 12;
-            }
-
-            membershipTotal = totalWithoutDiscount;
-
-            if (discountType === 'percentage') {
-                membershipTotal -= (totalWithoutDiscount * discountValue) / 100;
-            } else if (discountType === 'Rs') {
-                membershipTotal -= discountValue;
-            }
-        }
-
-        // Subscription Calculation
-        if (subscriptionData) {
-            const category = subscriptionData.category || {};
+            const category = memberData || {};
             const baseFee = parseFloat(category.fee || 0);
             const subFee = parseFloat(category.subscription_fee || 0);
 
             if (subscriptionType === 'one_time') {
-                subscriptionTotal = baseFee;
+                membershipTotal = baseFee;
             } else if (subscriptionType === 'monthly') {
-                subscriptionTotal = subFee;
+                membershipTotal = subFee;
             } else if (subscriptionType === 'quarter') {
-                subscriptionTotal = subFee * 3;
+                membershipTotal = subFee * 3;
             } else if (subscriptionType === 'annual') {
-                subscriptionTotal = subFee * 12;
+                membershipTotal = subFee * 12;
             }
 
-            // Optional: update duration if subscription is present
             duration = subscriptionType === 'one_time' ? 1 : subscriptionType === 'monthly' ? 1 : subscriptionType === 'quarter' ? 3 : subscriptionType === 'annual' ? 12 : duration;
         }
 
-        const combinedTotal = membershipTotal + subscriptionTotal;
+        let discountAmount = 0;
+        const discountVal = parseFloat(discountValue || 0);
+        if (discountType === 'fixed') {
+            discountAmount = discountVal;
+        } else if (discountType === 'percentage') {
+            discountAmount = (membershipTotal * discountVal) / 100;
+        }
+
+        const total = membershipTotal - discountAmount;
 
         return {
-            amount: membershipTotal + subscriptionTotal, // pre-discounted membership and sub fees
-            total: combinedTotal,
+            amount: membershipTotal,
+            total: total > 0 ? total : 0,
             duration,
             membershipTotal,
-            subscriptionTotal,
         };
     };
 
-    const { total, membershipTotal, subscriptionTotal } = getMinimumAmount();
+    const { amount, total, membershipTotal } = getMinimumAmount();
     const minAmount = total;
 
     const handleInputChange = (e) => {
@@ -185,12 +157,13 @@ const Payment = ({ invoice, onBack }) => {
         const data = new FormData();
         data.append('invoice_no', invoice.invoice_no);
         data.append('subscription_type', formData.subscriptionType);
-        data.append('subscription_amount', Math.round(subscriptionTotal));
         data.append('membership_amount', Math.round(membershipTotal));
         data.append('amount', amount);
         data.append('total_amount', inputAmount);
         data.append('member_type_id', invoice.member?.member_type?.id);
         data.append('customer_charges', parseFloat(formData.customerCharges));
+        data.append('discount_type', formData.discountType || '');
+        data.append('discount_value', formData.discountValue || '');
         data.append('payment_method', formData.paymentMethod);
         data.append('duration', duration);
 
@@ -208,7 +181,7 @@ const Payment = ({ invoice, onBack }) => {
 
             if (response.status === 200) {
                 setError('');
-                router.visit(route('membership.history'));
+                router.visit(route('membership.dashboard'));
             } else {
                 setError('Payment failed: ' + (response.data?.message || 'Please check the form data.'));
             }
@@ -300,30 +273,28 @@ const Payment = ({ invoice, onBack }) => {
                             <Typography variant="h6" sx={{ mb: 2, color: '#333' }}>
                                 Member Details
                             </Typography>
-                            <Typography sx={{ mb: 1 }}>
-                                Name: {invoice.customer?.first_name} {invoice.customer?.last_name}
-                            </Typography>
-                            <Typography sx={{ mb: 1 }}>Email: {invoice.customer?.email}</Typography>
-                            {/* <Typography>Membership Type: {invoice.data}</Typography> */}
-                            <Typography variant="body2" sx={{ color: 'gray', mt: 1 }}>
-                                {membershipTotal > 0 && (
-                                    <>
-                                        <strong>Membership:</strong>
-                                        <br />
-                                        Fee + Maintenance = Rs {Math.round(membershipTotal)}
-                                        <br />
-                                    </>
-                                )}
-                                {subscriptionTotal > 0 && (
-                                    <>
-                                        <strong>Subscription:</strong>
-                                        <br />
-                                        Fee = Rs {Math.round(subscriptionTotal)}
-                                        <br />
-                                    </>
-                                )}
-                                <strong>Total Payable:</strong> Rs {Math.round(total)}
-                            </Typography>
+                            <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                    <Typography sx={{ mb: 1 }}>
+                                        <strong>Name:</strong> {invoice.customer?.first_name} {invoice.customer?.last_name}
+                                    </Typography>
+                                    <Typography sx={{ mb: 1 }}>
+                                        <strong>Email:</strong> {invoice.customer?.email}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    {membershipTotal > 0 && (
+                                        <>
+                                            <Typography sx={{ mb: 1 }}>
+                                                <strong>Membership Fee:</strong> Rs {Math.round(membershipTotal)}
+                                            </Typography>
+                                        </>
+                                    )}
+                                    <Typography>
+                                        <strong>Total Payable:</strong> Rs {Math.round(total)}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
                         </Paper>
                     )}
 
@@ -405,6 +376,26 @@ const Payment = ({ invoice, onBack }) => {
                                 <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
                                     Rs {Math.round(formData.customerCharges)}
                                 </Typography>
+                            </Box>
+                        </Box>
+
+                        <Box className="d-flex gap-5 mb-4">
+                            <Box className="d-flex flex-column w-50">
+                                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                    Discount Type
+                                </Typography>
+                                <TextField select name="discountType" value={formData.discountType} onChange={handleInputChange} SelectProps={{ native: true }} size="small" variant="outlined">
+                                    <option value="">None</option>
+                                    <option value="fixed">Fixed</option>
+                                    <option value="percentage">Percentage</option>
+                                </TextField>
+                            </Box>
+
+                            <Box className="d-flex flex-column w-50">
+                                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                    Discount Value
+                                </Typography>
+                                <TextField name="discountValue" value={formData.discountValue} onChange={handleInputChange} placeholder="0" variant="outlined" size="small" inputProps={{ type: 'number', min: 0 }} />
                             </Box>
                         </Box>
 

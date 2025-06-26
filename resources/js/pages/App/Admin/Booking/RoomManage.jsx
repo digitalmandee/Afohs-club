@@ -168,7 +168,7 @@ const RoomScreen = ({ rooms, data }) => {
                                             bgcolor: '#FFFFFF',
                                         },
                                     }}
-                                    onClick={() => router.visit('/booking/add/room?type=room')}
+                                    onClick={() => router.visit(route('rooms.add', { type: 'room' }))}
                                 >
                                     Add Room
                                 </Button>
@@ -190,7 +190,7 @@ const RoomScreen = ({ rooms, data }) => {
                         <Box sx={{ mb: 2 }}>
                             <Box textAlign="right" pb={2}>
                                 <Link
-                                    href="/rooms/manage"
+                                    href={route('rooms.all')}
                                     underline="none"
                                     sx={{
                                         color: '#0a3d62',

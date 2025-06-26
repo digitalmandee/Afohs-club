@@ -338,8 +338,9 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                         color: '#333',
                                         '&:hover': { borderColor: '#999', backgroundColor: '#f5f5f5' },
                                     }}
+                                    onClick={onBack}
                                 >
-                                    Cancel
+                                    Back
                                 </Button>
                                 <Button
                                     variant="contained"

@@ -12,10 +12,12 @@ class FinancialInvoice extends Model
         'member_id',
         'subscription_type',
         'invoice_type',
-        'discount_amount',
+        'discount_type',
+        'discount_value',
         'discount_details',
         'amount',
         'total_price',
+        'paid_amount',
         'customer_charges',
         'issue_date',
         'due_date',
@@ -40,4 +42,3 @@ class FinancialInvoice extends Model
         return $this->belongsTo(User::class, 'member_id', 'id');
     }
 }
-

@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('members', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('application_no')->unique()->nullable();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('member_type_id')->nullable()->constrained('member_types')->onDelete('set null');
-            $table->string('membership_category')->nullable();
-            $table->string('membership_number')->nullable()->unique();
+            $table->foreignId('member_category_id')->nullable()->constrained('member_categories')->onDelete('set null');
+            // $table->string('membership_category')->nullable();
+            $table->string('membership_no')->nullable()->unique();
             $table->date('membership_date')->nullable();
             $table->enum('card_status', ['active', 'inactive', 'suspended', 'cancelled'])->default('inactive')->nullable();
             $table->date('card_issue_date')->nullable();

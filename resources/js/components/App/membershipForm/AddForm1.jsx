@@ -5,8 +5,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import { router } from '@inertiajs/react';
 
-const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
+const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
     const [memberImage, setMemberImage] = useState(null);
     const [showImageButtons, setShowImageButtons] = useState(false);
     const [dateError, setDateError] = useState(''); // New state for date validation
@@ -168,7 +169,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                                 Application Number :
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                #{userNo}
+                                #{applicationNo}
                             </Typography>
                         </Box>
                     </Grid>
@@ -335,7 +336,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                             {/* Gender */}
                             <Grid item xs={6}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Gender
+                                    Gender*
                                 </Typography>
                                 <FormControl fullWidth size="small" error={!!formErrors.gender}>
                                     <Select
@@ -456,6 +457,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, userNo }) => {
                         color: '#333',
                         '&:hover': { borderColor: '#999', backgroundColor: '#f5f5f5' },
                     }}
+                    onClick={() => router.visit(route('membership.dashboard'))}
                 >
                     Cancel
                 </Button>

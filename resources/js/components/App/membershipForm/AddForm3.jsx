@@ -9,7 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 
-const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, userNo, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
+const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
 
     const [submitError, setSubmitError] = useState('');
@@ -23,12 +23,13 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
     };
 
     const AddFamilyMember = () => {
-        const maxUserId = data.family_members.length ? Math.max(...data.family_members.map((f) => f.user_id)) : userNo;
+        const maxApplicationNo = data.family_members.length ? Math.max(...data.family_members.map((f) => f.application_no)) : applicationNo;
 
         setCurrentFamilyMember((prev) => ({
             ...prev,
-            user_id: maxUserId + 1,
+            application_no: Number(maxApplicationNo) + 1,
             member_type_id: data.member.member_type_id,
+            membership_category: data.member.membership_category,
             start_date: data.member.card_issue_date,
             end_date: data.member.card_expire_date,
         }));
@@ -83,7 +84,7 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
         // All good: proceed
         handleChangeData('family_members', [...data.family_members, currentFamilyMember]);
         setCurrentFamilyMember({
-            user_id: userNo + 1,
+            application_no: '',
             full_name: '',
             relation: '',
             cnic: '',
@@ -328,16 +329,28 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                         </Select>
                                     </FormControl>
                                 </Box>
-
                                 <Box sx={{ mb: 3 }}>
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Number *</Typography>
                                     <TextField
                                         fullWidth
-                                        placeholder="Enter membership number"
+                                        placeholder="e.g. 12345-24"
                                         variant="outlined"
-                                        name="membership_number"
-                                        value={userNo}
-                                        readOnly
+                                        name="member.membership_no"
+                                        value={data.member.membership_no}
+                                        onChange={(e) => {
+                                            const input = e.target.value;
+
+                                            // Allow any number before dash, and exactly 2 digits after dash
+                                            const validPattern = /^[0-9]{0,10}-?[0-9]{0,2}$/;
+
+                                            if (input === '' || validPattern.test(input)) {
+                                                handleChange(e);
+                                            }
+                                        }}
+                                        inputProps={{
+                                            maxLength: 12, // enough for big serials + dash + year
+                                            inputMode: 'numeric',
+                                        }}
                                         sx={{
                                             '& .MuiOutlinedInput-notchedOutline': {
                                                 borderColor: '#ccc',
@@ -439,49 +452,6 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                     </Grid>
                                 </Grid>
 
-                                <Grid container spacing={2}>
-                                    <Grid item xs={6}>
-                                        <Box sx={{ mb: 3 }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>From</Typography>
-                                            <TextField
-                                                fullWidth
-                                                type="date"
-                                                InputLabelProps={{ shrink: true }}
-                                                placeholder="dd/mm/yyyy"
-                                                variant="outlined"
-                                                name="member.from_date"
-                                                value={data.member.from_date}
-                                                onChange={handleChange}
-                                                sx={{
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
-                                                    },
-                                                }}
-                                            />
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Box sx={{ mb: 3 }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>To</Typography>
-                                            <TextField
-                                                fullWidth
-                                                type="date"
-                                                InputLabelProps={{ shrink: true }}
-                                                placeholder="dd/mm/yyyy"
-                                                variant="outlined"
-                                                name="member.to_date"
-                                                value={data.member.to_date}
-                                                onChange={handleChange}
-                                                sx={{
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
-                                                    },
-                                                }}
-                                            />
-                                        </Box>
-                                    </Grid>
-                                </Grid>
-
                                 <Button
                                     variant="contained"
                                     sx={{
@@ -550,21 +520,13 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                         <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                     </Box>
 
-                                    <Box sx={{ mb: 3 }}>
-                                        <TextField
-                                            fullWidth
-                                            label="Application Number :"
-                                            value={currentFamilyMember.user_id}
-                                            variant="outlined"
-                                            InputProps={{
-                                                readOnly: true,
-                                            }}
-                                            sx={{
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#ccc',
-                                                },
-                                            }}
-                                        />
+                                    <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                                        <Box component="span" sx={{ mr: 1, fontWeight: 500 }}>
+                                            Application Number :
+                                        </Box>
+                                        <Box component="span" sx={{ color: '#666' }}>
+                                            #{currentFamilyMember.application_no}
+                                        </Box>
                                     </Box>
 
                                     <Box sx={{ mb: 3, display: 'flex', gap: '10px' }}>
@@ -737,7 +699,7 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                                 return <Typography sx={{ color: '#757575' }}>Choose Type</Typography>;
                                                             }
                                                             const item = memberTypesData.find((item) => item.id == Number(selected));
-                                                            return item ? item.name : '';
+                                                            return item ? item.name + ' - ' + currentFamilyMember.relation : '';
                                                         }}
                                                         sx={{
                                                             '& .MuiOutlinedInput-notchedOutline': {
@@ -747,7 +709,7 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                     >
                                                         {memberTypesData.map((type) => (
                                                             <MenuItem key={type.id} value={type.id}>
-                                                                {type.name}
+                                                                {type.name} - {currentFamilyMember.relation}
                                                             </MenuItem>
                                                         ))}
                                                     </Select>
@@ -765,12 +727,13 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                         displayEmpty
                                                         value={currentFamilyMember.membership_category}
                                                         onChange={(e) => handleFamilyMemberChange('membership_category', e.target.value)}
+                                                        readOnly
                                                         renderValue={(selected) => {
                                                             if (!selected) {
                                                                 return <Typography sx={{ color: '#757575' }}>Choose Category</Typography>;
                                                             }
                                                             const item = membercategories.find((item) => item.id == Number(selected));
-                                                            return item ? item.name : '';
+                                                            return item ? item.name + ' - ' + currentFamilyMember.relation : '';
                                                         }}
                                                         sx={{
                                                             '& .MuiOutlinedInput-notchedOutline': {
@@ -778,14 +741,11 @@ const AddForm3 = ({ setData, data, handleChange, handleChangeData, onSubmit, onB
                                                             },
                                                         }}
                                                     >
-                                                        <MenuItem value="">
-                                                            <em>None</em>
-                                                        </MenuItem>
                                                         {membercategories
                                                             ?.filter((item) => item.id === data.member.membership_category)
                                                             .map((item) => (
                                                                 <MenuItem value={item.id} key={item.id}>
-                                                                    {item.name}
+                                                                    {item.name} - {currentFamilyMember.relation}
                                                                 </MenuItem>
                                                             ))}
                                                     </Select>

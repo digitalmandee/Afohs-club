@@ -15,7 +15,7 @@ import { objectToFormData } from '@/helpers/objectToFormData';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
+const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, userNo, membercategories }) => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
@@ -32,7 +32,6 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
             coa_account: '',
             title: '',
             state: '',
-            application_number: '',
             name_comments: '',
             guardian_name: '',
             guardian_membership: '',
@@ -62,12 +61,11 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
         },
         member: {
             member_type_id: '',
+            membership_no: membershipNo,
             membership_category: '',
             membership_date: new Date().toISOString().split('T')[0],
             card_issue_date: new Date().toISOString().split('T')[0],
             card_expiry_date: '',
-            from_date: new Date().toISOString().split('T')[0],
-            to_date: '',
             card_status: 'active',
         },
         family_members: [],
@@ -109,7 +107,7 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
                     [field]: value,
                 },
             }));
-            if (field === 'member_type_id') {
+            if (field === 'member_type_id' || field === 'membership_category') {
                 let family_members = formsData1.family_members.map((member) => ({
                     ...member,
                     [field]: value,
@@ -167,7 +165,7 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
     }, [formsData1.member.card_issue_date, formsData1.member.card_expiry_date, formsData1.family_members]);
 
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
-        user_id: '',
+        application_no: '',
         full_name: '',
         relation: '',
         cnic: '',
@@ -182,37 +180,30 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
     });
 
     const handleFinalSubmit = async () => {
-        const formData2 = objectToFormData(formsData1);
+        setLoading(true);
+        try {
+            const formData2 = objectToFormData(formsData1);
+            const response = await axios.post(route('membership.store'), formData2);
+            const invoiceNo = response.data.invoice_no;
 
-        await axios
-            .post(route('membership.store'), formData2)
-            .then((response) => {
-                const invoiceNo = response.data.invoice_no;
-
-                enqueueSnackbar('Membership created successfully.', { variant: 'success' });
-
-                // Redirect with query param
-                router.visit(route('membership.allpayment') + `?invoice_no=${invoiceNo}`);
-            })
-            .catch((error) => {
-                if (error.response && error.response.status === 422 && error.response.data.errors) {
-                    const errors = error.response.data.errors;
-
-                    // Loop through each field and show individual errors
-                    Object.keys(errors).forEach((field) => {
-                        const label = field.replace(/\./g, ' → ');
-                        errors[field].forEach((message) => {
-                            enqueueSnackbar(`${label}: ${message}`, { variant: 'error' });
-                        });
+            enqueueSnackbar('Membership created successfully.', { variant: 'success' });
+            router.visit(route('membership.allpayment') + `?invoice_no=${invoiceNo}`);
+        } catch (error) {
+            if (error.response && error.response.status === 422 && error.response.data.errors) {
+                const errors = error.response.data.errors;
+                Object.keys(errors).forEach((field) => {
+                    const label = field.replace(/\./g, ' → ');
+                    errors[field].forEach((message) => {
+                        enqueueSnackbar(`${label}: ${message}`, { variant: 'error' });
                     });
-                } else {
-                    console.error(error);
-                    enqueueSnackbar('Something went wrong.', { variant: 'error' });
-                }
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+                });
+            } else {
+                console.error(error);
+                enqueueSnackbar('Failed: ' + (error.response?.data?.error || error.message), { variant: 'error' });
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -228,9 +219,9 @@ const MembershipDashboard = ({ memberTypesData, userNo, membercategories }) => {
             >
                 {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                 <div className="">
-                    {step === 1 && <AddForm1 setData={setFormsData1} data={formsData1} handleChange={handleChange} userNo={userNo} onNext={() => setStep(2)} />}
+                    {step === 1 && <AddForm1 setData={setFormsData1} data={formsData1} handleChange={handleChange} applicationNo={applicationNo} onNext={() => setStep(2)} />}
                     {step === 2 && <AddForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
-                    {step === 3 && <AddForm3 setData={setFormsData1} data={formsData1} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} userNo={userNo} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
+                    {step === 3 && <AddForm3 setData={setFormsData1} data={formsData1} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} membershipNo={membershipNo} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} applicationNo={applicationNo} />}
                 </div>
             </div>
         </>

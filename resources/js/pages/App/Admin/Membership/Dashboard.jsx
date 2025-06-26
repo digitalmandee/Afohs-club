@@ -111,7 +111,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                 height: 40,
                                 width: 170,
                             }}
-                            onClick={() => router.visit('/admin/add/personal/information')}
+                            onClick={() => router.visit(route('membership.add'))}
                         >
                             Add Member
                         </Button>
@@ -211,14 +211,8 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                 <TableBody>
                                     {members.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell
-                                                sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    setSelectMember(user);
-                                                    setOpenProfileModal(true);
-                                                }}
-                                            >
-                                                {user.user_id || 'N/A'}
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
+                                                {user.member?.member_category?.name} {user.member?.membership_no || 'N/A'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
@@ -314,7 +308,12 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <IconButton onClick={(e) => handleOpenModal(user, e)}>
+                                                <IconButton
+                                                    onClick={() => {
+                                                        setSelectMember(user);
+                                                        setOpenProfileModal(true);
+                                                    }}
+                                                >
                                                     <MoreVert />
                                                 </IconButton>
                                             </TableCell>

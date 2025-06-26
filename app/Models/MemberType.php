@@ -8,18 +8,5 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MemberType extends Model
 {
-    protected $fillable = [
-        'name',
-        'duration',
-        'fee',
-        'maintenance_fee',
-        'discount_type',
-        'discount_value',
-        'discount_authorized',
-        'benefit',
-    ];
-
-    protected $casts = [
-        'benefit' => 'array',
-    ];
+    protected $fillable = ['name'];
 }

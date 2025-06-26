@@ -225,14 +225,8 @@ const AllMembers = ({ members = [] }) => {
                                 <TableBody>
                                     {members.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell
-                                                sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    setSelectMember(user);
-                                                    setOpenProfileModal(true);
-                                                }}
-                                            >
-                                                {user.user_id || 'N/A'}
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
+                                                {user.member?.member_category?.name} {user.member?.membership_no || 'N/A'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
@@ -328,7 +322,12 @@ const AllMembers = ({ members = [] }) => {
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <IconButton onClick={(e) => handleOpenModal(user, e)}>
+                                                <IconButton
+                                                    onClick={() => {
+                                                        setSelectMember(user);
+                                                        setOpenProfileModal(true);
+                                                    }}
+                                                >
                                                     <MoreVert />
                                                 </IconButton>
                                             </TableCell>

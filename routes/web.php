@@ -15,6 +15,7 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\RoomTypeController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -79,13 +80,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
 
     // Admin Room Booking Routes
-    Route::get('/rooms/dashboard', [RoomController::class, 'index'])->name('rooms.manage');
-    Route::get('/rooms/manage', [RoomController::class, 'allRooms'])->name('rooms.all');
-    Route::get('/booking/add/room', [RoomController::class, 'create'])->name('rooms.add');
-    Route::post('/booking/room/store', [RoomController::class, 'store'])->name('rooms.store');
-    Route::get('/rooms/edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit');
-    Route::put('/rooms/{id}', [RoomController::class, 'update'])->name('rooms.update');
-    Route::delete('/rooms/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+    Route::group(['prefix' => 'booking-management'], function () {
+        Route::group(['prefix' => 'rooms'], function () {
+            Route::get('/dashboard', [RoomController::class, 'index'])->name('rooms.manage');
+            Route::get('/', [RoomController::class, 'allRooms'])->name('rooms.all');
+            Route::get('add', [RoomController::class, 'create'])->name('rooms.add');
+            Route::post('store', [RoomController::class, 'store'])->name('rooms.store');
+            Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit');
+            Route::put('{id}', [RoomController::class, 'update'])->name('rooms.update');
+            Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+            // Route::get('/types', [RoomController::class, 'mamageTypes'])->name('rooms.types');
+        });
+        Route::resource('room-types', RoomTypeController::class)->except(['create', 'edit', 'show']);
+    });
 
     // Route::get('/events/dashboard', function () {
     //         return Inertia::render('App/Admin/Booking/EventManage');
@@ -292,7 +299,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
     Route::post('/members/member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
     Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
-    Route::get('/members/member-types/edit/{member_type}', [MemberTypeController::class, 'edit'])->name('member-types.edit');
     Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
 
     // Member Categories
