@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Button, Form, Badge, Card, Col, Modal } from 'react-bootstrap'; // Added Modal import for popup
 import { Search, FilterAlt } from '@mui/icons-material';
-import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem, Popper } from '@mui/material';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -11,6 +11,11 @@ import { DateObject } from 'react-multi-date-picker';
 import AvailableRooms from './Rooms';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { DateRange, DateRangePicker } from 'react-date-range';
+
+import 'react-date-range/dist/styles.css'; // main css file
+import 'react-date-range/dist/theme/default.css'; // theme css file
+import { addDays, format } from 'date-fns';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -340,25 +345,55 @@ const numberToWords = (num) => {
     return word.trim();
 };
 
-const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => {
+const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomTypes }) => {
     const [bookingType, setBookingType] = useState('room');
+    const [roomType, setRoomType] = useState('');
     const [values, setValues] = useState([new DateObject(), new DateObject().add(1, 'days')]);
     const [filterApplied, setFilterApplied] = useState(false);
     const [initialAdults] = useState(adults);
+    const [open, setOpen] = useState(false);
+    const anchorRef = useRef(null);
+    const popperRef = useRef(null);
 
-    const handleRangeSelect = (newValues) => {
-        setValues(newValues);
+    const [range, setRange] = useState([
+        {
+            startDate: undefined,
+            endDate: undefined,
+            key: 'selection',
+        },
+    ]);
+
+    const handleClick = () => setOpen((prev) => !prev);
+
+    const handleClickAway = (event) => {
+        if (popperRef.current && !popperRef.current.contains(event.target) && anchorRef.current && !anchorRef.current.contains(event.target)) {
+            setOpen(false);
+        }
     };
+
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickAway);
+        return () => document.removeEventListener('mousedown', handleClickAway);
+    }, []);
 
     const handleSearch = () => {
         const checkin = values[0]?.format?.('YYYY-MM-DD');
         const checkout = values[1]?.format?.('YYYY-MM-DD');
-        onSearch({ bookingType, checkin, checkout, persons: adults });
+
+        const payload = {
+            bookingType,
+            checkin,
+            checkout,
+            persons: adults,
+        };
+
+        onSearch(payload); // roomType removed
         setFilterApplied(true);
     };
 
     const handleClear = () => {
         setBookingType('room');
+        setRoomType('');
         setValues([new DateObject(), new DateObject().add(1, 'days')]);
         setAdults(initialAdults);
         setFilterApplied(false);
@@ -366,17 +401,23 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
         onSearch({ bookingType: 'room', checkin: '', checkout: '', persons: initialAdults });
     };
 
+    const startDate = range[0]?.startDate;
+    const endDate = range[0]?.endDate;
+
+    const displayText = startDate && endDate ? `${format(startDate, 'dd MMM yyyy')} — ${format(endDate, 'dd MMM yyyy')}` : 'Check-in date — Check-out date';
+
     return (
         <div style={{ padding: '10px', borderRadius: '4px' }}>
             <div
                 style={{
                     display: 'grid',
                     gridTemplateColumns: '200px 1fr 1fr 120px 60px',
-                    gap: '10px',
+                    gap: '6px',
                     alignItems: 'center',
                     marginBottom: '10px',
                 }}
             >
+                {/* Booking Type */}
                 <FormControl>
                     <InputLabel id="booking-label">Booking Type</InputLabel>
                     <Select labelId="booking-label" id="booking-select" value={bookingType} label="Booking Type" onChange={(e) => setBookingType(e.target.value)}>
@@ -385,7 +426,8 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                     </Select>
                 </FormControl>
 
-                <div
+                {/* Calendar Range */}
+                <Box
                     style={{
                         flex: '1',
                         backgroundColor: '#fff',
@@ -398,10 +440,22 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                     }}
                 >
                     <span>📅</span>
-                    <DatePicker placeholder="CheckIn to CheckOut" value={values} dateSeparator=" to " onChange={handleRangeSelect} range rangeHover style={{ width: '100%', height: '40px', fontSize: '16px' }} />
-                </div>
+                    <div className="date-range" style={{ width: '100%' }}>
+                        <Box>
+                            <Button ref={anchorRef} onClick={handleClick} variant="outlined">
+                                {displayText}
+                            </Button>
 
-                {/* 👤 Direct Input for Person */}
+                            <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
+                                <Box ref={popperRef} sx={{ bgcolor: 'background.paper', p: 2, zIndex: 1300 }}>
+                                    <DateRange editableDateInputs={true} onChange={(item) => setRange([item.selection])} moveRangeOnFirstSelection={false} ranges={range} months={2} showSelectionPreview={false} showDateDisplay={false} direction="horizontal" />
+                                </Box>
+                            </Popper>
+                        </Box>
+                    </div>
+                </Box>
+
+                {/* Persons Input */}
                 <div
                     style={{
                         flex: '1',
@@ -430,6 +484,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                     />
                 </div>
 
+                {/* Search Button */}
                 <Button
                     style={{
                         backgroundColor: '#063455',
@@ -443,6 +498,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
                     Search
                 </Button>
 
+                {/* Clear Filter */}
                 <Button variant="danger" style={{ padding: '10px', borderRadius: '4px' }} onClick={handleClear}>
                     <HighlightOffIcon />
                 </Button>
@@ -451,7 +507,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter }) => 
     );
 };
 
-const BookingDashboard = ({ data }) => {
+const BookingDashboard = ({ data, roomTypes }) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
@@ -687,7 +743,7 @@ const BookingDashboard = ({ data }) => {
 
                         <Row className="mb-4 align-items-center">
                             <Col>
-                                <CustomDateRangePicker adults={adults} setAdults={setAdults} onSearch={handleSearch} clearFilter={setSearchResultsFilter} />
+                                <CustomDateRangePicker adults={adults} setAdults={setAdults} onSearch={handleSearch} clearFilter={setSearchResultsFilter} roomTypes={roomTypes} />
                             </Col>
                         </Row>
 

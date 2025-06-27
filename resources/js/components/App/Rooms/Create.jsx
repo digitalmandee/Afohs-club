@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Box, Typography, TextField, Button, MenuItem, FormControl, InputLabel, Select } from '@mui/material';
+import { Box, Typography, TextField, Button, MenuItem, FormControl, InputLabel, Select, Grid } from '@mui/material';
 import { router, usePage } from '@inertiajs/react';
 import { enqueueSnackbar } from 'notistack';
 
@@ -8,12 +8,14 @@ const CreateRoom = () => {
     const [photoUrl, setPhotoUrl] = useState(null);
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef(null);
+
+    const [categoryCharges, setCategoryCharges] = useState(props.categories);
+
     // Room Form state
     const [roomForm, setRoomForm] = useState({
         name: '',
         number_of_beds: '',
         max_capacity: '',
-        price_per_night: '',
         number_of_bathrooms: '',
         room_type_id: '',
         photo: null,
@@ -23,7 +25,6 @@ const CreateRoom = () => {
         name: '',
         number_of_beds: '',
         max_capacity: '',
-        price_per_night: '',
         number_of_bathrooms: '',
         room_type_id: '',
     });
@@ -63,10 +64,6 @@ const CreateRoom = () => {
             newErrors.max_capacity = 'Max capacity is required';
             hasErrors = true;
         }
-        if (!roomForm.price_per_night.trim()) {
-            newErrors.price_per_night = 'Price per night is required';
-            hasErrors = true;
-        }
         if (!roomForm.number_of_bathrooms.trim()) {
             newErrors.number_of_bathrooms = 'Number of bathrooms is required';
             hasErrors = true;
@@ -87,9 +84,13 @@ const CreateRoom = () => {
         data.append('name', roomForm.name);
         data.append('number_of_beds', parseInt(roomForm.number_of_beds) || 0);
         data.append('max_capacity', parseInt(roomForm.max_capacity) || 0);
-        data.append('price_per_night', parseFloat(roomForm.price_per_night) || 0);
         data.append('number_of_bathrooms', parseInt(roomForm.number_of_bathrooms) || 0);
         data.append('room_type_id', roomForm.room_type_id);
+        categoryCharges.forEach((charge, i) => {
+            data.append(`category_charges[${i}][id]`, charge.id);
+            data.append(`category_charges[${i}][amount]`, charge.amount || 0);
+        });
+
         if (roomForm.photo) {
             data.append('photo', roomForm.photo);
         }
@@ -103,7 +104,6 @@ const CreateRoom = () => {
                     name: '',
                     number_of_beds: '',
                     max_capacity: '',
-                    price_per_night: '',
                     number_of_bathrooms: '',
                     photo: null,
                 });
@@ -115,7 +115,6 @@ const CreateRoom = () => {
                     name: '',
                     number_of_beds: '',
                     max_capacity: '',
-                    price_per_night: '',
                     number_of_bathrooms: '',
                 });
                 enqueueSnackbar('Room added successfully', { variant: 'success' });
@@ -239,94 +238,113 @@ const CreateRoom = () => {
                             fontSize: '14px',
                         }}
                     >
-                        Room Name
+                        Room No.
                     </Typography>
-                    <TextField fullWidth name="name" value={roomForm.name} onChange={handleRoomInputChange} placeholder="e.g : Standard" variant="outlined" size="small" error={!!roomErrors.name} helperText={roomErrors.name} />
+                    <TextField fullWidth name="name" value={roomForm.name} onChange={handleRoomInputChange} placeholder="Enter Room Number" variant="outlined" size="small" error={!!roomErrors.name} helperText={roomErrors.name} />
                 </Box>
-                <Box sx={{ mb: 2 }}>
-                    <Typography
-                        sx={{
-                            mb: 1,
-                            color: '#121212',
-                            fontWeight: 400,
-                            fontSize: '14px',
-                        }}
-                    >
-                        Room Type
-                    </Typography>
-                    <FormControl fullWidth size="small" error={!!roomErrors.room_type_id}>
-                        <Select name="room_type_id" value={roomForm.room_type_id} onChange={handleRoomInputChange} displayEmpty>
-                            <MenuItem value="" disabled>
-                                {props.roomTypes.length > 0 ? 'Select Room Type' : 'None'}
-                            </MenuItem>
-                            {props.roomTypes.map((type) => (
-                                <MenuItem key={type.id} value={type.id}>
-                                    {type.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        {roomErrors.room_type_id && (
-                            <Typography variant="caption" color="error">
-                                {roomErrors.room_type_id}
+
+                <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                        <Box sx={{ mb: 2 }}>
+                            <Typography
+                                sx={{
+                                    mb: 1,
+                                    color: '#121212',
+                                    fontWeight: 400,
+                                    fontSize: '14px',
+                                }}
+                            >
+                                Room Type
                             </Typography>
-                        )}
-                    </FormControl>
-                </Box>
+                            <FormControl fullWidth size="small" error={!!roomErrors.room_type_id}>
+                                <Select name="room_type_id" value={roomForm.room_type_id} onChange={handleRoomInputChange} displayEmpty>
+                                    <MenuItem value="" disabled>
+                                        {props.roomTypes.length > 0 ? 'Select Room Type' : 'None'}
+                                    </MenuItem>
+                                    {props.roomTypes.map((type) => (
+                                        <MenuItem key={type.id} value={type.id}>
+                                            {type.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {roomErrors.room_type_id && (
+                                    <Typography variant="caption" color="error">
+                                        {roomErrors.room_type_id}
+                                    </Typography>
+                                )}
+                            </FormControl>
+                        </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Box sx={{ mb: 2 }}>
+                            <Typography
+                                sx={{
+                                    mb: 1,
+                                    color: '#121212',
+                                    fontWeight: 400,
+                                    fontSize: '14px',
+                                }}
+                            >
+                                No. of Beds
+                            </Typography>
+                            <TextField fullWidth name="number_of_beds" type="number" inputProps={{ min: 0 }} value={roomForm.number_of_beds} onChange={handleRoomInputChange} placeholder="e.g : 3" variant="outlined" size="small" error={!!roomErrors.number_of_beds} helperText={roomErrors.number_of_beds} />
+                        </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Box sx={{ mb: 2 }}>
+                            <Typography
+                                sx={{
+                                    mb: 1,
+                                    color: '#121212',
+                                    fontWeight: 400,
+                                    fontSize: '14px',
+                                }}
+                            >
+                                Max Capacity
+                            </Typography>
+                            <TextField fullWidth name="max_capacity" type="number" inputProps={{ min: 0 }} value={roomForm.max_capacity} onChange={handleRoomInputChange} placeholder="e.g : 2 Adults" variant="outlined" size="small" error={!!roomErrors.max_capacity} helperText={roomErrors.max_capacity} />
+                        </Box>
+                    </Grid>
 
-                <Box sx={{ mb: 2 }}>
-                    <Typography
-                        sx={{
-                            mb: 1,
-                            color: '#121212',
-                            fontWeight: 400,
-                            fontSize: '14px',
-                        }}
-                    >
-                        No. of Beds
-                    </Typography>
-                    <TextField fullWidth name="number_of_beds" type="number" value={roomForm.number_of_beds} onChange={handleRoomInputChange} placeholder="e.g : 3" variant="outlined" size="small" error={!!roomErrors.number_of_beds} helperText={roomErrors.number_of_beds} />
-                </Box>
+                    <Grid item xs={6}>
+                        <Box sx={{ mb: 2 }}>
+                            <Typography
+                                sx={{
+                                    mb: 1,
+                                    color: '#121212',
+                                    fontWeight: 400,
+                                    fontSize: '14px',
+                                }}
+                            >
+                                No. of Bathroom
+                            </Typography>
+                            <TextField fullWidth name="number_of_bathrooms" type="number" inputProps={{ min: 0 }} value={roomForm.number_of_bathrooms} onChange={handleRoomInputChange} placeholder="e.g : 1" variant="outlined" size="small" error={!!roomErrors.number_of_bathrooms} helperText={roomErrors.number_of_bathrooms} />
+                        </Box>
+                    </Grid>
+                </Grid>
 
-                <Box sx={{ mb: 2 }}>
-                    <Typography
-                        sx={{
-                            mb: 1,
-                            color: '#121212',
-                            fontWeight: 400,
-                            fontSize: '14px',
-                        }}
-                    >
-                        Max Capacity
-                    </Typography>
-                    <TextField fullWidth name="max_capacity" type="number" value={roomForm.max_capacity} onChange={handleRoomInputChange} placeholder="e.g : 2 Adults" variant="outlined" size="small" error={!!roomErrors.max_capacity} helperText={roomErrors.max_capacity} />
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
-                    <Typography
-                        sx={{
-                            mb: 1,
-                            color: '#121212',
-                            fontWeight: 400,
-                            fontSize: '14px',
-                        }}
-                    >
-                        Price Per Night
-                    </Typography>
-                    <TextField fullWidth name="price_per_night" type="number" value={roomForm.price_per_night} onChange={handleRoomInputChange} placeholder="e.g : Rs. 100" variant="outlined" size="small" error={!!roomErrors.price_per_night} helperText={roomErrors.price_per_night} />
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
-                    <Typography
-                        sx={{
-                            mb: 1,
-                            color: '#121212',
-                            fontWeight: 400,
-                            fontSize: '14px',
-                        }}
-                    >
-                        No. of Bathroom
-                    </Typography>
-                    <TextField fullWidth name="number_of_bathrooms" type="number" value={roomForm.number_of_bathrooms} onChange={handleRoomInputChange} placeholder="e.g : 1" variant="outlined" size="small" error={!!roomErrors.number_of_bathrooms} helperText={roomErrors.number_of_bathrooms} />
+                <Box>
+                    <Typography sx={{ mb: 3 }}>Room Category Charges</Typography>
+                    <Grid container spacing={2}>
+                        {categoryCharges?.map((cat, index) => (
+                            <Grid item xs={6} key={cat.id}>
+                                <TextField
+                                    label={cat.name}
+                                    inputProps={{ min: 0 }}
+                                    type="number"
+                                    variant="outlined"
+                                    size="small"
+                                    value={cat.amount}
+                                    onChange={(e) => {
+                                        const updated = [...categoryCharges];
+                                        updated[index].amount = e.target.value;
+                                        setCategoryCharges(updated);
+                                    }}
+                                    InputProps={{ startAdornment: <span>Rs&nbsp;</span> }}
+                                />
+                            </Grid>
+                        ))}
+                    </Grid>
                 </Box>
 
                 {/* Action Buttons */}

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\RoomCategory;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\Tenant\FloorDatabaseSeeder;
@@ -18,6 +19,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            RoomCategorySeeder::class,
+            RoomTypeSeeder::class,
+            RoomSeeder::class,
             MemberTypeSeeder::class,
             PermissionsDatabaseSeeder::class,
             RestuarantDatabaseSeeder::class,
@@ -25,7 +29,6 @@ class DatabaseSeeder extends Seeder
             KitchenDatabaseSeeder::class,
             ProductDatabaseSeeder::class,
             MemberCategorySeeder::class,
-            RoomSeeder::class,
             BookingEventSeeder::class,
             BookingSeeder::class,
             // OrderDatabaseSeeder::class

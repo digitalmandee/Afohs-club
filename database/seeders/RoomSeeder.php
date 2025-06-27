@@ -9,37 +9,74 @@ class RoomSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('rooms')->insert([
+        // Define active categories
+        $activeCategoryIds = [1, 2, 3, 4, 6, 7];
+
+        // Define room data
+        $rooms = [
             [
-                'name' => 'Standard Room',
+                'name' => 'Room1',
+                'room_type_id' => 1,
                 'number_of_beds' => 2,
                 'max_capacity' => 4,
-                'price_per_night' => 120.00,
                 'number_of_bathrooms' => 1,
                 'photo_path' => 'images/standard.jpg',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'categories' => [
+                    ['id' => 1, 'amount' => 100],
+                    ['id' => 2, 'amount' => 200],
+                    ['id' => 6, 'amount' => 300],
+                ],
             ],
             [
-                'name' => 'Deluxe Suite',
+                'name' => 'Room2',
+                'room_type_id' => 2,
                 'number_of_beds' => 3,
                 'max_capacity' => 6,
-                'price_per_night' => 200.00,
                 'number_of_bathrooms' => 2,
                 'photo_path' => 'images/deluxe.jpg',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'categories' => [
+                    ['id' => 3, 'amount' => 400],
+                    ['id' => 4, 'amount' => 500],
+                ],
             ],
             [
-                'name' => 'Economy Room',
+                'name' => 'Room3',
+                'room_type_id' => 1,
                 'number_of_beds' => 1,
                 'max_capacity' => 2,
-                'price_per_night' => 80.00,
                 'number_of_bathrooms' => 1,
                 'photo_path' => 'images/economy.jpg',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'categories' => [
+                    ['id' => 7, 'amount' => 150],
+                ],
             ],
-        ]);
+        ];
+
+        foreach ($rooms as $room) {
+            // Extract category data and remove it before insert
+            $categories = $room['categories'] ?? [];
+            unset($room['categories']);
+
+            // Add timestamps
+            $room['created_at'] = now();
+            $room['updated_at'] = now();
+
+            // Insert room and get ID
+            $roomId = DB::table('rooms')->insertGetId($room);
+
+            // Insert category charges for this room
+            foreach ($categories as $cat) {
+                if (in_array($cat['id'], $activeCategoryIds)) {
+                    DB::table('room_category_charges')->insert([
+                        'room_category_id' => $cat['id'],
+                        'room_id' => $roomId,
+                        'amount' => $cat['amount'],
+                        'status' => 'active',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        }
     }
 }

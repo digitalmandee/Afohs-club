@@ -300,7 +300,6 @@ const RoomBooking = ({ booking, invoice, next_booking_id }) => {
                 <Box
                     sx={{
                         margin: '0 auto',
-                        maxWidth: '600px',
                         bgcolor: '#FFFFFF',
                         borderRadius: '4px',
                         marginTop: 5,
@@ -380,23 +379,174 @@ const RoomBooking = ({ booking, invoice, next_booking_id }) => {
                                 </h6>
 
                                 <Form>
-                                    <Form.Group className="mb-4">
-                                        <div
-                                            className="form-control"
-                                            style={{
-                                                backgroundColor: '#e9ecef',
-                                                color: '#7F7F7F',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                padding: '0.375rem 0.75rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <span style={{ color: '#7F7F7F' }}>Booking ID : </span>
-                                            <span style={{ color: '#063455', marginLeft: '4px', fontWeight: 700 }}>#{formData.bookingId}</span>
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={6}>
+                                            <Form.Group>
+                                                <Form.Label>Booking No.</Form.Label>
+                                                <Form.Control type="text" name="bookingNo" value={formData.bookingId} readOnly />
+                                            </Form.Group>
+                                        </Col>
+                                        <Col md={6}>
+                                            <Form.Group>
+                                                <Form.Label>Booking Date</Form.Label>
+                                                <Form.Control type="date" name="bookingDate" value={formData.bookingDate} onChange={handleInputChange} />
+                                            </Form.Group>
+                                        </Col>
+                                    </Row>
+
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Booking Type</Form.Label>
+                                        <div className="d-flex gap-3 flex-wrap">
+                                            {['Member', 'Corporate Member', 'Applied Member', 'Affiliated Member', 'VIP Guest'].map((type) => (
+                                                <Form.Check inline key={type} label={type} type="radio" name="bookingType" value={type} checked={formData.bookingType === type} onChange={handleInputChange} />
+                                            ))}
                                         </div>
                                     </Form.Group>
+
+                                    {/* Billing Info */}
+
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={6}>
+                                            <Form.Group>
+                                                <Form.Label>Member / Guest Name</Form.Label>
+                                                <Form.Control type="text" name="guestName" value={formData.guestName} onChange={handleInputChange} />
+                                            </Form.Group>
+                                        </Col>
+                                    </Row>
+
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={4}>
+                                            <Form.Control placeholder="Member #" name="memberId" value={formData.memberId} onChange={handleInputChange} />
+                                        </Col>
+                                        <Col md={4}>
+                                            <Form.Control placeholder="Corporate Mem #" name="corporateMemId" value={formData.corporateMemId} onChange={handleInputChange} />
+                                        </Col>
+                                        <Col md={4}>
+                                            <Form.Control placeholder="Guest No." name="guestNo" value={formData.guestNo} onChange={handleInputChange} />
+                                        </Col>
+                                    </Row>
+
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Address</Form.Label>
+                                        <Form.Control type="text" name="address" value={formData.address} onChange={handleInputChange} />
+                                    </Form.Group>
+
+                                    {/* Room Booking Info */}
+
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={6}>
+                                            <Form.Label>Room</Form.Label>
+                                            <Form.Select name="room" value={formData.room} onChange={handleInputChange}>
+                                                <option>Select a Room</option>
+                                                {/* map room options here */}
+                                            </Form.Select>
+                                        </Col>
+                                        <Col md={6}>
+                                            <Form.Label>Booking Category</Form.Label>
+                                            <Form.Select name="category" value={formData.category} onChange={handleInputChange}>
+                                                <option>Armed Forces Member</option>
+                                                {/* more categories */}
+                                            </Form.Select>
+                                        </Col>
+                                    </Row>
+
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={4}>
+                                            <Form.Label>Per Day Room Charges</Form.Label>
+                                            <Form.Control type="text" name="perDayCharges" value={formData.perDayCharges} />
+                                        </Col>
+                                        <Col md={4}>
+                                            <Form.Label>No. of Nights</Form.Label>
+                                            <Form.Control type="number" name="nights" value={formData.nights} />
+                                        </Col>
+                                        <Col md={4}>
+                                            <Form.Label>Total Room Charges</Form.Label>
+                                            <Form.Control type="text" value={formData.totalRoomCharges} readOnly />
+                                        </Col>
+                                    </Row>
+
+                                    {/* Other Charges */}
+
+                                    <h5 className="mt-4">Other Charges</h5>
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={3}>
+                                            <Form.Select name="otherChargeType" onChange={handleInputChange}>
+                                                <option>Select a Charges Type</option>
+                                                {/* options */}
+                                            </Form.Select>
+                                        </Col>
+                                        <Col md={4}>
+                                            <Form.Control type="text" name="otherBillDetails" placeholder="Bill Details" onChange={handleInputChange} />
+                                        </Col>
+                                        <Col md={3}>
+                                            <Form.Control type="number" name="otherChargesAmount" placeholder="Charges Amount" onChange={handleInputChange} />
+                                        </Col>
+                                        <Col md={1} className="d-flex align-items-center">
+                                            <Form.Check label="Complementary" name="isComplementary" onChange={handleInputChange} />
+                                        </Col>
+                                    </Row>
+
+                                    <h5>Mini Bar</h5>
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={4}>
+                                            <Form.Select name="miniBarItem">
+                                                <option>Select Item</option>
+                                                {/* items */}
+                                            </Form.Select>
+                                        </Col>
+                                        <Col md={2}>
+                                            <Form.Control placeholder="Amount" />
+                                        </Col>
+                                        <Col md={2}>
+                                            <Form.Control placeholder="Qty" />
+                                        </Col>
+                                        <Col md={2}>
+                                            <Form.Control placeholder="Total" readOnly />
+                                        </Col>
+                                        <Col md={2}>
+                                            <Button>Add</Button>
+                                        </Col>
+                                    </Row>
+
+                                    {/* Occupied Guests */}
+
+                                    <h5 className="mt-4">Occupied Guest Information</h5>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Booked By</Form.Label>
+                                        <Form.Control name="bookedBy" onChange={handleInputChange} />
+                                    </Form.Group>
+
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={6}>
+                                            <Form.Control placeholder="Guest First Name" name="guestFirstName" onChange={handleInputChange} />
+                                        </Col>
+                                        <Col md={6}>
+                                            <Form.Control placeholder="Father/Husband Name" name="guestLastName" onChange={handleInputChange} />
+                                        </Col>
+                                    </Row>
+
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={6}>
+                                            <Form.Control placeholder="Company / Institution" name="institution" onChange={handleInputChange} />
+                                        </Col>
+                                        <Col md={6}>
+                                            <Form.Control placeholder="Address" name="guestAddress" onChange={handleInputChange} />
+                                        </Col>
+                                    </Row>
+
+                                    <Row className="mb-3 gx-3">
+                                        <Col md={4}>
+                                            <Form.Control placeholder="Country" name="country" />
+                                        </Col>
+                                        <Col md={4}>
+                                            <Form.Control placeholder="City" name="city" />
+                                        </Col>
+                                        <Col md={4}>
+                                            <Form.Control placeholder="Mobile" name="mobile" />
+                                        </Col>
+                                    </Row>
+
+                                    <Form.Control placeholder="Email" name="email" className="mb-3" />
 
                                     <Row className="mb-3 gx-3">
                                         <Col md={6} className="mb-3 mb-md-0">

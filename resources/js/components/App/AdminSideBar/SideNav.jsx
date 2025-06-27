@@ -180,6 +180,18 @@ export default function SideNav({ open, setOpen }) {
                             text: 'Room Types',
                             path: route('room-types.index'),
                         },
+                        {
+                            text: 'Room Categories',
+                            path: route('room-categories.index'),
+                        },
+                        {
+                            text: 'Room Charges Type',
+                            path: route('room-charges-type.index'),
+                        },
+                        {
+                            text: 'Room MiniBar',
+                            path: route('room-minibar.index'),
+                        },
                     ],
                 },
                 {

@@ -10,9 +10,18 @@ class Room extends Model
         'name',
         'number_of_beds',
         'max_capacity',
-        'price_per_night',
         'number_of_bathrooms',
         'photo_path',
         'room_type_id'
     ];
+
+    public function roomType()
+    {
+        return $this->belongsTo(RoomType::class);
+    }
+
+    public function categoryCharges()
+    {
+        return $this->hasMany(RoomCategoryCharge::class, 'room_id');
+    }
 }
