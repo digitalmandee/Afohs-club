@@ -166,6 +166,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
 
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
         application_no: '',
+        family_suffix: '',
         full_name: '',
         relation: '',
         cnic: '',

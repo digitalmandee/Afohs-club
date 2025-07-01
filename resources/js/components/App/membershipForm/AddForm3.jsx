@@ -25,8 +25,13 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
     const AddFamilyMember = () => {
         const maxApplicationNo = data.family_members.length ? Math.max(...data.family_members.map((f) => f.application_no)) : applicationNo;
 
+        const existingCount = data.family_members.length;
+        const suffix = String.fromCharCode(65 + existingCount); // 65 = 'A'
+
         setCurrentFamilyMember((prev) => ({
             ...prev,
+            family_suffix: suffix,
+            // full_membership_no: `${data.member.membership_no}-${suffix}`,
             application_no: Number(maxApplicationNo) + 1,
             member_type_id: data.member.member_type_id,
             membership_category: data.member.membership_category,
@@ -81,10 +86,13 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
             return;
         }
 
-        // All good: proceed
+        // Update family member list
         handleChangeData('family_members', [...data.family_members, currentFamilyMember]);
+
+        // Reset form
         setCurrentFamilyMember({
             application_no: '',
+            family_suffix: '',
             full_name: '',
             relation: '',
             cnic: '',
@@ -520,12 +528,22 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                         <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                     </Box>
 
-                                    <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-                                        <Box component="span" sx={{ mr: 1, fontWeight: 500 }}>
-                                            Application Number :
+                                    <Box sx={{ mb: 3, display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
+                                        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                                            <Box component="span" sx={{ mr: 1, fontWeight: 500 }}>
+                                                Application Number :
+                                            </Box>
+                                            <Box component="span" sx={{ color: '#666' }}>
+                                                #{currentFamilyMember.application_no} <br />
+                                            </Box>
                                         </Box>
-                                        <Box component="span" sx={{ color: '#666' }}>
-                                            #{currentFamilyMember.application_no}
+                                        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                                            <Box component="span" sx={{ mr: 1, fontWeight: 500 }}>
+                                                Membership Number :
+                                            </Box>
+                                            <Box component="span" sx={{ color: '#666' }}>
+                                                {data.member?.membership_no}-{currentFamilyMember.family_suffix}
+                                            </Box>
                                         </Box>
                                     </Box>
 

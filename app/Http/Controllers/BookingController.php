@@ -8,6 +8,7 @@ use App\Models\Room;
 use App\Models\BookingEvents;
 use App\Models\FinancialInvoice;
 use App\Models\RoomType;
+use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -142,10 +143,42 @@ class BookingController extends Controller
         if ($invoice_no) {
             $invoice = FinancialInvoice::where('invoice_no', $invoice_no)->with('customer:id,first_name,last_name,email', 'customer.member.memberType')->first();
         }
-        $next_booking_id = $this->getBookingId();
+        $bookingNo = $this->getBookingId();
 
-        return Inertia::render('App/Admin/Booking/RoomBooking', compact('booking', 'invoice', 'next_booking_id'));
+        return Inertia::render('App/Admin/Booking/RoomBooking', compact('booking', 'invoice', 'bookingNo'));
     }
+
+    public function searchUsers(Request $request)
+    {
+        $query = $request->input('query');
+
+        $members = User::role('user', 'web')
+            ->select('users.id', 'users.first_name', 'users.last_name', 'users.email', 'members.membership_no')
+            ->leftJoin('members', 'users.id', '=', 'members.user_id')
+            ->where(function ($q) use ($query) {
+                $q->where('users.first_name', 'like', "%{$query}%")
+                    ->orWhere('users.last_name', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ["%{$query}%"])
+                    ->orWhere('members.membership_no', 'like', "%{$query}%")
+                    ->orWhere('users.email', 'like', "%{$query}%");
+            })
+            ->limit(10)
+            ->get();
+
+        // Format for frontend
+        $results = $members->map(function ($user) {
+            $fullName = trim("{$user->first_name} {$user->last_name}");
+            return [
+                'id' => $user->id,
+                'label' => "{$fullName} ({$user->membership_no}) ({})",
+                'membership_no' => $user->membership_no,
+                'email' => $user->email,
+            ];
+        });
+
+        return response()->json(['success' => true, 'results' => $results], 200);
+    }
+
 
     public function store(Request $request)
     {

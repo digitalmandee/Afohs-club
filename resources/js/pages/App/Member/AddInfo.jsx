@@ -1,21 +1,7 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { Add, ArrowBack, Close, LocationOn } from '@mui/icons-material';
-import {
-    Box,
-    Button,
-    Chip,
-    FormControlLabel,
-    Grid,
-    IconButton,
-    MenuItem,
-    Paper,
-    Radio,
-    RadioGroup,
-    Select,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Box, Button, Chip, FormControlLabel, Grid, IconButton, MenuItem, Paper, Radio, RadioGroup, Select, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 
 const drawerWidthOpen = 240;

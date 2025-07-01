@@ -128,6 +128,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
     Route::post('/room/booking', [BookingController::class, 'store'])->name('rooms.booking.store');
 
+    // Search
+    Route::get('/admin/api/search-users', [BookingController::class, 'searchUsers'])->name('admin.api.search-users');
     // Booking Search
     Route::get('/booking/search', [BookingController::class, 'search'])->name('booking.search');
 
