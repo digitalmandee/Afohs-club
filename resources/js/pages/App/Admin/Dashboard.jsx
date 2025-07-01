@@ -164,7 +164,7 @@ const Dashboard = () => {
                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                                 <Box
                                                     sx={{
-                                                        bgcolor: '#202728',
+                                                        bgcolor: 'transparent',
                                                         width: 46,
                                                         height: 46,
                                                         borderRadius: '50%',
@@ -219,7 +219,7 @@ const Dashboard = () => {
                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                                 <Box
                                                     sx={{
-                                                        bgcolor: '#202728',
+                                                        bgcolor: 'transparent',
                                                         height: 46,
                                                         width: 46,
                                                         borderRadius: '50%',
@@ -268,7 +268,7 @@ const Dashboard = () => {
                                             {/* Icon Circle */}
                                             <Box
                                                 sx={{
-                                                    bgcolor: '#202728',
+                                                    bgcolor: 'transparent',
                                                     height: 46,
                                                     width: 46,
                                                     borderRadius: '50%',
@@ -313,7 +313,7 @@ const Dashboard = () => {
                                             {/* Icon Circle */}
                                             <Box
                                                 sx={{
-                                                    bgcolor: '#202728',
+                                                    bgcolor: 'transparent',
                                                     height: 46,
                                                     width: 46,
                                                     borderRadius: '50%',
