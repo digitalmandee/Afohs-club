@@ -646,7 +646,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                             >
                                                 <Box
                                                     sx={{
-                                                        bgcolor: '#202728',
+                                                        bgcolor: 'transparent',
                                                         p: 1.5,
                                                         borderRadius: '50%',
                                                         mr: 2,
@@ -659,8 +659,8 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                         src="/assets/invoice.png"
                                                         alt=""
                                                         style={{
-                                                            width: 20,
-                                                            height: 20,
+                                                            width: 30,
+                                                            height: 30,
                                                         }}
                                                     />
                                                 </Box>
@@ -774,7 +774,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                             >
                                                 <Box
                                                     sx={{
-                                                        bgcolor: '#202728',
+                                                        bgcolor: 'transparent',
                                                         p: 1.5,
                                                         borderRadius: '50%',
                                                         mr: 2,
@@ -787,8 +787,8 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                         src="/assets/box.png"
                                                         alt=""
                                                         style={{
-                                                            height: 20,
-                                                            width: 20,
+                                                            height: 30,
+                                                            width: 30,
                                                         }}
                                                     />
                                                 </Box>
@@ -844,7 +844,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                             >
                                                 <Box
                                                     sx={{
-                                                        bgcolor: '#202728',
+                                                        bgcolor: 'transparent',
                                                         p: 1.5,
                                                         borderRadius: '50%',
                                                         mr: 2,
@@ -857,8 +857,8 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                         src="/assets/receipt-list.png"
                                                         alt=""
                                                         style={{
-                                                            height: 20,
-                                                            width: 20,
+                                                            height: 30,
+                                                            width: 30,
                                                         }}
                                                     />
                                                 </Box>
