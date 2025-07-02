@@ -4,13 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
-use App\Models\MemberCategory;
 use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
