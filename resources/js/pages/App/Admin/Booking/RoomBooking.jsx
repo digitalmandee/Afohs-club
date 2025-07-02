@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Button, Form, InputGroup, Modal, Card, Row, Col } from 'react-bootstrap';
-import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, IconButton } from '@mui/material';
+import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import { ArrowBack, CheckCircle, Add, Remove, Print, CreditCard, EventNote, AccountBalance, KeyboardArrowRight, Check } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -8,13 +8,15 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import { differenceInCalendarDays } from 'date-fns';
+import CloseIcon from '@mui/icons-material/Close';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const steps = ['Booking Details', 'Room Selection', 'Charges', 'Upload'];
 
-const RoomBooking = ({ booking, invoice, bookingNo }) => {
+const RoomBooking = ({ room, bookingNo, roomCategories }) => {
     // Access query parameters
     const { props } = usePage();
     const urlParams = new URLSearchParams(window.location.search);
@@ -31,7 +33,7 @@ const RoomBooking = ({ booking, invoice, bookingNo }) => {
         checkOutDate: urlParamsObject?.checkout || '',
         bookingType: 'Member',
         guestName: '',
-        room: '',
+        room: room || '',
         bookingCategory: '',
         perDayCharge: '',
         nights: '',
@@ -47,6 +49,7 @@ const RoomBooking = ({ booking, invoice, bookingNo }) => {
         email: '',
         cnic: '',
         accompaniedGuest: '',
+        discountType: 'fixed',
         discount: '',
         documents: [],
         previewFiles: [],
@@ -55,6 +58,7 @@ const RoomBooking = ({ booking, invoice, bookingNo }) => {
 
     const handleNext = () => setActiveStep((prev) => prev + 1);
     const handleBack = () => setActiveStep((prev) => prev - 1);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -64,9 +68,21 @@ const RoomBooking = ({ booking, invoice, bookingNo }) => {
         const files = Array.from(e.target.files);
         setFormData((prev) => ({
             ...prev,
-            documents: files,
-            previewFiles: files,
+            documents: [...(prev.documents || []), ...files],
+            previewFiles: [...(prev.previewFiles || []), ...files],
         }));
+    };
+
+    const handleFileRemove = (index) => {
+        setFormData((prev) => {
+            const updatedFiles = [...(prev.previewFiles || [])];
+            updatedFiles.splice(index, 1);
+            return {
+                ...prev,
+                previewFiles: updatedFiles,
+                documents: updatedFiles,
+            };
+        });
     };
 
     const renderStepContent = (step) => {
@@ -78,7 +94,7 @@ const RoomBooking = ({ booking, invoice, bookingNo }) => {
             case 2:
                 return <ChargesInfo formData={formData} handleChange={handleChange} />;
             case 3:
-                return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} />;
+                return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleFileRemove={handleFileRemove} />;
             default:
                 return <Typography>Step not implemented yet</Typography>;
         }
@@ -158,6 +174,7 @@ const BookingDetails = ({ formData, handleChange }) => (
             <Grid item xs={12} sm={6}>
                 <TextField label="Booking No." name="bookingNo" value={formData.bookingNo} inputProps={{ readOnly: true }} fullWidth />
             </Grid>
+            {JSON.stringify()}
             <Grid item xs={12} sm={6}>
                 <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
             </Grid>
@@ -177,10 +194,21 @@ const BookingDetails = ({ formData, handleChange }) => (
                     <FormControlLabel value="VIP Guest" control={<Radio />} label="VIP Guest" />
                 </RadioGroup>
             </Grid>
-            <Grid item xs={12}>
-                <AsyncSearchTextField label="Search by Name, Membership No, or Email" name="guest" value={formData.guest} onChange={handleChange} endpoint="/admin/api/search-users" placeholder="Search members..." />
 
-                {/* <TextField label="Member / Guest Name" name="guestName" value={formData.guestName} onChange={handleChange} fullWidth /> */}
+            <Grid item xs={12}>
+                <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="/admin/api/search-users" placeholder="Search members..." />
+
+                {formData.guest && (
+                    <Box sx={{ mt: 1, p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
+                        <Typography variant="h5" sx={{ mb: 1 }}>
+                            Member Information
+                        </Typography>
+                        <Typography variant="body1">Member #: {formData.guest?.membership_no}</Typography>
+                        <Typography variant="body1">Email: {formData.guest?.email}</Typography>
+                        <Typography variant="body1">Phone: {formData.guest?.phone}</Typography>
+                        <Typography variant="body1">Address: {formData.guest?.address}</Typography>
+                    </Box>
+                )}
             </Grid>
         </Grid>
         <Typography sx={{ my: 3 }} variant="h6">
@@ -225,88 +253,146 @@ const BookingDetails = ({ formData, handleChange }) => (
 );
 
 const RoomSelection = ({ formData, handleChange }) => {
-    const handleCalculation = (e) => {
-        handleChange(e);
-        const { name, value } = e.target;
-        let nights = name === 'nights' ? value : formData.nights;
-        let rate = name === 'perDayCharge' ? value : formData.perDayCharge;
+    const { props } = usePage();
 
-        const total = nights && rate ? parseInt(nights) * parseInt(rate) : '';
-        handleChange({ target: { name: 'roomCharge', value: total } });
-    };
+    // Automatically calculate nights between check-in and check-out
+    const nights = formData.checkInDate && formData.checkOutDate ? differenceInCalendarDays(new Date(formData.checkOutDate), new Date(formData.checkInDate)) : 0;
+
+    // Find charge by selected booking category
+    const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);
+    const matchedCharge = props.room.category_charges.find((charge) => charge.room_category_id == formData.bookingCategory);
+
+    const perDayCharge = matchedCharge?.amount || 0;
+    const totalCharge = nights * perDayCharge;
+
+    // Sync calculated values into parent form state
+    useEffect(() => {
+        handleChange({ target: { name: 'nights', value: nights } });
+        handleChange({ target: { name: 'perDayCharge', value: perDayCharge } });
+        handleChange({ target: { name: 'roomCharge', value: totalCharge } });
+    }, [formData.bookingCategory, formData.checkInDate, formData.checkOutDate]);
 
     return (
         <Grid container spacing={2}>
             <Grid item xs={12}>
-                <TextField label="Room" name="room" value={formData.room} onChange={handleChange} fullWidth select SelectProps={{ native: true }}>
-                    <option value="">Select a Room</option>
-                    <option value="101">Room 101</option>
-                    <option value="102">Room 102</option>
-                    <option value="103">Room 103</option>
-                </TextField>
+                Selected Room: {props.room.name} ({props.room.room_type.name})
             </Grid>
+
             <Grid item xs={12}>
                 <TextField label="Booking Category" name="bookingCategory" value={formData.bookingCategory} onChange={handleChange} fullWidth select SelectProps={{ native: true }}>
                     <option value="">Select Category</option>
-                    <option value="Armed Forces Member">Armed Forces Member</option>
-                    <option value="Corporate">Corporate</option>
-                    <option value="Guest">Guest</option>
+                    {props.roomCategories.map((item) => (
+                        <option key={item.id} value={item.id}>
+                            {item.name}
+                        </option>
+                    ))}
                 </TextField>
             </Grid>
+
             <Grid item xs={4}>
-                <TextField label="Per Day Room Charges" name="perDayCharge" value={formData.perDayCharge} onChange={handleCalculation} fullWidth type="number" />
+                <TextField label="Per Day Room Charges" name="perDayCharge" value={formData.perDayCharge} fullWidth InputProps={{ readOnly: true }} />
             </Grid>
             <Grid item xs={4}>
-                <TextField label="No. of Nights" name="nights" value={formData.nights} onChange={handleCalculation} fullWidth type="number" />
+                <TextField label="No. of Nights" name="nights" value={formData.nights} fullWidth InputProps={{ readOnly: true }} />
             </Grid>
             <Grid item xs={4}>
-                <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth disabled />
+                <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} />
             </Grid>
         </Grid>
     );
 };
 
 const ChargesInfo = ({ formData, handleChange }) => {
+    const { props } = usePage();
+
     const [otherChargesList, setOtherChargesList] = useState([{ type: '', details: '', amount: '', isComplementary: false }]);
 
     const [miniBarItems, setMiniBarItems] = useState([{ item: '', amount: '', qty: '', total: '' }]);
 
-    const calculateTotalMiniBar = () => {
-        return miniBarItems.reduce((acc, item) => acc + (parseFloat(item.total) || 0), 0);
-    };
-
     const handleOtherChange = (index, field, value) => {
         const updated = [...otherChargesList];
-        updated[index][field] = field === 'isComplementary' ? value : value;
+        const item = { ...updated[index] };
+
+        if (field === 'type') {
+            const selected = props.chargesTypeItems.find((c) => c.name === value);
+            item.type = value;
+            item.amount = selected ? selected.amount : '';
+        } else {
+            item[field] = value;
+        }
+
+        updated[index] = item;
         setOtherChargesList(updated);
     };
 
     const handleMiniBarChange = (index, field, value) => {
         const updated = [...miniBarItems];
-        updated[index][field] = value;
-        if (field === 'amount' || field === 'qty') {
-            const qty = parseInt(updated[index].qty) || 0;
-            const amt = parseFloat(updated[index].amount) || 0;
-            updated[index].total = (qty * amt).toFixed(2);
+        const item = { ...updated[index] };
+
+        if (field === 'item') {
+            const selected = props.miniBarItems.find((m) => m.name === value);
+            item.item = value;
+            item.qty = 1;
+            item.amount = selected ? selected.amount : '';
+        } else {
+            item[field] = value;
         }
+
+        const qty = parseFloat(item.qty) || 0;
+        const amt = parseFloat(item.amount) || 0;
+        item.total = (qty * amt).toFixed(2);
+
+        updated[index] = item;
         setMiniBarItems(updated);
     };
 
-    const totalOtherCharges = otherChargesList.reduce((sum, chg) => sum + (chg.isComplementary ? 0 : parseFloat(chg.amount) || 0), 0);
-    const totalMiniBar = calculateTotalMiniBar();
-    const room = parseFloat(formData.roomCharge || 0);
-    const discount = parseFloat(formData.discount || 0);
-    const grand = room + totalOtherCharges + totalMiniBar - discount;
+    const calculateTotals = () => {
+        const totalOther = otherChargesList.reduce((sum, chg) => sum + (chg.isComplementary ? 0 : parseFloat(chg.amount) || 0), 0);
+
+        const totalMini = miniBarItems.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+
+        const room = parseFloat(formData.roomCharge || 0);
+        const discountVal = parseFloat(formData.discount || 0);
+        const discountType = formData.discountType || 'fixed';
+
+        const baseTotal = room + totalOther + totalMini;
+        const discountAmount = discountType === 'percentage' ? (discountVal / 100) * baseTotal : discountVal;
+
+        const grandTotal = baseTotal - discountAmount;
+
+        return { totalOther, totalMini, grandTotal };
+    };
+
+    useEffect(() => {
+        const { totalOther, totalMini, grandTotal } = calculateTotals();
+
+        handleChange({ target: { name: 'totalOtherCharges', value: totalOther } });
+        handleChange({ target: { name: 'totalMiniBar', value: totalMini } });
+        handleChange({ target: { name: 'grandTotal', value: grandTotal.toFixed(2) } });
+    }, [otherChargesList, miniBarItems, formData.discount, formData.discountType, formData.roomCharge]);
+
+    const { totalOther, totalMini, grandTotal } = calculateTotals();
 
     return (
         <Grid container spacing={2}>
             <Grid item xs={12}>
                 <Typography variant="h6">Other Charges</Typography>
             </Grid>
+
             {otherChargesList.map((item, index) => (
                 <React.Fragment key={index}>
                     <Grid item xs={3}>
-                        <TextField label="Charges Type" fullWidth value={item.type} onChange={(e) => handleOtherChange(index, 'type', e.target.value)} />
+                        <FormControl fullWidth>
+                            <InputLabel>Charges Type</InputLabel>
+                            <Select value={item.type} label="Charges Type" onChange={(e) => handleOtherChange(index, 'type', e.target.value)}>
+                                <MenuItem value="">Select Type</MenuItem>
+                                {props.chargesTypeItems.map((type, i) => (
+                                    <MenuItem key={i} value={type.name}>
+                                        {type.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Grid>
                     <Grid item xs={3}>
                         <TextField label="Bill Details" fullWidth value={item.details} onChange={(e) => handleOtherChange(index, 'details', e.target.value)} />
@@ -320,16 +406,29 @@ const ChargesInfo = ({ formData, handleChange }) => {
                 </React.Fragment>
             ))}
             <Grid item xs={12}>
-                <Button onClick={() => setOtherChargesList([...otherChargesList, { type: '', details: '', amount: '', isComplementary: false }])}>Add More</Button>
+                <Button style={{ backgroundColor: '#063455', color: '#fff' }} variant="contained" onClick={() => setOtherChargesList([...otherChargesList, { type: '', details: '', amount: '', isComplementary: false }])}>
+                    Add More
+                </Button>
             </Grid>
 
             <Grid item xs={12}>
                 <Typography variant="h6">Mini Bar</Typography>
             </Grid>
+
             {miniBarItems.map((item, index) => (
-                <React.Fragment key={index}>
+                <Grid key={index} container spacing={2} sx={{ mb: 2, px: 2 }} alignItems="center">
                     <Grid item xs={3}>
-                        <TextField label="Item" fullWidth value={item.item} onChange={(e) => handleMiniBarChange(index, 'item', e.target.value)} />
+                        <FormControl fullWidth>
+                            <InputLabel>Item</InputLabel>
+                            <Select value={item.item} label="Item" onChange={(e) => handleMiniBarChange(index, 'item', e.target.value)}>
+                                <MenuItem value="">Select Item</MenuItem>
+                                {props.miniBarItems.map((mb, i) => (
+                                    <MenuItem key={i} value={mb.name}>
+                                        {mb.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Grid>
                     <Grid item xs={2}>
                         <TextField label="Amount" type="number" fullWidth value={item.amount} onChange={(e) => handleMiniBarChange(index, 'amount', e.target.value)} />
@@ -340,29 +439,44 @@ const ChargesInfo = ({ formData, handleChange }) => {
                     <Grid item xs={2}>
                         <TextField label="Total" fullWidth disabled value={item.total} />
                     </Grid>
-                </React.Fragment>
+                </Grid>
             ))}
             <Grid item xs={12}>
-                <Button onClick={() => setMiniBarItems([...miniBarItems, { item: '', amount: '', qty: '', total: '' }])}>Add More</Button>
+                <Button style={{ backgroundColor: '#063455', color: '#fff' }} variant="contained" onClick={() => setMiniBarItems([...miniBarItems, { item: '', amount: '', qty: '', total: '' }])}>
+                    Add More
+                </Button>
             </Grid>
 
-            <Grid item xs={3}>
-                <TextField label="Total Other Charges" value={totalOtherCharges} fullWidth disabled />
+            {/* Summary Fields */}
+            <Grid item xs={2}>
+                <TextField label="Total Other Charges" value={totalOther} fullWidth disabled />
             </Grid>
-            <Grid item xs={3}>
-                <TextField label="Total Mini Bar Charges" value={totalMiniBar} fullWidth disabled />
+            <Grid item xs={2}>
+                <TextField label="Total Mini Bar Charges" value={totalMini} fullWidth disabled />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={2}>
+                <TextField label="Room Charges" value={formData.roomCharge} fullWidth disabled />
+            </Grid>
+            <Grid item xs={2}>
+                <FormControl fullWidth>
+                    <InputLabel>Discount Type</InputLabel>
+                    <Select value={formData.discountType || 'fixed'} onChange={(e) => handleChange({ target: { name: 'discountType', value: e.target.value } })}>
+                        <MenuItem value="fixed">Fixed</MenuItem>
+                        <MenuItem value="percentage">Percentage</MenuItem>
+                    </Select>
+                </FormControl>
+            </Grid>
+            <Grid item xs={2}>
                 <TextField label="Discount" type="number" name="discount" value={formData.discount} onChange={handleChange} fullWidth />
             </Grid>
-            <Grid item xs={3}>
-                <TextField label="Grand Total" value={grand} fullWidth disabled />
+            <Grid item xs={2}>
+                <TextField label="Grand Total" value={grandTotal.toFixed(2)} fullWidth disabled />
             </Grid>
         </Grid>
     );
 };
 
-const UploadInfo = ({ formData, handleChange, handleFileChange }) => (
+const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove }) => (
     <Grid container spacing={2}>
         <Grid item xs={12}>
             <InputLabel>Upload Documents (PDF or Images)</InputLabel>
@@ -370,20 +484,27 @@ const UploadInfo = ({ formData, handleChange, handleFileChange }) => (
         </Grid>
 
         <Grid item xs={12}>
-            <Grid container spacing={2}>
+            <Grid container spacing={1}>
                 {[...(formData.previewFiles || [])].map((file, idx) => (
                     <Grid item key={idx}>
-                        {file.type.startsWith('image/') ? (
-                            <img src={URL.createObjectURL(file)} alt="preview" width={100} />
-                        ) : file.type === 'application/pdf' ? (
-                            <Box sx={{ border: '1px solid gray', p: 1, width: 100, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Typography variant="caption">
-                                    PDF
-                                    <br />
-                                    {file.name}
-                                </Typography>
-                            </Box>
-                        ) : null}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                border: '1px solid #ccc',
+                                borderRadius: 1,
+                                px: 1,
+                                py: 0.5,
+                                backgroundColor: '#f9f9f9',
+                            }}
+                        >
+                            <Typography variant="body2" sx={{ mr: 1 }}>
+                                {file.name}
+                            </Typography>
+                            <IconButton size="small" onClick={() => handleFileRemove(idx)}>
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
                     </Grid>
                 ))}
             </Grid>
@@ -391,17 +512,6 @@ const UploadInfo = ({ formData, handleChange, handleFileChange }) => (
 
         <Grid item xs={12}>
             <TextField label="Additional Notes" name="notes" value={formData.notes || ''} onChange={handleChange} multiline rows={4} fullWidth />
-        </Grid>
-        <Grid item xs={12} sx={{ display: 'flex', gap: 2 }}>
-            <Button variant="contained" color="primary">
-                Save
-            </Button>
-            <Button variant="contained" color="success">
-                Save & Print
-            </Button>
-            <Button variant="outlined" color="error">
-                Cancel
-            </Button>
         </Grid>
     </Grid>
 );

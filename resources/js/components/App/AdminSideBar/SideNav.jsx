@@ -313,8 +313,12 @@ export default function SideNav({ open, setOpen }) {
                     path: route('subscription.monthly'),
                 },
                 {
-                    text: 'Sports Category',
-                    path: route('subscription.sports'),
+                    text: 'Subscription Type',
+                    path: route('subscription-types.index'),
+                },
+                {
+                    text: 'Categories',
+                    path: route('subscription-categories.index'),
                 },
             ],
         },

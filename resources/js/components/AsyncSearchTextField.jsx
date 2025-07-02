@@ -13,7 +13,7 @@ const AsyncSearchTextField = ({
     fullWidth = true,
     disabled = false,
     debounceTime = 300,
-    resultFormat = (item) => `${item.label} (${item.id})`,
+    resultFormat = (item) => `${item.label}`,
 }) => {
     const [inputValue, setInputValue] = useState(value?.label || '');
     const [suggestions, setSuggestions] = useState([]);

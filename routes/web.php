@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
+use App\Http\Controllers\App\SubscriptionTypeController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MembershipController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\RoomCategoryController;
 use App\Http\Controllers\RoomChargesTypeController;
 use App\Http\Controllers\RoomMiniBarController;
 use App\Http\Controllers\RoomTypeController;
+use App\Http\Controllers\SubscriptionCategoryController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -238,8 +240,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/admin/subscription/payment/store', [SubscriptionController::class, 'paymentStore'])->name('subscriptions.payment.store');
     Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
     Route::post('/admin/subscription/store', [SubscriptionController::class, 'store'])->name('subscriptions.store');
-
     Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
+    // Subscription categories
+    Route::resource('/admin/subscription/subscription-categories', SubscriptionCategoryController::class)->except('show');
+    // Subscription types
+    Route::get('admin/subscription/subscription-types', [SubscriptionTypeController::class, 'index'])->name('subscription-types.index');
+    Route::post('admin/subscription/subscription-types/store', [SubscriptionTypeController::class, 'store'])->name('subscription-types.store');
+    Route::post('admin/subscription/subscription-types/{id}/update2', [SubscriptionTypeController::class, 'update'])->name('subscription-types.update2');
+    Route::delete('admin/subscription/subscription-types/{id}/delete', [SubscriptionTypeController::class, 'destroy'])->name('subscription-types.destroy');
+
 
 
     //Financial Routes
@@ -252,17 +261,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.addtransaction');
 
 
-    Route::get('/admin/manage/monthly/fee', function () {
-        return Inertia::render('App/Admin/Subscription/Monthly');
-    })->name('subscription.monthly');
+    Route::get('/admin/manage/monthly/fee', [SubscriptionController::class, 'monthlyFee'])->name('subscription.monthly');
 
-    Route::get('/admin/subscription/sports/category', function () {
-        return Inertia::render('App/Admin/Subscription/Sports');
-    })->name('subscription.sports');
+    // Route::get('/admin/subscription/sports/category', function () {
+    //     return Inertia::render('App/Admin/Subscription/Sports');
+    // })->name('subscription.sports');
 
-    Route::get('/admin/subscription/add/sports/category', function () {
-        return Inertia::render('App/Admin/Subscription/AddSports');
-    })->name('subscription.addsports');
+    // Route::get('/admin/subscription/add/sports/category', function () {
+    //     return Inertia::render('App/Admin/Subscription/AddSports');
+    // })->name('subscription.addsports');
 
     //Kitchen Routes
     Route::get('/kitchen/category/dashboard', function () {

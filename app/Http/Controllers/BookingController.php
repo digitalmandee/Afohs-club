@@ -7,6 +7,9 @@ use App\Models\Booking;
 use App\Models\Room;
 use App\Models\BookingEvents;
 use App\Models\FinancialInvoice;
+use App\Models\RoomCategory;
+use App\Models\RoomChargesType;
+use App\Models\RoomMiniBar;
 use App\Models\RoomType;
 use App\Models\User;
 use Inertia\Inertia;
@@ -129,23 +132,16 @@ class BookingController extends Controller
 
     public function booking(Request $request)
     {
-        $bookingType = $request->query('type');
-        $TypeId = $request->query('type_id');
-        $invoice_no = $request->query('invoice_no');
+        $roomId = $request->query('room_id');
 
-        $booking = null;
-        $invoice = null;
-        if ($bookingType == 'room') {
-            $booking = Room::find($TypeId);
-        } else if ($bookingType == 'event') {
-            $booking = BookingEvents::find($TypeId);
-        }
-        if ($invoice_no) {
-            $invoice = FinancialInvoice::where('invoice_no', $invoice_no)->with('customer:id,first_name,last_name,email', 'customer.member.memberType')->first();
-        }
+        $room = Room::with('roomType', 'categoryCharges')->find($roomId);
         $bookingNo = $this->getBookingId();
 
-        return Inertia::render('App/Admin/Booking/RoomBooking', compact('booking', 'invoice', 'bookingNo'));
+        $roomCategories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
+        $chargesTypeItems = RoomChargesType::where('status', 'active')->select('id', 'name', 'amount')->get();
+        $miniBarItems = RoomMiniBar::where('status', 'active')->select('id', 'name', 'amount')->get();
+
+        return Inertia::render('App/Admin/Booking/RoomBooking', compact('room', 'bookingNo', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
     }
 
     public function searchUsers(Request $request)
@@ -153,8 +149,19 @@ class BookingController extends Controller
         $query = $request->input('query');
 
         $members = User::role('user', 'web')
-            ->select('users.id', 'users.first_name', 'users.last_name', 'users.email', 'members.membership_no')
+            ->select(
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'users.email',
+                'users.phone_number',
+                'members.membership_no',
+                'user_details.cnic_no',
+                'user_details.current_address',
+            )
             ->leftJoin('members', 'users.id', '=', 'members.user_id')
+            ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
+            ->whereNull('users.parent_user_id')
             ->where(function ($q) use ($query) {
                 $q->where('users.first_name', 'like', "%{$query}%")
                     ->orWhere('users.last_name', 'like', "%{$query}%")
@@ -170,14 +177,18 @@ class BookingController extends Controller
             $fullName = trim("{$user->first_name} {$user->last_name}");
             return [
                 'id' => $user->id,
-                'label' => "{$fullName} ({$user->membership_no}) ({})",
+                'label' => "{$fullName} ({$user->membership_no}) ({$user->email})",
                 'membership_no' => $user->membership_no,
                 'email' => $user->email,
+                'cnic' => $user->cnic_no,
+                'phone' => $user->phone_number,
+                'address' => $user->current_address,
             ];
         });
 
         return response()->json(['success' => true, 'results' => $results], 200);
     }
+
 
 
     public function store(Request $request)

@@ -6,6 +6,7 @@ use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
 use App\Models\MemberCategory;
 use App\Models\Subscription;
+use App\Models\SubscriptionCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,9 +22,46 @@ class SubscriptionController extends Controller
         $newSubscriptionsToday = Subscription::where('status', 'active')->whereDate('created_at', today())->count();
         $totalRevenue = FinancialInvoice::where('status', 'paid')->where('invoice_type', 'subscription')->sum('total_price');
         // subscriptions
-        $subscriptions = Subscription::with('user:id,user_id,first_name,last_name,email,phone_number', 'invoice:id,status')->latest()->take(5)->get();
+        $subscriptions = Subscription::with('user:id,user_id,first_name,last_name,email,phone_number', 'user.member:id,user_id,membership_no', 'invoice:id,status')->latest()->take(5)->get();
 
         return Inertia::render('App/Admin/Subscription/Dashboard', compact('subscriptions', 'newSubscriptionsToday', 'totalRevenue'));
+    }
+
+
+    public function monthlyFee()
+    {
+        // Get all monthly subscriptions
+        $monthlySubscriptions = Subscription::where('subscription_type', 'monthly')->get();
+
+        // Total number of monthly subscriptions
+        $totalSubscriptions = $monthlySubscriptions->count();
+
+        // Get their IDs
+        $monthlySubscriptionIds = $monthlySubscriptions->pluck('id');
+
+        // Collected Fee: paid invoices only
+        $collectedFee = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'subscription')
+            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.subscription_id'))"), $monthlySubscriptionIds)
+            ->sum('total_price');
+
+        // Pending Fee: unpaid/due invoices
+        $pendingFee = FinancialInvoice::whereIn('status', ['unpaid', 'due']) // adjust if you use other terms
+            ->where('invoice_type', 'subscription')
+            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.subscription_id'))"), $monthlySubscriptionIds)
+            ->sum('total_price');
+
+        // Latest 5 monthly subscriptions
+        $subscriptions = Subscription::with([
+            'user:id,user_id,first_name,last_name,email,phone_number',
+            'invoice:id,status'
+        ])
+            ->where('subscription_type', 'monthly')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return Inertia::render('App/Admin/Subscription/Monthly', compact('subscriptions', 'totalSubscriptions', 'collectedFee', 'pendingFee'));
     }
 
     public function management()
@@ -34,7 +72,7 @@ class SubscriptionController extends Controller
 
     public function create()
     {
-        $categories = MemberCategory::where('status', 'active')->get();
+        $categories = SubscriptionCategory::where('status', 'active')->get();
         $invoice_no = $this->getInvoiceNo();
         return Inertia::render('App/Admin/Subscription/AddSubscription', compact('categories', 'invoice_no'));
     }
@@ -44,13 +82,13 @@ class SubscriptionController extends Controller
         $request->validate([
             'email' => 'required|email|max:255|exists:users,email',
             'phone' => 'required|string|max:20',
-            'category' => 'required|exists:member_categories,id',
+            'category' => 'required|exists:subscription_categories,id',
             'subscriptionType' => 'required|in:one_time,monthly,annual,quarter',
             'startDate' => 'required|date',
             'expiryDate' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-        $category = MemberCategory::find($request->category);
+        $category = SubscriptionCategory::find($request->category);
 
         DB::beginTransaction();
 

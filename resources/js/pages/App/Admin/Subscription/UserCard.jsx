@@ -224,7 +224,7 @@ const SubscriptionCardComponent = ({ open, onClose, subscription }) => {
                                         Membership ID
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {subscription.user?.user_id || 'N/A'}
+                                        {subscription.user.member?.membership_no || 'N/A'}
                                     </Typography>
                                 </Box>
                             </Grid>
