@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, TextField, Autocomplete, Typography, Button, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, CircularProgress, Paper } from '@mui/material';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 
 const UnpaidInvoiceViewer = () => {
@@ -48,7 +48,11 @@ const UnpaidInvoiceViewer = () => {
             <AsyncSearchTextField label="Search Customer" name="user" endpoint="/admin/api/search-users" onChange={(e) => setSelectedCustomer(e.target.value)} />
 
             {loading && <CircularProgress />}
-            {!loading && selectedCustomer && invoices.length === 0 && <Typography>No unpaid invoices found.</Typography>}
+            {!loading && selectedCustomer && invoices.length === 0 && (
+                <Paper sx={{ p: 2, mt: 2, mb: 2, border: '1px solid #ccc', borderRadius: 1 }}>
+                    <Typography>No unpaid invoices found.</Typography>
+                </Paper>
+            )}
 
             {invoices.map((invoice) => (
                 <Box key={invoice.id} sx={{ mb: 2, p: 2, border: '1px solid #ccc', borderRadius: 1 }}>

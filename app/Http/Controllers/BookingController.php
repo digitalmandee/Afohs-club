@@ -24,7 +24,7 @@ class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = RoomBooking::with('room', 'customer')->latest()->get();
+        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
         $totalBookings = RoomBooking::count();
         $totalRoomBookings = RoomBooking::count();
 

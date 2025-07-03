@@ -106,8 +106,6 @@ const dialogStyles = `
 const generateInvoiceContent = (booking) => {
     if (!booking) return '';
 
-    const durationInDays = booking.booking_type === 'room' ? dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day') : null;
-
     return `<!doctype html>
 <html>
     <head>
@@ -229,12 +227,12 @@ const generateInvoiceContent = (booking) => {
 
                 <!-- Bill To Section -->
                 <div style="margin-bottom: 20px">
-                    <div class="subtitle1">Bill To - ${booking.booking_id || 'N/A'}</div>
+                    <div class="subtitle1">Bill To - #${booking.booking_no || 'N/A'}</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.user?.name || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Membership ID: </span>${booking.user?.user_id || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Phone Number: </span>${booking.user?.phone_number || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Email: </span>${booking.user?.email || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer?.first_name || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Membership ID: </span>${booking.customer?.member?.membership_no || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Phone Number: </span>${booking.customer?.phone_number || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Email: </span>${booking.customer?.email || 'N/A'}</div>
                     </div>
                 </div>
 
@@ -242,32 +240,16 @@ const generateInvoiceContent = (booking) => {
                 <div style="margin-bottom: 2px">
                     <div class="subtitle1">Booking Details</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_id ? booking.booking_id.padStart(6, '0') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no ? booking.booking_no.padStart(6, '0') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.created_at ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Room Name' : 'Event Name'}: </span>${booking.typeable?.name || booking.typeable?.event_name || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.typeable?.max_capacity || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Number of Beds' : 'location'}: </span>${booking.typeable?.number_of_beds || booking.typeable?.location || 'N/A'}</div>
-                        ${
-                            booking.booking_type === 'room' && booking.typeable?.number_of_bathrooms
-                                ? `
-                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.typeable?.number_of_bathrooms}</div>
-                        `
-                                : ''
-                        } ${
-                            booking.booking_type === 'room'
-                                ? `
-                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.checkout ? dayjs(booking.checkout).format('MMMM D, YYYY') : 'N/A'}</div>
-                        `
-                                : booking.booking_type === 'event'
-                                  ? `
-                        <div class="typography-body2"><span style="font-weight: bold">Event Date: </span>${booking.typeable?.date_time ? dayjs(booking.typeable?.date_time).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Event Time: </span>${booking.typeable?.date_time ? dayjs(booking.typeable?.date_time).format('h:mm A') : 'N/A'}</div>
-                        `
-                                  : ''
-                        }
+                        <div class="typography-body2"><span style="font-weight: bold">Number of Beds: </span>${booking.room?.number_of_beds || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.room?.number_of_bathrooms}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
                     </div>
@@ -278,7 +260,7 @@ const generateInvoiceContent = (booking) => {
             <div class="summary-box">
                 <div class="summary-row">
                     <span class="typography-body2-bold">Total Amount</span>
-                    <span class="typography-body2">Rs ${booking.total_payment || '0'}</span>
+                    <span class="typography-body2">Rs ${booking.grand_total || '0'}</span>
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Balance Due</span>
@@ -300,7 +282,7 @@ const generateInvoiceContent = (booking) => {
                 </div>
             </div>
             <div class="notes-item">
-                <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.total_payment || 0)} RUPEES ONLY</div>
+                <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.grand_total || 0)} RUPEES ONLY</div>
             </div>
             </div>
         </div>
