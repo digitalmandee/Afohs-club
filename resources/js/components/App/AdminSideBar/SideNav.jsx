@@ -200,11 +200,16 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Events',
-                    path: route('events.manage'),
-                },
-                {
-                    text: 'Event Location',
-                    path: route('events.locations'),
+                    children: [
+                        {
+                            text: 'Manage Events',
+                            path: route('events.manage'),
+                        },
+                        {
+                            text: 'Locations',
+                            path: route('events.locations'),
+                        },
+                    ],
                 },
             ],
         },
