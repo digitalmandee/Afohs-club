@@ -135,7 +135,7 @@ const Dashboard = () => {
                                             {/* Total Revenue */}
                                             <Box sx={{ flex: 1, textAlign: 'flex-start' }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Revenue</Typography>
-                                                <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 559,102.00</Typography>
+                                                <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 0</Typography>
                                             </Box>
 
                                             {/* Divider */}
@@ -144,7 +144,7 @@ const Dashboard = () => {
                                             {/* Total Profit */}
                                             <Box sx={{ flex: 1, textAlign: 'right' }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Profit</Typography>
-                                                <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 223,640.80</Typography>
+                                                <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 0</Typography>
                                             </Box>
                                         </CardContent>
                                     </Card>
@@ -186,18 +186,18 @@ const Dashboard = () => {
                                                 </Box>
                                                 <Box>
                                                     <Typography sx={{ fontSize: '14px', fontWeight: 400, color: '#C6C6C6' }}>Total Booking</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>320</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>0</Typography>
                                                 </Box>
                                             </Box>
                                             <Divider orientation="horizontal" flexItem sx={{ bgcolor: '#7F7F7F', height: '2px' }} />
                                             <Box sx={{ display: 'flex', mt: 2 }}>
                                                 <Box sx={{ flex: 1 }}>
                                                     <Typography sx={{ fontWeight: 400, fontSize: '12px', color: '#C6C6C6' }}>Room Booking</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>280</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
                                                 </Box>
                                                 <Box sx={{ flex: 1 }}>
                                                     <Typography sx={{ fontWeight: 400, fontSize: '12px', color: '#C6C6C6' }}>Event Booking</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>40</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
                                                 </Box>
                                             </Box>
                                         </CardContent>
@@ -234,18 +234,18 @@ const Dashboard = () => {
                                                 </Box>
                                                 <Box>
                                                     <Typography sx={{ color: '#C6C6C6', fontSize: '14px', fontWeight: 400 }}>Total Members</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>320</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>0</Typography>
                                                 </Box>
                                             </Box>
                                             <Divider orientation="horizontal" flexItem sx={{ bgcolor: '#7F7F7F', height: '2px' }} />
                                             <Box sx={{ display: 'flex', mt: 2 }}>
                                                 <Box sx={{ flex: 1 }}>
                                                     <Typography sx={{ color: '#C6C6C6', fontSize: '12px', fontWeight: 400 }}>Total Customer</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>280</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
                                                 </Box>
                                                 <Box sx={{ flex: 1 }}>
                                                     <Typography sx={{ color: '#C6C6C6', fontSize: '12px', fontWeight: 400 }}>Total Employee</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>40</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
                                                 </Box>
                                             </Box>
                                         </CardContent>
@@ -291,7 +291,7 @@ const Dashboard = () => {
 
                                             {/* Text Content */}
                                             <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', mb: 1 }}>Total Product Order</Typography>
-                                            <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>500</Typography>
+                                            <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>0</Typography>
                                             <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', display: 'inline', ml: 1 }}>Items</Typography>
                                         </CardContent>
                                     </Card>
@@ -329,7 +329,7 @@ const Dashboard = () => {
 
                                             {/* Text Content */}
                                             <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', mb: 1 }}>Total Subscription Order</Typography>
-                                            <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>380</Typography>
+                                            <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>0</Typography>
                                             <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', display: 'inline', ml: 1 }}>Order</Typography>
                                         </CardContent>
                                     </Card>
@@ -413,8 +413,8 @@ const Dashboard = () => {
                                                     <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                                         <XAxis dataKey="name" />
-                                                        <YAxis tickFormatter={(value) => `$${value}`} ticks={[0, 200, 400, 600, 800, 1000, 1200, 1400]} />
-                                                        <Tooltip formatter={(value) => [`$${value}`, '']} />
+                                                        <YAxis tickFormatter={(value) => `Rs ${value}`} ticks={[0, 200, 400, 600, 800, 1000, 1200, 1400]} />
+                                                        <Tooltip formatter={(value) => [`Rs ${value}`, '']} />
                                                         <Bar dataKey="income" fill="#0d3c61" barSize={10} />
                                                         <Bar dataKey="expenses" fill="#e74c3c" barSize={10} />
                                                         <Bar dataKey="profit" fill="#2ecc71" barSize={10} />

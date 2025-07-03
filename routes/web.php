@@ -16,6 +16,7 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\RoomBookingController;
 use App\Http\Controllers\RoomCategoryController;
 use App\Http\Controllers\RoomChargesTypeController;
 use App\Http\Controllers\RoomMiniBarController;
@@ -127,13 +128,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
     Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
     Route::get('/booking/new', [BookingController::class, 'booking'])->name('rooms.booking');
+    Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
-    Route::post('/room/booking', [BookingController::class, 'store'])->name('rooms.booking.store');
+    Route::post('/room/booking', [RoomBookingController::class, 'store'])->name('rooms.booking.store');
+    Route::get('/room/booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar');
+    Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar');
 
     // Search
     Route::get('/admin/api/search-users', [BookingController::class, 'searchUsers'])->name('admin.api.search-users');
     // Booking Search
-    Route::get('/booking/search', [BookingController::class, 'search'])->name('booking.search');
+    Route::get('/booking/search', [BookingController::class, 'search'])->name('rooms.booking.search');
 
 
     Route::get('/booking/details', function () {
@@ -248,6 +252,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('admin/subscription/subscription-types/store', [SubscriptionTypeController::class, 'store'])->name('subscription-types.store');
     Route::post('admin/subscription/subscription-types/{id}/update2', [SubscriptionTypeController::class, 'update'])->name('subscription-types.update2');
     Route::delete('admin/subscription/subscription-types/{id}/delete', [SubscriptionTypeController::class, 'destroy'])->name('subscription-types.destroy');
+
+
+    Route::get('/api/customers/search', [SubscriptionController::class, 'search']);
+    Route::get('/api/unpaid-invoices/{user}', [SubscriptionController::class, 'unpaidInvoices']);
+    Route::post('/api/pay-invoice/{invoice}', [SubscriptionController::class, 'payInvoice']);
+
 
 
 

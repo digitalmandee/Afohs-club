@@ -177,6 +177,10 @@ export default function SideNav({ open, setOpen }) {
                             path: route('rooms.all'),
                         },
                         {
+                            text: 'Room Calendar',
+                            path: route('rooms.booking.calendar'),
+                        },
+                        {
                             text: 'Room Types',
                             path: route('room-types.index'),
                         },

@@ -6,6 +6,8 @@ use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
 use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
+use App\Models\SubscriptionType;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -71,8 +73,9 @@ class SubscriptionController extends Controller
     public function create()
     {
         $categories = SubscriptionCategory::where('status', 'active')->get();
+        $subscriberTypes = SubscriptionType::all();
         $invoice_no = $this->getInvoiceNo();
-        return Inertia::render('App/Admin/Subscription/AddSubscription', compact('categories', 'invoice_no'));
+        return Inertia::render('App/Admin/Subscription/AddSubscription', compact('subscriberTypes', 'categories', 'invoice_no'));
     }
 
     public function store(Request $request)
@@ -173,6 +176,46 @@ class SubscriptionController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Payment successful']);
     }
+
+    public function unpaidInvoices($userId)
+    {
+        $invoices = FinancialInvoice::where('customer_id', $userId)
+            ->whereIn('invoice_type', ['membership', 'subscription'])
+            ->where('status', 'unpaid')
+            ->get();
+
+        return response()->json($invoices);
+    }
+
+    public function payInvoice($invoiceId)
+    {
+        $invoice = FinancialInvoice::findOrFail($invoiceId);
+
+        if ($invoice->status === 'paid') {
+            return response()->json(['message' => 'Already paid'], 400);
+        }
+
+        $invoice->status = 'paid';
+        $invoice->payment_date = now();
+        $invoice->save();
+
+        return response()->json(['message' => 'Invoice paid successfully']);
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q');
+        $customers = User::where('name', 'like', "%$query%")
+            ->role('user')
+            ->whereNull('parent_user_id')
+            ->orWhere('email', 'like', "%$query%")
+            ->limit(10)
+            ->get(['id', 'name', 'email']);
+
+        return response()->json($customers);
+    }
+
+
 
     private function getInvoiceNo()
     {
