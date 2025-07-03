@@ -158,14 +158,14 @@ export default function SideNav({ open, setOpen }) {
             icon: <CalendarMonthIcon />,
             children: [
                 {
-                    text: 'Dashboard',
-                    path: route('rooms.dashboard'),
-                },
-                {
                     text: 'Rooms',
                     children: [
                         {
                             text: 'Dashboard',
+                            path: route('rooms.dashboard'),
+                        },
+                        {
+                            text: 'Manage',
                             path: route('rooms.manage'),
                         },
                         {
