@@ -202,13 +202,33 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Events',
                     children: [
                         {
+                            text: 'Dashboard',
+                            path: route('events.dashboard'),
+                        },
+                        {
                             text: 'Manage Events',
                             path: route('events.manage'),
                         },
                         {
-                            text: 'Locations',
-                            path: route('events.locations'),
+                            text: 'Event Venues',
+                            path: route('event-venues.index'),
                         },
+                        {
+                            text: 'Event Menu Rate Category',
+                            path: route('event-menu-category.index'),
+                        },
+                        {
+                            text: 'Event Menu Type',
+                            path: route('event-menu-type.index'),
+                        },
+                        {
+                            text: 'Event Menu AddOn',
+                            path: route('event-menu-addon.index'),
+                        },
+                        // {
+                        //     text: 'Locations',
+                        //     path: route('events.locations'),
+                        // },
                     ],
                 },
             ],

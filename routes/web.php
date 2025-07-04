@@ -15,6 +15,11 @@ use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\EventBookingController;
+use App\Http\Controllers\EventMenuAddOnsController;
+use App\Http\Controllers\EventMenuCategoryController;
+use App\Http\Controllers\EventMenuTypeController;
+use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\RoomBookingController;
 use App\Http\Controllers\RoomCategoryController;
@@ -101,11 +106,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('room-categories', RoomCategoryController::class)->except(['create', 'edit', 'show']);
         Route::resource('room-charges-type', RoomChargesTypeController::class)->except(['create', 'edit', 'show']);
         Route::resource('room-minibar', RoomMiniBarController::class)->except(['create', 'edit', 'show']);
+
+        // Event Routes
+        Route::get('events/dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
+        Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-menu-category', EventMenuCategoryController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-menu-type', EventMenuTypeController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-menu-addon', EventMenuAddOnsController::class)->except(['create', 'edit', 'show']);
     });
 
-    // Route::get('/events/dashboard', function () {
-    //         return Inertia::render('App/Admin/Booking/EventManage');
-    //     })->name('events.manage');
 
     //Admin Events Booking Routes
     Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
