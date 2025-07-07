@@ -24,7 +24,34 @@ class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
+        // Step 1: Build bookingId => invoice mapping
+        $invoices = FinancialInvoice::get();
+
+        $bookingInvoiceMap = [];
+
+        foreach ($invoices as $invoice) {
+            foreach ($invoice->data as $entry) {
+                if (!empty($entry['booking_id'])) {
+                    $bookingInvoiceMap[$entry['booking_id']] = [
+                        'id' => $invoice->id,
+                        'status' => $invoice->status,
+                    ];
+                }
+            }
+        }
+
+        // Step 2: Get all RoomBookings
+        $bookings = RoomBooking::with('room', 'customer', 'customer.member')
+            ->latest()
+            ->get();
+
+        // Step 3: Attach invoice data to each booking
+        $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
+            $invoice = $bookingInvoiceMap[$booking->id] ?? null;
+            $booking->invoice = $invoice;
+            return $booking;
+        });
+
         $totalBookings = RoomBooking::count();
         $totalRoomBookings = RoomBooking::count();
 
@@ -115,6 +142,19 @@ class BookingController extends Controller
         $miniBarItems = RoomMiniBar::where('status', 'active')->select('id', 'name', 'amount')->get();
 
         return Inertia::render('App/Admin/Booking/RoomBooking', compact('room', 'bookingNo', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
+    }
+
+    public function payNow(Request $request)
+    {
+        $invoice_no = $request->query('invoice_no');
+
+        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer:id,first_name,last_name,email', 'customer.member.memberType')->first();
+
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice not found'], 404);
+        }
+
+        return Inertia::render('App/Admin/Booking/Payment', compact('invoice'));
     }
 
     // Search family Members
@@ -288,9 +328,11 @@ class BookingController extends Controller
         $invoice->status = 'paid';
         $invoice->save();
 
-        $subscription = Booking::find($invoice->data[0]['id']);
-        $subscription->status = 'confirmed';
-        $subscription->save();
+        $booking = RoomBooking::find($invoice->data[0]['booking_id']);
+        if ($request->booking_status) {
+            $booking->status =  $request->booking_status;
+        }
+        $booking->save();
 
         DB::commit();
 

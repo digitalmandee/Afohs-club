@@ -13,7 +13,7 @@ import Divider from '@mui/material/Divider';
 import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
-import { IoPeople } from "react-icons/io5";
+import { IoPeople } from 'react-icons/io5';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -34,7 +34,7 @@ import TableIcon from '@/components/App/Icons/TableManagement';
 import CategoryIcon from '@mui/icons-material/Category';
 import AddressType from '../Icons/AddressType';
 import { MdManageHistory } from 'react-icons/md';
-import { FaUser } from "react-icons/fa";
+import { FaUser } from 'react-icons/fa';
 import { useEffect } from 'react';
 
 const drawerWidthOpen = 240; // Set open width to 240px
@@ -110,18 +110,13 @@ export default function SideNav({ open, setOpen }) {
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
         { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard'), permission: 'dashboard' },
+        { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
         { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index'), permission: 'order' },
         { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category'), permission: 'order' },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index'), permission: 'order' },
         {
             text: 'Table Management',
-            icon: (
-                <img
-                    src="/assets/Tablemanage.svg"
-                    alt="Table Icon"
-                    className="svg-img-icon"
-                />
-            ),
+            icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" />,
             path: route('table.management'),
             permission: 'order',
         },
@@ -133,12 +128,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Kitchens',
-            icon: (
-                <img src='/assets/Kitchen.svg'
-                    alt='Kitchen icon'
-                    className="svg-img-icon"
-                />
-            ),
+            icon: <img src="/assets/Kitchen.svg" alt="Kitchen icon" className="svg-img-icon" />,
             path: route('kitchens.index'),
             permission: 'order',
         },
@@ -445,7 +435,7 @@ export default function SideNav({ open, setOpen }) {
                                                     },
                                                     '& .MuiListItemIcon-root svg': {
                                                         fill: '#FFFFFF', // icon color on hover
-                                                    }
+                                                    },
                                                 },
                                             }}
                                         >
@@ -478,7 +468,6 @@ export default function SideNav({ open, setOpen }) {
                                                     opacity: open ? 1 : 0,
                                                 }}
                                             />
-
                                         </ListItemButton>
                                     </ListItem>
                                 );

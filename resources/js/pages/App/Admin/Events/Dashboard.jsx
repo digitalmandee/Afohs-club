@@ -489,7 +489,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                 />
                                             </Box>
                                             <Box>
-                                                <Typography sx={{ color: '#C6C6C6', fontSize: '14px' }}>Total Room Booking</Typography>
+                                                <Typography sx={{ color: '#C6C6C6', fontSize: '14px' }}>Total Event Booking</Typography>
                                                 <Typography sx={{ fontSize: '24px' }} className="m-0">
                                                     {data?.totalRoomBookings || 0}
                                                 </Typography>
@@ -498,11 +498,11 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                         <hr className="border-top mt-2" />
                                         <Row>
                                             <Col>
-                                                <Typography sx={{ color: '#C6C6C6', fontSize: '12px' }}>Available Rooms</Typography>
+                                                <Typography sx={{ color: '#C6C6C6', fontSize: '12px' }}>Available Events</Typography>
                                                 <Typography variant="h6">{data?.availableRoomsToday || 0}</Typography>
                                             </Col>
                                             <Col>
-                                                <Typography sx={{ color: '#C6C6C6', fontSize: '12px' }}>Total Rooms</Typography>
+                                                <Typography sx={{ color: '#C6C6C6', fontSize: '12px' }}>Total Events</Typography>
                                                 <Typography variant="h6">{data?.totalRooms || 0}</Typography>
                                             </Col>
                                         </Row>

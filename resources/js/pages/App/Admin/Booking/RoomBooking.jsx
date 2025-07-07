@@ -10,6 +10,7 @@ import { differenceInCalendarDays } from 'date-fns';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -149,9 +150,9 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         axios
             .post(route('rooms.booking.store'), payload)
             .then((res) => {
-                console.log('Booking submitted successfully');
+                enqueueSnackbar('Booking submitted successfully', { variant: 'success' });
                 // Redirect or show success
-                router.visit('/booking/dashboard');
+                router.visit(route('booking.payment', { invoice_no: res.data.invoice_id }));
             })
             .catch((err) => {
                 console.error('Submit error:', err);

@@ -135,6 +135,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     //Admin Booking Routes
     Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
+    Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
     Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
     Route::get('/booking/new', [BookingController::class, 'booking'])->name('rooms.booking');
     Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
