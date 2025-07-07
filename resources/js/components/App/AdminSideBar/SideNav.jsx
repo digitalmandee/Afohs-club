@@ -158,14 +158,14 @@ export default function SideNav({ open, setOpen }) {
             icon: <CalendarMonthIcon />,
             children: [
                 {
-                    text: 'Dashboard',
-                    path: route('rooms.dashboard'),
-                },
-                {
                     text: 'Rooms',
                     children: [
                         {
                             text: 'Dashboard',
+                            path: route('rooms.dashboard'),
+                        },
+                        {
+                            text: 'Manage',
                             path: route('rooms.manage'),
                         },
                         {
@@ -175,6 +175,10 @@ export default function SideNav({ open, setOpen }) {
                         {
                             text: 'All Rooms',
                             path: route('rooms.all'),
+                        },
+                        {
+                            text: 'Room Calendar',
+                            path: route('rooms.booking.calendar'),
                         },
                         {
                             text: 'Room Types',
@@ -196,11 +200,36 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Events',
-                    path: route('events.manage'),
-                },
-                {
-                    text: 'Event Location',
-                    path: route('events.locations'),
+                    children: [
+                        {
+                            text: 'Dashboard',
+                            path: route('events.dashboard'),
+                        },
+                        {
+                            text: 'Manage Events',
+                            path: route('events.manage'),
+                        },
+                        {
+                            text: 'Event Venues',
+                            path: route('event-venues.index'),
+                        },
+                        {
+                            text: 'Event Menu Rate Category',
+                            path: route('event-menu-category.index'),
+                        },
+                        {
+                            text: 'Event Menu Type',
+                            path: route('event-menu-type.index'),
+                        },
+                        {
+                            text: 'Event Menu AddOn',
+                            path: route('event-menu-addon.index'),
+                        },
+                        // {
+                        //     text: 'Locations',
+                        //     path: route('events.locations'),
+                        // },
+                    ],
                 },
             ],
         },
@@ -313,8 +342,12 @@ export default function SideNav({ open, setOpen }) {
                     path: route('subscription.monthly'),
                 },
                 {
-                    text: 'Sports Category',
-                    path: route('subscription.sports'),
+                    text: 'Subscription Type',
+                    path: route('subscription-types.index'),
+                },
+                {
+                    text: 'Categories',
+                    path: route('subscription-categories.index'),
                 },
             ],
         },

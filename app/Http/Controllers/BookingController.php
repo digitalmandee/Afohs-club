@@ -7,7 +7,13 @@ use App\Models\Booking;
 use App\Models\Room;
 use App\Models\BookingEvents;
 use App\Models\FinancialInvoice;
+use App\Models\Member;
+use App\Models\RoomBooking;
+use App\Models\RoomCategory;
+use App\Models\RoomChargesType;
+use App\Models\RoomMiniBar;
 use App\Models\RoomType;
+use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,53 +24,33 @@ class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::with('typeable', 'user')->latest()->get();
-        $totalBookings = Booking::count();
-        $totalRoomBookings = Booking::where('booking_type', 'room')->count();
-        $totalEventBookings = Booking::where('booking_type', 'event')->count();
+        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
+        $totalBookings = RoomBooking::count();
+        $totalRoomBookings = RoomBooking::count();
 
 
         $rooms = Room::latest()->get();
-        $events = BookingEvents::latest()->get();
 
         $totalRooms = $rooms->count();
-        $totalEvents = $events->count();
 
         // Determine unavailable rooms today
-        $conflictedRooms = Booking::query()
-            ->where('booking_Type', 'room')
+        $conflictedRooms = RoomBooking::query()
             ->whereIn('status', ['confirmed', 'pending'])
-            ->where('checkin', '<', now()->addDay()) // today and future
-            ->where('checkout', '>', now()) // overlapping today
-            ->pluck('type_id')->unique();
+            ->where('check_in_date', '<', now()->addDay()) // today and future
+            ->where('check_out_date', '>', now()) // overlapping today
+            ->pluck('room_id')->unique();
 
         $availableRoomsToday = Room::query()
             ->whereNotIn('id', $conflictedRooms)
             ->count();
 
-        // Determine unavailable events today
-        $conflictedEvents = Booking::query()
-            ->where('booking_Type', 'event')
-            ->whereIn('status', ['confirmed', 'pending'])
-            ->where('checkin', '<', now()->addDay()) // today and future
-            ->where('checkout', '>', now()) // overlapping today
-            ->pluck('type_id')->unique();
-
-        $availableEventsToday = BookingEvents::query()
-            ->whereNotIn('id', $conflictedEvents)
-            ->count();
-
         $data = [
             'bookingsData' => $bookings,
             'rooms' => $rooms,
-            'events' => $events,
             'totalRooms' => $totalRooms,
-            'totalEvents' => $totalEvents,
             'availableRoomsToday' => $availableRoomsToday,
-            'availableEventsToday' => $availableEventsToday,
             'totalBookings' => $totalBookings,
             'totalRoomBookings' => $totalRoomBookings,
-            'totalEventBookings' => $totalEventBookings,
         ];
 
         $roomTypes = RoomType::where('status', 'active')->select('id', 'name')->get();
@@ -79,32 +65,23 @@ class BookingController extends Controller
 
     public function search(Request $request)
     {
-        $type = $request->query('bookingType'); // 'room' or 'event'
         $checkin = $request->query('checkin'); // Y-m-d
         $checkout = $request->query('checkout'); // Y-m-d
         $persons = $request->query('persons'); // int
 
-        $conflicted = Booking::query()
-            ->where('booking_Type', $type)
+        $conflicted = RoomBooking::query()
             ->whereIn('status', ['confirmed', 'pending'])
             ->where(function ($query) use ($checkin, $checkout) {
-                $query->where('checkin', '<', $checkout)
-                    ->where('checkout', '>', $checkin);
+                $query->where('check_in_date', '<', $checkout)
+                    ->where('check_out_date', '>', $checkin);
             })
-            ->pluck('type_id');
+            ->pluck('room_id');
 
-        if ($type == 'room') {
-            $available = Room::query()
-                ->whereNotIn('id', $conflicted)
-                ->where('max_capacity', '>', $persons)
-                ->with('roomType', 'categoryCharges', 'categoryCharges.Category')
-                ->get();
-        } else { // event
-            $available = BookingEvents::query()
-                ->whereNotIn('id', $conflicted)
-                ->where('max_capacity', '>', $persons)
-                ->get();
-        }
+        $available = Room::query()
+            ->whereNotIn('id', $conflicted)
+            ->where('max_capacity', '>', $persons)
+            ->with('roomType', 'categoryCharges', 'categoryCharges.Category')
+            ->get();
 
         return response()->json($available);
     }
@@ -128,24 +105,102 @@ class BookingController extends Controller
 
     public function booking(Request $request)
     {
-        $bookingType = $request->query('type');
-        $TypeId = $request->query('type_id');
-        $invoice_no = $request->query('invoice_no');
+        $roomId = $request->query('room_id');
 
-        $booking = null;
-        $invoice = null;
-        if ($bookingType == 'room') {
-            $booking = Room::find($TypeId);
-        } else if ($bookingType == 'event') {
-            $booking = BookingEvents::find($TypeId);
-        }
-        if ($invoice_no) {
-            $invoice = FinancialInvoice::where('invoice_no', $invoice_no)->with('customer:id,first_name,last_name,email', 'customer.member.memberType')->first();
-        }
-        $next_booking_id = $this->getBookingId();
+        $room = Room::with('roomType', 'categoryCharges')->find($roomId);
+        $bookingNo = $this->getBookingId();
 
-        return Inertia::render('App/Admin/Booking/RoomBooking', compact('booking', 'invoice', 'next_booking_id'));
+        $roomCategories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
+        $chargesTypeItems = RoomChargesType::where('status', 'active')->select('id', 'name', 'amount')->get();
+        $miniBarItems = RoomMiniBar::where('status', 'active')->select('id', 'name', 'amount')->get();
+
+        return Inertia::render('App/Admin/Booking/RoomBooking', compact('room', 'bookingNo', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
     }
+
+    // Search family Members
+
+    public function familyMembers($id)
+    {
+        $members = User::role('user', 'web')->select(
+            'users.id',
+            'users.first_name',
+            'users.last_name',
+            'users.email',
+            'users.phone_number',
+            'members.family_suffix',
+            'user_details.cnic_no',
+            'user_details.current_address',
+        )->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
+            ->leftJoin('members', 'users.id', '=', 'members.user_id')
+            ->where('users.parent_user_id', $id)
+            ->limit(10)
+            ->get();
+
+        // Format for frontend
+        $results = $members->map(function ($user) use ($id) {
+            $fullName = trim("{$user->first_name} {$user->last_name}");
+            $parentUser = Member::where('user_id', $id)->first();
+            return [
+                'id' => $user->id,
+                'label' => "{$fullName} ({$parentUser->membership_no}-{$user->family_suffix}) ({$user->email})",
+                'membership_no' => "{$parentUser->membership_no}-{$user->family_suffix}",
+                'email' => $user->email,
+                'cnic' => $user->cnic_no,
+                'phone' => $user->phone_number,
+                'address' => $user->current_address,
+            ];
+        });
+
+        return response()->json(['success' => true, 'results' => $results], 200);
+    }
+
+    // Search users
+    public function searchUsers(Request $request)
+    {
+        $query = $request->input('query');
+
+        $members = User::role('user', 'web')
+            ->select(
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'users.email',
+                'users.phone_number',
+                'members.membership_no',
+                'user_details.cnic_no',
+                'user_details.current_address',
+            )
+            ->leftJoin('members', 'users.id', '=', 'members.user_id')
+            ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
+            ->whereNull('users.parent_user_id')
+            ->where(function ($q) use ($query) {
+                $q->where('users.first_name', 'like', "%{$query}%")
+                    ->orWhere('users.last_name', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ["%{$query}%"])
+                    ->orWhere('members.membership_no', 'like', "%{$query}%")
+                    ->orWhere('users.email', 'like', "%{$query}%");
+            })
+            ->limit(10)
+            ->get();
+
+        // Format for frontend
+        $results = $members->map(function ($user) {
+            $fullName = trim("{$user->first_name} {$user->last_name}");
+            return [
+                'id' => $user->id,
+                'label' => "{$fullName} ({$user->membership_no}) ({$user->email})",
+                'membership_no' => $user->membership_no,
+                'email' => $user->email,
+                'cnic' => $user->cnic_no,
+                'phone' => $user->phone_number,
+                'address' => $user->current_address,
+            ];
+        });
+
+        return response()->json(['success' => true, 'results' => $results], 200);
+    }
+
+
 
     public function store(Request $request)
     {
@@ -250,7 +305,7 @@ class BookingController extends Controller
 
     private function getBookingId()
     {
-        $booking_id =  (int) Booking::max('booking_id');
+        $booking_id =  (int) RoomBooking::max('booking_no');
         return $booking_id + 1;
     }
 

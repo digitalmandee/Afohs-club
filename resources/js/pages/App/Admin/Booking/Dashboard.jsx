@@ -106,8 +106,6 @@ const dialogStyles = `
 const generateInvoiceContent = (booking) => {
     if (!booking) return '';
 
-    const durationInDays = booking.booking_type === 'room' ? dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day') : null;
-
     return `<!doctype html>
 <html>
     <head>
@@ -229,12 +227,12 @@ const generateInvoiceContent = (booking) => {
 
                 <!-- Bill To Section -->
                 <div style="margin-bottom: 20px">
-                    <div class="subtitle1">Bill To - ${booking.booking_id || 'N/A'}</div>
+                    <div class="subtitle1">Bill To - #${booking.booking_no || 'N/A'}</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.user?.name || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Membership ID: </span>${booking.user?.user_id || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Phone Number: </span>${booking.user?.phone_number || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Email: </span>${booking.user?.email || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer?.first_name || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Membership ID: </span>${booking.customer?.member?.membership_no || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Phone Number: </span>${booking.customer?.phone_number || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Email: </span>${booking.customer?.email || 'N/A'}</div>
                     </div>
                 </div>
 
@@ -242,32 +240,16 @@ const generateInvoiceContent = (booking) => {
                 <div style="margin-bottom: 2px">
                     <div class="subtitle1">Booking Details</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_id ? booking.booking_id.padStart(6, '0') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no ? booking.booking_no.padStart(6, '0') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.created_at ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Room Name' : 'Event Name'}: </span>${booking.typeable?.name || booking.typeable?.event_name || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.typeable?.max_capacity || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">${booking.booking_type === 'room' ? 'Number of Beds' : 'location'}: </span>${booking.typeable?.number_of_beds || booking.typeable?.location || 'N/A'}</div>
-                        ${
-                            booking.booking_type === 'room' && booking.typeable?.number_of_bathrooms
-                                ? `
-                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.typeable?.number_of_bathrooms}</div>
-                        `
-                                : ''
-                        } ${
-                            booking.booking_type === 'room'
-                                ? `
-                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.checkin ? dayjs(booking.checkin).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.checkout ? dayjs(booking.checkout).format('MMMM D, YYYY') : 'N/A'}</div>
-                        `
-                                : booking.booking_type === 'event'
-                                  ? `
-                        <div class="typography-body2"><span style="font-weight: bold">Event Date: </span>${booking.typeable?.date_time ? dayjs(booking.typeable?.date_time).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Event Time: </span>${booking.typeable?.date_time ? dayjs(booking.typeable?.date_time).format('h:mm A') : 'N/A'}</div>
-                        `
-                                  : ''
-                        }
+                        <div class="typography-body2"><span style="font-weight: bold">Number of Beds: </span>${booking.room?.number_of_beds || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.room?.number_of_bathrooms}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
                     </div>
@@ -278,7 +260,7 @@ const generateInvoiceContent = (booking) => {
             <div class="summary-box">
                 <div class="summary-row">
                     <span class="typography-body2-bold">Total Amount</span>
-                    <span class="typography-body2">Rs ${booking.total_payment || '0'}</span>
+                    <span class="typography-body2">Rs ${booking.grand_total || '0'}</span>
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Balance Due</span>
@@ -300,7 +282,7 @@ const generateInvoiceContent = (booking) => {
                 </div>
             </div>
             <div class="notes-item">
-                <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.total_payment || 0)} RUPEES ONLY</div>
+                <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.grand_total || 0)} RUPEES ONLY</div>
             </div>
             </div>
         </div>
@@ -348,8 +330,12 @@ const numberToWords = (num) => {
 const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomTypes }) => {
     const [bookingType, setBookingType] = useState('room');
     const [roomType, setRoomType] = useState('');
-    const [values, setValues] = useState([new DateObject(), new DateObject().add(1, 'days')]);
     const [filterApplied, setFilterApplied] = useState(false);
+    const [errors, setErrors] = useState({
+        date: '',
+        persons: '',
+    });
+
     const [initialAdults] = useState(adults);
     const [open, setOpen] = useState(false);
     const anchorRef = useRef(null);
@@ -357,8 +343,8 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
 
     const [range, setRange] = useState([
         {
-            startDate: undefined,
-            endDate: undefined,
+            startDate: null,
+            endDate: null,
             key: 'selection',
         },
     ]);
@@ -377,24 +363,46 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
     }, []);
 
     const handleSearch = () => {
-        const checkin = values[0]?.format?.('YYYY-MM-DD');
-        const checkout = values[1]?.format?.('YYYY-MM-DD');
+        const checkin = range[0]?.startDate;
+        const checkout = range[0]?.endDate;
+
+        const newErrors = {
+            date: '',
+            persons: '',
+        };
+
+        let hasError = false;
+
+        if (!checkin || !checkout) {
+            newErrors.date = 'Please select both check-in and check-out dates.';
+            hasError = true;
+        }
+
+        if (adults <= 0) {
+            newErrors.persons = 'Please enter at least 1 person.';
+            hasError = true;
+        }
+
+        setErrors(newErrors);
+
+        if (hasError) return;
 
         const payload = {
             bookingType,
-            checkin,
-            checkout,
+            checkin: checkin.toLocaleDateString('en-CA'),
+            checkout: checkout.toLocaleDateString('en-CA'),
             persons: adults,
         };
 
-        onSearch(payload); // roomType removed
+        onSearch(payload);
         setFilterApplied(true);
     };
 
     const handleClear = () => {
         setBookingType('room');
+        setErrors({ date: '', persons: '' });
         setRoomType('');
-        setValues([new DateObject(), new DateObject().add(1, 'days')]);
+        setRange([]);
         setAdults(initialAdults);
         setFilterApplied(false);
         clearFilter(false);
@@ -411,21 +419,12 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
             <div
                 style={{
                     display: 'grid',
-                    gridTemplateColumns: '200px 1fr 1fr 120px 60px',
+                    gridTemplateColumns: '1fr 1fr 120px 60px',
                     gap: '6px',
                     alignItems: 'center',
                     marginBottom: '10px',
                 }}
             >
-                {/* Booking Type */}
-                <FormControl>
-                    <InputLabel id="booking-label">Booking Type</InputLabel>
-                    <Select labelId="booking-label" id="booking-select" value={bookingType} label="Booking Type" onChange={(e) => setBookingType(e.target.value)}>
-                        <MenuItem value="room">Room</MenuItem>
-                        <MenuItem value="event">Event</MenuItem>
-                    </Select>
-                </FormControl>
-
                 {/* Calendar Range */}
                 <Box
                     style={{
@@ -434,54 +433,69 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
                         padding: '5px',
                         borderRadius: '4px',
                         marginRight: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
                     }}
                 >
-                    <span>📅</span>
-                    <div className="date-range" style={{ width: '100%' }}>
-                        <Box>
-                            <Button ref={anchorRef} onClick={handleClick} variant="outlined">
-                                {displayText}
-                            </Button>
-
-                            <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
-                                <Box ref={popperRef} sx={{ bgcolor: 'background.paper', p: 2, zIndex: 1300 }}>
-                                    <DateRange editableDateInputs={true} onChange={(item) => setRange([item.selection])} moveRangeOnFirstSelection={false} ranges={range} months={2} showSelectionPreview={false} showDateDisplay={false} direction="horizontal" />
+                    <Box
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                        }}
+                    >
+                        <span>📅</span>
+                        <div className="date-range" style={{ width: '100%' }}>
+                            <Box>
+                                <Box>
+                                    <Button ref={anchorRef} onClick={handleClick} variant="outlined">
+                                        {displayText}
+                                    </Button>
                                 </Box>
-                            </Popper>
-                        </Box>
-                    </div>
+
+                                <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
+                                    <Box ref={popperRef} sx={{ bgcolor: 'background.paper', p: 2, zIndex: 1300 }}>
+                                        <DateRange editableDateInputs={true} onChange={(item) => setRange([item.selection])} moveRangeOnFirstSelection={false} ranges={range} months={2} showSelectionPreview={false} showDateDisplay={false} direction="horizontal" />
+                                    </Box>
+                                </Popper>
+                            </Box>
+                        </div>
+                    </Box>
+                    {errors.date && (
+                        <Typography color="error" variant="caption" sx={{ ml: 1, display: 'block' }}>
+                            {errors.date}
+                        </Typography>
+                    )}
                 </Box>
 
                 {/* Persons Input */}
-                <div
-                    style={{
-                        flex: '1',
-                        backgroundColor: '#fff',
-                        padding: '5px 10px',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                    }}
-                >
-                    <span>👤</span>
-                    <span style={{ whiteSpace: 'nowrap' }}>Total Person:</span>
-                    <input
-                        type="number"
-                        min="0"
-                        value={adults}
-                        onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
+                <div style={{ flex: '1', backgroundColor: '#fff', padding: '5px 10px', borderRadius: '4px' }}>
+                    <div
                         style={{
-                            width: '80px',
-                            padding: '5px 8px',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
                         }}
-                        placeholder="0"
-                    />
+                    >
+                        <span>👤</span>
+                        <span style={{ whiteSpace: 'nowrap' }}>Total Person:</span>
+                        <input
+                            type="number"
+                            min="0"
+                            value={adults}
+                            onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
+                            style={{
+                                width: '100%',
+                                padding: '5px 8px',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                            }}
+                            placeholder="0"
+                        />
+                    </div>
+                    {errors.persons && (
+                        <Typography color="error" variant="caption" sx={{ ml: 1 }}>
+                            {errors.persons}
+                        </Typography>
+                    )}
                 </div>
 
                 {/* Search Button */}
@@ -545,10 +559,12 @@ const BookingDashboard = ({ data, roomTypes }) => {
     const handleSearch = async (searchParams) => {
         setLoading(true);
         try {
-            const response = await axios.get(route('booking.search'), {
+            const response = await axios.get(route('rooms.booking.search'), {
                 params: searchParams,
             });
             setBookingType(searchParams.bookingType);
+            console.log(searchParams.checkin, searchParams.checkout);
+
             setCheckIn(searchParams.checkin);
             setCheckOut(searchParams.checkout);
             setSearchResultsFilter(true);
@@ -580,7 +596,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                         </Row>
 
                         <Row className="mb-4">
-                            <Col md={4}>
+                            <Col md={6}>
                                 <Card
                                     style={{
                                         backgroundColor: '#063455',
@@ -630,7 +646,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                 </Card>
                             </Col>
 
-                            <Col md={4}>
+                            <Col md={6}>
                                 <Card
                                     style={{
                                         backgroundColor: '#063455',
@@ -688,57 +704,6 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                     </Card.Body>
                                 </Card>
                             </Col>
-
-                            <Col md={4}>
-                                <Card
-                                    style={{
-                                        backgroundColor: '#063455',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '2px',
-                                        height: '150px',
-                                    }}
-                                >
-                                    <Card.Body
-                                        className="px-3 py-2"
-                                        style={{
-                                            height: '100%',
-                                        }}
-                                    >
-                                        <Box className="d-flex align-items-center gap-3">
-                                            <Box
-                                                sx={{
-                                                    backgroundColor: '#202728',
-                                                    borderRadius: '50%',
-                                                    width: '48px',
-                                                    height: '48px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                }}
-                                            >
-                                                <img
-                                                    src="/assets/check.png"
-                                                    alt=""
-                                                    style={{
-                                                        width: '25px',
-                                                        height: '25px',
-                                                    }}
-                                                />
-                                            </Box>
-                                            <Box>
-                                                <Typography sx={{ color: '#C6C6C6', fontSize: '14px' }}>Total Event Booking</Typography>
-                                                <Typography variant="h5" className="m-0">
-                                                    {data?.totalEventBookings || 0}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        <hr className="border-top" style={{ marginTop: 13 }} />
-                                        <Typography sx={{ color: '#C6C6C6', fontSize: '12px' }}>Available Event</Typography>
-                                        <Typography variant="h6">{data?.availableEventsToday || 0}</Typography>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
                         </Row>
 
                         <Row className="mb-4 align-items-center">
@@ -758,7 +723,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                 </Button>
                                 {/* TODO: Optional - Keep print button if needed during testing */}
                                 <Button
-                                    variant="primary"
+                                    style={{ backgroundColor: '#003366', color: 'white' }}
                                     onClick={() => {
                                         const printWindow = window.open('', '_blank');
                                         printWindow.document.write(`${generateInvoiceContent(selectedBooking)}`);
@@ -770,7 +735,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                         }, 250);
                                     }}
                                 >
-                                    Save in PDF
+                                    Print
                                 </Button>
                             </Modal.Footer>
                         </Modal>
@@ -834,7 +799,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
 
                                 {!searchResultsFilter && data.bookingsData.length > 0 ? (
                                     data.bookingsData.map((booking, index) => {
-                                        const durationInDays = dayjs(booking.checkout).diff(dayjs(booking.checkin), 'day');
+                                        const durationInDays = dayjs(booking.check_in_date).diff(dayjs(booking.check_out_date), 'day');
 
                                         return (
                                             <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handleShowInvoice(booking)}>
@@ -855,7 +820,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                                 <div>
                                                                     <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}</Typography>
                                                                     <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
-                                                                        Created on {booking.checkin}
+                                                                        Created on {booking.booking_date}
                                                                     </Typography>
                                                                 </div>
                                                                 <Badge
@@ -883,7 +848,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                                         Booking ID
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        # {booking.booking_id}
+                                                                        # {booking.booking_no}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={4} sm={6} className="mb-2">
@@ -891,15 +856,15 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                                         Duration
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? durationInDays + ' Days' : booking.checkin}
+                                                                        {durationInDays}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
                                                                     <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? 'Room' : 'Event'}
+                                                                        Room
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable?.name : booking.typeable?.event_name}
+                                                                        {booking.room?.name}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
@@ -907,7 +872,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                                         {booking.booking_type === 'room' ? 'Price Per Night' : 'Price Per Person'}
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.booking_type === 'room' ? booking.typeable?.price_per_night : booking.typeable?.price_per_person}
+                                                                        {booking.per_day_charge}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">
@@ -915,7 +880,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                                         Total Payment
                                                                     </Typography>
                                                                     <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                        {booking.total_payment}
+                                                                        {booking.grand_total}
                                                                     </Typography>
                                                                 </Col>
                                                                 <Col md={2} sm={6} className="mb-2">

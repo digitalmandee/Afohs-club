@@ -9,9 +9,9 @@ class Member extends Model
     protected $fillable = [
         'user_id',
         'application_no',
-        // 'primary_member_id', // Added
         'member_type_id',
         'member_category_id',
+        'family_suffix',
         'full_name',
         'relation',
         'cnic',
@@ -39,17 +39,15 @@ class Member extends Model
 
     public static function generateNextMembershipNumber(): string
     {
-        $year = now()->format('y');
-        $lastNumber = self::where('membership_no', 'like', '%-' . $year)
-            ->orderBy('id', 'desc')
+        $lastNumber = self::orderBy('id', 'desc')
             ->pluck('membership_no')
             ->map(function ($number) {
                 return (int) explode('-', $number)[0];
             })
             ->max() ?? 0;
 
-        $newSerial = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        return "$newSerial-$year";
+        $newSerial = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+        return $newSerial;
     }
 
     public static function generateNextApplicationNo(): string

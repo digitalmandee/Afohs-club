@@ -15,7 +15,7 @@ import SubscriptionFilter from './Filter';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MonthlyFee = () => {
+const MonthlyFee = ({ subscriptions, totalSubscriptions, collectedFee, pendingFee }) => {
     // Modal state
     const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
@@ -48,63 +48,7 @@ const MonthlyFee = () => {
         handleOpenModal(member, event, 'details');
     };
 
-    const members = [
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            month: "Apr-2025",
-            fee: "5000",
-            status: "Active",
-            date: 'Apr-09-2025',
-            action: 'View Invoice'
-        },
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            month: "Apr-2025",
-            fee: "5000",
-            status: "Active",
-            date: 'Apr-09-2025',
-            action: 'View Invoice'
-        },
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            month: "Apr-2025",
-            fee: "5000",
-            status: "Active",
-            date: 'Apr-09-2025',
-            action: 'View Invoice'
-        },
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            month: "Apr-2025",
-            fee: "5000",
-            status: "Active",
-            date: 'Apr-09-2025',
-            action: 'View Invoice'
-        },
-        {
-            user_id: "AFOHS-1235",
-            member: "Zahid Ullah",
-            category: "GYM",
-            type: "Monthly",
-            month: "Apr-2025",
-            fee: "5000",
-            status: "Active",
-            date: 'Apr-09-2025',
-            action: 'View Invoice'
-        },
-    ]
+    const members = [];
 
     return (
         <>
@@ -144,9 +88,9 @@ const MonthlyFee = () => {
                         }}
                     >
                         {[
-                            { title: 'Total Subscriptions', value: 400, icon: PeopleIcon },
-                            { title: 'Collect Fee', value: 20934, image: '/assets/ticks.png' },
-                            { title: 'Pending Fee', value: 8735, image: '/assets/cross.png' },
+                            { title: 'Total Subscriptions', value: totalSubscriptions, icon: PeopleIcon },
+                            { title: 'Collect Fee', value: collectedFee, image: '/assets/ticks.png' },
+                            { title: 'Pending Fee', value: pendingFee, image: '/assets/cross.png' },
                         ].map((item, index) => (
                             <div key={index} style={{ flex: 1 }}>
                                 <Card
@@ -216,7 +160,7 @@ const MonthlyFee = () => {
                                         color: '#333',
                                         textTransform: 'none',
                                         backgroundColor: 'transparent',
-                                        marginRight: 10
+                                        marginRight: 10,
                                     }}
                                     onClick={() => {
                                         setOpenFilterModal(true); // open the modal
@@ -264,7 +208,6 @@ const MonthlyFee = () => {
                                                     {/* <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.first_name} style={{ marginRight: '10px' }} /> */}
                                                     <div>
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.member}</Typography>
-
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -272,35 +215,34 @@ const MonthlyFee = () => {
                                             <TableCell>
                                                 <span
                                                     style={{
-                                                        color: '#7F7F7F', fontWeight: 400, fontSize: '14px'
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
                                                     }}
                                                     onClick={(e) => showMemberDetails(user, e)}
                                                 >
                                                     {member.type}
                                                 </span>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                {member.month}
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                {member.fee}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.month}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.fee}</TableCell>
                                             <TableCell>
-
-                                                <span style={{
-                                                    color: member.status === 'Active' ? '#178F6F' : '#F14C35'
-                                                }}>
+                                                <span
+                                                    style={{
+                                                        color: member.status === 'Active' ? '#178F6F' : '#F14C35',
+                                                    }}
+                                                >
                                                     {member.status}
                                                 </span>
                                             </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.date}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                {member.date}
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                <span style={{
-                                                    textDecoration:'underline',
-                                                    color:'#0C67AA'
-                                                }}>
+                                                <span
+                                                    style={{
+                                                        textDecoration: 'underline',
+                                                        color: '#0C67AA',
+                                                    }}
+                                                >
                                                     {member.action}
                                                 </span>
                                             </TableCell>

@@ -330,7 +330,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Passport No
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="user_details.passport_no" value={data.user_details.passport_no} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="user_details.passport_no" value={data.user_details.passport_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Gender */}

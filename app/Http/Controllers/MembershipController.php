@@ -221,6 +221,7 @@ class MembershipController extends Controller
                     Member::create([
                         'user_id' => $familyUser->id,
                         'application_no' => Member::generateNextApplicationNo(),
+                        'family_suffix' => $familyMemberData['family_suffix'],
                         'card_status' => $request->member['card_status'],
                         'start_date' => $familyMemberData['start_date'] ?? null,
                         'end_date' => $familyMemberData['end_date'] ?? null,

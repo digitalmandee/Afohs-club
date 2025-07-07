@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
+use App\Http\Controllers\App\SubscriptionTypeController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MembershipController;
@@ -14,11 +15,18 @@ use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\EventBookingController;
+use App\Http\Controllers\EventMenuAddOnsController;
+use App\Http\Controllers\EventMenuCategoryController;
+use App\Http\Controllers\EventMenuTypeController;
+use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\RoomBookingController;
 use App\Http\Controllers\RoomCategoryController;
 use App\Http\Controllers\RoomChargesTypeController;
 use App\Http\Controllers\RoomMiniBarController;
 use App\Http\Controllers\RoomTypeController;
+use App\Http\Controllers\SubscriptionCategoryController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -98,11 +106,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('room-categories', RoomCategoryController::class)->except(['create', 'edit', 'show']);
         Route::resource('room-charges-type', RoomChargesTypeController::class)->except(['create', 'edit', 'show']);
         Route::resource('room-minibar', RoomMiniBarController::class)->except(['create', 'edit', 'show']);
+
+        // Event Routes
+        Route::get('events/dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
+        Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-menu-category', EventMenuCategoryController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-menu-type', EventMenuTypeController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-menu-addon', EventMenuAddOnsController::class)->except(['create', 'edit', 'show']);
     });
 
-    // Route::get('/events/dashboard', function () {
-    //         return Inertia::render('App/Admin/Booking/EventManage');
-    //     })->name('events.manage');
 
     //Admin Events Booking Routes
     Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
@@ -125,11 +137,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
     Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
     Route::get('/booking/new', [BookingController::class, 'booking'])->name('rooms.booking');
+    Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
-    Route::post('/room/booking', [BookingController::class, 'store'])->name('rooms.booking.store');
+    Route::post('/room/booking', [RoomBookingController::class, 'store'])->name('rooms.booking.store');
+    Route::get('/room/booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar');
+    Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar');
 
+    // Search
+    Route::get('/admin/api/search-users', [BookingController::class, 'searchUsers'])->name('admin.api.search-users');
     // Booking Search
-    Route::get('/booking/search', [BookingController::class, 'search'])->name('booking.search');
+    Route::get('/booking/search', [BookingController::class, 'search'])->name('rooms.booking.search');
 
 
     Route::get('/booking/details', function () {
@@ -236,8 +253,21 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/admin/subscription/payment/store', [SubscriptionController::class, 'paymentStore'])->name('subscriptions.payment.store');
     Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
     Route::post('/admin/subscription/store', [SubscriptionController::class, 'store'])->name('subscriptions.store');
-
     Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
+    // Subscription categories
+    Route::resource('/admin/subscription/subscription-categories', SubscriptionCategoryController::class)->except('show');
+    // Subscription types
+    Route::get('admin/subscription/subscription-types', [SubscriptionTypeController::class, 'index'])->name('subscription-types.index');
+    Route::post('admin/subscription/subscription-types/store', [SubscriptionTypeController::class, 'store'])->name('subscription-types.store');
+    Route::post('admin/subscription/subscription-types/{id}/update2', [SubscriptionTypeController::class, 'update'])->name('subscription-types.update2');
+    Route::delete('admin/subscription/subscription-types/{id}/delete', [SubscriptionTypeController::class, 'destroy'])->name('subscription-types.destroy');
+
+
+    Route::get('/api/customers/search', [SubscriptionController::class, 'search']);
+    Route::get('/api/unpaid-invoices/{user}', [SubscriptionController::class, 'unpaidInvoices']);
+    Route::post('/api/pay-invoice/{invoice}', [SubscriptionController::class, 'payInvoice']);
+
+
 
 
     //Financial Routes
@@ -250,17 +280,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.addtransaction');
 
 
-    Route::get('/admin/manage/monthly/fee', function () {
-        return Inertia::render('App/Admin/Subscription/Monthly');
-    })->name('subscription.monthly');
+    Route::get('/admin/manage/monthly/fee', [SubscriptionController::class, 'monthlyFee'])->name('subscription.monthly');
 
-    Route::get('/admin/subscription/sports/category', function () {
-        return Inertia::render('App/Admin/Subscription/Sports');
-    })->name('subscription.sports');
+    // Route::get('/admin/subscription/sports/category', function () {
+    //     return Inertia::render('App/Admin/Subscription/Sports');
+    // })->name('subscription.sports');
 
-    Route::get('/admin/subscription/add/sports/category', function () {
-        return Inertia::render('App/Admin/Subscription/AddSports');
-    })->name('subscription.addsports');
+    // Route::get('/admin/subscription/add/sports/category', function () {
+    //     return Inertia::render('App/Admin/Subscription/AddSports');
+    // })->name('subscription.addsports');
 
     //Kitchen Routes
     Route::get('/kitchen/category/dashboard', function () {

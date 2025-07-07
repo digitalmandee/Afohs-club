@@ -21,7 +21,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoomCategorySeeder::class,
             RoomTypeSeeder::class,
+            RoomOtherChargesSeeder::class,
             RoomSeeder::class,
+            SubscriptionSeeder::class,
             MemberTypeSeeder::class,
             PermissionsDatabaseSeeder::class,
             RestuarantDatabaseSeeder::class,

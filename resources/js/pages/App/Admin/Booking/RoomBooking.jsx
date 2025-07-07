@@ -1,17 +1,22 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Container, Button, Form, InputGroup, Modal, Card, Row, Col } from 'react-bootstrap';
-import { ArrowBack, CheckCircle, Add, Remove, Print, CreditCard, EventNote, AccountBalance, KeyboardArrowRight, Check } from '@mui/icons-material';
-import { IconButton, Divider, Box, Autocomplete, TextField, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Button } from 'react-bootstrap';
+import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, IconButton, Select, MenuItem, FormControl } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import { differenceInCalendarDays } from 'date-fns';
+import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
-import { enqueueSnackbar } from 'notistack';
+import { objectToFormData } from '@/helpers/objectToFormData';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const RoomBooking = ({ booking, invoice, next_booking_id }) => {
+const steps = ['Booking Details', 'Room Selection', 'Charges', 'Upload'];
+
+const RoomBooking = ({ room, bookingNo, roomCategories }) => {
     // Access query parameters
     const { props } = usePage();
     const urlParams = new URLSearchParams(window.location.search);
@@ -20,260 +25,155 @@ const RoomBooking = ({ booking, invoice, next_booking_id }) => {
 
     // Main state for booking type
     const [open, setOpen] = useState(false);
-    const [bookingType, setBookingType] = useState(initialBookingType);
-
-    const [currentStep, setCurrentStep] = useState(urlParamsObject?.invoice_no ? 2 : 1);
-    const [paymentMethod, setPaymentMethod] = useState('cash');
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-    const [searchLoading, setSearchLoading] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [members, setMembers] = useState([]);
-
-    // Form data states
+    const [activeStep, setActiveStep] = useState(0);
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
-        customer: {},
-        bookingId: next_booking_id,
-        memberId: '',
-        fullName: '',
-        contactNumber: '',
+        bookingNo: bookingNo || '',
+        bookingDate: new Date().toISOString().split('T')[0],
+        checkInDate: urlParamsObject?.checkin || '',
+        checkOutDate: urlParamsObject?.checkout || '',
+        persons: urlParamsObject?.persons || '',
+        arrivalDetails: '',
+        departureDetails: '',
+        bookingType: 'Member',
+        guest: '',
+        familyMember: '',
+        room: room || '',
+        bookingCategory: '',
+        perDayCharge: '',
+        nights: '',
+        roomCharge: '',
+        securityDeposit: '',
+        bookedBy: '',
+        guestFirstName: '',
+        guestLastName: '',
+        company: '',
+        address: '',
+        country: '',
+        city: '',
+        mobile: '',
         email: '',
-        // roomCount: 0,
-        personCount: urlParamsObject?.persons || 0,
-        totalPayment: '',
-        eventName: booking?.event_name || '',
-        eventDate: booking?.date_time ? booking.date_time.split(' ')[0] : '',
-        eventTime: booking?.date_time ? booking.date_time.split(' ')[1] : '',
-        eventGuests: 0,
-        cashAmount: '',
-        customerChange: 0,
-        bankName: 'Sea Bank',
-        accountNumber: '',
-        accountName: '',
+        cnic: '',
+        guestRelation: '',
+        accompaniedGuest: '',
+        discountType: 'fixed',
+        discount: '',
+        totalOtherCharges: '',
+        totalMiniBar: '',
+        grandTotal: '',
+        mini_bar_items: [{ item: '', amount: '', qty: '', total: '' }],
+        other_charges: [{ type: '', details: '', amount: '', is_complementary: false }],
+        documents: [],
+        previewFiles: [],
         notes: '',
-        bookingFor: 'mainGuest',
-        checkin: urlParamsObject?.checkin || '',
-        checkout: urlParamsObject?.checkout || '',
     });
 
-    const [invoiceForm, setInvoiceForm] = useState({
-        user_id: invoice?.customer?.id,
-        inputAmount: invoice?.total_price?.toString() || '0',
-        customerCharges: '0.00',
-        paymentMethod: 'cash',
-        receipt: null,
-    });
+    const handleNext = () => {
+        const newErrors = {};
 
-    useEffect(() => {
-        const nights = (new Date(formData.checkout) - new Date(formData.checkin)) / (1000 * 60 * 60 * 24);
-
-        setFormData((prev) => ({
-            ...prev,
-            totalPayment: urlParamsObject?.type === 'room' ? booking?.price_per_night * nights : booking?.price_per_person * formData.personCount,
-        }));
-    }, [formData.checkout, formData.checkin]);
-
-    const searchUser = useCallback(async (query) => {
-        if (!query) return []; // Don't make a request if the query is empty.
-        setSearchLoading(true);
-        try {
-            const response = await axios.get(route('membership.filter'), {
-                params: { query },
-            });
-            setMembers(response.data.results);
-        } catch (error) {
-            console.error('Error fetching search results:', error);
-            return [];
-        } finally {
-            setSearchLoading(false);
+        // Step 0: Booking Details
+        if (activeStep === 0) {
+            if (!formData.guest || Object.keys(formData.guest).length === 0) {
+                newErrors.guest = 'Member is required';
+            }
         }
-    }, []);
 
-    const handleSearch = async (event) => {
-        const query = event?.target?.value;
-        if (query) {
-            await searchUser(query);
-        } else {
-            setMembers([]);
+        // Step 1: Room Selection
+        if (activeStep === 1) {
+            if (!formData.bookingCategory) {
+                newErrors.bookingCategory = 'Booking category is required';
+            }
         }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        setErrors({});
+        setActiveStep((prev) => prev + 1);
     };
 
-    const handleSearchChange = (event, value) => {
-        setFormData((prev) => ({
-            ...prev,
-            fullName: [value?.first_name, value?.middle_name, value?.last_name].filter(Boolean).join(' ') || '',
-            email: value?.email || '',
-            contactNumber: value?.phone_number || '',
-            customer: value || {},
-        }));
-    };
+    const handleBack = () => setActiveStep((prev) => prev - 1);
 
-    // Handle payment method selection
-    const handlePaymentMethodSelect = (method) => {
-        setPaymentMethod(method);
-    };
-
-    // Handle form input changes
-    const handleInputChange = (e) => {
+    const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setFormData((prev) => ({
+            ...prev,
+            documents: [...(prev.documents || []), ...files],
+            previewFiles: [...(prev.previewFiles || []), ...files],
+        }));
+    };
+
+    const handleFileRemove = (index) => {
+        setFormData((prev) => {
+            const updatedFiles = [...(prev.previewFiles || [])];
+            updatedFiles.splice(index, 1);
+            return {
+                ...prev,
+                previewFiles: updatedFiles,
+                documents: updatedFiles,
+            };
         });
+    };
 
-        // Calculate change if cash amount is entered
-        if (name === 'cashAmount' && formData.totalPayment) {
-            const change = Number.parseFloat(value) - Number.parseFloat(formData.totalPayment);
-            setFormData((prev) => ({
-                ...prev,
-                customerChange: change > 0 ? change : 0,
-            }));
+    const handleSubmit = () => {
+        const newErrors = {};
+
+        // Final validation before submission
+        if (!formData.guest || Object.keys(formData.guest).length === 0) {
+            newErrors.guest = 'Member is required';
         }
-    };
 
-    // Handle room/person count changes
-    const handleCountChange = (field, operation) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: operation === 'add' ? prev[field] + 1 : Math.max(0, prev[field] - 1),
-        }));
-    };
+        if (!formData.bookingCategory) {
+            newErrors.bookingCategory = 'Booking category is required';
+        }
 
-    const [error, setError] = useState('');
+        // Add more validations as needed for other fields...
 
-    const minAmount = parseFloat(invoice?.total_price || 0);
-
-    const handlePaymentChange = (e) => {
-        const { name, value, files } = e.target;
-
-        if (name === 'receipt') {
-            setInvoiceForm((prev) => ({ ...prev, receipt: files[0] }));
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        if (name === 'inputAmount') {
-            let inputValue = parseFloat(value) || 0;
-            inputValue = Math.round(inputValue);
-            const charges = inputValue - Math.round(minAmount);
-            setInvoiceForm((prev) => ({
-                ...prev,
-                inputAmount: inputValue.toString(),
-                customerCharges: charges > 0 ? charges.toString() : '0',
-            }));
-            return;
-        }
+        // Proceed with actual submission
+        const payload = objectToFormData(formData);
 
-        setInvoiceForm((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleQuickAmount = (value) => {
-        setInvoiceForm((prev) => ({ ...prev, inputAmount: value }));
-    };
-
-    const handlePayNow = async (e) => {
-        e.preventDefault();
-
-        const inputAmount = Math.round(invoiceForm.inputAmount || '0');
-
-        if (!invoiceForm.inputAmount || inputAmount <= 0) {
-            setError('Please enter a valid amount.');
-            return;
-        }
-
-        if (inputAmount < minAmount) {
-            setError(`Amount must be at least Rs ${minAmount.toFixed(2)}.`);
-            return;
-        }
-
-        const data = new FormData();
-        data.append('user_id', invoiceForm.user_id);
-        data.append('amount', invoice.amount); // or any other base you need
-        data.append('total_amount', inputAmount);
-        data.append('invoice_no', invoice.invoice_no); // optionally link to invoice
-        data.append('customer_charges', parseFloat(invoiceForm.customerCharges));
-        data.append('payment_method', paymentMethod);
-
-        if (invoiceForm.paymentMethod === 'credit_card' && invoiceForm.receipt) {
-            data.append('receipt', invoiceForm.receipt);
-        }
-
-        try {
-            setLoading(true);
-            const response = await axios.post(route('booking.payment.store'), data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+        setIsSubmitting(true);
+        axios
+            .post(route('rooms.booking.store'), payload)
+            .then((res) => {
+                console.log('Booking submitted successfully');
+                // Redirect or show success
+                router.visit('/booking/dashboard');
+            })
+            .catch((err) => {
+                console.error('Submit error:', err);
+                // Optionally show backend validation errors
+            })
+            .finally(() => {
+                setIsSubmitting(false);
             });
-
-            if (response.status === 200) {
-                setError('');
-                enqueueSnackbar('Payment successful', { variant: 'success' });
-                router.visit(route('rooms.dashboard'));
-            } else {
-                setError('Payment failed: ' + (response.data?.message || 'Please check the form data.'));
-            }
-        } catch (error) {
-            console.log(error);
-            setError('Payment failed: ' + (error.response?.data?.message || 'Please check the form data.'));
-        } finally {
-            setLoading(false);
-        }
     };
 
-    // Handle bank selection
-    const handleBankSelect = (bank) => {
-        setFormData((prev) => ({
-            ...prev,
-            bankName: bank,
-        }));
-    };
-
-    // Handle book now button
-    const handleBookNow = async () => {
-        try {
-            let bookingData = null;
-            if (bookingType === 'room') {
-                bookingData = {
-                    customer: formData.customer,
-                    bookingType: 'room',
-                    bookingTypeId: urlParamsObject.type_id,
-                    bookingFor: formData.bookingFor === 'mainGuest' ? 'main_guest' : 'other',
-                    personCount: formData.personCount,
-                    totalPayment: Math.round(formData.totalPayment) || 0,
-                    checkin: formData.checkin || null,
-                    checkout: formData.checkout || null,
-                };
-            } else {
-                bookingData = {
-                    customer: formData.customer,
-                    bookingType: 'event',
-                    bookingTypeId: urlParamsObject.type_id,
-                    bookingFor: formData.bookingFor === 'mainGuest' ? 'main_guest' : 'other',
-                    personCount: formData.personCount,
-                    totalPayment: Math.round(formData.totalPayment) || 0,
-                    eventName: formData.eventName || null,
-                    eventDate: formData.eventDate || null,
-                    eventTime: formData.eventTime || null,
-                };
-            }
-            setLoading(true);
-
-            const response = await axios.post(route('rooms.booking.store'), bookingData);
-            router.visit(route('rooms.booking', { invoice_no: response.data.invoice_no }));
-            setCurrentStep(2);
-            setShowSuccessModal(true);
-        } catch (error) {
-            console.error('Error saving booking:', error);
-            alert('Failed to save booking. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Handle back button
-    const handleBack = () => {
-        if (currentStep === 2) {
-            setCurrentStep(1);
+    const renderStepContent = (step) => {
+        switch (step) {
+            case 0:
+                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} />;
+            case 1:
+                return <RoomSelection formData={formData} handleChange={handleChange} errors={errors} />;
+            case 2:
+                return <ChargesInfo formData={formData} handleChange={handleChange} />;
+            case 3:
+                return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleFileRemove={handleFileRemove} />;
+            default:
+                return <Typography>Step not implemented yet</Typography>;
         }
     };
 
@@ -293,7 +193,7 @@ const RoomBooking = ({ booking, invoice, next_booking_id }) => {
                         <ArrowBack />
                     </IconButton>
                     <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
-                        {currentStep === 1 ? (bookingType === 'room' ? 'Room Booking' : 'Event Booking') : paymentMethod === 'cash' ? 'Cash Payment' : 'Bank Payment'}
+                        Room Booking
                     </h2>
                 </Box>
 
@@ -305,768 +205,38 @@ const RoomBooking = ({ booking, invoice, next_booking_id }) => {
                         marginTop: 5,
                     }}
                 >
-                    <div
-                        className="mx-4 mb-4 p-3"
-                        style={{
-                            backgroundColor: '#E7E7E7',
-                            borderRadius: '2px',
-                        }}
-                    >
-                        <div className="d-flex align-items-center justify-content-center position-relative">
-                            {/* Line */}
-                            <div
-                                className="position-absolute"
-                                style={{
-                                    height: '2px',
-                                    backgroundColor: '#FFFFFF',
-                                    width: '300px',
-                                    top: '50%',
-                                    zIndex: 1,
-                                }}
-                            ></div>
-
-                            {/* Step 1 */}
-                            <div className="d-flex align-items-center position-relative" style={{ zIndex: 2 }}>
-                                <div className={`rounded-circle d-flex align-items-center justify-content-center ${currentStep >= 1 ? 'bg-dark text-white' : 'bg-light text-dark border'}`} style={{ width: '32px', height: '32px', border: currentStep >= 1 ? 'none' : '1px solid #dee2e6' }}>
-                                    {currentStep > 1 ? <Check style={{ fontSize: '18px' }} /> : '1'}
-                                </div>
-                                <span
-                                    className="ms-2 small"
-                                    style={{
-                                        color: '#121212',
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    First Step
-                                </span>
-                            </div>
-
-                            {/* Spacer */}
-                            <div className="flex-grow-1"></div>
-
-                            {/* Step 2 */}
-                            <div className="d-flex align-items-center position-relative" style={{ zIndex: 2 }}>
-                                <div className={`rounded-circle d-flex align-items-center justify-content-center ${currentStep >= 2 ? 'bg-dark text-white' : 'bg-light text-dark border'}`} style={{ width: '32px', height: '32px', border: currentStep >= 2 ? 'none' : '1px solid #dee2e6' }}>
-                                    2
-                                </div>
-                                <span
-                                    className="ms-2 small"
-                                    style={{
-                                        color: '#121212',
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    Final Step
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
+                    <Box sx={{ px: 4 }}>
+                        <Stepper
+                            activeStep={activeStep}
+                            sx={{
+                                '& .MuiStepIcon-root.Mui-active': {
+                                    color: '#063455',
+                                },
+                                '& .MuiStepIcon-root.Mui-completed': {
+                                    color: 'gray',
+                                },
+                            }}
+                        >
+                            {steps.map((label) => (
+                                <Step key={label}>
+                                    <StepLabel>{label}</StepLabel>
+                                </Step>
+                            ))}
+                        </Stepper>
+                    </Box>
                     {/* Main Content */}
-                    <div className="mx-4 mb-4 p-4 bg-white rounded border">
-                        {currentStep === 1 && (
-                            <>
-                                <h6
-                                    className="mb-4"
-                                    style={{
-                                        color: '#121212',
-                                        fontSize: '16px',
-                                    }}
-                                >
-                                    Booking Type : {bookingType === 'room' ? 'Room' : 'Event'}
-                                </h6>
-
-                                <Form>
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={6}>
-                                            <Form.Group>
-                                                <Form.Label>Booking No.</Form.Label>
-                                                <Form.Control type="text" name="bookingNo" value={formData.bookingId} readOnly />
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={6}>
-                                            <Form.Group>
-                                                <Form.Label>Booking Date</Form.Label>
-                                                <Form.Control type="date" name="bookingDate" value={formData.bookingDate} onChange={handleInputChange} />
-                                            </Form.Group>
-                                        </Col>
-                                    </Row>
-
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Booking Type</Form.Label>
-                                        <div className="d-flex gap-3 flex-wrap">
-                                            {['Member', 'Corporate Member', 'Applied Member', 'Affiliated Member', 'VIP Guest'].map((type) => (
-                                                <Form.Check inline key={type} label={type} type="radio" name="bookingType" value={type} checked={formData.bookingType === type} onChange={handleInputChange} />
-                                            ))}
-                                        </div>
-                                    </Form.Group>
-
-                                    {/* Billing Info */}
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={6}>
-                                            <Form.Group>
-                                                <Form.Label>Member / Guest Name</Form.Label>
-                                                <Form.Control type="text" name="guestName" value={formData.guestName} onChange={handleInputChange} />
-                                            </Form.Group>
-                                        </Col>
-                                    </Row>
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={4}>
-                                            <Form.Control placeholder="Member #" name="memberId" value={formData.memberId} onChange={handleInputChange} />
-                                        </Col>
-                                        <Col md={4}>
-                                            <Form.Control placeholder="Corporate Mem #" name="corporateMemId" value={formData.corporateMemId} onChange={handleInputChange} />
-                                        </Col>
-                                        <Col md={4}>
-                                            <Form.Control placeholder="Guest No." name="guestNo" value={formData.guestNo} onChange={handleInputChange} />
-                                        </Col>
-                                    </Row>
-
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Address</Form.Label>
-                                        <Form.Control type="text" name="address" value={formData.address} onChange={handleInputChange} />
-                                    </Form.Group>
-
-                                    {/* Room Booking Info */}
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={6}>
-                                            <Form.Label>Room</Form.Label>
-                                            <Form.Select name="room" value={formData.room} onChange={handleInputChange}>
-                                                <option>Select a Room</option>
-                                                {/* map room options here */}
-                                            </Form.Select>
-                                        </Col>
-                                        <Col md={6}>
-                                            <Form.Label>Booking Category</Form.Label>
-                                            <Form.Select name="category" value={formData.category} onChange={handleInputChange}>
-                                                <option>Armed Forces Member</option>
-                                                {/* more categories */}
-                                            </Form.Select>
-                                        </Col>
-                                    </Row>
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={4}>
-                                            <Form.Label>Per Day Room Charges</Form.Label>
-                                            <Form.Control type="text" name="perDayCharges" value={formData.perDayCharges} />
-                                        </Col>
-                                        <Col md={4}>
-                                            <Form.Label>No. of Nights</Form.Label>
-                                            <Form.Control type="number" name="nights" value={formData.nights} />
-                                        </Col>
-                                        <Col md={4}>
-                                            <Form.Label>Total Room Charges</Form.Label>
-                                            <Form.Control type="text" value={formData.totalRoomCharges} readOnly />
-                                        </Col>
-                                    </Row>
-
-                                    {/* Other Charges */}
-
-                                    <h5 className="mt-4">Other Charges</h5>
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={3}>
-                                            <Form.Select name="otherChargeType" onChange={handleInputChange}>
-                                                <option>Select a Charges Type</option>
-                                                {/* options */}
-                                            </Form.Select>
-                                        </Col>
-                                        <Col md={4}>
-                                            <Form.Control type="text" name="otherBillDetails" placeholder="Bill Details" onChange={handleInputChange} />
-                                        </Col>
-                                        <Col md={3}>
-                                            <Form.Control type="number" name="otherChargesAmount" placeholder="Charges Amount" onChange={handleInputChange} />
-                                        </Col>
-                                        <Col md={1} className="d-flex align-items-center">
-                                            <Form.Check label="Complementary" name="isComplementary" onChange={handleInputChange} />
-                                        </Col>
-                                    </Row>
-
-                                    <h5>Mini Bar</h5>
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={4}>
-                                            <Form.Select name="miniBarItem">
-                                                <option>Select Item</option>
-                                                {/* items */}
-                                            </Form.Select>
-                                        </Col>
-                                        <Col md={2}>
-                                            <Form.Control placeholder="Amount" />
-                                        </Col>
-                                        <Col md={2}>
-                                            <Form.Control placeholder="Qty" />
-                                        </Col>
-                                        <Col md={2}>
-                                            <Form.Control placeholder="Total" readOnly />
-                                        </Col>
-                                        <Col md={2}>
-                                            <Button>Add</Button>
-                                        </Col>
-                                    </Row>
-
-                                    {/* Occupied Guests */}
-
-                                    <h5 className="mt-4">Occupied Guest Information</h5>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Booked By</Form.Label>
-                                        <Form.Control name="bookedBy" onChange={handleInputChange} />
-                                    </Form.Group>
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={6}>
-                                            <Form.Control placeholder="Guest First Name" name="guestFirstName" onChange={handleInputChange} />
-                                        </Col>
-                                        <Col md={6}>
-                                            <Form.Control placeholder="Father/Husband Name" name="guestLastName" onChange={handleInputChange} />
-                                        </Col>
-                                    </Row>
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={6}>
-                                            <Form.Control placeholder="Company / Institution" name="institution" onChange={handleInputChange} />
-                                        </Col>
-                                        <Col md={6}>
-                                            <Form.Control placeholder="Address" name="guestAddress" onChange={handleInputChange} />
-                                        </Col>
-                                    </Row>
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={4}>
-                                            <Form.Control placeholder="Country" name="country" />
-                                        </Col>
-                                        <Col md={4}>
-                                            <Form.Control placeholder="City" name="city" />
-                                        </Col>
-                                        <Col md={4}>
-                                            <Form.Control placeholder="Mobile" name="mobile" />
-                                        </Col>
-                                    </Row>
-
-                                    <Form.Control placeholder="Email" name="email" className="mb-3" />
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={6} className="mb-3 mb-md-0">
-                                            <Form.Group>
-                                                <Form.Label
-                                                    className="small"
-                                                    style={{
-                                                        color: '#121212',
-                                                        fontSize: '14px',
-                                                        fontWeight: 400,
-                                                    }}
-                                                >
-                                                    Members ID
-                                                </Form.Label>
-
-                                                <Autocomplete
-                                                    fullWidth
-                                                    freeSolo
-                                                    size="small"
-                                                    options={members}
-                                                    value={formData.customer}
-                                                    name="customer"
-                                                    loading={searchLoading}
-                                                    getOptionLabel={(option) => option?.user_id || ''}
-                                                    isOptionEqualToValue={(option, value) => option?.user_id === value?.user_id}
-                                                    onInputChange={handleSearch}
-                                                    onChange={handleSearchChange}
-                                                    renderInput={(params) => <TextField {...params} type="text" placeholder="e.g: MEM2025" name="memberId" className="border" />}
-                                                    renderOption={(props, option) => (
-                                                        <li {...props}>
-                                                            <span>
-                                                                {option.first_name} ({option.user_id})
-                                                            </span>
-                                                            <span style={{ color: 'gray', fontSize: '0.875rem', marginLeft: '8px' }}>{option.email}</span>
-                                                        </li>
-                                                    )}
-                                                />
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={6}>
-                                            <Form.Group>
-                                                <Form.Label
-                                                    className="small"
-                                                    style={{
-                                                        color: '#121212',
-                                                        fontSize: '14px',
-                                                        fontWeight: 400,
-                                                    }}
-                                                >
-                                                    Full Name
-                                                </Form.Label>
-                                                <Form.Control type="text" placeholder="e.g: Dianne" name="fullName" value={formData.fullName} onChange={handleInputChange} className="border" />
-                                            </Form.Group>
-                                        </Col>
-                                    </Row>
-
-                                    <Row className="mb-3 gx-3">
-                                        <Col md={6} className="mb-3 mb-md-0">
-                                            <Form.Group>
-                                                <Form.Label
-                                                    className="small"
-                                                    style={{
-                                                        color: '#121212',
-                                                        fontSize: '14px',
-                                                        fontWeight: 400,
-                                                    }}
-                                                >
-                                                    Contact Number
-                                                </Form.Label>
-                                                <InputGroup>
-                                                    <InputGroup.Text className="bg-white border">+92</InputGroup.Text>
-                                                    <Form.Control type="text" name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className="border" />
-                                                </InputGroup>
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={6}>
-                                            <Form.Group>
-                                                <Form.Label
-                                                    className="small"
-                                                    style={{
-                                                        color: '#121212',
-                                                        fontSize: '14px',
-                                                        fontWeight: 400,
-                                                    }}
-                                                >
-                                                    Email ID
-                                                </Form.Label>
-                                                <Form.Control type="email" placeholder="diannerussell@gmail.com" name="email" value={formData.email} onChange={handleInputChange} className="border" />
-                                            </Form.Group>
-                                        </Col>
-                                    </Row>
-
-                                    {bookingType === 'room' ? (
-                                        <>
-                                            <Row className="mb-3 gx-3">
-                                                <Col md={6} className="mb-3 mb-md-0">
-                                                    <Form.Group>
-                                                        <Form.Label
-                                                            className="small"
-                                                            style={{
-                                                                color: '#121212',
-                                                                fontSize: '14px',
-                                                                fontWeight: 400,
-                                                            }}
-                                                        >
-                                                            Person
-                                                        </Form.Label>
-                                                        <InputGroup>
-                                                            <Button variant="outline-secondary" onClick={() => handleCountChange('personCount', 'subtract')} className="border">
-                                                                <Remove fontSize="small" />
-                                                            </Button>
-                                                            <Form.Control type="text" className="text-center border-top border-bottom border-0" value={formData.personCount} readOnly />
-                                                            <Button variant="outline-secondary" onClick={() => handleCountChange('personCount', 'add')} className="border">
-                                                                <Add fontSize="small" />
-                                                            </Button>
-                                                        </InputGroup>
-                                                    </Form.Group>
-                                                </Col>
-                                                <Col md={6}>
-                                                    <Form.Group>
-                                                        <Form.Label
-                                                            className="small"
-                                                            style={{
-                                                                color: '#121212',
-                                                                fontSize: '14px',
-                                                                fontWeight: 400,
-                                                            }}
-                                                        >
-                                                            Total Payment
-                                                        </Form.Label>
-                                                        <InputGroup>
-                                                            <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
-                                                            <Form.Control type="text" placeholder="Auto fill" name="totalPayment" value={formData.totalPayment} onChange={handleInputChange} className="border" />
-                                                        </InputGroup>
-                                                    </Form.Group>
-                                                </Col>
-                                            </Row>
-                                            <Row className="mb-3 gx-3">
-                                                <Col md={6} className="mb-3 mb-md-0">
-                                                    <Form.Group>
-                                                        <Form.Label
-                                                            className="small"
-                                                            style={{
-                                                                color: '#121212',
-                                                                fontSize: '14px',
-                                                                fontWeight: 400,
-                                                            }}
-                                                        >
-                                                            Check-in Date
-                                                        </Form.Label>
-                                                        <Form.Control type="date" name="checkin" value={formData.checkin} onChange={handleInputChange} className="border" />
-                                                    </Form.Group>
-                                                </Col>
-                                                <Col md={6}>
-                                                    <Form.Group>
-                                                        <Form.Label
-                                                            className="small"
-                                                            style={{
-                                                                color: '#121212',
-                                                                fontSize: '14px',
-                                                                fontWeight: 400,
-                                                            }}
-                                                        >
-                                                            Check-out Date
-                                                        </Form.Label>
-                                                        <Form.Control type="date" name="checkout" value={formData.checkout} onChange={handleInputChange} className="border" />
-                                                    </Form.Group>
-                                                </Col>
-                                            </Row>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Row className="mb-3 gx-3">
-                                                <Col md={6} className="mb-3 mb-md-0">
-                                                    <Form.Group>
-                                                        <Form.Label
-                                                            className="small"
-                                                            style={{
-                                                                color: '#121212',
-                                                                fontSize: '14px',
-                                                                fontWeight: 400,
-                                                            }}
-                                                        >
-                                                            Event Name
-                                                        </Form.Label>
-                                                        <Form.Control type="text" placeholder="e.g: Conference" name="eventName" value={formData.eventName} onChange={handleInputChange} className="border" />
-                                                    </Form.Group>
-                                                </Col>
-                                                <Col md={6}>
-                                                    <Form.Group>
-                                                        <Form.Label
-                                                            className="small"
-                                                            style={{
-                                                                color: '#121212',
-                                                                fontSize: '14px',
-                                                                fontWeight: 400,
-                                                            }}
-                                                        >
-                                                            Event Date
-                                                        </Form.Label>
-                                                        <Form.Control type="date" name="eventDate" value={formData.eventDate} onChange={handleInputChange} className="border" />
-                                                    </Form.Group>
-                                                </Col>
-                                            </Row>
-                                            <Row className="mb-3 gx-3">
-                                                <Col md={6} className="mb-3 mb-md-0">
-                                                    <Form.Group>
-                                                        <Form.Label
-                                                            className="small"
-                                                            style={{
-                                                                color: '#121212',
-                                                                fontSize: '14px',
-                                                                fontWeight: 400,
-                                                            }}
-                                                        >
-                                                            Event Time
-                                                        </Form.Label>
-                                                        <Form.Control type="time" name="eventTime" value={formData.eventTime} onChange={handleInputChange} className="border" />
-                                                    </Form.Group>
-                                                </Col>
-                                                <Col md={6}>
-                                                    <Form.Group>
-                                                        <Form.Label
-                                                            className="small"
-                                                            style={{
-                                                                color: '#121212',
-                                                                fontSize: '14px',
-                                                                fontWeight: 400,
-                                                            }}
-                                                        >
-                                                            Total Payment
-                                                        </Form.Label>
-                                                        <InputGroup>
-                                                            <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
-                                                            <Form.Control type="text" placeholder="Auto fill" name="totalPayment" value={formData.totalPayment} onChange={handleInputChange} className="border" />
-                                                        </InputGroup>
-                                                    </Form.Group>
-                                                </Col>
-                                            </Row>
-                                        </>
-                                    )}
-
-                                    <Form.Group className="mb-3">
-                                        <Form.Label
-                                            className="small"
-                                            style={{
-                                                color: '#121212',
-                                                fontSize: '14px',
-                                                fontWeight: 400,
-                                            }}
-                                        >
-                                            Who are you booking for?
-                                        </Form.Label>
-                                        <div className="d-flex flex-column">
-                                            <Form.Check type="radio" label="I'm the main guest" name="bookingFor" value="mainGuest" checked={formData.bookingFor === 'mainGuest'} onChange={handleInputChange} className="mb-2" />
-                                            <Form.Check type="radio" label="I'm booking for someone else" name="bookingFor" value="someoneElse" checked={formData.bookingFor === 'someoneElse'} onChange={handleInputChange} />
-                                        </div>
-                                    </Form.Group>
-
-                                    <div className="d-flex justify-content-end mt-4">
-                                        <Button variant="light" className="me-2 border">
-                                            Cancel
-                                        </Button>
-                                        <Button style={{ backgroundColor: '#003366', borderColor: '#003366' }} className="d-flex align-items-center" onClick={handleBookNow} disabled={loading} loading={loading} loadingPosition="start">
-                                            Book Now
-                                            <KeyboardArrowRight fontSize="small" className="ms-1" />
-                                        </Button>
-                                    </div>
-                                </Form>
-                            </>
-                        )}
-
-                        {currentStep === 2 && (
-                            <>
-                                <h6
-                                    className="mb-4"
-                                    style={{
-                                        color: '#121212',
-                                        fontWeight: 500,
-                                        fontSize: '20px',
-                                    }}
-                                >
-                                    Choose Payment Method
-                                </h6>
-                                <Row className="mb-4 gx-3">
-                                    <Col md={4} className="mb-3 mb-md-0">
-                                        <div
-                                            className="border rounded p-3 text-center"
-                                            onClick={() => handlePaymentMethodSelect('cash')}
-                                            style={{
-                                                cursor: 'pointer',
-                                                backgroundColor: paymentMethod === 'cash' ? '#B0DEFF' : 'transparent',
-                                                border: paymentMethod === 'cash' ? '1px solid #063455' : '1px solid #dee2e6',
-                                            }}
-                                        >
-                                            <div className="d-flex justify-content-center mb-2">
-                                                <img
-                                                    src="/assets/money-bills.png"
-                                                    alt=""
-                                                    style={{
-                                                        width: 24,
-                                                        height: 20,
-                                                    }}
-                                                />
-                                            </div>
-                                            <div>Cash</div>
-                                        </div>
-                                    </Col>
-
-                                    <Col md={4}>
-                                        <div
-                                            className="border rounded p-3 text-center"
-                                            onClick={() => handlePaymentMethodSelect('credit_card')}
-                                            style={{
-                                                cursor: 'pointer',
-                                                backgroundColor: paymentMethod === 'credit_card' ? '#B0DEFF' : 'transparent',
-                                                border: paymentMethod === 'credit_card' ? '1px solid #063455' : '1px solid #dee2e6',
-                                            }}
-                                        >
-                                            <div className="d-flex justify-content-center mb-2">
-                                                <img
-                                                    src="/assets/credit-card-change.png"
-                                                    alt=""
-                                                    style={{
-                                                        width: 24,
-                                                        height: 20,
-                                                    }}
-                                                />
-                                            </div>
-                                            <div>Credit Card</div>
-                                        </div>
-                                    </Col>
-                                    <Col md={4}>
-                                        <div
-                                            className="border rounded p-3 text-center"
-                                            onClick={() => handlePaymentMethodSelect('bank')}
-                                            style={{
-                                                cursor: 'pointer',
-                                                backgroundColor: paymentMethod === 'bank' ? '#B0DEFF' : 'transparent',
-                                                border: paymentMethod === 'bank' ? '1px solid #063455' : '1px solid #dee2e6',
-                                            }}
-                                        >
-                                            <div className="d-flex justify-content-center mb-2">
-                                                <img
-                                                    src="/assets/credit-card-change.png"
-                                                    alt=""
-                                                    style={{
-                                                        width: 24,
-                                                        height: 20,
-                                                    }}
-                                                />
-                                            </div>
-                                            <div>Bank Transfer</div>
-                                        </div>
-                                    </Col>
-                                </Row>
-
-                                {paymentMethod === 'cash' || paymentMethod === 'credit_card' ? (
-                                    <>
-                                        <Row className="mb-3 gx-3">
-                                            <Col md={6} className="mb-3 mb-md-0">
-                                                <Form.Group>
-                                                    <Form.Label
-                                                        className="small"
-                                                        style={{
-                                                            color: '#121212',
-                                                            fontWeight: 400,
-                                                            fontSize: '14px',
-                                                        }}
-                                                    >
-                                                        Input Amount
-                                                    </Form.Label>
-                                                    <InputGroup>
-                                                        <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
-                                                        <Form.Control type="text" name="inputAmount" value={invoiceForm.inputAmount} onChange={handlePaymentChange} className="border" />
-                                                    </InputGroup>
-                                                </Form.Group>
-                                            </Col>
-                                            <Col md={6}>
-                                                <Form.Group>
-                                                    <Form.Label
-                                                        className="small"
-                                                        style={{
-                                                            color: '#121212',
-                                                            fontWeight: 400,
-                                                            fontSize: '14px',
-                                                        }}
-                                                    >
-                                                        Customer Changes
-                                                    </Form.Label>
-                                                    <h4>Rs {Math.round(invoiceForm.customerCharges)}</h4>
-                                                </Form.Group>
-                                            </Col>
-                                        </Row>
-
-                                        <div className="d-flex flex-wrap gap-2 mb-4">
-                                            {['Exact money', '10.00', '20.00', '50.00', '100.00'].map((value) => (
-                                                <Button
-                                                    key={value}
-                                                    variant="outlined"
-                                                    className="p-2"
-                                                    onClick={() => handleQuickAmount(value === 'Exact money' ? Math.round(minAmount) : parseInt(value))}
-                                                    sx={{
-                                                        textTransform: 'none',
-                                                        borderColor: '#ccc',
-                                                        color: '#333',
-                                                        fontSize: '0.875rem',
-                                                        '&:hover': { borderColor: '#999', bgcolor: '#f5f5f5' },
-                                                    }}
-                                                >
-                                                    {value === 'Exact money' ? 'Exact money' : `Rs ${value}`}
-                                                </Button>
-                                            ))}
-                                        </div>
-                                        {error && (
-                                            <Typography color="error" sx={{ mb: 2 }}>
-                                                {error}
-                                            </Typography>
-                                        )}
-
-                                        {paymentMethod === 'credit_card' && (
-                                            <Box sx={{ mb: 4 }}>
-                                                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
-                                                    Upload Receipt
-                                                </Typography>
-                                                <input type="file" name="receipt" accept="image/*,application/pdf" onChange={handlePaymentChange} style={{ display: 'block' }} />
-                                            </Box>
-                                        )}
-                                    </>
-                                ) : (
-                                    <>
-                                        <Form.Group className="mb-3">
-                                            <Form.Label className="small">Choose Bank Store</Form.Label>
-                                            <div className="d-flex flex-wrap gap-2">
-                                                <Button
-                                                    variant={formData.bankName === 'Sea Bank' ? 'dark' : 'outline-secondary'}
-                                                    onClick={() => handleBankSelect('Sea Bank')}
-                                                    className="rounded-pill"
-                                                    style={{
-                                                        backgroundColor: formData.bankName === 'Sea Bank' ? '#003366' : 'transparent',
-                                                        borderColor: formData.bankName === 'Sea Bank' ? '#003366' : '#dee2e6',
-                                                    }}
-                                                >
-                                                    Sea Bank
-                                                </Button>
-                                                <Button
-                                                    variant={formData.bankName === 'CNBC Bank' ? 'dark' : 'outline-secondary'}
-                                                    onClick={() => handleBankSelect('CNBC Bank')}
-                                                    className="rounded-pill"
-                                                    style={{
-                                                        backgroundColor: formData.bankName === 'CNBC Bank' ? '#003366' : 'transparent',
-                                                        borderColor: formData.bankName === 'CNBC Bank' ? '#003366' : '#dee2e6',
-                                                    }}
-                                                >
-                                                    CNBC Bank
-                                                </Button>
-                                                <Button
-                                                    variant={formData.bankName === 'Citibank' ? 'dark' : 'outline-secondary'}
-                                                    onClick={() => handleBankSelect('Citibank')}
-                                                    className="rounded-pill"
-                                                    style={{
-                                                        backgroundColor: formData.bankName === 'Citibank' ? '#003366' : 'transparent',
-                                                        borderColor: formData.bankName === 'Citibank' ? '#003366' : '#dee2e6',
-                                                    }}
-                                                >
-                                                    Citibank
-                                                </Button>
-                                                <Button
-                                                    variant={formData.bankName === 'OCBC NISP' ? 'dark' : 'outline-secondary'}
-                                                    onClick={() => handleBankSelect('OCBC NISP')}
-                                                    className="rounded-pill"
-                                                    style={{
-                                                        backgroundColor: formData.bankName === 'OCBC NISP' ? '#003366' : 'transparent',
-                                                        borderColor: formData.bankName === 'OCBC NISP' ? '#003366' : '#dee2e6',
-                                                    }}
-                                                >
-                                                    OCBC NISP
-                                                </Button>
-                                            </div>
-                                        </Form.Group>
-
-                                        <Form.Group className="mb-3">
-                                            <Form.Label className="small">Customer Account Number</Form.Label>
-                                            <Form.Control type="text" placeholder="88-08543-6982" name="accountNumber" value={formData.accountNumber} onChange={handleInputChange} className="border" />
-                                        </Form.Group>
-
-                                        <Form.Group className="mb-3">
-                                            <Form.Label className="small">Customer Account Name</Form.Label>
-                                            <Form.Control type="text" placeholder="Mr. Jamal" name="accountName" value={formData.accountName} onChange={handleInputChange} className="border" />
-                                        </Form.Group>
-
-                                        <Form.Group className="mb-3">
-                                            <Form.Label className="small">Customer Account Bank</Form.Label>
-                                            <Form.Select name="bankName" value={formData.bankName} onChange={handleInputChange} className="border">
-                                                <option value="Sea Bank">Sea Bank</option>
-                                                <option value="CNBC Bank">CNBC Bank</option>
-                                                <option value="Citibank">Citibank</option>
-                                                <option value="OCBC NISP">OCBC NISP</option>
-                                            </Form.Select>
-                                        </Form.Group>
-
-                                        <Form.Group className="mb-3">
-                                            <Form.Label className="small">Notes</Form.Label>
-                                            <Form.Control type="text" placeholder="e.g. lunch at afohs club." name="notes" value={formData.notes} onChange={handleInputChange} className="border" />
-                                        </Form.Group>
-                                    </>
-                                )}
-
-                                <div className="d-flex justify-content-end mt-4">
-                                    <Button variant="light" className="me-2 d-flex align-items-center border" onClick={handleBack}>
-                                        <ArrowBack fontSize="small" className="me-1" />
-                                        Back
-                                    </Button>
-                                    <Button style={{ backgroundColor: '#003366', borderColor: '#003366' }} className="d-flex align-items-center" onClick={handlePayNow} loading={loading} disabled={loading} loadingPosition="start">
-                                        Pay Now
-                                        <KeyboardArrowRight fontSize="small" className="ms-1" />
-                                    </Button>
-                                </div>
-                            </>
-                        )}
+                    <div className="mx-4 my-4 p-4 bg-white rounded border">
+                        <Box sx={{ width: '100%', p: 0 }}>
+                            <Box sx={{ mb: 4 }}>{renderStepContent(activeStep)}</Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Button variant="outlined" disabled={activeStep === 0} onClick={handleBack}>
+                                    Back
+                                </Button>
+                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}>
+                                    {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                                </Button>
+                            </Box>
+                        </Box>
                     </div>
                 </Box>
             </div>
@@ -1074,3 +244,398 @@ const RoomBooking = ({ booking, invoice, next_booking_id }) => {
     );
 };
 export default RoomBooking;
+
+const BookingDetails = ({ formData, handleChange, errors }) => {
+    const [familyMembers, setFamilyMembers] = useState([]);
+    useEffect(() => {
+        if (formData.guest) {
+            axios.get(route('admin.family-members', { id: formData.guest?.id })).then((res) => {
+                setFamilyMembers(res.data.results);
+            });
+        }
+    }, [formData.guest]);
+
+    return (
+        <>
+            <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                    <TextField label="Booking No." name="bookingNo" value={formData.bookingNo} inputProps={{ readOnly: true }} fullWidth />
+                </Grid>
+                {JSON.stringify()}
+                <Grid item xs={12} sm={6}>
+                    <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Arrival Details" name="arrivalDetails" value={formData.arrivalDetails} onChange={handleChange} fullWidth multiline rows={2} />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Departure Details" name="departureDetails" value={formData.departureDetails} onChange={handleChange} fullWidth multiline rows={2} />
+                </Grid>
+                <Grid item xs={12}>
+                    <FormLabel>Booking Type</FormLabel>
+                    <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
+                        <FormControlLabel value="Member" control={<Radio />} label="Member" />
+                        <FormControlLabel value="Corporate Member" control={<Radio />} label="Corporate Member" />
+                        <FormControlLabel value="Applied Member" control={<Radio />} label="Applied Member" />
+                        <FormControlLabel value="Affiliated Member" control={<Radio />} label="Affiliated Member" />
+                        <FormControlLabel value="VIP Guest" control={<Radio />} label="VIP Guest" />
+                    </RadioGroup>
+                </Grid>
+
+                <Grid item xs={12}>
+                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="/admin/api/search-users" placeholder="Search members..." />
+                    {errors.guest && (
+                        <Typography variant="body2" color="error">
+                            {errors.guest}
+                        </Typography>
+                    )}
+
+                    {formData.guest && (
+                        <Box sx={{ mt: 1, p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
+                            <Typography variant="h5" sx={{ mb: 1 }}>
+                                Member Information
+                            </Typography>
+                            <Typography variant="body1">Member #: {formData.guest?.membership_no}</Typography>
+                            <Typography variant="body1">Email: {formData.guest?.email}</Typography>
+                            <Typography variant="body1">Phone: {formData.guest?.phone}</Typography>
+                            <Typography variant="body1">Address: {formData.guest?.address}</Typography>
+                            <FormControl fullWidth sx={{ mt: 2 }}>
+                                <InputLabel>Select Family Member</InputLabel>
+                                <Select value={formData.familyMember} onChange={handleChange} name="familyMember" label="Select Family Member">
+                                    <MenuItem value="">Select Family Member</MenuItem>
+                                    {familyMembers?.map((member) => (
+                                        <MenuItem key={member.id} value={member.id}>
+                                            {member.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    )}
+                </Grid>
+            </Grid>
+            <Typography sx={{ my: 3 }} variant="h6">
+                Guest Info
+            </Typography>
+            <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                    <TextField label="Booked By" name="bookedBy" value={formData.bookedBy} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6} sm={3}>
+                    <TextField label="Guest First Name" name="guestFirstName" value={formData.guestFirstName} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6} sm={3}>
+                    <TextField label="Guest Last Name" name="guestLastName" value={formData.guestLastName} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Company / Institution" name="company" value={formData.company} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Address" name="address" value={formData.address} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Country" name="country" value={formData.country} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="CNIC / Passport No." name="cnic" value={formData.cnic} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={6}>
+                    <TextField label="Enter Relationship" name="guestRelation" value={formData.guestRelation} onChange={handleChange} fullWidth />
+                </Grid>
+                <Grid item xs={12}>
+                    <TextField label="Accompanied Guest Name" name="accompaniedGuest" value={formData.accompaniedGuest} onChange={handleChange} fullWidth />
+                </Grid>
+            </Grid>
+        </>
+    );
+};
+
+const RoomSelection = ({ formData, handleChange, errors }) => {
+    const { props } = usePage();
+
+    // Automatically calculate nights between check-in and check-out
+    const nights = formData.checkInDate && formData.checkOutDate ? differenceInCalendarDays(new Date(formData.checkOutDate), new Date(formData.checkInDate)) : 0;
+
+    // Find charge by selected booking category
+    const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);
+    const matchedCharge = props.room.category_charges.find((charge) => charge.room_category_id == formData.bookingCategory);
+
+    const perDayCharge = matchedCharge?.amount || 0;
+    const totalCharge = nights * perDayCharge;
+
+    // Sync calculated values into parent form state
+    useEffect(() => {
+        handleChange({ target: { name: 'nights', value: nights } });
+        handleChange({ target: { name: 'perDayCharge', value: perDayCharge } });
+        handleChange({ target: { name: 'roomCharge', value: totalCharge } });
+    }, [formData.bookingCategory, formData.checkInDate, formData.checkOutDate]);
+
+    return (
+        <Grid container spacing={2}>
+            <Grid item xs={12}>
+                <Typography variant="h6">
+                    <b>Selected Room:</b> {props.room.name} ({props.room.room_type.name})
+                </Typography>
+            </Grid>
+
+            <Grid item xs={12}>
+                <FormControl fullWidth>
+                    <InputLabel>Booking Category</InputLabel>
+                    <Select value={formData.bookingCategory} onChange={handleChange} name="bookingCategory" label="Booking Category">
+                        <MenuItem value="">Booking Category</MenuItem>
+                        {props.roomCategories.map((item) => (
+                            <MenuItem key={item.id} value={item.id}>
+                                {item.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                {errors.bookingCategory && (
+                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                        {errors.bookingCategory}
+                    </Typography>
+                )}
+            </Grid>
+
+            <Grid item xs={4}>
+                <TextField label="Per Day Room Charges" name="perDayCharge" value={formData.perDayCharge} fullWidth InputProps={{ readOnly: true }} disabled />
+            </Grid>
+            <Grid item xs={4}>
+                <TextField label="No. of Nights" name="nights" value={formData.nights} fullWidth InputProps={{ readOnly: true }} disabled />
+            </Grid>
+            <Grid item xs={4}>
+                <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
+            </Grid>
+            <Grid item xs={12}>
+                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth />
+            </Grid>
+        </Grid>
+    );
+};
+
+const ChargesInfo = ({ formData, handleChange }) => {
+    const { props } = usePage();
+
+    const [miniBarItems, setMiniBarItems] = useState();
+
+    const handleOtherChange = (index, field, value) => {
+        const updated = [...formData.other_charges];
+        const item = { ...updated[index] };
+
+        if (field === 'type') {
+            const selected = props.chargesTypeItems.find((c) => c.name === value);
+            item.type = value;
+            item.amount = selected ? selected.amount : '';
+        } else {
+            item[field] = value;
+        }
+
+        updated[index] = item;
+        handleChange({ target: { name: 'other_charges', value: updated } });
+    };
+
+    const handleMiniBarChange = (index, field, value) => {
+        const updated = [...formData.mini_bar_items];
+        const item = { ...updated[index] };
+
+        if (field === 'item') {
+            const selected = props.miniBarItems.find((m) => m.name === value);
+            item.item = value;
+            item.qty = 1;
+            item.amount = selected ? selected.amount : '';
+        } else {
+            item[field] = value;
+        }
+
+        const qty = parseFloat(item.qty) || 0;
+        const amt = parseFloat(item.amount) || 0;
+        item.total = (qty * amt).toFixed(2);
+
+        updated[index] = item;
+        handleChange({ target: { name: 'mini_bar_items', value: updated } });
+    };
+
+    const calculateTotals = () => {
+        const totalOther = formData.other_charges.reduce((sum, chg) => sum + (chg.is_complementary ? 0 : parseFloat(chg.amount) || 0), 0);
+
+        const totalMini = formData.mini_bar_items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+
+        const room = parseFloat(formData.roomCharge || 0);
+        const discountVal = parseFloat(formData.discount || 0);
+        const discountType = formData.discountType || 'fixed';
+
+        const baseTotal = room + totalOther + totalMini;
+        const discountAmount = discountType === 'percentage' ? (discountVal / 100) * baseTotal : discountVal;
+
+        const grandTotal = baseTotal - discountAmount;
+
+        return { totalOther, totalMini, grandTotal };
+    };
+
+    useEffect(() => {
+        const { totalOther, totalMini, grandTotal } = calculateTotals();
+
+        handleChange({ target: { name: 'totalOtherCharges', value: totalOther } });
+        handleChange({ target: { name: 'totalMiniBar', value: totalMini } });
+        handleChange({ target: { name: 'grandTotal', value: grandTotal.toFixed(2) } });
+    }, [formData.other_charges, formData.mini_bar_items, formData.discount, formData.discountType, formData.roomCharge]);
+
+    const { totalOther, totalMini, grandTotal } = calculateTotals();
+
+    return (
+        <Grid container spacing={2}>
+            <Grid item xs={12}>
+                <Typography variant="h6">Other Charges</Typography>
+            </Grid>
+
+            {formData.other_charges.map((item, index) => (
+                <React.Fragment key={index}>
+                    <Grid item xs={3}>
+                        <FormControl fullWidth>
+                            <InputLabel>Charges Type</InputLabel>
+                            <Select value={item.type} label="Charges Type" onChange={(e) => handleOtherChange(index, 'type', e.target.value)}>
+                                <MenuItem value="">Select Type</MenuItem>
+                                {props.chargesTypeItems.map((type, i) => (
+                                    <MenuItem key={i} value={type.name}>
+                                        {type.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    <Grid item xs={3}>
+                        <TextField label="Bill Details" fullWidth value={item.details} onChange={(e) => handleOtherChange(index, 'details', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={2}>
+                        <TextField label="Amount" type="number" fullWidth value={item.amount} onChange={(e) => handleOtherChange(index, 'amount', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={2}>
+                        <FormControlLabel control={<Checkbox checked={item.is_complementary} onChange={(e) => handleOtherChange(index, 'is_complementary', e.target.checked)} />} label="Complementary" />
+                    </Grid>
+                </React.Fragment>
+            ))}
+            <Grid item xs={12}>
+                <Button style={{ backgroundColor: '#063455', color: '#fff' }} variant="contained" onClick={() => handleChange({ target: { name: 'other_charges', value: [...formData.other_charges, { type: '', details: '', amount: '', is_complementary: false }] } })}>
+                    Add More
+                </Button>
+            </Grid>
+
+            <Grid item xs={12}>
+                <Typography variant="h6">Mini Bar</Typography>
+            </Grid>
+
+            {formData.mini_bar_items.map((item, index) => (
+                <Grid key={index} container spacing={2} sx={{ mb: 2, px: 2 }} alignItems="center">
+                    <Grid item xs={3}>
+                        <FormControl fullWidth>
+                            <InputLabel>Item</InputLabel>
+                            <Select value={item.item} label="Item" onChange={(e) => handleMiniBarChange(index, 'item', e.target.value)}>
+                                <MenuItem value="">Select Item</MenuItem>
+                                {props.miniBarItems.map((mb, i) => (
+                                    <MenuItem key={i} value={mb.name}>
+                                        {mb.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    <Grid item xs={3}>
+                        <TextField label="Amount" type="number" fullWidth value={item.amount} onChange={(e) => handleMiniBarChange(index, 'amount', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={3}>
+                        <TextField label="Qty" type="number" fullWidth value={item.qty} onChange={(e) => handleMiniBarChange(index, 'qty', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={3}>
+                        <TextField label="Total" fullWidth disabled value={item.total} />
+                    </Grid>
+                </Grid>
+            ))}
+            <Grid item xs={12}>
+                <Button style={{ backgroundColor: '#063455', color: '#fff' }} variant="contained" onClick={() => handleChange({ target: { name: 'mini_bar_items', value: [...formData.mini_bar_items, { item: '', amount: '', qty: '', total: '' }] } })}>
+                    Add More
+                </Button>
+            </Grid>
+
+            {/* Summary Fields */}
+            <Grid item xs={2}>
+                <TextField label="Total Other Charges" value={totalOther} fullWidth disabled />
+            </Grid>
+            <Grid item xs={2}>
+                <TextField label="Total Mini Bar Charges" value={totalMini} fullWidth disabled />
+            </Grid>
+            <Grid item xs={2}>
+                <TextField label="Room Charges" value={formData.roomCharge} fullWidth disabled />
+            </Grid>
+            <Grid item xs={2}>
+                <FormControl fullWidth>
+                    <InputLabel>Discount Type</InputLabel>
+                    <Select value={formData.discountType || 'fixed'} onChange={(e) => handleChange({ target: { name: 'discountType', value: e.target.value } })}>
+                        <MenuItem value="fixed">Fixed</MenuItem>
+                        <MenuItem value="percentage">Percentage</MenuItem>
+                    </Select>
+                </FormControl>
+            </Grid>
+            <Grid item xs={2}>
+                <TextField label="Discount" type="number" name="discount" value={formData.discount} onChange={handleChange} fullWidth />
+            </Grid>
+            <Grid item xs={2}>
+                <TextField label="Grand Total" value={grandTotal.toFixed(2)} fullWidth disabled />
+            </Grid>
+        </Grid>
+    );
+};
+
+const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove }) => (
+    <Grid container spacing={2}>
+        <Grid item xs={12}>
+            <InputLabel>Upload Documents (PDF or Images)</InputLabel>
+            <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8 }} />
+        </Grid>
+
+        <Grid item xs={12}>
+            <Grid container spacing={1}>
+                {[...(formData.previewFiles || [])].map((file, idx) => (
+                    <Grid item key={idx}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                border: '1px solid #ccc',
+                                borderRadius: 1,
+                                px: 1,
+                                py: 0.5,
+                                backgroundColor: '#f9f9f9',
+                            }}
+                        >
+                            <Typography variant="body2" sx={{ mr: 1 }}>
+                                {file.name}
+                            </Typography>
+                            <IconButton size="small" onClick={() => handleFileRemove(idx)}>
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
+                    </Grid>
+                ))}
+            </Grid>
+        </Grid>
+
+        <Grid item xs={12}>
+            <TextField label="Additional Notes" name="notes" value={formData.notes || ''} onChange={handleChange} multiline rows={4} fullWidth />
+        </Grid>
+    </Grid>
+);
