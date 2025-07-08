@@ -18,14 +18,14 @@ return new class extends Migration
             $table->foreignId('event_venue_id')->nullable()->constrained('event_venues')->onDelete('set null');
             $table->unsignedBigInteger('family_id')->nullable();
             $table->date('booking_date')->nullable();
+            $table->string('booking_type')->nullable();
+            $table->string('booked_by')->nullable();
+            $table->string('event_name')->nullable();
             $table->date('event_date')->nullable();
             $table->time('event_time_from')->nullable();
             $table->time('event_time_to')->nullable();
-            $table->string('arrival_details')->nullable();
 
             // booking metadata
-            $table->string('booking_type')->nullable();
-            $table->string('booked_by')->nullable();
             $table->decimal('menu_charges', 10, 2)->nullable();
             $table->decimal('addons_charges', 10, 2)->nullable();
             $table->decimal('total_per_person_charges', 10, 2)->nullable();
@@ -36,13 +36,18 @@ return new class extends Migration
             $table->bigInteger('total_food_charges')->default(0);
             $table->bigInteger('total_other_charges')->default(0);
             $table->bigInteger('total_charges')->default(0);
-            $table->decimal('surcharge', 10, 2)->default(0);
-            $table->decimal('reduction', 10, 2)->default(0);
-            $table->decimal('grand_total', 10, 2)->nullable();
+            $table->enum('surcharge_type', ['fixed', 'percentage'])->default('percentage');
+            $table->decimal('surcharge_amount', 10, 2)->default(0);
+            $table->string('surcharge_note')->nullable();
+            $table->enum('reduction_type', ['fixed', 'percentage'])->default('percentage');
+            $table->decimal('reduction_amount', 10, 2)->default(0);
+            $table->string('reduction_note')->nullable();
+            $table->decimal('total_price', 10, 2)->nullable();
+            $table->bigInteger('paid_amount')->default(0);
             $table->text('booking_docs')->nullable();
             $table->text('additional_notes')->nullable();
-            $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled', 'no_show', 'refunded'])->default('pending');
             $table->json('additional_data')->nullable();
+            $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled', 'no_show', 'refunded'])->default('pending');
 
             $table->bigInteger('created_by')->nullable();
             $table->bigInteger('updated_by')->nullable();

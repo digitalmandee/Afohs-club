@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Button, Form, Badge, Card, Col, Modal } from 'react-bootstrap'; // Added Modal import for popup
-import { Search, FilterAlt } from '@mui/icons-material';
+import { Search, FilterAlt, Add } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem, Popper } from '@mui/material';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { router } from '@inertiajs/react';
@@ -394,11 +394,25 @@ const BookingDashboard = ({ data, roomTypes }) => {
                 <ThemeProvider theme={theme}>
                     <style>{dialogStyles}</style>
                     <Container fluid className="p-4 bg-light">
-                        <Row className="mb-4 align-items-center">
-                            <Col>
-                                <Typography style={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>Dashboard</Typography>
-                            </Col>
-                        </Row>
+                        <Box className="mb-4 d-flex justify-content-between align-items-center">
+                            <Typography style={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>Dashboard</Typography>
+                            <Button
+                                variant="outlined"
+                                startIcon={<Add />}
+                                style={{
+                                    border: '1px solid #063455',
+                                    color: '#333',
+                                    bgcolor: 'white',
+                                    '&:hover': {
+                                        border: '1px solid #063455',
+                                        bgcolor: '#FFFFFF',
+                                    },
+                                }}
+                                onClick={() => router.visit(route('events.create'))}
+                            >
+                                Add Event
+                            </Button>
+                        </Box>
 
                         <Row className="mb-4">
                             <Col md={6}>

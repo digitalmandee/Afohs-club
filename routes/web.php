@@ -109,6 +109,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Event Routes
         Route::get('events/dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
+        Route::get('events/create', [EventBookingController::class, 'create'])->name('events.create');
         Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-category', EventMenuCategoryController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-type', EventMenuTypeController::class)->except(['create', 'edit', 'show']);
