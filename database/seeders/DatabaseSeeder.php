@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             RoomTypeSeeder::class,
             RoomOtherChargesSeeder::class,
             RoomSeeder::class,
+            GuestTypeSeeder::class,
             SubscriptionSeeder::class,
             MemberTypeSeeder::class,
             PermissionsDatabaseSeeder::class,

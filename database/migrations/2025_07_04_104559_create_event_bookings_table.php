@@ -15,12 +15,19 @@ return new class extends Migration
             $table->id();
             $table->string('booking_no')->unique();
             $table->unsignedBigInteger('customer_id')->nullable();
+            $table->unsignedBigInteger('member_id')->nullable();
             $table->foreignId('event_venue_id')->nullable()->constrained('event_venues')->onDelete('set null');
             $table->unsignedBigInteger('family_id')->nullable();
             $table->date('booking_date')->nullable();
             $table->string('booking_type')->nullable();
+            $table->string('name')->nullable();
+            $table->string('address')->nullable();
+            $table->string('cnic')->nullable();
+            $table->string('mobile')->nullable();
+            $table->string('email')->nullable();
+            $table->string('ledger_amount')->nullable();
             $table->string('booked_by')->nullable();
-            $table->string('event_name')->nullable();
+            $table->string('nature_of_event')->nullable();
             $table->date('event_date')->nullable();
             $table->time('event_time_from')->nullable();
             $table->time('event_time_to')->nullable();
@@ -54,6 +61,7 @@ return new class extends Migration
             $table->bigInteger('deleted_by')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

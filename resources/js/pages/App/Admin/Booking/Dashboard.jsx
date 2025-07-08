@@ -721,6 +721,13 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                 <Button variant="secondary" onClick={handleCloseInvoice}>
                                     Close
                                 </Button>
+                                {selectedBooking?.status === 'confirmed' ? (
+                                    <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking?.id }))}>
+                                        Edit
+                                    </Button>
+                                ) : (
+                                    ''
+                                )}
                                 {selectedBooking?.invoice?.status === 'unpaid' ? (
                                     <Button variant="success" onClick={() => router.visit(route('booking.payment', { invoice_no: selectedBooking?.invoice?.id }))}>
                                         Pay Now

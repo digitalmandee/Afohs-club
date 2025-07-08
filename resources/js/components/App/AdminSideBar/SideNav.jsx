@@ -158,6 +158,10 @@ export default function SideNav({ open, setOpen }) {
             icon: <CalendarMonthIcon />,
             children: [
                 {
+                    text: 'Guests',
+                    path: route('guests.index'),
+                },
+                {
                     text: 'Rooms',
                     children: [
                         {
