@@ -11,7 +11,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const Payment = ({ invoice, member, onBack }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [formData, setFormData] = useState({
         user_id: invoice?.user_id,
         inputAmount: invoice?.total_price?.toString() || '0',

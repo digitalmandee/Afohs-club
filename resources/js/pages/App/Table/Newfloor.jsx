@@ -13,7 +13,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const NewFloor = ({ floorInfo }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [modalOpen, setModalOpen] = useState(true);
     const [isFloorExpanded, setIsFloorExpanded] = useState(true);
     const [isTableExpanded, setIsTableExpanded] = useState(true);

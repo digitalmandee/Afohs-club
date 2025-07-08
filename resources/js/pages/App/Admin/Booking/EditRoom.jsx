@@ -15,7 +15,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const EditRoom = ({ room }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [photoUrl, setPhotoUrl] = useState(room.photo_path ? `/${room.photo_path}` : null);
     const fileInputRef = useRef(null);
 

@@ -32,7 +32,7 @@ const EventLocation = () => {
     const [newLocation, setNewLocation] = useState('');
     const [editLocation, setEditLocation] = useState({ id: null, name: '' });
     const [deleteLocationId, setDeleteLocationId] = useState(null);
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [locationError, setLocationError] = useState('');
     const [editError, setEditError] = useState('');
 

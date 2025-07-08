@@ -21,7 +21,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const EditEvent = ({ event, locations }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [photoUrl, setPhotoUrl] = useState(event.photo_path ? `/${event.photo_path}` : null);
     const fileInputRef = useRef(null);
 

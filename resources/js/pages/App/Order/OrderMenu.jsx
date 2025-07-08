@@ -19,7 +19,7 @@ const drawerWidthClosed = 110;
 const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     // const [showPayment, setShowPayment] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(firstCategoryId || '');

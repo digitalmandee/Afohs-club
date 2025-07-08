@@ -13,7 +13,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AddProduct = ({ product, id }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
             ? { ...product, discountValue: product.discount || '', discountType: product.discount_type || 'percentage' }

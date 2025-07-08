@@ -173,7 +173,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                     <Box sx={{ px: 2, mb: 4 }}>
                         <Grid container spacing={2}>
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ bgcolor: '#3a4a4c', color: 'white', height: '100%' }}>
+                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
                                         <Box
                                             sx={{
@@ -199,7 +199,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                             </Grid>
 
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ bgcolor: '#3a4a4c', color: 'white', height: '100%' }}>
+                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
                                         <Box
                                             sx={{
@@ -225,7 +225,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                             </Grid>
 
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ bgcolor: '#3a4a4c', color: 'white', height: '100%' }}>
+                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
                                         <Box
                                             sx={{

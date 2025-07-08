@@ -11,7 +11,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 export default function MemberType({ memberTypesList }) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openAddMenu, setOpenAddMenu] = useState(false);
     const [editingMemberTypeId, setEditingMemberTypeId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');

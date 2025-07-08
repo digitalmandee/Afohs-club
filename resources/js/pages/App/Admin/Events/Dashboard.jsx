@@ -327,7 +327,7 @@ const numberToWords = (num) => {
 };
 
 const BookingDashboard = ({ data, roomTypes }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showFilter, setShowFilter] = useState(false);

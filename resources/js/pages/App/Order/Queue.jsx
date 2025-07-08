@@ -23,7 +23,7 @@ const theme = createTheme({
 });
 
 const OrderQueue = ({ orders2 }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [activeTab, setActiveTab] = useState('All Order');
     const [activeFilter, setActiveFilter] = useState('All Type');
 

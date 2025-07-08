@@ -11,7 +11,7 @@ const drawerWidthClosed = 110;
 
 const RoomCalendar = () => {
     const schedulerRef = useRef();
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [month, setMonth] = useState(moment().format('MM'));
     const [year, setYear] = useState(moment().format('YYYY'));
     const [resources, setResources] = useState([]);

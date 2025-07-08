@@ -11,7 +11,7 @@ export default function AddCustomer({ users, memberTypes, customer = null, addre
     const drawerWidthOpen = 240;
     const drawerWidthClosed = 110;
 
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     const [customers, setCustomers] = useState([]); // Initialize empty for dynamic loading
 

@@ -10,7 +10,7 @@ export default function EditCustomer({ customer, memberTypes, addressTypes = [] 
     const drawerWidthOpen = 240;
     const drawerWidthClosed = 110;
 
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [showAddressForm, setShowAddressForm] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
