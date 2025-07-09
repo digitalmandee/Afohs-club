@@ -22,7 +22,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AllRooms = ({ rooms }) => {
-    const [open, setOpen] = React.useState(false);
+    const [open, setOpen] = React.useState(true);
     const [confirmDialog, setConfirmDialog] = React.useState({ open: false, roomId: null });
 
     const handleEdit = (id) => {

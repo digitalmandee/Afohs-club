@@ -8,7 +8,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 export default function CustomerInformationForm() {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [customerType, setCustomerType] = useState('silver');
     const [selectedType, setSelectedType] = useState('apartment');
 

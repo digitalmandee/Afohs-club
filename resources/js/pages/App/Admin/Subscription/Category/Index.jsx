@@ -10,7 +10,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const SubscriptionCategories = ({ subscriptionCategories }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [categories, setCategories] = useState(subscriptionCategories || []);

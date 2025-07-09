@@ -10,7 +10,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 export default function AddressType({ addressTypes }) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openAddMenu, setOpenAddMenu] = useState(false);
     const [editingAddressTypeId, setEditingAddressTypeId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');

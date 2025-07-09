@@ -95,7 +95,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const CustomerDashboard = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [openFilter, setOpenFilter] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
     const [profileView, setProfileView] = useState('customer');

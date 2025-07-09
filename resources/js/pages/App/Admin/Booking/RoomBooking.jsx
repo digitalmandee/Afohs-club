@@ -25,7 +25,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
     const initialBookingType = urlParamsObject?.type === 'event' ? 'events' : 'room';
 
     // Main state for booking type
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);

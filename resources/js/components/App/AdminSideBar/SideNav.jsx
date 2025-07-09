@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+import { router, usePage, useRemember } from '@inertiajs/react';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HomeIcon from '@mui/icons-material/Home';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -22,7 +22,7 @@ import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaRegAddressCard } from 'react-icons/fa';
 import { FaKitchenSet } from 'react-icons/fa6';
 import MemberIcon from '@/components/App/Icons/Member';
@@ -104,8 +104,42 @@ export default function SideNav({ open, setOpen }) {
     const [showProfile, setShowProfile] = React.useState(false);
     const [showOrder, setShowOrder] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
+    // const [openDropdown, setOpenDropdown] = useState({});
+    const [openDropdown, setOpenDropdown] = useRemember({}, 'sidebarDropdown');
+    useEffect(() => {
+        const dropdownState = {};
 
-    const [openDropdown, setOpenDropdown] = useState({});
+        menuItems.forEach((item) => {
+            if (item.children) {
+                // Match direct children
+                const matchChild = item.children.some((child) =>
+                    normalizePath(child.path) === url ||
+                    (child.children && child.children.some((sub) => normalizePath(sub.path) === url))
+                );
+
+                if (matchChild) {
+                    dropdownState[item.text] = true;
+
+                    // Match nested children if present
+                    item.children.forEach((child) => {
+                        if (child.children) {
+                            const matchSub = child.children.some(
+                                (sub) => normalizePath(sub.path) === url
+                            );
+                            if (matchSub) {
+                                dropdownState[child.text] = true;
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        setOpenDropdown((prev) => ({
+            ...prev,
+            ...dropdownState,
+        }));
+    }, [url]);
     const [hoveredDropdown, setHoveredDropdown] = useState(null); // Track hovered dropdown for popup
     const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
     const hidePopupTimer = React.useRef(null);
