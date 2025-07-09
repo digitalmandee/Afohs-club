@@ -266,10 +266,10 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                     <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} readOnly />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
+                    <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
+                    <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
                 <Grid item xs={6}>
                     <TextField label="Arrival Details" name="arrivalDetails" value={formData.arrivalDetails} onChange={handleChange} fullWidth multiline rows={2} />

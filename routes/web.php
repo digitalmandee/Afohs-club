@@ -33,9 +33,10 @@ use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+
 Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+});
 
 Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name('member.profile');
 
