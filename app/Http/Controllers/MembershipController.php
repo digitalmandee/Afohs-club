@@ -58,9 +58,22 @@ class MembershipController extends Controller
     public function edit(Request $request)
     {
         $user = User::where('id', $request->id)->with('userDetail', 'member', 'member.memberType')->first();
+        $familyMembers = $user->familyMembers->map(function ($member) {
+            return [
+                'user_id' => $member->id,
+                'full_name' => $member->first_name,
+                'relation' => $member->member->relation,
+                'cnic' => $member->member->cnic,
+                'phone_number' => $member->phone_number,
+                'email' => $member->email,
+                'start_date' => $member->member->start_date,
+                'end_date' => $member->member->end_date,
+                'picture' => $member->profile_photo,
+            ];
+        });
         $memberTypesData = MemberType::all();
         $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
-        return Inertia::render('App/Admin/Membership/EditMembershipForm', compact('user', 'memberTypesData', 'membercategories'));
+        return Inertia::render('App/Admin/Membership/EditMembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories'));
     }
 
     public function allMembers()
@@ -221,6 +234,7 @@ class MembershipController extends Controller
                     Member::create([
                         'user_id' => $familyUser->id,
                         'application_no' => Member::generateNextApplicationNo(),
+                        'relation' => $familyMemberData['relation'],
                         'family_suffix' => $familyMemberData['family_suffix'],
                         'card_status' => $request->member['card_status'],
                         'start_date' => $familyMemberData['start_date'] ?? null,
@@ -265,7 +279,6 @@ class MembershipController extends Controller
     public function updateMember(Request $request)
     {
         try {
-            Log::info($request->all());
             $validator = Validator::make($request->all(), [
                 'user_id' => 'required|exists:users,id',
                 'email' => 'required|email|unique:users,email,' . $request->user_id,

@@ -4,20 +4,18 @@ import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
-import AddForm1 from '@/components/App/membershipForm/AddForm1';
-import AddForm2 from '@/components/App/membershipForm/AddForm2';
-import AddForm3 from '@/components/App/membershipForm/AddForm3';
 import { enqueueSnackbar } from 'notistack';
 import Payment from './Payment';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import EditForm1 from '@/components/App/membershipForm/EditForm1';
 import EditForm2 from '@/components/App/membershipForm/EditForm2';
+import EditForm3 from '@/components/App/membershipForm/EditForm3';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = ({ memberTypesData, user, membercategories }) => {
+const MembershipDashboard = ({ memberTypesData, familyMembers, user, membercategories }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
@@ -65,8 +63,10 @@ const MembershipDashboard = ({ memberTypesData, user, membercategories }) => {
                 country: user.user_detail?.country || '',
             },
             member: {
+                application_no: user.member?.application_no || '',
+                membership_no: user.member?.membership_no || '',
                 member_type_id: user.member?.member_type_id || '',
-                membership_category: user.member?.membership_category || '',
+                membership_category: user.member?.member_category_id || '',
                 membership_date: user.member?.membership_date || new Date().toISOString().split('T')[0],
                 card_issue_date: user.member?.card_issue_date || new Date().toISOString().split('T')[0],
                 card_expiry_date: user.member?.card_expiry_date || '',
@@ -74,7 +74,7 @@ const MembershipDashboard = ({ memberTypesData, user, membercategories }) => {
                 to_date: user.member?.to_date || '',
                 card_status: user.member?.card_status || 'active',
             },
-            family_members: user.family_members || [],
+            family_members: familyMembers || [],
         };
     };
 
@@ -118,7 +118,9 @@ const MembershipDashboard = ({ memberTypesData, user, membercategories }) => {
             country: '',
         },
         member: {
+            application_no: '',
             member_type_id: '',
+            membership_no: '',
             membership_category: '',
             membership_date: new Date().toISOString().split('T')[0],
             card_issue_date: new Date().toISOString().split('T')[0],
@@ -232,8 +234,6 @@ const MembershipDashboard = ({ memberTypesData, user, membercategories }) => {
     });
 
     const handleFinalSubmit = async () => {
-        console.log(formsData1);
-
         const formData2 = objectToFormData(formsData1);
         setLoading(true);
 
@@ -283,7 +283,8 @@ const MembershipDashboard = ({ memberTypesData, user, membercategories }) => {
                 {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                 <div className="">
                     {step === 1 && <EditForm1 user={user} setData={setFormsData1} data={formsData1} handleChange={handleChange} userNo={user.user_id} onNext={() => setStep(2)} />}
-                    {step === 2 && <EditForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} onNext={handleFinalSubmit} onBack={() => setStep(1)} />}
+                    {step === 2 && <EditForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+                    {step === 3 && <EditForm3 setData={setFormsData1} data={formsData1} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} applicationNo={formsData1.member.application_no} />}
                 </div>
             </div>
         </>

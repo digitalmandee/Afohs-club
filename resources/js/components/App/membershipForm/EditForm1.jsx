@@ -170,7 +170,7 @@ const EditForm1 = ({ setData, data, handleChange, onNext, userNo, user }) => {
                                 Application Number :
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                #{userNo}
+                                #{data.member.application_no}
                             </Typography>
                         </Box>
                     </Grid>

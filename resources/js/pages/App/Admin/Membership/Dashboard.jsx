@@ -11,7 +11,10 @@ import MembershipCardComponent from './UserCard';
 import MemberFilter from './MemberFilter';
 import InvoiceSlip from './Invoice';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+import BorderColorIcon from '@mui/icons-material/BorderColor';
 import ActivateMembershipDialog from './ActivateMembershipDialog';
+import { MdEditSquare, MdModeEdit } from 'react-icons/md';
+import { FaEdit } from 'react-icons/fa';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -230,7 +233,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                         <>
                                                             <span
                                                                 style={{
-                                                                    color: user.member?.card_status === 'active' ? '#2e7d32' : user.member?.card_status === 'Suspend' ? '#FFA90B' : '#d32f2f',
+                                                                    color: user.member?.card_status === 'active' ? '#2e7d32' : user.member?.card_status === 'suspended' ? '#FFA90B' : '#d32f2f',
                                                                     fontWeight: 'medium',
                                                                     cursor: 'pointer',
                                                                 }}
@@ -249,6 +252,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                                         }}
                                                                     />
                                                                 )}
+                                                                <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
                                                             </span>
 
                                                             <Menu {...bindMenu(popupState)}>
@@ -308,13 +312,8 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <IconButton
-                                                    onClick={() => {
-                                                        setSelectMember(user);
-                                                        setOpenProfileModal(true);
-                                                    }}
-                                                >
-                                                    <MoreVert />
+                                                <IconButton onClick={() => router.visit(route('membership.edit', user.id))}>
+                                                    <FaEdit size={18} />
                                                 </IconButton>
                                             </TableCell>
                                         </TableRow>
