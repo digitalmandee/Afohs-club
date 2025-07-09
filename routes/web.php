@@ -15,6 +15,7 @@ use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EventBookingController;
 use App\Http\Controllers\EventMenuAddOnsController;
 use App\Http\Controllers\EventMenuCategoryController;
@@ -27,13 +28,15 @@ use App\Http\Controllers\RoomChargesTypeController;
 use App\Http\Controllers\RoomMiniBarController;
 use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\SubscriptionCategoryController;
+use App\Http\Controllers\UserController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+
 Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+});
 
 Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name('member.profile');
 
@@ -92,6 +95,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Admin Room Booking Routes
     Route::group(['prefix' => 'booking-management'], function () {
+        Route::resource('guests', CustomerController::class)->except(['show']);
+
         Route::group(['prefix' => 'rooms'], function () {
             Route::get('/dashboard', [RoomController::class, 'index'])->name('rooms.manage');
             Route::get('/', [RoomController::class, 'allRooms'])->name('rooms.all');
@@ -109,6 +114,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Event Routes
         Route::get('events/dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
+        Route::get('events/create', [EventBookingController::class, 'create'])->name('events.create');
         Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-category', EventMenuCategoryController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-type', EventMenuTypeController::class)->except(['create', 'edit', 'show']);
@@ -135,8 +141,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     //Admin Booking Routes
     Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
+    Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
     Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
     Route::get('/booking/new', [BookingController::class, 'booking'])->name('rooms.booking');
+    Route::get('/booking/edit/{id}', [BookingController::class, 'editbooking'])->name('rooms.booking.edit');
+    Route::post('/booking/update/{id}', [RoomBookingController::class, 'update'])->name('rooms.booking.update');
     Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
     Route::post('/room/booking', [RoomBookingController::class, 'store'])->name('rooms.booking.store');
@@ -144,7 +153,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar');
 
     // Search
-    Route::get('/admin/api/search-users', [BookingController::class, 'searchUsers'])->name('admin.api.search-users');
+    Route::get('/admin/api/search-users', [UserController::class, 'searchUsers'])->name('admin.api.search-users');
     // Booking Search
     Route::get('/booking/search', [BookingController::class, 'search'])->name('rooms.booking.search');
 

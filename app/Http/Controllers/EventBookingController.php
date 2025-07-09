@@ -6,6 +6,7 @@ use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\BookingEvents;
+use App\Models\EventBooking;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
 use App\Models\RoomBooking;
@@ -62,6 +63,13 @@ class EventBookingController extends Controller
         ]);
     }
 
+    // Create Events
+    public function create()
+    {
+        $bookingNo = $this->getBookingId();
+
+        return Inertia::render('App/Admin/Events/CreateBooking', compact('bookingNo'));
+    }
 
     public function search(Request $request)
     {
@@ -305,7 +313,7 @@ class EventBookingController extends Controller
 
     private function getBookingId()
     {
-        $booking_id =  (int) RoomBooking::max('booking_no');
+        $booking_id =  (int) EventBooking::max('booking_no');
         return $booking_id + 1;
     }
 

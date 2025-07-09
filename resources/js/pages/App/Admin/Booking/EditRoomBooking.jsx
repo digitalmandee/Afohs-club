@@ -17,57 +17,56 @@ const drawerWidthClosed = 110;
 
 const steps = ['Booking Details', 'Room Selection', 'Charges', 'Upload'];
 
-const RoomBooking = ({ room, bookingNo, roomCategories }) => {
+const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     // Access query parameters
     const { props } = usePage();
+
     const urlParams = new URLSearchParams(window.location.search);
     const urlParamsObject = Object.fromEntries([...urlParams.entries()].map(([key, value]) => [key, value]));
     const initialBookingType = urlParamsObject?.type === 'event' ? 'events' : 'room';
 
     // Main state for booking type
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(false);
     const [activeStep, setActiveStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
-        bookingNo: bookingNo || '',
-        bookingDate: new Date().toISOString().split('T')[0],
-        checkInDate: urlParamsObject?.checkin || '',
-        checkOutDate: urlParamsObject?.checkout || '',
-        persons: urlParamsObject?.persons || '',
-        arrivalDetails: '',
-        departureDetails: '',
-        bookingType: 'Member',
-        guest: '',
-        familyMember: '',
-        room: room || '',
-        bookingCategory: '',
-        perDayCharge: '',
-        nights: '',
-        roomCharge: '',
-        securityDeposit: '',
-        bookedBy: '',
-        guestFirstName: '',
-        guestLastName: '',
-        company: '',
-        address: '',
-        country: '',
-        city: '',
-        mobile: '',
-        email: '',
-        cnic: '',
-        guestRelation: '',
-        accompaniedGuest: '',
-        discountType: 'fixed',
-        discount: '',
-        totalOtherCharges: '',
-        totalMiniBar: '',
-        grandTotal: '',
-        mini_bar_items: [{ item: '', amount: '', qty: '', total: '' }],
-        other_charges: [{ type: '', details: '', amount: '', is_complementary: false }],
-        documents: [],
-        previewFiles: [],
-        notes: '',
+        bookingNo: booking.bookingNo,
+        bookingDate: booking.bookingDate,
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+        arrivalDetails: booking.arrivalDetails,
+        departureDetails: booking.departureDetails,
+        bookingType: booking.bookingType,
+        guest: booking.guest, // contains id, name, etc.
+        guestFirstName: booking.guestFirstName,
+        guestLastName: booking.guestLastName,
+        company: booking.company,
+        address: booking.address,
+        country: booking.country,
+        city: booking.city,
+        mobile: booking.mobile,
+        email: booking.email,
+        cnic: booking.cnic,
+        accompaniedGuest: booking.accompaniedGuest,
+        guestRelation: booking.guestRelation,
+        bookedBy: booking.bookedBy,
+        room: booking.room, // contains id (and optionally label)
+        persons: booking.persons,
+        bookingCategory: booking.bookingCategory,
+        nights: booking.nights,
+        perDayCharge: booking.perDayCharge,
+        roomCharge: booking.roomCharge,
+        securityDeposit: booking.securityDeposit,
+        discountType: booking.discountType,
+        discount: booking.discount,
+        totalOtherCharges: booking.totalOtherCharges,
+        totalMiniBar: booking.totalMiniBar,
+        grandTotal: booking.grandTotal,
+        notes: booking.notes,
+        documents: booking.documents ?? [],
+        mini_bar_items: booking.mini_bar_items ?? [],
+        other_charges: booking.other_charges ?? [],
     });
 
     const handleNext = () => {
@@ -148,11 +147,11 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
 
         setIsSubmitting(true);
         axios
-            .post(route('rooms.booking.store'), payload)
+            .post(route('rooms.booking.update', { id: booking.id }), payload)
             .then((res) => {
-                enqueueSnackbar('Booking submitted successfully', { variant: 'success' });
+                enqueueSnackbar('Booking Updated successfully', { variant: 'success' });
                 // Redirect or show success
-                router.visit(route('booking.payment', { invoice_no: res.data.invoice_id }));
+                router.visit(route('rooms.dashboard'));
             })
             .catch((err) => {
                 console.error('Submit error:', err);
@@ -244,7 +243,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         </>
     );
 };
-export default RoomBooking;
+export default EditRoomBooking;
 
 const BookingDetails = ({ formData, handleChange, errors }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
@@ -264,13 +263,13 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 </Grid>
                 {JSON.stringify()}
                 <Grid item xs={12} sm={6}>
-                    <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                    <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} readOnly />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
+                    <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
+                    <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
                 <Grid item xs={6}>
                     <TextField label="Arrival Details" name="arrivalDetails" value={formData.arrivalDetails} onChange={handleChange} fullWidth multiline rows={2} />
@@ -280,7 +279,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 </Grid>
                 <Grid item xs={12}>
                     <FormLabel>Booking Type</FormLabel>
-                    <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
+                    <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange} readOnly>
                         <FormControlLabel value="Member" control={<Radio />} label="Member" />
                         <FormControlLabel value="Corporate Member" control={<Radio />} label="Corporate Member" />
                         <FormControlLabel value="Applied Member" control={<Radio />} label="Applied Member" />
@@ -290,7 +289,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 </Grid>
 
                 <Grid item xs={12}>
-                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="/admin/api/search-users" placeholder="Search members..." />
+                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="/admin/api/search-users" placeholder="Search members..." disabled={true} />
                     {errors.guest && (
                         <Typography variant="body2" color="error">
                             {errors.guest}
@@ -374,7 +373,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
 
     // Find charge by selected booking category
     const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);
-    const matchedCharge = props.room.category_charges.find((charge) => charge.room_category_id == formData.bookingCategory);
+    const matchedCharge = formData.room.category_charges.find((charge) => charge.room_category_id == formData.bookingCategory);
 
     const perDayCharge = matchedCharge?.amount || 0;
     const totalCharge = nights * perDayCharge;
@@ -390,7 +389,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
         <Grid container spacing={2}>
             <Grid item xs={12}>
                 <Typography variant="h6">
-                    <b>Selected Room:</b> {props.room.name} ({props.room.room_type.name})
+                    <b>Selected Room:</b> {formData.room?.name} ({formData.room?.room_type?.name})
                 </Typography>
             </Grid>
 

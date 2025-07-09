@@ -15,9 +15,9 @@ import { enqueueSnackbar } from 'notistack';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const steps = ['Booking Details', 'Room Selection', 'Charges', 'Upload'];
+const steps = ['Booking Details', 'Charges', 'Upload'];
 
-const RoomBooking = ({ room, bookingNo, roomCategories }) => {
+const EventBooking = ({ room, bookingNo, roomCategories }) => {
     // Access query parameters
     const { props } = usePage();
     const urlParams = new URLSearchParams(window.location.search);
@@ -25,18 +25,14 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
     const initialBookingType = urlParamsObject?.type === 'event' ? 'events' : 'room';
 
     // Main state for booking type
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(false);
     const [activeStep, setActiveStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         bookingNo: bookingNo || '',
         bookingDate: new Date().toISOString().split('T')[0],
-        checkInDate: urlParamsObject?.checkin || '',
-        checkOutDate: urlParamsObject?.checkout || '',
         persons: urlParamsObject?.persons || '',
-        arrivalDetails: '',
-        departureDetails: '',
         bookingType: 'Member',
         guest: '',
         familyMember: '',
@@ -168,10 +164,8 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
             case 0:
                 return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} />;
             case 1:
-                return <RoomSelection formData={formData} handleChange={handleChange} errors={errors} />;
-            case 2:
                 return <ChargesInfo formData={formData} handleChange={handleChange} />;
-            case 3:
+            case 2:
                 return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleFileRemove={handleFileRemove} />;
             default:
                 return <Typography>Step not implemented yet</Typography>;
@@ -194,7 +188,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
                         <ArrowBack />
                     </IconButton>
                     <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
-                        Room Booking
+                        Event Booking
                     </h2>
                 </Box>
 
@@ -244,7 +238,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         </>
     );
 };
-export default RoomBooking;
+export default EventBooking;
 
 const BookingDetails = ({ formData, handleChange, errors }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
@@ -266,26 +260,11 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 <Grid item xs={12} sm={6}>
                     <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
-                <Grid item xs={6}>
-                    <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
-                </Grid>
-                <Grid item xs={6}>
-                    <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
-                </Grid>
-                <Grid item xs={6}>
-                    <TextField label="Arrival Details" name="arrivalDetails" value={formData.arrivalDetails} onChange={handleChange} fullWidth multiline rows={2} />
-                </Grid>
-                <Grid item xs={6}>
-                    <TextField label="Departure Details" name="departureDetails" value={formData.departureDetails} onChange={handleChange} fullWidth multiline rows={2} />
-                </Grid>
                 <Grid item xs={12}>
                     <FormLabel>Booking Type</FormLabel>
                     <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
                         <FormControlLabel value="Member" control={<Radio />} label="Member" />
-                        <FormControlLabel value="Corporate Member" control={<Radio />} label="Corporate Member" />
-                        <FormControlLabel value="Applied Member" control={<Radio />} label="Applied Member" />
-                        <FormControlLabel value="Affiliated Member" control={<Radio />} label="Affiliated Member" />
-                        <FormControlLabel value="VIP Guest" control={<Radio />} label="VIP Guest" />
+                        <FormControlLabel value="Guest" control={<Radio />} label="Guest / Non-Member" />
                     </RadioGroup>
                 </Grid>
 
@@ -368,23 +347,6 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
 
 const RoomSelection = ({ formData, handleChange, errors }) => {
     const { props } = usePage();
-
-    // Automatically calculate nights between check-in and check-out
-    const nights = formData.checkInDate && formData.checkOutDate ? differenceInCalendarDays(new Date(formData.checkOutDate), new Date(formData.checkInDate)) : 0;
-
-    // Find charge by selected booking category
-    const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);
-    const matchedCharge = props.room.category_charges.find((charge) => charge.room_category_id == formData.bookingCategory);
-
-    const perDayCharge = matchedCharge?.amount || 0;
-    const totalCharge = nights * perDayCharge;
-
-    // Sync calculated values into parent form state
-    useEffect(() => {
-        handleChange({ target: { name: 'nights', value: nights } });
-        handleChange({ target: { name: 'perDayCharge', value: perDayCharge } });
-        handleChange({ target: { name: 'roomCharge', value: totalCharge } });
-    }, [formData.bookingCategory, formData.checkInDate, formData.checkOutDate]);
 
     return (
         <Grid container spacing={2}>

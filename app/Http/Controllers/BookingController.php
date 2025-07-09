@@ -24,7 +24,34 @@ class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
+        // Step 1: Build bookingId => invoice mapping
+        $invoices = FinancialInvoice::get();
+
+        $bookingInvoiceMap = [];
+
+        foreach ($invoices as $invoice) {
+            foreach ($invoice->data as $entry) {
+                if (!empty($entry['booking_id'])) {
+                    $bookingInvoiceMap[$entry['booking_id']] = [
+                        'id' => $invoice->id,
+                        'status' => $invoice->status,
+                    ];
+                }
+            }
+        }
+
+        // Step 2: Get all RoomBookings
+        $bookings = RoomBooking::with('room', 'customer', 'customer.member')
+            ->latest()
+            ->get();
+
+        // Step 3: Attach invoice data to each booking
+        $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
+            $invoice = $bookingInvoiceMap[$booking->id] ?? null;
+            $booking->invoice = $invoice;
+            return $booking;
+        });
+
         $totalBookings = RoomBooking::count();
         $totalRoomBookings = RoomBooking::count();
 
@@ -117,6 +144,77 @@ class BookingController extends Controller
         return Inertia::render('App/Admin/Booking/RoomBooking', compact('room', 'bookingNo', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
     }
 
+    public function editbooking(Request $request, $id)
+    {
+        $booking = RoomBooking::with(['customer', 'customer.member', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
+        Log::info($booking->room);
+        $booking =  [
+            'id' => $booking->id,
+            'bookingNo' => $booking->booking_no,
+            'bookingDate' => $booking->booking_date,
+            'checkInDate' => $booking->check_in_date,
+            'checkOutDate' => $booking->check_out_date,
+            'arrivalDetails' => $booking->arrival_details,
+            'departureDetails' => $booking->departure_details,
+            'bookingType' => $booking->booking_type,
+            'guest' => [
+                'id' => $booking->customer_id,
+                'name' => $booking->customer->first_name ?? null,
+                'label' => $booking->customer->first_name ?? null,
+                'email' => $booking->customer->email ?? null,
+                'phone' => $booking->customer->phone_number ?? null,
+                'membership_no' => $booking->customer->member->membership_no ?? null,
+            ],
+            'guestFirstName' => $booking->guest_first_name,
+            'guestLastName' => $booking->guest_last_name,
+            'company' => $booking->guest_company,
+            'address' => $booking->guest_address,
+            'country' => $booking->guest_country,
+            'city' => $booking->guest_city,
+            'mobile' => $booking->guest_mob,
+            'email' => $booking->guest_email,
+            'cnic' => $booking->guest_cnic,
+            'accompaniedGuest' => $booking->accompanied_guest,
+            'guestRelation' => $booking->acc_relationship,
+            'bookedBy' => $booking->booked_by,
+            'room' => $booking->room,
+            'persons' => $booking->persons,
+            'bookingCategory' => $booking->category,
+            'nights' => $booking->nights,
+            'perDayCharge' => $booking->per_day_charge,
+            'roomCharge' => $booking->room_charge,
+            'securityDeposit' => $booking->security_deposit,
+            'discountType' => $booking->discount_type,
+            'discount' => $booking->discount_value,
+            'totalOtherCharges' => $booking->total_other_charges,
+            'totalMiniBar' => $booking->total_mini_bar,
+            'grandTotal' => $booking->grand_total,
+            'notes' => $booking->additional_notes,
+            'documents' => json_decode($booking->booking_docs, true),
+            'mini_bar_items' => $booking->miniBarItems,
+            'other_charges' => $booking->otherCharges,
+        ];
+
+        $roomCategories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
+        $chargesTypeItems = RoomChargesType::where('status', 'active')->select('id', 'name', 'amount')->get();
+        $miniBarItems = RoomMiniBar::where('status', 'active')->select('id', 'name', 'amount')->get();
+
+        return Inertia::render('App/Admin/Booking/EditRoomBooking', compact('booking', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
+    }
+
+    public function payNow(Request $request)
+    {
+        $invoice_no = $request->query('invoice_no');
+
+        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer:id,first_name,last_name,email', 'customer.member.memberType')->first();
+
+        if (!$invoice) {
+            return response()->json(['message' => 'Invoice not found'], 404);
+        }
+
+        return Inertia::render('App/Admin/Booking/Payment', compact('invoice'));
+    }
+
     // Search family Members
 
     public function familyMembers($id)
@@ -153,54 +251,6 @@ class BookingController extends Controller
 
         return response()->json(['success' => true, 'results' => $results], 200);
     }
-
-    // Search users
-    public function searchUsers(Request $request)
-    {
-        $query = $request->input('query');
-
-        $members = User::role('user', 'web')
-            ->select(
-                'users.id',
-                'users.first_name',
-                'users.last_name',
-                'users.email',
-                'users.phone_number',
-                'members.membership_no',
-                'user_details.cnic_no',
-                'user_details.current_address',
-            )
-            ->leftJoin('members', 'users.id', '=', 'members.user_id')
-            ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
-            ->whereNull('users.parent_user_id')
-            ->where(function ($q) use ($query) {
-                $q->where('users.first_name', 'like', "%{$query}%")
-                    ->orWhere('users.last_name', 'like', "%{$query}%")
-                    ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ["%{$query}%"])
-                    ->orWhere('members.membership_no', 'like', "%{$query}%")
-                    ->orWhere('users.email', 'like', "%{$query}%");
-            })
-            ->limit(10)
-            ->get();
-
-        // Format for frontend
-        $results = $members->map(function ($user) {
-            $fullName = trim("{$user->first_name} {$user->last_name}");
-            return [
-                'id' => $user->id,
-                'label' => "{$fullName} ({$user->membership_no}) ({$user->email})",
-                'membership_no' => $user->membership_no,
-                'email' => $user->email,
-                'cnic' => $user->cnic_no,
-                'phone' => $user->phone_number,
-                'address' => $user->current_address,
-            ];
-        });
-
-        return response()->json(['success' => true, 'results' => $results], 200);
-    }
-
-
 
     public function store(Request $request)
     {
@@ -288,9 +338,11 @@ class BookingController extends Controller
         $invoice->status = 'paid';
         $invoice->save();
 
-        $subscription = Booking::find($invoice->data[0]['id']);
-        $subscription->status = 'confirmed';
-        $subscription->save();
+        $booking = RoomBooking::find($invoice->data[0]['booking_id']);
+        if ($request->booking_status) {
+            $booking->status =  $request->booking_status;
+        }
+        $booking->save();
 
         DB::commit();
 
