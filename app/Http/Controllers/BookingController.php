@@ -41,9 +41,7 @@ class BookingController extends Controller
         }
 
         // Step 2: Get all RoomBookings
-        $bookings = RoomBooking::with('room', 'customer', 'customer.member')
-            ->latest()
-            ->get();
+        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
 
         // Step 3: Attach invoice data to each booking
         $bookings->transform(function ($booking) use ($bookingInvoiceMap) {

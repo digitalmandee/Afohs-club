@@ -305,6 +305,44 @@ class RoomBookingController extends Controller
         return response()->json(['rooms' => $rooms, 'bookings' => $bookings]);
     }
 
+
+    // Show Room Booking
+    public function showRoomBooking($id)
+    {
+        $booking = RoomBooking::findOrFail($id);
+
+        return response()->json(['success' => true, 'booking' => $booking]);
+    }
+
+    public function checkIn(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:room_bookings,id',
+            'check_in_date' => 'required|date',
+            'check_in_time' => 'required|date_format:H:i',
+        ]);
+
+        $booking = RoomBooking::findOrFail($request->booking_id);
+
+        // Validate: Check-in date must not be after check-out date
+        if (!empty($booking->check_out_date) && $request->check_in_date > $booking->check_out_date) {
+            return response()->json(['message' => 'Check-in date cannot be after check-out date.'], 422);
+        }
+
+        // Save check-in info
+        $booking->check_in_date = $request->check_in_date;
+        $booking->check_in_time = $request->check_in_time;
+        $booking->status = 'checked_in';
+
+        $booking->save();
+
+        return response()->json([
+            'message' => 'Check-in time recorded successfully.',
+            'check_in_at' => $booking->check_in_date . ' ' . $booking->check_in_time,
+        ]);
+    }
+
+
     private function getBookingId()
     {
         $booking_id =  (int) RoomBooking::max('booking_no');

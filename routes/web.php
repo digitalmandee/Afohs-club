@@ -105,6 +105,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit');
             Route::put('{id}', [RoomController::class, 'update'])->name('rooms.update');
             Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+            // get room booking data
+            Route::get('api/bookings/{id}', [RoomBookingController::class, 'showRoomBooking'])->name('api.room.booking.show');
+            Route::post('api/bookings/check-in', [RoomBookingController::class, 'checkIn'])->name('api.room.booking.checkin');
             // Route::get('/types', [RoomController::class, 'mamageTypes'])->name('rooms.types');
         });
         Route::resource('room-types', RoomTypeController::class)->except(['create', 'edit', 'show']);

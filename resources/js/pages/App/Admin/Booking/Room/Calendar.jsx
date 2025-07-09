@@ -3,8 +3,9 @@ import { DayPilot, DayPilotScheduler } from 'daypilot-pro-react';
 import axios from 'axios';
 import moment from 'moment';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import { FormControl, InputLabel, MenuItem, Select, Box, IconButton } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
+import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -16,33 +17,33 @@ const RoomCalendar = () => {
     const [year, setYear] = useState(moment().format('YYYY'));
     const [resources, setResources] = useState([]);
     const [events, setEvents] = useState([]);
+    const [checkInDialogOpen, setCheckInDialogOpen] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState(null);
 
     const fetchData = async () => {
         try {
             const { data } = await axios.get('/api/room-bookings/calendar', {
                 params: { month, year },
             });
-            console.log(data);
 
             setResources(data.rooms);
 
-            const evs = data.bookings.map((b) => {
-                return {
-                    id: b.id,
-                    resource: 'R' + b.room_number,
-                    start: b.check_in_date,
-                    end: moment(b.check_out_date).add(1, 'day').format('YYYY-MM-DD'),
-                    text: `#${b.booking_no}: ${b.guest_name}`,
-                    backColor: statusBack(b.status),
-                    barColor: statusBar(b.status),
-                    bubbleHtml: `
-            <strong>${b.guest_name}</strong><br/>
-            Status: ${b.status.replace('_', ' ')}<br/>
-            <button onclick="window.open('/room-management/room-check-in/${b.id}', '_blank')">Check-in</button>
-            <button onclick="window.open('/room-management/room-check-out/${b.id}', '_blank')">Check-out</button>
-          `,
-                };
-            });
+            const evs = data.bookings.map((b) => ({
+                id: b.id,
+                booking: b,
+                resource: 'R' + b.room_number,
+                start: b.check_in_date,
+                end: moment(b.check_out_date).add(1, 'day').format('YYYY-MM-DD'),
+                text: `#${b.booking_no}: ${b.guest_name}`,
+                backColor: statusBack(b.status),
+                barColor: statusBar(b.status),
+                bubbleHtml: `
+                    <strong>${b.guest_name}</strong><br/>
+                    Status: ${b.status.replace('_', ' ')}<br/>
+                    <a href="#" onclick="window.checkIn(${b.id}); return false;">Check-in</a><br/>
+                    <a href="/booking/edit/${b.id}" target="_blank">Check-out</a>
+                `,
+            }));
 
             setEvents(evs);
         } catch (e) {
@@ -54,7 +55,23 @@ const RoomCalendar = () => {
         fetchData();
     }, [month, year]);
 
+    useEffect(() => {
+        // Register global checkIn function
+        window.checkIn = (bookingId) => {
+            const booking = events.find((e) => e.id === bookingId)?.booking;
+            if (booking) {
+                setSelectedBooking(booking);
+                setCheckInDialogOpen(true);
+            }
+        };
+
+        return () => {
+            delete window.checkIn;
+        };
+    }, [events]);
+
     const statusBack = (s) => ({ booked: 'blue', checked_in: 'yellow', checked_out: '#ddd', refund: 'green' })[s] || 'gray';
+
     const statusBar = (s) => ({ booked: 'blue', checked_in: 'black', checked_out: 'black', refund: 'black' })[s] || 'black';
 
     const dpConfig = {
@@ -79,13 +96,33 @@ const RoomCalendar = () => {
                 })),
             },
         ],
-        events: events,
+        events,
         eventHoverHandling: 'Bubble',
         bubble: new DayPilot.Bubble(),
         onEventClick: (args) => {
-            const id = args.e.id();
-            window.open(`/room-management/room-check-in/${id}`, '_blank');
+            const booking = args.e.data.booking;
+            setSelectedBooking(booking);
+            setCheckInDialogOpen(true);
         },
+    };
+
+    const handleCloseCheckIn = () => {
+        setCheckInDialogOpen(false);
+        setSelectedBooking(null);
+    };
+
+    const handleCheckInSubmit = async () => {
+        try {
+            await axios.post('/api/room-bookings/check-in', {
+                booking_id: selectedBooking.id,
+                check_in_date: selectedBooking.check_in_date,
+                check_in_time: '12:00', // default for now
+            });
+            setCheckInDialogOpen(false);
+            fetchData(); // Refresh calendar
+        } catch (error) {
+            console.error('Check-in failed:', error);
+        }
     };
 
     return (
@@ -99,7 +136,6 @@ const RoomCalendar = () => {
                 }}
             >
                 <Box px={2}>
-                    {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton style={{ color: '#063455' }} onClick={() => router.visit('/booking/dashboard')}>
                             <ArrowBack />
@@ -108,6 +144,7 @@ const RoomCalendar = () => {
                             Room Booking Calendar
                         </h2>
                     </Box>
+
                     <Box display="flex" gap={2} mb={2}>
                         <FormControl variant="outlined" size="small">
                             <InputLabel id="month-label">Month</InputLabel>
@@ -135,6 +172,31 @@ const RoomCalendar = () => {
                     <DayPilotScheduler ref={schedulerRef} {...dpConfig} style={{ height: '650px' }} />
                 </Box>
             </div>
+
+            {/* Check-in Modal */}
+            <Dialog open={checkInDialogOpen} onClose={handleCloseCheckIn} maxWidth="sm" fullWidth>
+                <DialogTitle>Check-in for Booking #{selectedBooking?.booking_no}</DialogTitle>
+                <DialogContent dividers>
+                    <p>
+                        <strong>Guest:</strong> {selectedBooking?.guest_name}
+                    </p>
+                    <p>
+                        <strong>Room:</strong> {selectedBooking?.room?.room_number}
+                    </p>
+                    <p>
+                        <strong>Check-in Date:</strong> {selectedBooking?.check_in_date}
+                    </p>
+                    <p>
+                        <strong>Check-out Date:</strong> {selectedBooking?.check_out_date}
+                    </p>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseCheckIn}>Cancel</Button>
+                    <Button variant="contained" color="primary" onClick={handleCheckInSubmit}>
+                        Confirm Check-in
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };

@@ -16,6 +16,7 @@ import { DateRange, DateRangePicker } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { addDays, format } from 'date-fns';
+import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -525,6 +526,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+    const [showCheckInModal, setShowCheckInModal] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchResultsFilter, setSearchResultsFilter] = useState(false);
@@ -712,6 +714,9 @@ const BookingDashboard = ({ data, roomTypes }) => {
                             </Col>
                         </Row>
 
+                        {/* Room Checkin Modal  */}
+                        <RoomCheckInModal open={showCheckInModal} onClose={() => setShowCheckInModal(false)} bookingId={selectedBooking?.id} />
+
                         {/* TODO: Remove invoice modal when reverting to original print functionality */}
                         <Modal show={showInvoiceModal} onHide={handleCloseInvoice} className="custom-dialog-right" size="lg" aria-labelledby="invoice-modal-title">
                             <Modal.Body>
@@ -721,7 +726,10 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                 <Button variant="secondary" onClick={handleCloseInvoice}>
                                     Close
                                 </Button>
-                                {selectedBooking?.status === 'confirmed' ? (
+                                <Button variant="secondary" onClick={() => setShowCheckInModal(true)}>
+                                    Checked In
+                                </Button>
+                                {!['checked_out', 'cancelled', 'no_show', 'refunded'].includes(selectedBooking?.status) ? (
                                     <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking?.id }))}>
                                         Edit
                                     </Button>

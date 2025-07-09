@@ -112,10 +112,7 @@ export default function SideNav({ open, setOpen }) {
         menuItems.forEach((item) => {
             if (item.children) {
                 // Match direct children
-                const matchChild = item.children.some((child) =>
-                    normalizePath(child.path) === url ||
-                    (child.children && child.children.some((sub) => normalizePath(sub.path) === url))
-                );
+                const matchChild = item.children.some((child) => normalizePath(child.path) === url || (child.children && child.children.some((sub) => normalizePath(sub.path) === url)));
 
                 if (matchChild) {
                     dropdownState[item.text] = true;
@@ -123,9 +120,7 @@ export default function SideNav({ open, setOpen }) {
                     // Match nested children if present
                     item.children.forEach((child) => {
                         if (child.children) {
-                            const matchSub = child.children.some(
-                                (sub) => normalizePath(sub.path) === url
-                            );
+                            const matchSub = child.children.some((sub) => normalizePath(sub.path) === url);
                             if (matchSub) {
                                 dropdownState[child.text] = true;
                             }
