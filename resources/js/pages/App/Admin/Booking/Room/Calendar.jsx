@@ -6,6 +6,7 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
+import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -41,7 +42,7 @@ const RoomCalendar = () => {
                     <strong>${b.guest_name}</strong><br/>
                     Status: ${b.status.replace('_', ' ')}<br/>
                     <a href="#" onclick="window.checkIn(${b.id}); return false;">Check-in</a><br/>
-                    <a href="/booking/edit/${b.id}" target="_blank">Check-out</a>
+                    <a href="/booking/edit/${b.id}?type=checkout" target="_blank">Check-out</a>
                 `,
             }));
 
@@ -174,29 +175,7 @@ const RoomCalendar = () => {
             </div>
 
             {/* Check-in Modal */}
-            <Dialog open={checkInDialogOpen} onClose={handleCloseCheckIn} maxWidth="sm" fullWidth>
-                <DialogTitle>Check-in for Booking #{selectedBooking?.booking_no}</DialogTitle>
-                <DialogContent dividers>
-                    <p>
-                        <strong>Guest:</strong> {selectedBooking?.guest_name}
-                    </p>
-                    <p>
-                        <strong>Room:</strong> {selectedBooking?.room?.room_number}
-                    </p>
-                    <p>
-                        <strong>Check-in Date:</strong> {selectedBooking?.check_in_date}
-                    </p>
-                    <p>
-                        <strong>Check-out Date:</strong> {selectedBooking?.check_out_date}
-                    </p>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseCheckIn}>Cancel</Button>
-                    <Button variant="contained" color="primary" onClick={handleCheckInSubmit}>
-                        Confirm Check-in
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <RoomCheckInModal open={checkInDialogOpen} onClose={handleCloseCheckIn} bookingId={selectedBooking?.id} />
         </>
     );
 };

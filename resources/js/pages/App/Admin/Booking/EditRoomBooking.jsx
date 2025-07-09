@@ -17,13 +17,13 @@ const drawerWidthClosed = 110;
 
 const steps = ['Booking Details', 'Room Selection', 'Charges', 'Upload'];
 
+const urlParams = new URLSearchParams(window.location.search);
+const urlParamsObject = Object.fromEntries([...urlParams.entries()].map(([key, value]) => [key, value]));
+const isCheckout = urlParamsObject?.type === 'checkout' ? true : false;
+
 const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     // Access query parameters
     const { props } = usePage();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlParamsObject = Object.fromEntries([...urlParams.entries()].map(([key, value]) => [key, value]));
-    const initialBookingType = urlParamsObject?.type === 'event' ? 'events' : 'room';
 
     // Main state for booking type
     const [open, setOpen] = useState(false);
@@ -34,7 +34,9 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
         bookingNo: booking.bookingNo,
         bookingDate: booking.bookingDate,
         checkInDate: booking.checkInDate,
+        checkInTime: booking.checkInTime,
         checkOutDate: booking.checkOutDate,
+        checkOutTime: booking.checkOutTime,
         arrivalDetails: booking.arrivalDetails,
         departureDetails: booking.departureDetails,
         bookingType: booking.bookingType,
@@ -142,8 +144,13 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             return;
         }
 
+        const newData = {
+            ...formData,
+            statusType: isCheckout ? 'checked_out' : '',
+        };
+
         // Proceed with actual submission
-        const payload = objectToFormData(formData);
+        const payload = objectToFormData(newData);
 
         setIsSubmitting(true);
         axios
@@ -268,9 +275,19 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 <Grid item xs={6}>
                     <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
+                {isCheckout && (
+                    <Grid item xs={6}>
+                        <TextField label="Check-In Time" name="checkInTime" type="time" value={formData.checkInTime} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                    </Grid>
+                )}
                 <Grid item xs={6}>
                     <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
+                {isCheckout && (
+                    <Grid item xs={6}>
+                        <TextField label="Check-Out Time" name="checkOutTime" type="time" value={formData.checkOutTime} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                    </Grid>
+                )}
                 <Grid item xs={6}>
                     <TextField label="Arrival Details" name="arrivalDetails" value={formData.arrivalDetails} onChange={handleChange} fullWidth multiline rows={2} />
                 </Grid>
@@ -279,12 +296,12 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 </Grid>
                 <Grid item xs={12}>
                     <FormLabel>Booking Type</FormLabel>
-                    <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange} readOnly>
-                        <FormControlLabel value="Member" control={<Radio />} label="Member" />
-                        <FormControlLabel value="Corporate Member" control={<Radio />} label="Corporate Member" />
-                        <FormControlLabel value="Applied Member" control={<Radio />} label="Applied Member" />
-                        <FormControlLabel value="Affiliated Member" control={<Radio />} label="Affiliated Member" />
-                        <FormControlLabel value="VIP Guest" control={<Radio />} label="VIP Guest" />
+                    <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
+                        <FormControlLabel value="Member" control={<Radio />} label="Member" disabled />
+                        <FormControlLabel value="Corporate Member" control={<Radio />} label="Corporate Member" disabled />
+                        <FormControlLabel value="Applied Member" control={<Radio />} label="Applied Member" disabled />
+                        <FormControlLabel value="Affiliated Member" control={<Radio />} label="Affiliated Member" disabled />
+                        <FormControlLabel value="VIP Guest" control={<Radio />} label="VIP Guest" disabled />
                     </RadioGroup>
                 </Grid>
 
@@ -307,7 +324,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                             <Typography variant="body1">Address: {formData.guest?.address}</Typography>
                             <FormControl fullWidth sx={{ mt: 2 }}>
                                 <InputLabel>Select Family Member</InputLabel>
-                                <Select value={formData.familyMember} onChange={handleChange} name="familyMember" label="Select Family Member">
+                                <Select value={formData.familyMember} onChange={handleChange} name="familyMember" label="Select Family Member" disabled>
                                     <MenuItem value="">Select Family Member</MenuItem>
                                     {familyMembers?.map((member) => (
                                         <MenuItem key={member.id} value={member.id}>
@@ -325,40 +342,40 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
             </Typography>
             <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                    <TextField label="Booked By" name="bookedBy" value={formData.bookedBy} onChange={handleChange} fullWidth />
+                    <TextField label="Booked By" name="bookedBy" value={formData.bookedBy} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Guest First Name" name="guestFirstName" value={formData.guestFirstName} onChange={handleChange} fullWidth />
+                    <TextField label="Guest First Name" name="guestFirstName" value={formData.guestFirstName} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Guest Last Name" name="guestLastName" value={formData.guestLastName} onChange={handleChange} fullWidth />
+                    <TextField label="Guest Last Name" name="guestLastName" value={formData.guestLastName} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Company / Institution" name="company" value={formData.company} onChange={handleChange} fullWidth />
+                    <TextField label="Company / Institution" name="company" value={formData.company} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Address" name="address" value={formData.address} onChange={handleChange} fullWidth />
+                    <TextField label="Address" name="address" value={formData.address} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Country" name="country" value={formData.country} onChange={handleChange} fullWidth />
+                    <TextField label="Country" name="country" value={formData.country} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth />
+                    <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={handleChange} fullWidth />
+                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth />
+                    <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="CNIC / Passport No." name="cnic" value={formData.cnic} onChange={handleChange} fullWidth />
+                    <TextField label="CNIC / Passport No." name="cnic" value={formData.cnic} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Enter Relationship" name="guestRelation" value={formData.guestRelation} onChange={handleChange} fullWidth />
+                    <TextField label="Enter Relationship" name="guestRelation" value={formData.guestRelation} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={12}>
-                    <TextField label="Accompanied Guest Name" name="accompaniedGuest" value={formData.accompaniedGuest} onChange={handleChange} fullWidth />
+                    <TextField label="Accompanied Guest Name" name="accompaniedGuest" value={formData.accompaniedGuest} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
             </Grid>
         </>
@@ -396,7 +413,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
             <Grid item xs={12}>
                 <FormControl fullWidth>
                     <InputLabel>Booking Category</InputLabel>
-                    <Select value={formData.bookingCategory} onChange={handleChange} name="bookingCategory" label="Booking Category">
+                    <Select value={formData.bookingCategory} onChange={handleChange} name="bookingCategory" label="Booking Category" disabled={isCheckout}>
                         <MenuItem value="">Booking Category</MenuItem>
                         {props.roomCategories.map((item) => (
                             <MenuItem key={item.id} value={item.id}>
@@ -422,7 +439,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
             <Grid item xs={12}>
-                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth />
+                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth disabled={isCheckout} />
             </Grid>
         </Grid>
     );

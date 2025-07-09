@@ -177,6 +177,7 @@ class RoomBookingController extends Controller
             'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,docx',
             'mini_bar_items' => 'nullable|array',
             'other_charges' => 'nullable|array',
+            'statusType' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -228,6 +229,7 @@ class RoomBookingController extends Controller
                 'grand_total' => $data['grandTotal'],
                 'additional_notes' => $data['notes'] ?? null,
                 'booking_docs' => json_encode($documentPaths),
+                'status' => $data['statusType'] ?? $booking->status,
             ]);
 
             // 🔁 Clear and recreate mini bar + other charges
@@ -309,7 +311,13 @@ class RoomBookingController extends Controller
     // Show Room Booking
     public function showRoomBooking($id)
     {
-        $booking = RoomBooking::findOrFail($id);
+        $booking = RoomBooking::with('room', 'customer', 'customer.member:id,user_id,membership_no', 'room', 'room.roomType')->findOrFail($id);
+        $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
+            ->select('id', 'customer_id', 'data', 'status')
+            ->where('customer_id', $booking->customer_id)
+            ->whereJsonContains('data', [['booking_id' => $booking->id]])
+            ->first();
+        $booking->invoice = $invoice;
 
         return response()->json(['success' => true, 'booking' => $booking]);
     }
