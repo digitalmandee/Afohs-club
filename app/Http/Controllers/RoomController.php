@@ -173,28 +173,35 @@ class RoomController extends Controller
     // Show edit form for a room
     public function edit($id)
     {
-        $room = Room::findOrFail($id);
+        $room = Room::with('categoryCharges')->findOrFail($id);
+        $roomTypes = RoomType::where('status', 'active')->select('id', 'name')->get();
+        $categories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
         $locations = EventLocation::all();
 
-        return Inertia::render('App/Admin/Booking/EditRoom', [
-            'room' => $room,
+        return Inertia::render('App/Admin/Booking/AddRoom', [
+            'roomTypes' => $roomTypes,
             'locations' => $locations,
+            'categories' => $categories,
+            'room' => $room,
         ]);
     }
 
     // Update a room
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        $room = Room::findOrFail($id);
-
         $request->validate([
             'name' => 'required|string|max:255',
             'number_of_beds' => 'required|integer',
             'max_capacity' => 'required|integer',
-            'price_per_night' => 'required|numeric',
+            'room_type_id' => 'required|exists:room_types,id',
             'number_of_bathrooms' => 'required|integer',
             'photo' => 'nullable|image|max:4096',
+            'category_charges' => 'nullable|array',
+            'category_charges.*.id' => 'required|exists:room_categories,id',
+            'category_charges.*.amount' => 'nullable|numeric|min:0',
         ]);
+
+        $room = Room::findOrFail($request->id);
 
         $path = $room->photo_path;
         if ($request->hasFile('photo')) {
@@ -203,12 +210,27 @@ class RoomController extends Controller
 
         $room->update([
             'name' => $request->name,
+            'room_type_id' => $request->room_type_id,
             'number_of_beds' => $request->number_of_beds,
             'max_capacity' => $request->max_capacity,
-            'price_per_night' => $request->price_per_night,
             'number_of_bathrooms' => $request->number_of_bathrooms,
             'photo_path' => $path,
         ]);
+
+        // Save category charges
+        foreach ($request->category_charges as $charge) {
+            if (!empty($charge['amount'])) {
+                RoomCategoryCharge::updateOrCreate(
+                    [
+                        'room_id' => $room->id,
+                        'room_category_id' => $charge['id']
+                    ],
+                    [
+                        'amount' => $charge['amount']
+                    ]
+                );
+            }
+        }
 
         return redirect()->route('rooms.all')->with('success', 'Room updated successfully.');
     }

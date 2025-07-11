@@ -27,7 +27,6 @@ class SubscriptionController extends Controller
         return Inertia::render('App/Admin/Subscription/Dashboard', compact('subscriptions', 'newSubscriptionsToday', 'totalRevenue'));
     }
 
-
     public function monthlyFee()
     {
         // Get all monthly subscriptions
@@ -42,13 +41,13 @@ class SubscriptionController extends Controller
         // Collected Fee: paid invoices only
         $collectedFee = FinancialInvoice::where('status', 'paid')
             ->where('invoice_type', 'subscription')
-            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.subscription_id'))"), $monthlySubscriptionIds)
+            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.subscription_id'))"), $monthlySubscriptionIds)
             ->sum('total_price');
 
         // Pending Fee: unpaid/due invoices
-        $pendingFee = FinancialInvoice::whereIn('status', ['unpaid', 'due']) // adjust if you use other terms
+        $pendingFee = FinancialInvoice::whereIn('status', ['unpaid', 'due'])  // adjust if you use other terms
             ->where('invoice_type', 'subscription')
-            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.subscription_id'))"), $monthlySubscriptionIds)
+            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.subscription_id'))"), $monthlySubscriptionIds)
             ->sum('total_price');
 
         // Latest 5 monthly subscriptions
@@ -102,9 +101,9 @@ class SubscriptionController extends Controller
             'status' => 'in_active',
         ]);
 
-        $data = $subscription->toArray(); // Convert Eloquent model to array
-        $data['invoice_type'] = 'subscription'; // Add custom fiel
-        $data['amount'] = $request->amount; // Add custom fiel
+        $data = $subscription->toArray();  // Convert Eloquent model to array
+        $data['invoice_type'] = 'subscription';  // Add custom fiel
+        $data['amount'] = $request->amount;  // Add custom fiel
 
         $invoice_no = $this->getInvoiceNo();
         $member_id = Auth::user()->id;
@@ -181,10 +180,29 @@ class SubscriptionController extends Controller
     {
         $invoices = FinancialInvoice::where('customer_id', $userId)
             ->whereIn('invoice_type', ['membership', 'subscription'])
-            ->where('status', 'unpaid')
+            ->orderByDesc('issue_date')
             ->get();
 
         return response()->json($invoices);
+    }
+
+    public function payMultipleInvoices(Request $request)
+    {
+        $validated = $request->validate([
+            'invoice_ids' => 'required|array',
+            'invoice_ids.*' => 'exists:financial_invoices,id',
+            'method' => 'required|in:cash,card',
+        ]);
+
+        foreach ($validated['invoice_ids'] as $id) {
+            $invoice = FinancialInvoice::find($id);
+            $invoice->status = 'paid';
+            $invoice->payment_date = now();
+            $invoice->payment_method = $validated['method'];
+            $invoice->save();
+        }
+
+        return response()->json(['message' => 'Invoices paid successfully']);
     }
 
     public function payInvoice($invoiceId)
@@ -214,8 +232,6 @@ class SubscriptionController extends Controller
 
         return response()->json($customers);
     }
-
-
 
     private function getInvoiceNo()
     {

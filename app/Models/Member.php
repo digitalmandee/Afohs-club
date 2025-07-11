@@ -42,12 +42,16 @@ class Member extends Model
         $lastNumber = self::orderBy('id', 'desc')
             ->pluck('membership_no')
             ->map(function ($number) {
-                return (int) explode('-', $number)[0];
+                // Extract the base numeric part (e.g., from "AR 002", "PR 1000-1")
+                preg_match('/\b(\d+)\b/', $number, $matches);
+                return isset($matches[1]) ? (int) $matches[1] : 0;
             })
             ->max() ?? 0;
 
-        $newSerial = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-        return $newSerial;
+        $next = $lastNumber + 1;
+
+        // Minimum 3 digits, but will grow if needed (e.g., "001", "099", "1000")
+        return str_pad((string) $next, 3, '0', STR_PAD_LEFT);
     }
 
     public static function generateNextApplicationNo(): string
@@ -61,12 +65,11 @@ class Member extends Model
 
         // Optional cap, e.g., if max is 99
         if ($next > 99) {
-            throw new \Exception("Application number limit reached.");
+            throw new \Exception('Application number limit reached.');
         }
 
         return $next;
     }
-
 
     // public function userDetail()
     // {
@@ -87,6 +90,7 @@ class Member extends Model
     {
         return $this->belongsTo(Member::class, 'primary_member_id');
     }
+
     public function userDetail()
     {
         return $this->belongsTo(UserDetail::class);

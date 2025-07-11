@@ -242,6 +242,7 @@ class RoomBookingController extends Controller
             $booking->otherCharges()->delete();
             foreach ($data['other_charges'] ?? [] as $charge) {
                 if (!empty($charge['type'])) {
+                    $charge['is_complementary'] = $charge['is_complementary'] ? 1 : 0;
                     $booking->otherCharges()->create($charge);
                 }
             }

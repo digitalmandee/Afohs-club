@@ -1,7 +1,7 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { Link, router } from '@inertiajs/react';
 import { Add, ArrowBack, Bathroom, Bed, FilterAlt, Person, Search } from '@mui/icons-material';
-import { Box, Button, Grid, IconButton, Paper, ThemeProvider, Typography, createTheme } from '@mui/material';
+import { Avatar, Box, Button, Grid, IconButton, Paper, ThemeProvider, Typography, createTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 import { Badge, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap';
@@ -474,14 +474,13 @@ const RoomScreen = ({ rooms, data }) => {
                                             sx={{
                                                 borderRadius: 1,
                                                 overflow: 'hidden',
+                                                alignItems: 'center',
                                                 display: 'flex',
                                                 height: '100px',
                                                 bgcolor: '#FFFFFF',
                                             }}
                                         >
-                                            <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                                <img src={'/' + roomTypes?.photo_path} alt="" style={{ width: '117px', height: '77px' }} />
-                                            </Box>
+                                            <Avatar src={'/' + roomTypes?.photo_path} alt={roomTypes?.name} sx={{ width: 80, height: 80, ml: 2 }} />
 
                                             <Box sx={{ p: 2, width: '80%' }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
