@@ -824,7 +824,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
 
                                 {!searchResultsFilter && data.bookingsData.length > 0 ? (
                                     data.bookingsData.map((booking, index) => {
-                                        const durationInDays = dayjs(booking.check_in_date).diff(dayjs(booking.check_out_date), 'day');
+                                        const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
 
                                         return (
                                             <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handleShowInvoice(booking)}>

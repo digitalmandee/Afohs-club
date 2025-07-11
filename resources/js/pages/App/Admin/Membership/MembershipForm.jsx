@@ -61,6 +61,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
         },
         member: {
             member_type_id: '',
+            kinship: '',
             membership_no: membershipNo,
             membership_category: '',
             membership_date: new Date().toISOString().split('T')[0],

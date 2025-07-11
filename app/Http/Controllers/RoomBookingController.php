@@ -7,10 +7,10 @@ use App\Models\FinancialInvoice;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
 class RoomBookingController extends Controller
@@ -65,7 +65,7 @@ class RoomBookingController extends Controller
 
             $booking = RoomBooking::create([
                 'booking_no' => $this->getBookingId(),
-                'customer_id' => (int)$data['guest']['id'],
+                'customer_id' => (int) $data['guest']['id'],
                 'booking_date' => $data['bookingDate'] ?? null,
                 'check_in_date' => $data['checkInDate'] ?? null,
                 'check_out_date' => $data['checkOutDate'] ?? null,
@@ -109,15 +109,14 @@ class RoomBookingController extends Controller
 
             foreach ($data['other_charges'] ?? [] as $charge) {
                 if (!empty($charge['type'])) {
+                    $charge['is_complementary'] = $charge['is_complementary'] ? 1 : 0;
                     $booking->otherCharges()->create($charge);
                 }
             }
 
-            Log::info('Room booking created', ['booking_id' => $data['guest']['id']]);
-
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->getInvoiceNo(),
-                'customer_id' => (int)$data['guest']['id'],
+                'customer_id' => (int) $data['guest']['id'],
                 'member_id' => Auth::user()->id,
                 'invoice_type' => 'room_booking',
                 'discount_type' => $data['discountType'] ?? null,
@@ -278,7 +277,6 @@ class RoomBookingController extends Controller
         }
     }
 
-
     // Calendar
 
     public function calendar()
@@ -306,7 +304,6 @@ class RoomBookingController extends Controller
 
         return response()->json(['rooms' => $rooms, 'bookings' => $bookings]);
     }
-
 
     // Show Room Booking
     public function showRoomBooking($id)
@@ -350,10 +347,9 @@ class RoomBookingController extends Controller
         ]);
     }
 
-
     private function getBookingId()
     {
-        $booking_id =  (int) RoomBooking::max('booking_no');
+        $booking_id = (int) RoomBooking::max('booking_no');
         return $booking_id + 1;
     }
 

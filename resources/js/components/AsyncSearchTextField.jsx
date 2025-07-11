@@ -9,6 +9,7 @@ const AsyncSearchTextField = ({
     onChange,
     endpoint,
     queryParam = 'q', // key to send query like ?q=ali
+    params = {},
     placeholder = '',
     fullWidth = true,
     disabled = false,
@@ -40,7 +41,10 @@ const AsyncSearchTextField = ({
 
         try {
             setLoading(true);
-            const res = await axios.get(`${endpoint}?${queryParam}=${query}`);
+            const searchParams = new URLSearchParams({ ...params, [queryParam]: query });
+            const url = `${endpoint}?${searchParams.toString()}`;
+
+            const res = await axios.get(url);
             setSuggestions(res.data.results);
         } catch (err) {
             console.error('Search failed:', err);

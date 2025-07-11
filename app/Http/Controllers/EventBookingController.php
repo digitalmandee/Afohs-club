@@ -4,22 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\Booking;
-use App\Models\Room;
 use App\Models\BookingEvents;
 use App\Models\EventBooking;
+use App\Models\EventChargeType;
+use App\Models\EventVenue;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
+use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\RoomCategory;
 use App\Models\RoomChargesType;
 use App\Models\RoomMiniBar;
 use App\Models\RoomType;
 use App\Models\User;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class EventBookingController extends Controller
 {
@@ -29,7 +31,6 @@ class EventBookingController extends Controller
         $totalBookings = RoomBooking::count();
         $totalRoomBookings = RoomBooking::count();
 
-
         $rooms = Room::latest()->get();
 
         $totalRooms = $rooms->count();
@@ -37,9 +38,10 @@ class EventBookingController extends Controller
         // Determine unavailable rooms today
         $conflictedRooms = RoomBooking::query()
             ->whereIn('status', ['confirmed', 'pending'])
-            ->where('check_in_date', '<', now()->addDay()) // today and future
-            ->where('check_out_date', '>', now()) // overlapping today
-            ->pluck('room_id')->unique();
+            ->where('check_in_date', '<', now()->addDay())  // today and future
+            ->where('check_out_date', '>', now())  // overlapping today
+            ->pluck('room_id')
+            ->unique();
 
         $availableRoomsToday = Room::query()
             ->whereNotIn('id', $conflictedRooms)
@@ -56,7 +58,6 @@ class EventBookingController extends Controller
 
         $roomTypes = RoomType::where('status', 'active')->select('id', 'name')->get();
 
-
         return Inertia::render('App/Admin/Events/Dashboard', [
             'data' => $data,
             'roomTypes' => $roomTypes
@@ -67,20 +68,23 @@ class EventBookingController extends Controller
     public function create()
     {
         $bookingNo = $this->getBookingId();
+        $eventVenues = EventVenue::select('id', 'name')->get();
+        $chargesTypeItems = EventChargeType::where('status', 'active')->select('id', 'name', 'amount')->get();
 
-        return Inertia::render('App/Admin/Events/CreateBooking', compact('bookingNo'));
+        return Inertia::render('App/Admin/Events/CreateBooking', compact('bookingNo', 'eventVenues'));
     }
 
     public function search(Request $request)
     {
-        $checkin = $request->query('checkin'); // Y-m-d
-        $checkout = $request->query('checkout'); // Y-m-d
-        $persons = $request->query('persons'); // int
+        $checkin = $request->query('checkin');  // Y-m-d
+        $checkout = $request->query('checkout');  // Y-m-d
+        $persons = $request->query('persons');  // int
 
         $conflicted = RoomBooking::query()
             ->whereIn('status', ['confirmed', 'pending'])
             ->where(function ($query) use ($checkin, $checkout) {
-                $query->where('check_in_date', '<', $checkout)
+                $query
+                    ->where('check_in_date', '<', $checkout)
                     ->where('check_out_date', '>', $checkin);
             })
             ->pluck('room_id');
@@ -93,7 +97,6 @@ class EventBookingController extends Controller
 
         return response()->json($available);
     }
-
 
     //     public function roomsAndEvents()
     // {
@@ -109,7 +112,6 @@ class EventBookingController extends Controller
     //         'roomsEvent' => $roomsEvents,
     //     ]);
     // }
-
 
     public function booking(Request $request)
     {
@@ -129,16 +131,18 @@ class EventBookingController extends Controller
 
     public function familyMembers($id)
     {
-        $members = User::role('user', 'web')->select(
-            'users.id',
-            'users.first_name',
-            'users.last_name',
-            'users.email',
-            'users.phone_number',
-            'members.family_suffix',
-            'user_details.cnic_no',
-            'user_details.current_address',
-        )->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
+        $members = User::role('user', 'web')
+            ->select(
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'users.email',
+                'users.phone_number',
+                'members.family_suffix',
+                'user_details.cnic_no',
+                'user_details.current_address',
+            )
+            ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
             ->leftJoin('members', 'users.id', '=', 'members.user_id')
             ->where('users.parent_user_id', $id)
             ->limit(10)
@@ -182,7 +186,8 @@ class EventBookingController extends Controller
             ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
             ->whereNull('users.parent_user_id')
             ->where(function ($q) use ($query) {
-                $q->where('users.first_name', 'like', "%{$query}%")
+                $q
+                    ->where('users.first_name', 'like', "%{$query}%")
                     ->orWhere('users.last_name', 'like', "%{$query}%")
                     ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ["%{$query}%"])
                     ->orWhere('members.membership_no', 'like', "%{$query}%")
@@ -207,8 +212,6 @@ class EventBookingController extends Controller
 
         return response()->json(['success' => true, 'results' => $results], 200);
     }
-
-
 
     public function store(Request $request)
     {
@@ -250,7 +253,7 @@ class EventBookingController extends Controller
             'status' => 'pending',
         ]);
 
-        $data = $booking->toArray(); // Convert Eloquent model to array
+        $data = $booking->toArray();  // Convert Eloquent model to array
         $data['invoice_type'] = $bookingType === 'room' ? 'room_booking' : 'event_booking';
         $data['amount'] = $request->totalPayment;
         $invoice_no = $this->getInvoiceNo();
@@ -313,7 +316,7 @@ class EventBookingController extends Controller
 
     private function getBookingId()
     {
-        $booking_id =  (int) EventBooking::max('booking_no');
+        $booking_id = (int) EventBooking::max('booking_no');
         return $booking_id + 1;
     }
 

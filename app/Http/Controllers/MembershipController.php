@@ -6,23 +6,23 @@ use App\Helpers\FileHelper;
 use App\Models\CardPayment;
 use App\Models\FamilyMember;
 use App\Models\FinancialInvoice;
-use App\Models\User;
-use App\Models\UserDetail;
 use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\MembershipInvoice;
 use App\Models\MemberStatusHistory;
 use App\Models\MemberType;
 use App\Models\Subscription;
+use App\Models\User;
+use App\Models\UserDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MembershipController extends Controller
@@ -36,6 +36,7 @@ class MembershipController extends Controller
 
         return Inertia::render('App/Admin/Membership/Dashboard', compact('members', 'total_members', 'total_payment'));
     }
+
     public function getAllMemberTypes()
     {
         $memberTypes = MemberType::all(['name']);
@@ -82,12 +83,14 @@ class MembershipController extends Controller
 
         return Inertia::render('App/Admin/Membership/Members', compact('members'));
     }
+
     public function membershipHistory()
     {
         $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->get();
 
         return Inertia::render('App/Admin/Membership/Members', compact('members'));
     }
+
     public function paymentMembersHistory()
     {
         $users = User::with([
@@ -98,6 +101,7 @@ class MembershipController extends Controller
             'membersdata' => $users,
         ]);
     }
+
     public function membershipFinance()
     {
         $users = User::with([
@@ -193,6 +197,7 @@ class MembershipController extends Controller
             Member::create([
                 'user_id' => $primaryUser->id,
                 'application_no' => $applicationNo,
+                'kinship' => $request->member['kinship']['id'] ?? null,
                 'membership_no' => $request->member['membership_no'] ?? $membershipNo,
                 'member_type_id' => $request->member['member_type_id'],
                 'member_category_id' => $request->member['membership_category'],
@@ -243,7 +248,7 @@ class MembershipController extends Controller
                 }
             }
 
-            $memberTypeArray = $memberCategory->toArray(); // includes all fields from DB
+            $memberTypeArray = $memberCategory->toArray();  // includes all fields from DB
             $memberTypeArray['amount'] = $memberCategory->fee;
             $memberTypeArray['invoice_type'] = 'membership';
 
@@ -393,7 +398,8 @@ class MembershipController extends Controller
         $query = $request->input('query');
 
         $members = User::role('user')->whereNotNull('first_name')->where(function ($q) use ($query) {
-            $q->where('user_id', 'like', "%{$query}%")
+            $q
+                ->where('user_id', 'like', "%{$query}%")
                 ->orWhere('email', 'like', "%{$query}%")
                 ->orWhere('first_name', 'like', "%{$query}%")
                 ->orWhere('last_name', 'like', "%{$query}%")
@@ -405,7 +411,6 @@ class MembershipController extends Controller
 
         return response()->json(['results' => $members]);
     }
-
 
     // Show Public Profile
     public function viewProfile($id)

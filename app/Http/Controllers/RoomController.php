@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\BookingEvents;
+use App\Models\EventLocation;
 use App\Models\FinancialInvoice;
 use App\Models\Room;
-use App\Models\EventLocation;
-use App\Helpers\FileHelper;
+use App\Models\RoomBooking;
 use App\Models\RoomCategory;
 use App\Models\RoomCategoryCharge;
 use App\Models\RoomType;
@@ -18,10 +19,31 @@ class RoomController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::with('typeable')
-            ->where('booking_type', 'room')
-            ->latest()
-            ->get();
+        // Step 1: Build bookingId => invoice mapping
+        $invoices = FinancialInvoice::get();
+
+        $bookingInvoiceMap = [];
+
+        foreach ($invoices as $invoice) {
+            foreach ($invoice->data as $entry) {
+                if (!empty($entry['booking_id'])) {
+                    $bookingInvoiceMap[$entry['booking_id']] = [
+                        'id' => $invoice->id,
+                        'status' => $invoice->status,
+                    ];
+                }
+            }
+        }
+
+        // Step 2: Get all RoomBookings
+        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
+
+        // Step 3: Attach invoice data to each booking
+        $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
+            $invoice = $bookingInvoiceMap[$booking->id] ?? null;
+            $booking->invoice = $invoice;
+            return $booking;
+        });
 
         $totalBookings = Booking::count();
         $totalRoomBookings = Booking::where('booking_type', 'room')->count();
@@ -38,7 +60,8 @@ class RoomController extends Controller
             ->whereIn('status', ['confirmed', 'pending'])
             ->where('checkin', '<', now()->addDay())
             ->where('checkout', '>', now())
-            ->pluck('type_id')->unique();
+            ->pluck('type_id')
+            ->unique();
 
         $availableRoomsToday = Room::query()
             ->whereNotIn('id', $conflictedRooms)
@@ -49,7 +72,8 @@ class RoomController extends Controller
             ->whereIn('status', ['confirmed', 'pending'])
             ->where('checkin', '<', now()->addDay())
             ->where('checkout', '>', now())
-            ->pluck('type_id')->unique();
+            ->pluck('type_id')
+            ->unique();
 
         $availableEventsToday = BookingEvents::query()
             ->whereNotIn('id', $conflictedEvents)

@@ -1,14 +1,6 @@
 import React from 'react';
 import { usePage, router } from '@inertiajs/react';
-import {
-    Box,
-    Typography,
-    Paper,
-    Grid,
-    IconButton,
-    Dialog,
-    Button,
-} from '@mui/material';
+import { Box, Typography, Paper, Grid, IconButton, Dialog, Button } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import Bed from '@mui/icons-material/Bed';
 import Person from '@mui/icons-material/Person';
@@ -26,7 +18,7 @@ const AllRooms = ({ rooms }) => {
     const [confirmDialog, setConfirmDialog] = React.useState({ open: false, roomId: null });
 
     const handleEdit = (id) => {
-        router.visit(`/rooms/edit/${id}`);
+        router.visit(route('rooms.edit', id));
     };
 
     const handleDelete = (id) => {
@@ -45,10 +37,7 @@ const AllRooms = ({ rooms }) => {
             >
                 <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <IconButton
-                            sx={{ color: '#063455', mr: 1 }}
-                            onClick={() => window.history.back()}
-                        >
+                        <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
                             <ArrowBack />
                         </IconButton>
                         <Typography variant="h5" component="h1" sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
@@ -79,22 +68,10 @@ const AllRooms = ({ rooms }) => {
                                                     {room.name}
                                                 </Typography>
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mr: 2 }}>
-                                                        <Box component="span" fontWeight="bold" color="text.primary">
-                                                            {room.price_per_night}$
-                                                        </Box>
-                                                        /per night
-                                                    </Typography>
-                                                    <IconButton
-                                                        onClick={() => handleEdit(room.id)}
-                                                        sx={{ color: '#0a3d62' }}
-                                                    >
+                                                    <IconButton onClick={() => handleEdit(room.id)} sx={{ color: '#0a3d62' }}>
                                                         <Edit fontSize="small" />
                                                     </IconButton>
-                                                    <IconButton
-                                                        onClick={() => handleDelete(room.id)}
-                                                        sx={{ color: '#f44336' }}
-                                                    >
+                                                    <IconButton onClick={() => handleDelete(room.id)} sx={{ color: '#f44336' }}>
                                                         <Delete fontSize="small" />
                                                     </IconButton>
                                                 </Box>
@@ -130,10 +107,7 @@ const AllRooms = ({ rooms }) => {
             </div>
 
             {/* Delete Confirmation Dialog */}
-            <Dialog
-                open={confirmDialog.open}
-                onClose={() => setConfirmDialog({ open: false, roomId: null })}
-            >
+            <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, roomId: null })}>
                 <Box sx={{ p: 3, width: 300 }}>
                     <Typography variant="h6" gutterBottom>
                         Confirm Deletion
@@ -142,17 +116,14 @@ const AllRooms = ({ rooms }) => {
                         Are you sure you want to delete this room?
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                        <Button
-                            onClick={() => setConfirmDialog({ open: false, roomId: null })}
-                            color="inherit"
-                        >
+                        <Button onClick={() => setConfirmDialog({ open: false, roomId: null })} color="inherit">
                             Cancel
                         </Button>
                         <Button
                             variant="contained"
                             color="error"
                             onClick={() => {
-                                router.delete(`/rooms/${confirmDialog.roomId}`, {
+                                router.delete(route('rooms.destroy', confirmDialog.roomId), {
                                     onSuccess: () => {
                                         enqueueSnackbar('Room deleted successfully', { variant: 'success' });
                                         setConfirmDialog({ open: false, roomId: null });

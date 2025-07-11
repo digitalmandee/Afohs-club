@@ -8,9 +8,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 
 const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
+    const [selectedKinshipUser, setSelectedKinshipUser] = useState(null);
 
     const [submitError, setSubmitError] = useState('');
     const [familyMemberErrors, setFamilyMemberErrors] = useState({});
@@ -307,7 +309,31 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                         <Select
                                             name="member.membership_category"
                                             value={data.member.membership_category}
-                                            onChange={handleChange}
+                                            onChange={(e) => {
+                                                const selectedCategoryId = e.target.value;
+                                                const selectedCategory = membercategories.find((item) => item.id === Number(selectedCategoryId));
+                                                const categoryName = selectedCategory?.name || '';
+
+                                                handleChange({
+                                                    target: {
+                                                        name: 'member.membership_category',
+                                                        value: selectedCategoryId,
+                                                    },
+                                                });
+
+                                                if (!selectedKinshipUser) {
+                                                    // If kinship is not selected, default to category prefix + 001
+                                                    handleChange({
+                                                        target: {
+                                                            name: 'member.membership_no',
+                                                            value: `${categoryName} ${data.member.membership_no}`,
+                                                        },
+                                                    });
+                                                } else {
+                                                    // If kinship is already selected, re-trigger kinship logic
+                                                    // Optionally call a function to regenerate membership_no based on kinship
+                                                }
+                                            }}
                                             displayEmpty
                                             SelectProps={{
                                                 displayEmpty: true,
@@ -316,7 +342,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                         return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
                                                     }
                                                     const item = membercategories.find((item) => item.id == Number(selected));
-
                                                     return item ? item.name : '';
                                                 },
                                             }}
@@ -336,6 +361,49 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                             ))}
                                         </Select>
                                     </FormControl>
+                                </Box>
+                                <Box sx={{ mb: 3 }}>
+                                    <AsyncSearchTextField
+                                        label="Kinship"
+                                        name="member.kinship"
+                                        value={data.member.kinship}
+                                        onChange={async (e) => {
+                                            const kinshipUser = e.target.value; // assuming this is an object with details like membership_no
+                                            setSelectedKinshipUser(kinshipUser);
+                                            handleChange({ target: { name: 'member.kinship', value: e.target.value } });
+
+                                            const selectedCategory = membercategories.find((item) => item.id === Number(data.member.membership_category));
+                                            const prefix = selectedCategory?.name || '';
+
+                                            if (kinshipUser && kinshipUser.membership_no) {
+                                                // Extract base number from kinship's membership_no
+                                                const kinshipParts = kinshipUser.membership_no.split(' ');
+                                                const kinshipNum = kinshipParts[1]?.split('-')[0]; // e.g., 050
+
+                                                // Simulate a fetch to count how many members already use this kinship number with suffixes
+                                                // Replace this with your real check or API call
+                                                const existingMembers = [
+                                                    /*...*/
+                                                ]; // example: ['AR 050-1', 'AR 050-2']
+                                                let suffix = 1;
+                                                while (existingMembers.includes(`${prefix} ${kinshipNum}-${suffix}`)) {
+                                                    suffix++;
+                                                }
+
+                                                const newMembershipNo = `${prefix} ${kinshipNum}-${suffix}`;
+
+                                                handleChange({
+                                                    target: {
+                                                        name: 'member.membership_no',
+                                                        value: newMembershipNo,
+                                                    },
+                                                });
+                                            }
+                                        }}
+                                        endpoint="/admin/api/search-users"
+                                        placeholder="Search Kinship..."
+                                        disabled={!data.member.membership_category}
+                                    />
                                 </Box>
                                 <Box sx={{ mb: 3 }}>
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Number *</Typography>

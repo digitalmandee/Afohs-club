@@ -10,4 +10,8 @@ class RoomBookingOtherCharge extends Model
     use HasFactory;
 
     protected $fillable = ['room_booking_id', 'type', 'details', 'amount', 'is_complementary'];
+
+    protected $casts = [
+        'is_complementary' => 'boolean',
+    ];
 }
