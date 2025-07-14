@@ -30,6 +30,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserMemberController;
+use App\Http\Controllers\FamilyMembersArchiveConroller;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -368,6 +369,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/membership/full/detail', function () {
         return Inertia::render('App/Admin/Membership/CompleteDetail');
     })->name('membership.detail2');
+
+    // Family Members Archive route
+    Route::get('/admin/membership/archive', [FamilyMembersArchiveConroller::class, 'index'])->name('family-members-archive.index');
 
     // tenant route
     Route::get('tenant', [TenantController::class, 'index'])->name('tenant.index');

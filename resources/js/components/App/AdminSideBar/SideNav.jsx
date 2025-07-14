@@ -287,8 +287,12 @@ export default function SideNav({ open, setOpen }) {
                     path: route('member-types.index'),
                 },
                 {
-                    text: 'Membership Category',
+                    text: 'Membership Category',
                     path: route('member-categories.index'),
+                },
+                {
+                    text: 'Family Members Archive',
+                    path: route('family-members-archive.index'),
                 },
                 {
                     text: 'Finance',
