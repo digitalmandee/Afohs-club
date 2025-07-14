@@ -12,6 +12,7 @@ use App\Http\Controllers\EventBookingController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMenuAddOnsController;
 use App\Http\Controllers\EventMenuCategoryController;
+use App\Http\Controllers\EventMenuController;
 use App\Http\Controllers\EventMenuTypeController;
 use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FinancialController;
@@ -113,9 +114,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('room-minibar', RoomMiniBarController::class)->except(['create', 'edit', 'show']);
 
         // Event Routes
-        Route::get('events/dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
-        Route::get('events/create', [EventBookingController::class, 'create'])->name('events.create');
+        Route::group(['prefix' => 'events'], function () {
+            Route::get('dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
+            Route::get('create', [EventBookingController::class, 'create'])->name('events.create');
+        });
         Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-menu', EventMenuController::class)->except(['show']);
         Route::resource('event-menu-category', EventMenuCategoryController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-type', EventMenuTypeController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-addon', EventMenuAddOnsController::class)->except(['create', 'edit', 'show']);
@@ -264,8 +268,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::delete('admin/subscription/subscription-types/{id}/delete', [SubscriptionTypeController::class, 'destroy'])->name('subscription-types.destroy');
 
     Route::get('/api/customers/search', [SubscriptionController::class, 'search']);
-    Route::get('/api/customer-invoices/{user}', [SubscriptionController::class, 'unpaidInvoices']);
-    Route::post('/api/pay-multiple-invoices', [SubscriptionController::class, 'payMultipleInvoices']);
+
+    Route::get('api/customer-invoices/{userId}', [SubscriptionController::class, 'customerInvoices']);
+    Route::get('api/subscriptions/by-user/{user}', [SubscriptionController::class, 'byUser']);
+    Route::get('api/members/by-user/{user}', [MembersController::class, 'byUser']);
+    Route::post('api/pay-multiple-invoices', [SubscriptionController::class, 'payMultipleInvoices']);
+    Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPayInvoice']);
 
     // Financial Routes
     Route::get('/finance/dashboard', [FinancialController::class, 'index'])->name('finance.dashboard');

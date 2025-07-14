@@ -22,6 +22,7 @@ class FinancialInvoice extends Model
         'issue_date',
         'due_date',
         'paid_for_month',
+        'paid_for_quarter',
         'payment_method',
         'payment_date',
         'reciept',
@@ -37,6 +38,7 @@ class FinancialInvoice extends Model
     {
         return $this->belongsTo(User::class, 'customer_id', 'id');
     }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'member_id', 'id');

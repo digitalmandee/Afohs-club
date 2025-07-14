@@ -5,15 +5,16 @@ namespace App\Http\Controllers\App;
 use App\Helpers\FileHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AddressType;
+use App\Models\Member;
 use App\Models\MemberType;
 use App\Models\User;
 use App\Models\UserDetail;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
 class MembersController extends Controller
@@ -23,7 +24,6 @@ class MembersController extends Controller
         $limit = $request->query('limit') ?? 10;
 
         $users = User::with(['memberType', 'userDetail'])->role('user', 'web')->latest()->paginate($limit);
-
 
         return Inertia::render('App/Member/Dashboard', compact('users'));
     }
@@ -65,7 +65,7 @@ class MembersController extends Controller
                 'customer_type' => 'required|string|exists:member_types,name',
                 'profile_photo' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
-                'addresses.*.type' => 'required|string|exists:address_types,name', // Validate against address_types table
+                'addresses.*.type' => 'required|string|exists:address_types,name',  // Validate against address_types table
                 'addresses.*.address' => 'required|string|max:255',
                 'addresses.*.city' => 'required|string|max:255',
                 'addresses.*.province' => 'required|string|max:255',
@@ -85,7 +85,7 @@ class MembersController extends Controller
             $customer->phone_number = $validated['phone'];
             $customer->member_type_id = $memberType->id;
             $customer->password = Hash::make(Str::random(16));
-            $customer->user_id = User::max('user_id') ? (string)(intval(User::max('user_id')) + 1) : '1';
+            $customer->user_id = User::max('user_id') ? (string) (intval(User::max('user_id')) + 1) : '1';
 
             if ($request->hasFile('profile_photo')) {
                 $path = FileHelper::saveImage($request->file('profile_photo'), 'profiles');
@@ -144,7 +144,7 @@ class MembersController extends Controller
                 'member_type_id' => 'required|exists:member_types,id',
                 'profile_pic' => 'nullable|image|max:4096',
                 'addresses' => 'nullable|array',
-                'addresses.*.address_type' => 'required|string|exists:address_types,name', // Validate against address_types table
+                'addresses.*.address_type' => 'required|string|exists:address_types,name',  // Validate against address_types table
                 'addresses.*.address' => 'required|string|max:255',
                 'addresses.*.city' => 'required|string|max:255',
                 'addresses.*.state' => 'required|string|max:255',
@@ -178,7 +178,7 @@ class MembersController extends Controller
             if (!empty($request->addresses)) {
                 foreach ($request->addresses as $address) {
                     UserDetail::create([
-                        'user_id' => $customer->id, // Fixed: Use $customer->id instead of user_id
+                        'user_id' => $customer->id,  // Fixed: Use $customer->id instead of user_id
                         'address_type' => $address['address_type'],
                         'country' => $address['country'],
                         'state' => $address['state'],
@@ -227,5 +227,11 @@ class MembersController extends Controller
             'memberTypes' => $memberTypes,
             'addressTypes' => $addressTypes,
         ]);
+    }
+
+    public function byUser($userId)
+    {
+        $member = Member::with('memberCategory')->where('user_id', $userId)->firstOrFail();
+        return response()->json($member);
     }
 }

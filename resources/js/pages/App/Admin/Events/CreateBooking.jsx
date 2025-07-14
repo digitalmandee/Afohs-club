@@ -328,8 +328,6 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
 const ChargesInfo = ({ formData, handleChange }) => {
     const { props } = usePage();
 
-    const [miniBarItems, setMiniBarItems] = useState();
-
     const handleOtherChange = (index, field, value) => {
         const updated = [...formData.other_charges];
         const item = { ...updated[index] };
@@ -346,51 +344,26 @@ const ChargesInfo = ({ formData, handleChange }) => {
         handleChange({ target: { name: 'other_charges', value: updated } });
     };
 
-    const handleMiniBarChange = (index, field, value) => {
-        const updated = [...formData.mini_bar_items];
-        const item = { ...updated[index] };
-
-        if (field === 'item') {
-            const selected = props.miniBarItems.find((m) => m.name === value);
-            item.item = value;
-            item.qty = 1;
-            item.amount = selected ? selected.amount : '';
-        } else {
-            item[field] = value;
-        }
-
-        const qty = parseFloat(item.qty) || 0;
-        const amt = parseFloat(item.amount) || 0;
-        item.total = (qty * amt).toFixed(2);
-
-        updated[index] = item;
-        handleChange({ target: { name: 'mini_bar_items', value: updated } });
-    };
-
     const calculateTotals = () => {
         const totalOther = formData.other_charges.reduce((sum, chg) => sum + (chg.is_complementary ? 0 : parseFloat(chg.amount) || 0), 0);
 
-        const totalMini = formData.mini_bar_items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-
-        const room = parseFloat(formData.roomCharge || 0);
         const discountVal = parseFloat(formData.discount || 0);
         const discountType = formData.discountType || 'fixed';
 
-        const baseTotal = room + totalOther + totalMini;
+        const baseTotal = totalOther;
         const discountAmount = discountType === 'percentage' ? (discountVal / 100) * baseTotal : discountVal;
 
         const grandTotal = baseTotal - discountAmount;
 
-        return { totalOther, totalMini, grandTotal };
+        return { totalOther, grandTotal };
     };
 
     useEffect(() => {
-        const { totalOther, totalMini, grandTotal } = calculateTotals();
+        const { totalOther, grandTotal } = calculateTotals();
 
         handleChange({ target: { name: 'totalOtherCharges', value: totalOther } });
-        handleChange({ target: { name: 'totalMiniBar', value: totalMini } });
         handleChange({ target: { name: 'grandTotal', value: grandTotal.toFixed(2) } });
-    }, [formData.other_charges, formData.mini_bar_items, formData.discount, formData.discountType, formData.roomCharge]);
+    }, [formData.other_charges, formData.discount, formData.discountType]);
 
     const { totalOther, totalMini, grandTotal } = calculateTotals();
 
@@ -432,51 +405,9 @@ const ChargesInfo = ({ formData, handleChange }) => {
                 </Button>
             </Grid>
 
-            <Grid item xs={12}>
-                <Typography variant="h6">Mini Bar</Typography>
-            </Grid>
-
-            {formData.mini_bar_items.map((item, index) => (
-                <Grid key={index} container spacing={2} sx={{ mb: 2, px: 2 }} alignItems="center">
-                    <Grid item xs={3}>
-                        <FormControl fullWidth>
-                            <InputLabel>Item</InputLabel>
-                            <Select value={item.item} label="Item" onChange={(e) => handleMiniBarChange(index, 'item', e.target.value)}>
-                                <MenuItem value="">Select Item</MenuItem>
-                                {props.miniBarItems.map((mb, i) => (
-                                    <MenuItem key={i} value={mb.name}>
-                                        {mb.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                    <Grid item xs={3}>
-                        <TextField label="Amount" type="number" fullWidth value={item.amount} onChange={(e) => handleMiniBarChange(index, 'amount', e.target.value)} />
-                    </Grid>
-                    <Grid item xs={3}>
-                        <TextField label="Qty" type="number" fullWidth value={item.qty} onChange={(e) => handleMiniBarChange(index, 'qty', e.target.value)} />
-                    </Grid>
-                    <Grid item xs={3}>
-                        <TextField label="Total" fullWidth disabled value={item.total} />
-                    </Grid>
-                </Grid>
-            ))}
-            <Grid item xs={12}>
-                <Button style={{ backgroundColor: '#063455', color: '#fff' }} variant="contained" onClick={() => handleChange({ target: { name: 'mini_bar_items', value: [...formData.mini_bar_items, { item: '', amount: '', qty: '', total: '' }] } })}>
-                    Add More
-                </Button>
-            </Grid>
-
             {/* Summary Fields */}
             <Grid item xs={2}>
                 <TextField label="Total Other Charges" value={totalOther} fullWidth disabled />
-            </Grid>
-            <Grid item xs={2}>
-                <TextField label="Total Mini Bar Charges" value={totalMini} fullWidth disabled />
-            </Grid>
-            <Grid item xs={2}>
-                <TextField label="Room Charges" value={formData.roomCharge} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
                 <FormControl fullWidth>

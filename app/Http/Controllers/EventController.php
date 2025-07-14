@@ -2,60 +2,60 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EventLocation;
+use App\Helpers\FileHelper;
 use App\Models\Booking;
-use App\Models\Room;
 use App\Models\BookingEvents;
+use App\Models\EventLocation;
 use App\Models\FinancialInvoice;
+use App\Models\Room;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Helpers\FileHelper;
-
 
 class EventController extends Controller
 {
-      public function index()
-{
-    // Only get bookings where booking_type is 'event'
-    $bookings = Booking::with('typeable', 'user')
-        ->where('booking_type', 'event')
-        ->latest()
-        ->get();
+    public function index()
+    {
+        // Only get bookings where booking_type is 'event'
+        $bookings = Booking::with('typeable', 'user')
+            ->where('booking_type', 'event')
+            ->latest()
+            ->get();
 
-    $totalBookings = Booking::count();
-    $totalRoomBookings = Booking::where('booking_type', 'room')->count();
-    $totalEventBookings = Booking::where('booking_type', 'event')->count();
+        $totalBookings = Booking::count();
+        $totalRoomBookings = Booking::where('booking_type', 'room')->count();
+        $totalEventBookings = Booking::where('booking_type', 'event')->count();
 
-    $events = BookingEvents::latest()->get();
-    $totalEvents = $events->count();
+        $events = BookingEvents::latest()->get();
+        $totalEvents = $events->count();
 
-    // Determine unavailable events today
-    $conflictedEvents = Booking::query()
-        ->where('booking_type', 'event')
-        ->whereIn('status', ['confirmed', 'pending'])
-        ->where('checkin', '<', now()->addDay())
-        ->where('checkout', '>', now())
-        ->pluck('type_id')->unique();
+        // Determine unavailable events today
+        $conflictedEvents = Booking::query()
+            ->where('booking_type', 'event')
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where('checkin', '<', now()->addDay())
+            ->where('checkout', '>', now())
+            ->pluck('type_id')
+            ->unique();
 
-    $availableEventsToday = BookingEvents::query()
-        ->whereNotIn('id', $conflictedEvents)
-        ->count();
+        $availableEventsToday = BookingEvents::query()
+            ->whereNotIn('id', $conflictedEvents)
+            ->count();
 
-    $data = [
-        'bookingsData' => $bookings, // Only event bookings
-        'events' => $events,
-        'totalEvents' => $totalEvents,
-        'availableEventsToday' => $availableEventsToday,
-        'totalBookings' => $totalBookings,
-        'totalRoomBookings' => $totalRoomBookings,
-        'totalEventBookings' => $totalEventBookings,
-    ];
+        $data = [
+            'bookingsData' => $bookings,  // Only event bookings
+            'events' => $events,
+            'totalEvents' => $totalEvents,
+            'availableEventsToday' => $availableEventsToday,
+            'totalBookings' => $totalBookings,
+            'totalRoomBookings' => $totalRoomBookings,
+            'totalEventBookings' => $totalEventBookings,
+        ];
 
-    return Inertia::render('App/Admin/Booking/EventManage', [
-        'data' => $data,
-        'events' => $events,
-    ]);
-}
+        return Inertia::render('App/Admin/Booking/EventManage', [
+            'data' => $data,
+            'events' => $events,
+        ]);
+    }
 
     // public function index()
     // {
@@ -140,12 +140,12 @@ class EventController extends Controller
         ]);
 
         $path = $event->photo_path;
-         if ($request->hasFile('photo')) {
-            // Delete old photo if it exists
-        $path = null;
         if ($request->hasFile('photo')) {
-            $path = FileHelper::saveImage($request->file('photo'), 'booking_events');
-        }
+            // Delete old photo if it exists
+            $path = null;
+            if ($request->hasFile('photo')) {
+                $path = FileHelper::saveImage($request->file('photo'), 'booking_events');
+            }
         }
 
         $event->update([
@@ -159,7 +159,7 @@ class EventController extends Controller
             'photo_path' => $path,
         ]);
 
-        return redirect()->route('events.manage')->with('success', 'Event updated successfully.');
+        return redirect()->route('events.dashboard')->with('success', 'Event updated successfully.');
     }
 
     public function destroy($id)
@@ -170,7 +170,7 @@ class EventController extends Controller
         }
         $event->delete();
 
-        return redirect()->route('events.manage')->with('success', 'Event deleted successfully.');
+        return redirect()->route('events.dashboard')->with('success', 'Event deleted successfully.');
     }
 
     public function locations()

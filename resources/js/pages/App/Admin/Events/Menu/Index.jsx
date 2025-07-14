@@ -6,28 +6,28 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import AddEventMenuCategoryModal from '@/components/App/Events/MenuCategory/AddModal';
+import AddEventMenuModal from '@/components/App/Events/Menu/AddModal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const EventMenuCategories = ({ eventMenuCategoriesData }) => {
+const EventMenuManage = ({ eventMenusData }) => {
     const [open, setOpen] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
-    const [editingMenuCategory, setEditingMenuCategory] = useState(null);
-    const [eventMenuCategories, setEventMenuCategories] = useState(eventMenuCategoriesData || []);
+    const [editingMenu, setEditingMenu] = useState(null);
+    const [eventMenus, setEventMenus] = useState(eventMenusData || []);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [menuCategoryToDelete, setMenuCategoryToDelete] = useState(null);
     const { props } = usePage();
     const csrfToken = props._token;
 
     const handleAdd = () => {
-        setEditingMenuCategory(null);
+        setEditingMenu(null);
         setModalOpen(true);
     };
 
     const handleEdit = (menuCategory) => {
-        setEditingMenuCategory(menuCategory);
+        setEditingMenu(menuCategory);
         setModalOpen(true);
     };
 
@@ -48,7 +48,7 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
             await axios.delete(route('event-menu-category.destroy', menuCategoryToDelete.id), {
                 headers: { 'X-CSRF-TOKEN': csrfToken },
             });
-            setEventMenuCategories((prev) => prev.filter((menuCategory) => menuCategory.id !== menuCategoryToDelete.id));
+            setEventMenus((prev) => prev.filter((menuCategory) => menuCategory.id !== menuCategoryToDelete.id));
             enqueueSnackbar('Event Menu Category deleted successfully.', { variant: 'success' });
         } catch (error) {
             enqueueSnackbar('Failed to delete: ' + (error.response?.data?.message || error.message), {
@@ -60,12 +60,12 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
     };
 
     const handleSuccess = (data) => {
-        setEventMenuCategories((prev) => {
+        setEventMenus((prev) => {
             const exists = prev.find((p) => p.id === data.id);
             return exists ? prev.map((p) => (p.id === data.id ? data : p)) : [...prev, data];
         });
         setModalOpen(false);
-        setEditingMenuCategory(null);
+        setEditingMenu(null);
     };
 
     return (
@@ -87,11 +87,12 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
                             <ArrowBackIcon sx={{ color: '#555' }} />
                         </IconButton>
                         <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
-                            Event Menu Categories
+                            Event Menus
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
-                        Add Menu Category
+
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={() => router.visit(route('event-menu.create'))}>
+                        Add Menu
                     </Button>
                 </Box>
 
@@ -100,21 +101,21 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>#</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Menu Category</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Menu Name</TableCell>
+                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Total</TableCell>
                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
                         <TableBody>
-                            {eventMenuCategories.length > 0 ? (
-                                eventMenuCategories.map((menuCategory, index) => (
+                            {eventMenus.length > 0 ? (
+                                eventMenus.map((menuCategory, index) => (
                                     <TableRow key={menuCategory.id} style={{ borderBottom: '1px solid #eee' }}>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{index + 1}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{menuCategory.name}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{menuCategory.status}</TableCell>
                                         <TableCell>
-                                            <IconButton onClick={() => handleEdit(menuCategory)} size="small" title="Edit">
+                                            <IconButton onClick={() => router.visit(route('event-menu.edit', menuCategory.id))} size="small" title="Edit">
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(menuCategory)} size="small" title="Delete">
@@ -126,7 +127,7 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={4} align="center" sx={{ py: 3, color: '#999' }}>
-                                        No Event Menu Categories found.
+                                        No Event Menus found.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -134,8 +135,6 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
                     </Table>
                 </TableContainer>
             </Box>
-
-            <AddEventMenuCategoryModal open={modalOpen} handleClose={() => setModalOpen(false)} eventMenuCategory={editingMenuCategory} onSuccess={handleSuccess} />
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onClose={cancelDelete} aria-labelledby="delete-dialog-title">
@@ -156,4 +155,4 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
     );
 };
 
-export default EventMenuCategories;
+export default EventMenuManage;

@@ -81,8 +81,7 @@ class UserController extends Controller
                         ->where('users.first_name', 'like', "%{$query}%")
                         ->orWhere('users.last_name', 'like', "%{$query}%")
                         ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ["%{$query}%"])
-                        ->orWhere('members.membership_no', 'like', "%{$query}%")
-                        ->orWhere('users.email', 'like', "%{$query}%");
+                        ->orWhere('members.membership_no', 'like', "%{$query}%");
                 })
                 ->limit(10)
                 ->get();

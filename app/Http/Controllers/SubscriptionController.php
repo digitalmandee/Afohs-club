@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\Category;
 use App\Models\FinancialInvoice;
 use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
@@ -176,33 +177,101 @@ class SubscriptionController extends Controller
         return response()->json(['success' => true, 'message' => 'Payment successful']);
     }
 
-    public function unpaidInvoices($userId)
+    public function customerInvoices($userId)
     {
-        $invoices = FinancialInvoice::where('customer_id', $userId)
+        $invoices = FinancialInvoice::with('customer')
+            ->where('customer_id', $userId)
             ->whereIn('invoice_type', ['membership', 'subscription'])
-            ->orderByDesc('issue_date')
-            ->get();
+            ->orderBy('issue_date', 'desc')
+            ->get()
+            ->map(function ($invoice) {
+                $invoice->is_overdue = $invoice->due_date && $invoice->status !== 'paid' && now()->gt($invoice->due_date);
+                return $invoice;
+            });
 
         return response()->json($invoices);
     }
 
     public function payMultipleInvoices(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'invoice_ids' => 'required|array',
             'invoice_ids.*' => 'exists:financial_invoices,id',
             'method' => 'required|in:cash,card',
         ]);
 
-        foreach ($validated['invoice_ids'] as $id) {
+        foreach ($request->invoice_ids as $id) {
             $invoice = FinancialInvoice::find($id);
-            $invoice->status = 'paid';
-            $invoice->payment_date = now();
-            $invoice->payment_method = $validated['method'];
-            $invoice->save();
+
+            if (!$invoice || $invoice->status === 'paid')
+                continue;
+
+            $invoice->update([
+                'status' => 'paid',
+                'payment_method' => $request->method,
+                'payment_date' => now(),
+            ]);
         }
 
-        return response()->json(['message' => 'Invoices paid successfully']);
+        return response()->json(['message' => 'Selected invoices marked as paid.']);
+    }
+
+    public function createAndPayInvoice(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'member_id' => 'nullable|exists:members,id',
+            'amount' => 'required|numeric|min:0',
+            'invoice_type' => 'required|in:membership,subscription',
+            'subscription_type' => 'required|in:one_time,monthly,quarter,yearly',
+            'method' => 'required|in:cash,card',
+            'prepay_quarters' => 'nullable|integer|min:0|max:4'
+        ]);
+
+        $today = now();
+
+        $invoice = FinancialInvoice::create([
+            'invoice_no' => 'INV-' . strtoupper(uniqid()),
+            'customer_id' => $request->customer_id,
+            'member_id' => $request->member_id,
+            'invoice_type' => $request->invoice_type,
+            'subscription_type' => $request->subscription_type,
+            'amount' => $request->amount,
+            'total_price' => $request->amount,
+            'paid_amount' => $request->amount,
+            'issue_date' => $today,
+            'due_date' => $today->copy()->addDays(10),
+            'status' => 'paid',
+            'payment_method' => $request->method,
+            'payment_date' => $today,
+        ]);
+
+        if ($request->subscription_type === 'quarter' && $request->prepay_quarters) {
+            for ($i = 1; $i <= $request->prepay_quarters; $i++) {
+                $futureDate = $today->copy()->addMonths($i * 3);
+                $quarter = ceil($futureDate->month / 3);
+                $quarterLabel = 'Q' . $quarter . ' ' . $futureDate->year;
+
+                FinancialInvoice::create([
+                    'invoice_no' => 'INV-' . strtoupper(uniqid()),
+                    'customer_id' => $request->customer_id,
+                    'member_id' => $request->member_id,
+                    'invoice_type' => $request->invoice_type,
+                    'subscription_type' => 'quarter',
+                    'amount' => $request->amount,
+                    'total_price' => $request->amount,
+                    'paid_amount' => $request->amount,
+                    'issue_date' => $futureDate,
+                    'due_date' => $futureDate->copy()->addDays(10),
+                    'paid_for_quarter' => $quarterLabel,
+                    'status' => 'paid',
+                    'payment_method' => $request->method,
+                    'payment_date' => now(),
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'Invoice created and paid.', 'invoice' => $invoice]);
     }
 
     public function payInvoice($invoiceId)
@@ -231,6 +300,19 @@ class SubscriptionController extends Controller
             ->get(['id', 'name', 'email']);
 
         return response()->json($customers);
+    }
+
+    public function byUser($userId)
+    {
+        $subscriptions = Subscription::where('user_id', $userId)->get()->map(function ($s) {
+            return [
+                'id' => $s->id,
+                'subscription_type' => $s->subscription_type,
+                'category' => SubscriptionCategory::where('id', $s->category['id']),
+            ];
+        });
+
+        return response()->json($subscriptions);
     }
 
     private function getInvoiceNo()

@@ -71,7 +71,7 @@ class EventBookingController extends Controller
         $eventVenues = EventVenue::select('id', 'name')->get();
         $chargesTypeItems = EventChargeType::where('status', 'active')->select('id', 'name', 'amount')->get();
 
-        return Inertia::render('App/Admin/Events/CreateBooking', compact('bookingNo', 'eventVenues'));
+        return Inertia::render('App/Admin/Events/CreateBooking', compact('bookingNo', 'eventVenues', 'chargesTypeItems'));
     }
 
     public function search(Request $request)

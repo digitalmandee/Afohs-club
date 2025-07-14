@@ -239,12 +239,12 @@ export default function SideNav({ open, setOpen }) {
                             path: route('events.dashboard'),
                         },
                         {
-                            text: 'Manage Events',
-                            path: route('events.manage'),
-                        },
-                        {
                             text: 'Event Venues',
                             path: route('event-venues.index'),
+                        },
+                        {
+                            text: 'Event Menu',
+                            path: route('event-menu.index'),
                         },
                         {
                             text: 'Event Menu Rate Category',

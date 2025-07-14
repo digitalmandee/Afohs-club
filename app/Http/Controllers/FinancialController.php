@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
 use App\Models\FinancialInvoice;
 use App\Models\MemberCategory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
 
 class FinancialController extends Controller
 {
@@ -20,6 +20,7 @@ class FinancialController extends Controller
             'FinancialInvoice' => $FinancialInvoice,
         ]);
     }
+
     public function fetchRevenue()
     {
         $totalRevenue = FinancialInvoice::where('status', 'paid')
@@ -54,7 +55,6 @@ class FinancialController extends Controller
             'foodRevenue' => $foodRevenue,
         ]);
     }
-
 
     public function getTransaction()
     {
@@ -140,5 +140,46 @@ class FinancialController extends Controller
         $invoice->customer->loadCount('familyMembers');
 
         return response()->json(['invoice' => $invoice]);
+    }
+
+    public function createAndPay(Request $request)
+    {
+        $data = $request->validate([
+            'customer_id' => 'required|exists:users,id',
+            'invoice_type' => 'required|in:membership,subscription',
+            'subscription_type' => 'nullable|in:quarter,monthly,yearly,one_time',
+            'amount' => 'required|numeric|min:0',
+            'prepay_quarters' => 'nullable|integer|min:0|max:4',
+            'method' => 'required|in:cash,card',
+            'discount_type' => 'nullable|in:fixed,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
+        ]);
+
+        $amount = $data['amount'];
+        if ($data['discount_type'] && $data['discount_value']) {
+            $discount = $data['discount_type'] === 'percentage'
+                ? ($amount * $data['discount_value']) / 100
+                : $data['discount_value'];
+
+            $amount -= $discount;
+        }
+
+        $invoice = FinancialInvoice::create([
+            'customer_id' => $data['customer_id'],
+            'invoice_type' => $data['invoice_type'],
+            'subscription_type' => $data['subscription_type'],
+            'amount' => $amount,
+            'total_price' => $amount,
+            'discount_type' => $data['discount_type'],
+            'discount_value' => $data['discount_value'],
+            'issue_date' => now(),
+            'due_date' => now()->addDays(7),
+            'paid_for_quarter' => $data['prepay_quarters'] ?? null,
+            'payment_method' => $data['method'],
+            'payment_date' => now(),
+            'status' => 'paid',
+        ]);
+
+        return response()->json(['message' => 'Invoice created and marked as paid', 'invoice' => $invoice]);
     }
 }
