@@ -1,12 +1,10 @@
-import React from 'react';
-
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
     Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead,
     TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment
 } from '@mui/material';
 import {
-    ArrowBack, Search, FilterAlt, People, CreditCard, ExpandMore, ExpandLess
+    Search, FilterAlt, People, CreditCard, ExpandMore, ExpandLess
 } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -41,11 +39,8 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                         <div className="d-flex align-items-center">
                             <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>
                                 Family Members Archive
-
                             </Typography>
-                            {/* <pre>{JSON.stringify(familysGroups, null, 2)}</pre> */}
                         </div>
-
                     </div>
 
                     {/* Stats Cards */}
@@ -153,11 +148,11 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {familyGroups.map((user) => (
+                                    {familyGroups.map((user, index) => (
                                         <React.Fragment key={user.id}>
                                             <TableRow style={{ borderBottom: '1px solid #eee' }}>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                    {user.id || 'N/A'}
+                                                    {index + 1}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="d-flex align-items-center">
@@ -205,10 +200,10 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                                                 </TableRow>
                                                             </TableHead>
                                                             <TableBody>
-                                                                {user.family_members.map((fm) => (
+                                                                {user.family_members.map((fm, subIndex) => (
                                                                     <TableRow key={fm.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
                                                                         <TableCell sx={{ fontSize: '14px', color: '#555' }}>
-                                                                            {fm.id || 'N/A'}
+                                                                            {`${index + 1}.${subIndex + 1}`}
                                                                         </TableCell>
                                                                         <TableCell>
                                                                             <div className="d-flex align-items-center">
@@ -235,8 +230,6 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                                     </TableCell>
                                                 </TableRow>
                                             )}
-
-
                                         </React.Fragment>
                                     ))}
                                 </TableBody>
