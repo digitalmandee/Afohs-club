@@ -195,85 +195,47 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                                 <TableRow>
                                                     <TableCell colSpan={5} style={{ backgroundColor: '#f9f9f9', padding: 0 }}>
                                                         <Table size="small">
+                                                            <TableHead>
+                                                                <TableRow style={{ backgroundColor: '#f0f0f0', height: '50px' }}>
+                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Membership ID</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Member</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Member Type</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Phone Number</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Parent ID</TableCell>
+                                                                </TableRow>
+                                                            </TableHead>
                                                             <TableBody>
                                                                 {user.family_members.map((fm) => (
-                                                                    <>
-                                                                        {/* <TableRow style={{ borderBottom: '1px solid #eee' }}>
-                                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                {user.id || 'N/A'}
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <div className="d-flex align-items-center">
-                                                                                    <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
-                                                                                    <div>
-                                                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.first_name}</Typography>
-                                                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.email}</Typography>
-                                                                                    </div>
+                                                                    <TableRow key={fm.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                                                                        <TableCell sx={{ fontSize: '14px', color: '#555' }}>
+                                                                            {fm.id || 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            <div className="d-flex align-items-center">
+                                                                                <Avatar src={fm.profile_photo || '/placeholder.svg?height=40&width=40'} alt={fm.first_name} style={{ marginRight: '10px' }} />
+                                                                                <div>
+                                                                                    <Typography sx={{ fontSize: '14px', color: '#555' }}>{fm.first_name}</Typography>
+                                                                                    <Typography sx={{ fontSize: '14px', color: '#777' }}>{fm.email}</Typography>
                                                                                 </div>
-                                                                            </TableCell>
-                                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                {user.member_type_id || 'N/A'}
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                    {user.phone_number || 'N/A'}
-                                                                                </Typography>
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <div className="d-flex align-items-center">
-                                                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                        {user.family_members.length}
-                                                                                    </Typography>
-                                                                                    {user.family_members.length > 0 && (
-                                                                                        <IconButton size="small" onClick={() => toggleRow(user.id)}>
-                                                                                            {expandedRow === user.id ? <ExpandLess /> : <ExpandMore />}
-                                                                                        </IconButton>
-                                                                                    )}
-                                                                                </div>
-                                                                            </TableCell>
-                                                                        </TableRow> */}
-                                                                        {/* <pre>{JSON.stringify(fm, null, 2)}</pre> */}
-
-
-                                                                        <TableRow key={fm.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                {fm.id || 'N/A'}
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <div className="d-flex align-items-center">
-                                                                                    <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
-                                                                                    <div>
-                                                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                            {fm.first_name}
-                                                                                        </Typography>
-                                                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                            {fm.email}
-                                                                                        </Typography>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </TableCell>
-                                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                {fm.member_type_id || 'N/A'}
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                    {fm.phone_number || 'N/A'}
-                                                                                </Typography>
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                    {fm.parent_user_id || 'N/A'}
-                                                                                </Typography>
-                                                                            </TableCell>
-                                                                            <TableCell />
-                                                                        </TableRow>
-                                                                    </>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell sx={{ fontSize: '14px', color: '#555' }}>
+                                                                            {fm.member_type_id || 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell sx={{ fontSize: '14px', color: '#555' }}>
+                                                                            {fm.phone_number || 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell sx={{ fontSize: '14px', color: '#555' }}>
+                                                                            {fm.parent_user_id || 'N/A'}
+                                                                        </TableCell>
+                                                                    </TableRow>
                                                                 ))}
                                                             </TableBody>
                                                         </Table>
                                                     </TableCell>
                                                 </TableRow>
                                             )}
+
 
                                         </React.Fragment>
                                     ))}
