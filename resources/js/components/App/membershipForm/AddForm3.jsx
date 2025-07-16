@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography } from '@mui/material';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
@@ -13,7 +13,6 @@ import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
     const [selectedKinshipUser, setSelectedKinshipUser] = useState(null);
-
     const [submitError, setSubmitError] = useState('');
     const [familyMemberErrors, setFamilyMemberErrors] = useState({});
 
@@ -111,6 +110,8 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
             end_date: '',
             picture: null,
             picture_preview: null,
+            is_document_enabled: false,
+            documents: '',
         });
         setShowFamilyMember(false);
         setFamilyMemberErrors({}); // Clear errors
@@ -517,6 +518,46 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                             />
                                         </Box>
                                     </Grid>
+                                    {/* Document Missing */}
+                                    <Grid item xs={12}>
+                                        <Box sx={{ mb: 3 }}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={data.member.is_document_enabled || false}
+                                                        onChange={(e) => handleChange({
+                                                            target: {
+                                                                name: 'member.is_document_enabled',
+                                                                value: e.target.checked,
+                                                            },
+                                                        })}
+                                                        sx={{ color: '#1976d2' }}
+                                                    />
+                                                }
+                                                label="Document Missing"
+                                            />
+                                        </Box>
+                                        {data.member.is_document_enabled && (
+                                            <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Which document is missing?</Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    multiline
+                                                    rows={4}
+                                                    placeholder="Enter missing documents"
+                                                    variant="outlined"
+                                                    name="member.documents"
+                                                    value={data.member.documents || ''}
+                                                    onChange={handleChange}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        )}
+                                    </Grid>
                                 </Grid>
 
                                 <Button
@@ -875,6 +916,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 />
                                             </Box>
                                         </Grid>
+
                                     </Grid>
 
                                     {familyMemberErrors.date && (

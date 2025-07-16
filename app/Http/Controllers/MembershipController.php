@@ -113,14 +113,13 @@ class MembershipController extends Controller
         ]);
     }
 
-   public function store(Request $request)
+ public function store(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email|unique:users,email',
                 'family_members' => 'array',
                 'family_members.*.email' => 'required|email|distinct|different:email|unique:users,email',
-                
                 'user_details.cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:user_details,cnic_no',
                 'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:user_details,cnic_no',
             ], [
@@ -152,8 +151,6 @@ class MembershipController extends Controller
 
             DB::beginTransaction();
 
-            // $member_type_id = $request->member_type;
-            // $memberType = MemberType::where('id', $member_type_id)->firstOrFail();
             $memberImagePath = null;
             if ($request->hasFile('profile_photo')) {
                 $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'member_images');
@@ -208,8 +205,6 @@ class MembershipController extends Controller
             $membershipNo = Member::generateNextMembershipNumber();
             $applicationNo = Member::generateNextApplicationNo();
 
-            // Handle primary member image
-
             $qrCodeData = route('member.profile', ['id' => $primaryUser->id]);
 
             // Create QR code image and save it
@@ -229,7 +224,9 @@ class MembershipController extends Controller
                 'card_status' => $request->member['card_status'],
                 'card_issue_date' => $request->member['card_issue_date'],
                 'card_expiry_date' => $request->member['card_expiry_date'],
-                'qr_code' => $qrImagePath
+                'qr_code' => $qrImagePath,
+                'is_document_enabled' => filter_var($request->member['is_document_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'documents' => $request->member['documents'] ?? null,
             ]);
 
             // Handle family members
