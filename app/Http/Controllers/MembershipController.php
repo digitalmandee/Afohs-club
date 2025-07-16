@@ -113,14 +113,38 @@ class MembershipController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email|unique:users,email',
                 'family_members' => 'array',
                 'family_members.*.email' => 'required|email|distinct|different:email|unique:users,email',
+                
+                'user_details.cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:user_details,cnic_no',
+                'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:user_details,cnic_no',
+            ], [
+                'user_details.cnic_no.unique' => 'The primary user\'s CNIC already exists.',
+                'family_members.*.cnic.unique' => 'The family member\'s CNIC already exists.',
+            ], [
+                'user_details.cnic_no' => 'Primary User CNIC',
+                'family_members.*.cnic' => 'Family Member CNIC',
             ]);
+
+            // Custom validation to check if family member CNIC matches primary user CNIC
+            $validator->after(function ($validator) use ($request) {
+                $primaryCnic = $request->user_details['cnic_no'] ?? null;
+                if (!empty($request->family_members)) {
+                    foreach ($request->family_members as $index => $familyMember) {
+                        if (!empty($familyMember['cnic']) && $familyMember['cnic'] === $primaryCnic) {
+                            $validator->errors()->add(
+                                "family_members.$index.cnic",
+                                'Family member CNIC must not be the same as the primary user CNIC.'
+                            );
+                        }
+                    }
+                }
+            });
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
