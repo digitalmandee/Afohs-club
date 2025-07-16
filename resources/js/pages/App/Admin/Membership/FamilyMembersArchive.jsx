@@ -103,6 +103,7 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>
                                 Recently Joined
+
                             </Typography>
 
                             <div className="d-flex">
@@ -164,7 +165,7 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                                     </div>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                    {user.member_type_id || 'N/A'}
+                                                    {user.member_type?.name || 'N/A'}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
@@ -215,7 +216,7 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                                                             </div>
                                                                         </TableCell>
                                                                         <TableCell sx={{ fontSize: '14px', color: '#555' }}>
-                                                                            {fm.member_type_id || 'N/A'}
+                                                                            {user.member_type?.name || 'N/Aa'}
                                                                         </TableCell>
                                                                         <TableCell sx={{ fontSize: '14px', color: '#555' }}>
                                                                             {fm.phone_number || 'N/A'}
