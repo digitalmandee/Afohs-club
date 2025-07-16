@@ -49,7 +49,11 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
         if (!data.user_details.guardian_name) errors.guardian_name = 'Father/Husband Name is required';
         if (!data.user_details.nationality) errors.nationality = 'Nationality is required';
         if (!data.user_details.gender) errors.gender = 'Gender is required';
-        if (!data.user_details.cnic_no) errors.cnic_no = 'CNIC No is required';
+        if (!data.user_details.cnic_no) {
+            errors.cnic_no = 'CNIC No is required';
+        } else if (!/^\d{5}-\d{7}-\d{1}$/.test(data.user_details.cnic_no)) {
+            errors.cnic_no = 'CNIC must be in the format XXXXX-XXXXXXX-X';
+        }
         if (!data.user_details.date_of_birth) errors.date_of_birth = 'Date of Birth is required';
         else if (dateError) errors.date_of_birth = dateError;
 
@@ -234,10 +238,6 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 </Typography>
                                 <FormControl fullWidth size="small">
                                     <Select
-                                        // open={titleOpen}
-                                        // onOpen={() => setTitleOpen(true)}
-                                        // onClose={() => setTitleOpen(false)}
-                                        // onClick={() => setTitleOpen(!titleOpen)}
                                         value={data.user_details.title}
                                         name="user_details.title"
                                         onChange={handleChange}
@@ -322,7 +322,26 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     CNIC No*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" type="number" placeholder="Enter CNIC Number (13 digits)" size="small" name="user_details.cnic_no" value={data.user_details.cnic_no} error={!!formErrors.cnic_no} helperText={formErrors.cnic_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    placeholder="XXXXX-XXXXXXX-X"
+                                    size="small"
+                                    name="user_details.cnic_no"
+                                    value={data.user_details.cnic_no}
+                                    error={!!formErrors.cnic_no}
+                                    helperText={formErrors.cnic_no}
+                                    onChange={(e) => {
+                                        let value = e.target.value;
+                                        // Auto-format the input as the user types
+                                        value = value.replace(/[^\d-]/g, ''); // Remove non-digits and non-hyphens
+                                        if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
+                                        if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
+                                        if (value.length > 15) value = value.slice(0, 15); // Limit to 15 characters
+                                        handleChange({ target: { name: 'user_details.cnic_no', value } });
+                                    }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
+                                />
                             </Grid>
 
                             {/* Passport No */}
