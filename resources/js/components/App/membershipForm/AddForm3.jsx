@@ -114,7 +114,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
             documents: '',
         });
         setShowFamilyMember(false);
-        setFamilyMemberErrors({}); // Clear errors
+        setFamilyMemberErrors({});
     };
 
     const handleImageUpload = (event) => {
