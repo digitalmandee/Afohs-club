@@ -13,7 +13,7 @@ import { router } from '@inertiajs/react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment }) => {
+const FamilyMembersArchive = ({ familyGroups = [] }) => {
     const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [expandedRow, setExpandedRow] = useState(null);
@@ -35,74 +35,21 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
             >
                 <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Header */}
-                    <div className="d-flex justify-content-between align-items-center">
+                    {/* <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
                             <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>
                                 Family Members Archive
                             </Typography>
                         </div>
-                    </div>
+                    </div> */}
 
-                    {/* Stats Cards */}
-                    <div className="row mb-4 mt-5">
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                            <People />
-                                        </Avatar>
-                                    </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
-                                        Total Membership
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
-                                        {total_members ?? 0}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                            <CreditCard />
-                                        </Avatar>
-                                    </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
-                                        Total Payment
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
-                                        {total_payment ?? 0}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                            <CreditCard />
-                                        </Avatar>
-                                    </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
-                                        Current Balance
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
-                                        0
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
+
 
                     {/* Recently Joined Section */}
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>
-                                Recently Joined
+                                Family Members Archive
 
                             </Typography>
 
