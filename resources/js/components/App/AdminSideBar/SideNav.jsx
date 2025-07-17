@@ -295,6 +295,10 @@ export default function SideNav({ open, setOpen }) {
                     path: route('family-members-archive.index'),
                 },
                 {
+                    text: 'Applied Member',
+                    path: route('applied-member.index'),
+                },
+                {
                     text: 'Finance',
                     path: route('membership.finance'),
                 },

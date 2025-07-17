@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography } from '@mui/material';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
@@ -13,7 +13,6 @@ import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
     const [selectedKinshipUser, setSelectedKinshipUser] = useState(null);
-
     const [submitError, setSubmitError] = useState('');
     const [familyMemberErrors, setFamilyMemberErrors] = useState({});
 
@@ -33,12 +32,11 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
         setCurrentFamilyMember((prev) => ({
             ...prev,
             family_suffix: suffix,
-            // full_membership_no: `${data.member.membership_no}-${suffix}`,
             application_no: Number(maxApplicationNo) + 1,
             member_type_id: data.member.member_type_id,
             membership_category: data.member.membership_category,
             start_date: data.member.card_issue_date,
-            end_date: data.member.card_expire_date,
+            end_date: data.member.card_expiry_date,
         }));
         setShowFamilyMember(true);
     };
@@ -55,6 +53,12 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
         }
         if (!currentFamilyMember.email) {
             errors.email = 'Email is required';
+        }
+        if (currentFamilyMember.cnic && !/^\d{5}-\d{7}-\d{1}$/.test(currentFamilyMember.cnic)) {
+            errors.cnic = 'CNIC must be in the format XXXXX-XXXXXXX-X';
+        }
+        if (currentFamilyMember.cnic && currentFamilyMember.cnic === data.user_details.cnic_no) {
+            errors.cnic = 'Family member CNIC must not be the same as the primary member CNIC';
         }
 
         // Email uniqueness check
@@ -106,9 +110,11 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
             end_date: '',
             picture: null,
             picture_preview: null,
+            is_document_enabled: false,
+            documents: '',
         });
         setShowFamilyMember(false);
-        setFamilyMemberErrors({}); // Clear errors
+        setFamilyMemberErrors({});
     };
 
     const handleImageUpload = (event) => {
@@ -144,8 +150,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
 
     const handleCancelFamilyMember = () => {
         setShowFamilyMember(false);
-        // handleChangeData('family_members', []);
-        // setFamilyMembers([]); // Clear family members on cancel
     };
 
     const handleSubmit = async () => {
@@ -174,7 +178,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
         try {
             await onSubmit();
             setSubmitError('');
-            // router.visit('/admin/membership/all/payments');
         } catch (error) {
             console.error('Submission Error:', error);
             const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data || 'An error occurred during submission');
@@ -279,7 +282,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                     </Typography>
                                     <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                 </Box>
-                                {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                                 <Box sx={{ mb: 3 }}>
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Member Type</Typography>
                                     <Grid container spacing={2}>
@@ -322,16 +324,12 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 });
 
                                                 if (!selectedKinshipUser) {
-                                                    // If kinship is not selected, default to category prefix + 001
                                                     handleChange({
                                                         target: {
                                                             name: 'member.membership_no',
                                                             value: `${categoryName} ${data.member.membership_no}`,
                                                         },
                                                     });
-                                                } else {
-                                                    // If kinship is already selected, re-trigger kinship logic
-                                                    // Optionally call a function to regenerate membership_no based on kinship
                                                 }
                                             }}
                                             displayEmpty
@@ -368,7 +366,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                         name="member.kinship"
                                         value={data.member.kinship}
                                         onChange={async (e) => {
-                                            const kinshipUser = e.target.value; // assuming this is an object with details like membership_no
+                                            const kinshipUser = e.target.value;
                                             setSelectedKinshipUser(kinshipUser);
                                             handleChange({ target: { name: 'member.kinship', value: e.target.value } });
 
@@ -376,15 +374,10 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                             const prefix = selectedCategory?.name || '';
 
                                             if (kinshipUser && kinshipUser.membership_no) {
-                                                // Extract base number from kinship's membership_no
                                                 const kinshipParts = kinshipUser.membership_no.split(' ');
-                                                const kinshipNum = kinshipParts[1]?.split('-')[0]; // e.g., 050
+                                                const kinshipNum = kinshipParts[1]?.split('-')[0];
 
-                                                // Simulate a fetch to count how many members already use this kinship number with suffixes
-                                                // Replace this with your real check or API call
-                                                const existingMembers = [
-                                                    /*...*/
-                                                ]; // example: ['AR 050-1', 'AR 050-2']
+                                                const existingMembers = [];
                                                 let suffix = 1;
                                                 while (existingMembers.includes(`${prefix} ${kinshipNum}-${suffix}`)) {
                                                     suffix++;
@@ -416,7 +409,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                         onChange={(e) => {
                                             const input = e.target.value;
 
-                                            // Allow any number before dash, and exactly 2 digits after dash
                                             const validPattern = /^[0-9]{0,10}-?[0-9]{0,2}$/;
 
                                             if (input === '' || validPattern.test(input)) {
@@ -424,7 +416,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                             }
                                         }}
                                         inputProps={{
-                                            maxLength: 12, // enough for big serials + dash + year
+                                            maxLength: 12,
                                             inputMode: 'numeric',
                                         }}
                                         sx={{
@@ -525,6 +517,46 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 }}
                                             />
                                         </Box>
+                                    </Grid>
+                                    {/* Document Missing */}
+                                    <Grid item xs={12}>
+                                        <Box sx={{ mb: 3 }}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={data.member.is_document_enabled || false}
+                                                        onChange={(e) => handleChange({
+                                                            target: {
+                                                                name: 'member.is_document_enabled',
+                                                                value: e.target.checked,
+                                                            },
+                                                        })}
+                                                        sx={{ color: '#1976d2' }}
+                                                    />
+                                                }
+                                                label="Document Missing"
+                                            />
+                                        </Box>
+                                        {data.member.is_document_enabled && (
+                                            <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Which document is missing?</Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    multiline
+                                                    rows={4}
+                                                    placeholder="Enter missing documents"
+                                                    variant="outlined"
+                                                    name="member.documents"
+                                                    value={data.member.documents || ''}
+                                                    onChange={handleChange}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        )}
                                     </Grid>
                                 </Grid>
 
@@ -759,10 +791,19 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>CNIC</Typography>
                                                 <TextField
                                                     fullWidth
-                                                    placeholder="Enter cnic number"
+                                                    placeholder="XXXXX-XXXXXXX-X"
                                                     variant="outlined"
                                                     value={currentFamilyMember.cnic}
-                                                    onChange={(e) => handleFamilyMemberChange('cnic', e.target.value)}
+                                                    error={!!familyMemberErrors.cnic}
+                                                    helperText={familyMemberErrors.cnic}
+                                                    onChange={(e) => {
+                                                        let value = e.target.value;
+                                                        value = value.replace(/[^\d-]/g, '');
+                                                        if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
+                                                        if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
+                                                        if (value.length > 15) value = value.slice(0, 15);
+                                                        handleFamilyMemberChange('cnic', value);
+                                                    }}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
@@ -779,7 +820,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                         displayEmpty
                                                         value={currentFamilyMember.member_type_id}
                                                         readOnly
-                                                        // onChange={(e) => handleFamilyMemberChange('member_type_id', e.target.value)}
                                                         renderValue={(selected) => {
                                                             if (!selected) {
                                                                 return <Typography sx={{ color: '#757575' }}>Choose Type</Typography>;
@@ -876,9 +916,9 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 />
                                             </Box>
                                         </Grid>
+
                                     </Grid>
 
-                                    {/* Date error shown separately */}
                                     {familyMemberErrors.date && (
                                         <Typography color="error" variant="body2">
                                             {familyMemberErrors.date}

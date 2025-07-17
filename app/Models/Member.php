@@ -29,12 +29,15 @@ class Member extends Model
         'picture',
         'member_image',
         'qr_code',
-        'invoice_id'
+        'invoice_id',
+        'is_document_enabled',
+        'documents'
     ];
 
     protected $casts = [
         'member_type' => 'array',
-        'category_ids' => 'array'
+        'category_ids' => 'array',
+        'is_document_enabled' => 'boolean'
     ];
 
     public static function generateNextMembershipNumber(): string
@@ -70,11 +73,6 @@ class Member extends Model
 
         return $next;
     }
-
-    // public function userDetail()
-    // {
-    //     return $this->belongsTo(UserDetail::class);
-    // }
 
     public function memberType()
     {
