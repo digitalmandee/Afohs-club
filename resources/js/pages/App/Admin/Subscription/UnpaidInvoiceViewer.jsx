@@ -9,7 +9,7 @@ const InvoiceViewer = () => {
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [allInvoices, setAllInvoices] = useState([]);
     const [selectedInvoices, setSelectedInvoices] = useState([]);
-    const [filteredInvoices, setFilteredInvoices] = useState([]);
+    // const [filteredInvoices, setFilteredInvoices] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [receiptFile, setReceiptFile] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -18,8 +18,8 @@ const InvoiceViewer = () => {
     const [subscriptions, setSubscriptions] = useState([]);
     const [memberDetails, setMemberDetails] = useState(null);
     const [newInvoiceData, setNewInvoiceData] = useState({
-        invoice_type: 'subscription', // or 'membership'
-        subscription_type: 'one_time', // one_time, monthly, quarter, yearly
+        invoice_type: 'membership',
+        subscription_type: 'one_time',
         selected_subscription_id: null,
         base_fee: 0,
         subscription_fee: 0,
@@ -38,6 +38,23 @@ const InvoiceViewer = () => {
             .catch(() => setAllInvoices([]))
             .finally(() => setLoading(false));
     }, [selectedCustomer]);
+
+    const filteredInvoices = allInvoices.filter((inv) => {
+        const dueDate = dayjs(inv.issue_date);
+        const isOverdue = inv.status === 'unpaid' && dueDate.isBefore(dayjs(), 'day');
+        switch (filter) {
+            case 'paid':
+                return inv.status === 'paid';
+            case 'unpaid':
+                return inv.status === 'unpaid' && !isOverdue;
+            case 'cancelled':
+                return inv.status === 'cancelled';
+            case 'overdue':
+                return isOverdue;
+            default:
+                return true;
+        }
+    });
 
     useEffect(() => {
         if (!selectedCustomer || !invoiceModalOpen) return;
@@ -127,49 +144,6 @@ const InvoiceViewer = () => {
             <Button variant="outlined" onClick={() => setInvoiceModalOpen(true)} sx={{ mt: 2 }}>
                 Create & Pay New Invoice
             </Button>
-
-            <ToggleButtonGroup value={filter} exclusive onChange={(e, val) => val && setFilter(val)} sx={{ my: 2 }}>
-                <ToggleButton value="all">All</ToggleButton>
-                <ToggleButton value="paid">Paid</ToggleButton>
-                <ToggleButton value="unpaid">Unpaid</ToggleButton>
-                <ToggleButton value="overdue">Overdue</ToggleButton>
-                <ToggleButton value="cancelled">Cancelled</ToggleButton>
-            </ToggleButtonGroup>
-
-            {filteredInvoices.map((invoice) => (
-                <Paper key={invoice.id} sx={{ p: 2, mb: 2 }}>
-                    <Box display="flex" justifyContent="space-between">
-                        <Box>
-                            <Typography variant="body1">{invoice.invoice_no}</Typography>
-                            <Typography variant="body2">Amount: PKR {invoice.amount}</Typography>
-                        </Box>
-                        <Box>
-                            {getStatusChip(invoice)}
-                            <Checkbox checked={selectedInvoices.some((inv) => inv.id === invoice.id)} onChange={() => handleInvoiceSelect(invoice)} />
-                        </Box>
-                    </Box>
-                </Paper>
-            ))}
-
-            {selectedInvoices.length > 0 && (
-                <Paper sx={{ p: 2, mt: 2 }}>
-                    <Typography variant="h6">Selected Invoices</Typography>
-                    <RadioGroup row value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                        <FormControlLabel value="cash" control={<Radio />} label="Cash" />
-                        <FormControlLabel value="card" control={<Radio />} label="Credit Card" />
-                    </RadioGroup>
-
-                    {paymentMethod === 'card' && (
-                        <Box mt={2}>
-                            <TextField type="file" fullWidth onChange={(e) => setReceiptFile(e.target.files[0])} />
-                        </Box>
-                    )}
-
-                    <Button variant="contained" onClick={handlePaySelected} sx={{ mt: 2 }}>
-                        Pay Now
-                    </Button>
-                </Paper>
-            )}
 
             {invoiceModalOpen && (
                 <Paper sx={{ p: 3, mt: 3 }}>
@@ -355,6 +329,64 @@ const InvoiceViewer = () => {
                     </Stack>
                 </Paper>
             )}
+
+            <ToggleButtonGroup value={filter} exclusive onChange={(e, val) => val && setFilter(val)} sx={{ my: 2 }}>
+                <ToggleButton value="all">All</ToggleButton>
+                <ToggleButton value="paid">Paid</ToggleButton>
+                <ToggleButton value="unpaid">Unpaid</ToggleButton>
+                <ToggleButton value="overdue">Overdue</ToggleButton>
+                <ToggleButton value="cancelled">Cancelled</ToggleButton>
+            </ToggleButtonGroup>
+
+            {selectedInvoices.length > 0 && (
+                <Paper sx={{ p: 2, backgroundColor: '#f7f7f7', mb: 2 }}>
+                    <Typography variant="h6">Selected Invoices</Typography>
+                    {selectedInvoices.map((inv) => (
+                        <Typography key={inv.id} variant="body2">
+                            {inv.invoice_no} - {inv.invoice_type} - PKR {inv.amount}
+                        </Typography>
+                    ))}
+                    <Divider sx={{ my: 2 }} />
+                    <Typography variant="subtitle1">Choose Payment Method:</Typography>
+                    <RadioGroup row value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                        <FormControlLabel value="cash" control={<Radio />} label="Cash" />
+                        <FormControlLabel value="card" control={<Radio />} label="Credit Card" />
+                    </RadioGroup>
+                    {paymentMethod === 'card' && (
+                        <Stack spacing={2} sx={{ mt: 2 }}>
+                            <TextField label="Card Number" fullWidth />
+                            <TextField label="Card Holder Name" fullWidth />
+                            <TextField label="Expiry Date" fullWidth />
+                        </Stack>
+                    )}
+                    {selectedInvoices.some((inv) => inv.subscription_type === 'quarter') && (
+                        <Box sx={{ mt: 2 }}>
+                            <TextField type="number" label="Prepay Future Quarters" inputProps={{ min: 0, max: 4 }} value={prepayCount} onChange={(e) => setPrepayCount(Math.min(4, Math.max(0, parseInt(e.target.value || '0'))))} />
+                        </Box>
+                    )}
+                    <Button variant="contained" sx={{ mt: 2 }} onClick={handlePaySelected} disabled={isPaying}>
+                        {isPaying ? 'Processing...' : `Pay ${selectedInvoices.length} Invoice(s)`}
+                    </Button>
+                </Paper>
+            )}
+
+            {filteredInvoices.map((invoice) => (
+                <Paper key={invoice.id} sx={{ p: 2, mb: 2 }}>
+                    <Box display="flex" alignItems="center" justifyContent="space-between">
+                        <Box>
+                            <Typography variant="body1">
+                                {invoice.invoice_no} ({invoice.invoice_type} - {invoice.subscription_type})
+                            </Typography>
+                            <Typography variant="body2">Amount: PKR {invoice.amount}</Typography>
+                            <Typography variant="body2">Due: {dayjs(invoice.issue_date).format('YYYY-MM-DD')}</Typography>
+                        </Box>
+                        <Box textAlign="right">
+                            {getStatusChip(invoice)}
+                            {invoice.status === 'unpaid' && <Checkbox checked={selectedInvoices.some((inv) => inv.id === invoice.id)} onChange={() => handleInvoiceSelect(invoice)} sx={{ ml: 2 }} />}
+                        </Box>
+                    </Box>
+                </Paper>
+            ))}
         </Box>
     );
 };

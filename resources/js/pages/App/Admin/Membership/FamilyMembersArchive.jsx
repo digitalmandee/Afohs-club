@@ -1,13 +1,8 @@
 import React from 'react';
 
 import { useState } from 'react';
-import {
-    Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead,
-    TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment
-} from '@mui/material';
-import {
-    ArrowBack, Search, FilterAlt, People, CreditCard, ExpandMore, ExpandLess
-} from '@mui/icons-material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment } from '@mui/material';
+import { ArrowBack, Search, FilterAlt, People, CreditCard, ExpandMore, ExpandLess } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
@@ -39,13 +34,9 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
-                            <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>
-                                Family Members Archive
-
-                            </Typography>
+                            <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Family Members Archive</Typography>
                             {/* <pre>{JSON.stringify(familysGroups, null, 2)}</pre> */}
                         </div>
-
                     </div>
 
                     {/* Stats Cards */}
@@ -58,12 +49,8 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                             <People />
                                         </Avatar>
                                     </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
-                                        Total Membership
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
-                                        {total_members ?? 0}
-                                    </Typography>
+                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Membership</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_members ?? 0}</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -75,12 +62,8 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                             <CreditCard />
                                         </Avatar>
                                     </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
-                                        Total Payment
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
-                                        {total_payment ?? 0}
-                                    </Typography>
+                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Payment</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_payment ?? 0}</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -92,12 +75,8 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                             <CreditCard />
                                         </Avatar>
                                     </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>
-                                        Current Balance
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>
-                                        0
-                                    </Typography>
+                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Current Balance</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>0</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -106,9 +85,7 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                     {/* Recently Joined Section */}
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>
-                                Recently Joined
-                            </Typography>
+                            <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
 
                             <div className="d-flex">
                                 <TextField
@@ -156,9 +133,7 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                     {familyGroups.map((user) => (
                                         <React.Fragment key={user.id}>
                                             <TableRow style={{ borderBottom: '1px solid #eee' }}>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                    {user.id || 'N/A'}
-                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.id || 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <div className="d-flex align-items-center">
                                                         <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
@@ -168,19 +143,13 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                    {user.member_type_id || 'N/A'}
-                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type_id || 'N/A'}</TableCell>
                                                 <TableCell>
-                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        {user.phone_number || 'N/A'}
-                                                    </Typography>
+                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.phone_number || 'N/A'}</Typography>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="d-flex align-items-center">
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {user.family_members.length}
-                                                        </Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members.length}</Typography>
                                                         {user.family_members.length > 0 && (
                                                             <IconButton size="small" onClick={() => toggleRow(user.id)}>
                                                                 {expandedRow === user.id ? <ExpandLess /> : <ExpandMore />}
@@ -234,36 +203,23 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                                                         </TableRow> */}
                                                                         {/* <pre>{JSON.stringify(fm, null, 2)}</pre> */}
 
-
                                                                         <TableRow key={fm.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                {fm.id || 'N/A'}
-                                                                            </TableCell>
+                                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{fm.id || 'N/A'}</TableCell>
                                                                             <TableCell>
                                                                                 <div className="d-flex align-items-center">
                                                                                     <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                                                     <div>
-                                                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                            {fm.first_name}
-                                                                                        </Typography>
-                                                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                            {fm.email}
-                                                                                        </Typography>
+                                                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{fm.first_name}</Typography>
+                                                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{fm.email}</Typography>
                                                                                     </div>
                                                                                 </div>
                                                                             </TableCell>
-                                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                {fm.member_type_id || 'N/A'}
+                                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{fm.member_type_id || 'N/A'}</TableCell>
+                                                                            <TableCell>
+                                                                                <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{fm.phone_number || 'N/A'}</Typography>
                                                                             </TableCell>
                                                                             <TableCell>
-                                                                                <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                    {fm.phone_number || 'N/A'}
-                                                                                </Typography>
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                                    {fm.parent_user_id || 'N/A'}
-                                                                                </Typography>
+                                                                                <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{fm.parent_user_id || 'N/A'}</Typography>
                                                                             </TableCell>
                                                                             <TableCell />
                                                                         </TableRow>
@@ -274,7 +230,6 @@ const FamilyMembersArchive = ({ familyGroups = [], total_members, total_payment 
                                                     </TableCell>
                                                 </TableRow>
                                             )}
-
                                         </React.Fragment>
                                     ))}
                                 </TableBody>
