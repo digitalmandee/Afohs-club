@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, Alert, Slide, InputAdornment, Snackbar, Menu, MenuItem } from '@mui/material';
-import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard } from '@mui/icons-material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem } from '@mui/material';
+import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
@@ -11,9 +11,8 @@ import MembershipCardComponent from './UserCard';
 import MemberFilter from './MemberFilter';
 import InvoiceSlip from './Invoice';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
-import BorderColorIcon from '@mui/icons-material/BorderColor';
 import ActivateMembershipDialog from './ActivateMembershipDialog';
-import { MdEditSquare, MdModeEdit } from 'react-icons/md';
+import { MdModeEdit } from 'react-icons/md';
 import { FaEdit } from 'react-icons/fa';
 
 const drawerWidthOpen = 240;
@@ -214,9 +213,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                 <TableBody>
                                     {members.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
-                                                {user.member?.member_category?.name} {user.member?.membership_no || 'N/A'}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.member?.membership_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />

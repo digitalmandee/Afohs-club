@@ -15,13 +15,75 @@ import { objectToFormData } from '@/helpers/objectToFormData';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, userNo, membercategories }) => {
+const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
 
-    const [formsData1, setFormsData1] = useState({
+    const getNormalizedUserData = (user) => {
+        if (!user) return defaultFormData;
+
+        return {
+            user_id: user.id || '',
+            email: user.email || '',
+            first_name: user.first_name || '',
+            middle_name: user.middle_name || '',
+            last_name: user.last_name || '',
+            phone_number: user.phone_number || '',
+            profile_photo: user.profile_photo || '',
+            user_details: {
+                coa_account: user.user_detail?.coa_account || '',
+                title: user.user_detail?.title || '',
+                state: user.user_detail?.state || '',
+                application_number: user.user_detail?.application_number || '',
+                name_comments: user.user_detail?.name_comments || '',
+                guardian_name: user.user_detail?.guardian_name || '',
+                guardian_membership: user.user_detail?.guardian_membership || '',
+                nationality: user.user_detail?.nationality || '',
+                cnic_no: user.user_detail?.cnic_no || '',
+                passport_no: user.user_detail?.passport_no || '',
+                gender: user.user_detail?.gender || '',
+                ntn: user.user_detail?.ntn || '',
+                date_of_birth: user.user_detail?.date_of_birth || '',
+                education: user.user_detail?.education || '',
+                membership_reason: user.user_detail?.membership_reason || '',
+                mobile_number_a: user.user_detail?.mobile_number_a || '',
+                mobile_number_b: user.user_detail?.mobile_number_b || '',
+                mobile_number_c: user.user_detail?.mobile_number_c || '',
+                telephone_number: user.user_detail?.telephone_number || '',
+                critical_email: user.user_detail?.critical_email || '',
+                emergency_name: user.user_detail?.emergency_name || '',
+                emergency_relation: user.user_detail?.emergency_relation || '',
+                emergency_contact: user.user_detail?.emergency_contact || '',
+                current_address: user.user_detail?.current_address || '',
+                current_city: user.user_detail?.current_city || '',
+                current_country: user.user_detail?.current_country || '',
+                permanent_address: user.user_detail?.permanent_address || '',
+                permanent_city: user.user_detail?.permanent_city || '',
+                permanent_country: user.user_detail?.permanent_country || '',
+                country: user.user_detail?.country || '',
+            },
+            member: {
+                application_no: user.member?.application_no || '',
+                membership_no: user.member?.membership_no || '',
+                kinship: user.member?.kinship || '',
+                member_type_id: user.member?.member_type_id || '',
+                membership_category: user.member?.member_category_id || '',
+                membership_date: user.member?.membership_date || new Date().toISOString().split('T')[0],
+                card_issue_date: user.member?.card_issue_date || new Date().toISOString().split('T')[0],
+                card_expiry_date: user.member?.card_expiry_date || '',
+                is_document_enabled: user.member?.is_document_enabled || false,
+                documents: user.member?.documents || [],
+                card_status: user.member?.card_status || 'active',
+            },
+            documents: user.user_detail?.documents || [],
+            previewFiles: user.user_detail?.documents || [],
+            family_members: familyMembers || [],
+        };
+    };
+
+    const defaultFormData = {
         email: '',
         first_name: '',
         middle_name: '',
@@ -60,17 +122,24 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
             country: '',
         },
         member: {
+            application_no: applicationNo,
             member_type_id: '',
             kinship: '',
             membership_no: membershipNo,
             membership_category: '',
+            is_document_enabled: false,
+            documents: '',
             membership_date: new Date().toISOString().split('T')[0],
             card_issue_date: new Date().toISOString().split('T')[0],
             card_expiry_date: '',
             card_status: 'active',
         },
+        documents: [],
+        previewFiles: [],
         family_members: [],
-    });
+    };
+
+    const [formsData, setFormsData] = useState(getNormalizedUserData(user));
 
     const handleChangeData = (name, value) => {
         addDataInState(name, value);
@@ -81,7 +150,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
     };
 
     const addDataInState = (name, value) => {
-        const updatedUserDetails = { ...formsData1.user_details };
+        const updatedUserDetails = { ...formsData.user_details };
 
         if (name.startsWith('user_details.')) {
             const field = name.split('.')[1];
@@ -95,13 +164,13 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
                 if (field === 'current_country') updatedUserDetails.permanent_country = value;
             }
 
-            setFormsData1((prev) => ({
+            setFormsData((prev) => ({
                 ...prev,
                 user_details: updatedUserDetails,
             }));
         } else if (name.startsWith('member.')) {
             const field = name.split('.')[1];
-            setFormsData1((prev) => ({
+            setFormsData((prev) => ({
                 ...prev,
                 member: {
                     ...prev.member,
@@ -109,7 +178,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
                 },
             }));
             if (field === 'member_type_id' || field === 'membership_category') {
-                let family_members = formsData1.family_members.map((member) => ({
+                let family_members = formsData.family_members.map((member) => ({
                     ...member,
                     [field]: value,
                 }));
@@ -117,19 +186,19 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
                     ...prev,
                     [field]: value,
                 }));
-                setFormsData1((prev) => ({
+                setFormsData((prev) => ({
                     ...prev,
                     family_members: family_members,
                 }));
             }
         } else if (name.startsWith('family_members.')) {
             const index = parseInt(name.split('.')[1], 10);
-            setFormsData1((prev) => ({
+            setFormsData((prev) => ({
                 ...prev,
                 family_members: prev.family_members.map((member, i) => (i === index ? { ...member, [name.split('.')[2]]: value } : member)),
             }));
         } else {
-            setFormsData1((prev) => ({
+            setFormsData((prev) => ({
                 ...prev,
                 [name]: value,
             }));
@@ -137,14 +206,14 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
     };
 
     useEffect(() => {
-        const { card_issue_date, card_expiry_date } = formsData1.member;
+        const { card_issue_date, card_expiry_date } = formsData.member;
 
         if (!card_issue_date || !card_expiry_date) return;
 
         const issueDate = new Date(card_issue_date);
         const expiryDate = new Date(card_expiry_date);
 
-        formsData1.family_members.forEach((fm, idx) => {
+        formsData.family_members.forEach((fm, idx) => {
             const start = new Date(fm.start_date);
             const end = new Date(fm.end_date);
             console.log(issueDate, expiryDate);
@@ -163,7 +232,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
                 console.log(`✅ Family member at index ${idx} is within date range`);
             }
         });
-    }, [formsData1.member.card_issue_date, formsData1.member.card_expiry_date, formsData1.family_members]);
+    }, [formsData.member.card_issue_date, formsData.member.card_expiry_date, formsData.family_members]);
 
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
         application_no: '',
@@ -183,29 +252,42 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
 
     const handleFinalSubmit = async () => {
         setLoading(true);
-        try {
-            const formData2 = objectToFormData(formsData1);
-            const response = await axios.post(route('membership.store'), formData2);
-            const invoiceNo = response.data.invoice_no;
+        const formData2 = objectToFormData(formsData);
 
-            enqueueSnackbar('Membership created successfully.', { variant: 'success' });
-            router.visit(route('membership.allpayment') + `?invoice_no=${invoiceNo}`);
-        } catch (error) {
-            if (error.response && error.response.status === 422 && error.response.data.errors) {
-                const errors = error.response.data.errors;
-                Object.keys(errors).forEach((field) => {
-                    const label = field.replace(/\./g, ' → ');
-                    errors[field].forEach((message) => {
-                        enqueueSnackbar(`${label}: ${message}`, { variant: 'error' });
+        const isEditMode = !!user?.id;
+        const url = isEditMode ? route('membership.update', user.id) : route('membership.store');
+
+        await axios
+            .post(url, formData2)
+            .then((response) => {
+                enqueueSnackbar(`Membership ${isEditMode ? 'updated' : 'created'} successfully.`, { variant: 'success' });
+
+                const invoiceNo = response.data?.invoice_no || user.invoice_id;
+                if (!isEditMode) {
+                    router.visit(route('membership.allpayment') + `?invoice_no=${invoiceNo}`);
+                } else {
+                    router.visit(route('membership.dashboard'));
+                }
+            })
+            .catch((error) => {
+                if (error.response && error.response.status === 422 && error.response.data.errors) {
+                    const errors = error.response.data.errors;
+                    Object.keys(errors).forEach((field) => {
+                        const label = field.replace(/\./g, ' → ');
+                        errors[field].forEach((message) => {
+                            enqueueSnackbar(`${label}: ${message}`, { variant: 'error' });
+                        });
                     });
-                });
-            } else {
-                console.error(error);
-                enqueueSnackbar('Failed: ' + (error.response?.data?.error || error.message), { variant: 'error' });
-            }
-        } finally {
-            setLoading(false);
-        }
+                } else {
+                    console.error(error);
+                    if (error.response && error.response.data.error) {
+                        enqueueSnackbar(error.response.data.error, { variant: 'error' });
+                    } else {
+                        enqueueSnackbar('Something went wrong.', { variant: 'error' });
+                    }
+                }
+            })
+            .finally(() => setLoading(false));
     };
 
     return (
@@ -219,11 +301,10 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, use
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                 <div className="">
-                    {step === 1 && <AddForm1 setData={setFormsData1} data={formsData1} handleChange={handleChange} applicationNo={applicationNo} onNext={() => setStep(2)} />}
-                    {step === 2 && <AddForm2 setData={setFormsData1} data={formsData1} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
-                    {step === 3 && <AddForm3 setData={setFormsData1} data={formsData1} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} membershipNo={membershipNo} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} applicationNo={applicationNo} />}
+                    {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}
+                    {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
+                    {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
                 </div>
             </div>
         </>

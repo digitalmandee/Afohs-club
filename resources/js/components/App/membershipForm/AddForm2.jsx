@@ -4,7 +4,7 @@ import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { countries } from '@/constants/countries';
 
-const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurrent, sameAsCurrent }) => {
+const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAsCurrent }) => {
     const [formErrors, setFormErrors] = useState({});
 
     const handleSameAddress = (e) => {
@@ -12,15 +12,24 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
         setSameAsCurrent(checked);
 
         if (checked) {
-            setData((prev) => ({
-                ...prev,
-                user_details: {
-                    ...prev.user_details,
-                    permanent_address: prev.user_details.current_address || '',
-                    permanent_city: prev.user_details.current_city || '',
-                    permanent_country: prev.user_details.current_country || '',
+            handleChange({
+                target: {
+                    name: 'user_details.permanent_address',
+                    value: data.user_details.current_address || '',
                 },
-            }));
+            });
+            handleChange({
+                target: {
+                    name: 'user_details.permanent_city',
+                    value: data.user_details.current_city || '',
+                },
+            });
+            handleChange({
+                target: {
+                    name: 'user_details.permanent_country',
+                    value: data.user_details.current_country || '',
+                },
+            });
         }
     };
 

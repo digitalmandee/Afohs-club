@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 
-const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
+const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
     const [selectedKinshipUser, setSelectedKinshipUser] = useState(null);
     const [submitError, setSubmitError] = useState('');
@@ -24,7 +25,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
     };
 
     const AddFamilyMember = () => {
-        const maxApplicationNo = data.family_members.length ? Math.max(...data.family_members.map((f) => f.application_no)) : applicationNo;
+        const maxApplicationNo = data.family_members.length ? Math.max(...data.family_members.map((f) => f.application_no)) : data.member.application_no;
 
         const existingCount = data.family_members.length;
         const suffix = String.fromCharCode(65 + existingCount); // 65 = 'A'
@@ -150,6 +151,20 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
 
     const handleCancelFamilyMember = () => {
         setShowFamilyMember(false);
+    };
+
+    // Upload documents
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        handleChangeData('documents', [...(data.documents || []), ...files]);
+        handleChangeData('previewFiles', [...(data.previewFiles || []), ...files]);
+    };
+
+    const handleFileRemove = (index) => {
+        const updatedFiles = [...(data.previewFiles || [])];
+        updatedFiles.splice(index, 1);
+        handleChangeData('previewFiles', updatedFiles);
+        handleChangeData('documents', updatedFiles);
     };
 
     const handleSubmit = async () => {
@@ -518,6 +533,37 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                             />
                                         </Box>
                                     </Grid>
+                                    <Grid item xs={12}>
+                                        <InputLabel>Upload Documents (PDF or Images)</InputLabel>
+                                        <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8 }} />
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <Grid container spacing={1}>
+                                            {[...(data.previewFiles || [])].map((file, idx) => (
+                                                <Grid item key={idx}>
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            border: '1px solid #ccc',
+                                                            borderRadius: 1,
+                                                            px: 1,
+                                                            py: 0.5,
+                                                            backgroundColor: '#f9f9f9',
+                                                        }}
+                                                    >
+                                                        <Typography variant="body2" sx={{ mr: 1 }}>
+                                                            {file.name}
+                                                        </Typography>
+                                                        <IconButton size="small" onClick={() => handleFileRemove(idx)}>
+                                                            <CloseIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Box>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    </Grid>
                                     {/* Document Missing */}
                                     <Grid item xs={12}>
                                         <Box sx={{ mb: 3 }}>
@@ -525,12 +571,14 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 control={
                                                     <Checkbox
                                                         checked={data.member.is_document_enabled || false}
-                                                        onChange={(e) => handleChange({
-                                                            target: {
-                                                                name: 'member.is_document_enabled',
-                                                                value: e.target.checked,
-                                                            },
-                                                        })}
+                                                        onChange={(e) =>
+                                                            handleChange({
+                                                                target: {
+                                                                    name: 'member.is_document_enabled',
+                                                                    value: e.target.checked,
+                                                                },
+                                                            })
+                                                        }
                                                         sx={{ color: '#1976d2' }}
                                                     />
                                                 }
@@ -916,7 +964,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 />
                                             </Box>
                                         </Grid>
-
                                     </Grid>
 
                                     {familyMemberErrors.date && (

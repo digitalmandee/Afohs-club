@@ -135,7 +135,7 @@ const handlePrintMembershipCard = (member) => {
                         <div class="value">${member?.first_name + ' ' + member?.last_name || 'N/A'}</div>
 
                         <div class="label">Membership ID</div>
-                        <div class="value">${member?.member?.member_category?.name} ${member?.member?.membership_no || 'N/A'}</div>
+                        <div class="value">${member?.member?.membership_no || 'N/A'}</div>
                     </div>
 
                     <!-- Valid Until + QR -->
@@ -230,7 +230,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                                         Membership ID
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.member?.member_category?.name} {member?.member?.membership_no || 'N/A'}
+                                        {member?.member?.membership_no || 'N/A'}
                                     </Typography>
                                 </Box>
                             </Grid>

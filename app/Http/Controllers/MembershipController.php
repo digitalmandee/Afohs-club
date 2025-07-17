@@ -74,7 +74,7 @@ class MembershipController extends Controller
         });
         $memberTypesData = MemberType::all();
         $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
-        return Inertia::render('App/Admin/Membership/EditMembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories'));
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories'));
     }
 
     public function allMembers()
@@ -113,7 +113,7 @@ class MembershipController extends Controller
         ]);
     }
 
- public function store(Request $request)
+    public function store(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -123,8 +123,8 @@ class MembershipController extends Controller
                 'user_details.cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:user_details,cnic_no',
                 'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:user_details,cnic_no',
             ], [
-                'user_details.cnic_no.unique' => 'The primary user\'s CNIC already exists.',
-                'family_members.*.cnic.unique' => 'The family member\'s CNIC already exists.',
+                'user_details.cnic_no.unique' => "The primary user's CNIC already exists.",
+                'family_members.*.cnic.unique' => "The family member's CNIC already exists.",
             ], [
                 'user_details.cnic_no' => 'Primary User CNIC',
                 'family_members.*.cnic' => 'Family Member CNIC',
@@ -154,6 +154,13 @@ class MembershipController extends Controller
             $memberImagePath = null;
             if ($request->hasFile('profile_photo')) {
                 $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'member_images');
+            }
+
+            $documentPaths = [];
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    $documentPaths[] = FileHelper::saveImage($file, 'member_documents');
+                }
             }
 
             // Create primary user
@@ -200,6 +207,7 @@ class MembershipController extends Controller
                 'permanent_city' => $request->user_details['permanent_city'],
                 'permanent_country' => $request->user_details['permanent_country'],
                 'country' => $request->user_details['country'],
+                'documents' => $documentPaths,
             ]);
 
             $membershipNo = Member::generateNextMembershipNumber();

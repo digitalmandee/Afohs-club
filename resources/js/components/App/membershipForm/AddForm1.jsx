@@ -7,7 +7,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { router } from '@inertiajs/react';
 
-const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
+const AddForm1 = ({ data, handleChange, onNext }) => {
     const [memberImage, setMemberImage] = useState(null);
     const [showImageButtons, setShowImageButtons] = useState(false);
     const [dateError, setDateError] = useState(''); // New state for date validation
@@ -16,7 +16,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {
-            setData((prev) => ({ ...prev, profile_photo: event.target.files[0] }));
+            handleChange({ target: { name: 'profile_photo', value: event.target.files[0] } });
             const reader = new FileReader();
             reader.onload = (e) => {
                 setMemberImage(e.target.result);
@@ -29,6 +29,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
     const handleDeleteImage = () => {
         setMemberImage(null);
         setShowImageButtons(false);
+        handleChange({ target: { name: 'profile_photo', value: null } });
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -173,7 +174,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 Application Number :
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                #{applicationNo}
+                                #{data.member.application_no}
                             </Typography>
                         </Box>
                     </Grid>
@@ -183,6 +184,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                         {/* Left Column */}
                         <Grid item xs={12} md={6} container spacing={3}>
                             {/* Member Picture */}
+                            {data.profile_image && 'Yes'}
                             <Grid item xs={12}>
                                 <Box sx={{ mb: 1, display: 'flex', gap: '10px' }}>
                                     <Box
