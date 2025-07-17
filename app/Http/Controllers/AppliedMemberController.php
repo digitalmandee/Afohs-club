@@ -25,6 +25,7 @@ class AppliedMemberController extends Controller
                 'amount_paid' => $member->amount_paid,
                 'start_date' => $member->start_date,
                 'end_date' => $member->end_date,
+                'is_permanent_member' => $member->is_permanent_member, // usama code: Added is_permanent_member to response
             ];
         });
 
@@ -42,6 +43,7 @@ class AppliedMemberController extends Controller
                 'amount_paid' => $member->amount_paid,
                 'start_date' => $member->start_date,
                 'end_date' => $member->end_date,
+                'is_permanent_member' => $member->is_permanent_member, // usama code: Added is_permanent_member to edit data
             ];
         }
 
@@ -65,6 +67,7 @@ class AppliedMemberController extends Controller
                 'amount_paid' => 'required|numeric|min:0',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
+                'is_permanent_member' => 'required|boolean', // usama code: Added validation for is_permanent_member
             ], [
                 'member_id.unique' => 'The member ID is already in use.',
                 'email.unique' => 'The email address is already in use.',
@@ -73,6 +76,7 @@ class AppliedMemberController extends Controller
                 'cnic.regex' => 'The CNIC must be exactly 13 digits.',
                 'cnic.unique' => 'The CNIC is already in use.',
                 'end_date.after_or_equal' => 'The end date must be on or after the start date.',
+                'is_permanent_member.required' => 'The permanent member status is required.', // usama code: Error message for is_permanent_member
             ]);
 
             if ($validator->fails()) {
@@ -90,6 +94,7 @@ class AppliedMemberController extends Controller
                 'amount_paid' => (float) $request->amount_paid,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
+                'is_permanent_member' => $request->is_permanent_member, // usama code: Save is_permanent_member
             ]);
 
             return response()->json(['message' => 'Applied member created successfully.'], 200);
@@ -106,7 +111,7 @@ class AppliedMemberController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'member_id' => 'nullable|integer|exists:users,id|unique:applied_member,member_id,' . $id, 
+                'member_id' => 'nullable|integer|exists:users,id|unique:applied_member,member_id,' . $id,
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:applied_member,email,' . $id . '|max:255',
                 'phone_number' => 'required|string|regex:/^[0-9]{11}$/',
@@ -115,6 +120,7 @@ class AppliedMemberController extends Controller
                 'amount_paid' => 'required|numeric|min:0',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
+                'is_permanent_member' => 'required|boolean', // usama code: Added validation for is_permanent_member
             ], [
                 'member_id.unique' => 'The member ID is already in use.',
                 'email.unique' => 'The email address is already in use.',
@@ -123,6 +129,7 @@ class AppliedMemberController extends Controller
                 'cnic.regex' => 'The CNIC must be exactly 13 digits.',
                 'cnic.unique' => 'The CNIC is already in use.',
                 'end_date.after_or_equal' => 'The end date must be on or after the start date.',
+                'is_permanent_member.required' => 'The permanent member status is required.', // usama code: Error message for is_permanent_member
             ]);
 
             if ($validator->fails()) {
@@ -141,6 +148,7 @@ class AppliedMemberController extends Controller
                 'amount_paid' => (float) $request->amount_paid,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
+                'is_permanent_member' => $request->is_permanent_member, // usama code: Update is_permanent_member
             ]);
 
             return response()->json(['message' => 'Applied member updated successfully.'], 200);

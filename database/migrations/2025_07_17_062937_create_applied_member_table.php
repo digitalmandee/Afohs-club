@@ -19,6 +19,7 @@ class CreateAppliedMemberTable extends Migration
             $table->string('cnic')->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
+            $table->boolean('is_permanent_member')->default(false);
             $table->timestamps();
         });
     }

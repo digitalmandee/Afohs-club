@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TextField, Button, Paper, Typography, Box, IconButton } from '@mui/material';
+import { TextField, Button, Paper, Typography, Box, IconButton, Checkbox, FormControlLabel } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
@@ -26,6 +26,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
         amount_paid: '',
         start_date: '',
         end_date: '',
+        is_permanent_member: false, // usama code: Initialize with false
     });
 
     const [errors, setErrors] = useState({});
@@ -42,6 +43,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                 amount_paid: memberData.amount_paid !== null ? memberData.amount_paid.toString() : '',
                 start_date: memberData.start_date || '',
                 end_date: memberData.end_date || '',
+                is_permanent_member: memberData.is_permanent_member || false, // usama code: Include is_permanent_member
             });
         }
     }, [memberData]);
@@ -123,6 +125,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
             amount_paid: formData.amount_paid ? parseFloat(formData.amount_paid) : 0,
             start_date: formData.start_date,
             end_date: formData.end_date,
+            is_permanent_member: formData.is_permanent_member, // usama code: Include is_permanent_member
         };
 
         try {
@@ -296,6 +299,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                                 fullWidth
                                 size="small"
                                 name="start_date"
+                                disabled={isEditMode}
                                 value={formData.start_date}
                                 onChange={handleInputChange}
                                 type="date"
@@ -318,6 +322,23 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                                 required
                                 error={!!errors.end_date}
                                 helperText={errors.end_date}
+                            />
+                        </Box>
+                        <Box sx={{ mb: 2 }}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="is_permanent_member"
+                                        checked={formData.is_permanent_member}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                is_permanent_member: e.target.checked,
+                                            }))
+                                        }
+                                    />
+                                }
+                                label="Make Permanent Member"
                             />
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
