@@ -373,13 +373,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Family Members Archive route
     Route::get('/admin/membership/archive', [FamilyMembersArchiveConroller::class, 'index'])->name('family-members-archive.index');
-    // Family Applied Member
-    // Route::get('/admin/membership/applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
-    // Route::get('/admin/membership/applied-member/add', [AppliedMemberController::class, 'create'])->name('applied-member.create');
 
-Route::get('/admin/membership/applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
-Route::post('/admin/membership/applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
-Route::put('/admin/membership/applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
+    // Family Applied Member
+    Route::get('/admin/membership/applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
+    Route::post('/admin/membership/applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
+    Route::put('/admin/membership/applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
 
 
     // tenant route

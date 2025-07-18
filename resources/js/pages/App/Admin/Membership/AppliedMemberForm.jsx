@@ -125,7 +125,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
             amount_paid: formData.amount_paid ? parseFloat(formData.amount_paid) : 0,
             start_date: formData.start_date,
             end_date: formData.end_date,
-            is_permanent_member: formData.is_permanent_member, // usama code: Include is_permanent_member
+            is_permanent_member: formData.is_permanent_member,
         };
 
         try {
@@ -324,23 +324,25 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                                 helperText={errors.end_date}
                             />
                         </Box>
-                        <Box sx={{ mb: 2 }}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        name="is_permanent_member"
-                                        checked={formData.is_permanent_member}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                is_permanent_member: e.target.checked,
-                                            }))
-                                        }
-                                    />
-                                }
-                                label="Make Permanent Member"
-                            />
-                        </Box>
+                        {isEditMode &&
+                            <Box sx={{ mb: 2 }}>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            name="is_permanent_member"
+                                            checked={formData.is_permanent_member}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    is_permanent_member: e.target.checked,
+                                                }))
+                                            }
+                                        />
+                                    }
+                                    label="Make Permanent Member"
+                                />
+                            </Box>
+                        }
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                             <Button variant="outlined" onClick={() => router.get(route('applied-member.index'))}>
                                 Cancel
@@ -351,7 +353,9 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                                 type="submit"
                                 sx={{ backgroundColor: '#0c4b6e', '&:hover': { backgroundColor: '#083854' } }}
                             >
-                                {loading ? 'Saving...' : 'Save'}
+                                {isEditMode ? (loading ? 'Updating...' : 'Update') : (loading ? 'Saving...' : 'Save')}
+
+                                {/* {loading ? 'Saving...' : 'Save'} */}
                             </Button>
                         </Box>
                     </form>
