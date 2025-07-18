@@ -26,7 +26,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
         amount_paid: '',
         start_date: '',
         end_date: '',
-        is_permanent_member: false, // usama code: Initialize with false
+        is_permanent_member: false,
     });
 
     const [errors, setErrors] = useState({});
@@ -43,7 +43,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                 amount_paid: memberData.amount_paid !== null ? memberData.amount_paid.toString() : '',
                 start_date: memberData.start_date || '',
                 end_date: memberData.end_date || '',
-                is_permanent_member: memberData.is_permanent_member || false, // usama code: Include is_permanent_member
+                is_permanent_member: memberData.is_permanent_member || false,
             });
         }
     }, [memberData]);
@@ -65,7 +65,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
     };
 
     const handleCnicChange = (e) => {
-        let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-digit characters
+        let value = e.target.value.replace(/[^0-9]/g, '');
 
         if (value.length > 13) {
             value = value.slice(0, 13);
@@ -355,7 +355,6 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                             >
                                 {isEditMode ? (loading ? 'Updating...' : 'Update') : (loading ? 'Saving...' : 'Save')}
 
-                                {/* {loading ? 'Saving...' : 'Save'} */}
                             </Button>
                         </Box>
                     </form>
