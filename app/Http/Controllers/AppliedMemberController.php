@@ -66,7 +66,7 @@ class AppliedMemberController extends Controller
                 'email' => 'required|email|unique:applied_member,email|max:255',
                 'phone_number' => 'required|string|regex:/^[0-9]{11}$/',
                 'address' => 'nullable|string|max:500',
-                'cnic' => 'required|string|regex:/^[0-9]{13}$/|unique:applied_member,cnic',
+                'cnic' => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/|unique:applied_member,cnic',
                 'amount_paid' => 'required|numeric|min:0',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
@@ -76,7 +76,7 @@ class AppliedMemberController extends Controller
                 'email.unique' => 'The email address is already in use.',
                 'phone_number.regex' => 'The phone number must be exactly 11 digits.',
                 'cnic.required' => 'The CNIC is required.',
-                'cnic.regex' => 'The CNIC must be exactly 13 digits.',
+                'cnic.regex' => 'The CNIC must be in the format XXXXX-XXXXXXX-X.',
                 'cnic.unique' => 'The CNIC is already in use.',
                 'end_date.after_or_equal' => 'The end date must be on or after the start date.',
                 'is_permanent_member.required' => 'The permanent member status is required.',
@@ -93,7 +93,7 @@ class AppliedMemberController extends Controller
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
                 'address' => $request->address ?: null,
-                'cnic' => $request->cnic,
+                'cnic' => $request->cnic, // Use raw CNIC with hyphens
                 'amount_paid' => (float) $request->amount_paid,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
@@ -119,7 +119,7 @@ class AppliedMemberController extends Controller
                 'email' => 'required|email|unique:applied_member,email,' . $id . '|max:255',
                 'phone_number' => 'required|string|regex:/^[0-9]{11}$/',
                 'address' => 'nullable|string|max:500',
-                'cnic' => 'required|string|regex:/^[0-9]{13}$/|unique:applied_member,cnic,' . $id,
+                'cnic' => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/|unique:applied_member,cnic,' . $id,
                 'amount_paid' => 'required|numeric|min:0',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
@@ -129,7 +129,7 @@ class AppliedMemberController extends Controller
                 'email.unique' => 'The email address is already in use.',
                 'phone_number.regex' => 'The phone number must be exactly 11 digits.',
                 'cnic.required' => 'The CNIC is required.',
-                'cnic.regex' => 'The CNIC must be exactly 13 digits.',
+                'cnic.regex' => 'The CNIC must be in the format XXXXX-XXXXXXX-X.',
                 'cnic.unique' => 'The CNIC is already in use.',
                 'end_date.after_or_equal' => 'The end date must be on or after the start date.',
                 'is_permanent_member.required' => 'The permanent member status is required.',
@@ -149,7 +149,7 @@ class AppliedMemberController extends Controller
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
                 'address' => $request->address ?: null,
-                'cnic' => $request->cnic,
+                'cnic' => $request->cnic, // Use raw CNIC with hyphens
                 'amount_paid' => (float) $request->amount_paid,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
@@ -183,7 +183,7 @@ class AppliedMemberController extends Controller
                     [
                         'phone_number' => $request->phone_number,
                         'current_address' => $request->address ?: null,
-                        'cnic_no' => $request->cnic,
+                        'cnic_no' => $request->cnic, // Use raw CNIC with hyphens
                     ]
                 );
 

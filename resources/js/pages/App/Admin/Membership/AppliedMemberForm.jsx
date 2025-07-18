@@ -121,7 +121,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
             email: formData.email,
             phone_number: formData.phone_number,
             address: formData.address || null,
-            cnic: cnicDigits,
+            cnic: formData.cnic, // Use formatted CNIC directly
             amount_paid: formData.amount_paid ? parseFloat(formData.amount_paid) : 0,
             start_date: formData.start_date,
             end_date: formData.end_date,
