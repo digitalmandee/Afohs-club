@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem } from '@mui/material';
-import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
+import { Search, FilterAlt, People, CreditCard, LocalDining as DiningIcon, TakeoutDining as TakeoutIcon, TwoWheeler as DeliveryIcon } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
@@ -8,15 +8,23 @@ import MembershipSuspensionDialog from './Modal';
 import MembershipCancellationDialog from './CancelModal';
 import MemberProfileModal from './Profile';
 import MembershipCardComponent from './UserCard';
-import MemberFilter from './MemberFilter';
 import InvoiceSlip from './Invoice';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import ActivateMembershipDialog from './ActivateMembershipDialog';
+import MembershipDashboardFilter from './MembershipDashboardFilter';
 import { MdModeEdit } from 'react-icons/md';
 import { FaEdit } from 'react-icons/fa';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
+
+const styles = {
+    root: {
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        fontFamily: 'Arial, sans-serif',
+    },
+};
 
 const MembershipDashboard = ({ members = [], total_members, total_payment }) => {
     // Modal state
@@ -29,10 +37,32 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
     const [openProfileModal, setOpenProfileModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
-    const [openInvoiceModal, setOpenInvoiceModal] = useState(false); // State for InvoiceSlip modal
     const [selectMember, setSelectMember] = useState(null);
     const [statusAnchorEl, setStatusAnchorEl] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
+    const [filteredMembers, setFilteredMembers] = useState(members);
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
+
+
+    // Extract unique status and member type values from members
+    const statusOptions = [
+        { label: 'All type', value: 'all', icon: null },
+        ...[...new Set(members.map(member => member.member?.card_status).filter(status => status))].map(status => ({
+            label: status.charAt(0).toUpperCase() + status.slice(1),
+            value: status,
+            // icon: status.toLowerCase() === 'active' ? <DiningIcon /> :
+            //     status.toLowerCase() === 'inactive' ? <TakeoutIcon /> :
+            //         <DeliveryIcon />,
+        })),
+    ];
+
+    const memberTypeOptions = [
+        { label: 'All types', value: 'all' },
+        ...[...new Set(members.map(member => member.member?.member_type?.name).filter(name => name))].map(name => ({
+            label: name,
+            value: name,
+        })),
+    ];
 
     const handleStatusClick = (event, member) => {
         setStatusAnchorEl(event.currentTarget);
@@ -42,8 +72,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
     const handleStatusClose = () => {
         setStatusAnchorEl(null);
     };
-
-    // console.log('Member prop:', member); // Debug: Log the member prop
 
     const handleOpenModal = (member, event, type = 'actions') => {
         const rect = event.currentTarget.getBoundingClientRect();
@@ -72,17 +100,14 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
     };
 
     const getAvailableStatusActions = (currentStatus) => {
-        const allStatuses = ['active', 'suspended', 'cancelled'];
+        const allStatuses = statusOptions.map(option => option.value).filter(value => value !== 'all');
         return allStatuses.filter((status) => status.toLowerCase() !== currentStatus?.toLowerCase());
     };
 
     const handleStatusUpdate = (memberId, newStatus) => {
         const foundMember = members.find((m) => m.id === memberId);
         if (foundMember) {
-            console.log('Member found:', foundMember);
             foundMember.member.card_status = newStatus;
-        } else {
-            console.log('Member not found:', memberId);
         }
     };
 
@@ -166,7 +191,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
-
                             <div className="d-flex">
                                 <TextField
                                     placeholder="Search by name, member type etc"
@@ -211,7 +235,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {members.map((user) => (
+                                    {filteredMembers.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.member?.membership_no || 'N/A'}</TableCell>
                                             <TableCell>
@@ -251,14 +275,12 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                                 )}
                                                                 <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
                                                             </span>
-
                                                             <Menu {...bindMenu(popupState)}>
                                                                 {getAvailableStatusActions(user.member?.card_status).map((statusOption) => (
                                                                     <MenuItem
                                                                         key={statusOption}
                                                                         onClick={() => {
                                                                             popupState.close();
-
                                                                             if (statusOption === 'suspended') {
                                                                                 setSelectMember(user);
                                                                                 setSuspensionModalOpen(true);
@@ -268,8 +290,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                                             } else if (statusOption === 'active') {
                                                                                 setSelectMember(user);
                                                                                 setActivateModalOpen(true);
-                                                                                // Optional: trigger activate logic/modal here
-                                                                                console.log('Activate clicked');
                                                                             }
                                                                         }}
                                                                     >
@@ -281,7 +301,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                     )}
                                                 </PopupState>
                                             </TableCell>
-
                                             <TableCell>
                                                 <Button
                                                     style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
@@ -320,15 +339,25 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                         </TableContainer>
                     </div>
 
-                    <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={members} />
-                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
-                    <MemberFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.member?.invoice_id} />
+                    {/* Filter Modal */}
+                    <MembershipDashboardFilter
+                        openFilterModal={openFilterModal}
+                        setOpenFilterModal={setOpenFilterModal}
+                        members={members}
+                        filteredMembers={filteredMembers}
+                        setFilteredMembers={setFilteredMembers}
+                        statusOptions={statusOptions}
+                        memberTypeOptions={memberTypeOptions}
+                    />
                 </div>
             </div>
+
+            <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+            <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+            <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+            <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={members} />
+            <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
+            <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.member?.invoice_id} />
         </>
     );
 };

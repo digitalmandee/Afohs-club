@@ -487,7 +487,7 @@ const MemberFilter = ({ open, onClose }) => {
                                     px: 1
                                 }}
                             >
-                                <Typography sx={{ fontWeight: 400, fontSize:'14px' }}>
+                                <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>
                                     Select your target date
                                 </Typography>
 
