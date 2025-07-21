@@ -50,9 +50,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
         ...[...new Set(members.map(member => member.member?.card_status).filter(status => status))].map(status => ({
             label: status.charAt(0).toUpperCase() + status.slice(1),
             value: status,
-            // icon: status.toLowerCase() === 'active' ? <DiningIcon /> :
-            //     status.toLowerCase() === 'inactive' ? <TakeoutIcon /> :
-            //         <DeliveryIcon />,
         })),
     ];
 
@@ -186,7 +183,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                             </Card>
                         </div>
                     </div>
-
                     {/* Recently Joined Section */}
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
