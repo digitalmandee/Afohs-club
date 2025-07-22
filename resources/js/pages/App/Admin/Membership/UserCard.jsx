@@ -165,7 +165,7 @@ const handlePrintMembershipCard = (member) => {
 
 const MembershipCardComponent = ({ open, onClose, member }) => {
     // Debug: Log the member prop to verify its structure
-    // console.log('Member in MembershipCardComponent:', member);
+    console.log('Member in MembershipCardComponent:', member?.member?.is_document_enabled);
 
     return (
         <Drawer
@@ -265,6 +265,13 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                     </MembershipFooter>
                 </MembershipCard>
             </Box>
+            {member?.member?.is_document_enabled &&
+                <Typography display="flex" justifyContent="center" alignItems="center" variant="caption" color="error">
+                    Document is Missing
+                </Typography>
+
+            }
+
             <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button variant="text" color="inherit" onClick={onClose}>
                     Close
@@ -275,6 +282,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                 <Button
                     onClick={() => handlePrintMembershipCard(member)}
                     variant="contained"
+                    disabled={member?.member?.is_document_enabled}
                     startIcon={<PrintIcon />}
                     sx={{
                         bgcolor: '#0a3d62',
@@ -286,7 +294,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                     Print
                 </Button>
             </Box>
-        </Drawer>
+        </Drawer >
     );
 };
 
