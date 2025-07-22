@@ -98,6 +98,11 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'parent_user_id');
     }
 
+    public function statusHistories()
+    {
+        return $this->hasMany(MemberStatusHistory::class);
+    }
+
     /**
      * Set the password for a new user.
      *

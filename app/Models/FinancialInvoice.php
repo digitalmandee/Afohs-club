@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class FinancialInvoice extends Model
+class FinancialInvoice extends BaseModel
 {
     protected $fillable = [
         'invoice_no',
@@ -27,7 +25,11 @@ class FinancialInvoice extends Model
         'payment_date',
         'reciept',
         'data',
-        'status'
+        'remarks',
+        'status',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
     protected $casts = [

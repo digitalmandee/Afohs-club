@@ -97,6 +97,7 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url, component, props } = usePage();
+    const auth = props.auth;
 
     const normalizePath = (fullPath) => new URL(fullPath, window.location.origin).pathname;
 
@@ -431,6 +432,10 @@ export default function SideNav({ open, setOpen }) {
             icon: <SettingsIcon />,
             children: [
                 {
+                    text: 'Billing',
+                    path: route('admin.billing-settings.edit'),
+                },
+                {
                     text: 'Profile settings',
                     path: '/settings/profile',
                 },
@@ -546,8 +551,8 @@ export default function SideNav({ open, setOpen }) {
                                 }}
                             />
                             <Box>
-                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>MALIK</Typography>
-                                <Typography sx={{ fontSize: '12px', color: '#666' }}>Admin</Typography>
+                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>{auth.user?.name}</Typography>
+                                <Typography sx={{ fontSize: '12px', color: '#666' }}>{auth.role}</Typography>
                             </Box>
                         </Box>
                     </Box>

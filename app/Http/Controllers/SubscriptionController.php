@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\Category;
 use App\Models\FinancialInvoice;
+use App\Models\Member;
 use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
 use App\Models\SubscriptionType;
@@ -216,62 +217,102 @@ class SubscriptionController extends Controller
         return response()->json(['message' => 'Selected invoices marked as paid.']);
     }
 
-    public function createAndPayInvoice(Request $request)
+    public function createAndPay(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'member_id' => 'nullable|exists:members,id',
-            'amount' => 'required|numeric|min:0',
+            'customer_id' => 'required|exists:users,id',
             'invoice_type' => 'required|in:membership,subscription',
             'subscription_type' => 'required|in:one_time,monthly,quarter,yearly',
-            'method' => 'required|in:cash,card',
-            'prepay_quarters' => 'nullable|integer|min:0|max:4'
+            'amount' => 'required|numeric|min:0',
+            'discount_type' => 'nullable|in:fixed,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
+            'method' => 'required|string',
+            'subscription_id' => 'nullable|exists:subscriptions,id',
+            'receipt' => 'nullable|file',
+            'prepay_quarters' => 'nullable|array',
         ]);
 
-        $today = now();
+        DB::beginTransaction();
 
-        $invoice = FinancialInvoice::create([
-            'invoice_no' => 'INV-' . strtoupper(uniqid()),
-            'customer_id' => $request->customer_id,
-            'member_id' => $request->member_id,
-            'invoice_type' => $request->invoice_type,
-            'subscription_type' => $request->subscription_type,
-            'amount' => $request->amount,
-            'total_price' => $request->amount,
-            'paid_amount' => $request->amount,
-            'issue_date' => $today,
-            'due_date' => $today->copy()->addDays(10),
-            'status' => 'paid',
-            'payment_method' => $request->method,
-            'payment_date' => $today,
-        ]);
+        try {
+            $invoiceNo = $this->getInvoiceNo();
+            $paidAmount = $request->amount;
+            $discountDetails = null;
+            $receiptPath = null;
 
-        if ($request->subscription_type === 'quarter' && $request->prepay_quarters) {
-            for ($i = 1; $i <= $request->prepay_quarters; $i++) {
-                $futureDate = $today->copy()->addMonths($i * 3);
-                $quarter = ceil($futureDate->month / 3);
-                $quarterLabel = 'Q' . $quarter . ' ' . $futureDate->year;
-
-                FinancialInvoice::create([
-                    'invoice_no' => 'INV-' . strtoupper(uniqid()),
-                    'customer_id' => $request->customer_id,
-                    'member_id' => $request->member_id,
-                    'invoice_type' => $request->invoice_type,
-                    'subscription_type' => 'quarter',
-                    'amount' => $request->amount,
-                    'total_price' => $request->amount,
-                    'paid_amount' => $request->amount,
-                    'issue_date' => $futureDate,
-                    'due_date' => $futureDate->copy()->addDays(10),
-                    'paid_for_quarter' => $quarterLabel,
-                    'status' => 'paid',
-                    'payment_method' => $request->method,
-                    'payment_date' => now(),
+            if ($request->discount_type && $request->discount_value) {
+                if ($request->discount_type === 'fixed') {
+                    $paidAmount -= $request->discount_value;
+                } elseif ($request->discount_type === 'percentage') {
+                    $paidAmount -= ($paidAmount * $request->discount_value / 100);
+                }
+                $discountDetails = json_encode([
+                    'type' => $request->discount_type,
+                    'value' => $request->discount_value,
                 ]);
             }
-        }
 
-        return response()->json(['message' => 'Invoice created and paid.', 'invoice' => $invoice]);
+            if ($request->hasFile('receipt')) {
+                $receiptPath = FileHelper::saveImage($request->file('receipt'), 'reciepts');
+            }
+
+            $now = now();
+            $paidForMonth = null;
+            $paidForQuarter = null;
+
+            if ($request->subscription_type === 'monthly') {
+                $paidForMonth = $now->format('Y-m');
+            }
+
+            if ($request->subscription_type === 'quarter') {
+                $paidForQuarter = $request->prepay_quarters ?? [];
+            }
+
+            // ✅ Check paused status for current period
+            $member = Member::with('pausedHistories')->where('user_id', $request->customer_id)->first();
+            $billingStart = $now->copy()->startOfMonth();
+            $billingEnd = $now->copy()->endOfMonth();
+            $wasPaused = false;
+
+            foreach ($member->pausedHistories as $history) {
+                $pausedFrom = \Carbon\Carbon::parse($history->start_date);
+                $pausedTo = $history->end_date ? \Carbon\Carbon::parse($history->end_date) : now();
+
+                if ($billingStart->lte($pausedTo) && $billingEnd->gte($pausedFrom)) {
+                    $wasPaused = true;
+                    $paidAmount *= 0.5;
+                    break;
+                }
+            }
+
+            $invoice = FinancialInvoice::create([
+                'invoice_no' => $invoiceNo,
+                'customer_id' => $request->customer_id,
+                'invoice_type' => $request->invoice_type,
+                'subscription_type' => $request->subscription_type,
+                'discount_type' => $request->discount_type,
+                'discount_value' => $request->discount_value,
+                'discount_details' => $discountDetails,
+                'amount' => $request->amount,
+                'total_price' => $paidAmount,
+                'paid_amount' => $paidAmount,
+                'customer_charges' => 0,
+                'issue_date' => $now,
+                'due_date' => $now,
+                'paid_for_month' => $paidForMonth,
+                'paid_for_quarter' => $paidForQuarter ? json_encode($paidForQuarter) : null,
+                'payment_method' => $request->method,
+                'payment_date' => $now,
+                'reciept' => $receiptPath,
+                'status' => 'paid',
+            ]);
+
+            DB::commit();
+            return response()->json(['message' => 'Invoice created and paid successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Something went wrong.', 'details' => $e->getMessage()], 500);
+        }
     }
 
     public function payInvoice($invoiceId)

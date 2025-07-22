@@ -62,9 +62,22 @@ const InvoiceViewer = () => {
         if (newInvoiceData.invoice_type === 'membership') {
             axios.get(`/api/members/by-user/${selectedCustomer.id}`).then((res) => {
                 setMemberDetails(res.data);
+
+                const baseFee = res.data.member_category?.fee || 0;
+                const currentMonth = dayjs().startOf('month');
+                const endOfMonth = dayjs().endOf('month');
+
+                const isPaused = res.data.paused_histories?.some((h) => {
+                    const start = dayjs(h.start_date);
+                    const end = h.end_date ? dayjs(h.end_date) : dayjs();
+                    return currentMonth.isBefore(end) && endOfMonth.isAfter(start);
+                });
+
+                const adjustedFee = isPaused ? baseFee / 2 : baseFee;
+
                 setNewInvoiceData((prev) => ({
                     ...prev,
-                    amount: res.data.member_category?.fee || '',
+                    amount: adjustedFee,
                 }));
             });
         } else {
@@ -115,7 +128,7 @@ const InvoiceViewer = () => {
         formData.append('amount', newInvoiceData.amount);
         formData.append('discount_type', newInvoiceData.discount_type);
         formData.append('discount_value', newInvoiceData.discount_value);
-        formData.append('prepay_quarters', newInvoiceData.prepay_quarters);
+        formData.append('prepay_quarters', newInvoiceData.prepay_quarters || []);
         formData.append('method', paymentMethod);
         if (newInvoiceData.selected_subscription_id) formData.append('subscription_id', newInvoiceData.selected_subscription_id);
         if (receiptFile) formData.append('receipt', receiptFile);

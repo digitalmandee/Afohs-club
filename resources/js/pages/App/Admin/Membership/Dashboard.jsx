@@ -14,6 +14,7 @@ import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import ActivateMembershipDialog from './ActivateMembershipDialog';
 import { MdModeEdit } from 'react-icons/md';
 import { FaEdit } from 'react-icons/fa';
+import MembershipPauseDialog from './MembershipPauseDialog';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -21,8 +22,6 @@ const drawerWidthClosed = 110;
 const MembershipDashboard = ({ members = [], total_members, total_payment }) => {
     // Modal state
     const [open, setOpen] = useState(true);
-    const [openModal, setOpenModal] = useState(false);
-    const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [activateModalOpen, setActivateModalOpen] = useState(false);
@@ -31,48 +30,16 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false); // State for InvoiceSlip modal
     const [selectMember, setSelectMember] = useState(null);
-    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
-    const [selectedMember, setSelectedMember] = useState(null);
-
-    const handleStatusClick = (event, member) => {
-        setStatusAnchorEl(event.currentTarget);
-        setSelectedMember(member);
-    };
-
-    const handleStatusClose = () => {
-        setStatusAnchorEl(null);
-    };
+    const [pauseModalOpen, setPauseModalOpen] = useState(false);
 
     // console.log('Member prop:', member); // Debug: Log the member prop
-
-    const handleOpenModal = (member, event, type = 'actions') => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const position = {
-            top: rect.top + window.scrollY,
-            left: rect.left + window.scrollX,
-        };
-        setModalPosition(position);
-        setOpenModal(true);
-    };
-
-    const handleCloseModal = () => {
-        setOpenModal(false);
-    };
 
     const handleCancelMembership = () => {
         setCancelModalOpen(false);
     };
 
-    const handleConfirmSuspend = () => {
-        setSuspensionModalOpen(false);
-    };
-
-    const showMemberDetails = (member, event) => {
-        handleOpenModal(member, event, 'details');
-    };
-
     const getAvailableStatusActions = (currentStatus) => {
-        const allStatuses = ['active', 'suspended', 'cancelled'];
+        const allStatuses = ['active', 'suspended', 'cancelled', 'pause'];
         return allStatuses.filter((status) => status.toLowerCase() !== currentStatus?.toLowerCase());
     };
 
@@ -270,6 +237,9 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                                                 setActivateModalOpen(true);
                                                                                 // Optional: trigger activate logic/modal here
                                                                                 console.log('Activate clicked');
+                                                                            } else if (statusOption === 'pause') {
+                                                                                setSelectMember(user);
+                                                                                setPauseModalOpen(true);
                                                                             }
                                                                         }}
                                                                     >
@@ -320,6 +290,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                         </TableContainer>
                     </div>
 
+                    <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
                     <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
                     <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
                     <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />

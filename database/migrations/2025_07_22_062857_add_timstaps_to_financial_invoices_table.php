@@ -11,7 +11,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('financial_invoices', function (Blueprint $table) {
-            $table->string('paid_for_quarter')->nullable()->after('paid_for_month');
+            $table->bigInteger('created_by')->nullable();
+            $table->bigInteger('updated_by')->nullable();
+            $table->bigInteger('deleted_by')->nullable();
         });
     }
 
@@ -21,7 +23,9 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('financial_invoices', function (Blueprint $table) {
-            $table->dropColumn('paid_for_quarter');
+            $table->dropColumn('created_by');
+            $table->dropColumn('updated_by');
+            $table->dropColumn('deleted_by');
         });
     }
 };

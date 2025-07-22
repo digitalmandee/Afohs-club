@@ -5,6 +5,7 @@ use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\SubscriptionTypeController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AppliedMemberController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CustomerController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\EventMenuCategoryController;
 use App\Http\Controllers\EventMenuController;
 use App\Http\Controllers\EventMenuTypeController;
 use App\Http\Controllers\EventVenueController;
+use App\Http\Controllers\FamilyMembersArchiveConroller;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MembershipController;
@@ -30,8 +32,6 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserMemberController;
-use App\Http\Controllers\FamilyMembersArchiveConroller;
-use App\Http\Controllers\AppliedMemberController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -275,7 +275,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('api/subscriptions/by-user/{user}', [SubscriptionController::class, 'byUser']);
     Route::get('api/members/by-user/{user}', [MembersController::class, 'byUser']);
     Route::post('api/pay-multiple-invoices', [SubscriptionController::class, 'payMultipleInvoices']);
-    Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPayInvoice']);
+    Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPay']);
 
     // Financial Routes
     Route::get('/finance/dashboard', [FinancialController::class, 'index'])->name('finance.dashboard');
@@ -316,6 +316,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('/membership/edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
     Route::post('/membership/update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
+    Route::post('/membership/pause', [MembershipController::class, 'membershipPause'])->name('membership.pause');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
     Route::post('/membership/update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
@@ -378,7 +379,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/membership/applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
     Route::post('/admin/membership/applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
     Route::put('/admin/membership/applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
-
 
     // tenant route
     Route::get('tenant', [TenantController::class, 'index'])->name('tenant.index');

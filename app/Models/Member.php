@@ -66,7 +66,6 @@ class Member extends Model
 
         $next = $last + 1;
 
-        // Optional cap, e.g., if max is 99
         if ($next > 99) {
             throw new \Exception('Application number limit reached.');
         }
@@ -92,5 +91,18 @@ class Member extends Model
     public function userDetail()
     {
         return $this->belongsTo(UserDetail::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function pausedHistories()
+    {
+        return $this
+            ->hasMany(MemberStatusHistory::class, 'user_id', 'user_id')
+            ->where('status', 'pause')
+            ->whereNull('used_up_to');
     }
 }

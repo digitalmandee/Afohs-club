@@ -231,7 +231,13 @@ class MembersController extends Controller
 
     public function byUser($userId)
     {
-        $member = Member::with('memberCategory')->where('user_id', $userId)->firstOrFail();
+        $member = Member::with([
+            'memberCategory',
+            'pausedHistories' => function ($q) {
+                $q->orderBy('start_date');
+            }
+        ])->where('user_id', $userId)->firstOrFail();
+
         return response()->json($member);
     }
 }

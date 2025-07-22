@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class MemberStatusHistory extends Model
+class MemberStatusHistory extends BaseModel
 {
     use HasFactory;
 
@@ -15,5 +15,9 @@ class MemberStatusHistory extends Model
         'reason',
         'start_date',
         'end_date',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+        'used_up_to'
     ];
 }

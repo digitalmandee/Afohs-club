@@ -21,6 +21,7 @@ const Payment = ({ invoice, onBack }) => {
         receipt: null,
         discountType: '', // 'fixed' or 'percentage'
         discountValue: '', // value of the discount
+        remarks: '',
     });
 
     const [error, setError] = useState('');
@@ -144,13 +145,13 @@ const Payment = ({ invoice, onBack }) => {
         const inputAmount = parseFloat(formData.inputAmount || '0');
         const { amount, total, duration } = getMinimumAmount();
 
-        if (!formData.inputAmount || inputAmount <= 0) {
-            setError('Please enter a valid amount.');
+        if (inputAmount < 0) {
+            setError('Amount cannot be negative.');
             return;
         }
 
-        if (inputAmount < total) {
-            setError(`Amount must be at least Rs ${total.toFixed(2)}.`);
+        if (inputAmount === 0 && (!formData.remarks || formData.remarks.trim() === '')) {
+            setError('Remarks are required when the amount is 0.');
             return;
         }
 
@@ -166,6 +167,7 @@ const Payment = ({ invoice, onBack }) => {
         data.append('discount_value', formData.discountValue || '');
         data.append('payment_method', formData.paymentMethod);
         data.append('duration', duration);
+        data.append('remarks', formData.remarks || '');
 
         if (formData.paymentMethod === 'credit_card' && formData.receipt) {
             data.append('receipt', formData.receipt);
@@ -417,6 +419,13 @@ const Payment = ({ invoice, onBack }) => {
                                     {value === 'Exact money' ? 'Exact money' : `Rs ${value}`}
                                 </Button>
                             ))}
+                        </Box>
+
+                        <Box className="d-flex flex-column mb-4">
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                Remarks
+                            </Typography>
+                            <TextField name="remarks" value={formData.remarks} onChange={handleInputChange} placeholder="e.g., Overseas, Out of country" variant="outlined" size="small" />
                         </Box>
 
                         {error && (

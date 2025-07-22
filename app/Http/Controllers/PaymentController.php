@@ -6,7 +6,6 @@ use App\Helpers\FileHelper;
 use App\Models\CardPayment;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
-use Inertia\Inertia;
 use App\Models\MembershipInvoice;
 use App\Models\MemberType;
 use App\Models\Subscription;
@@ -15,12 +14,14 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class PaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $invoiceId = $request->query('invoice_no'); // or $request->member_id
+        $invoiceId = $request->query('invoice_no');  // or $request->member_id
 
         $invoice = null;
 
@@ -33,17 +34,19 @@ class PaymentController extends Controller
         return Inertia::render('App/Admin/Membership/Payment', compact('invoice'));
     }
 
-
     public function store(Request $request)
     {
         $request->validate([
             'invoice_no' => 'required|exists:financial_invoices,invoice_no',
             'subscription_type' => 'required|in:one_time,monthly,quarter,annual',
-            'amount' => 'required|numeric|min:0.01',
-            'total_amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|min:0',
+            'total_amount' => 'required|numeric|min:0',
             'customer_charges' => 'required|numeric|min:0',
             'duration' => 'required|integer|min:1',
             'payment_method' => 'required|string',
+            'remarks' => Rule::requiredIf(function () use ($request) {
+                return floatval($request->total_amount) === 0;
+            }),
             'receipt' => 'nullable|file',
         ]);
 
@@ -67,10 +70,10 @@ class PaymentController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_date' => now(),
                 'reciept' => $request->file('receipt') ? $request->file('receipt')->store('receipts') : null,
+                'remarks' => $request->remarks,
                 'status' => 'paid',
                 // 'paid_for_month' => $paidForMonth,
             ]);
-
 
             $data = $invoice->data ?? [];
 
