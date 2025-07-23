@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem } from '@mui/material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem, Tooltip } from '@mui/material';
 import { Search, FilterAlt, People, CreditCard, LocalDining as DiningIcon, TakeoutDining as TakeoutIcon, TwoWheeler as DeliveryIcon } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -15,6 +15,7 @@ import MembershipDashboardFilter from './MembershipDashboardFilter';
 import { MdModeEdit } from 'react-icons/md';
 import { FaEdit } from 'react-icons/fa';
 import MembershipPauseDialog from './MembershipPauseDialog';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -206,7 +207,16 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.first_name}</Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
+                                                            {user.first_name}
+
+                                                            {user.member?.is_document_enabled && (
+                                                                <Tooltip title="Documents missing" arrow>
+                                                                    <WarningAmberIcon color="warning" fontSize="small" />
+                                                                </Tooltip>
+                                                            )}
+                                                        </Typography>
+
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.email}</Typography>
                                                     </div>
                                                 </div>

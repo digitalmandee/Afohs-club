@@ -88,7 +88,7 @@ const FamilyMembersArchive = ({ familyGroups = [] }) => {
                                     {familyGroups.map((user, index) => (
                                         <React.Fragment key={user.id}>
                                             <TableRow style={{ borderBottom: '1px solid #eee' }}>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{index + 1}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member.membership_no}</TableCell>
                                                 <TableCell>
                                                     <div className="d-flex align-items-center">
                                                         <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />

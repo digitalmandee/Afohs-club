@@ -9,6 +9,7 @@ class Member extends Model
     protected $fillable = [
         'user_id',
         'application_no',
+        'membership_no',
         'member_type_id',
         'member_category_id',
         'family_suffix',
@@ -19,7 +20,6 @@ class Member extends Model
         'start_date',
         'end_date',
         'picture',
-        'membership_no',
         'membership_date',
         'card_status',
         'card_issue_date',

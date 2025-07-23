@@ -10,6 +10,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import { enqueueSnackbar } from 'notistack';
 
 const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
@@ -176,6 +177,10 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             missingFields.push('Member Type (must be one of: ' + allowedMemberTypes.join(', ') + ')');
         }
 
+        if (data.member.is_document_enabled && !data.member.documents) {
+            missingFields.push('Missing Document is required.');
+        }
+
         if (!data.member.membership_date) {
             missingFields.push('Membership Date');
         } else {
@@ -186,7 +191,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         }
 
         if (missingFields.length > 0) {
-            alert(`Please fill all required fields correctly: ${missingFields.join(', ')}`);
+            enqueueSnackbar(`Please fill all required fields correctly: ${missingFields.join(', ')}`, { variant: 'error' });
+            // alert(`Please fill all required fields correctly: ${missingFields.join(', ')}`);
             return;
         }
 
