@@ -155,34 +155,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
-                            <div className="d-flex">
-                                <TextField
-                                    placeholder="Search by name, member type etc"
-                                    variant="outlined"
-                                    size="small"
-                                    style={{ width: '350px', marginRight: '10px' }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Search />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<FilterAlt />}
-                                    style={{
-                                        border: '1px solid #063455',
-                                        color: '#333',
-                                        textTransform: 'none',
-                                        backgroundColor: 'transparent',
-                                    }}
-                                    onClick={() => setOpenFilterModal(true)}
-                                >
-                                    Filter
-                                </Button>
-                            </div>
                         </div>
                         {/* Members Table */}
                         <TableContainer component={Paper} style={{ boxShadow: 'none' }}>

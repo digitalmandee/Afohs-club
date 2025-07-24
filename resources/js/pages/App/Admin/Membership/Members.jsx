@@ -3,7 +3,7 @@ import { Typography, Button, TextField, Table, TableContainer, TableHead, TableR
 import { Search, FilterAlt } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import MembershipSuspensionDialog from './Modal';
 import MembershipCancellationDialog from './CancelModal';
 import MemberProfileModal from './Profile';
@@ -21,6 +21,8 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const AllMembers = ({ members }) => {
+    const props = usePage().props;
+
     // Modal state
     const [open, setOpen] = useState(true);
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
@@ -33,6 +35,22 @@ const AllMembers = ({ members }) => {
     const [filteredMembers, setFilteredMembers] = useState(members.data);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [pauseModalOpen, setPauseModalOpen] = useState(false);
+
+    const [filters, setFilters] = useState({
+        membership_no: props.filters?.membership_no || '',
+        name: props.filters?.name || '',
+        cnic: props.filters?.cnic || '',
+        contact: props.filters?.contact || '',
+        status: props.filters?.status || 'all',
+        member_type: props.filters?.member_type || 'all',
+    });
+
+    const handleFilter = () => {
+        router.get(route('membership.members'), filters, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
 
     // Extract unique status and member type values from members
     const statusOptions = [
@@ -84,19 +102,6 @@ const AllMembers = ({ members }) => {
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography sx={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>All Members</Typography>
                             <div className="d-flex">
-                                <TextField
-                                    placeholder="Search by name, member type etc"
-                                    variant="outlined"
-                                    size="small"
-                                    style={{ width: '350px', marginRight: '10px' }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Search />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
                                 <Button
                                     variant="outlined"
                                     startIcon={<FilterAlt />}
@@ -128,7 +133,7 @@ const AllMembers = ({ members }) => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {filteredMembers.map((user) => (
+                                    {members.data.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.member?.membership_no || 'N/A'}</TableCell>
                                             <TableCell>

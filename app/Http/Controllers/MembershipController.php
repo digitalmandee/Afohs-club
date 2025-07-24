@@ -77,12 +77,78 @@ class MembershipController extends Controller
         return Inertia::render('App/Admin/Membership/MembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories'));
     }
 
-    public function allMembers()
+    public function allMembers(Request $request)
     {
-        $members = User::role('user')->whereNull('parent_user_id')->with(['userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name'])->paginate(10);
+        $query = User::role('user')
+            ->whereNull('parent_user_id')
+            ->with(['userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name']);
+
+        // Filter: Membership Number
+        if ($request->filled('membership_no')) {
+            $query->whereHas('member', function ($q) use ($request) {
+                $q->where('membership_no', 'like', '%' . $request->membership_no . '%');
+            });
+        }
+
+        // Filter: Name (first_name only or combine first+last if needed)
+        if ($request->filled('name')) {
+            $query->where(function ($q) use ($request) {
+                $q
+                    ->where('first_name', 'like', '%' . $request->name . '%')
+                    ->orWhere('last_name', 'like', '%' . $request->name . '%');
+            });
+        }
+
+        // Filter: CNIC
+        if ($request->filled('cnic')) {
+            $query->whereHas('userDetail', function ($q) use ($request) {
+                $q->where('cnic_no', 'like', '%' . $request->cnic . '%');
+            });
+        }
+
+        // Filter: Contact
+        if ($request->filled('contact')) {
+            $query->whereHas('userDetail', function ($q) use ($request) {
+                $q->where('mobile_number_a', 'like', '%' . $request->contact . '%');
+            });
+        }
+
+        // Filter: Status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->whereHas('member', function ($q) use ($request) {
+                $q->where('card_status', $request->status);
+            });
+        }
+
+        // Filter: Member Type
+        if ($request->filled('member_type') && $request->member_type !== 'all') {
+            $query->whereHas('member.memberType', function ($q) use ($request) {
+                $q->where('name', $request->member_type);
+            });
+        }
+
+        // Sorting
+        $sortBy = $request->input('sortBy', 'id');
+        $sortDirection = $request->input('sort', 'asc');
+
+        if ($sortBy === 'name') {
+            $query->orderBy('first_name', $sortDirection);
+        } elseif ($sortBy === 'membership_no') {
+            $query->whereHas('member', function ($q) use ($sortDirection) {
+                $q->orderBy('membership_no', $sortDirection);
+            });
+        } else {
+            $query->orderBy('id', $sortDirection);
+        }
+
+        $members = $query->paginate(10)->withQueryString();
 
         return Inertia::render('App/Admin/Membership/Members', [
             'members' => $members,
+            'filters' => $request->only([
+                'membership_no', 'name', 'cnic', 'contact',
+                'status', 'member_type', 'sort', 'sortBy'
+            ]),
         ]);
     }
 
