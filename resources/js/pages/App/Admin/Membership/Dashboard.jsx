@@ -38,7 +38,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [selectMember, setSelectMember] = useState(null);
-    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
     const [filteredMembers, setFilteredMembers] = useState(members);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);

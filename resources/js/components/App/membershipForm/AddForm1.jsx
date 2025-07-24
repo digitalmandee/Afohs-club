@@ -284,14 +284,6 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="last_name" value={data.last_name} error={!!formErrors.last_name} helperText={formErrors.last_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
-                            {/* Name Comments */}
-                            <Grid item xs={12}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Name Comments
-                                </Typography>
-                                <TextField fullWidth multiline rows={3} placeholder="Enter your comments" variant="outlined" size="small" name="user_details.name_comments" value={data.user_details.name_comments} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
-                            </Grid>
-
                             {/* Father/Husband Name */}
                             <Grid item xs={4}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
@@ -454,14 +446,6 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         ),
                                     }}
                                 />
-                            </Grid>
-
-                            {/* Reason for Seeking Membership */}
-                            <Grid item xs={12}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Reason for Seeking Membership
-                                </Typography>
-                                <TextField fullWidth multiline rows={3} placeholder="Enter Detail" variant="outlined" size="small" name="user_details.membership_reason" value={data.user_details.membership_reason} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
                         </Grid>
                     </Grid>

@@ -29,7 +29,7 @@ class MembershipController extends Controller
 {
     public function index()
     {
-        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->latest()->limit(6)->get();
 
         $total_members = User::role('user')->whereNull('parent_user_id')->count();
         $total_payment = FinancialInvoice::where('invoice_type', 'membership')->where('status', 'paid')->sum('total_price');
@@ -79,9 +79,11 @@ class MembershipController extends Controller
 
     public function allMembers()
     {
-        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with(['userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name'])->paginate(10);
 
-        return Inertia::render('App/Admin/Membership/Members', compact('members'));
+        return Inertia::render('App/Admin/Membership/Members', [
+            'members' => $members,
+        ]);
     }
 
     public function membershipHistory()

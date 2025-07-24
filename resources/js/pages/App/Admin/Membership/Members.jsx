@@ -1,12 +1,6 @@
-import { useState, useEffect } from 'react';
-import AddIcon from '@mui/icons-material/Add';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import EventSeatIcon from '@mui/icons-material/EventSeat';
-import PeopleIcon from '@mui/icons-material/People';
-import PrintIcon from '@mui/icons-material/Print';
-import SearchIcon from '@mui/icons-material/Search';
-import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, Alert, Slide, InputAdornment, Snackbar, Menu, MenuItem } from '@mui/material';
-import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard } from '@mui/icons-material';
+import { useState } from 'react';
+import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Search, FilterAlt } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
@@ -14,81 +8,62 @@ import MembershipSuspensionDialog from './Modal';
 import MembershipCancellationDialog from './CancelModal';
 import MemberProfileModal from './Profile';
 import MembershipCardComponent from './UserCard';
-import MemberFilter from './MemberFilter';
 import InvoiceSlip from './Invoice';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import ActivateMembershipDialog from './ActivateMembershipDialog';
 import { FaEdit } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
+import MembershipDashboardFilter from './MembershipDashboardFilter';
+import MembershipPauseDialog from './MembershipPauseDialog';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const AllMembers = ({ members = [] }) => {
+const AllMembers = ({ members }) => {
     // Modal state
     const [open, setOpen] = useState(true);
-    const [openModal, setOpenModal] = useState(false);
-    const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [activateModalOpen, setActivateModalOpen] = useState(false);
     const [openProfileModal, setOpenProfileModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
-    const [openInvoiceModal, setOpenInvoiceModal] = useState(false); // State for InvoiceSlip modal
     const [selectMember, setSelectMember] = useState(null);
-    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
-    const [selectedMember, setSelectedMember] = useState(null);
+    const [filteredMembers, setFilteredMembers] = useState(members.data);
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
+    const [pauseModalOpen, setPauseModalOpen] = useState(false);
 
-    const handleStatusClick = (event, member) => {
-        setStatusAnchorEl(event.currentTarget);
-        setSelectedMember(member);
-    };
+    // Extract unique status and member type values from members
+    const statusOptions = [
+        { label: 'All type', value: 'all', icon: null },
+        { label: 'Active', value: 'active', icon: null },
+        { label: 'Suspended', value: 'suspended', icon: null },
+        { label: 'Cancelled', value: 'cancelled', icon: null },
+        { label: 'Pause', value: 'pause', icon: null },
+    ];
 
-    const handleStatusClose = () => {
-        setStatusAnchorEl(null);
-    };
-
-    // console.log('Member prop:', member); // Debug: Log the member prop
-
-    const handleOpenModal = (member, event, type = 'actions') => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const position = {
-            top: rect.top + window.scrollY,
-            left: rect.left + window.scrollX,
-        };
-        setModalPosition(position);
-        setOpenModal(true);
-    };
-
-    const handleCloseModal = () => {
-        setOpenModal(false);
-    };
+    const memberTypeOptions = [
+        { label: 'All types', value: 'all' },
+        ...[...new Set(members.data.map((member) => member.member?.member_type?.name).filter((name) => name))].map((name) => ({
+            label: name,
+            value: name,
+        })),
+    ];
 
     const handleCancelMembership = () => {
         setCancelModalOpen(false);
     };
 
-    const handleConfirmSuspend = () => {
-        setSuspensionModalOpen(false);
-    };
-
-    const showMemberDetails = (member, event) => {
-        handleOpenModal(member, event, 'details');
-    };
-
     const getAvailableStatusActions = (currentStatus) => {
-        const allStatuses = ['active', 'suspended', 'cancelled'];
+        const allStatuses = ['active', 'suspended', 'cancelled', 'pause'];
         return allStatuses.filter((status) => status.toLowerCase() !== currentStatus?.toLowerCase());
     };
 
     const handleStatusUpdate = (memberId, newStatus) => {
-        const foundMember = members.find((m) => m.id === memberId);
+        const foundMember = members.data.find((m) => m.id === memberId);
         if (foundMember) {
-            console.log('Member found:', foundMember);
             foundMember.member.card_status = newStatus;
-        } else {
-            console.log('Member not found:', memberId);
         }
     };
 
@@ -103,80 +78,7 @@ const AllMembers = ({ members = [] }) => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <div className="container-fluid px-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-                    {/* Header */}
-                    <div className="d-flex justify-content-between align-items-center pt-3">
-                        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <Typography
-                                sx={{
-                                    fontWeight: 500,
-                                    fontSize: '30px',
-                                    color: '#063455',
-                                }}
-                            >
-                                All Members
-                            </Typography>
-                        </div>
-                    </div>
-
-                    {/* Stats Cards */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            width: '100%',
-                            justifyContent: 'space-between',
-                            gap: '1rem',
-                            marginBottom: '24px',
-                        }}
-                    >
-                        {[
-                            { title: 'Total Members', value: members.length, icon: PeopleIcon },
-                            { title: 'Pending', value: members.filter((m) => m.member?.card_status === 'inactive').length, image: '/assets/refresh.png' },
-                            { title: 'Active', value: members.filter((m) => m.member?.card_status === 'active').length, image: '/assets/ticks.png' },
-                            { title: 'In-Active', value: members.filter((m) => m.member?.card_status === 'suspended' || m.member?.card_status === 'Suspend').length, image: '/assets/cross.png' },
-                        ].map((item, index) => (
-                            <div key={index} style={{ flex: 1 }}>
-                                <Card
-                                    style={{
-                                        backgroundColor: '#063455',
-                                        color: '#fff',
-                                        borderRadius: '2px',
-                                        height: '150px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        padding: '1rem',
-                                        boxShadow: 'none',
-                                        border: 'none',
-                                        textAlign: 'center',
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            backgroundColor: '#1E2C2F',
-                                            borderRadius: '50%',
-                                            width: '50px',
-                                            height: '50px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginBottom: '0.5rem',
-                                        }}
-                                    >
-                                        {item.icon ? <item.icon style={{ color: '#fff', fontSize: '28px' }} /> : <img src={item.image} alt={item.title} style={{ width: '28px', height: '28px', objectFit: 'contain' }} />}
-                                    </div>
-                                    <Typography variant="body2" style={{ color: '#DDE6E8', marginBottom: '0.25rem' }}>
-                                        {item.title}
-                                    </Typography>
-                                    <Typography variant="h6" style={{ fontWeight: 'bold', color: '#fff' }}>
-                                        {item.value}
-                                    </Typography>
-                                </Card>
-                            </div>
-                        ))}
-                    </div>
-
+                <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Recently Joined Section */}
                     <div className="mx-3">
                         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -204,6 +106,7 @@ const AllMembers = ({ members = [] }) => {
                                         textTransform: 'none',
                                         backgroundColor: 'transparent',
                                     }}
+                                    onClick={() => setOpenFilterModal(true)}
                                 >
                                     Filter
                                 </Button>
@@ -225,16 +128,23 @@ const AllMembers = ({ members = [] }) => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {members.map((user) => (
+                                    {filteredMembers.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
-                                                {user.member?.member_category?.name} {user.member?.membership_no || 'N/A'}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.member?.membership_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.first_name}</Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
+                                                            {user.first_name}
+
+                                                            {user.member?.is_document_enabled && (
+                                                                <Tooltip title="Documents missing" arrow>
+                                                                    <WarningAmberIcon color="warning" fontSize="small" />
+                                                                </Tooltip>
+                                                            )}
+                                                        </Typography>
+
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.email}</Typography>
                                                     </div>
                                                 </div>
@@ -267,14 +177,12 @@ const AllMembers = ({ members = [] }) => {
                                                                 )}
                                                                 <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
                                                             </span>
-
                                                             <Menu {...bindMenu(popupState)}>
                                                                 {getAvailableStatusActions(user.member?.card_status).map((statusOption) => (
                                                                     <MenuItem
                                                                         key={statusOption}
                                                                         onClick={() => {
                                                                             popupState.close();
-
                                                                             if (statusOption === 'suspended') {
                                                                                 setSelectMember(user);
                                                                                 setSuspensionModalOpen(true);
@@ -286,6 +194,9 @@ const AllMembers = ({ members = [] }) => {
                                                                                 setActivateModalOpen(true);
                                                                                 // Optional: trigger activate logic/modal here
                                                                                 console.log('Activate clicked');
+                                                                            } else if (statusOption === 'pause') {
+                                                                                setSelectMember(user);
+                                                                                setPauseModalOpen(true);
                                                                             }
                                                                         }}
                                                                     >
@@ -297,7 +208,6 @@ const AllMembers = ({ members = [] }) => {
                                                     )}
                                                 </PopupState>
                                             </TableCell>
-
                                             <TableCell>
                                                 <Button
                                                     style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
@@ -333,16 +243,39 @@ const AllMembers = ({ members = [] }) => {
                                     ))}
                                 </TableBody>
                             </Table>
+                            <Box display="flex" justifyContent="center" mt={2}>
+                                {members.links?.map((link, index) => (
+                                    <Button
+                                        key={index}
+                                        onClick={() => link.url && router.visit(link.url)}
+                                        disabled={!link.url}
+                                        variant={link.active ? 'contained' : 'outlined'}
+                                        size="small"
+                                        style={{
+                                            margin: '0 5px',
+                                            minWidth: '36px',
+                                            padding: '6px 10px',
+                                            fontWeight: link.active ? 'bold' : 'normal',
+                                            backgroundColor: link.active ? '#333' : '#fff',
+                                        }}
+                                    >
+                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    </Button>
+                                ))}
+                            </Box>
                         </TableContainer>
+
+                        {/* Filter Modal */}
+                        <MembershipDashboardFilter openFilterModal={openFilterModal} setOpenFilterModal={setOpenFilterModal} members={members.data} filteredMembers={filteredMembers} setFilteredMembers={setFilteredMembers} statusOptions={statusOptions} memberTypeOptions={memberTypeOptions} />
                     </div>
 
                     {/* Modal */}
+                    <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
                     <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
                     <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
                     <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={members} />
-                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
-                    <MemberFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={members.data} />
+                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members.data} />
                     <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.member?.invoice_id} />
                 </div>
             </div>

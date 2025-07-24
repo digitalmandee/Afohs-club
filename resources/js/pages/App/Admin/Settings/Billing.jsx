@@ -80,11 +80,6 @@ export default function Billing({ settings }) {
 
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
-                            {/* Overdue Invoice Charge */}
-                            <Grid item xs={12} md={6}>
-                                <TextField fullWidth type="number" name="overdue_charge_pct" label="Overdue Invoice Charges (%)" value={data.overdue_charge_pct} onChange={handleChange} error={!!errors.overdue_charge_pct} helperText={errors.overdue_charge_pct} />
-                            </Grid>
-
                             {/* Penalty Per Quarter */}
                             <Grid item xs={12}>
                                 <Typography variant="h6" mt={4}>

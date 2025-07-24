@@ -280,10 +280,6 @@ export default function SideNav({ open, setOpen }) {
                     path: route('membership.members'),
                 },
                 {
-                    text: 'Members History',
-                    path: route('membership.history'),
-                },
-                {
                     text: 'Membership Type',
                     path: route('member-types.index'),
                 },
