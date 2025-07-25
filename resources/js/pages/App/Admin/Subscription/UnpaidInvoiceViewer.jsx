@@ -3,6 +3,7 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { Box, Typography, Paper, Chip, Checkbox, Button, CircularProgress, TextField, MenuItem } from '@mui/material';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import { enqueueSnackbar } from 'notistack';
 
 const InvoiceViewer = () => {
     const [member, setMember] = useState(null);
@@ -101,10 +102,11 @@ const InvoiceViewer = () => {
             setAmountPaid('');
             setPaymentMethod('');
             setReceipt(null);
-        } catch (err) {
-            console.log(err);
 
-            alert('Payment failed');
+            enqueueSnackbar('Payment successful', { variant: 'success' });
+        } catch (err) {
+            enqueueSnackbar('Payment failed', { variant: 'error' });
+            // alert('Payment failed');
         }
     };
 
