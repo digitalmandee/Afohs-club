@@ -1,405 +1,162 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Typography, Button, CircularProgress, Paper, Checkbox, FormControlLabel, Divider, RadioGroup, Radio, TextField, Stack, Chip, ToggleButtonGroup, ToggleButton } from '@mui/material';
-import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import dayjs from 'dayjs';
+import { Box, Typography, Paper, Chip, Checkbox, Button, CircularProgress, TextField, MenuItem } from '@mui/material';
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 
 const InvoiceViewer = () => {
-    const [searchText, setSearchText] = useState('');
-    const [selectedCustomer, setSelectedCustomer] = useState(null);
-    const [allInvoices, setAllInvoices] = useState([]);
+    const [member, setMember] = useState(null);
+    const [invoices, setInvoices] = useState({
+        existing_invoices: [],
+        due_invoices: [],
+        future_invoices: [],
+    });
     const [selectedInvoices, setSelectedInvoices] = useState([]);
-    // const [filteredInvoices, setFilteredInvoices] = useState([]);
-    const [paymentMethod, setPaymentMethod] = useState('cash');
-    const [receiptFile, setReceiptFile] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [filter, setFilter] = useState('all');
-    const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
-    const [subscriptions, setSubscriptions] = useState([]);
-    const [memberDetails, setMemberDetails] = useState(null);
-    const [newInvoiceData, setNewInvoiceData] = useState({
-        invoice_type: 'membership',
-        subscription_type: 'one_time',
-        selected_subscription_id: null,
-        base_fee: 0,
-        subscription_fee: 0,
-        selected_quarters: [],
-        amount: '',
-        discount_type: '',
-        discount_value: '',
-    });
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [amountPaid, setAmountPaid] = useState('');
+    const [receipt, setReceipt] = useState(null);
 
-    useEffect(() => {
-        if (!selectedCustomer) return;
+    const fetchInvoices = async (userId) => {
         setLoading(true);
-        axios
-            .get(`/api/customer-invoices/${selectedCustomer.id}`)
-            .then((res) => setAllInvoices(res.data))
-            .catch(() => setAllInvoices([]))
-            .finally(() => setLoading(false));
-    }, [selectedCustomer]);
-
-    const filteredInvoices = allInvoices.filter((inv) => {
-        const dueDate = dayjs(inv.issue_date);
-        const isOverdue = inv.status === 'unpaid' && dueDate.isBefore(dayjs(), 'day');
-        switch (filter) {
-            case 'paid':
-                return inv.status === 'paid';
-            case 'unpaid':
-                return inv.status === 'unpaid' && !isOverdue;
-            case 'cancelled':
-                return inv.status === 'cancelled';
-            case 'overdue':
-                return isOverdue;
-            default:
-                return true;
+        try {
+            const res = await axios.get(`/api/member-invoices?user_id=${userId}`);
+            setInvoices(res.data);
+        } finally {
+            setLoading(false);
         }
-    });
+    };
 
     useEffect(() => {
-        if (!selectedCustomer || !invoiceModalOpen) return;
-
-        if (newInvoiceData.invoice_type === 'membership') {
-            axios.get(`/api/members/by-user/${selectedCustomer.id}`).then((res) => {
-                setMemberDetails(res.data);
-
-                const baseFee = res.data.member_category?.fee || 0;
-                const currentMonth = dayjs().startOf('month');
-                const endOfMonth = dayjs().endOf('month');
-
-                const isPaused = res.data.paused_histories?.some((h) => {
-                    const start = dayjs(h.start_date);
-                    const end = h.end_date ? dayjs(h.end_date) : dayjs();
-                    return currentMonth.isBefore(end) && endOfMonth.isAfter(start);
-                });
-
-                const adjustedFee = isPaused ? baseFee / 2 : baseFee;
-
-                setNewInvoiceData((prev) => ({
-                    ...prev,
-                    amount: adjustedFee,
-                }));
-            });
-        } else {
-            axios.get(`/api/subscriptions/by-user/${selectedCustomer.id}`).then((res) => {
-                setSubscriptions(res.data);
-                setNewInvoiceData((prev) => ({
-                    ...prev,
-                    amount: '',
-                    selected_subscription_id: null,
-                    subscription_type: '',
-                }));
-            });
+        if (member?.id) {
+            fetchInvoices(member.id);
+            setSelectedInvoices([]);
         }
-    }, [invoiceModalOpen, newInvoiceData.invoice_type]);
+    }, [member]);
 
     const handleInvoiceSelect = (invoice) => {
-        if (invoice.status !== 'unpaid') return;
-        setSelectedInvoices((prev) => (prev.some((inv) => inv.id === invoice.id) ? prev.filter((inv) => inv.id !== invoice.id) : [...prev, invoice]));
+        const key = invoice.id !== 'new' ? `existing-${invoice.id}` : invoice.subscription_type + '-' + (invoice.paid_for_month || invoice.paid_for_quarter || invoice.paid_for_yearly || '');
+
+        const exists = selectedInvoices.find((i) => i._key === key);
+
+        if (exists) {
+            setSelectedInvoices(selectedInvoices.filter((i) => i._key !== key));
+        } else {
+            setSelectedInvoices([...selectedInvoices, { ...invoice, _key: key }]);
+        }
+    };
+
+    const getInvoiceKey = (invoice) => (invoice.id !== 'new' ? `existing-${invoice.id}` : invoice.subscription_type + '-' + (invoice.paid_for_month || invoice.paid_for_quarter || invoice.paid_for_yearly || ''));
+
+    const renderInvoice = (invoice, section) => {
+        const key = getInvoiceKey(invoice);
+        const isSelected = selectedInvoices.some((i) => i._key === key);
+        const isPayable = section === 'due' || section === 'future' || (section === 'existing' && invoice.status !== 'paid');
+
+        const chipColor = invoice.status === 'paid' ? 'success' : section === 'future' ? 'info' : section === 'due' || (section === 'existing' && invoice.status === 'unpaid') ? 'warning' : 'default';
+
+        const chipLabel = invoice.status === 'paid' ? 'Paid' : section === 'future' ? 'Upcoming' : section === 'due' ? 'Due' : invoice.status === 'unpaid' ? 'Unpaid' : invoice.status;
+
+        return (
+            <Paper key={key} sx={{ p: 2, mb: 2 }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <Box>
+                        <Typography fontWeight={500}>
+                            ({invoice.invoice_type} - {invoice.subscription_type})
+                        </Typography>
+                        <Typography variant="body2">Amount: PKR {invoice.amount}</Typography>
+                        {invoice.paid_for_month && <Typography variant="body2">For: {invoice.paid_for_month}</Typography>}
+                        {invoice.paid_for_quarter && <Typography variant="body2">For: {invoice.paid_for_quarter}</Typography>}
+                        {invoice.paid_for_yearly && <Typography variant="body2">For Year: {invoice.paid_for_yearly}</Typography>}
+                    </Box>
+                    <Box textAlign="right">
+                        <Chip label={chipLabel} color={chipColor} />
+                        {isPayable && <Checkbox checked={isSelected} onChange={() => handleInvoiceSelect(invoice)} sx={{ ml: 1 }} />}
+                    </Box>
+                </Box>
+            </Paper>
+        );
     };
 
     const handlePaySelected = async () => {
-        if (!paymentMethod || selectedInvoices.length === 0) return;
+        if (!selectedInvoices.length || !paymentMethod || !amountPaid) {
+            alert('Please fill required payment fields');
+            return;
+        }
+
         const formData = new FormData();
-        formData.append(
-            'invoice_ids',
-            selectedInvoices.map((inv) => inv.id),
-        );
-        formData.append('method', paymentMethod);
-        if (receiptFile) formData.append('receipt', receiptFile);
+        formData.append('customer_id', member.id);
+        formData.append('payment_method', paymentMethod);
+        formData.append('amount_paid', amountPaid);
+        if (receipt) formData.append('receipt', receipt);
+
+        formData.append('invoices', JSON.stringify(selectedInvoices));
 
         try {
-            await axios.post('/api/pay-multiple-invoices', formData);
+            await axios.post('/api/pay-invoices', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            fetchInvoices(member.id);
             setSelectedInvoices([]);
-            setPaymentMethod('cash');
-            setReceiptFile(null);
+            setAmountPaid('');
+            setPaymentMethod('');
+            setReceipt(null);
         } catch (err) {
-            console.error(err);
+            console.log(err);
+
+            alert('Payment failed');
         }
     };
 
-    const handleCreateAndPay = async () => {
-        if (!selectedCustomer || !newInvoiceData.amount) return;
-
-        const formData = new FormData();
-        formData.append('customer_id', selectedCustomer.id);
-        formData.append('invoice_type', newInvoiceData.invoice_type);
-        formData.append('subscription_type', newInvoiceData.subscription_type);
-        formData.append('amount', newInvoiceData.amount);
-        formData.append('discount_type', newInvoiceData.discount_type);
-        formData.append('discount_value', newInvoiceData.discount_value);
-        formData.append('prepay_quarters', newInvoiceData.prepay_quarters || []);
-        formData.append('method', paymentMethod);
-        if (newInvoiceData.selected_subscription_id) formData.append('subscription_id', newInvoiceData.selected_subscription_id);
-        if (receiptFile) formData.append('receipt', receiptFile);
-
-        try {
-            await axios.post('/api/create-and-pay-invoice', formData);
-            setInvoiceModalOpen(false);
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const getStatusChip = (invoice) => {
-        const due = dayjs(invoice.issue_date);
-        const isOverdue = invoice.status === 'unpaid' && due.isBefore(dayjs());
-        if (invoice.status === 'paid') return <Chip label="Paid" color="success" />;
-        if (invoice.status === 'cancelled') return <Chip label="Cancelled" color="error" />;
-        if (isOverdue) return <Chip label="Overdue" color="warning" />;
-        return <Chip label="Unpaid" />;
-    };
+    const totalAmount = selectedInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
 
     return (
-        <Box>
-            <AsyncSearchTextField label="Search Customer" name="user" endpoint="/admin/api/search-users" onChange={(e) => setSelectedCustomer(e.target.value)} />
+        <Box p={2}>
+            <AsyncSearchTextField label="Search Member" name="user" endpoint="/admin/api/search-users" onChange={(e) => setMember(e.target.value)} />
 
-            <Button variant="outlined" onClick={() => setInvoiceModalOpen(true)} sx={{ mt: 2 }}>
-                Create & Pay New Invoice
-            </Button>
-
-            {invoiceModalOpen && (
-                <Paper sx={{ p: 3, mt: 3 }}>
-                    <Typography variant="h6">Create New Invoice</Typography>
-
-                    <ToggleButtonGroup value={newInvoiceData.invoice_type} exclusive onChange={(e, val) => val && setNewInvoiceData((prev) => ({ ...prev, invoice_type: val }))} sx={{ mb: 2 }}>
-                        <ToggleButton value="membership">Membership</ToggleButton>
-                        <ToggleButton value="subscription">Subscription</ToggleButton>
-                    </ToggleButtonGroup>
-
-                    {newInvoiceData.invoice_type === 'membership' && memberDetails && (
-                        <Box>
-                            <Typography variant="body1">Category: {memberDetails.member_category?.name}</Typography>
-                            <Typography variant="body2">Base Fee: PKR {memberDetails.member_category?.fee}</Typography>
-
-                            <TextField
-                                select
-                                fullWidth
-                                label="Select Payment Type"
-                                value={newInvoiceData.subscription_type}
-                                onChange={(e) => {
-                                    const type = e.target.value;
-                                    let amount = 0;
-
-                                    if (type === 'one_time') {
-                                        amount = memberDetails.member_category?.fee || 0;
-                                    } else if (type === 'monthly') {
-                                        amount = memberDetails.member_category?.subscription_fee || 0;
-                                    } else if (type === 'yearly') {
-                                        amount = (memberDetails.member_category?.subscription_fee || 0) * 12;
-                                    } else if (type === 'quarter') {
-                                        amount = 0; // will be set when quarters selected
-                                    }
-
-                                    setNewInvoiceData((prev) => ({
-                                        ...prev,
-                                        subscription_type: type,
-                                        base_fee: memberDetails.member_category?.fee || 0,
-                                        subscription_fee: memberDetails.member_category?.subscription_fee || 0,
-                                        selected_quarters: [],
-                                        amount,
-                                    }));
-                                }}
-                                SelectProps={{ native: true }}
-                                sx={{ my: 2 }}
-                            >
-                                <option value="one_time">One Time</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="quarter">Quarterly</option>
-                                <option value="yearly">Yearly</option>
-                            </TextField>
-
-                            {newInvoiceData.subscription_type === 'quarter' && (
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                        Select Quarters to Pay:
+            {loading ? (
+                <CircularProgress sx={{ mt: 4 }} />
+            ) : (
+                <>
+                    {['existing_invoices', 'due_invoices', 'future_invoices'].map((sectionKey) => {
+                        const titleMap = {
+                            existing_invoices: 'Existing Invoices',
+                            due_invoices: 'Due Invoices',
+                            future_invoices: 'Upcoming Invoices',
+                        };
+                        return (
+                            invoices[sectionKey]?.length > 0 && (
+                                <React.Fragment key={sectionKey}>
+                                    <Typography variant="h6" mt={3} mb={1}>
+                                        {titleMap[sectionKey]}
                                     </Typography>
-                                    <ToggleButtonGroup
-                                        value={newInvoiceData.selected_quarters}
-                                        onChange={(e, val) => {
-                                            const fee = memberDetails.member_category?.subscription_fee || 0;
-                                            setNewInvoiceData((prev) => ({
-                                                ...prev,
-                                                selected_quarters: val,
-                                                amount: val.length * 3 * fee,
-                                            }));
-                                        }}
-                                        aria-label="quarter-selection"
-                                    >
-                                        <ToggleButton value={1}>Q1</ToggleButton>
-                                        <ToggleButton value={2}>Q2</ToggleButton>
-                                        <ToggleButton value={3}>Q3</ToggleButton>
-                                        <ToggleButton value={4}>Q4</ToggleButton>
-                                    </ToggleButtonGroup>
-                                </Box>
-                            )}
-                        </Box>
-                    )}
-
-                    {newInvoiceData.invoice_type === 'subscription' && (
-                        <Box>
-                            <TextField
-                                select
-                                fullWidth
-                                label="Select Subscription"
-                                value={newInvoiceData.selected_subscription_id || ''}
-                                onChange={(e) => {
-                                    const sub = subscriptions.find((s) => s.id === Number(e.target.value));
-                                    setNewInvoiceData((prev) => ({
-                                        ...prev,
-                                        selected_subscription_id: sub.id,
-                                        subscription_type: 'one_time',
-                                        base_fee: sub.category?.fee,
-                                        subscription_fee: sub.category?.subscription_fee,
-                                        selected_quarters: [],
-                                        amount: sub.category?.fee,
-                                    }));
-                                }}
-                                SelectProps={{ native: true }}
-                                sx={{ mb: 2 }}
-                            >
-                                <option value="">Select</option>
-                                {subscriptions.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.category} ({s.subscription_type})
-                                    </option>
-                                ))}
-                            </TextField>
-
-                            {newInvoiceData.selected_subscription_id && (
-                                <>
-                                    <TextField
-                                        select
-                                        fullWidth
-                                        label="Select Payment Type"
-                                        value={newInvoiceData.subscription_type}
-                                        onChange={(e) => {
-                                            const type = e.target.value;
-                                            let amount = 0;
-                                            const fee = newInvoiceData.base_fee || 0;
-                                            const subFee = newInvoiceData.subscription_fee || 0;
-
-                                            if (type === 'one_time') amount = fee;
-                                            if (type === 'monthly') amount = subFee;
-                                            if (type === 'yearly') amount = subFee * 12;
-                                            if (type === 'quarter') amount = 0;
-
-                                            setNewInvoiceData((prev) => ({
-                                                ...prev,
-                                                subscription_type: type,
-                                                selected_quarters: [],
-                                                amount,
-                                            }));
-                                        }}
-                                        SelectProps={{ native: true }}
-                                        sx={{ mb: 2 }}
-                                    >
-                                        <option value="one_time">One Time</option>
-                                        <option value="monthly">Monthly</option>
-                                        <option value="quarter">Quarterly</option>
-                                        <option value="yearly">Yearly</option>
-                                    </TextField>
-
-                                    {newInvoiceData.subscription_type === 'quarter' && (
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography variant="body2" sx={{ mb: 1 }}>
-                                                Select Quarters to Pay:
-                                            </Typography>
-                                            <ToggleButtonGroup
-                                                value={newInvoiceData.selected_quarters}
-                                                onChange={(e, val) => {
-                                                    const fee = newInvoiceData.subscription_fee || 0;
-                                                    setNewInvoiceData((prev) => ({
-                                                        ...prev,
-                                                        selected_quarters: val,
-                                                        amount: val.length * 3 * fee,
-                                                    }));
-                                                }}
-                                                aria-label="quarter-selection"
-                                            >
-                                                <ToggleButton value={1}>Q1</ToggleButton>
-                                                <ToggleButton value={2}>Q2</ToggleButton>
-                                                <ToggleButton value={3}>Q3</ToggleButton>
-                                                <ToggleButton value={4}>Q4</ToggleButton>
-                                            </ToggleButtonGroup>
-                                        </Box>
-                                    )}
-                                </>
-                            )}
-                        </Box>
-                    )}
-
-                    <Stack spacing={2}>
-                        <TextField label="Amount" type="number" value={newInvoiceData.amount} onChange={(e) => setNewInvoiceData((prev) => ({ ...prev, amount: e.target.value }))} />
-                        <RadioGroup row value={newInvoiceData.discount_type} onChange={(e) => setNewInvoiceData((prev) => ({ ...prev, discount_type: e.target.value }))}>
-                            <FormControlLabel value="fixed" control={<Radio />} label="Fixed" />
-                            <FormControlLabel value="percentage" control={<Radio />} label="%" />
-                        </RadioGroup>
-                        <TextField label="Discount Value" type="number" value={newInvoiceData.discount_value} onChange={(e) => setNewInvoiceData((prev) => ({ ...prev, discount_value: e.target.value }))} />
-                        <Button variant="contained" onClick={handleCreateAndPay}>
-                            Pay & Create Invoice
-                        </Button>
-                    </Stack>
-                </Paper>
+                                    {invoices[sectionKey].map((inv) => renderInvoice(inv, sectionKey.replace('_invoices', '')))}
+                                </React.Fragment>
+                            )
+                        );
+                    })}
+                </>
             )}
-
-            <ToggleButtonGroup value={filter} exclusive onChange={(e, val) => val && setFilter(val)} sx={{ my: 2 }}>
-                <ToggleButton value="all">All</ToggleButton>
-                <ToggleButton value="paid">Paid</ToggleButton>
-                <ToggleButton value="unpaid">Unpaid</ToggleButton>
-                <ToggleButton value="overdue">Overdue</ToggleButton>
-                <ToggleButton value="cancelled">Cancelled</ToggleButton>
-            </ToggleButtonGroup>
 
             {selectedInvoices.length > 0 && (
-                <Paper sx={{ p: 2, backgroundColor: '#f7f7f7', mb: 2 }}>
+                <Box mt={4} p={2} borderTop="1px solid #ccc">
                     <Typography variant="h6">Selected Invoices</Typography>
-                    {selectedInvoices.map((inv) => (
-                        <Typography key={inv.id} variant="body2">
-                            {inv.invoice_no} - {inv.invoice_type} - PKR {inv.amount}
-                        </Typography>
-                    ))}
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="subtitle1">Choose Payment Method:</Typography>
-                    <RadioGroup row value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                        <FormControlLabel value="cash" control={<Radio />} label="Cash" />
-                        <FormControlLabel value="card" control={<Radio />} label="Credit Card" />
-                    </RadioGroup>
-                    {paymentMethod === 'card' && (
-                        <Stack spacing={2} sx={{ mt: 2 }}>
-                            <TextField label="Card Number" fullWidth />
-                            <TextField label="Card Holder Name" fullWidth />
-                            <TextField label="Expiry Date" fullWidth />
-                        </Stack>
-                    )}
-                    {selectedInvoices.some((inv) => inv.subscription_type === 'quarter') && (
-                        <Box sx={{ mt: 2 }}>
-                            <TextField type="number" label="Prepay Future Quarters" inputProps={{ min: 0, max: 4 }} value={prepayCount} onChange={(e) => setPrepayCount(Math.min(4, Math.max(0, parseInt(e.target.value || '0'))))} />
-                        </Box>
-                    )}
-                    <Button variant="contained" sx={{ mt: 2 }} onClick={handlePaySelected} disabled={isPaying}>
-                        {isPaying ? 'Processing...' : `Pay ${selectedInvoices.length} Invoice(s)`}
-                    </Button>
-                </Paper>
-            )}
+                    <Typography variant="body1">Total: PKR {totalAmount}</Typography>
 
-            {filteredInvoices.map((invoice) => (
-                <Paper key={invoice.id} sx={{ p: 2, mb: 2 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between">
-                        <Box>
-                            <Typography variant="body1">
-                                {invoice.invoice_no} ({invoice.invoice_type} - {invoice.subscription_type})
-                            </Typography>
-                            <Typography variant="body2">Amount: PKR {invoice.amount}</Typography>
-                            <Typography variant="body2">Due: {dayjs(invoice.issue_date).format('YYYY-MM-DD')}</Typography>
-                        </Box>
-                        <Box textAlign="right">
-                            {getStatusChip(invoice)}
-                            {invoice.status === 'unpaid' && <Checkbox checked={selectedInvoices.some((inv) => inv.id === invoice.id)} onChange={() => handleInvoiceSelect(invoice)} sx={{ ml: 2 }} />}
-                        </Box>
-                    </Box>
-                </Paper>
-            ))}
+                    <TextField select fullWidth label="Payment Method" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} sx={{ mt: 2 }}>
+                        <MenuItem value="cash">Cash</MenuItem>
+                        <MenuItem value="credit_card">Credit Card</MenuItem>
+                    </TextField>
+
+                    {paymentMethod && <TextField fullWidth label="Paid Amount" type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} sx={{ mt: 2 }} />}
+
+                    {paymentMethod === 'credit_card' && <TextField fullWidth label="Upload Receipt" type="file" InputLabelProps={{ shrink: true }} onChange={(e) => setReceipt(e.target.files[0])} sx={{ mt: 2 }} />}
+
+                    <Button variant="contained" fullWidth sx={{ mt: 3 }} onClick={handlePaySelected}>
+                        Finalize & Pay
+                    </Button>
+                </Box>
+            )}
         </Box>
     );
 };

@@ -52,11 +52,15 @@ class UserController extends Controller
     }
 
     // Search users
-
     public function searchUsers(Request $request)
     {
-        $query = $request->input('query');
+        $query = $request->input('q');
         $bookingType = $request->query('type') ?? '0';
+
+        // Prevent empty search from returning all results
+        if (!$query || trim($query) === '') {
+            return response()->json(['success' => true, 'results' => []]);
+        }
 
         // Case 1: bookingType = 0 => Search in Users table (members)
         if ($bookingType === '0') {

@@ -287,6 +287,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/admin/manage/monthly/fee', [SubscriptionController::class, 'monthlyFee'])->name('subscription.monthly');
 
+    Route::get('/api/member/{id}/invoice-status', [FinancialController::class, 'status']);
+    Route::post('/api/member/{id}/create-invoices', [FinancialController::class, 'createInvoices']);
+
+    // Member Invoices
+    Route::get('/api/member-invoices', [FinancialController::class, 'getMemberInvoices']);
+    Route::post('/api/pay-invoices', [FinancialController::class, 'payInvoices']);
+
     // Route::get('/admin/subscription/sports/category', function () {
     //     return Inertia::render('App/Admin/Subscription/Sports');
     // })->name('subscription.sports');
