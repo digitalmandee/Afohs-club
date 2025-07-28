@@ -1,28 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { Box, Typography, Paper, Chip, Checkbox, Button, CircularProgress, TextField, MenuItem } from '@mui/material';
+import { Box, Typography, Paper, Chip, Checkbox, Button, CircularProgress, TextField, MenuItem, Tabs, Tab } from '@mui/material';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { enqueueSnackbar } from 'notistack';
 
 const InvoiceViewer = () => {
     const [member, setMember] = useState(null);
-    const [invoices, setInvoices] = useState({
-        existing_invoices: [],
-        due_invoices: [],
-        future_invoices: [],
-    });
+    const [invoices, setInvoices] = useState([]);
     const [selectedInvoices, setSelectedInvoices] = useState([]);
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('');
     const [amountPaid, setAmountPaid] = useState('');
     const [receipt, setReceipt] = useState(null);
+    const [activeTab, setActiveTab] = useState('all');
 
     const fetchInvoices = async (userId) => {
         setLoading(true);
         try {
             const res = await axios.get(`/api/member-invoices?user_id=${userId}`);
-            setInvoices(res.data);
+            setInvoices(res.data.invoices || []);
         } finally {
             setLoading(false);
         }
@@ -35,28 +32,60 @@ const InvoiceViewer = () => {
         }
     }, [member]);
 
-    const handleInvoiceSelect = (invoice) => {
-        const key = invoice.id !== 'new' ? `existing-${invoice.id}` : invoice.subscription_type + '-' + (invoice.paid_for_month || invoice.paid_for_quarter || invoice.paid_for_yearly || '');
-
-        const exists = selectedInvoices.find((i) => i._key === key);
-
-        if (exists) {
-            setSelectedInvoices(selectedInvoices.filter((i) => i._key !== key));
-        } else {
-            setSelectedInvoices([...selectedInvoices, { ...invoice, _key: key }]);
-        }
-    };
-
     const getInvoiceKey = (invoice) => (invoice.id !== 'new' ? `existing-${invoice.id}` : invoice.subscription_type + '-' + (invoice.paid_for_month || invoice.paid_for_quarter || invoice.paid_for_yearly || ''));
 
-    const renderInvoice = (invoice, section) => {
+    const handleInvoiceSelect = (invoice) => {
+        const key = getInvoiceKey(invoice);
+        const exists = selectedInvoices.find((i) => i._key === key);
+
+        // Allow de-select anytime
+        if (exists) {
+            setSelectedInvoices(selectedInvoices.filter((i) => i._key !== key));
+            return;
+        }
+
+        // Enforce sequential payment: unpaid first, then upcoming
+        const sortedInvoices = [...invoices]
+            .filter((inv) => inv.status === 'overdue' || inv.status === 'unpaid' || inv.status === 'upcoming')
+            .sort((a, b) => {
+                const aDate = a.paid_for_month || a.paid_for_quarter || a.paid_for_yearly || a.issue_date || '';
+                const bDate = b.paid_for_month || b.paid_for_quarter || b.paid_for_yearly || b.issue_date || '';
+                return new Date(aDate) - new Date(bDate);
+            });
+
+        const currentIndex = sortedInvoices.findIndex((i) => getInvoiceKey(i) === key);
+
+        const hasEarlierUnselected = sortedInvoices.slice(0, currentIndex).some((inv) => {
+            const invKey = getInvoiceKey(inv);
+            return !selectedInvoices.some((sel) => sel._key === invKey);
+        });
+
+        if (hasEarlierUnselected) {
+            enqueueSnackbar('Please select previous unpaid invoices before selecting this.', {
+                variant: 'warning',
+            });
+            return;
+        }
+
+        setSelectedInvoices([...selectedInvoices, { ...invoice, _key: key }]);
+    };
+
+    const filteredInvoices = invoices.filter((inv) => {
+        if (activeTab === 'all') return true;
+        if (activeTab === 'paid') return inv.status === 'paid';
+        if (activeTab === 'due') return inv.status === 'overdue' || inv.status === 'unpaid';
+        if (activeTab === 'upcoming') return inv.status === 'upcoming';
+        return true;
+    });
+
+    const renderInvoice = (invoice) => {
         const key = getInvoiceKey(invoice);
         const isSelected = selectedInvoices.some((i) => i._key === key);
-        const isPayable = section === 'due' || section === 'future' || (section === 'existing' && invoice.status !== 'paid');
+        const isPayable = invoice.status === 'overdue' || invoice.status === 'upcoming' || invoice.status === 'unpaid';
 
-        const chipColor = invoice.status === 'paid' ? 'success' : section === 'future' ? 'info' : section === 'due' || (section === 'existing' && invoice.status === 'unpaid') ? 'warning' : 'default';
+        const chipColor = invoice.status === 'paid' ? 'success' : invoice.status === 'upcoming' ? 'info' : invoice.status === 'overdue' || invoice.status === 'unpaid' ? 'warning' : 'default';
 
-        const chipLabel = invoice.status === 'paid' ? 'Paid' : section === 'future' ? 'Upcoming' : section === 'due' ? 'Due' : invoice.status === 'unpaid' ? 'Unpaid' : invoice.status;
+        const chipLabel = invoice.status === 'paid' ? 'Paid' : invoice.status === 'upcoming' ? 'Upcoming' : invoice.status === 'overdue' ? 'Overdue' : invoice.status === 'unpaid' ? 'Unpaid' : invoice.status;
 
         return (
             <Paper key={key} sx={{ p: 2, mb: 2 }}>
@@ -81,16 +110,45 @@ const InvoiceViewer = () => {
 
     const handlePaySelected = async () => {
         if (!selectedInvoices.length || !paymentMethod || !amountPaid) {
-            alert('Please fill required payment fields');
+            enqueueSnackbar('Please select at least one invoice and enter payment details.', {
+                variant: 'warning',
+            });
             return;
         }
 
+        // Validate chronological payment (no skipped unpaid invoices)
+        const sortedInvoices = [...invoices]
+            .filter((inv) => inv.status === 'overdue' || inv.status === 'unpaid' || inv.status === 'upcoming')
+            .sort((a, b) => {
+                const aDate = a.paid_for_month || a.paid_for_quarter || a.paid_for_yearly || a.issue_date || '';
+                const bDate = b.paid_for_month || b.paid_for_quarter || b.paid_for_yearly || b.issue_date || '';
+                return new Date(aDate) - new Date(bDate);
+            });
+
+        const selectedKeys = selectedInvoices.map((inv) => getInvoiceKey(inv));
+
+        for (let i = 0; i < sortedInvoices.length; i++) {
+            const key = getInvoiceKey(sortedInvoices[i]);
+            const isSelected = selectedKeys.includes(key);
+
+            // If user selected an upcoming invoice but skipped earlier unpaid ones
+            if (!isSelected) {
+                const remainingSelected = sortedInvoices.slice(i + 1).some((inv) => selectedKeys.includes(getInvoiceKey(inv)));
+                if (remainingSelected) {
+                    enqueueSnackbar('Cannot pay future invoices without clearing earlier unpaid ones.', {
+                        variant: 'error',
+                    });
+                    return;
+                }
+            }
+        }
+
+        // Proceed to payment
         const formData = new FormData();
         formData.append('customer_id', member.id);
         formData.append('payment_method', paymentMethod);
         formData.append('amount_paid', amountPaid);
         if (receipt) formData.append('receipt', receipt);
-
         formData.append('invoices', JSON.stringify(selectedInvoices));
 
         try {
@@ -102,11 +160,9 @@ const InvoiceViewer = () => {
             setAmountPaid('');
             setPaymentMethod('');
             setReceipt(null);
-
             enqueueSnackbar('Payment successful', { variant: 'success' });
         } catch (err) {
             enqueueSnackbar('Payment failed', { variant: 'error' });
-            // alert('Payment failed');
         }
     };
 
@@ -116,28 +172,21 @@ const InvoiceViewer = () => {
         <Box p={2}>
             <AsyncSearchTextField label="Search Member" name="user" endpoint="/admin/api/search-users" onChange={(e) => setMember(e.target.value)} />
 
+            <Tabs value={activeTab} onChange={(_, newVal) => setActiveTab(newVal)} sx={{ mt: 2, mb: 2 }} variant="scrollable" scrollButtons="auto">
+                <Tab label="All" value="all" />
+                <Tab label="Paid" value="paid" />
+                <Tab label="Unpaid / Overdue" value="due" />
+                <Tab label="Upcoming" value="upcoming" />
+            </Tabs>
+
             {loading ? (
                 <CircularProgress sx={{ mt: 4 }} />
+            ) : filteredInvoices.length > 0 ? (
+                filteredInvoices.map((inv) => renderInvoice(inv))
             ) : (
-                <>
-                    {['existing_invoices', 'due_invoices', 'future_invoices'].map((sectionKey) => {
-                        const titleMap = {
-                            existing_invoices: 'Existing Invoices',
-                            due_invoices: 'Due Invoices',
-                            future_invoices: 'Upcoming Invoices',
-                        };
-                        return (
-                            invoices[sectionKey]?.length > 0 && (
-                                <React.Fragment key={sectionKey}>
-                                    <Typography variant="h6" mt={3} mb={1}>
-                                        {titleMap[sectionKey]}
-                                    </Typography>
-                                    {invoices[sectionKey].map((inv) => renderInvoice(inv, sectionKey.replace('_invoices', '')))}
-                                </React.Fragment>
-                            )
-                        );
-                    })}
-                </>
+                <Typography variant="body2" color="textSecondary" mt={2}>
+                    No invoices to show.
+                </Typography>
             )}
 
             {selectedInvoices.length > 0 && (

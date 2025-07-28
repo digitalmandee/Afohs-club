@@ -18,22 +18,51 @@ class UserController extends Controller
         $roleType = $request->input('role', 'user');
 
         $members = User::role($roleType, 'web')
-            ->where(function ($queryBuilder) use ($query) {
-                $queryBuilder
-                    ->where('name', 'like', "%{$query}%")
-                    ->orWhere('user_id', 'like', "%{$query}%");
+            ->select(
+                'users.id',
+                'users.email',
+                'users.phone_number',
+                'members.first_name',
+                'members.last_name',
+                'members.membership_no',
+                'members.cnic_no',
+                'members.current_address',
+                'member_categories.name as category_name'
+            )
+            ->leftJoin('members', 'users.id', '=', 'members.user_id')
+            ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
+            ->whereNull('users.parent_user_id')
+            ->where(function ($q) use ($query) {
+                $q
+                    ->where('members.first_name', 'like', "%{$query}%")
+                    ->orWhere('members.last_name', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(members.first_name, ' ', members.last_name) LIKE ?", ["%{$query}%"])
+                    ->orWhere('members.membership_no', 'like', "%{$query}%");
             });
 
-        // Only apply member_type filter if role is 'user' and member_type is provided
-        if ($roleType === 'user' && !empty($memberType)) {
-            $members->where('member_type_id', $memberType);
-        }
+        // Apply member_type filter if provided (only for 'user' role)
+        // if ($roleType === 'user' && !empty($memberType)) {
+        //     $members->where('members.member_type_id', $memberType);
+        // }
 
-        $results = $members->select('id', 'user_id', 'name', 'email')->get();
+        $members = $members->limit(10)->get();
 
-        Log::info($results);
+        $results = $members->map(function ($user) {
+            $fullName = trim("{$user->first_name} {$user->last_name}");
+            return [
+                'id' => $user->id,
+                'booking_type' => 'member',
+                'name' => $fullName,
+                'label' => "{$fullName} ({$user->membership_no})",
+                'membership_no' => $user->membership_no,
+                'email' => $user->email,
+                'cnic' => $user->cnic_no,
+                'phone' => $user->phone_number,
+                'address' => $user->current_address,
+            ];
+        });
 
-        return response()->json(['success' => true, 'results' => $results], 200);
+        return response()->json(['success' => true, 'results' => $results]);
     }
 
     // get waiters

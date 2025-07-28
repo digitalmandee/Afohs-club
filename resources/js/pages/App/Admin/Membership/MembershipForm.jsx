@@ -18,7 +18,7 @@ const drawerWidthClosed = 110;
 const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState(3);
+    const [step, setStep] = useState(1);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
 
     const getNormalizedUserData = (user) => {
@@ -147,22 +147,35 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         addDataInState(name, value);
     };
 
-    const addDataInState = (name, value) => {
-        const updatedUserDetails = { ...formsData.member };
+    useEffect(() => {
+        if (!sameAsCurrent) return;
 
+        setFormsData((prev) => {
+            const updated = { ...prev };
+
+            const current = prev.member || {};
+
+            updated.member = {
+                ...prev.member,
+                permanent_address: current.current_address || '',
+                permanent_city: current.current_city || '',
+                permanent_country: current.current_country || '',
+            };
+
+            return updated;
+        });
+    }, [formsData.member?.current_address, formsData.member?.current_city, formsData.member?.current_country, sameAsCurrent]);
+
+    const addDataInState = (name, value) => {
         if (name.startsWith('member.')) {
             const field = name.split('.')[1];
-            updatedUserDetails[field] = value;
-            // Sync permanent address if checkbox is checked
-            if (sameAsCurrent) {
-                if (field === 'current_address') updatedUserDetails.permanent_address = value;
-                if (field === 'current_city') updatedUserDetails.permanent_city = value;
-                if (field === 'current_country') updatedUserDetails.permanent_country = value;
-            }
 
             setFormsData((prev) => ({
                 ...prev,
-                member: updatedUserDetails,
+                member: {
+                    ...prev.member,
+                    [field]: value,
+                },
             }));
             if (field === 'member_type_id' || field === 'membership_category') {
                 let family_members = formsData.family_members.map((member) => ({

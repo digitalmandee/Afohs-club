@@ -281,7 +281,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Last Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="last_name" value={data.last_name} error={!!formErrors.last_name} helperText={formErrors.last_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="member.last_name" value={data.last_name} error={!!formErrors.last_name} helperText={formErrors.last_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Father/Husband Name */}

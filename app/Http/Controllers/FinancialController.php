@@ -292,6 +292,7 @@ class FinancialController extends Controller
         }
 
         $now = Carbon::now();
+        $currentYear = $now->year;
 
         // Fetch member category price
         $member = Member::where('user_id', $userId)->first();
@@ -306,7 +307,13 @@ class FinancialController extends Controller
             ->orderBy('issue_date', 'desc')
             ->get();
 
-        $existing = $invoices;
+        // Filter existing invoices: only current year OR unpaid from past years
+        $existing = $invoices->filter(function ($invoice) use ($currentYear) {
+            $invoiceYear = Carbon::parse($invoice->issue_date)->year;
+
+            return $invoiceYear === $currentYear || ($invoiceYear < $currentYear && $invoice->status !== 'paid');
+        })->values();
+
         $due = [];
         $future = [];
 
@@ -319,7 +326,6 @@ class FinancialController extends Controller
             $subscriptionType = $invoice->subscription_type;
             $invoiceStatus = $invoice->status;
 
-            // Determine base amount
             $invoiceAmount = ($invoice->invoice_type === 'membership' && $memberPrice !== null)
                 ? $memberPrice
                 : $invoice->amount;
@@ -358,7 +364,7 @@ class FinancialController extends Controller
                                     'subscription_type' => 'quarter',
                                     'paid_for_quarter' => $quarterLabel,
                                     'amount' => $invoiceAmount * 3,
-                                    'status' => 'due'
+                                    'status' => 'overdue'
                                 ];
                                 break;
                             } else {
@@ -370,7 +376,7 @@ class FinancialController extends Controller
                                             'subscription_type' => 'monthly',
                                             'paid_for_month' => $m->format('Y-m-d'),
                                             'amount' => $invoiceAmount,
-                                            'status' => 'due'
+                                            'status' => 'overdue'
                                         ];
                                     }
                                 } else {
@@ -380,7 +386,7 @@ class FinancialController extends Controller
                                         'subscription_type' => 'quarter',
                                         'paid_for_quarter' => $quarterLabel,
                                         'amount' => $invoiceAmount * 3,
-                                        'status' => 'due'
+                                        'status' => 'overdue'
                                     ];
                                 }
 
@@ -411,15 +417,22 @@ class FinancialController extends Controller
                         $nowQuarter = ceil($now->month / 3);
                         $paidQuarter = ceil($lastPaid->month / 3);
 
-                        if ($now->year > $year || $nowQuarter > $paidQuarter) {
+                        $lastPaidDate = Carbon::createFromDate($year, $month, 1)->startOfQuarter()->addQuarter();
+                        $currentQuarterStart = $now->copy()->startOfQuarter();
+
+                        while ($lastPaidDate->lte($currentQuarterStart)) {
+                            $quarterLabel = $lastPaidDate->format('Y') . '-Q' . ceil($lastPaidDate->month / 3);
+
                             $due[] = [
                                 'id' => 'new',
                                 'invoice_type' => $invoice->invoice_type,
                                 'subscription_type' => 'quarter',
-                                'paid_for_quarter' => $now->year . '-Q' . $nowQuarter,
+                                'paid_for_quarter' => $quarterLabel,
                                 'amount' => $invoiceAmount,
-                                'status' => 'due'
+                                'status' => 'overdue'
                             ];
+
+                            $lastPaidDate->addQuarter();
                         }
 
                         $nextQuarterDate = $now->copy()->addQuarter();
@@ -437,14 +450,13 @@ class FinancialController extends Controller
                 case 'yearly':
                     if ($invoice->paid_for_yearly) {
                         $paidYear = (int) $invoice->paid_for_yearly;
-                        $currentYear = $now->year;
 
                         if ($paidYear < $currentYear) {
                             for ($q = 1; $q <= 4; $q++) {
                                 $quarterStartMonth = ($q - 1) * 3 + 1;
                                 $quarterStart = Carbon::create($currentYear, $quarterStartMonth, 1);
-
                                 $quarterLabel = $currentYear . '-Q' . $q;
+
                                 $invoiceData = [
                                     'id' => 'new',
                                     'invoice_type' => $invoice->invoice_type,
@@ -453,6 +465,7 @@ class FinancialController extends Controller
                                     'amount' => $invoiceAmount * 3,
                                     'status' => $quarterStart->lte($now) ? 'due' : 'upcoming'
                                 ];
+
                                 if ($quarterStart->lte($now)) {
                                     $due[] = $invoiceData;
                                 } else {
@@ -479,10 +492,25 @@ class FinancialController extends Controller
             }
         }
 
+        $allInvoices = collect()
+            ->merge($existing)
+            ->merge($due)
+            ->merge($future)
+            ->sortBy(function ($invoice) {
+                if (isset($invoice['paid_for_quarter'])) {
+                    [$year, $q] = explode('-Q', $invoice['paid_for_quarter']);
+                    return Carbon::create($year, ($q - 1) * 3 + 1, 1);
+                }
+                if (isset($invoice['paid_for_month'])) {
+                    return Carbon::parse($invoice['paid_for_month']);
+                }
+                return Carbon::parse($invoice['issue_date'] ?? now());
+            })
+            ->values();
+
         return response()->json([
-            'existing_invoices' => $existing,
-            'due_invoices' => $due,
-            'future_invoices' => $future
+            'success' => true,
+            'invoices' => $allInvoices
         ]);
     }
 

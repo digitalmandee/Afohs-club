@@ -328,6 +328,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
                                 <Box sx={{ mb: 3 }}>
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category</Typography>
+                                    <pre>{JSON.stringify(data.member, null, 2)}</pre>
                                     <FormControl fullWidth variant="outlined">
                                         <Select
                                             name="member.membership_category"
@@ -345,10 +346,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 });
 
                                                 if (!selectedKinshipUser) {
+                                                    const membershipNoParts = data.member.membership_no.split(' ');
+                                                    const newMembershipNo = membershipNoParts.length > 1 ? `${categoryName} ${membershipNoParts[1]}` : `${categoryName} ${data.member.membership_no}`;
+
                                                     handleChange({
                                                         target: {
                                                             name: 'member.membership_no',
-                                                            value: `${categoryName} ${data.member.membership_no}`,
+                                                            value: newMembershipNo,
                                                         },
                                                     });
                                                 }

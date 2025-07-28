@@ -206,7 +206,7 @@ class MembershipController extends Controller
             // Create primary user
             $primaryUser = User::create([
                 'email' => $request->email,
-                'name' => $request->first_name . ' ' . $request->last_name,
+                'name' => $request->member['first_name'] . ' ' . $request->member['last_name'],
                 'phone_number' => $request->member['mobile_number_a'],
                 'profile_photo' => $memberImagePath
             ]);
@@ -315,14 +315,19 @@ class MembershipController extends Controller
             $data = [$memberTypeArray];
 
             // Create membership invoice
+            $now = Carbon::now();
+            $quarter = ceil($now->month / 3);  // Calculate quarter number (1 to 4)
+            $paidForQuarter = $now->year . '-Q' . $quarter;
+
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->getInvoiceNo(),
                 'customer_id' => $primaryUser->id,
                 'amount' => $memberCategory->fee,
                 'member_id' => Auth::user()->id,
-                'subscription_type' => 'one_time',
+                'subscription_type' => 'quarter',
                 'invoice_type' => 'membership',
-                'issue_date' => Carbon::now(),
+                'issue_date' => $now,
+                'paid_for_quarter' => $paidForQuarter,
                 'data' => $data,
                 'status' => 'unpaid',
             ]);
@@ -368,7 +373,7 @@ class MembershipController extends Controller
             // Update User basic info
             $user->update([
                 'email' => $request->email,
-                'name' => $request->first_name . ' ' . $request->last_name,
+                'name' => $request->member['first_name'] . ' ' . $request->member['last_name'],
                 'phone_number' => $request->user_details['mobile_number_a'],
             ]);
 

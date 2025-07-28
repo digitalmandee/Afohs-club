@@ -28,7 +28,7 @@ const Payment = ({ invoice, onBack }) => {
 
     const subscriptionTypes = [
         { label: 'One Time', value: 'one_time' },
-        { label: 'Monthly', value: 'monthly' },
+        // { label: 'Monthly', value: 'monthly' },
         { label: 'Quarter', value: 'quarter' },
         { label: 'Annual', value: 'annual' },
     ];
