@@ -490,8 +490,11 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         },
                                                     }}
                                                 >
-                                                    <MenuItem value="active">Active</MenuItem>
-                                                    <MenuItem value="inactive">Inactive</MenuItem>
+                                                    {['In-Process', 'Printed', 'Received', 'Issued', 'Re-Printed', 'E-Card Issued'].map((status) => (
+                                                        <MenuItem key={status} value={status}>
+                                                            {status}
+                                                        </MenuItem>
+                                                    ))}
                                                 </Select>
                                             </FormControl>
                                         </Box>
@@ -500,7 +503,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
                                 <Grid container spacing={2}>
                                     <Grid item xs={6}>
-                                        <Box sx={{ mb: 3 }}>
+                                        <Box sx={{ mb: 1 }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
                                             <TextField
                                                 fullWidth
@@ -520,7 +523,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Box sx={{ mb: 3 }}>
+                                        <Box sx={{ mb: 1 }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
                                             <TextField
                                                 fullWidth
@@ -537,6 +540,34 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     },
                                                 }}
                                             />
+                                        </Box>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Status</Typography>
+                                            <FormControl fullWidth variant="outlined">
+                                                <Select
+                                                    name="member.status"
+                                                    value={data.member.status}
+                                                    onChange={handleChange}
+                                                    displayEmpty
+                                                    renderValue={() => {
+                                                        const status = data.member.status;
+                                                        return status ? <Typography sx={{ textTransform: 'capitalize' }}>{status}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                    }}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                >
+                                                    {['active', 'inactive', 'suspended', 'cancelled', 'pause'].map((status) => (
+                                                        <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
+                                                            {status}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
                                         </Box>
                                     </Grid>
                                     <Grid item xs={12}>

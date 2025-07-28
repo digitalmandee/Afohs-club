@@ -18,7 +18,7 @@ const drawerWidthClosed = 110;
 const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(3);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
 
     const getNormalizedUserData = (user) => {
@@ -148,7 +148,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
     };
 
     const addDataInState = (name, value) => {
-        const updatedUserDetails = { ...formsData.user_details };
+        const updatedUserDetails = { ...formsData.member };
 
         if (name.startsWith('member.')) {
             const field = name.split('.')[1];
@@ -162,10 +162,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
 
             setFormsData((prev) => ({
                 ...prev,
-                member: {
-                    ...prev.member,
-                    updatedUserDetails,
-                },
+                member: updatedUserDetails,
             }));
             if (field === 'member_type_id' || field === 'membership_category') {
                 let family_members = formsData.family_members.map((member) => ({
