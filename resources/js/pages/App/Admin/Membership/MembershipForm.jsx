@@ -32,7 +32,19 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             last_name: user.last_name || '',
             phone_number: user.phone_number || '',
             profile_photo: user.profile_photo || '',
-            user_details: {
+            member: {
+                application_no: user.member?.application_no || '',
+                membership_no: user.member?.membership_no || '',
+                kinship: user.member?.kinship || '',
+                member_type_id: user.member?.member_type_id || '',
+                membership_category: user.member?.member_category_id || '',
+                membership_date: user.member?.membership_date || new Date().toISOString().split('T')[0],
+                card_issue_date: user.member?.card_issue_date || new Date().toISOString().split('T')[0],
+                card_expiry_date: user.member?.card_expiry_date || '',
+                is_document_missing: user.member?.is_document_missing || false,
+                missing_documents: user.member?.missing_documents || [],
+                card_status: user.member?.card_status || 'In-Process',
+                status: user.member?.status || 'active',
                 coa_account: user.user_detail?.coa_account || '',
                 title: user.user_detail?.title || '',
                 state: user.user_detail?.state || '',
@@ -63,34 +75,33 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 permanent_city: user.user_detail?.permanent_city || '',
                 permanent_country: user.user_detail?.permanent_country || '',
                 country: user.user_detail?.country || '',
-            },
-            member: {
-                application_no: user.member?.application_no || '',
-                membership_no: user.member?.membership_no || '',
-                kinship: user.member?.kinship || '',
-                member_type_id: user.member?.member_type_id || '',
-                membership_category: user.member?.member_category_id || '',
-                membership_date: user.member?.membership_date || new Date().toISOString().split('T')[0],
-                card_issue_date: user.member?.card_issue_date || new Date().toISOString().split('T')[0],
-                card_expiry_date: user.member?.card_expiry_date || '',
-                is_document_enabled: user.member?.is_document_enabled || false,
                 documents: user.member?.documents || [],
-                card_status: user.member?.card_status || 'active',
+                previewFiles: user.member?.documents || [],
             },
-            documents: user.user_detail?.documents || [],
-            previewFiles: user.user_detail?.documents || [],
             family_members: familyMembers || [],
         };
     };
 
     const defaultFormData = {
         email: '',
-        first_name: '',
-        middle_name: '',
-        last_name: '',
         phone_number: '',
         profile_photo: '',
-        user_details: {
+        member: {
+            application_no: applicationNo,
+            member_type_id: '',
+            first_name: '',
+            middle_name: '',
+            last_name: '',
+            kinship: '',
+            membership_no: membershipNo,
+            membership_category: '',
+            is_document_missing: false,
+            missing_documents: '',
+            membership_date: new Date().toISOString().split('T')[0],
+            card_issue_date: new Date().toISOString().split('T')[0],
+            card_expiry_date: '',
+            card_status: 'In-Process',
+            status: 'active',
             coa_account: '',
             title: '',
             state: '',
@@ -120,22 +131,9 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             permanent_city: '',
             permanent_country: '',
             country: '',
+            documents: [],
+            previewFiles: [],
         },
-        member: {
-            application_no: applicationNo,
-            member_type_id: '',
-            kinship: '',
-            membership_no: membershipNo,
-            membership_category: '',
-            is_document_enabled: false,
-            documents: '',
-            membership_date: new Date().toISOString().split('T')[0],
-            card_issue_date: new Date().toISOString().split('T')[0],
-            card_expiry_date: '',
-            card_status: 'active',
-        },
-        documents: [],
-        previewFiles: [],
         family_members: [],
     };
 
@@ -152,11 +150,9 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
     const addDataInState = (name, value) => {
         const updatedUserDetails = { ...formsData.user_details };
 
-        if (name.startsWith('user_details.')) {
+        if (name.startsWith('member.')) {
             const field = name.split('.')[1];
-
             updatedUserDetails[field] = value;
-
             // Sync permanent address if checkbox is checked
             if (sameAsCurrent) {
                 if (field === 'current_address') updatedUserDetails.permanent_address = value;
@@ -166,15 +162,9 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
 
             setFormsData((prev) => ({
                 ...prev,
-                user_details: updatedUserDetails,
-            }));
-        } else if (name.startsWith('member.')) {
-            const field = name.split('.')[1];
-            setFormsData((prev) => ({
-                ...prev,
                 member: {
                     ...prev.member,
-                    [field]: value,
+                    updatedUserDetails,
                 },
             }));
             if (field === 'member_type_id' || field === 'membership_category') {

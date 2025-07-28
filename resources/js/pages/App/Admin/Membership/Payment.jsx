@@ -278,7 +278,7 @@ const Payment = ({ invoice, onBack }) => {
                             <Grid container spacing={2}>
                                 <Grid item xs={6}>
                                     <Typography sx={{ mb: 1 }}>
-                                        <strong>Name:</strong> {invoice.customer?.first_name} {invoice.customer?.last_name}
+                                        <strong>Name:</strong> {invoice.customer?.name}
                                     </Typography>
                                     <Typography sx={{ mb: 1 }}>
                                         <strong>Email:</strong> {invoice.customer?.email}

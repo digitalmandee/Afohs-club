@@ -132,7 +132,9 @@ const handlePrintMembershipCard = (member) => {
                     <!-- Name + Membership ID -->
                     <div class="section">
                         <div class="label">Name</div>
-                        <div class="value">${member?.first_name + ' ' + member?.last_name || 'N/A'}</div>
+                        <div class="value">
+                            ${member?.member?.first_name ? `${member?.member?.first_name} ${member?.member?.middle_name || ''} ${member?.member?.last_name || ''}` : 'N/A'}
+                        </div>
 
                         <div class="label">Membership ID</div>
                         <div class="value">${member?.member?.membership_no || 'N/A'}</div>
@@ -222,7 +224,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                                         Name
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.first_name + ' ' + member?.last_name || 'N/A'}
+                                        {member?.member?.first_name ? `${member?.member?.first_name} ${member?.member?.middle_name || ''} ${member?.member?.last_name || ''}` : 'N/A'}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ mt: 2 }}>
@@ -265,12 +267,11 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                     </MembershipFooter>
                 </MembershipCard>
             </Box>
-            {member?.member?.is_document_enabled &&
+            {member?.member?.is_document_enabled && (
                 <Typography display="flex" justifyContent="center" alignItems="center" variant="caption" color="error">
                     Document is Missing
                 </Typography>
-
-            }
+            )}
 
             <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button variant="text" color="inherit" onClick={onClose}>
@@ -294,7 +295,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                     Print
                 </Button>
             </Box>
-        </Drawer >
+        </Drawer>
     );
 };
 

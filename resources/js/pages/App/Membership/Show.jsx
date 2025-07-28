@@ -2,7 +2,7 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 
 export default function MemberProfile({ user }) {
-    const fullName = `${user.first_name} ${user.middle_name ?? ''} ${user.last_name ?? ''}`.trim();
+    const fullName = `${user.member.first_name} ${user.member.middle_name ?? ''} ${user.member.last_name ?? ''}`.trim();
 
     return (
         <>

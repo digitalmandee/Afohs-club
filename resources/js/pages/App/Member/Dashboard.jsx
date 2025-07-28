@@ -112,9 +112,6 @@ const CustomerLists = ({ users }) => {
                                 }}
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('members.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
-                                Add Customer
-                            </Button>
                         </div>
                     </div>
 
@@ -127,14 +124,13 @@ const CustomerLists = ({ users }) => {
                                     <TableCell style={{ fontWeight: 'bold' }}>Type</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Address</TableCell>
                                     <TableCell style={{ fontWeight: 'bold' }}>Create Order</TableCell>
-                                    <TableCell style={{ fontWeight: 'bold' }}>Edit</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {users.data.length > 0 &&
                                     users.data.map((user, userIndex) => (
                                         <TableRow key={userIndex}>
-                                            <TableCell>{user.user_id || 'N/A'}</TableCell>
+                                            <TableCell>{user.member?.membership_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                                     <Avatar src={tenantAsset(user.profile_photo)} alt={user.name} style={{ marginRight: '10px' }} />
@@ -168,22 +164,6 @@ const CustomerLists = ({ users }) => {
                                                     }}
                                                 >
                                                     Order
-                                                </Button>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleEditCustomer(user.id);
-                                                    }}
-                                                    style={{
-                                                        backgroundColor: '#1976d2',
-                                                        fontSize: '12px',
-                                                        borderRadius: '20px',
-                                                        color: 'white',
-                                                    }}
-                                                >
-                                                    Edit
                                                 </Button>
                                             </TableCell>
                                         </TableRow>

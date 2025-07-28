@@ -4,24 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\CardPayment;
-use App\Models\FamilyMember;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
 use App\Models\MemberCategory;
-use App\Models\MembershipInvoice;
 use App\Models\MemberStatusHistory;
 use App\Models\MemberType;
-use App\Models\Subscription;
 use App\Models\User;
-use App\Models\UserDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -29,7 +23,7 @@ class MembershipController extends Controller
 {
     public function index()
     {
-        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->latest()->limit(6)->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('member', 'member.memberType:id,name', 'member.memberCategory:id,name')->latest()->limit(6)->get();
 
         $total_members = User::role('user')->whereNull('parent_user_id')->count();
         $total_payment = FinancialInvoice::where('invoice_type', 'membership')->where('status', 'paid')->sum('total_price');
@@ -58,11 +52,11 @@ class MembershipController extends Controller
 
     public function edit(Request $request)
     {
-        $user = User::where('id', $request->id)->with('userDetail', 'member', 'member.memberType')->first();
+        $user = User::where('id', $request->id)->with('member', 'member.memberType')->first();
         $familyMembers = $user->familyMembers->map(function ($member) {
             return [
                 'user_id' => $member->id,
-                'full_name' => $member->first_name,
+                'full_name' => $member->name,
                 'relation' => $member->member->relation,
                 'cnic' => $member->member->cnic,
                 'phone_number' => $member->phone_number,
@@ -81,7 +75,7 @@ class MembershipController extends Controller
     {
         $query = User::role('user')
             ->whereNull('parent_user_id')
-            ->with(['userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name']);
+            ->with(['member', 'member.memberType:id,name', 'member.memberCategory:id,name']);
 
         // Filter: Membership Number
         if ($request->filled('membership_no')) {
@@ -101,14 +95,14 @@ class MembershipController extends Controller
 
         // Filter: CNIC
         if ($request->filled('cnic')) {
-            $query->whereHas('userDetail', function ($q) use ($request) {
+            $query->whereHas('member', function ($q) use ($request) {
                 $q->where('cnic_no', 'like', '%' . $request->cnic . '%');
             });
         }
 
         // Filter: Contact
         if ($request->filled('contact')) {
-            $query->whereHas('userDetail', function ($q) use ($request) {
+            $query->whereHas('member', function ($q) use ($request) {
                 $q->where('mobile_number_a', 'like', '%' . $request->contact . '%');
             });
         }
@@ -154,31 +148,9 @@ class MembershipController extends Controller
 
     public function membershipHistory()
     {
-        $members = User::role('user')->whereNull('parent_user_id')->with('userDetail', 'member', 'member.memberType:id,name', 'member.memberCategory:id,name')->get();
+        $members = User::role('user')->whereNull('parent_user_id')->with('member', 'member.memberType:id,name', 'member.memberCategory:id,name')->get();
 
         return Inertia::render('App/Admin/Membership/Members', compact('members'));
-    }
-
-    public function paymentMembersHistory()
-    {
-        $users = User::with([
-            'userDetail.members.memberType'
-        ])->get();
-
-        return Inertia::render('App/Admin/Membership/History', [
-            'membersdata' => $users,
-        ]);
-    }
-
-    public function membershipFinance()
-    {
-        $users = User::with([
-            'userDetail.members.memberType'
-        ])->get();
-
-        return Inertia::render('App/Admin/Membership/Finance', [
-            'membersdata' => $users,
-        ]);
     }
 
     public function store(Request $request)
@@ -188,19 +160,19 @@ class MembershipController extends Controller
                 'email' => 'required|email|unique:users,email',
                 'family_members' => 'array',
                 'family_members.*.email' => 'required|email|distinct|different:email|unique:users,email',
-                'user_details.cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:user_details,cnic_no',
-                'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:user_details,cnic_no',
+                'member.cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
+                'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
             ], [
-                'user_details.cnic_no.unique' => "The primary user's CNIC already exists.",
+                'member.cnic_no.unique' => "The primary user's CNIC already exists.",
                 'family_members.*.cnic.unique' => "The family member's CNIC already exists.",
             ], [
-                'user_details.cnic_no' => 'Primary User CNIC',
+                'members.cnic_no' => 'Primary User CNIC',
                 'family_members.*.cnic' => 'Family Member CNIC',
             ]);
 
             // Custom validation to check if family member CNIC matches primary user CNIC
             $validator->after(function ($validator) use ($request) {
-                $primaryCnic = $request->user_details['cnic_no'] ?? null;
+                $primaryCnic = $request->member['cnic_no'] ?? null;
                 if (!empty($request->family_members)) {
                     foreach ($request->family_members as $index => $familyMember) {
                         if (!empty($familyMember['cnic']) && $familyMember['cnic'] === $primaryCnic) {
@@ -225,8 +197,8 @@ class MembershipController extends Controller
             }
 
             $documentPaths = [];
-            if ($request->hasFile('documents')) {
-                foreach ($request->file('documents') as $file) {
+            if ($request->hasFile('member.documents')) {
+                foreach ($request->file('member.documents') as $file) {
                     $documentPaths[] = FileHelper::saveImage($file, 'member_documents');
                 }
             }
@@ -234,49 +206,11 @@ class MembershipController extends Controller
             // Create primary user
             $primaryUser = User::create([
                 'email' => $request->email,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
-                'phone_number' => $request->user_details['mobile_number_a'],
-                'member_type_id' => $request->member['member_type_id'],
+                'name' => $request->first_name . ' ' . $request->last_name,
+                'phone_number' => $request->member['mobile_number_a'],
                 'profile_photo' => $memberImagePath
             ]);
-
             $primaryUser->assignRole('user');
-
-            // Create UserDetail for primary user
-            UserDetail::create([
-                'user_id' => $primaryUser->id,
-                'coa_account' => $request->user_details['coa_account'],
-                'title' => $request->user_details['title'],
-                'name_comments' => $request->user_details['name_comments'],
-                'guardian_name' => $request->user_details['guardian_name'],
-                'guardian_membership' => $request->user_details['guardian_membership'],
-                'nationality' => $request->user_details['nationality'],
-                'cnic_no' => $request->user_details['cnic_no'],
-                'passport_no' => $request->user_details['passport_no'],
-                'gender' => $request->user_details['gender'],
-                'ntn' => $request->user_details['ntn'],
-                'date_of_birth' => $request->user_details['date_of_birth'],
-                'education' => json_encode($request->user_details['education'] ?? []),
-                'membership_reason' => $request->user_details['membership_reason'],
-                'mobile_number_a' => $request->user_details['mobile_number_a'],
-                'mobile_number_b' => $request->user_details['mobile_number_b'],
-                'mobile_number_c' => $request->user_details['mobile_number_c'],
-                'telephone_number' => $request->user_details['telephone_number'],
-                'critical_email' => $request->user_details['critical_email'],
-                'emergency_name' => $request->user_details['emergency_name'],
-                'emergency_relation' => $request->user_details['emergency_relation'],
-                'emergency_contact' => $request->user_details['emergency_contact'],
-                'current_address' => $request->user_details['current_address'],
-                'current_city' => $request->user_details['current_city'],
-                'current_country' => $request->user_details['current_country'],
-                'permanent_address' => $request->user_details['permanent_address'],
-                'permanent_city' => $request->user_details['permanent_city'],
-                'permanent_country' => $request->user_details['permanent_country'],
-                'country' => $request->user_details['country'],
-                'documents' => $documentPaths,
-            ]);
 
             $membershipNo = Member::generateNextMembershipNumber();
             $applicationNo = Member::generateNextApplicationNo();
@@ -289,22 +223,56 @@ class MembershipController extends Controller
 
             $memberCategory = MemberCategory::find($request->member['membership_category'], ['id', 'name', 'fee', 'subscription_fee']);
             // Create primary member record
+
+            Log::info(json_encode($request->member));
             Member::create([
                 'user_id' => $primaryUser->id,
                 'application_no' => $applicationNo,
+                'first_name' => $request->member['first_name'],
+                'middle_name' => $request->member['middle_name'],
+                'last_name' => $request->member['last_name'],
                 'kinship' => $request->member['kinship']['id'] ?? null,
                 'membership_no' => $request->member['membership_no'] ?? $membershipNo,
                 'member_type_id' => $request->member['member_type_id'],
                 'member_category_id' => $request->member['membership_category'],
                 'membership_date' => $request->member['membership_date'],
                 'card_status' => $request->member['card_status'],
+                'status' => $request->member['status'],
                 'card_issue_date' => $request->member['card_issue_date'],
                 'card_expiry_date' => $request->member['card_expiry_date'],
                 'qr_code' => $qrImagePath,
-                'is_document_enabled' => filter_var($request->member['is_document_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                'documents' => $request->member['documents'] ?? null,
+                'is_document_missing' => filter_var($request->member['is_document_missing'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'missing_documents' => $request->member['missing_documents'] ?? null,
+                'coa_account' => $request->member['coa_account'],
+                'title' => $request->member['title'],
+                'guardian_name' => $request->member['guardian_name'],
+                'guardian_membership' => $request->member['guardian_membership'],
+                'nationality' => $request->member['nationality'],
+                'cnic_no' => $request->member['cnic_no'],
+                'passport_no' => $request->member['passport_no'],
+                'gender' => $request->member['gender'],
+                'ntn' => $request->member['ntn'],
+                'date_of_birth' => $request->member['date_of_birth'],
+                'education' => json_encode($request->member['education'] ?? []),
+                'mobile_number_a' => $request->member['mobile_number_a'],
+                'mobile_number_b' => $request->member['mobile_number_b'],
+                'mobile_number_c' => $request->member['mobile_number_c'],
+                'telephone_number' => $request->member['telephone_number'],
+                'personal_email' => $request->email,
+                'critical_email' => $request->member['critical_email'],
+                'emergency_name' => $request->member['emergency_name'],
+                'emergency_relation' => $request->member['emergency_relation'],
+                'emergency_contact' => $request->member['emergency_contact'],
+                'current_address' => $request->member['current_address'],
+                'current_city' => $request->member['current_city'],
+                'current_country' => $request->member['current_country'],
+                'permanent_address' => $request->member['permanent_address'],
+                'permanent_city' => $request->member['permanent_city'],
+                'permanent_country' => $request->member['permanent_country'],
+                'country' => $request->member['country'],
+                'documents' => $documentPaths,
             ]);
-
+            Log::info('yes');
             // Handle family members
             if (!empty($request->family_members)) {
                 foreach ($request->family_members as $familyMemberData) {
@@ -315,10 +283,9 @@ class MembershipController extends Controller
                     }
                     // Create User for family member (no password)
                     $familyUser = User::create([
-                        'user_id' => $this->getUserNo(),
                         'email' => $familyMemberData['email'],
                         'password' => isset($validated['password']) ? $validated['password'] : null,
-                        'first_name' => $familyMemberData['full_name'],
+                        'name' => $familyMemberData['full_name'],
                         'phone_number' => $familyMemberData['phone_number'],
                         'parent_user_id' => $primaryUser->id,
                         'profile_photo' => $familyMemberImagePath
@@ -326,21 +293,17 @@ class MembershipController extends Controller
 
                     $familyUser->assignRole('user');
 
-                    // Create UserDetail for family member
-                    UserDetail::create([
-                        'user_id' => $familyUser->id,
-                        'cnic_no' => $familyMemberData['cnic'],
-                        'mobile_number_a' => $familyMemberData['phone_number'],
-                    ]);
-
                     Member::create([
                         'user_id' => $familyUser->id,
                         'application_no' => Member::generateNextApplicationNo(),
+                        'first_name' => $familyMemberData['full_name'],
                         'relation' => $familyMemberData['relation'],
                         'family_suffix' => $familyMemberData['family_suffix'],
                         'card_status' => $request->member['card_status'],
                         'start_date' => $familyMemberData['start_date'] ?? null,
                         'end_date' => $familyMemberData['end_date'] ?? null,
+                        'cnic_no' => $familyMemberData['cnic'],
+                        'mobile_number_a' => $familyMemberData['phone_number'],
                     ]);
                 }
             }
@@ -405,47 +368,56 @@ class MembershipController extends Controller
             // Update User basic info
             $user->update([
                 'email' => $request->email,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
+                'name' => $request->first_name . ' ' . $request->last_name,
                 'phone_number' => $request->user_details['mobile_number_a'],
-                'member_type_id' => $request->member['member_type_id'],
             ]);
 
             // Update UserDetail (assumes one-to-one relation)
-            $userDetail = $user->userDetail;
+            $memberDetail = $user->member;
 
-            if ($userDetail) {
-                $userDetail->update([
-                    'coa_account' => $request->user_details['coa_account'],
-                    'title' => $request->user_details['title'],
-                    'application_number' => $request->user_details['application_number'],
-                    'name_comments' => $request->user_details['name_comments'],
-                    'guardian_name' => $request->user_details['guardian_name'],
-                    'guardian_membership' => $request->user_details['guardian_membership'],
-                    'nationality' => $request->user_details['nationality'],
-                    'cnic_no' => $request->user_details['cnic_no'],
-                    'passport_no' => $request->user_details['passport_no'],
-                    'gender' => $request->user_details['gender'],
-                    'ntn' => $request->user_details['ntn'],
-                    'date_of_birth' => $request->user_details['date_of_birth'],
-                    'education' => json_encode($request->user_details['education'] ?? []),
-                    'membership_reason' => $request->user_details['membership_reason'],
-                    'mobile_number_a' => $request->user_details['mobile_number_a'],
-                    'mobile_number_b' => $request->user_details['mobile_number_b'],
-                    'mobile_number_c' => $request->user_details['mobile_number_c'],
-                    'telephone_number' => $request->user_details['telephone_number'],
-                    'critical_email' => $request->user_details['critical_email'],
-                    'emergency_name' => $request->user_details['emergency_name'],
-                    'emergency_relation' => $request->user_details['emergency_relation'],
-                    'emergency_contact' => $request->user_details['emergency_contact'],
-                    'current_address' => $request->user_details['current_address'],
-                    'current_city' => $request->user_details['current_city'],
-                    'current_country' => $request->user_details['current_country'],
-                    'permanent_address' => $request->user_details['permanent_address'],
-                    'permanent_city' => $request->user_details['permanent_city'],
-                    'permanent_country' => $request->user_details['permanent_country'],
-                    'country' => $request->user_details['country'],
+            if ($memberDetail) {
+                $memberDetail->update([
+                    'kinship' => $request->member['kinship']['id'] ?? null,
+                    'membership_no' => $request->member['membership_no'],
+                    'member_type_id' => $request->member['member_type_id'],
+                    'first_name' => $request->member['first_name'],
+                    'middle_name' => $request->member['middle_name'],
+                    'last_name' => $request->member['last_name'],
+                    'member_category_id' => $request->member['membership_category'],
+                    'membership_date' => $request->member['membership_date'],
+                    'card_status' => $request->member['card_status'],
+                    'status' => $request->member['status'],
+                    'card_issue_date' => $request->member['card_issue_date'],
+                    'card_expiry_date' => $request->member['card_expiry_date'],
+                    'is_document_missing' => filter_var($request->member['is_document_missing'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'missing_documents' => $request->member['missing_documents'] ?? null,
+                    'coa_account' => $request->member['coa_account'],
+                    'title' => $request->member['title'],
+                    'guardian_name' => $request->member['guardian_name'],
+                    'guardian_membership' => $request->member['guardian_membership'],
+                    'nationality' => $request->member['nationality'],
+                    'cnic_no' => $request->member['cnic_no'],
+                    'passport_no' => $request->member['passport_no'],
+                    'gender' => $request->member['gender'],
+                    'ntn' => $request->member['ntn'],
+                    'date_of_birth' => $request->member['date_of_birth'],
+                    'education' => json_encode($request->member['education'] ?? []),
+                    'mobile_number_a' => $request->member['mobile_number_a'],
+                    'mobile_number_b' => $request->member['mobile_number_b'],
+                    'mobile_number_c' => $request->member['mobile_number_c'],
+                    'telephone_number' => $request->member['telephone_number'],
+                    'personal_email' => $request->email,
+                    'critical_email' => $request->member['critical_email'],
+                    'emergency_name' => $request->member['emergency_name'],
+                    'emergency_relation' => $request->member['emergency_relation'],
+                    'emergency_contact' => $request->member['emergency_contact'],
+                    'current_address' => $request->member['current_address'],
+                    'current_city' => $request->member['current_city'],
+                    'current_country' => $request->member['current_country'],
+                    'permanent_address' => $request->member['permanent_address'],
+                    'permanent_city' => $request->member['permanent_city'],
+                    'permanent_country' => $request->member['permanent_country'],
+                    'country' => $request->member['country'],
                 ]);
             }
 
@@ -512,7 +484,7 @@ class MembershipController extends Controller
     // Show Public Profile
     public function viewProfile($id)
     {
-        $user = User::with(['member', 'member.memberType', 'userDetail'])->findOrFail($id);
+        $user = User::with(['member', 'member.memberType'])->findOrFail($id);
 
         return Inertia::render('App/Membership/Show', ['user' => $user]);
     }

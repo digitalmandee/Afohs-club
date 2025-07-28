@@ -67,24 +67,23 @@ class UserController extends Controller
             $members = User::role('user', 'web')
                 ->select(
                     'users.id',
-                    'users.first_name',
-                    'users.last_name',
                     'users.email',
                     'users.phone_number',
+                    'members.first_name',
+                    'members.last_name',
                     'members.membership_no',
-                    'user_details.cnic_no',
-                    'user_details.current_address',
+                    'members.cnic_no',
+                    'members.current_address',
                     'member_categories.name as category_name'
                 )
                 ->leftJoin('members', 'users.id', '=', 'members.user_id')
-                ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
                 ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
                 ->whereNull('users.parent_user_id')
                 ->where(function ($q) use ($query) {
                     $q
-                        ->where('users.first_name', 'like', "%{$query}%")
-                        ->orWhere('users.last_name', 'like', "%{$query}%")
-                        ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ["%{$query}%"])
+                        ->where('members.first_name', 'like', "%{$query}%")
+                        ->orWhere('members.last_name', 'like', "%{$query}%")
+                        ->orWhereRaw("CONCAT(members.first_name, ' ', members.last_name) LIKE ?", ["%{$query}%"])
                         ->orWhere('members.membership_no', 'like', "%{$query}%");
                 })
                 ->limit(10)

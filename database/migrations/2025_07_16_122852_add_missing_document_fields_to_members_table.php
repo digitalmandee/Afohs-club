@@ -8,15 +8,15 @@ class AddMissingDocumentFieldsToMembersTable extends Migration
     public function up()
     {
         Schema::table('members', function (Blueprint $table) {
-            $table->boolean('is_document_enabled')->default(false);
-            $table->text('documents')->nullable();
+            $table->boolean('is_document_missing')->default(false);
+            $table->text('missing_documents')->nullable();
         });
     }
 
     public function down()
     {
         Schema::table('members', function (Blueprint $table) {
-            $table->dropColumn(['is_document_enabled', 'documents']);
+            $table->dropColumn(['is_document_missing', 'missing_documents']);
         });
     }
 }

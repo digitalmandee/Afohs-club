@@ -112,7 +112,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             end_date: '',
             picture: null,
             picture_preview: null,
-            is_document_enabled: false,
+            is_document_missing: false,
             documents: '',
         });
         setShowFamilyMember(false);
@@ -157,15 +157,15 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     // Upload documents
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
-        handleChangeData('documents', [...(data.documents || []), ...files]);
-        handleChangeData('previewFiles', [...(data.previewFiles || []), ...files]);
+        handleChangeData('member.documents', [...(data.member.documents || []), ...files]);
+        handleChangeData('member.previewFiles', [...(data.member.previewFiles || []), ...files]);
     };
 
     const handleFileRemove = (index) => {
-        const updatedFiles = [...(data.previewFiles || [])];
+        const updatedFiles = [...(data.member.previewFiles || [])];
         updatedFiles.splice(index, 1);
-        handleChangeData('previewFiles', updatedFiles);
-        handleChangeData('documents', updatedFiles);
+        handleChangeData('member.previewFiles', updatedFiles);
+        handleChangeData('member.documents', updatedFiles);
     };
 
     const handleSubmit = async () => {
@@ -177,7 +177,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             missingFields.push('Member Type (must be one of: ' + allowedMemberTypes.join(', ') + ')');
         }
 
-        if (data.member.is_document_enabled && !data.member.documents) {
+        if (data.member.is_document_missing && !data.member.missing_documents) {
             missingFields.push('Missing Document is required.');
         }
 
@@ -541,7 +541,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                     </Grid>
                                     <Grid item xs={12}>
                                         <InputLabel>Upload Documents (PDF or Images)</InputLabel>
-                                        <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8 }} />
+                                        <input type="file" multiple accept=".pdf,image/*" name="member.documents" onChange={handleFileChange} style={{ marginTop: 8 }} />
                                     </Grid>
 
                                     <Grid item xs={12}>
@@ -576,11 +576,11 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             <FormControlLabel
                                                 control={
                                                     <Checkbox
-                                                        checked={data.member.is_document_enabled || false}
+                                                        checked={data.member.is_document_missing || false}
                                                         onChange={(e) =>
                                                             handleChange({
                                                                 target: {
-                                                                    name: 'member.is_document_enabled',
+                                                                    name: 'member.is_document_missing',
                                                                     value: e.target.checked,
                                                                 },
                                                             })
@@ -591,7 +591,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 label="Document Missing"
                                             />
                                         </Box>
-                                        {data.member.is_document_enabled && (
+                                        {data.member.is_document_missing && (
                                             <Box sx={{ mb: 3 }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Which document is missing?</Typography>
                                                 <TextField
@@ -600,8 +600,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     rows={4}
                                                     placeholder="Enter missing documents"
                                                     variant="outlined"
-                                                    name="member.documents"
-                                                    value={data.member.documents || ''}
+                                                    name="member.missing_documents"
+                                                    value={data.member.missing_documents || ''}
                                                     onChange={handleChange}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
