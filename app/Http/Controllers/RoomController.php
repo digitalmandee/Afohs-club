@@ -20,7 +20,7 @@ class RoomController extends Controller
     public function index()
     {
         // Step 1: Build bookingId => invoice mapping
-        $invoices = FinancialInvoice::get();
+        $invoices = FinancialInvoice::where('invoice_type', 'room_booking')->get();
 
         $bookingInvoiceMap = [];
 
