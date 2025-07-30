@@ -46,18 +46,18 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
             <body>
               <div class="header">
                 <h2>Order Detail</h2>
-                <div class="order-id">Order ID: #${paymentData.order.id}</div>
+                <div class="order-id">Order ID: #${paymentData.id}</div>
               </div>
-    
+
               <div class="customer-info">
-                <p><strong>Customer:</strong> ${paymentData.user.name}</p>
-                <p><strong>Table:</strong> ${paymentData.order.table.table_no}</p>
-                <p><strong>Date:</strong> ${paymentData.order.start_date}</p>
+                <p><strong>Customer:</strong> ${paymentData.member.first_name + ' ' + paymentData.member.last_name}</p>
+                <p><strong>Table:</strong> ${paymentData.table.table_no}</p>
+                <p><strong>Date:</strong> ${paymentData.start_date}</p>
                 <p><strong>Cashier:</strong> ${paymentData.cashier?.name || 'N/A'}</p>
               </div>
-    
+
               <h3>Items</h3>
-              ${paymentData.order.order_items
+              ${paymentData.order_items
                   .map(
                       (item) => `
                 <div class="item">
@@ -68,14 +68,14 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
               `,
                   )
                   .join('')}
-    
+
               <div class="summary">
                 <p>Subtotal: Rs ${paymentData.amount}</p>
                 <p>Discount: Rs 0.00</p>
                 <p>Tax (12%): Rs ${(paymentData.amount * 0.12).toFixed(2)}</p>
                 <p class="total">Total: Rs ${paymentData.total_price}</p>
               </div>
-    
+
               <div class="payment">
                 <p><strong>Payment Method:</strong> ${paymentData.payment_method}</p>
                 <p><strong>Amount Paid:</strong> Rs ${paymentData.paid_amount}</p>
@@ -141,10 +141,10 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                     mr: 1,
                                 }}
                             >
-                                {paymentData.user.name.charAt(0).toUpperCase()}
+                                {paymentData.member.first_name.charAt(0).toUpperCase()}
                             </Avatar>
                             <Typography variant="subtitle1" fontWeight="medium">
-                                {paymentData.user.name}
+                                {paymentData.member.first_name + ' ' + paymentData.member.last_name}
                             </Typography>
                             {/* {orderDetail.isVIP && (
                             <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />
@@ -158,7 +158,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                         height: 36,
                                     }}
                                 >
-                                    {paymentData.order.table.table_no}
+                                    {paymentData.table.table_no}
                                 </Avatar>
                                 <IconButton size="small" sx={{ border: '1px solid #e0e0e0' }}>
                                     <HomeIcon />
@@ -177,7 +177,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                 Order Date
                             </Typography>
                             <Typography variant="body2" mt={0.5}>
-                                {paymentData.order.start_date}
+                                {paymentData.start_date}
                             </Typography>
                         </Grid>
                         <Grid item xs={4}>
@@ -209,7 +209,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                     {/* Order ID */}
                     <Box sx={{ mb: 3 }}>
                         <Chip
-                            label={`Order Id : #${paymentData.order.id}`}
+                            label={`Order Id : #${paymentData.id}`}
                             sx={{
                                 backgroundColor: '#f5f5f5',
                                 color: '#333',
@@ -221,7 +221,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
 
                     {/* Order Items */}
                     <Box sx={{ mb: 3 }}>
-                        {paymentData.order.order_items.map((item, index) => (
+                        {paymentData.order_items.map((item, index) => (
                             <Box key={index} display="flex" alignItems="center" mb={2}>
                                 <img
                                     src={item.order_item.image || '/placeholder.svg'}
