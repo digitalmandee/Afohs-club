@@ -321,9 +321,8 @@ class MembershipController extends Controller
 
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->getInvoiceNo(),
-                'customer_id' => $primaryUser->id,
-                'amount' => $memberCategory->fee,
-                'member_id' => Auth::user()->id,
+                'member_id' => $primaryUser->id,
+                'amount' => $memberCategory->subscription_fee * 3,
                 'subscription_type' => 'quarter',
                 'invoice_type' => 'membership',
                 'issue_date' => $now,

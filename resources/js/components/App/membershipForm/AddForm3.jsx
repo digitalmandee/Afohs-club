@@ -328,7 +328,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
                                 <Box sx={{ mb: 3 }}>
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category</Typography>
-                                    <pre>{JSON.stringify(data.member, null, 2)}</pre>
                                     <FormControl fullWidth variant="outlined">
                                         <Select
                                             name="member.membership_category"
@@ -432,13 +431,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         name="member.membership_no"
                                         value={data.member.membership_no}
                                         onChange={(e) => {
-                                            const input = e.target.value;
-
-                                            const validPattern = /^[0-9]{0,10}-?[0-9]{0,2}$/;
-
-                                            if (input === '' || validPattern.test(input)) {
-                                                handleChange(e);
-                                            }
+                                            handleChange(e);
                                         }}
                                         inputProps={{
                                             maxLength: 12,
