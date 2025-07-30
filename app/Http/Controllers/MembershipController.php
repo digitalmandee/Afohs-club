@@ -272,7 +272,7 @@ class MembershipController extends Controller
                 'country' => $request->member['country'],
                 'documents' => $documentPaths,
             ]);
-            Log::info('yes');
+
             // Handle family members
             if (!empty($request->family_members)) {
                 foreach ($request->family_members as $familyMemberData) {

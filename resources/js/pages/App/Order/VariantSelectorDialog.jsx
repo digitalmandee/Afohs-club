@@ -1,5 +1,3 @@
-// resources/js/Components/VariantSelectorDialog.jsx
-
 import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -9,6 +7,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
     const [loading, setLoading] = useState(false);
     const [selectedValues, setSelectedValues] = useState({});
     const [quantity, setQuantity] = useState(initialItem?.quantity || 1);
+    const [remarks, setRemarks] = useState(initialItem?.remarks || ''); // ✅ New state for remarks
 
     useEffect(() => {
         if (!productId) return;
@@ -71,6 +70,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
             quantity,
             category: product.category?.name || '',
             variants: selectedVariantItems,
+            remarks, // ✅ Include remarks
         };
 
         onConfirm(orderItem);
@@ -110,10 +110,18 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
                                 </ToggleButtonGroup>
                             </Box>
                         ))}
+
                         <Box mt={2}>
                             <TextField label="Quantity" type="number" value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))} inputProps={{ min: 1 }} fullWidth />
                         </Box>
+
+                        <Box mt={2}>
+                            {' '}
+                            {/* ✅ Remarks input field */}
+                            <TextField label="Remarks" multiline minRows={2} value={remarks} onChange={(e) => setRemarks(e.target.value)} fullWidth />
+                        </Box>
                     </DialogContent>
+
                     <DialogActions>
                         <Button onClick={onClose}>Cancel</Button>
                         <Button variant="contained" disabled={Object.values(selectedValues).some((v) => !v || v.stock === 0)} onClick={handleConfirm}>

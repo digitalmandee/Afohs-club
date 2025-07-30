@@ -88,16 +88,22 @@ const OrderDetail = ({ handleEditItem }) => {
 
     const handleSendToKitchen = async () => {
         setIsLoading(true);
+        console.log('orderDetails', orderDetails);
+
         const payload = {
             ...orderDetails,
             price: subtotal,
             tax: taxRate,
+            discount_type: formData.discountType,
+            discount_value: formData.discountValue,
             discount: discountAmount,
             total_price: total,
             kitchen_note: notes.kitchen_note,
             staff_note: notes.staff_note,
             payment_note: notes.payment_note,
         };
+
+        console.log('payload', payload);
 
         router.post(route('order.send-to-kitchen'), payload, {
             onSuccess: () => {

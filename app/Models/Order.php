@@ -25,9 +25,14 @@ class Order extends Model
         'order_time',
         'end_time',
         'status',
+        'payment_status',
         'kitchen_note',
         'staff_note',
         'payment_note',
+        'tax',
+        'discount',
+        'total_price',
+        'cost_price'
     ];
 
     public function orderItems()
@@ -39,9 +44,15 @@ class Order extends Model
     {
         return $this->belongsTo(Table::class);
     }
+
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Member::class);
+    }
+
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'user_id', 'user_id');
     }
 
     public function invoice()

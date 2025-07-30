@@ -144,7 +144,7 @@ const ReservationDialog = () => {
         return date.toLocaleString('en-US', options);
     }
 
-    const isDisabled = !orderDetails.member;
+    const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0;
 
     useEffect(() => {
         const handleKeyDown = (e) => {

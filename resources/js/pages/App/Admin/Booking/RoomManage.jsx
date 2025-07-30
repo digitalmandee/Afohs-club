@@ -521,7 +521,6 @@ const RoomScreen = ({ rooms, data }) => {
                             <Col>
                                 <Typography variant="h6" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '24px' }}>
                                     Recently Booking
-                                    {/* <pre>{JSON.stringify(data, null, 2)}</pre> */} {/* TODO: Commented out debug output */}
                                 </Typography>
                             </Col>
                             <Col xs="auto" className="d-flex gap-3">
@@ -621,9 +620,9 @@ const RoomScreen = ({ rooms, data }) => {
 
                                 return (
                                     <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handleShowInvoice(booking)}>
-                                        <Card.Body className="p-2">
+                                        <Card.Body className="p-3">
                                             <Row>
-                                                <Col md={2} className="d-flex justify-content-center">
+                                                {/* <Col md={2} className="d-flex justify-content-center">
                                                     <img
                                                         src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
                                                         alt={booking.type}
@@ -632,9 +631,9 @@ const RoomScreen = ({ rooms, data }) => {
                                                             objectFit: 'cover',
                                                         }}
                                                     />
-                                                </Col>
-                                                <Col md={10}>
-                                                    <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                                                </Col> */}
+                                                <Col md={12}>
+                                                    <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap">
                                                         <div>
                                                             <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}</Typography>
                                                             <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>

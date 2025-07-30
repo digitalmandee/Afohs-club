@@ -51,7 +51,7 @@ const TakeAwayDialog = () => {
         // setErrors({ ...errors, [field]: '' }); // Clear error on change
     };
 
-    const isDisabled = !orderDetails.member;
+    const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0;
 
     useEffect(() => {
         const handleKeyDown = (e) => {

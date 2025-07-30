@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\OrderCreated;
 use App\Models\Category;
+use App\Models\FinancialInvoice;
 use App\Models\Floor;
 use App\Models\Invoices;
 use App\Models\MemberType;
@@ -13,17 +14,16 @@ use App\Models\Product;
 use App\Models\ProductVariantValue;
 use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
 
 class OrderController extends Controller
 {
-
     // Show new order page
     public function index(Request $request)
     {
@@ -36,14 +36,17 @@ class OrderController extends Controller
         $floorTables = Floor::select('id', 'name')
             ->where('status', 1)
             ->with(['tables' => function ($query) use ($today) {
-                $query->select('id', 'floor_id', 'table_no', 'capacity')
+                $query
+                    ->select('id', 'floor_id', 'table_no', 'capacity')
                     ->with(['orders' => function ($orderQuery) use ($today) {
-                        $orderQuery->select('id', 'table_id', 'status', 'start_date')
+                        $orderQuery
+                            ->select('id', 'table_id', 'status', 'start_date')
                             ->whereDate('start_date', $today)
                             ->whereIn('status', ['pending', 'in_progress', 'completed'])
                             ->with(['invoice:id,order_id,status']);
                     }]);
-            }])->get();
+            }])
+            ->get();
 
         // Process is_available flag based on today's orders and invoice status
         foreach ($floorTables as $floor) {
@@ -118,10 +121,11 @@ class OrderController extends Controller
 
     private function getInvoiceNo()
     {
-        $invoicNo = Invoices::max('invoice_no');
-        $invoicNo = $invoicNo + 1;
+        $invoicNo = FinancialInvoice::max('invoice_no');
+        $invoicNo = (int) $invoicNo + 1;
         return $invoicNo;
     }
+
     public function orderReservation(Request $request)
     {
         $date = $request->input('date');
@@ -138,7 +142,6 @@ class OrderController extends Controller
             'table_id' => $request->table,
             'status' => 'saved',
         ]);
-
 
         return response()->json(['message' => 'Order placed successfully.', 'order' => $order], 200);
     }
@@ -187,7 +190,7 @@ class OrderController extends Controller
             // Insert order items
             foreach ($groupedByKitchen as $kitchenId => $items) {
                 // Ensure kitchenId is null if empty or not numeric
-                $safeKitchenId = (is_numeric($kitchenId) && $kitchenId !== '') ? (int)$kitchenId : null;
+                $safeKitchenId = (is_numeric($kitchenId) && $kitchenId !== '') ? (int) $kitchenId : null;
                 foreach ($items as $item) {
                     $productData = $item;
                     $productId = $productData['id'];
@@ -225,25 +228,36 @@ class OrderController extends Controller
                     ]);
                 }
             }
-
-            // Create invoice
-            Invoices::create([
-                'invoice_no' => $this->getInvoiceNo(),
-                'user_id' => $request->member['id'],
-                'order_id' => $order->id,
-                'amount' => $request->price,
+            Log::info($totalCostPrice);
+            $order->update([
                 'tax' => $request->tax,
                 'discount' => $request->discount,
                 'total_price' => $request->total_price,
                 'cost_price' => $totalCostPrice,
+            ]);
+
+            // Create invoice
+            FinancialInvoice::create([
+                'invoice_no' => $this->getInvoiceNo(),
+                'member_id' => $request->member['id'],
+                'invoice_type' => 'food_order',
+                'amount' => $request->price,
+                'total_price' => $request->total_price,
+                'discount_type' => $request->discount_type,
+                'discount_value' => $request->discount_type ? (float) $request->discount_value : 0,
+                'payment_method' => 'cash',
+                'issue_date' => Carbon::now(),
                 'status' => 'unpaid',
+                'data' => [
+                    'order_id' => $order->id,
+                ],
             ]);
 
             DB::commit();
 
             // Load relationships for broadcasting
             $order->load(['table', 'orderItems']);
-
+            Log::info('Order created: ' . $order->id);
             // Broadcast the event
             broadcast(new OrderCreated($order));
 
@@ -253,7 +267,7 @@ class OrderController extends Controller
             return redirect()->back()->with('success', 'Order sent to kitchen.');
         } catch (\Throwable $th) {
             // DB::rollBack();
-            Log::error("Error sending order to kitchen: " . $th->getMessage());
+            Log::error('Error sending order to kitchen: ' . $th->getMessage());
             return redirect()->back()->with('error', 'Failed to send order to kitchen.');
         }
     }
@@ -262,7 +276,8 @@ class OrderController extends Controller
     {
         foreach ($groupedByKitchen as $kitchenId => $items) {
             $kitchen = User::with('kitchenDetail')->find($kitchenId);
-            if (!$kitchen || !$kitchen->kitchenDetail || !$kitchen->kitchenDetail->printer_ip) continue;
+            if (!$kitchen || !$kitchen->kitchenDetail || !$kitchen->kitchenDetail->printer_ip)
+                continue;
 
             try {
                 $printerIp = $kitchen->kitchenDetail->printer_ip;
@@ -276,7 +291,7 @@ class OrderController extends Controller
                 $printer->text("Kitchen: {$kitchen->name}\n");
                 $printer->text("Order #: {$order->order_number}\n");
                 $printer->text("Table: {$order->table->table_no}\n");
-                $printer->text(date("Y-m-d H:i:s") . "\n");
+                $printer->text(date('Y-m-d H:i:s') . "\n");
                 $printer->text("--------------------------------\n");
 
                 // Print each item
@@ -293,7 +308,6 @@ class OrderController extends Controller
             }
         }
     }
-
 
     protected function printItem($printer, $item)
     {
@@ -345,7 +359,7 @@ class OrderController extends Controller
                 $itemId = (int) str_replace('update-', '', $itemData['id']);
                 $order->orderItems()->where('id', $itemId)->update([
                     'order_item' => $itemData['order_item'],
-                    'status'     => $itemData['status'],
+                    'status' => $itemData['status'],
                 ]);
             }
 
@@ -354,13 +368,13 @@ class OrderController extends Controller
                 $order->orderItems()->create([
                     'kitchen_id' => $itemData['order_item']['kitchen_id'] ?? null,
                     'order_item' => $itemData['order_item'],
-                    'status'     => 'pending',
+                    'status' => 'pending',
                 ]);
             }
 
             // Update related invoice
             $order->invoice?->update([
-                'amount'      => $validated['subtotal'],
+                'amount' => $validated['subtotal'],
                 'total_price' => $validated['total_price'],
                 // 'discount'  => $validated['discount'],
                 // 'tax'       => $validated['tax_amount'] ?? 0,
@@ -382,7 +396,6 @@ class OrderController extends Controller
         $orders2 = Order::whereIn('status', ['pending', 'in_progress', 'completed'])->get();
         return Inertia::render('App/Order/Queue', compact('orders2'));
     }
-
 
     public function getProducts(Request $request, $category_id)
     {

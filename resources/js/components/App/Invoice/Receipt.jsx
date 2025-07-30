@@ -17,6 +17,8 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
         if (openModal && invoiceId) {
             setLoading(true);
             axios.get(route('transaction.invoice', { invoiceId: invoiceId })).then((response) => {
+                console.log('response', response.data);
+
                 setPaymentData(response.data);
                 setLoading(false);
             });
@@ -66,14 +68,14 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
             <div class="row">
               <div>Cashier</div>
-              <div>${data.user.name}</div>
+              <div>${data.member.first_name + ' ' + data.member.last_name}</div>
             </div>
 
             <div class="divider"></div>
 
             <div class="row">
               <div>Customer Name</div>
-              <div>${data.user.name}</div>
+              <div>${data.member.first_name + ' ' + data.member.last_name}</div>
             </div>
 
             <div class="row">
@@ -158,7 +160,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <img src={'/assets/Logo.png'} style={styles.receiptLogo} />
             </Box>
             <Box sx={styles.receiptHeader}>
-                <Typography variant="caption">{paymentData.order.start_date}</Typography>
+                <Typography variant="caption">{paymentData.start_date}</Typography>
             </Box>
 
             <Box sx={styles.receiptOrderId}>
@@ -166,7 +168,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                     Order Id
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                    #{paymentData.order.order_number}
+                    #{paymentData.order_number}
                 </Typography>
             </Box>
 
@@ -183,7 +185,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption" color="text.secondary">
                     Customer Name
                 </Typography>
-                <Typography variant="caption">{paymentData.user.name}</Typography>
+                <Typography variant="caption">{paymentData.member?.first_name + ' ' + paymentData.member?.last_name}</Typography>
             </Box>
 
             <Box sx={styles.receiptRow}>
@@ -197,19 +199,19 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption" color="text.secondary">
                     Order Type
                 </Typography>
-                <Typography variant="caption">{paymentData.order.order_type}</Typography>
+                <Typography variant="caption">{paymentData.order_type}</Typography>
             </Box>
 
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
                     Table Number
                 </Typography>
-                <Typography variant="caption">{paymentData.order?.table?.table_no}</Typography>
+                <Typography variant="caption">{paymentData?.table?.table_no}</Typography>
             </Box>
 
             <Box sx={styles.receiptDivider} />
 
-            {paymentData.order.order_items.map((item, index) => (
+            {paymentData.order_items.map((item, index) => (
                 <Box key={index} mb={1.5}>
                     <Typography variant="caption" fontWeight="medium">
                         {item.order_item.name}

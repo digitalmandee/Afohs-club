@@ -12,33 +12,29 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $invoices = Invoices::with([
-            'user',
-            'order.user',
-            'order.table:id,table_no',
-            'order.orderItems:id,order_id'
-        ])->latest()
-            ->get()
-            ->map(function ($invoice) {
-                $invoice->order_items_count = $invoice->order?->orderItems->count() ?? 0;
-                return $invoice;
-            });
+        $orders = Order::with([
+            'member',
+            'table:id,table_no',
+            'orderItems:id,order_id',
+        ])->latest()->get()->map(function ($order) {
+            $order->order_items_count = $order->orderItems->count() ?? 0;
+            return $order;
+        });
 
         $totalOrders = Order::count();
 
-
         return Inertia::render('App/Transaction/Dashboard', [
-            'Invoices' => $invoices,
+            'Invoices' => $orders,
             'totalOrders' => $totalOrders,
         ]);
     }
 
-
     public function PaymentOrderData($invoiceId)
     {
-        $order = Invoices::where('id', $invoiceId)->with(['cashier:id,name', 'user:id,name', 'order', 'order.orderItems:id,order_id,order_item,status', 'order.table:id,table_no'])->firstOrFail();
+        $order = Order::where('id', $invoiceId)->with(['member:id,user_id,first_name,last_name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
         return $order;
     }
+
     public function OrderPayment(Request $request)
     {
         // Basic validation for common fields

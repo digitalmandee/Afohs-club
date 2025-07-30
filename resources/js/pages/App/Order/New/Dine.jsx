@@ -91,7 +91,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
           })
         : [];
 
-    const isDisabled = !orderDetails.member || !orderDetails.waiter || !orderDetails.table;
+    const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0 || !orderDetails.waiter || !orderDetails.table;
 
     useEffect(() => {
         const handleKeyDown = (e) => {
