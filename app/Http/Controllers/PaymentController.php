@@ -40,7 +40,7 @@ class PaymentController extends Controller
             'amount' => 'required|numeric|min:0',
             'total_amount' => 'required|numeric|min:0',
             'customer_charges' => 'required|numeric|min:0',
-            'duration' => 'required|integer|min:1',
+            // 'duration' => 'required|integer|min:1',
             'payment_method' => 'required|string',
             'remarks' => Rule::requiredIf(fn() => floatval($request->total_amount) === 0),
             'receipt' => 'nullable|file',

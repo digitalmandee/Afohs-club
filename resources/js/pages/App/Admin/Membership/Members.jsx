@@ -81,7 +81,7 @@ const AllMembers = ({ members }) => {
     const handleStatusUpdate = (memberId, newStatus) => {
         const foundMember = members.data.find((m) => m.id === memberId);
         if (foundMember) {
-            foundMember.member.card_status = newStatus;
+            foundMember.member.status = newStatus;
         }
     };
 
@@ -161,14 +161,14 @@ const AllMembers = ({ members }) => {
                                                         <>
                                                             <span
                                                                 style={{
-                                                                    color: user.member?.card_status === 'active' ? '#2e7d32' : user.member?.card_status === 'suspended' ? '#FFA90B' : '#d32f2f',
+                                                                    color: user.member?.status === 'active' ? '#2e7d32' : user.member?.status === 'suspended' ? '#FFA90B' : '#d32f2f',
                                                                     fontWeight: 'medium',
                                                                     cursor: 'pointer',
                                                                 }}
                                                                 {...bindTrigger(popupState)}
                                                             >
-                                                                {user.member?.card_status || 'N/A'}
-                                                                {user.member?.card_status === 'suspended' && (
+                                                                {user.member?.status || 'N/A'}
+                                                                {user.member?.status === 'suspended' && (
                                                                     <img
                                                                         src="/assets/system-expired.png"
                                                                         alt=""
@@ -183,7 +183,7 @@ const AllMembers = ({ members }) => {
                                                                 <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
                                                             </span>
                                                             <Menu {...bindMenu(popupState)}>
-                                                                {getAvailableStatusActions(user.member?.card_status).map((statusOption) => (
+                                                                {getAvailableStatusActions(user.member?.status).map((statusOption) => (
                                                                     <MenuItem
                                                                         key={statusOption}
                                                                         onClick={() => {
@@ -225,7 +225,7 @@ const AllMembers = ({ members }) => {
                                                 </Button>
                                             </TableCell>
                                             <TableCell>
-                                                {user.member?.card_status === 'Expired' || user.member?.card_status === 'Suspend' ? (
+                                                {user.member?.status === 'Expired' || user.member?.status === 'Suspend' ? (
                                                     <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
                                                 ) : (
                                                     <Button

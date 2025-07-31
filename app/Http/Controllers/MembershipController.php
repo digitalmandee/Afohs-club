@@ -223,7 +223,7 @@ class MembershipController extends Controller
 
             $memberCategory = MemberCategory::find($request->member['membership_category'], ['id', 'name', 'fee', 'subscription_fee']);
             // Create primary member record
-
+            Log::info($request->member['status']);
             Member::create([
                 'user_id' => $primaryUser->id,
                 'application_no' => $applicationNo,
@@ -529,7 +529,7 @@ class MembershipController extends Controller
         DB::beginTransaction();
         try {
             $member->update([
-                'card_status' => $request->status,
+                'status' => $request->status,
                 'paused_at' => $request->status === 'pause' ? now() : null,
             ]);
 

@@ -25,6 +25,7 @@ class Member extends Model
         'picture',
         'membership_date',
         'card_status',
+        'status',
         'card_issue_date',
         'card_expiry_date',
         'from_date',
