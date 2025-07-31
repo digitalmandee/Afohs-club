@@ -70,7 +70,6 @@ class Member extends Model
     ];
 
     protected $casts = [
-        'member_type' => 'array',
         'category_ids' => 'array',
         'is_document_missing' => 'boolean',
         'documents' => 'array',

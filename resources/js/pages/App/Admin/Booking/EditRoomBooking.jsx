@@ -306,7 +306,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 </Grid>
 
                 <Grid item xs={12}>
-                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="/admin/api/search-users" placeholder="Search members..." disabled={true} />
+                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="admin.api.search-users" placeholder="Search members..." disabled={true} />
                     {errors.guest && (
                         <Typography variant="body2" color="error">
                             {errors.guest}

@@ -50,7 +50,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
               </div>
 
               <div class="customer-info">
-                <p><strong>Customer:</strong> ${paymentData.member.first_name + ' ' + paymentData.member.last_name}</p>
+                <p><strong>Customer:</strong> ${paymentData.member.full_name}</p>
                 <p><strong>Table:</strong> ${paymentData.table.table_no}</p>
                 <p><strong>Date:</strong> ${paymentData.start_date}</p>
                 <p><strong>Cashier:</strong> ${paymentData.cashier?.name || 'N/A'}</p>
@@ -79,7 +79,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
               <div class="payment">
                 <p><strong>Payment Method:</strong> ${paymentData.payment_method}</p>
                 <p><strong>Amount Paid:</strong> Rs ${paymentData.paid_amount}</p>
-                <p><strong>Change:</strong> Rs ${paymentData.customer_change || 0}</p>
+                <p><strong>Change:</strong> Rs ${paymentData.paid_amount - paymentData.total_price}</p>
               </div>
             </body>
           </html>
@@ -141,10 +141,10 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                     mr: 1,
                                 }}
                             >
-                                {paymentData.member.first_name.charAt(0).toUpperCase()}
+                                {paymentData.member.full_name ? paymentData.member.full_name.charAt(0).toUpperCase() : ''}
                             </Avatar>
                             <Typography variant="subtitle1" fontWeight="medium">
-                                {paymentData.member.first_name + ' ' + paymentData.member.last_name}
+                                {paymentData.member.full_name} ({paymentData.member.membership_no})
                             </Typography>
                             {/* {orderDetail.isVIP && (
                             <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />
@@ -180,22 +180,24 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                 {paymentData.start_date}
                             </Typography>
                         </Grid>
-                        <Grid item xs={4}>
-                            <Typography variant="caption" color="text.secondary">
-                                Cashier
-                            </Typography>
-                            <Box display="flex" alignItems="center" mt={0.5}>
-                                <Avatar
-                                    src={paymentData.cashier?.profile_photo}
-                                    sx={{
-                                        width: 20,
-                                        height: 20,
-                                        mr: 1,
-                                    }}
-                                />
-                                <Typography variant="body2">{paymentData.cashier?.name}</Typography>
-                            </Box>
-                        </Grid>
+                        {paymentData.cashier && (
+                            <Grid item xs={4}>
+                                <Typography variant="caption" color="text.secondary">
+                                    Cashier
+                                </Typography>
+                                <Box display="flex" alignItems="center" mt={0.5}>
+                                    <Avatar
+                                        src={paymentData.cashier?.profile_photo}
+                                        sx={{
+                                            width: 20,
+                                            height: 20,
+                                            mr: 1,
+                                        }}
+                                    />
+                                    <Typography variant="body2">{paymentData.cashier?.name}</Typography>
+                                </Box>
+                            </Grid>
+                        )}
                         {/* <Grid item xs={4}>
                         <Typography variant="caption" color="text.secondary">
                             Working Time
@@ -223,16 +225,18 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                     <Box sx={{ mb: 3 }}>
                         {paymentData.order_items.map((item, index) => (
                             <Box key={index} display="flex" alignItems="center" mb={2}>
-                                <img
-                                    src={item.order_item.image || '/placeholder.svg'}
-                                    alt={item.order_item.name}
-                                    style={{
-                                        width: 50,
-                                        height: 50,
-                                        borderRadius: 8,
-                                        objectFit: 'cover',
-                                    }}
-                                />
+                                {item.order_item.image && (
+                                    <img
+                                        src={item.order_item.image || '/placeholder.svg'}
+                                        alt={item.order_item.name}
+                                        style={{
+                                            width: 50,
+                                            height: 50,
+                                            borderRadius: 8,
+                                            objectFit: 'cover',
+                                        }}
+                                    />
+                                )}
                                 <Box ml={2} flex={1}>
                                     <Typography variant="subtitle2" fontWeight="bold">
                                         {item.order_item.name}
@@ -251,7 +255,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                         Qty: {item.order_item.quantity} x Rs {item.order_item.price}
                                     </Typography>
                                     <Typography variant="subtitle2" fontWeight="bold" display="block">
-                                        Rs {item.order_item.total_price}
+                                        Rs {item.order_item.total_price.toFixed(2)}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -325,7 +329,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                 Customer Change
                             </Typography>
                             <Typography variant="body2" fontWeight="medium" mt={0.5}>
-                                Rs {paymentData.customer_change || 0}
+                                Rs {paymentData.paid_amount - paymentData.total_price}
                             </Typography>
                         </Box>
                     </Box>

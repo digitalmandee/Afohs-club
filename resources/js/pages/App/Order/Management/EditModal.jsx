@@ -1,5 +1,5 @@
 import { AccessTime, Add } from '@mui/icons-material';
-import { Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide } from '@mui/material';
+import { Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 import { useState } from 'react';
 import AddItems from './AddItem';
 import VariantSelectorDialog from '../VariantSelectorDialog';
@@ -10,6 +10,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const [variantProductId, setVariantProductId] = useState(null);
     const [initialEditItem, setInitialEditItem] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
+    const [orderStatus, setOrderStatus] = useState(order?.status || 'pending');
     const [loading, setLoading] = useState(false);
 
     const handleQuantityChange = (index, delta) => {
@@ -95,7 +96,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const onSubmit = async () => {
         setLoading(true);
         try {
-            await onSave(); // or perform API call here
+            await onSave(orderStatus); // or perform API call here
             setShowAddItem(false);
         } catch (error) {
             console.error('Failed to save order', error);
@@ -145,11 +146,9 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                             <Typography variant="subtitle2" sx={{ fontWeight: 500, fontSize: '18px' }}>
                                 #{order?.order_number ?? '—'}
                             </Typography>
+
                             <Typography variant="h6" sx={{ fontWeight: 500, fontSize: '18px' }}>
-                                {order?.user?.member_type?.name ?? '—'}{' '}
-                                <Typography component="span" variant="body2" sx={{ opacity: 0.8, fontWeight: 500 }}>
-                                    ({order?.type ?? '—'})
-                                </Typography>
+                                {order?.member?.member_type?.name ?? '—'}{' '}
                             </Typography>
                             <Box
                                 sx={{
@@ -216,6 +215,30 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 },
                             }}
                         >
+                            <Box p={2}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="status-label">Status</InputLabel>
+                                    <Select
+                                        labelId="status-label"
+                                        fullWidth
+                                        value={orderStatus}
+                                        onChange={(e) => setOrderStatus(e.target.value)}
+                                        sx={{
+                                            backgroundColor: 'white',
+                                            borderRadius: 1,
+                                            color: '#003153',
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        <MenuItem value="pending">Pending</MenuItem>
+                                        <MenuItem value="in_progress">In Progress</MenuItem>
+                                        <MenuItem value="completed">Completed</MenuItem>
+                                        <MenuItem value="cancelled">Cancelled</MenuItem>
+                                        <MenuItem value="no_show">No Show</MenuItem>
+                                        <MenuItem value="refund">Refund</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Box>
                             <List sx={{ py: 0 }}>
                                 {orderItems.length > 0 &&
                                     orderItems.map((item, index) => (

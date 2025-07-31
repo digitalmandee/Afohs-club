@@ -88,7 +88,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                         ))}
                     </TextField>
 
-                    <AsyncSearchTextField label="Member Name" name="guest" value={data.guest} onChange={handleChange} endpoint="/admin/api/search-users?type=memeber" placeholder="Search members..." />
+                    <AsyncSearchTextField label="Member Name" name="guest" value={data.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: 'member' }} placeholder="Search members..." />
 
                     <TextField fullWidth label="Member No" margin="normal" value={data.member_no} onChange={(e) => setData('member_no', e.target.value)} disabled />
 

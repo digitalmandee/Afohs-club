@@ -1,5 +1,5 @@
 // pages/CustomerLists.jsx
-import SideNav from '@/components/App/Sidebar/SideNav';
+import SideNav from '@/components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrowRightIcon, Search as SearchIcon } from '@mui/icons-material';

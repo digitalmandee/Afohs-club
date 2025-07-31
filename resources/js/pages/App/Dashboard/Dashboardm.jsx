@@ -484,7 +484,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                         mr: 1,
                                                                     }}
                                                                 >
-                                                                    {item.user.name}
+                                                                    {item.member.full_name} ({item.member.membership_no})
                                                                 </Typography>
                                                                 <img
                                                                     src="/assets/Diamond.png"
@@ -1030,7 +1030,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                     mr: 1,
                                                                 }}
                                                             >
-                                                                {order.user?.name}
+                                                                {order.member?.full_name}
                                                             </Typography>
                                                             <img
                                                                 src="/assets/Diamond.png"
@@ -1350,7 +1350,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 mb: 0.5,
                                                             }}
                                                         >
-                                                            {order.user?.name}
+                                                            {order.member.full_name}
                                                             <img
                                                                 src="/assets/Diamond.png"
                                                                 alt=""
@@ -1411,7 +1411,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 fontWeight: 'bold',
                                                             }}
                                                         >
-                                                            {order.invoice?.total_price}
+                                                            {order.total_price}
                                                         </Typography>
                                                     </Box>
                                                 </Box>

@@ -224,13 +224,13 @@ class MembershipController extends Controller
             $memberCategory = MemberCategory::find($request->member['membership_category'], ['id', 'name', 'fee', 'subscription_fee']);
             // Create primary member record
 
-            Log::info(json_encode($request->member));
             Member::create([
                 'user_id' => $primaryUser->id,
                 'application_no' => $applicationNo,
                 'first_name' => $request->member['first_name'],
                 'middle_name' => $request->member['middle_name'],
                 'last_name' => $request->member['last_name'],
+                'full_name' => $request->member['first_name'] . ' ' . $request->member['middle_name'] . ' ' . $request->member['last_name'],
                 'kinship' => $request->member['kinship']['id'] ?? null,
                 'membership_no' => $request->member['membership_no'] ?? $membershipNo,
                 'member_type_id' => $request->member['member_type_id'],
@@ -387,6 +387,7 @@ class MembershipController extends Controller
                     'first_name' => $request->member['first_name'],
                     'middle_name' => $request->member['middle_name'],
                     'last_name' => $request->member['last_name'],
+                    'full_name' => $request->member['first_name'] . ' ' . $request->member['middle_name'] . ' ' . $request->member['last_name'],
                     'member_category_id' => $request->member['membership_category'],
                     'membership_date' => $request->member['membership_date'],
                     'card_status' => $request->member['card_status'],

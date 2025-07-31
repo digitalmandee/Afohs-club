@@ -417,7 +417,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 });
                                             }
                                         }}
-                                        endpoint="/admin/api/search-users"
+                                        endpoint="admin.api.search-users"
                                         placeholder="Search Kinship..."
                                         disabled={!data.member.membership_category}
                                     />

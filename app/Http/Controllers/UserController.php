@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,51 +14,45 @@ class UserController extends Controller
     // Search for members
     public function searchMember(Request $request)
     {
-        $query = $request->input('query');
-        $memberType = $request->input('member_type');
-        $roleType = $request->input('role', 'user');
+        $query = $request->input('q');
+        $memberType = $request->input('type');
 
-        $members = User::role($roleType, 'web')
-            ->select(
-                'users.id',
-                'users.email',
-                'users.phone_number',
-                'members.first_name',
-                'members.last_name',
-                'members.membership_no',
-                'members.cnic_no',
-                'members.current_address',
-                'member_categories.name as category_name'
-            )
-            ->leftJoin('members', 'users.id', '=', 'members.user_id')
+        $members = Member::select(
+            'members.id',
+            'members.user_id',
+            'members.first_name',
+            'members.last_name',
+            'members.membership_no',
+            'members.cnic_no',
+            'members.current_address',
+            'member_categories.name as category_name'
+        )
             ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
+            ->leftJoin('users', 'members.user_id', '=', 'users.id')
             ->whereNull('users.parent_user_id')
             ->where(function ($q) use ($query) {
                 $q
-                    ->where('members.first_name', 'like', "%{$query}%")
-                    ->orWhere('members.last_name', 'like', "%{$query}%")
-                    ->orWhereRaw("CONCAT(members.first_name, ' ', members.last_name) LIKE ?", ["%{$query}%"])
+                    ->where('members.full_name', 'like', "%{$query}%")
                     ->orWhere('members.membership_no', 'like', "%{$query}%");
             });
 
         // Apply member_type filter if provided (only for 'user' role)
-        // if ($roleType === 'user' && !empty($memberType)) {
-        //     $members->where('members.member_type_id', $memberType);
-        // }
+        if (!empty($memberType)) {
+            $members->where('members.member_type_id', $memberType);
+        }
 
         $members = $members->limit(10)->get();
 
         $results = $members->map(function ($user) {
             $fullName = trim("{$user->first_name} {$user->last_name}");
             return [
-                'id' => $user->id,
-                'booking_type' => 'member',
+                'id' => $user->user_id,
                 'name' => $fullName,
                 'label' => "{$fullName} ({$user->membership_no})",
                 'membership_no' => $user->membership_no,
-                'email' => $user->email,
+                'email' => $user->personal_email,
                 'cnic' => $user->cnic_no,
-                'phone' => $user->phone_number,
+                'phone' => $user->mobile_number_a,
                 'address' => $user->current_address,
             ];
         });

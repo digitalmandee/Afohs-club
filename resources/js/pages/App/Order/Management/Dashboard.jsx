@@ -42,7 +42,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
         setActiveCategory(category);
     };
 
-    const onSave = () => {
+    const onSave = (status) => {
         const updatedItems = orderItems.filter((item) => typeof item.id === 'string' && item.id.startsWith('update-'));
         const newItems = orderItems.filter((item) => item.id === 'new');
 
@@ -59,6 +59,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
             discount,
             tax_rate: taxRate,
             total_price: total,
+            status,
         };
 
         return new Promise((resolve, reject) => {
@@ -90,7 +91,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
         if (searchText.trim()) {
             const lowercased = searchText.toLowerCase();
             filtered = filtered.filter((order) => {
-                return order.order_number.toString().includes(lowercased) || (order.user?.name && order.user.name.toLowerCase().includes(lowercased)) || (order.user?.user_id && order.user.user_id.toLowerCase().includes(lowercased)) || (order.table?.table_no && order.table.table_no.toLowerCase().includes(lowercased));
+                return order.order_number.toString().includes(lowercased) || (order.member?.full_name && order.member.full_name.toLowerCase().includes(lowercased)) || (order.member?.membership_no && order.member.membership_no.toLowerCase().includes(lowercased)) || (order.table?.table_no && order.table.table_no.toLowerCase().includes(lowercased));
             });
         }
 
@@ -222,10 +223,10 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                         <Box sx={{ bgcolor: '#063455', color: 'white', p: 2, position: 'relative' }}>
                                             <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px', color: '#FFFFFF' }}>#{card.order_number}</Typography>
                                             <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px', color: '#FFFFFF' }}>
-                                                {card.user?.member_type?.name}{' '}
-                                                {/* <Typography component="span" variant="body2" sx={{ opacity: 0.8 }}>
-                                                    ({card.type})
-                                                </Typography> */}
+                                                {card.member?.full_name} ({card.member?.membership_no})
+                                                <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
+                                                    ({card.order_type})
+                                                </Typography>
                                             </Typography>
                                             <Box
                                                 sx={{
@@ -241,18 +242,21 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                                 <AccessTime fontSize="small" sx={{ fontSize: 16, mr: 0.5 }} />
                                                 <Typography variant="caption">{card.start_time}</Typography>
                                             </Box>
-                                            <Box sx={{ position: 'absolute', top: 45, right: 16, display: 'flex' }}>
-                                                <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
-                                                <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>
-                                                    <img
-                                                        src="/assets/food-tray.png"
-                                                        alt=""
-                                                        style={{
-                                                            width: 24,
-                                                            height: 24,
-                                                        }}
-                                                    />
-                                                </Avatar>
+                                            <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                                                <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px', color: '#FFFFFF' }}>{card.member?.member_type?.name}</Typography>
+                                                <Box display="flex">
+                                                    <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
+                                                    <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>
+                                                        <img
+                                                            src="/assets/food-tray.png"
+                                                            alt=""
+                                                            style={{
+                                                                width: 24,
+                                                                height: 24,
+                                                            }}
+                                                        />
+                                                    </Avatar>
+                                                </Box>
                                             </Box>
                                         </Box>
 
@@ -339,7 +343,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                         order={selectedCard}
                         orderItems={orderItems}
                         setOrderItems={setOrderItems}
-                        onSave={() => onSave()}
+                        onSave={(status) => onSave(status)}
                     />
                 </Box>
             </div>

@@ -694,7 +694,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     fontSize: '18px',
                                                                 }}
                                                             >
-                                                                {order?.user?.first_name} {order?.user?.last_name}
+                                                                {order?.member?.full_name} ({order.member?.membership_no})
                                                             </Typography>
                                                             {order.isVIP && <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />}
                                                         </Box>
@@ -1290,7 +1290,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                     <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} orderDetail={orderDetail} handleOpenTrackOrder={handleOpenTrackOrder} />
 
                     {/* Payment Modal */}
-                    <PaymentNow invoiceData={selectedOrder} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} />
+                    <PaymentNow invoiceData={selectedOrder} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} setSelectedOrder={setSelectedOrder} />
 
                     {/* Payment Success Modal */}
                     <Dialog
@@ -1349,7 +1349,6 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             Rs {selectedOrder?.total_price}
                                         </Typography>
                                     </Box>
-
                                     <Grid container spacing={2} mb={4}>
                                         <Grid item xs={6}>
                                             <Typography variant="subtitle2" color="text.secondary" mb={1}>
@@ -1361,8 +1360,8 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             {/* <Typography variant="body1">Total Cash</Typography> */}
                                         </Grid>
                                         <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="subtitle2" color="text.secondary" mb={1}>
-                                                Cash
+                                            <Typography variant="subtitle2" color="text.secondary" mb={1} textTransform="capitalize">
+                                                {selectedOrder?.payment_method ? selectedOrder.payment_method.replace(/_/g, ' ') : ''}
                                             </Typography>
                                             <Typography variant="body1">Rs {selectedOrder?.paid_amount}</Typography>
                                         </Grid>
@@ -1379,7 +1378,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 Customer Changes
                                             </Typography>
                                             <Typography variant="body1" fontWeight="medium">
-                                                Rs {selectedOrder?.customer_change}
+                                                Rs {selectedOrder?.paid_amount - selectedOrder?.total_price}
                                             </Typography>
                                         </Box>
                                     </Box>

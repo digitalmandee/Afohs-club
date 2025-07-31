@@ -170,7 +170,7 @@ const InvoiceViewer = () => {
 
     return (
         <Box p={2}>
-            <AsyncSearchTextField label="Search Member" name="user" endpoint="/admin/api/search-users" onChange={(e) => setMember(e.target.value)} />
+            <AsyncSearchTextField label="Search Member" name="user" endpoint="admin.api.search-users" onChange={(e) => setMember(e.target.value)} />
 
             <Tabs value={activeTab} onChange={(_, newVal) => setActiveTab(newVal)} sx={{ mt: 2, mb: 2 }} variant="scrollable" scrollButtons="auto">
                 <Tab label="All" value="all" />

@@ -1,3 +1,4 @@
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -98,40 +99,7 @@ const TakeAwayDialog = () => {
                     <Typography variant="body2" sx={{ mb: 0.5, color: '#121212', fontSize: '14px' }}>
                         Customer Name
                     </Typography>
-                    <Autocomplete
-                        fullWidth
-                        freeSolo
-                        size="small"
-                        options={members}
-                        value={orderDetails.member}
-                        getOptionLabel={(option) => option?.name || ''}
-                        onInputChange={(event, value) => handleSearch(event, 'user')}
-                        onChange={(event, value) => handleAutocompleteChange(event, value, 'member')}
-                        loading={searchLoading}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                fullWidth
-                                sx={{ p: 0 }}
-                                placeholder="Enter name or scan member card"
-                                variant="outlined"
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <QrCodeScannerIcon fontSize="small" />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                        )}
-                        renderOption={(props, option) => (
-                            <li {...props}>
-                                <span>{option.name}</span>
-                                <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
-                            </li>
-                        )}
-                    />
+                    <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" params={{ member_type: orderDetails.membership_type }} onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
                 </Grid>
             </Grid>
 

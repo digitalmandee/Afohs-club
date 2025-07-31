@@ -3,16 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\FinancialInvoice;
 use App\Models\Invoices;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class TransactionController extends Controller
 {
     public function index()
     {
-        $orders = Order::with([
+        $orders = Order::whereIn('order_type', ['dineIn', 'takeaway'])->with([
             'member',
             'table:id,table_no',
             'orderItems:id,order_id',
@@ -31,7 +33,7 @@ class TransactionController extends Controller
 
     public function PaymentOrderData($invoiceId)
     {
-        $order = Order::where('id', $invoiceId)->with(['member:id,user_id,first_name,last_name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
+        $order = Order::where('id', $invoiceId)->with(['member:id,user_id,full_name,membership_no', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
         return $order;
     }
 
@@ -39,7 +41,7 @@ class TransactionController extends Controller
     {
         // Basic validation for common fields
         $request->validate([
-            'invoice_id' => 'required|exists:invoices,id',
+            'order_id' => 'required|exists:orders,id',
             'paid_amount' => 'required|numeric',
             // 'customer_changes' => 'required|numeric',
             'payment_method' => 'required|in:cash,credit_card,split_payment',
@@ -48,7 +50,7 @@ class TransactionController extends Controller
             // If you handle receipt upload, validate here, e.g. 'receipt' => 'nullable|file|mimes:jpg,png,pdf',
         ]);
 
-        $invoice = Invoices::findOrFail($request->invoice_id);
+        $invoice = Order::findOrFail($request->order_id);
         $totalDue = $invoice->total_price;
 
         if ($request->paid_amount < $totalDue) {
@@ -56,10 +58,7 @@ class TransactionController extends Controller
         }
 
         // Save payment details
-        $invoice->cashier_id = auth()->user()->id;
-        if ($request->payment_method === 'cash') {
-            $invoice->customer_change = $request->customer_changes;
-        }
+        $invoice->cashier_id = Auth::user()->id;
         $invoice->payment_method = $request->payment_method;
         $invoice->paid_amount = $request->paid_amount;
 
@@ -73,14 +72,22 @@ class TransactionController extends Controller
             }
         }
         if ($request->payment_method === 'split_payment') {
-            $invoice->customer_change = $request->customer_changes;
-            $invoice->cash = $request->cash;
-            $invoice->credit_card = $request->credit_card;
-            $invoice->bank_transfer = $request->bank_transfer;
+            $invoice->cash_amount = $request->cash;
+            $invoice->credit_card_amount = $request->credit_card;
+            $invoice->bank_amount = $request->bank_transfer;
         }
-
-        $invoice->status = 'paid';
+        $invoice->paid_at = now();
+        $invoice->payment_status = 'paid';
         $invoice->save();
+
+        FinancialInvoice::where('member_id', $invoice->user_id)
+            ->whereJsonContains('data', ['order_id' => $invoice->id])
+            ->update([
+                'status' => 'paid',
+                'payment_date' => now(),
+                'payment_method' => $request->payment_method,
+                'paid_amount' => $request->paid_amount
+            ]);
 
         return redirect()->back()->with('success', 'Payment successful');
     }

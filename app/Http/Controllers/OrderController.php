@@ -40,10 +40,9 @@ class OrderController extends Controller
                     ->select('id', 'floor_id', 'table_no', 'capacity')
                     ->with(['orders' => function ($orderQuery) use ($today) {
                         $orderQuery
-                            ->select('id', 'table_id', 'status', 'start_date')
+                            ->select('id', 'table_id', 'status', 'start_date', 'payment_status')
                             ->whereDate('start_date', $today)
-                            ->whereIn('status', ['pending', 'in_progress', 'completed'])
-                            ->with(['invoice:id,order_id,status']);
+                            ->whereIn('status', ['pending', 'in_progress', 'completed']);
                     }]);
             }])
             ->get();
@@ -54,16 +53,14 @@ class OrderController extends Controller
                 $isAvailable = true;
 
                 foreach ($table->orders as $order) {
-                    $invoice = $order->invoice;
-
                     // Invoice missing or unpaid → not available
-                    if (!$invoice || $invoice->status === 'unpaid') {
+                    if (!$order || $order->payment_status === 'unpaid') {
                         $isAvailable = false;
                         break;
                     }
 
                     // Only allow availability if order is completed AND invoice is paid
-                    if (!($order->status === 'completed' && $invoice->status === 'paid')) {
+                    if (!($order->status === 'completed' && $order->payment_status === 'paid')) {
                         $isAvailable = false;
                         break;
                     }
@@ -85,7 +82,7 @@ class OrderController extends Controller
 
     public function orderManagement(Request $request)
     {
-        $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,kitchen_id,order_item,status', 'user:id,name,member_type_id', 'user.memberType'])->latest()->get();
+        $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,kitchen_id,order_item,status', 'member:id,user_id,member_type_id,full_name,membership_no', 'member.memberType:id,name'])->latest()->get();
         $categoriesList = Category::where('tenant_id', tenant()->id)->select('id', 'name')->get();
         $allrestaurants = Tenant::select('id', 'name')->get();
 
@@ -342,6 +339,7 @@ class OrderController extends Controller
             'total_price' => 'required|numeric',
             'updated_items' => 'nullable|array',
             'new_items' => 'nullable|array',
+            'status' => 'required|in:saved,pending,in_progress,completed,cancelled,no_show,refund',
         ]);
 
         DB::beginTransaction();
@@ -352,6 +350,8 @@ class OrderController extends Controller
             // Update order base amount
             $order->update([
                 'amount' => $validated['subtotal'],
+                'total_price' => $validated['total_price'],
+                'status' => $validated['status'],
             ]);
 
             // Update existing order items
@@ -372,13 +372,12 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Update related invoice
-            $order->invoice?->update([
-                'amount' => $validated['subtotal'],
-                'total_price' => $validated['total_price'],
-                // 'discount'  => $validated['discount'],
-                // 'tax'       => $validated['tax_amount'] ?? 0,
-            ]);
+            FinancialInvoice::where('member_id', $order->user_id)
+                ->whereJsonContains('data', ['order_id' => $order->id])
+                ->update([
+                    'amount' => $validated['subtotal'],
+                    'total_price' => $validated['total_price'],
+                ]);
 
             DB::commit();
 

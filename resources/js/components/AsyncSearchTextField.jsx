@@ -14,6 +14,7 @@ const AsyncSearchTextField = ({
     fullWidth = true,
     disabled = false,
     debounceTime = 300,
+    size = 'medium',
     resultFormat = (item) => `${item.label}`,
 }) => {
     const [inputValue, setInputValue] = useState(value?.label || '');
@@ -41,8 +42,7 @@ const AsyncSearchTextField = ({
 
         try {
             setLoading(true);
-            const searchParams = new URLSearchParams({ ...params, [queryParam]: query });
-            const url = `${endpoint}?${searchParams.toString()}`;
+            const url = route(endpoint, { ...params, [queryParam]: query });
 
             const res = await axios.get(url);
             setSuggestions(res.data.results);
@@ -76,6 +76,7 @@ const AsyncSearchTextField = ({
             <TextField
                 label={label}
                 name={name}
+                size={size}
                 value={inputValue}
                 onChange={handleInputChange}
                 placeholder={placeholder}

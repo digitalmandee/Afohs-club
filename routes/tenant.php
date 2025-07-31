@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\WaiterController;
@@ -9,10 +10,9 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\App\DashboardController;
-use App\Http\Controllers\SettingController;
 use App\Http\Middleware\AuthenticateTenant;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -44,27 +44,13 @@ Route::group([
         Route::get('/floor/all', [FloorController::class, 'floorAll'])->name('floor.all');
 
         // Members
-        Route::resource('members', MembersController::class)->except('show', 'edit');
-
-        // address
-        Route::resource('/members/address-types', AddressTypeController::class)->except('show', 'edit');
-        Route::get('/members/address-types', [AddressTypeController::class, 'index'])->name('address-types.index');
-        Route::post('/members/address-types', [AddressTypeController::class, 'store'])->name('address-types.store');
-        Route::put('/members/address-types/{id}/update', [AddressTypeController::class, 'update'])->name('address.update');
-        Route::delete('/members/address-types/{id}', [AddressTypeController::class, 'destroy'])->name('address.destroy');
-        // member
         Route::get('/members', [MembersController::class, 'index'])->name('members.index');
-        Route::get('/members/create', [MembersController::class, 'create'])->name('members.create');
-        Route::post('/members', [MembersController::class, 'store'])->name('members.store');
-        Route::get('/members/{id}/edit', [MembersController::class, 'edit'])->name('members.edit');
-        // Route::put('/members/{id}', [MembersController::class, 'update'])->name('members.update');
 
         // Waiter Dashboard
-        Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');
-        Route::get('/waiters/create', [WaiterController::class, 'create'])->name('waiters.create');
-        Route::post('/waiters', [WaiterController::class, 'store'])->name('waiters.store');
-        Route::put('/waiters/{id}/update', [WaiterController::class, 'update'])->name('waiters.update');
-
+        // Route::get('/waiters', [WaiterController::class, 'index'])->name('waiters.index');
+        // Route::get('/waiters/create', [WaiterController::class, 'create'])->name('waiters.create');
+        // Route::post('/waiters', [WaiterController::class, 'store'])->name('waiters.store');
+        // Route::put('/waiters/{id}/update', [WaiterController::class, 'update'])->name('waiters.update');
 
         // Order Management
         Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
@@ -138,14 +124,12 @@ Route::group([
         //
         Route::get('/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
 
-
-
         Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
         Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
         Route::post('/kitchen/{order}/item/{item}/update-status', [KitchenController::class, 'updateItemStatus'])->name('kitchen.item.update-status');
 
         // Transaction
-        Route::get('/transaction', [TransactionController::class, 'Index'])->name('transaction.index');
+        Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction.index');
         Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('transaction.invoice');
         Route::post('/order-payment', [TransactionController::class, 'OrderPayment'])->name('order.payment');
 
@@ -155,7 +139,6 @@ Route::group([
         Route::get('/kitchens/{id}/edit', [KitchenController::class, 'edit'])->name('kitchens.edit');
         Route::post('/kitchens', [KitchenController::class, 'store'])->name('kitchens.store');
         Route::put('/kitchens/{id}/update', [KitchenController::class, 'update'])->name('kitchens.update');
-
 
         Route::get('/test', function () {
             return Inertia::render('App/Test');

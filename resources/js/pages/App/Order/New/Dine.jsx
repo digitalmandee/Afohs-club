@@ -1,5 +1,6 @@
 'use client';
 
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -7,6 +8,7 @@ import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import SearchIcon from '@mui/icons-material/Search';
 import { Autocomplete, Box, Button, FormControl, FormControlLabel, Grid, IconButton, InputAdornment, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 
 const DineDialog = ({ memberTypes, floorTables }) => {
@@ -14,46 +16,8 @@ const DineDialog = ({ memberTypes, floorTables }) => {
 
     const [filterOption, setFilterOption] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-    const [members, setMembers] = useState([]);
     const [waiters, setWaiters] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
-
-    // Search Members
-    const searchUser = useCallback(async (query, role, member_type) => {
-        if (!query) return []; // Don't make a request if the query is empty.
-        setSearchLoading(true);
-        if (member_type === '') {
-            alert('Please select membership type');
-            return [];
-        }
-        try {
-            const response = await axios.get(route('user.search'), {
-                params: { query, role, member_type },
-            });
-            if (response.data.success) {
-                return response.data.results;
-            } else {
-                return [];
-            }
-        } catch (error) {
-            console.error('Error fetching search results:', error);
-            return [];
-        } finally {
-            setSearchLoading(false);
-        }
-    }, []);
-
-    const handleSearch = async (event, role) => {
-        const query = event?.target?.value;
-        if (query) {
-            const results = await searchUser(query, role, orderDetails.membership_type);
-            if (role === 'user') setMembers(results);
-            else setWaiters(results);
-        } else {
-            if (role === 'user') setMembers([]);
-            else setWaiters([]);
-        }
-    };
 
     const handleAutocompleteChange = (event, value, field) => {
         handleOrderDetailChange(field, value);
@@ -63,7 +27,6 @@ const DineDialog = ({ memberTypes, floorTables }) => {
     const handleMembershipType = (value) => {
         handleOrderDetailChange('membership_type', value);
         handleOrderDetailChange('member', {});
-        setMembers([]);
     };
 
     const handleFilterOptionChange = (event, newFilterOption) => {
@@ -188,40 +151,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
                         Customer Name
                     </Typography>
-                    <Autocomplete
-                        fullWidth
-                        freeSolo
-                        size="small"
-                        options={members}
-                        value={orderDetails.member}
-                        getOptionLabel={(option) => option?.name || ''}
-                        onInputChange={(event, value) => handleSearch(event, 'user')}
-                        onChange={(event, value) => handleAutocompleteChange(event, value, 'member')}
-                        loading={searchLoading}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                fullWidth
-                                sx={{ p: 0 }}
-                                placeholder="Enter name or scan member card"
-                                variant="outlined"
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <QrCodeScannerIcon fontSize="small" />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                        )}
-                        renderOption={(props, option) => (
-                            <li {...props}>
-                                <span>{option.name}</span>
-                                <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
-                            </li>
-                        )}
-                    />
+                    <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" params={{ member_type: orderDetails.membership_type }} onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
                 </Grid>
                 <Grid item xs={4}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>

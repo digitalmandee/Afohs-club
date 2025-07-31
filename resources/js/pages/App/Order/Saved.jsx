@@ -1,4 +1,3 @@
-'use client';
 import SearchIcon from '@mui/icons-material/Search';
 import { Autocomplete, Avatar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, Grid, IconButton, InputBase, InputLabel, List, ListItem, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import axios from 'axios';

@@ -58,24 +58,24 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
               <div><img src='/assets/Logo.png' class="logo"/></div>
             </div>
             <div class="header">
-              <div>${data.order.start_date || ''}</div>
+              <div>${data.start_date || ''}</div>
             </div>
 
             <div class="order-id">
               <div>Order Id</div>
-              <div><strong>${data.order.order_number}</strong></div>
+              <div><strong>#${data.order_number}</strong></div>
             </div>
 
             <div class="row">
               <div>Cashier</div>
-              <div>${data.member.first_name + ' ' + data.member.last_name}</div>
+              <div>${data.cashier ? data.cashier.name : user.name}</div>
             </div>
 
             <div class="divider"></div>
 
             <div class="row">
               <div>Customer Name</div>
-              <div>${data.member.first_name + ' ' + data.member.last_name}</div>
+              <div>${data.member.full_name}</div>
             </div>
 
             <div class="row">
@@ -85,17 +85,17 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
             <div class="row">
               <div>Order Type</div>
-              <div>${data.order.order_type}</div>
+              <div>${data.order_type}</div>
             </div>
 
             <div class="row">
               <div>Table Number</div>
-              <div>${data.order.table?.table_no ?? '-'}</div>
+              <div>${data.table?.table_no ?? '-'}</div>
             </div>
 
             <div class="divider"></div>
 
-            ${data.order.order_items
+            ${data.order_items
                 .map(
                     (item) => `
               <div style="margin-bottom: 10px;">
@@ -176,7 +176,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption" color="text.secondary">
                     Cashier
                 </Typography>
-                <Typography variant="caption">{user.name}</Typography>
+                <Typography variant="caption">{paymentData.cashier ? paymentData.cashier.name : user.name}</Typography>
             </Box>
 
             <Box sx={styles.receiptDivider} />
@@ -185,14 +185,14 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption" color="text.secondary">
                     Customer Name
                 </Typography>
-                <Typography variant="caption">{paymentData.member?.first_name + ' ' + paymentData.member?.last_name}</Typography>
+                <Typography variant="caption">{paymentData.member?.full_name}</Typography>
             </Box>
 
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
                     Member Id Card
                 </Typography>
-                <Typography variant="caption">-</Typography>
+                <Typography variant="caption">{paymentData.member?.membership_no}</Typography>
             </Box>
 
             <Box sx={styles.receiptRow}>
@@ -258,7 +258,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption" color="text.secondary">
                     Customer Changes
                 </Typography>
-                <Typography variant="caption">Rs{paymentData.customer_change}</Typography>
+                <Typography variant="caption">Rs{paymentData.paid_amount - paymentData.total_price}</Typography>
             </Box>
 
             <Box sx={styles.receiptTotal}>
