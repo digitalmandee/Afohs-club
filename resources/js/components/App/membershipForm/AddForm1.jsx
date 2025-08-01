@@ -265,7 +265,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     First Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter first name" size="small" name="member.first_name" value={data.first_name} error={!!formErrors.first_name} helperText={formErrors.first_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter first name" size="small" name="member.first_name" value={data.member.first_name} error={!!formErrors.first_name} helperText={formErrors.first_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Middle Name */}
@@ -273,7 +273,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Middle Name
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter middle name" size="small" name="member.middle_name" value={data.middle_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter middle name" size="small" name="member.middle_name" value={data.member.middle_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Last Name */}
@@ -281,7 +281,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Last Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="member.last_name" value={data.last_name} error={!!formErrors.last_name} helperText={formErrors.last_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="member.last_name" value={data.member.last_name} error={!!formErrors.last_name} helperText={formErrors.last_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Father/Husband Name */}
