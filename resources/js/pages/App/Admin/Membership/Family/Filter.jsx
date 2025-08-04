@@ -1,48 +1,7 @@
 import { useState } from 'react';
-import { Typography, Button, Box, Dialog, Collapse, Chip, IconButton, TextField, MenuItem } from '@mui/material';
-import { Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from '@mui/icons-material';
+import { Typography, Button, Box, Dialog, IconButton, TextField, MenuItem, FormControlLabel, Checkbox } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
-
-const styles = {
-    root: {
-        backgroundColor: '#f5f5f5',
-        minHeight: '100vh',
-        fontFamily: 'Arial, sans-serif',
-    },
-    tabButton: {
-        borderRadius: '20px',
-        margin: '0 5px',
-        textTransform: 'none',
-        fontWeight: 'normal',
-        padding: '6px 16px',
-        border: '1px solid #00274D',
-        color: '#00274D',
-    },
-    activeTabButton: {
-        backgroundColor: '#0a3d62',
-        color: 'white',
-        borderRadius: '20px',
-        margin: '0 5px',
-        textTransform: 'none',
-        fontWeight: 'normal',
-        padding: '6px 16px',
-    },
-    filterSection: {
-        mb: 3,
-        border: '1px solid #eee',
-        borderRadius: '8px',
-        p: 2,
-        backgroundColor: '#fff',
-        boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
-    },
-    filterHeader: {
-        p: 0,
-        mb: 1,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-};
 
 const FamilyFilter = ({ openFilterModal, setOpenFilterModal, members }) => {
     const props = usePage().props;
@@ -50,51 +9,50 @@ const FamilyFilter = ({ openFilterModal, setOpenFilterModal, members }) => {
     const [filters, setFilters] = useState({
         sort: props.filters?.sort || 'asc',
         sortBy: props.filters?.sortBy || 'id',
-        orderType: props.filters?.orderType || 'all',
-        memberStatus: props.filters?.memberStatus || 'all',
-        orderStatus: props.filters?.orderStatus || 'all',
-        targetDate: props.filters?.targetDate || '',
         membership_no: props.filters?.membership_no || '',
         name: props.filters?.name || '',
         cnic: props.filters?.cnic || '',
         contact: props.filters?.contact || '',
         status: props.filters?.status || 'all',
         member_type: props.filters?.member_type || 'all',
+        parent_name: props.filters?.parent_name || '',
+        relation: props.filters?.relation || 'all',
+        card_status: props.filters?.card_status || 'all',
+        min_age: props.filters?.min_age || '',
+        max_age: props.filters?.max_age || '',
+        age_over_25: props.filters?.age_over_25 || false,
     });
 
     const handleFilterChange = (key, value) => {
-        setFilters((prev) => ({
-            ...prev,
-            [key]: value,
-        }));
+        setFilters((prev) => ({ ...prev, [key]: value }));
     };
 
     const handleResetFilters = () => {
         const reset = {
             sort: 'asc',
             sortBy: 'id',
-            orderType: 'all',
-            memberStatus: 'all',
-            orderStatus: 'all',
-            targetDate: '',
             membership_no: '',
             name: '',
             cnic: '',
             contact: '',
             status: 'all',
             member_type: 'all',
+            parent_name: '',
+            relation: 'all',
+            card_status: 'all',
+            min_age: '',
+            max_age: '',
+            age_over_25: false,
         };
         setFilters(reset);
-
-        router.get(route('membership.members'));
+        router.get(route('membership.family-members'));
     };
 
     const handleApplyFilters = () => {
-        router.get(route('membership.members'), filters, {
+        router.get(route('membership.family-members'), filters, {
             preserveState: true,
             preserveScroll: true,
         });
-
         setOpenFilterModal(false);
     };
 
@@ -129,6 +87,26 @@ const FamilyFilter = ({ openFilterModal, setOpenFilterModal, members }) => {
                     <TextField label="Name" size="small" value={filters.name} onChange={(e) => handleFilterChange('name', e.target.value)} />
                     <TextField label="CNIC" size="small" value={filters.cnic} onChange={(e) => handleFilterChange('cnic', e.target.value)} />
                     <TextField label="Contact" size="small" value={filters.contact} onChange={(e) => handleFilterChange('contact', e.target.value)} />
+                    <TextField label="Member Name" size="small" value={filters.parent_name} onChange={(e) => handleFilterChange('parent_name', e.target.value)} />
+                    <TextField label="Min Age" type="number" size="small" value={filters.min_age} onChange={(e) => handleFilterChange('min_age', e.target.value)} />
+                    <TextField label="Max Age" type="number" size="small" value={filters.max_age} onChange={(e) => handleFilterChange('max_age', e.target.value)} />
+                    <FormControlLabel control={<Checkbox checked={filters.age_over_25} onChange={(e) => handleFilterChange('age_over_25', e.target.checked)} />} label="Show only age over 25" />
+                    <TextField select label="Relation" size="small" value={filters.relation} onChange={(e) => handleFilterChange('relation', e.target.value)}>
+                        <MenuItem value="all">All</MenuItem>
+                        {[...new Set(members.map((m) => m?.relation).filter(Boolean))].map((relation, idx) => (
+                            <MenuItem key={idx} value={relation}>
+                                {relation}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    <TextField select label="Card Status" size="small" value={filters.card_status} onChange={(e) => handleFilterChange('card_status', e.target.value)}>
+                        <MenuItem value="all">All</MenuItem>
+                        {['In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued'].map((status, idx) => (
+                            <MenuItem key={idx} value={status}>
+                                {status}
+                            </MenuItem>
+                        ))}
+                    </TextField>
                     <TextField select label="Status" size="small" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
                         <MenuItem value="all">All</MenuItem>
                         <MenuItem value="active">Active</MenuItem>
@@ -145,8 +123,6 @@ const FamilyFilter = ({ openFilterModal, setOpenFilterModal, members }) => {
                         ))}
                     </TextField>
                 </Box>
-
-                {/* Sorting and chip filter sections remain as they are... */}
 
                 <Box display="flex" justifyContent="flex-end" gap={1} mt={3}>
                     <Button variant="outlined" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none' }}>

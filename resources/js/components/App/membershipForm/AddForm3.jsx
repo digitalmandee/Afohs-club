@@ -30,10 +30,12 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         const maxApplicationNo = data.family_members.length ? Math.max(...data.family_members.map((f) => f.application_no)) : data.application_no;
 
         const existingCount = data.family_members.length;
-        const suffix = String.fromCharCode(65 + existingCount); // 65 = 'A'
+        const suffix = String.fromCharCode(65 + existingCount); // A, B, C...
+        const uniqueId = `new-${existingCount + 1}`;
 
         setCurrentFamilyMember((prev) => ({
             ...prev,
+            id: uniqueId,
             family_suffix: suffix,
             application_no: Number(maxApplicationNo) + 1,
             member_type_id: data.member_type_id,
@@ -48,7 +50,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const handleSaveFamilyMember = () => {
         const errors = {};
 
-        // Required fields
+        const isEdit = data.family_members.some((fm) => fm.id === currentFamilyMember.id);
+
+        // --- Validation ---
         if (!currentFamilyMember.full_name) {
             errors.full_name = 'Full Name is required';
         }
@@ -64,20 +68,17 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         if (currentFamilyMember.cnic && !/^\d{5}-\d{7}-\d{1}$/.test(currentFamilyMember.cnic)) {
             errors.cnic = 'CNIC must be in the format XXXXX-XXXXXXX-X';
         }
-
         if (currentFamilyMember.cnic && currentFamilyMember.cnic === data.cnic_no) {
             errors.cnic = 'Family member CNIC must not be the same as the primary member CNIC';
         }
-
         if (!currentFamilyMember.start_date) {
             errors.start_date = 'Start Date is required';
         }
-
         if (!currentFamilyMember.status) {
             errors.status = 'Status is required';
         }
 
-        // Email uniqueness check
+        // Email uniqueness
         const mainEmail = data.email?.trim().toLowerCase();
         const memberEmail = currentFamilyMember.email?.trim().toLowerCase();
 
@@ -85,10 +86,17 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             errors.email = 'Family member email must not be same as member email';
         }
 
-        const emailAlreadyUsed = data.family_members.some((fm) => fm.email?.trim().toLowerCase() === memberEmail);
+        const emailAlreadyUsed = data.family_members.some((fm) => {
+            if (!fm.email) return false;
+
+            const fmEmail = fm.email.trim().toLowerCase();
+            console.log(isEdit, fm.id, currentFamilyMember.id);
+            if (isEdit && fm.id === currentFamilyMember.id) return false;
+            return fmEmail === memberEmail;
+        });
 
         if (emailAlreadyUsed) {
-            errors.email = 'This email is already added to another family member';
+            errors.email = 'This email is already used by another family member';
         }
 
         // Date validations
@@ -108,8 +116,24 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             return;
         }
 
-        // Update family member list
-        handleChangeData('family_members', [...data.family_members, currentFamilyMember]);
+        // --- Save or Update Logic ---
+        let updatedMember = { ...currentFamilyMember };
+
+        // Assign ID if it's new
+        if (!currentFamilyMember.id) {
+            const newId = `new-${data.family_members.length + 1}`;
+            updatedMember.id = newId;
+        }
+
+        let updatedFamilyMembers;
+
+        if (isEdit) {
+            updatedFamilyMembers = data.family_members.map((fm) => (fm.id === currentFamilyMember.id ? updatedMember : fm));
+        } else {
+            updatedFamilyMembers = [...data.family_members, updatedMember];
+        }
+
+        handleChangeData('family_members', updatedFamilyMembers);
 
         // Reset form
         setCurrentFamilyMember({
@@ -163,12 +187,33 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     };
 
     const handleEditFamilyMember = (index) => {
-        setCurrentFamilyMember(data.family_members[index]);
-        handleDeleteFamilyMember(index);
+        const family = data.family_members[index];
+        setCurrentFamilyMember({ ...family });
         setShowFamilyMember(true);
     };
 
     const handleCancelFamilyMember = () => {
+        setCurrentFamilyMember({
+            application_no: '',
+            family_suffix: '',
+            full_name: '',
+            relation: '',
+            cnic: '',
+            phone_number: '',
+            email: '',
+            member_type_id: '',
+            date_of_birth: '',
+            membership_category: '',
+            start_date: '',
+            end_date: '',
+            card_issue_date: '',
+            card_expiry_date: '',
+            status: 'active',
+            picture: null,
+            picture_preview: null,
+            is_document_missing: false,
+            documents: '',
+        });
         setShowFamilyMember(false);
     };
 
@@ -735,7 +780,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     <IconButton size="small" onClick={() => handleEditFamilyMember(index)} sx={{ mr: 1 }}>
                                                         <EditIcon fontSize="small" />
                                                     </IconButton>
-                                                    <IconButton size="small" onClick={() => handleDeleteFamilyMember(index)}>
+                                                    <IconButton size="small" onClick={() => handleDeleteFamilyMember(index)} disabled={typeof family.id === 'number' || (typeof family.id === 'string' && !family.id.startsWith('new-'))}>
                                                         <DeleteIcon fontSize="small" />
                                                     </IconButton>
                                                 </Box>

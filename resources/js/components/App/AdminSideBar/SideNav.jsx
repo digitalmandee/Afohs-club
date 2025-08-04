@@ -289,7 +289,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Family Members Archive',
-                    path: route('family-members-archive.index'),
+                    path: route('membership.family-members'),
                 },
                 {
                     text: 'Applied Member',

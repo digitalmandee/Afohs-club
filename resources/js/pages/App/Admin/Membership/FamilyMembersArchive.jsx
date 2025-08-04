@@ -3,6 +3,7 @@ import { Typography, Button, TextField, Table, TableContainer, TableHead, TableR
 import { Search, FilterAlt, ExpandMore, ExpandLess } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
+import FamilyFilter from './Family/Filter';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -50,19 +51,6 @@ const FamilyMembersArchive = ({ familyGroups = [] }) => {
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Family Members Archive</Typography>
 
                             <div className="d-flex">
-                                <TextField
-                                    placeholder="Search by name, member type etc"
-                                    variant="outlined"
-                                    size="small"
-                                    style={{ width: '350px', marginRight: '10px' }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Search />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
                                 <Button
                                     variant="outlined"
                                     startIcon={<FilterAlt />}
@@ -123,6 +111,16 @@ const FamilyMembersArchive = ({ familyGroups = [] }) => {
                                 </TableBody>
                             </Table>
                         </TableContainer>
+
+                        <FamilyFilter
+                            openFilterModal={openFilterModal}
+                            setOpenFilterModal={setOpenFilterModal}
+                            members={familyGroups}
+                            filteredMembers={familyGroups}
+                            setFilteredMembers={() => {}} // not needed anymore since filters hit the backend
+                            statusOptions={['active', 'suspended', 'cancelled', 'pause']}
+                            memberTypeOptions={[...new Set(familyGroups.map((f) => f?.parent?.member_type?.name).filter(Boolean))]}
+                        />
                     </div>
                 </div>
             </div>

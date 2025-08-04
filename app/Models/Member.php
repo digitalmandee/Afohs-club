@@ -144,7 +144,7 @@ class Member extends Model
 
     public function familyMembers()
     {
-        return $this->hasMany(User::class, 'parent_user_id', 'user_id');
+        return $this->hasMany(Member::class, 'parent_id', 'user_id');
     }
 
     public function pausedHistories()

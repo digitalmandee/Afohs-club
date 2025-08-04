@@ -58,6 +58,7 @@ const MembershipDashboardFilter = ({ openFilterModal, setOpenFilterModal, member
         name: props.filters?.name || '',
         cnic: props.filters?.cnic || '',
         contact: props.filters?.contact || '',
+        card_status: props.filters?.card_status || 'all',
         status: props.filters?.status || 'all',
         member_type: props.filters?.member_type || 'all',
     });
@@ -129,6 +130,14 @@ const MembershipDashboardFilter = ({ openFilterModal, setOpenFilterModal, member
                     <TextField label="Name" size="small" value={filters.name} onChange={(e) => handleFilterChange('name', e.target.value)} />
                     <TextField label="CNIC" size="small" value={filters.cnic} onChange={(e) => handleFilterChange('cnic', e.target.value)} />
                     <TextField label="Contact" size="small" value={filters.contact} onChange={(e) => handleFilterChange('contact', e.target.value)} />
+                    <TextField select label="Card Status" size="small" value={filters.card_status} onChange={(e) => handleFilterChange('card_status', e.target.value)}>
+                        <MenuItem value="all">All</MenuItem>
+                        {['In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued'].map((status, idx) => (
+                            <MenuItem key={idx} value={status}>
+                                {status}
+                            </MenuItem>
+                        ))}
+                    </TextField>
                     <TextField select label="Status" size="small" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
                         <MenuItem value="all">All</MenuItem>
                         <MenuItem value="active">Active</MenuItem>
@@ -138,9 +147,9 @@ const MembershipDashboardFilter = ({ openFilterModal, setOpenFilterModal, member
                     </TextField>
                     <TextField select label="Member Type" size="small" value={filters.member_type} onChange={(e) => handleFilterChange('member_type', e.target.value)}>
                         <MenuItem value="all">All</MenuItem>
-                        {[...new Set(members.map((m) => m?.member_type?.name).filter(Boolean))].map((type, idx) => (
-                            <MenuItem key={idx} value={type}>
-                                {type}
+                        {props.memberTypes.map((type, idx) => (
+                            <MenuItem key={idx} value={type.name}>
+                                {type.name}
                             </MenuItem>
                         ))}
                     </TextField>

@@ -205,6 +205,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
     }, [formsData.card_issue_date, formsData.card_expiry_date, formsData.family_members]);
 
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
+        id: 'new',
         application_no: '',
         family_suffix: '',
         full_name: '',
@@ -213,8 +214,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         phone_number: '',
         email: '',
         member_type_id: '',
-        date_of_birth: '',
         membership_category: '',
+        date_of_birth: '',
         start_date: '',
         end_date: '',
         card_issue_date: '',

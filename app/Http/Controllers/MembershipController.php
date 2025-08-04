@@ -23,7 +23,7 @@ class MembershipController extends Controller
 {
     public function index()
     {
-        $members = Member::whereNull('parent_id')->with('memberType:id,name', 'memberCategory:id,name')->latest()->limit(6)->get();
+        $members = Member::whereNull('parent_id')->with('memberType:id,name', 'memberCategory:id,name,description')->withCount('familyMembers')->latest()->limit(6)->get();
 
         $total_members = Member::whereNull('parent_id')->count();
         $total_payment = FinancialInvoice::where('invoice_type', 'membership')->where('status', 'paid')->sum('total_price');
@@ -53,16 +53,25 @@ class MembershipController extends Controller
     public function edit(Request $request)
     {
         $user = Member::where('id', $request->id)->with('memberType')->first();
-        $familyMembers = $user->familyMembers->map(function ($member) {
+        $familyMembers = $user->familyMembers->map(function ($member) use ($user) {
             return [
-                'user_id' => $member->id,
-                'full_name' => $member->name,
-                'relation' => $member->member->relation,
-                'cnic' => $member->member->cnic,
-                'phone_number' => $member->phone_number,
-                'email' => $member->email,
-                'start_date' => $member->member->start_date,
-                'end_date' => $member->member->end_date,
+                'id' => $member->id,
+                'membership_no' => $member->membership_no,
+                'application_no' => $member->application_no,
+                'family_suffix' => $member->family_suffix,
+                'full_name' => $member->full_name,
+                'member_type_id' => $user->member_type_id,
+                'membership_category' => $user->member_category_id,
+                'relation' => $member->relation,
+                'cnic' => $member->cnic_no,
+                'date_of_birth' => $member->date_of_birth,
+                'phone_number' => $member->mobile_number_a,
+                'email' => $member->personal_email,
+                'start_date' => $member->start_date,
+                'end_date' => $member->end_date,
+                'card_issue_date' => $member->card_issue_date,
+                'card_expiry_date' => $member->card_expiry_date,
+                'status' => $member->status,
                 'picture' => $member->profile_photo,
             ];
         });
@@ -74,7 +83,8 @@ class MembershipController extends Controller
     public function allMembers(Request $request)
     {
         $query = Member::whereNull('parent_id')
-            ->with('memberType:id,name', 'memberCategory:id,name');
+            ->with('memberType:id,name', 'memberCategory:id,name,description')
+            ->withCount('familyMembers');
 
         // Filter: Membership Number
         if ($request->filled('membership_no')) {
@@ -101,6 +111,10 @@ class MembershipController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('card_status') && $request->card_status !== 'all') {
+            $query->where('card_status', $request->card_status);
+        }
+
         // Filter: Member Type
         if ($request->filled('member_type') && $request->member_type !== 'all') {
             $query->whereHas('memberType', function ($q) use ($request) {
@@ -124,6 +138,7 @@ class MembershipController extends Controller
 
         return Inertia::render('App/Admin/Membership/Members', [
             'members' => $members,
+            'memberTypes' => MemberType::all(['id', 'name']),
             'filters' => $request->only([
                 'membership_no', 'name', 'cnic', 'contact',
                 'status', 'member_type', 'sort', 'sortBy'
@@ -210,12 +225,12 @@ class MembershipController extends Controller
             $memberCategory = MemberCategory::find($request->membership_category, ['id', 'name', 'fee', 'subscription_fee']);
             // Create primary member record
 
-            Member::create([
+            $mainMember = Member::create([
                 'user_id' => $primaryUser->id,
                 'application_no' => $applicationNo,
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
-                'last_name' => $request->middle_name,
+                'last_name' => $request->last_name,
                 'full_name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
                 'profile_photo' => $memberImagePath,
                 'kinship' => $request->kinship['id'] ?? null,
@@ -282,6 +297,7 @@ class MembershipController extends Controller
                         'application_no' => Member::generateNextApplicationNo(),
                         'parent_id' => $primaryUser->id,
                         'profile_photo' => $familyMemberImagePath,
+                        'membership_no' => $mainMember->membership_no . '-' . $familyMemberData['family_suffix'],
                         'family_suffix' => $familyMemberData['family_suffix'],
                         'full_name' => $familyMemberData['full_name'],
                         'personal_email' => $familyMemberData['email'],
@@ -344,7 +360,7 @@ class MembershipController extends Controller
                 'member_id' => 'required|exists:members,id',
                 'personal_email' => 'required|email|unique:members,personal_email,' . $request->member_id,
                 'family_members' => 'array',
-                'family_members.*.email' => 'required|email|distinct|different:email|unique:members,personal_email',
+                // 'family_members.*.email' => 'required|email|distinct|different:email|unique:members,personal_email',
             ]);
 
             if ($validator->fails()) {
@@ -423,6 +439,19 @@ class MembershipController extends Controller
                 'country' => $request->country,
                 'documents' => $documentPaths,
             ]);
+
+            // foreach ($request->family_members as $newMemberData) {
+            //     if (str_starts_with($newMemberData['id'], 'new-')) {
+            //         // New member
+            //         Member::create($newMemberData);
+            //     } elseif (!empty($newMemberData['id'])) {
+            //         // Update existing member
+            //         $member = Member::find($newMemberData['id']);
+            //         if ($member) {
+            //             $member->update($newMemberData);
+            //         }
+            //     }
+            // }
 
             DB::commit();
 

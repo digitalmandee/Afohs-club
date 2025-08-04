@@ -376,7 +376,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('membership.detail2');
 
     // Family Members Archive route
-    Route::get('/admin/membership/family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('family-members-archive.index');
+    Route::get('/admin/membership/family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('membership.family-members');
 
     // Family Applied Member
     Route::get('/admin/membership/applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');

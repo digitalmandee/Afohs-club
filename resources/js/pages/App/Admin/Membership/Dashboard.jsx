@@ -6,12 +6,10 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import MembershipSuspensionDialog from './Modal';
 import MembershipCancellationDialog from './CancelModal';
-import MemberProfileModal from './Profile';
 import MembershipCardComponent from './UserCard';
 import InvoiceSlip from './Invoice';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import ActivateMembershipDialog from './ActivateMembershipDialog';
-import MembershipDashboardFilter from './MembershipDashboardFilter';
 import { MdModeEdit } from 'react-icons/md';
 import { FaEdit } from 'react-icons/fa';
 import MembershipPauseDialog from './MembershipPauseDialog';
@@ -49,7 +47,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
         { label: 'Active', value: 'active', icon: null },
         { label: 'Suspended', value: 'suspended', icon: null },
         { label: 'Cancelled', value: 'cancelled', icon: null },
-        { label: 'Pause', value: 'pause', icon: null },
+        { label: 'Absent', value: 'pause', icon: null },
     ];
 
     const memberTypeOptions = [
@@ -161,13 +159,19 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Membership ID</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member Type</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Card</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -191,7 +195,13 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                     </div>
                                                 </div>
                                             </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <PopupState variant="popover" popupId={`status-popup-${user.id}`}>
                                                     {(popupState) => (
@@ -285,9 +295,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                             </Table>
                         </TableContainer>
                     </div>
-
-                    {/* Filter Modal */}
-                    <MembershipDashboardFilter openFilterModal={openFilterModal} setOpenFilterModal={setOpenFilterModal} members={members} filteredMembers={filteredMembers} setFilteredMembers={setFilteredMembers} statusOptions={statusOptions} memberTypeOptions={memberTypeOptions} />
                 </div>
             </div>
 
