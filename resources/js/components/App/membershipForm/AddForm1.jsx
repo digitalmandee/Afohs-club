@@ -8,8 +8,8 @@ import dayjs from 'dayjs';
 import { router } from '@inertiajs/react';
 
 const AddForm1 = ({ data, handleChange, onNext }) => {
-    const [memberImage, setMemberImage] = useState(null);
-    const [showImageButtons, setShowImageButtons] = useState(false);
+    const [memberImage, setMemberImage] = useState(data?.profile_photo || null);
+    const [showImageButtons, setShowImageButtons] = useState(data?.profile_photo ? true : false);
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});
@@ -44,18 +44,18 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     const handleSubmit = () => {
         const errors = {};
 
-        if (!data.member.coa_account) errors.coa_account = 'COA Account is required';
-        if (!data.member.first_name) errors.first_name = 'First Name is required';
-        if (!data.member.last_name) errors.last_name = 'Last Name is required';
-        if (!data.member.guardian_name) errors.guardian_name = 'Father/Husband Name is required';
-        if (!data.member.nationality) errors.nationality = 'Nationality is required';
-        if (!data.member.gender) errors.gender = 'Gender is required';
-        if (!data.member.cnic_no) {
+        if (!data.coa_account) errors.coa_account = 'COA Account is required';
+        if (!data.first_name) errors.first_name = 'First Name is required';
+        if (!data.last_name) errors.last_name = 'Last Name is required';
+        if (!data.guardian_name) errors.guardian_name = 'This Name is required';
+        if (!data.nationality) errors.nationality = 'Nationality is required';
+        if (!data.gender) errors.gender = 'Gender is required';
+        if (!data.cnic_no) {
             errors.cnic_no = 'CNIC No is required';
-        } else if (!/^\d{5}-\d{7}-\d{1}$/.test(data.member.cnic_no)) {
+        } else if (!/^\d{5}-\d{7}-\d{1}$/.test(data.cnic_no)) {
             errors.cnic_no = 'CNIC must be in the format XXXXX-XXXXXXX-X';
         }
-        if (!data.member.date_of_birth) errors.date_of_birth = 'Date of Birth is required';
+        if (!data.date_of_birth) errors.date_of_birth = 'Date of Birth is required';
         else if (dateError) errors.date_of_birth = dateError;
 
         setFormErrors(errors);
@@ -174,7 +174,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 Application Number :
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                #{data.member.application_no}
+                                #{data.application_no}
                             </Typography>
                         </Box>
                     </Grid>
@@ -184,7 +184,6 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                         {/* Left Column */}
                         <Grid item xs={12} md={6} container spacing={3}>
                             {/* Member Picture */}
-                            {data.profile_image && 'Yes'}
                             <Grid item xs={12}>
                                 <Box sx={{ mb: 1, display: 'flex', gap: '10px' }}>
                                     <Box
@@ -203,7 +202,8 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         }}
                                         onClick={() => !memberImage && fileInputRef.current?.click()}
                                     >
-                                        {memberImage ? <img src={memberImage || '/placeholder.svg'} alt="Member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Add sx={{ color: '#a5d8ff', fontSize: 30 }} />}
+                                        {memberImage ? <img src={memberImage} alt="Member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Add sx={{ color: '#a5d8ff', fontSize: 30 }} />}
+
                                         <input type="file" hidden ref={fileInputRef} onChange={handleImageUpload} accept="image/*" />
                                     </Box>
                                     <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666' }}>
@@ -230,7 +230,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     COA Account*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="member.coa_account" value={data.member.coa_account} error={!!formErrors.coa_account} helperText={formErrors.coa_account} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="coa_account" value={data.coa_account} error={!!formErrors.coa_account} helperText={formErrors.coa_account} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Title */}
@@ -240,8 +240,8 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 </Typography>
                                 <FormControl fullWidth size="small">
                                     <Select
-                                        value={data.member.title}
-                                        name="member.title"
+                                        value={data.title}
+                                        name="title"
                                         onChange={handleChange}
                                         displayEmpty
                                         renderValue={(selected) => {
@@ -265,7 +265,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     First Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter first name" size="small" name="member.first_name" value={data.member.first_name} error={!!formErrors.first_name} helperText={formErrors.first_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter first name" size="small" name="first_name" value={data.first_name} error={!!formErrors.first_name} helperText={formErrors.first_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Middle Name */}
@@ -273,7 +273,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Middle Name
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter middle name" size="small" name="member.middle_name" value={data.member.middle_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter middle name" size="small" name="middle_name" value={data.middle_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Last Name */}
@@ -281,7 +281,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Last Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="member.last_name" value={data.member.last_name} error={!!formErrors.last_name} helperText={formErrors.last_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="last_name" value={data.last_name} error={!!formErrors.last_name} helperText={formErrors.last_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Father/Husband Name */}
@@ -289,7 +289,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Father/Husband Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter name" size="small" name="member.guardian_name" value={data.member.guardian_name} error={!!formErrors.guardian_name} helperText={formErrors.guardian_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter name" size="small" name="guardian_name" value={data.guardian_name} error={!!formErrors.guardian_name} helperText={formErrors.guardian_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Father Membership No */}
@@ -297,7 +297,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     If father is a member then membership No
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter membership Number" size="small" name="member.guardian_membership" value={data.member.fatherMembershipNo} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter membership Number" size="small" name="guardian_membership" value={data.fatherMembershipNo} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
                         </Grid>
 
@@ -308,7 +308,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Nationality*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter Nationality e.g. Pakistan" size="small" name="member.nationality" value={data.member.nationality} error={!!formErrors.nationality} helperText={formErrors.nationality} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter Nationality e.g. Pakistan" size="small" name="nationality" value={data.nationality} error={!!formErrors.nationality} helperText={formErrors.nationality} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* CNIC No */}
@@ -321,8 +321,8 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                     variant="outlined"
                                     placeholder="XXXXX-XXXXXXX-X"
                                     size="small"
-                                    name="member.cnic_no"
-                                    value={data.member.cnic_no}
+                                    name="cnic_no"
+                                    value={data.cnic_no}
                                     error={!!formErrors.cnic_no}
                                     helperText={formErrors.cnic_no}
                                     onChange={(e) => {
@@ -332,7 +332,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
                                         if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
                                         if (value.length > 15) value = value.slice(0, 15); // Limit to 15 characters
-                                        handleChange({ target: { name: 'member.cnic_no', value } });
+                                        handleChange({ target: { name: 'cnic_no', value } });
                                     }}
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
                                 />
@@ -343,7 +343,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Passport No
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="member.passport_no" value={data.member.passport_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="passport_no" value={data.passport_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Gender */}
@@ -353,8 +353,8 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 </Typography>
                                 <FormControl fullWidth size="small" error={!!formErrors.gender}>
                                     <Select
-                                        value={data.member.gender || ''}
-                                        name="member.gender"
+                                        value={data.gender || ''}
+                                        name="gender"
                                         onChange={handleChange}
                                         displayEmpty
                                         renderValue={(selected) => {
@@ -386,7 +386,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     NTN (if any)
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter national NTN number" size="small" name="member.ntn" value={data.member.ntn} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter national NTN number" size="small" name="ntn" value={data.ntn} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Date of Birth */}
@@ -398,11 +398,11 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                     <DatePicker
                                         label="Date of Birth"
                                         format="YYYY-MM-DD"
-                                        value={data.member.date_of_birth ? dayjs(data.member.date_of_birth) : null}
+                                        value={data.date_of_birth ? dayjs(data.date_of_birth) : null}
                                         onChange={(newValue) =>
                                             handleChange({
                                                 target: {
-                                                    name: 'member.date_of_birth',
+                                                    name: 'date_of_birth',
                                                     value: newValue ? newValue.format('YYYY-MM-DD') : '',
                                                 },
                                             })
@@ -413,7 +413,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                                 fullWidth: true,
                                                 variant: 'outlined',
                                                 size: 'small',
-                                                name: 'member.date_of_birth',
+                                                name: 'date_of_birth',
                                                 error: !!formErrors.date_of_birth || !!dateError,
                                                 helperText: formErrors.date_of_birth || dateError,
                                                 sx: { '& .MuiOutlinedInput-root': { borderRadius: '4px' } },
@@ -433,8 +433,8 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                     variant="outlined"
                                     placeholder="Enter complete education of the applicant"
                                     size="small"
-                                    name="member.education"
-                                    value={data.member.education}
+                                    name="education"
+                                    value={data.education}
                                     onChange={handleChange}
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
                                     InputProps={{

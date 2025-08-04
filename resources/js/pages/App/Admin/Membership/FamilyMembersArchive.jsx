@@ -16,6 +16,13 @@ const FamilyMembersArchive = ({ familyGroups = [] }) => {
         setExpandedRow(expandedRow === id ? null : id);
     };
 
+    const calculateAge = (dob) => {
+        if (!dob) return null;
+        const birthDate = new Date(dob);
+        const ageDiffMs = Date.now() - birthDate.getTime();
+        return Math.floor(ageDiffMs / (365.25 * 24 * 60 * 60 * 1000));
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -76,81 +83,41 @@ const FamilyMembersArchive = ({ familyGroups = [] }) => {
                         <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Membership ID</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member Type</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Phone Number</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Family Members</TableCell>
+                                    <TableRow style={{ backgroundColor: '#E5E5EA', height: '40px' }}>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card No</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Name</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Age</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Relationship</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Phone Number</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Date of Birth</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Issue Date</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {familyGroups.map((user, index) => (
                                         <React.Fragment key={user.id}>
                                             <TableRow style={{ borderBottom: '1px solid #eee' }}>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member.membership_no}</TableCell>
-                                                <TableCell>
-                                                    <div className="d-flex align-items-center">
-                                                        <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
-                                                        <div>
-                                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.first_name}</Typography>
-                                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.email}</Typography>
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
-                                                <TableCell>
-                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.phone_number || 'N/A'}</Typography>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                    {user.parent.membership_no}-{user.family_suffix}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="d-flex align-items-center">
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members.length}</Typography>
-                                                        {user.family_members.length > 0 && (
-                                                            <IconButton size="small" onClick={() => toggleRow(user.id)}>
-                                                                {expandedRow === user.id ? <ExpandLess /> : <ExpandMore />}
-                                                            </IconButton>
-                                                        )}
-                                                    </div>
+                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.full_name}</Typography>
+                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography>
                                                 </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.parent.full_name}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{calculateAge(user.date_of_birth) ?? 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.relation}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.date_of_birth ? new Date(user.date_of_birth).toLocaleDateString() : 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_issue_date || 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.status || 'N/A'}</TableCell>
                                             </TableRow>
-
-                                            {/* Collapsible Family Members */}
-                                            {user.family_members.length > 0 && expandedRow === user.id && (
-                                                <TableRow>
-                                                    <TableCell colSpan={5} style={{ backgroundColor: '#f9f9f9', padding: 0 }}>
-                                                        <Table size="small">
-                                                            <TableHead>
-                                                                <TableRow style={{ backgroundColor: '#f0f0f0', height: '50px' }}>
-                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Membership ID</TableCell>
-                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Member</TableCell>
-                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Member Type</TableCell>
-                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Phone Number</TableCell>
-                                                                    <TableCell sx={{ fontWeight: 500, fontSize: '16px' }}>Parent ID</TableCell>
-                                                                </TableRow>
-                                                            </TableHead>
-                                                            <TableBody>
-                                                                {user.family_members.map((fm, subIndex) => (
-                                                                    <TableRow key={fm.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                                                                        <TableCell sx={{ fontSize: '14px', color: '#555' }}>{`${index + 1}.${subIndex + 1}`}</TableCell>
-                                                                        <TableCell>
-                                                                            <div className="d-flex align-items-center">
-                                                                                <Avatar src={fm.profile_photo || '/placeholder.svg?height=40&width=40'} alt={fm.first_name} style={{ marginRight: '10px' }} />
-                                                                                <div>
-                                                                                    <Typography sx={{ fontSize: '14px', color: '#555' }}>{fm.first_name}</Typography>
-                                                                                    <Typography sx={{ fontSize: '14px', color: '#777' }}>{fm.email}</Typography>
-                                                                                </div>
-                                                                            </div>
-                                                                        </TableCell>
-                                                                        <TableCell sx={{ fontSize: '14px', color: '#555' }}>{user.member_type?.name || 'N/Aa'}</TableCell>
-                                                                        <TableCell sx={{ fontSize: '14px', color: '#555' }}>{fm.phone_number || 'N/A'}</TableCell>
-                                                                        <TableCell sx={{ fontSize: '14px', color: '#555' }}>{fm.parent_user_id || 'N/A'}</TableCell>
-                                                                    </TableRow>
-                                                                ))}
-                                                            </TableBody>
-                                                        </Table>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
                                         </React.Fragment>
                                     ))}
                                 </TableBody>

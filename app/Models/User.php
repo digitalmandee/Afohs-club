@@ -29,6 +29,7 @@ class User extends Authenticatable
         'password',
         'parent_user_id',
         'tenant_id',
+        'profile_photo'
     ];
 
     /**

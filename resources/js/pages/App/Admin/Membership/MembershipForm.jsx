@@ -18,122 +18,116 @@ const drawerWidthClosed = 110;
 const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(3);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
 
     const getNormalizedUserData = (user) => {
         if (!user) return defaultFormData;
 
         return {
-            user_id: user.id || '',
-            email: user.email || '',
-            phone_number: user.phone_number || '',
+            member_id: user.id || '',
             profile_photo: user.profile_photo || '',
-            member: {
-                application_no: user.member?.application_no || '',
-                first_name: user.member.first_name || '',
-                middle_name: user.member.middle_name || '',
-                last_name: user.member.last_name || '',
-                membership_no: user.member?.membership_no || '',
-                kinship: user.member?.kinship || '',
-                member_type_id: user.member?.member_type_id || '',
-                membership_category: user.member?.member_category_id || '',
-                membership_date: user.member?.membership_date || new Date().toISOString().split('T')[0],
-                card_issue_date: user.member?.card_issue_date || new Date().toISOString().split('T')[0],
-                card_expiry_date: user.member?.card_expiry_date || '',
-                is_document_missing: user.member?.is_document_missing || false,
-                missing_documents: user.member?.missing_documents || [],
-                card_status: user.member?.card_status || 'In-Process',
-                status: user.member?.status || 'active',
-                coa_account: user.member?.coa_account || '',
-                title: user.member?.title || '',
-                state: user.member?.state || '',
-                application_number: user.member?.application_number || '',
-                name_comments: user.member?.name_comments || '',
-                guardian_name: user.member?.guardian_name || '',
-                guardian_membership: user.member?.guardian_membership || '',
-                nationality: user.member?.nationality || '',
-                cnic_no: user.member?.cnic_no || '',
-                passport_no: user.member?.passport_no || '',
-                gender: user.member?.gender || '',
-                ntn: user.member?.ntn || '',
-                date_of_birth: user.member?.date_of_birth || '',
-                education: user.member?.education || '',
-                membership_reason: user.member?.membership_reason || '',
-                mobile_number_a: user.member?.mobile_number_a || '',
-                mobile_number_b: user.member?.mobile_number_b || '',
-                mobile_number_c: user.member?.mobile_number_c || '',
-                telephone_number: user.member?.telephone_number || '',
-                critical_email: user.member?.critical_email || '',
-                emergency_name: user.member?.emergency_name || '',
-                emergency_relation: user.member?.emergency_relation || '',
-                emergency_contact: user.member?.emergency_contact || '',
-                current_address: user.member?.current_address || '',
-                current_city: user.member?.current_city || '',
-                current_country: user.member?.current_country || '',
-                permanent_address: user.member?.permanent_address || '',
-                permanent_city: user.member?.permanent_city || '',
-                permanent_country: user.member?.permanent_country || '',
-                country: user.member?.country || '',
-                documents: user.member?.documents || [],
-                previewFiles: user.member?.documents || [],
-            },
+            application_no: user.application_no || '',
+            first_name: user.first_name || '',
+            middle_name: user.middle_name || '',
+            last_name: user.last_name || '',
+            membership_no: user.membership_no || '',
+            kinship: user.kinship || '',
+            member_type_id: user.member_type_id || '',
+            membership_category: user.member_category_id || '',
+            membership_date: user.membership_date || new Date().toISOString().split('T')[0],
+            card_issue_date: user.card_issue_date || new Date().toISOString().split('T')[0],
+            card_expiry_date: user.card_expiry_date || '',
+            is_document_missing: user.is_document_missing || false,
+            missing_documents: user.missing_documents || [],
+            card_status: user.card_status || 'In-Process',
+            status: user.status || 'active',
+            coa_account: user.coa_account || '',
+            title: user.title || '',
+            state: user.state || '',
+            application_number: user.application_number || '',
+            name_comments: user.name_comments || '',
+            guardian_name: user.guardian_name || '',
+            guardian_membership: user.guardian_membership || '',
+            nationality: user.nationality || '',
+            cnic_no: user.cnic_no || '',
+            passport_no: user.passport_no || '',
+            gender: user.gender || '',
+            ntn: user.ntn || '',
+            date_of_birth: user.date_of_birth || '',
+            education: user.education || '',
+            membership_reason: user.membership_reason || '',
+            mobile_number_a: user.mobile_number_a || '',
+            mobile_number_b: user.mobile_number_b || '',
+            mobile_number_c: user.mobile_number_c || '',
+            telephone_number: user.telephone_number || '',
+            personal_email: user.personal_email || '',
+            critical_email: user.critical_email || '',
+            emergency_name: user.emergency_name || '',
+            emergency_relation: user.emergency_relation || '',
+            emergency_contact: user.emergency_contact || '',
+            current_address: user.current_address || '',
+            current_city: user.current_city || '',
+            current_country: user.current_country || '',
+            permanent_address: user.permanent_address || '',
+            permanent_city: user.permanent_city || '',
+            permanent_country: user.permanent_country || '',
+            country: user.country || '',
+            documents: user.documents || [],
+            previewFiles: user.documents || [],
             family_members: familyMembers || [],
         };
     };
 
     const defaultFormData = {
-        email: '',
-        phone_number: '',
         profile_photo: '',
-        member: {
-            application_no: applicationNo,
-            member_type_id: '',
-            first_name: '',
-            middle_name: '',
-            last_name: '',
-            kinship: '',
-            membership_no: membershipNo,
-            membership_category: '',
-            is_document_missing: false,
-            missing_documents: '',
-            membership_date: new Date().toISOString().split('T')[0],
-            card_issue_date: new Date().toISOString().split('T')[0],
-            card_expiry_date: '',
-            card_status: 'In-Process',
-            status: 'active',
-            coa_account: '',
-            title: '',
-            state: '',
-            name_comments: '',
-            guardian_name: '',
-            guardian_membership: '',
-            nationality: '',
-            cnic_no: '',
-            passport_no: '',
-            gender: '',
-            ntn: '',
-            date_of_birth: '',
-            education: '',
-            membership_reason: '',
-            mobile_number_a: '',
-            mobile_number_b: '',
-            mobile_number_c: '',
-            telephone_number: '',
-            critical_email: '',
-            emergency_name: '',
-            emergency_relation: '',
-            emergency_contact: '',
-            current_address: '',
-            current_city: '',
-            current_country: '',
-            permanent_address: '',
-            permanent_city: '',
-            permanent_country: '',
-            country: '',
-            documents: [],
-            previewFiles: [],
-        },
+        application_no: applicationNo,
+        member_type_id: '',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
+        kinship: '',
+        membership_no: membershipNo,
+        membership_category: '',
+        is_document_missing: false,
+        missing_documents: '',
+        membership_date: new Date().toISOString().split('T')[0],
+        card_issue_date: new Date().toISOString().split('T')[0],
+        card_expiry_date: '',
+        card_status: 'In-Process',
+        status: 'active',
+        coa_account: '',
+        title: '',
+        state: '',
+        name_comments: '',
+        guardian_name: '',
+        guardian_membership: '',
+        nationality: '',
+        cnic_no: '',
+        passport_no: '',
+        gender: '',
+        ntn: '',
+        date_of_birth: '',
+        education: '',
+        membership_reason: '',
+        mobile_number_a: '',
+        mobile_number_b: '',
+        mobile_number_c: '',
+        telephone_number: '',
+        personal_email: '',
+        critical_email: '',
+        emergency_name: '',
+        emergency_relation: '',
+        emergency_contact: '',
+        current_address: '',
+        current_city: '',
+        current_country: '',
+        permanent_address: '',
+        permanent_city: '',
+        permanent_country: '',
+        country: '',
+        documents: [],
+        previewFiles: [],
         family_members: [],
     };
 
@@ -142,6 +136,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
     const handleChangeData = (name, value) => {
         addDataInState(name, value);
     };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         addDataInState(name, value);
@@ -150,63 +145,40 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
     useEffect(() => {
         if (!sameAsCurrent) return;
 
-        setFormsData((prev) => {
-            const updated = { ...prev };
-
-            const current = prev.member || {};
-
-            updated.member = {
-                ...prev.member,
-                permanent_address: current.current_address || '',
-                permanent_city: current.current_city || '',
-                permanent_country: current.current_country || '',
-            };
-
-            return updated;
-        });
-    }, [formsData.member?.current_address, formsData.member?.current_city, formsData.member?.current_country, sameAsCurrent]);
+        setFormsData((prev) => ({
+            ...prev,
+            permanent_address: prev.current_address || '',
+            permanent_city: prev.current_city || '',
+            permanent_country: prev.current_country || '',
+        }));
+    }, [formsData.current_address, formsData.current_city, formsData.current_country, sameAsCurrent]);
 
     const addDataInState = (name, value) => {
-        if (name.startsWith('member.')) {
-            const field = name.split('.')[1];
-
-            setFormsData((prev) => ({
-                ...prev,
-                member: {
-                    ...prev.member,
-                    [field]: value,
-                },
+        if (['member_type_id', 'membership_category'].includes(name)) {
+            const updatedFamily = formsData.family_members.map((member) => ({
+                ...member,
+                [name]: value,
             }));
-            if (field === 'member_type_id' || field === 'membership_category') {
-                let family_members = formsData.family_members.map((member) => ({
-                    ...member,
-                    [field]: value,
-                }));
-                setCurrentFamilyMember((prev) => ({
-                    ...prev,
-                    [field]: value,
-                }));
-                setFormsData((prev) => ({
-                    ...prev,
-                    family_members: family_members,
-                }));
-            }
-        } else if (name.startsWith('family_members.')) {
-            const index = parseInt(name.split('.')[1], 10);
-            setFormsData((prev) => ({
-                ...prev,
-                family_members: prev.family_members.map((member, i) => (i === index ? { ...member, [name.split('.')[2]]: value } : member)),
-            }));
-        } else {
+            setCurrentFamilyMember((prev) => ({ ...prev, [name]: value }));
             setFormsData((prev) => ({
                 ...prev,
                 [name]: value,
+                family_members: updatedFamily,
             }));
+        } else if (name.startsWith('family_members.')) {
+            const index = parseInt(name.split('.')[1], 10);
+            const field = name.split('.')[2];
+            setFormsData((prev) => ({
+                ...prev,
+                family_members: prev.family_members.map((member, i) => (i === index ? { ...member, [field]: value } : member)),
+            }));
+        } else {
+            setFormsData((prev) => ({ ...prev, [name]: value }));
         }
     };
 
     useEffect(() => {
-        const { card_issue_date, card_expiry_date } = formsData.member;
+        const { card_issue_date, card_expiry_date } = formsData;
 
         if (!card_issue_date || !card_expiry_date) return;
 
@@ -216,23 +188,21 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         formsData.family_members.forEach((fm, idx) => {
             const start = new Date(fm.start_date);
             const end = new Date(fm.end_date);
-            console.log(issueDate, expiryDate);
-            console.log('yes');
 
-            if (isNaN(start) || isNaN(end)) return; // Skip invalid
+            if (isNaN(start) || isNaN(end)) return;
 
             const isFuture = start > expiryDate && end > expiryDate;
             const isInRange = start >= issueDate && end <= expiryDate;
 
             if (isFuture) {
-                console.error(`❌ Family member at index ${idx} has dates in the future beyond new card expiry`);
+                console.error(`❌ Family member at index ${idx} has dates in the future`);
             } else if (!isInRange && end > expiryDate) {
-                console.warn(`⚠️ Family member at index ${idx} has range partly outside the card date range`);
+                console.warn(`⚠️ Family member at index ${idx} is partly outside the range`);
             } else {
-                console.log(`✅ Family member at index ${idx} is within date range`);
+                console.log(`✅ Family member ${idx} is valid`);
             }
         });
-    }, [formsData.member.card_issue_date, formsData.member.card_expiry_date, formsData.family_members]);
+    }, [formsData.card_issue_date, formsData.card_expiry_date, formsData.family_members]);
 
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
         application_no: '',
@@ -243,9 +213,13 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         phone_number: '',
         email: '',
         member_type_id: '',
+        date_of_birth: '',
         membership_category: '',
         start_date: '',
         end_date: '',
+        card_issue_date: '',
+        card_expiry_date: '',
+        status: 'active',
         picture: null,
         picture_preview: null,
     });
@@ -270,21 +244,13 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 }
             })
             .catch((error) => {
-                if (error.response && error.response.status === 422 && error.response.data.errors) {
-                    const errors = error.response.data.errors;
-                    Object.keys(errors).forEach((field) => {
+                if (error.response?.status === 422 && error.response.data.errors) {
+                    Object.entries(error.response.data.errors).forEach(([field, messages]) => {
                         const label = field.replace(/\./g, ' → ');
-                        errors[field].forEach((message) => {
-                            enqueueSnackbar(`${label}: ${message}`, { variant: 'error' });
-                        });
+                        messages.forEach((msg) => enqueueSnackbar(`${label}: ${msg}`, { variant: 'error' }));
                     });
                 } else {
-                    console.error(error);
-                    if (error.response && error.response.data.error) {
-                        enqueueSnackbar(error.response.data.error, { variant: 'error' });
-                    } else {
-                        enqueueSnackbar('Something went wrong.', { variant: 'error' });
-                    }
+                    enqueueSnackbar(error.response?.data?.error || 'Something went wrong.', { variant: 'error' });
                 }
             })
             .finally(() => setLoading(false));
@@ -301,7 +267,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <div className="">
+                <div>
                     {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}
                     {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
                     {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}

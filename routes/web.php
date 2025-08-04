@@ -316,8 +316,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/membership/filter', [MembershipController::class, 'filterMember'])->name('membership.filter');
 
-    Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
-    Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
+    Route::get('/membership/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
+    Route::get('/membership/all', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('/membership/edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
     Route::post('/membership/update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
     Route::post('/membership/pause', [MembershipController::class, 'membershipPause'])->name('membership.pause');
@@ -326,8 +326,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/membership/update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
 
     // get member invoice
-    Route::get('member-invoices/{id}', [MembershipController::class, 'getMemberInvoices'])->name('member-invoices');
-    Route::get('financial-invoices/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
+    Route::get('financial-invoice/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
 
     // Members types
@@ -377,7 +376,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('membership.detail2');
 
     // Family Members Archive route
-    Route::get('/admin/membership/archive', [FamilyMembersArchiveConroller::class, 'index'])->name('family-members-archive.index');
+    Route::get('/admin/membership/family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('family-members-archive.index');
 
     // Family Applied Member
     Route::get('/admin/membership/applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');

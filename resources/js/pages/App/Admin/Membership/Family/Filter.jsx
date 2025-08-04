@@ -44,7 +44,7 @@ const styles = {
     },
 };
 
-const MembershipDashboardFilter = ({ openFilterModal, setOpenFilterModal, members }) => {
+const FamilyFilter = ({ openFilterModal, setOpenFilterModal, members }) => {
     const props = usePage().props;
 
     const [filters, setFilters] = useState({
@@ -161,4 +161,4 @@ const MembershipDashboardFilter = ({ openFilterModal, setOpenFilterModal, member
     );
 };
 
-export default MembershipDashboardFilter;
+export default FamilyFilter;

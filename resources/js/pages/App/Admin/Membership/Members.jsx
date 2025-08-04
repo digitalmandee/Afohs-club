@@ -135,40 +135,39 @@ const AllMembers = ({ members }) => {
                                 <TableBody>
                                     {members.data.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.member?.membership_no || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.membership_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
-                                                            {user.first_name}
+                                                            {user.full_name}
 
-                                                            {user.member?.is_document_enabled && (
+                                                            {user.is_document_enabled && (
                                                                 <Tooltip title="Documents missing" arrow>
                                                                     <WarningAmberIcon color="warning" fontSize="small" />
                                                                 </Tooltip>
                                                             )}
                                                         </Typography>
-
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.email}</Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <PopupState variant="popover" popupId={`status-popup-${user.id}`}>
                                                     {(popupState) => (
                                                         <>
                                                             <span
                                                                 style={{
-                                                                    color: user.member?.status === 'active' ? '#2e7d32' : user.member?.status === 'suspended' ? '#FFA90B' : '#d32f2f',
+                                                                    color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f',
                                                                     fontWeight: 'medium',
                                                                     cursor: 'pointer',
                                                                 }}
                                                                 {...bindTrigger(popupState)}
                                                             >
-                                                                {user.member?.status || 'N/A'}
-                                                                {user.member?.status === 'suspended' && (
+                                                                {user.status || 'N/A'}
+                                                                {user.status === 'suspended' && (
                                                                     <img
                                                                         src="/assets/system-expired.png"
                                                                         alt=""
@@ -183,26 +182,16 @@ const AllMembers = ({ members }) => {
                                                                 <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
                                                             </span>
                                                             <Menu {...bindMenu(popupState)}>
-                                                                {getAvailableStatusActions(user.member?.status).map((statusOption) => (
+                                                                {getAvailableStatusActions(user.status).map((statusOption) => (
                                                                     <MenuItem
                                                                         key={statusOption}
                                                                         onClick={() => {
                                                                             popupState.close();
-                                                                            if (statusOption === 'suspended') {
-                                                                                setSelectMember(user);
-                                                                                setSuspensionModalOpen(true);
-                                                                            } else if (statusOption === 'cancelled') {
-                                                                                setSelectMember(user);
-                                                                                setCancelModalOpen(true);
-                                                                            } else if (statusOption === 'active') {
-                                                                                setSelectMember(user);
-                                                                                setActivateModalOpen(true);
-                                                                                // Optional: trigger activate logic/modal here
-                                                                                console.log('Activate clicked');
-                                                                            } else if (statusOption === 'pause') {
-                                                                                setSelectMember(user);
-                                                                                setPauseModalOpen(true);
-                                                                            }
+                                                                            setSelectMember(user);
+                                                                            if (statusOption === 'suspended') setSuspensionModalOpen(true);
+                                                                            else if (statusOption === 'cancelled') setCancelModalOpen(true);
+                                                                            else if (statusOption === 'active') setActivateModalOpen(true);
+                                                                            else if (statusOption === 'pause') setPauseModalOpen(true);
                                                                         }}
                                                                     >
                                                                         {statusOption === 'active' ? 'Activate' : statusOption}
@@ -215,7 +204,11 @@ const AllMembers = ({ members }) => {
                                             </TableCell>
                                             <TableCell>
                                                 <Button
-                                                    style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
+                                                    style={{
+                                                        color: '#0C67AA',
+                                                        textDecoration: 'underline',
+                                                        textTransform: 'none',
+                                                    }}
                                                     onClick={() => {
                                                         setSelectMember(user);
                                                         setOpenCardModal(true);
@@ -225,11 +218,15 @@ const AllMembers = ({ members }) => {
                                                 </Button>
                                             </TableCell>
                                             <TableCell>
-                                                {user.member?.status === 'Expired' || user.member?.status === 'Suspend' ? (
+                                                {user.card_status === 'Expired' || user.card_status === 'Suspend' ? (
                                                     <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
                                                 ) : (
                                                     <Button
-                                                        style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
+                                                        style={{
+                                                            color: '#0C67AA',
+                                                            textDecoration: 'underline',
+                                                            textTransform: 'none',
+                                                        }}
                                                         onClick={() => {
                                                             setSelectMember(user);
                                                             setOpenInvoiceModal(true);
@@ -275,13 +272,14 @@ const AllMembers = ({ members }) => {
                     </div>
 
                     {/* Modal */}
-                    <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={members.data} />
-                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members.data} />
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.member?.invoice_id} />
+                    <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+                    <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+                    <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+
+                    <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+
+                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
+                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.user_id} />
                 </div>
             </div>
         </>

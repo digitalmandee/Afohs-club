@@ -59,7 +59,7 @@ return new class extends Migration {
         // Step 2: Update invalid values to new enum values (with quotes!)
         DB::table('members')
             ->whereNotIn('card_status', [
-                'In-Process', 'Printed', 'Received', 'Issued', 'Re-Printed', 'E-Card Issued'
+                'In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued'
             ])
             ->update(['card_status' => 'In-Process']);
 

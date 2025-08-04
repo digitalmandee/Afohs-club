@@ -12,13 +12,14 @@ class Member extends Model
         'membership_no',
         'member_type_id',
         'member_category_id',
+        'profile_photo',
+        'parent_id',
         'family_suffix',
         'first_name',
         'middle_name',
         'last_name',
         'full_name',
         'relation',
-        'cnic',
         'phone_number',
         'start_date',
         'end_date',
@@ -134,6 +135,16 @@ class Member extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Member::class, 'parent_id', 'user_id');
+    }
+
+    public function familyMembers()
+    {
+        return $this->hasMany(User::class, 'parent_user_id', 'user_id');
     }
 
     public function pausedHistories()

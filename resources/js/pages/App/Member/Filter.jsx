@@ -1,19 +1,5 @@
 import { CalendarToday as CalendarIcon, Close as CloseIcon, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Box,
-    Button,
-    Chip,
-    FormControl,
-    IconButton,
-    InputAdornment,
-    MenuItem,
-    Select,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, FormControl, IconButton, InputAdornment, MenuItem, Select, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 
@@ -140,16 +126,8 @@ const CustomerFilter = () => {
                                 By Customer Name
                             </Typography>
                             <Box>
-                                <FilterChip
-                                    label="↑ Ascending"
-                                    active={filters.customerNameSort === 'asc'}
-                                    onClick={() => handleFilterChange('customerNameSort', 'asc')}
-                                />
-                                <FilterChip
-                                    label="↓ Descending"
-                                    active={filters.customerNameSort === 'desc'}
-                                    onClick={() => handleFilterChange('customerNameSort', 'desc')}
-                                />
+                                <FilterChip label="↑ Ascending" active={filters.customerNameSort === 'asc'} onClick={() => handleFilterChange('customerNameSort', 'asc')} />
+                                <FilterChip label="↓ Descending" active={filters.customerNameSort === 'desc'} onClick={() => handleFilterChange('customerNameSort', 'desc')} />
                             </Box>
                         </Box>
 
@@ -158,16 +136,8 @@ const CustomerFilter = () => {
                                 By Member Id
                             </Typography>
                             <Box>
-                                <FilterChip
-                                    label="↑ Ascending"
-                                    active={filters.memberIdSort === 'asc'}
-                                    onClick={() => handleFilterChange('memberIdSort', 'asc')}
-                                />
-                                <FilterChip
-                                    label="↓ Descending"
-                                    active={filters.memberIdSort === 'desc'}
-                                    onClick={() => handleFilterChange('memberIdSort', 'desc')}
-                                />
+                                <FilterChip label="↑ Ascending" active={filters.memberIdSort === 'asc'} onClick={() => handleFilterChange('memberIdSort', 'asc')} />
+                                <FilterChip label="↓ Descending" active={filters.memberIdSort === 'desc'} onClick={() => handleFilterChange('memberIdSort', 'desc')} />
                             </Box>
                         </Box>
                     </AccordionDetails>
@@ -192,27 +162,10 @@ const CustomerFilter = () => {
                                 Member Status
                             </Typography>
                             <Box>
-                                <FilterChip
-                                    label="All Status"
-                                    active={filters.memberStatus === 'All Status'}
-                                    onClick={() => handleFilterChange('memberStatus', 'All Status')}
-                                    color="dark"
-                                />
-                                <FilterChip
-                                    label="Guest"
-                                    active={filters.memberStatus === 'Guest'}
-                                    onClick={() => handleFilterChange('memberStatus', 'Guest')}
-                                />
-                                <FilterChip
-                                    label="Star"
-                                    active={filters.memberStatus === 'Star'}
-                                    onClick={() => handleFilterChange('memberStatus', 'Star')}
-                                />
-                                <FilterChip
-                                    label="Diamond"
-                                    active={filters.memberStatus === 'Diamond'}
-                                    onClick={() => handleFilterChange('memberStatus', 'Diamond')}
-                                />
+                                <FilterChip label="All Status" active={filters.memberStatus === 'All Status'} onClick={() => handleFilterChange('memberStatus', 'All Status')} color="dark" />
+                                <FilterChip label="Guest" active={filters.memberStatus === 'Guest'} onClick={() => handleFilterChange('memberStatus', 'Guest')} />
+                                <FilterChip label="Star" active={filters.memberStatus === 'Star'} onClick={() => handleFilterChange('memberStatus', 'Star')} />
+                                <FilterChip label="Diamond" active={filters.memberStatus === 'Diamond'} onClick={() => handleFilterChange('memberStatus', 'Diamond')} />
                             </Box>
                         </Box>
 
@@ -221,22 +174,9 @@ const CustomerFilter = () => {
                                 Active Status
                             </Typography>
                             <Box>
-                                <FilterChip
-                                    label="All Status"
-                                    active={filters.activeStatus === 'All Status'}
-                                    onClick={() => handleFilterChange('activeStatus', 'All Status')}
-                                    color="dark"
-                                />
-                                <FilterChip
-                                    label="Active"
-                                    active={filters.activeStatus === 'Active'}
-                                    onClick={() => handleFilterChange('activeStatus', 'Active')}
-                                />
-                                <FilterChip
-                                    label="Inactive"
-                                    active={filters.activeStatus === 'Inactive'}
-                                    onClick={() => handleFilterChange('activeStatus', 'Inactive')}
-                                />
+                                <FilterChip label="All Status" active={filters.activeStatus === 'All Status'} onClick={() => handleFilterChange('activeStatus', 'All Status')} color="dark" />
+                                <FilterChip label="Active" active={filters.activeStatus === 'Active'} onClick={() => handleFilterChange('activeStatus', 'Active')} />
+                                <FilterChip label="Inactive" active={filters.activeStatus === 'Inactive'} onClick={() => handleFilterChange('activeStatus', 'Inactive')} />
                             </Box>
                         </Box>
 
@@ -321,16 +261,8 @@ const CustomerFilter = () => {
                                 Sorting
                             </Typography>
                             <Box>
-                                <FilterChip
-                                    label="↑ Ascending"
-                                    active={filters.spendingSort === 'asc'}
-                                    onClick={() => handleFilterChange('spendingSort', 'asc')}
-                                />
-                                <FilterChip
-                                    label="↓ Descending"
-                                    active={filters.spendingSort === 'desc'}
-                                    onClick={() => handleFilterChange('spendingSort', 'desc')}
-                                />
+                                <FilterChip label="↑ Ascending" active={filters.spendingSort === 'asc'} onClick={() => handleFilterChange('spendingSort', 'asc')} />
+                                <FilterChip label="↓ Descending" active={filters.spendingSort === 'desc'} onClick={() => handleFilterChange('spendingSort', 'desc')} />
                             </Box>
                         </Box>
 
@@ -339,21 +271,9 @@ const CustomerFilter = () => {
                                 Suggest
                             </Typography>
                             <Box>
-                                <FilterChip
-                                    label="Rs 50 - Rs 100"
-                                    active={filters.spendingSuggest === 'range1'}
-                                    onClick={() => handleFilterChange('spendingSuggest', 'range1')}
-                                />
-                                <FilterChip
-                                    label="Rs 100 - Rs 500"
-                                    active={filters.spendingSuggest === 'range2'}
-                                    onClick={() => handleFilterChange('spendingSuggest', 'range2')}
-                                />
-                                <FilterChip
-                                    label="Rs 500 - Rs 1000"
-                                    active={filters.spendingSuggest === 'range3'}
-                                    onClick={() => handleFilterChange('spendingSuggest', 'range3')}
-                                />
+                                <FilterChip label="Rs 50 - Rs 100" active={filters.spendingSuggest === 'range1'} onClick={() => handleFilterChange('spendingSuggest', 'range1')} />
+                                <FilterChip label="Rs 100 - Rs 500" active={filters.spendingSuggest === 'range2'} onClick={() => handleFilterChange('spendingSuggest', 'range2')} />
+                                <FilterChip label="Rs 500 - Rs 1000" active={filters.spendingSuggest === 'range3'} onClick={() => handleFilterChange('spendingSuggest', 'range3')} />
                             </Box>
                         </Box>
 
@@ -415,16 +335,8 @@ const CustomerFilter = () => {
                                 Sorting
                             </Typography>
                             <Box>
-                                <FilterChip
-                                    label="↑ Ascending"
-                                    active={filters.registeredSort === 'asc'}
-                                    onClick={() => handleFilterChange('registeredSort', 'asc')}
-                                />
-                                <FilterChip
-                                    label="↓ Descending"
-                                    active={filters.registeredSort === 'desc'}
-                                    onClick={() => handleFilterChange('registeredSort', 'desc')}
-                                />
+                                <FilterChip label="↑ Ascending" active={filters.registeredSort === 'asc'} onClick={() => handleFilterChange('registeredSort', 'asc')} />
+                                <FilterChip label="↓ Descending" active={filters.registeredSort === 'desc'} onClick={() => handleFilterChange('registeredSort', 'desc')} />
                             </Box>
                         </Box>
 
@@ -433,21 +345,9 @@ const CustomerFilter = () => {
                                 Suggest
                             </Typography>
                             <Box>
-                                <FilterChip
-                                    label="By Date"
-                                    active={filters.registeredSuggest === 'date'}
-                                    onClick={() => handleFilterChange('registeredSuggest', 'date')}
-                                />
-                                <FilterChip
-                                    label="By Month"
-                                    active={filters.registeredSuggest === 'month'}
-                                    onClick={() => handleFilterChange('registeredSuggest', 'month')}
-                                />
-                                <FilterChip
-                                    label="By Year"
-                                    active={filters.registeredSuggest === 'year'}
-                                    onClick={() => handleFilterChange('registeredSuggest', 'year')}
-                                />
+                                <FilterChip label="By Date" active={filters.registeredSuggest === 'date'} onClick={() => handleFilterChange('registeredSuggest', 'date')} />
+                                <FilterChip label="By Month" active={filters.registeredSuggest === 'month'} onClick={() => handleFilterChange('registeredSuggest', 'month')} />
+                                <FilterChip label="By Year" active={filters.registeredSuggest === 'year'} onClick={() => handleFilterChange('registeredSuggest', 'year')} />
                             </Box>
                         </Box>
 
