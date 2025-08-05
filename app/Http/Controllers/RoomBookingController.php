@@ -7,10 +7,10 @@ use App\Models\FinancialInvoice;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
 class RoomBookingController extends Controller
@@ -65,7 +65,7 @@ class RoomBookingController extends Controller
 
             $booking = RoomBooking::create([
                 'booking_no' => $this->getBookingId(),
-                'customer_id' => (int)$data['guest']['id'],
+                'customer_id' => (int) $data['guest']['id'],
                 'booking_date' => $data['bookingDate'] ?? null,
                 'check_in_date' => $data['checkInDate'] ?? null,
                 'check_out_date' => $data['checkOutDate'] ?? null,
@@ -109,15 +109,14 @@ class RoomBookingController extends Controller
 
             foreach ($data['other_charges'] ?? [] as $charge) {
                 if (!empty($charge['type'])) {
+                    $charge['is_complementary'] = $charge['is_complementary'] ? 1 : 0;
                     $booking->otherCharges()->create($charge);
                 }
             }
 
-            Log::info('Room booking created', ['booking_id' => $data['guest']['id']]);
-
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->getInvoiceNo(),
-                'customer_id' => (int)$data['guest']['id'],
+                'customer_id' => (int) $data['guest']['id'],
                 'member_id' => Auth::user()->id,
                 'invoice_type' => 'room_booking',
                 'discount_type' => $data['discountType'] ?? null,
@@ -177,6 +176,7 @@ class RoomBookingController extends Controller
             'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,docx',
             'mini_bar_items' => 'nullable|array',
             'other_charges' => 'nullable|array',
+            'statusType' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -228,6 +228,7 @@ class RoomBookingController extends Controller
                 'grand_total' => $data['grandTotal'],
                 'additional_notes' => $data['notes'] ?? null,
                 'booking_docs' => json_encode($documentPaths),
+                'status' => $data['statusType'] ?? $booking->status,
             ]);
 
             // 🔁 Clear and recreate mini bar + other charges
@@ -241,6 +242,7 @@ class RoomBookingController extends Controller
             $booking->otherCharges()->delete();
             foreach ($data['other_charges'] ?? [] as $charge) {
                 if (!empty($charge['type'])) {
+                    $charge['is_complementary'] = $charge['is_complementary'] ? 1 : 0;
                     $booking->otherCharges()->create($charge);
                 }
             }
@@ -276,7 +278,6 @@ class RoomBookingController extends Controller
         }
     }
 
-
     // Calendar
 
     public function calendar()
@@ -305,9 +306,51 @@ class RoomBookingController extends Controller
         return response()->json(['rooms' => $rooms, 'bookings' => $bookings]);
     }
 
+    // Show Room Booking
+    public function showRoomBooking($id)
+    {
+        $booking = RoomBooking::with('room', 'customer', 'customer.member:id,user_id,membership_no', 'room', 'room.roomType')->findOrFail($id);
+        $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
+            ->select('id', 'customer_id', 'data', 'status')
+            ->where('customer_id', $booking->customer_id)
+            ->whereJsonContains('data', [['booking_id' => $booking->id]])
+            ->first();
+        $booking->invoice = $invoice;
+
+        return response()->json(['success' => true, 'booking' => $booking]);
+    }
+
+    public function checkIn(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:room_bookings,id',
+            'check_in_date' => 'required|date',
+            'check_in_time' => 'required|date_format:H:i',
+        ]);
+
+        $booking = RoomBooking::findOrFail($request->booking_id);
+
+        // Validate: Check-in date must not be after check-out date
+        if (!empty($booking->check_out_date) && $request->check_in_date > $booking->check_out_date) {
+            return response()->json(['message' => 'Check-in date cannot be after check-out date.'], 422);
+        }
+
+        // Save check-in info
+        $booking->check_in_date = $request->check_in_date;
+        $booking->check_in_time = $request->check_in_time;
+        $booking->status = 'checked_in';
+
+        $booking->save();
+
+        return response()->json([
+            'message' => 'Check-in time recorded successfully.',
+            'check_in_at' => $booking->check_in_date . ' ' . $booking->check_in_time,
+        ]);
+    }
+
     private function getBookingId()
     {
-        $booking_id =  (int) RoomBooking::max('booking_no');
+        $booking_id = (int) RoomBooking::max('booking_no');
         return $booking_id + 1;
     }
 

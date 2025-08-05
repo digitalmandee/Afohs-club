@@ -97,6 +97,7 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url, component, props } = usePage();
+    const auth = props.auth;
 
     const normalizePath = (fullPath) => new URL(fullPath, window.location.origin).pathname;
 
@@ -112,10 +113,7 @@ export default function SideNav({ open, setOpen }) {
         menuItems.forEach((item) => {
             if (item.children) {
                 // Match direct children
-                const matchChild = item.children.some((child) =>
-                    normalizePath(child.path) === url ||
-                    (child.children && child.children.some((sub) => normalizePath(sub.path) === url))
-                );
+                const matchChild = item.children.some((child) => normalizePath(child.path) === url || (child.children && child.children.some((sub) => normalizePath(sub.path) === url)));
 
                 if (matchChild) {
                     dropdownState[item.text] = true;
@@ -123,9 +121,7 @@ export default function SideNav({ open, setOpen }) {
                     // Match nested children if present
                     item.children.forEach((child) => {
                         if (child.children) {
-                            const matchSub = child.children.some(
-                                (sub) => normalizePath(sub.path) === url
-                            );
+                            const matchSub = child.children.some((sub) => normalizePath(sub.path) === url);
                             if (matchSub) {
                                 dropdownState[child.text] = true;
                             }
@@ -244,12 +240,12 @@ export default function SideNav({ open, setOpen }) {
                             path: route('events.dashboard'),
                         },
                         {
-                            text: 'Manage Events',
-                            path: route('events.manage'),
-                        },
-                        {
                             text: 'Event Venues',
                             path: route('event-venues.index'),
+                        },
+                        {
+                            text: 'Event Menu',
+                            path: route('event-menu.index'),
                         },
                         {
                             text: 'Event Menu Rate Category',
@@ -284,16 +280,20 @@ export default function SideNav({ open, setOpen }) {
                     path: route('membership.members'),
                 },
                 {
-                    text: 'Members History',
-                    path: route('membership.history'),
-                },
-                {
                     text: 'Membership Type',
                     path: route('member-types.index'),
                 },
                 {
-                    text: 'Membership Category',
+                    text: 'Membership Category',
                     path: route('member-categories.index'),
+                },
+                {
+                    text: 'Family Members Archive',
+                    path: route('membership.family-members'),
+                },
+                {
+                    text: 'Applied Member',
+                    path: route('applied-member.index'),
                 },
                 {
                     text: 'Finance',
@@ -428,6 +428,10 @@ export default function SideNav({ open, setOpen }) {
             icon: <SettingsIcon />,
             children: [
                 {
+                    text: 'Billing',
+                    path: route('admin.billing-settings.edit'),
+                },
+                {
                     text: 'Profile settings',
                     path: '/settings/profile',
                 },
@@ -543,8 +547,8 @@ export default function SideNav({ open, setOpen }) {
                                 }}
                             />
                             <Box>
-                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>MALIK</Typography>
-                                <Typography sx={{ fontSize: '12px', color: '#666' }}>Admin</Typography>
+                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>{auth.user?.name}</Typography>
+                                <Typography sx={{ fontSize: '12px', color: '#666' }}>{auth.role}</Typography>
                             </Box>
                         </Box>
                     </Box>

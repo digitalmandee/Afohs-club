@@ -1,19 +1,23 @@
 import { useState } from 'react';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography } from '@mui/material';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import { enqueueSnackbar } from 'notistack';
 
-const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
+const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
-
+    const [selectedKinshipUser, setSelectedKinshipUser] = useState(null);
     const [submitError, setSubmitError] = useState('');
     const [familyMemberErrors, setFamilyMemberErrors] = useState({});
+    const [fieldErrors, setFieldErrors] = useState({});
 
     const handleFamilyMemberChange = (field, value) => {
         setCurrentFamilyMember({
@@ -23,20 +27,22 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
     };
 
     const AddFamilyMember = () => {
-        const maxApplicationNo = data.family_members.length ? Math.max(...data.family_members.map((f) => f.application_no)) : applicationNo;
+        const maxApplicationNo = data.family_members.length ? Math.max(...data.family_members.map((f) => f.application_no)) : data.application_no;
 
         const existingCount = data.family_members.length;
-        const suffix = String.fromCharCode(65 + existingCount); // 65 = 'A'
+        const suffix = String.fromCharCode(65 + existingCount); // A, B, C...
+        const uniqueId = `new-${existingCount + 1}`;
 
         setCurrentFamilyMember((prev) => ({
             ...prev,
+            id: uniqueId,
             family_suffix: suffix,
-            // full_membership_no: `${data.member.membership_no}-${suffix}`,
             application_no: Number(maxApplicationNo) + 1,
-            member_type_id: data.member.member_type_id,
-            membership_category: data.member.membership_category,
-            start_date: data.member.card_issue_date,
-            end_date: data.member.card_expire_date,
+            member_type_id: data.member_type_id,
+            membership_category: data.membership_category,
+            start_date: new Date(),
+            card_issue_date: data.card_issue_date,
+            card_expiry_date: data.card_expiry_date,
         }));
         setShowFamilyMember(true);
     };
@@ -44,7 +50,9 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
     const handleSaveFamilyMember = () => {
         const errors = {};
 
-        // Required fields
+        const isEdit = data.family_members.some((fm) => fm.id === currentFamilyMember.id);
+
+        // --- Validation ---
         if (!currentFamilyMember.full_name) {
             errors.full_name = 'Full Name is required';
         }
@@ -54,8 +62,23 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
         if (!currentFamilyMember.email) {
             errors.email = 'Email is required';
         }
+        if (!currentFamilyMember.date_of_birth) {
+            errors.date_of_birth = 'Date of Birth is required';
+        }
+        if (currentFamilyMember.cnic && !/^\d{5}-\d{7}-\d{1}$/.test(currentFamilyMember.cnic)) {
+            errors.cnic = 'CNIC must be in the format XXXXX-XXXXXXX-X';
+        }
+        if (currentFamilyMember.cnic && currentFamilyMember.cnic === data.cnic_no) {
+            errors.cnic = 'Family member CNIC must not be the same as the primary member CNIC';
+        }
+        if (!currentFamilyMember.start_date) {
+            errors.start_date = 'Start Date is required';
+        }
+        if (!currentFamilyMember.status) {
+            errors.status = 'Status is required';
+        }
 
-        // Email uniqueness check
+        // Email uniqueness
         const mainEmail = data.email?.trim().toLowerCase();
         const memberEmail = currentFamilyMember.email?.trim().toLowerCase();
 
@@ -63,15 +86,22 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
             errors.email = 'Family member email must not be same as member email';
         }
 
-        const emailAlreadyUsed = data.family_members.some((fm) => fm.email?.trim().toLowerCase() === memberEmail);
+        const emailAlreadyUsed = data.family_members.some((fm) => {
+            if (!fm.email) return false;
+
+            const fmEmail = fm.email.trim().toLowerCase();
+            console.log(isEdit, fm.id, currentFamilyMember.id);
+            if (isEdit && fm.id === currentFamilyMember.id) return false;
+            return fmEmail === memberEmail;
+        });
 
         if (emailAlreadyUsed) {
-            errors.email = 'This email is already added to another family member';
+            errors.email = 'This email is already used by another family member';
         }
 
         // Date validations
-        const issueDate = new Date(data.member.card_issue_date);
-        const expiryDate = new Date(data.member.card_expiry_date);
+        const issueDate = new Date(data.card_issue_date);
+        const expiryDate = new Date(data.card_expiry_date);
         const start = new Date(currentFamilyMember.start_date);
         const end = new Date(currentFamilyMember.end_date);
 
@@ -86,8 +116,24 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
             return;
         }
 
-        // Update family member list
-        handleChangeData('family_members', [...data.family_members, currentFamilyMember]);
+        // --- Save or Update Logic ---
+        let updatedMember = { ...currentFamilyMember };
+
+        // Assign ID if it's new
+        if (!currentFamilyMember.id) {
+            const newId = `new-${data.family_members.length + 1}`;
+            updatedMember.id = newId;
+        }
+
+        let updatedFamilyMembers;
+
+        if (isEdit) {
+            updatedFamilyMembers = data.family_members.map((fm) => (fm.id === currentFamilyMember.id ? updatedMember : fm));
+        } else {
+            updatedFamilyMembers = [...data.family_members, updatedMember];
+        }
+
+        handleChangeData('family_members', updatedFamilyMembers);
 
         // Reset form
         setCurrentFamilyMember({
@@ -99,14 +145,20 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
             phone_number: '',
             email: '',
             member_type_id: '',
+            date_of_birth: '',
             membership_category: '',
             start_date: '',
             end_date: '',
+            card_issue_date: '',
+            card_expiry_date: '',
+            status: 'active',
             picture: null,
             picture_preview: null,
+            is_document_missing: false,
+            documents: '',
         });
         setShowFamilyMember(false);
-        setFamilyMemberErrors({}); // Clear errors
+        setFamilyMemberErrors({});
     };
 
     const handleImageUpload = (event) => {
@@ -135,48 +187,90 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
     };
 
     const handleEditFamilyMember = (index) => {
-        setCurrentFamilyMember(data.family_members[index]);
-        handleDeleteFamilyMember(index);
+        const family = data.family_members[index];
+        setCurrentFamilyMember({ ...family });
         setShowFamilyMember(true);
     };
 
     const handleCancelFamilyMember = () => {
+        setCurrentFamilyMember({
+            application_no: '',
+            family_suffix: '',
+            full_name: '',
+            relation: '',
+            cnic: '',
+            phone_number: '',
+            email: '',
+            member_type_id: '',
+            date_of_birth: '',
+            membership_category: '',
+            start_date: '',
+            end_date: '',
+            card_issue_date: '',
+            card_expiry_date: '',
+            status: 'active',
+            picture: null,
+            picture_preview: null,
+            is_document_missing: false,
+            documents: '',
+        });
         setShowFamilyMember(false);
-        // handleChangeData('family_members', []);
-        // setFamilyMembers([]); // Clear family members on cancel
+    };
+
+    // Upload documents
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        handleChangeData('documents', [...(data.documents || []), ...files]);
+        handleChangeData('previewFiles', [...(data.previewFiles || []), ...files]);
+    };
+
+    const handleFileRemove = (index) => {
+        const updatedFiles = [...(data.previewFiles || [])];
+        updatedFiles.splice(index, 1);
+        handleChangeData('previewFiles', updatedFiles);
+        handleChangeData('documents', updatedFiles);
     };
 
     const handleSubmit = async () => {
-        const missingFields = [];
+        const errors = {};
         const allowedMemberTypes = memberTypesData.map((type) => type.id);
 
-        // Validate required fields
-        if (!data.member.member_type_id || !allowedMemberTypes.includes(Number(data.member.member_type_id))) {
-            missingFields.push('Member Type (must be one of: ' + allowedMemberTypes.join(', ') + ')');
+        // Member Type validation
+        if (!data.member_type_id || !allowedMemberTypes.includes(Number(data.member_type_id))) {
+            errors.member_type_id = `Member Type is required.`;
         }
 
-        if (!data.member.membership_date) {
-            missingFields.push('Membership Date');
+        // Category example (add your real logic here)
+        if (!data.membership_category) {
+            errors.membership_category = 'Member Category is required.';
+        }
+
+        // Document logic
+        if (data.is_document_missing && !data.missing_documents) {
+            errors.missing_documents = 'Please specify the missing document(s).';
+        }
+
+        // Membership date
+        if (!data.membership_date) {
+            errors.membership_date = 'Membership Date is required.';
         } else {
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(data.member.membership_date)) {
-                missingFields.push('Membership Date (must be in YYYY-MM-DD format)');
+            if (!dateRegex.test(data.membership_date)) {
+                errors.membership_date = 'Membership Date must be in YYYY-MM-DD format.';
             }
         }
 
-        if (missingFields.length > 0) {
-            alert(`Please fill all required fields correctly: ${missingFields.join(', ')}`);
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
             return;
         }
 
         try {
             await onSubmit();
-            setSubmitError('');
-            // router.visit('/admin/membership/all/payments');
+            setFieldErrors({});
         } catch (error) {
             console.error('Submission Error:', error);
-            const errorMessage = error.response?.data?.message || JSON.stringify(error.response?.data || 'An error occurred during submission');
-            setSubmitError(`Submission failed: ${errorMessage}. Please check all form fields.`);
+            enqueueSnackbar('Submission failed. Please try again.', { variant: 'error' });
         }
     };
 
@@ -277,9 +371,8 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                     </Typography>
                                     <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                 </Box>
-                                {/* <pre>{JSON.stringify(memberTypesData, null, 2)}</pre> */}
                                 <Box sx={{ mb: 3 }}>
-                                    <Typography sx={{ mb: 1, fontWeight: 500 }}>Member Type</Typography>
+                                    <Typography sx={{ mb: 1, fontWeight: 500 }}>Member Type *</Typography>
                                     <Grid container spacing={2}>
                                         {memberTypesData.map((type) => (
                                             <Grid item xs={6} sm={6} key={type.id}>
@@ -290,24 +383,52 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                         p: 1,
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        bgcolor: data.member.member_type_id == type.id ? '#fff' : 'transparent',
+                                                        bgcolor: data.member_type_id == type.id ? '#fff' : 'transparent',
                                                     }}
                                                 >
-                                                    <Radio checked={data.member.member_type_id == type.id} onChange={handleChange} value={type.id} name="member.member_type_id" sx={{ color: '#1976d2' }} />
+                                                    <Radio checked={data.member_type_id == type.id} onChange={handleChange} value={type.id} name="member_type_id" sx={{ color: '#1976d2' }} />
                                                     <Typography>{type.name}</Typography>
                                                 </Box>
                                             </Grid>
                                         ))}
                                     </Grid>
+                                    {fieldErrors.member_type_id && (
+                                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                            {fieldErrors.member_type_id}
+                                        </Typography>
+                                    )}
                                 </Box>
 
                                 <Box sx={{ mb: 3 }}>
-                                    <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category</Typography>
+                                    <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category *</Typography>
                                     <FormControl fullWidth variant="outlined">
                                         <Select
-                                            name="member.membership_category"
-                                            value={data.member.membership_category}
-                                            onChange={handleChange}
+                                            name="membership_category"
+                                            value={data.membership_category}
+                                            onChange={(e) => {
+                                                const selectedCategoryId = e.target.value;
+                                                const selectedCategory = membercategories.find((item) => item.id === Number(selectedCategoryId));
+                                                const categoryName = selectedCategory?.name || '';
+
+                                                handleChange({
+                                                    target: {
+                                                        name: 'membership_category',
+                                                        value: selectedCategoryId,
+                                                    },
+                                                });
+
+                                                if (!selectedKinshipUser) {
+                                                    const membershipNoParts = data.membership_no.split(' ');
+                                                    const newMembershipNo = membershipNoParts.length > 1 ? `${categoryName} ${membershipNoParts[1]}` : `${categoryName} ${data.membership_no}`;
+
+                                                    handleChange({
+                                                        target: {
+                                                            name: 'membership_no',
+                                                            value: newMembershipNo,
+                                                        },
+                                                    });
+                                                }
+                                            }}
                                             displayEmpty
                                             SelectProps={{
                                                 displayEmpty: true,
@@ -316,7 +437,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                         return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
                                                     }
                                                     const item = membercategories.find((item) => item.id == Number(selected));
-
                                                     return item ? item.name : '';
                                                 },
                                             }}
@@ -335,7 +455,50 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 </MenuItem>
                                             ))}
                                         </Select>
+                                        {fieldErrors.membership_category && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                                {fieldErrors.membership_category}
+                                            </Typography>
+                                        )}
                                     </FormControl>
+                                </Box>
+                                <Box sx={{ mb: 3 }}>
+                                    <AsyncSearchTextField
+                                        label="Kinship"
+                                        name="kinship"
+                                        value={data.kinship}
+                                        onChange={async (e) => {
+                                            const kinshipUser = e.target.value;
+                                            setSelectedKinshipUser(kinshipUser);
+                                            handleChange({ target: { name: 'kinship', value: e.target.value } });
+
+                                            const selectedCategory = membercategories.find((item) => item.id === Number(data.membership_category));
+                                            const prefix = selectedCategory?.name || '';
+
+                                            if (kinshipUser && kinshipUser.membership_no) {
+                                                const kinshipParts = kinshipUser.membership_no.split(' ');
+                                                const kinshipNum = kinshipParts[1]?.split('-')[0];
+
+                                                const existingMembers = [];
+                                                let suffix = 1;
+                                                while (existingMembers.includes(`${prefix} ${kinshipNum}-${suffix}`)) {
+                                                    suffix++;
+                                                }
+
+                                                const newMembershipNo = `${prefix} ${kinshipNum}-${suffix}`;
+
+                                                handleChange({
+                                                    target: {
+                                                        name: 'membership_no',
+                                                        value: newMembershipNo,
+                                                    },
+                                                });
+                                            }
+                                        }}
+                                        endpoint="admin.api.search-users"
+                                        placeholder="Search Kinship..."
+                                        disabled={!data.membership_category}
+                                    />
                                 </Box>
                                 <Box sx={{ mb: 3 }}>
                                     <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Number *</Typography>
@@ -343,20 +506,13 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                         fullWidth
                                         placeholder="e.g. 12345-24"
                                         variant="outlined"
-                                        name="member.membership_no"
-                                        value={data.member.membership_no}
+                                        name="membership_no"
+                                        value={data.membership_no}
                                         onChange={(e) => {
-                                            const input = e.target.value;
-
-                                            // Allow any number before dash, and exactly 2 digits after dash
-                                            const validPattern = /^[0-9]{0,10}-?[0-9]{0,2}$/;
-
-                                            if (input === '' || validPattern.test(input)) {
-                                                handleChange(e);
-                                            }
+                                            handleChange(e);
                                         }}
                                         inputProps={{
-                                            maxLength: 12, // enough for big serials + dash + year
+                                            maxLength: 12,
                                             inputMode: 'numeric',
                                         }}
                                         sx={{
@@ -377,8 +533,8 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="member.membership_date"
-                                                value={data.member.membership_date}
+                                                name="membership_date"
+                                                value={data.membership_date}
                                                 onChange={handleChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -386,6 +542,11 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                     },
                                                 }}
                                             />
+                                            {fieldErrors.membership_date && (
+                                                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                                    {fieldErrors.membership_date}
+                                                </Typography>
+                                            )}
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
@@ -393,8 +554,8 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
                                             <FormControl fullWidth variant="outlined">
                                                 <Select
-                                                    name="member.card_status"
-                                                    value={data.member.card_status}
+                                                    name="card_status"
+                                                    value={data.card_status}
                                                     onChange={handleChange}
                                                     displayEmpty
                                                     renderValue={(selected) => {
@@ -409,8 +570,11 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                         },
                                                     }}
                                                 >
-                                                    <MenuItem value="active">Active</MenuItem>
-                                                    <MenuItem value="inactive">Inactive</MenuItem>
+                                                    {['In-Process', 'Printed', 'Received', 'Issued', 'Re-Printed', 'E-Card Issued', 'Expired'].map((status) => (
+                                                        <MenuItem key={status} value={status}>
+                                                            {status}
+                                                        </MenuItem>
+                                                    ))}
                                                 </Select>
                                             </FormControl>
                                         </Box>
@@ -419,7 +583,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
 
                                 <Grid container spacing={2}>
                                     <Grid item xs={6}>
-                                        <Box sx={{ mb: 3 }}>
+                                        <Box sx={{ mb: 1 }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
                                             <TextField
                                                 fullWidth
@@ -427,8 +591,8 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="member.card_issue_date"
-                                                value={data.member.card_issue_date}
+                                                name="card_issue_date"
+                                                value={data.card_issue_date}
                                                 onChange={handleChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -439,7 +603,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Box sx={{ mb: 3 }}>
+                                        <Box sx={{ mb: 1 }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
                                             <TextField
                                                 fullWidth
@@ -447,8 +611,8 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 InputLabelProps={{ shrink: true }}
                                                 placeholder="dd/mm/yyyy"
                                                 variant="outlined"
-                                                name="member.card_expiry_date"
-                                                value={data.member.card_expiry_date}
+                                                name="card_expiry_date"
+                                                value={data.card_expiry_date}
                                                 onChange={handleChange}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -457,6 +621,113 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 }}
                                             />
                                         </Box>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Status</Typography>
+                                            <FormControl fullWidth variant="outlined">
+                                                <Select
+                                                    name="status"
+                                                    value={data.status}
+                                                    onChange={handleChange}
+                                                    displayEmpty
+                                                    renderValue={() => {
+                                                        const status = data.status;
+                                                        return status ? <Typography sx={{ textTransform: 'capitalize' }}>{status}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                    }}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                >
+                                                    {['active', 'inactive', 'suspended', 'cancelled', 'pause'].map((status) => (
+                                                        <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
+                                                            {status}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </Box>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <InputLabel>Upload Documents (PDF or Images)</InputLabel>
+                                        <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8 }} />
+                                    </Grid>
+
+                                    {fieldErrors.missing_documents && (
+                                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                            {fieldErrors.missing_documents}
+                                        </Typography>
+                                    )}
+
+                                    <Grid item xs={12}>
+                                        <Grid container spacing={1}>
+                                            {[...(data.previewFiles || [])].map((file, idx) => (
+                                                <Grid item key={idx}>
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            border: '1px solid #ccc',
+                                                            borderRadius: 1,
+                                                            px: 1,
+                                                            py: 0.5,
+                                                            backgroundColor: '#f9f9f9',
+                                                        }}
+                                                    >
+                                                        <Typography variant="body2" sx={{ mr: 1 }}>
+                                                            {file.name}
+                                                        </Typography>
+                                                        <IconButton size="small" onClick={() => handleFileRemove(idx)}>
+                                                            <CloseIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Box>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    </Grid>
+                                    {/* Document Missing */}
+                                    <Grid item xs={12}>
+                                        <Box sx={{ mb: 3 }}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={data.is_document_missing || false}
+                                                        onChange={(e) =>
+                                                            handleChange({
+                                                                target: {
+                                                                    name: 'is_document_missing',
+                                                                    value: e.target.checked,
+                                                                },
+                                                            })
+                                                        }
+                                                        sx={{ color: '#1976d2' }}
+                                                    />
+                                                }
+                                                label="Document Missing"
+                                            />
+                                        </Box>
+                                        {data.is_document_missing && (
+                                            <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Which document is missing?</Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    multiline
+                                                    rows={4}
+                                                    placeholder="Enter missing documents"
+                                                    variant="outlined"
+                                                    name="missing_documents"
+                                                    value={data.missing_documents || ''}
+                                                    onChange={handleChange}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        )}
                                     </Grid>
                                 </Grid>
 
@@ -489,7 +760,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                 {data.family_members.length > 0 && (
                                     <Box sx={{ mt: 3 }}>
                                         <Typography sx={{ mb: 1, fontWeight: 500 }}>Added Family Members</Typography>
-                                        {data.family_members.map((member, index) => (
+                                        {data.family_members.map((family, index) => (
                                             <Box
                                                 key={index}
                                                 sx={{
@@ -503,13 +774,13 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 }}
                                             >
                                                 <Typography>
-                                                    {member.full_name} ({member.relation})
+                                                    {family.full_name} ({family.relation})
                                                 </Typography>
                                                 <Box>
                                                     <IconButton size="small" onClick={() => handleEditFamilyMember(index)} sx={{ mr: 1 }}>
                                                         <EditIcon fontSize="small" />
                                                     </IconButton>
-                                                    <IconButton size="small" onClick={() => handleDeleteFamilyMember(index)}>
+                                                    <IconButton size="small" onClick={() => handleDeleteFamilyMember(index)} disabled={typeof family.id === 'number' || (typeof family.id === 'string' && !family.id.startsWith('new-'))}>
                                                         <DeleteIcon fontSize="small" />
                                                     </IconButton>
                                                 </Box>
@@ -542,7 +813,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 Membership Number :
                                             </Box>
                                             <Box component="span" sx={{ color: '#666' }}>
-                                                {data.member?.membership_no}-{currentFamilyMember.family_suffix}
+                                                {data.membership_no}-{currentFamilyMember.family_suffix}
                                             </Box>
                                         </Box>
                                     </Box>
@@ -691,10 +962,19 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>CNIC</Typography>
                                                 <TextField
                                                     fullWidth
-                                                    placeholder="Enter cnic number"
+                                                    placeholder="XXXXX-XXXXXXX-X"
                                                     variant="outlined"
                                                     value={currentFamilyMember.cnic}
-                                                    onChange={(e) => handleFamilyMemberChange('cnic', e.target.value)}
+                                                    error={!!familyMemberErrors.cnic}
+                                                    helperText={familyMemberErrors.cnic}
+                                                    onChange={(e) => {
+                                                        let value = e.target.value;
+                                                        value = value.replace(/[^\d-]/g, '');
+                                                        if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
+                                                        if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
+                                                        if (value.length > 15) value = value.slice(0, 15);
+                                                        handleFamilyMemberChange('cnic', value);
+                                                    }}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
@@ -711,7 +991,6 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                         displayEmpty
                                                         value={currentFamilyMember.member_type_id}
                                                         readOnly
-                                                        // onChange={(e) => handleFamilyMemberChange('member_type_id', e.target.value)}
                                                         renderValue={(selected) => {
                                                             if (!selected) {
                                                                 return <Typography sx={{ color: '#757575' }}>Choose Type</Typography>;
@@ -737,7 +1016,29 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                     </Grid>
 
                                     <Grid container spacing={2}>
-                                        <Grid item xs={12}>
+                                        <Grid item xs={6}>
+                                            <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Date of Birth *</Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    type="date"
+                                                    InputLabelProps={{ shrink: true }}
+                                                    placeholder="dd/mm/yyyy"
+                                                    variant="outlined"
+                                                    name="date_of_birth"
+                                                    error={!!familyMemberErrors.date_of_birth}
+                                                    helperText={familyMemberErrors.date_of_birth}
+                                                    value={currentFamilyMember.date_of_birth}
+                                                    onChange={(e) => handleFamilyMemberChange('date_of_birth', e.target.value)}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Grid>
+                                        <Grid item xs={6}>
                                             <Box sx={{ mb: 3 }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category</Typography>
                                                 <FormControl fullWidth variant="outlined">
@@ -760,7 +1061,7 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                         }}
                                                     >
                                                         {membercategories
-                                                            ?.filter((item) => item.id === data.member.membership_category)
+                                                            ?.filter((item) => item.id === data.membership_category)
                                                             .map((item) => (
                                                                 <MenuItem value={item.id} key={item.id}>
                                                                     {item.name} - {currentFamilyMember.relation}
@@ -808,9 +1109,73 @@ const AddForm3 = ({ applicationNo, data, handleChange, handleChangeData, onSubmi
                                                 />
                                             </Box>
                                         </Grid>
+                                        <Grid item xs={6}>
+                                            <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    type="date"
+                                                    InputLabelProps={{ shrink: true }}
+                                                    placeholder="Select date"
+                                                    variant="outlined"
+                                                    value={currentFamilyMember.card_issue_date}
+                                                    onChange={(e) => handleFamilyMemberChange('card_issue_date', e.target.value)}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    type="date"
+                                                    InputLabelProps={{ shrink: true }}
+                                                    placeholder="Select date"
+                                                    variant="outlined"
+                                                    value={currentFamilyMember.card_expiry_date}
+                                                    onChange={(e) => handleFamilyMemberChange('card_expiry_date', e.target.value)}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Status</Typography>
+                                                <Select
+                                                    name="status"
+                                                    value={currentFamilyMember.status}
+                                                    onChange={(e) => handleFamilyMemberChange('status', e.target.value)}
+                                                    displayEmpty
+                                                    renderValue={() => {
+                                                        const status = currentFamilyMember.status;
+                                                        return status ? <Typography sx={{ textTransform: 'capitalize' }}>{status}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                    }}
+                                                    sx={{
+                                                        width: '100%',
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                >
+                                                    {['active', 'inactive', 'suspended', 'cancelled', 'pause'].map((status) => (
+                                                        <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
+                                                            {status}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </Box>
+                                        </Grid>
                                     </Grid>
 
-                                    {/* Date error shown separately */}
                                     {familyMemberErrors.date && (
                                         <Typography color="error" variant="body2">
                                             {familyMemberErrors.date}

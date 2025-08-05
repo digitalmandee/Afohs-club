@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TextField, Button, Typography, Box, IconButton, Radio, RadioGroup, FormControlLabel, Paper, Grid } from '@mui/material';
 import { ArrowBack, ArrowForward, Check } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -12,6 +13,8 @@ const drawerWidthClosed = 110;
 const Payment = ({ invoice, onBack }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [availableQuarters, setAvailableQuarters] = useState([]);
+    const [selectedQuarters, setSelectedQuarters] = useState([]);
     const [formData, setFormData] = useState({
         user_id: invoice.user_id,
         subscriptionType: 'one_time',
@@ -21,16 +24,66 @@ const Payment = ({ invoice, onBack }) => {
         receipt: null,
         discountType: '', // 'fixed' or 'percentage'
         discountValue: '', // value of the discount
+        remarks: '',
     });
 
     const [error, setError] = useState('');
 
     const subscriptionTypes = [
         { label: 'One Time', value: 'one_time' },
-        { label: 'Monthly', value: 'monthly' },
+        // { label: 'Monthly', value: 'monthly' },
         { label: 'Quarter', value: 'quarter' },
         { label: 'Annual', value: 'annual' },
     ];
+
+    const getAvailableQuarters = (membershipDate) => {
+        const quarters = [];
+        const startDate = new Date(membershipDate);
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+
+        const quarterRanges = [
+            { label: `${year}-Q1`, start: new Date(`${year}-01-01`), end: new Date(`${year}-03-31`) },
+            { label: `${year}-Q2`, start: new Date(`${year}-04-01`), end: new Date(`${year}-06-30`) },
+            { label: `${year}-Q3`, start: new Date(`${year}-07-01`), end: new Date(`${year}-09-30`) },
+            { label: `${year}-Q4`, start: new Date(`${year}-10-01`), end: new Date(`${year}-12-31`) },
+        ];
+
+        return quarterRanges.filter((q) => startDate <= q.end).map((q) => q.label);
+    };
+
+    const getCurrentQuarterLabel = () => {
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
+        const q = Math.floor(month / 3) + 1;
+        return `${year}-Q${q}`;
+    };
+
+    useEffect(() => {
+        const memberDate = invoice.member?.membership_date;
+        const quarters = getAvailableQuarters(memberDate);
+        setAvailableQuarters(quarters);
+
+        if (formData.subscriptionType === 'annual') {
+            setSelectedQuarters(quarters);
+        } else if (formData.subscriptionType === 'quarter') {
+            const currentQ = getCurrentQuarterLabel();
+            if (quarters.includes(currentQ)) {
+                setSelectedQuarters([currentQ]);
+            } else {
+                setSelectedQuarters([]);
+            }
+        } else {
+            setSelectedQuarters([]);
+        }
+    }, [formData.subscriptionType]);
+
+    useEffect(() => {
+        if (formData.subscriptionType === 'quarter' && availableQuarters.length > 0 && selectedQuarters.length === availableQuarters.length) {
+            setFormData((prev) => ({ ...prev, subscriptionType: 'annual' }));
+        }
+    }, [selectedQuarters]);
 
     const getMinimumAmount = () => {
         const { subscriptionType, discountType, discountValue } = formData;
@@ -50,9 +103,11 @@ const Payment = ({ invoice, onBack }) => {
             } else if (subscriptionType === 'monthly') {
                 membershipTotal = subFee;
             } else if (subscriptionType === 'quarter') {
-                membershipTotal = subFee * 3;
+                membershipTotal = subFee * selectedQuarters.length;
+                duration = selectedQuarters.length * 3;
             } else if (subscriptionType === 'annual') {
-                membershipTotal = subFee * 12;
+                membershipTotal = subFee * availableQuarters.length;
+                duration = availableQuarters.length * 3;
             }
 
             duration = subscriptionType === 'one_time' ? 1 : subscriptionType === 'monthly' ? 1 : subscriptionType === 'quarter' ? 3 : subscriptionType === 'annual' ? 12 : duration;
@@ -140,17 +195,17 @@ const Payment = ({ invoice, onBack }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        if (invoice.status === 'paid') return;
         const inputAmount = parseFloat(formData.inputAmount || '0');
         const { amount, total, duration } = getMinimumAmount();
 
-        if (!formData.inputAmount || inputAmount <= 0) {
-            setError('Please enter a valid amount.');
+        if (inputAmount < 0) {
+            setError('Amount cannot be negative.');
             return;
         }
 
-        if (inputAmount < total) {
-            setError(`Amount must be at least Rs ${total.toFixed(2)}.`);
+        if (inputAmount === 0 && (!formData.remarks || formData.remarks.trim() === '')) {
+            setError('Remarks are required when the amount is 0.');
             return;
         }
 
@@ -165,7 +220,16 @@ const Payment = ({ invoice, onBack }) => {
         data.append('discount_type', formData.discountType || '');
         data.append('discount_value', formData.discountValue || '');
         data.append('payment_method', formData.paymentMethod);
-        data.append('duration', duration);
+        // Determine duration based on quarters
+        let effectiveQuarters = selectedQuarters.length;
+        if (formData.subscriptionType === 'annual') {
+            effectiveQuarters = availableQuarters.length;
+        }
+        const durationInMonths = effectiveQuarters * 3;
+        data.append('duration', durationInMonths);
+
+        data.append('remarks', formData.remarks || '');
+        selectedQuarters.forEach((q, i) => data.append(`paid_for_quarter[${i}]`, q));
 
         if (formData.paymentMethod === 'credit_card' && formData.receipt) {
             data.append('receipt', formData.receipt);
@@ -180,6 +244,7 @@ const Payment = ({ invoice, onBack }) => {
             });
 
             if (response.status === 200) {
+                enqueueSnackbar('Payment successful.', { variant: 'success' });
                 setError('');
                 router.visit(route('membership.dashboard'));
             } else {
@@ -276,10 +341,13 @@ const Payment = ({ invoice, onBack }) => {
                             <Grid container spacing={2}>
                                 <Grid item xs={6}>
                                     <Typography sx={{ mb: 1 }}>
-                                        <strong>Name:</strong> {invoice.customer?.first_name} {invoice.customer?.last_name}
+                                        <strong>Membership no:</strong> {invoice.member?.membership_no}
                                     </Typography>
                                     <Typography sx={{ mb: 1 }}>
-                                        <strong>Email:</strong> {invoice.customer?.email}
+                                        <strong>Name:</strong> {invoice.member?.first_name} {invoice.member?.last_name}
+                                    </Typography>
+                                    <Typography sx={{ mb: 1 }}>
+                                        <strong>Email:</strong> {invoice.member?.personal_email}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
@@ -419,6 +487,42 @@ const Payment = ({ invoice, onBack }) => {
                             ))}
                         </Box>
 
+                        <Box className="d-flex flex-column mb-4">
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                Remarks
+                            </Typography>
+                            <TextField name="remarks" value={formData.remarks} onChange={handleInputChange} placeholder="e.g., Overseas, Out of country" variant="outlined" size="small" />
+                        </Box>
+                        {(formData.subscriptionType === 'quarter' || formData.subscriptionType === 'annual') && (
+                            <Box className="mb-4">
+                                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                    {formData.subscriptionType === 'annual' ? 'Selected Quarters (Auto)' : 'Select Quarters'}
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                                    {availableQuarters.map((quarter) => (
+                                        <Button
+                                            key={quarter}
+                                            variant={selectedQuarters.includes(quarter) ? 'contained' : 'outlined'}
+                                            onClick={() => {
+                                                if (formData.subscriptionType === 'annual') return;
+                                                setSelectedQuarters((prev) => (prev.includes(quarter) ? prev.filter((q) => q !== quarter) : [...prev, quarter]));
+                                            }}
+                                            disabled={formData.subscriptionType === 'annual'}
+                                            sx={{
+                                                textTransform: 'none',
+                                                minWidth: '80px',
+                                                bgcolor: selectedQuarters.includes(quarter) ? '#1976d2' : 'transparent',
+                                                color: selectedQuarters.includes(quarter) ? '#fff' : '#333',
+                                                borderColor: '#ccc',
+                                            }}
+                                        >
+                                            {quarter}
+                                        </Button>
+                                    ))}
+                                </Box>
+                            </Box>
+                        )}
+
                         {error && (
                             <Typography color="error" sx={{ mb: 2 }}>
                                 {error}
@@ -440,7 +544,7 @@ const Payment = ({ invoice, onBack }) => {
                                 className="d-flex align-items-center"
                                 onClick={handleSubmit}
                                 loading={loading}
-                                disabled={loading}
+                                disabled={invoice.status === 'paid' || loading}
                                 loadingPosition="start"
                                 sx={{
                                     bgcolor: '#0c4b6e',

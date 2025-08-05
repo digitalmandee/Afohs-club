@@ -10,21 +10,8 @@ import CreateRoom from '@/components/App/Rooms/Create';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const RoomEventManager = ({ locations }) => {
+const AddRoom = () => {
     const [open, setOpen] = useState(true);
-    const [activeTab, setActiveTab] = useState('room');
-    const { url } = usePage();
-    const query = new URLSearchParams(url.split('?')[1]);
-    const type = query.get('type');
-
-    useEffect(() => {
-        if (type === 'event') {
-            setActiveTab('events');
-        } else {
-            setActiveTab('room');
-        }
-    }, [type]);
-
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -41,13 +28,13 @@ const RoomEventManager = ({ locations }) => {
                             <ArrowBackIcon />
                         </IconButton>
                         <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, fontSize: '30px', color: '#063455' }}>
-                            {activeTab === 'room' ? 'Add Room' : 'Add Event'}
+                            Add Room
                         </Typography>
                     </Box>
                     <Box sx={{ maxWidth: 600, margin: '0 auto', border: '1px solid #E3E3E3', bgcolor: '#FFFFFF' }}>
                         <Paper sx={{ p: 3 }}>
                             {/* Form Fields */}
-                            {activeTab === 'room' ? <CreateRoom /> : <CreateEvent />}
+                            <CreateRoom />
                         </Paper>
                     </Box>
                 </div>
@@ -56,4 +43,4 @@ const RoomEventManager = ({ locations }) => {
     );
 };
 
-export default RoomEventManager;
+export default AddRoom;

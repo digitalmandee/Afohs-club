@@ -4,7 +4,7 @@ import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { countries } from '@/constants/countries';
 
-const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurrent, sameAsCurrent }) => {
+const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAsCurrent }) => {
     const [formErrors, setFormErrors] = useState({});
 
     const handleSameAddress = (e) => {
@@ -12,15 +12,24 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
         setSameAsCurrent(checked);
 
         if (checked) {
-            setData((prev) => ({
-                ...prev,
-                user_details: {
-                    ...prev.user_details,
-                    permanent_address: prev.user_details.current_address || '',
-                    permanent_city: prev.user_details.current_city || '',
-                    permanent_country: prev.user_details.current_country || '',
+            handleChange({
+                target: {
+                    name: 'permanent_address',
+                    value: data.current_address || '',
                 },
-            }));
+            });
+            handleChange({
+                target: {
+                    name: 'permanent_city',
+                    value: data.current_city || '',
+                },
+            });
+            handleChange({
+                target: {
+                    name: 'permanent_country',
+                    value: data.current_country || '',
+                },
+            });
         }
     };
 
@@ -28,11 +37,11 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
         e.preventDefault(); // Prevent default form submission
         // Basic validation
         const errors = {};
-        if (!data.user_details.mobile_number_a) errors.mobile_number_a = 'Mobile Number (A) is required';
-        if (!data.email) errors.email = 'Personal Email is required';
-        if (!data.user_details.current_address) errors.current_address = 'Address is required';
-        if (!data.user_details.current_city) errors.current_city = 'City is required';
-        if (!data.user_details.current_country) errors.current_country = 'Country is required';
+        if (!data.mobile_number_a) errors.mobile_number_a = 'Mobile Number (A) is required';
+        if (!data.personal_email) errors.personal_email = 'Personal Email is required';
+        if (!data.current_address) errors.current_address = 'Address is required';
+        if (!data.current_city) errors.current_city = 'City is required';
+        if (!data.current_country) errors.current_country = 'Country is required';
 
         setFormErrors(errors);
 
@@ -143,7 +152,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (A)*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_a" value={data.user_details.mobile_number_a} error={!!formErrors.mobile_number_a} helperText={formErrors.mobile_number_a} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="mobile_number_a" value={data.mobile_number_a} error={!!formErrors.mobile_number_a} helperText={formErrors.mobile_number_a} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Mobile Number (B) */}
@@ -151,7 +160,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (B)
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_b" value={data.user_details.mobile_number_b} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="mobile_number_b" value={data.mobile_number_b} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Mobile Number (C) */}
@@ -159,7 +168,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (C)
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="user_details.mobile_number_c" value={data.user_details.mobile_number_c} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="mobile_number_c" value={data.mobile_number_c} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Telephone Number */}
@@ -167,7 +176,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Telephone Number
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="number" placeholder="Enter telephone number" size="small" name="user_details.telephone_number" value={data.user_details.telephone_number} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="number" placeholder="Enter telephone number" size="small" name="telephone_number" value={data.telephone_number} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Personal Email */}
@@ -175,7 +184,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Personal Email*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="email" placeholder="member1@gmail.com" size="small" name="email" value={data.email} error={!!formErrors.email} helperText={formErrors.email} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" type="email" placeholder="member1@gmail.com" size="small" name="personal_email" value={data.personal_email} error={!!formErrors.personal_email} helperText={formErrors.personal_email} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Critical Email */}
@@ -183,7 +192,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Critical Email
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="member2@gmail.com" size="small" name="user_details.critical_email" value={data.user_details.critical_email} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="member2@gmail.com" size="small" name="critical_email" value={data.critical_email} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
                             </Grid>
 
@@ -201,7 +210,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Name
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter Full Name" size="small" name="user_details.emergency_name" value={data.user_details.emergency_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter Full Name" size="small" name="emergency_name" value={data.emergency_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Relation */}
@@ -209,7 +218,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Relation
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter Relationship" size="small" name="user_details.emergency_relation" value={data.user_details.emergency_relation} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter Relationship" size="small" name="emergency_relation" value={data.emergency_relation} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Contact Number */}
@@ -217,7 +226,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Contact Number
                                     </Typography>
-                                    <TextField fullWidth type="number" variant="outlined" placeholder="03XXXXXXXX" size="small" name="user_details.emergency_contact" value={data.user_details.emergency_contact} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth type="number" variant="outlined" placeholder="03XXXXXXXX" size="small" name="emergency_contact" value={data.emergency_contact} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
                             </Grid>
                         </Paper>
@@ -240,7 +249,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Address*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="user_details.current_address" value={data.user_details.current_address} error={!!formErrors.current_address} helperText={formErrors.current_address} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="current_address" value={data.current_address} error={!!formErrors.current_address} helperText={formErrors.current_address} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* City */}
@@ -248,7 +257,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         City*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="user_details.current_city" value={data.user_details.current_city} error={!!formErrors.current_city} helperText={formErrors.current_city} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="current_city" value={data.current_city} error={!!formErrors.current_city} helperText={formErrors.current_city} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Country */}
@@ -261,11 +270,11 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                         fullWidth
                                         options={countries}
                                         getOptionLabel={(option) => option.label}
-                                        value={countries.find((c) => c.label === data.user_details.current_country) || null}
+                                        value={countries.find((c) => c.label === data.current_country) || null}
                                         onChange={(e, newValue) => {
                                             handleChange({
                                                 target: {
-                                                    name: 'user_details.current_country',
+                                                    name: 'current_country',
                                                     value: newValue ? newValue.label : '',
                                                 },
                                             });
@@ -292,7 +301,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Address
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="user_details.permanent_address" value={data.user_details.permanent_address} onChange={handleChange} disabled={sameAsCurrent} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter complete address" size="small" name="permanent_address" value={data.permanent_address} onChange={handleChange} disabled={sameAsCurrent} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* City */}
@@ -300,7 +309,7 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         City
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="user_details.permanent_city" value={data.user_details.permanent_city} onChange={handleChange} disabled={sameAsCurrent} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter city name" size="small" name="permanent_city" value={data.permanent_city} onChange={handleChange} disabled={sameAsCurrent} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Country */}
@@ -313,11 +322,11 @@ const AddForm2 = ({ setData, data, handleChange, onNext, onBack, setSameAsCurren
                                         fullWidth
                                         options={countries}
                                         getOptionLabel={(option) => option.label}
-                                        value={countries.find((c) => c.label === data.user_details.permanent_country) || null}
+                                        value={countries.find((c) => c.label === data.permanent_country) || null}
                                         onChange={(e, newValue) => {
                                             handleChange({
                                                 target: {
-                                                    name: 'user_details.permanent_country',
+                                                    name: 'permanent_country',
                                                     value: newValue ? newValue.label : '',
                                                 },
                                             });

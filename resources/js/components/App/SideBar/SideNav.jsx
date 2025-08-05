@@ -126,29 +126,16 @@ export default function SideNav({ open, setOpen }) {
             path: route('order.management'),
             permission: 'order',
         },
-        {
-            text: 'Kitchens',
-            icon: <img src="/assets/Kitchen.svg" alt="Kitchen icon" className="svg-img-icon" />,
-            path: route('kitchens.index'),
-            permission: 'order',
-        },
+        // {
+        //     text: 'Kitchens',
+        //     icon: <img src="/assets/Kitchen.svg" alt="Kitchen icon" className="svg-img-icon" />,
+        //     path: route('kitchens.index'),
+        //     permission: 'order',
+        // },
         {
             text: 'Members',
             icon: <IoPeople style={{ height: 20, width: 20 }} />,
             path: route('members.index'),
-            permission: 'order',
-        },
-
-        {
-            text: 'Members Types',
-            icon: <FaUser style={{ width: 16, height: 16 }} />,
-            path: route('member-types.index'),
-            permission: 'order',
-        },
-        {
-            text: 'Address Type',
-            icon: <AddressType />,
-            path: route('address-types.index'),
             permission: 'order',
         },
         {

@@ -14,6 +14,7 @@ class Order extends Model
     protected $fillable = [
         'order_number',
         'user_id',
+        'cashier_id',
         'waiter_id',
         'table_id',
         'order_type',
@@ -25,9 +26,22 @@ class Order extends Model
         'order_time',
         'end_time',
         'status',
+        'payment_status',
         'kitchen_note',
         'staff_note',
         'payment_note',
+        'tax',
+        'discount',
+        'total_price',
+        'cost_price',
+        'cash_amount',
+        'credit_card_amount',
+        'bank_amount',
+        'paid_at',
+        'paid_amount',
+        'credit_card_type',
+        'payment_method',
+        'reciept',
     ];
 
     public function orderItems()
@@ -39,13 +53,24 @@ class Order extends Model
     {
         return $this->belongsTo(Table::class);
     }
+
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Member::class);
+    }
+
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'user_id', 'user_id');
     }
 
     public function invoice()
     {
         return $this->hasOne(Invoices::class);
+    }
+
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id', 'id');
     }
 }

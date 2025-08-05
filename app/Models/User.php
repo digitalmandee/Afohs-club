@@ -29,6 +29,7 @@ class User extends Authenticatable
         'password',
         'parent_user_id',
         'tenant_id',
+        'profile_photo'
     ];
 
     /**
@@ -96,6 +97,11 @@ class User extends Authenticatable
     public function familyMembers()
     {
         return $this->hasMany(User::class, 'parent_user_id');
+    }
+
+    public function statusHistories()
+    {
+        return $this->hasMany(MemberStatusHistory::class);
     }
 
     /**

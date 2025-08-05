@@ -7,16 +7,16 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { router } from '@inertiajs/react';
 
-const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
-    const [memberImage, setMemberImage] = useState(null);
-    const [showImageButtons, setShowImageButtons] = useState(false);
+const AddForm1 = ({ data, handleChange, onNext }) => {
+    const [memberImage, setMemberImage] = useState(data?.profile_photo || null);
+    const [showImageButtons, setShowImageButtons] = useState(data?.profile_photo ? true : false);
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {
-            setData((prev) => ({ ...prev, profile_photo: event.target.files[0] }));
+            handleChange({ target: { name: 'profile_photo', value: event.target.files[0] } });
             const reader = new FileReader();
             reader.onload = (e) => {
                 setMemberImage(e.target.result);
@@ -29,6 +29,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
     const handleDeleteImage = () => {
         setMemberImage(null);
         setShowImageButtons(false);
+        handleChange({ target: { name: 'profile_photo', value: null } });
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -43,14 +44,18 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
     const handleSubmit = () => {
         const errors = {};
 
-        if (!data.user_details.coa_account) errors.coa_account = 'COA Account is required';
+        // if (!data.coa_account) errors.coa_account = 'COA Account is required';
         if (!data.first_name) errors.first_name = 'First Name is required';
         if (!data.last_name) errors.last_name = 'Last Name is required';
-        if (!data.user_details.guardian_name) errors.guardian_name = 'Father/Husband Name is required';
-        if (!data.user_details.nationality) errors.nationality = 'Nationality is required';
-        if (!data.user_details.gender) errors.gender = 'Gender is required';
-        if (!data.user_details.cnic_no) errors.cnic_no = 'CNIC No is required';
-        if (!data.user_details.date_of_birth) errors.date_of_birth = 'Date of Birth is required';
+        if (!data.guardian_name) errors.guardian_name = 'This Name is required';
+        if (!data.nationality) errors.nationality = 'Nationality is required';
+        if (!data.gender) errors.gender = 'Gender is required';
+        if (!data.cnic_no) {
+            errors.cnic_no = 'CNIC No is required';
+        } else if (!/^\d{5}-\d{7}-\d{1}$/.test(data.cnic_no)) {
+            errors.cnic_no = 'CNIC must be in the format XXXXX-XXXXXXX-X';
+        }
+        if (!data.date_of_birth) errors.date_of_birth = 'Date of Birth is required';
         else if (dateError) errors.date_of_birth = dateError;
 
         setFormErrors(errors);
@@ -169,7 +174,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 Application Number :
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                #{applicationNo}
+                                #{data.application_no}
                             </Typography>
                         </Box>
                     </Grid>
@@ -197,7 +202,8 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                         }}
                                         onClick={() => !memberImage && fileInputRef.current?.click()}
                                     >
-                                        {memberImage ? <img src={memberImage || '/placeholder.svg'} alt="Member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Add sx={{ color: '#a5d8ff', fontSize: 30 }} />}
+                                        {memberImage ? <img src={memberImage} alt="Member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Add sx={{ color: '#a5d8ff', fontSize: 30 }} />}
+
                                         <input type="file" hidden ref={fileInputRef} onChange={handleImageUpload} accept="image/*" />
                                     </Box>
                                     <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666' }}>
@@ -224,7 +230,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     COA Account*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="user_details.coa_account" value={data.user_details.coa_account} error={!!formErrors.coa_account} helperText={formErrors.coa_account} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="coa_account" value={data.coa_account} error={!!formErrors.coa_account} helperText={formErrors.coa_account} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Title */}
@@ -234,12 +240,8 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 </Typography>
                                 <FormControl fullWidth size="small">
                                     <Select
-                                        // open={titleOpen}
-                                        // onOpen={() => setTitleOpen(true)}
-                                        // onClose={() => setTitleOpen(false)}
-                                        // onClick={() => setTitleOpen(!titleOpen)}
-                                        value={data.user_details.title}
-                                        name="user_details.title"
+                                        value={data.title}
+                                        name="title"
                                         onChange={handleChange}
                                         displayEmpty
                                         renderValue={(selected) => {
@@ -282,20 +284,12 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <TextField fullWidth variant="outlined" placeholder="Enter last name" size="small" name="last_name" value={data.last_name} error={!!formErrors.last_name} helperText={formErrors.last_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
-                            {/* Name Comments */}
-                            <Grid item xs={12}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Name Comments
-                                </Typography>
-                                <TextField fullWidth multiline rows={3} placeholder="Enter your comments" variant="outlined" size="small" name="user_details.name_comments" value={data.user_details.name_comments} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
-                            </Grid>
-
                             {/* Father/Husband Name */}
                             <Grid item xs={4}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Father/Husband Name*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter name" size="small" name="user_details.guardian_name" value={data.user_details.guardian_name} error={!!formErrors.guardian_name} helperText={formErrors.guardian_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter name" size="small" name="guardian_name" value={data.guardian_name} error={!!formErrors.guardian_name} helperText={formErrors.guardian_name} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Father Membership No */}
@@ -303,7 +297,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     If father is a member then membership No
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter membership Number" size="small" name="user_details.guardian_membership" value={data.user_details.fatherMembershipNo} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter membership Number" size="small" name="guardian_membership" value={data.fatherMembershipNo} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
                         </Grid>
 
@@ -314,7 +308,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Nationality*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter Nationality e.g. Pakistan" size="small" name="user_details.nationality" value={data.user_details.nationality} error={!!formErrors.nationality} helperText={formErrors.nationality} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter Nationality e.g. Pakistan" size="small" name="nationality" value={data.nationality} error={!!formErrors.nationality} helperText={formErrors.nationality} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* CNIC No */}
@@ -322,7 +316,26 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     CNIC No*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" type="number" placeholder="Enter CNIC Number (13 digits)" size="small" name="user_details.cnic_no" value={data.user_details.cnic_no} error={!!formErrors.cnic_no} helperText={formErrors.cnic_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    placeholder="XXXXX-XXXXXXX-X"
+                                    size="small"
+                                    name="cnic_no"
+                                    value={data.cnic_no}
+                                    error={!!formErrors.cnic_no}
+                                    helperText={formErrors.cnic_no}
+                                    onChange={(e) => {
+                                        let value = e.target.value;
+                                        // Auto-format the input as the user types
+                                        value = value.replace(/[^\d-]/g, ''); // Remove non-digits and non-hyphens
+                                        if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
+                                        if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
+                                        if (value.length > 15) value = value.slice(0, 15); // Limit to 15 characters
+                                        handleChange({ target: { name: 'cnic_no', value } });
+                                    }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
+                                />
                             </Grid>
 
                             {/* Passport No */}
@@ -330,7 +343,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Passport No
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="user_details.passport_no" value={data.user_details.passport_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="passport_no" value={data.passport_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Gender */}
@@ -340,8 +353,8 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 </Typography>
                                 <FormControl fullWidth size="small" error={!!formErrors.gender}>
                                     <Select
-                                        value={data.user_details.gender || ''}
-                                        name="user_details.gender"
+                                        value={data.gender || ''}
+                                        name="gender"
                                         onChange={handleChange}
                                         displayEmpty
                                         renderValue={(selected) => {
@@ -373,7 +386,7 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     NTN (if any)
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter national NTN number" size="small" name="user_details.ntn" value={data.user_details.ntn} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter national NTN number" size="small" name="ntn" value={data.ntn} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Date of Birth */}
@@ -385,21 +398,22 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                     <DatePicker
                                         label="Date of Birth"
                                         format="YYYY-MM-DD"
-                                        value={data.user_details.date_of_birth ? dayjs(data.user_details.date_of_birth) : null}
+                                        value={data.date_of_birth ? dayjs(data.date_of_birth) : null}
                                         onChange={(newValue) =>
                                             handleChange({
                                                 target: {
-                                                    name: 'user_details.date_of_birth',
+                                                    name: 'date_of_birth',
                                                     value: newValue ? newValue.format('YYYY-MM-DD') : '',
                                                 },
                                             })
                                         }
+                                        maxDate={dayjs()} // 👈 Prevent future dates
                                         slotProps={{
                                             textField: {
                                                 fullWidth: true,
                                                 variant: 'outlined',
                                                 size: 'small',
-                                                name: 'user_details.date_of_birth',
+                                                name: 'date_of_birth',
                                                 error: !!formErrors.date_of_birth || !!dateError,
                                                 helperText: formErrors.date_of_birth || dateError,
                                                 sx: { '& .MuiOutlinedInput-root': { borderRadius: '4px' } },
@@ -419,8 +433,8 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                     variant="outlined"
                                     placeholder="Enter complete education of the applicant"
                                     size="small"
-                                    name="user_details.education"
-                                    value={data.user_details.education}
+                                    name="education"
+                                    value={data.education}
                                     onChange={handleChange}
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
                                     InputProps={{
@@ -433,14 +447,6 @@ const AddForm1 = ({ setData, data, handleChange, onNext, applicationNo }) => {
                                         ),
                                     }}
                                 />
-                            </Grid>
-
-                            {/* Reason for Seeking Membership */}
-                            <Grid item xs={12}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
-                                    Reason for Seeking Membership
-                                </Typography>
-                                <TextField fullWidth multiline rows={3} placeholder="Enter Detail" variant="outlined" size="small" name="user_details.membership_reason" value={data.user_details.membership_reason} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
                         </Grid>
                     </Grid>

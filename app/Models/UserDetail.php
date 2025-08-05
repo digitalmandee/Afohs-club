@@ -44,8 +44,11 @@ class UserDetail extends Model
         'permanent_city',
         'permanent_country',
         'country',
+        'documents',
     ];
+
     protected $casts = [
+        'documents' => 'array',
         'education' => 'array',
         'date_of_birth' => 'date',
     ];

@@ -5,12 +5,12 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Invoices;
 use App\Models\Order;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
@@ -20,7 +20,7 @@ class DashboardController extends Controller
         $yesterday = Carbon::yesterday()->toDateString();
 
         // Invoices Summary
-        $invoices = Invoices::selectRaw('
+        $invoices = Order::selectRaw('
         DATE(created_at) as date,
         SUM(total_price) as revenue,
         SUM(cost_price) as cost,
@@ -100,7 +100,7 @@ class DashboardController extends Controller
     public function weeklyReservationOverview()
     {
         $start = Carbon::today();
-        $end = Carbon::today()->addDays(6); // Next 7 days
+        $end = Carbon::today()->addDays(6);  // Next 7 days
         $period = CarbonPeriod::create($start, $end);
 
         $days = [];
@@ -111,7 +111,7 @@ class DashboardController extends Controller
                 ->count();
 
             $days[] = [
-                'label' => $date->format('D'), // Sun, Mon, etc.
+                'label' => $date->format('D'),  // Sun, Mon, etc.
                 'date' => $date->toDateString(),
                 'dayNum' => $date->day,
                 'orders_count' => $ordersCount,
@@ -129,7 +129,7 @@ class DashboardController extends Controller
         $date = $request->query('date') ?: date('Y-m-d');
         $limit = $request->query('limit');
 
-        $orders = Order::where('order_type', 'reservation')->whereDate('start_date', $date)->with(['user:id,name', 'table:id,table_no'])->withCount('orderItems')->limit($limit)->get();
+        $orders = Order::where('order_type', 'reservation')->whereDate('start_date', $date)->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->withCount('orderItems')->limit($limit)->get();
 
         return response()->json(['success' => true, 'orders' => $orders]);
     }
@@ -141,13 +141,13 @@ class DashboardController extends Controller
         $order_type = $request->query('order_type');
 
         if (empty($order_type) || $order_type === 'all') {
-            $orders = Order::whereDate('start_date', $date)->with(['user:id,name', 'table:id,table_no', 'invoice:id,order_id,total_price'])->withCount([
+            $orders = Order::whereDate('start_date', $date)->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->withCount([
                 'orderItems AS completed_order_items_count' => function ($query) {
                     $query->where('order_items.status', 'completed');
                 }
             ])->get();
         } else {
-            $orders = Order::where('order_type', $order_type)->whereDate('start_date', $date)->with(['user:id,name', 'table:id,table_no'])->withCount([
+            $orders = Order::where('order_type', $order_type)->whereDate('start_date', $date)->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->withCount([
                 'orderItems AS completed_order_items_count' => function ($query) {
                     $query->where('order_items.status', 'completed');
                 }

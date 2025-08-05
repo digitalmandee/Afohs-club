@@ -1,38 +1,40 @@
 <?php
 
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\SubscriptionTypeController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AppliedMemberController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\EventBookingController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventMenuAddOnsController;
+use App\Http\Controllers\EventMenuCategoryController;
+use App\Http\Controllers\EventMenuController;
+use App\Http\Controllers\EventMenuTypeController;
+use App\Http\Controllers\EventVenueController;
+use App\Http\Controllers\FamilyMembersArchiveConroller;
+use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\SubscriptionController;
-use App\Http\Controllers\TenantController;
-use App\Http\Controllers\UserMemberController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\EventBookingController;
-use App\Http\Controllers\EventMenuAddOnsController;
-use App\Http\Controllers\EventMenuCategoryController;
-use App\Http\Controllers\EventMenuTypeController;
-use App\Http\Controllers\EventVenueController;
-use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\RoomBookingController;
 use App\Http\Controllers\RoomCategoryController;
 use App\Http\Controllers\RoomChargesTypeController;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomMiniBarController;
 use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\SubscriptionCategoryController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserMemberController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
 
 Route::get('/', function () {
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
@@ -45,7 +47,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // admin dashboard routes
     Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard');
 
-    //Admin Employee Routes
+    // Admin Employee Routes
     Route::get('/employee/department/list', function () {
         return Inertia::render('App/Admin/Employee/Department');
     })->name('employee.departmentlist');
@@ -82,7 +84,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/AttendanceReport');
     })->name('employee.attendancereport');
 
-    //Membership Booking Routes
+    // Membership Booking Routes
     Route::get('/admin/membership/finance', function () {
         return Inertia::render('App/Admin/Membership/Finance');
     })->name('membership.finance');
@@ -90,8 +92,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/membership/add/membertype', function () {
         return Inertia::render('App/Admin/Membership/AddMember');
     })->name('membership.addmembertype');
-
-
 
     // Admin Room Booking Routes
     Route::group(['prefix' => 'booking-management'], function () {
@@ -103,8 +103,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('add', [RoomController::class, 'create'])->name('rooms.add');
             Route::post('store', [RoomController::class, 'store'])->name('rooms.store');
             Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit');
-            Route::put('{id}', [RoomController::class, 'update'])->name('rooms.update');
+            Route::post('{id}', [RoomController::class, 'update'])->name('rooms.update');
             Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+            // get room booking data
+            Route::get('api/bookings/{id}', [RoomBookingController::class, 'showRoomBooking'])->name('api.room.booking.show');
+            Route::post('api/bookings/check-in', [RoomBookingController::class, 'checkIn'])->name('api.room.booking.checkin');
             // Route::get('/types', [RoomController::class, 'mamageTypes'])->name('rooms.types');
         });
         Route::resource('room-types', RoomTypeController::class)->except(['create', 'edit', 'show']);
@@ -113,16 +116,18 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('room-minibar', RoomMiniBarController::class)->except(['create', 'edit', 'show']);
 
         // Event Routes
-        Route::get('events/dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
-        Route::get('events/create', [EventBookingController::class, 'create'])->name('events.create');
+        Route::group(['prefix' => 'events'], function () {
+            Route::get('dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
+            Route::get('create', [EventBookingController::class, 'create'])->name('events.create');
+        });
         Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-menu', EventMenuController::class)->except(['show']);
         Route::resource('event-menu-category', EventMenuCategoryController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-type', EventMenuTypeController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-addon', EventMenuAddOnsController::class)->except(['create', 'edit', 'show']);
     });
 
-
-    //Admin Events Booking Routes
+    // Admin Events Booking Routes
     Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
     Route::get('/events/manage', [EventController::class, 'allEvents'])->name('events.all');
     Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
@@ -132,14 +137,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
 
-
     // location
     Route::get('/events/locations', [EventController::class, 'locations'])->name('events.locations');
     Route::post('/events/locations', [EventController::class, 'storeLocation'])->name('events.locations.store');
     Route::put('/events/locations/{id}', [EventController::class, 'updateLocation'])->name('events.locations.update');
     Route::delete('/events/locations/{id}', [EventController::class, 'deleteLocation'])->name('events.locations.delete');
 
-    //Admin Booking Routes
+    // Admin Booking Routes
     Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
     Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
     Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
@@ -157,16 +161,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Booking Search
     Route::get('/booking/search', [BookingController::class, 'search'])->name('rooms.booking.search');
 
-
     Route::get('/booking/details', function () {
         return Inertia::render('App/Admin/Booking/Detail');
     })->name('rooms.details');
 
-
-
-
-
-    //Admin Employee Routes
+    // Admin Employee Routes
     Route::get('/employee/dashboard', function () {
         return Inertia::render('App/Admin/Employee/Dashboard');
     })->name('employee.dashboard');
@@ -178,7 +177,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/employee/list', function () {
         return Inertia::render('App/Admin/Employee/EmployeeList');
     })->name('employee.employeeList');
-
 
     // UserMember routes
     Route::get('/user-member', [UserMemberController::class, 'index'])->name('usermember');
@@ -256,7 +254,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/AddCheque');
     })->name('employee.addcheque');
 
-    //Subscription Routes
+    // Subscription Routes
     Route::get('/admin/subscription/dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard');
     Route::get('/admin/subscription/payment', [SubscriptionController::class, 'payment'])->name('subscriptions.payment');
     Route::post('/admin/subscription/payment/store', [SubscriptionController::class, 'paymentStore'])->name('subscriptions.payment.store');
@@ -271,25 +269,27 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('admin/subscription/subscription-types/{id}/update2', [SubscriptionTypeController::class, 'update'])->name('subscription-types.update2');
     Route::delete('admin/subscription/subscription-types/{id}/delete', [SubscriptionTypeController::class, 'destroy'])->name('subscription-types.destroy');
 
-
     Route::get('/api/customers/search', [SubscriptionController::class, 'search']);
-    Route::get('/api/unpaid-invoices/{user}', [SubscriptionController::class, 'unpaidInvoices']);
-    Route::post('/api/pay-invoice/{invoice}', [SubscriptionController::class, 'payInvoice']);
 
+    Route::get('api/customer-invoices/{userId}', [SubscriptionController::class, 'customerInvoices']);
+    Route::get('api/subscriptions/by-user/{user}', [SubscriptionController::class, 'byUser']);
+    Route::get('api/members/by-user/{user}', [MembersController::class, 'byUser']);
+    Route::post('api/pay-multiple-invoices', [SubscriptionController::class, 'payMultipleInvoices']);
+    Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPay']);
 
-
-
-    //Financial Routes
+    // Financial Routes
     Route::get('/finance/dashboard', [FinancialController::class, 'index'])->name('finance.dashboard');
     Route::get('/finance/transaction', [FinancialController::class, 'getTransaction'])->name('finance.transaction');
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
 
-
     Route::get('/finance/add/transaction', [FinancialController::class, 'create'])->name('finance.addtransaction');
     Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.addtransaction');
 
-
     Route::get('/admin/manage/monthly/fee', [SubscriptionController::class, 'monthlyFee'])->name('subscription.monthly');
+
+    // Member Invoices
+    Route::get('/api/member-invoices', [FinancialController::class, 'getMemberInvoices']);
+    Route::post('/api/pay-invoices', [FinancialController::class, 'payInvoices']);
 
     // Route::get('/admin/subscription/sports/category', function () {
     //     return Inertia::render('App/Admin/Subscription/Sports');
@@ -299,7 +299,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     //     return Inertia::render('App/Admin/Subscription/AddSports');
     // })->name('subscription.addsports');
 
-    //Kitchen Routes
+    // Kitchen Routes
     Route::get('/kitchen/category/dashboard', function () {
         return Inertia::render('App/Admin/Kitchen/Dashboard');
     })->name('kitchen.dashboard');
@@ -312,30 +312,22 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Kitchen/History');
     })->name('kitchen.history');
 
-
-
-
-
-
     Route::get('/card/dashboard', [CardController::class, 'index'])->name('cards.dashboard');
-
-
 
     Route::get('/membership/filter', [MembershipController::class, 'filterMember'])->name('membership.filter');
 
-    Route::get('/membership/booking/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
-    Route::get('/membership/all/members', [MembershipController::class, 'allMembers'])->name('membership.members');
+    Route::get('/membership/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
+    Route::get('/membership/all', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('/membership/edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
     Route::post('/membership/update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
+    Route::post('/membership/pause', [MembershipController::class, 'membershipPause'])->name('membership.pause');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
     Route::post('/membership/update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
 
     // get member invoice
-    Route::get('member-invoices/{id}', [MembershipController::class, 'getMemberInvoices'])->name('member-invoices');
-    Route::get('financial-invoices/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
+    Route::get('financial-invoice/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
-
 
     // Members types
     Route::get('/admin/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
@@ -347,12 +339,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Member Categories
     Route::resource('/admin/members/member-categories', MemberCategoryController::class)->except('show');
 
-    //payment
+    // payment
     Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');
     Route::post('/admin/membership/payments/store', [PaymentController::class, 'store'])->name('membership.payment.store');
 
-
-    //Membership Booking Routes
+    // Membership Booking Routes
 
     Route::get('/admin/add/personal/information', [MembershipController::class, 'create'])->name('membership.add');
 
@@ -363,7 +354,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/add/membership/information', function () {
         return Inertia::render('App/Admin/Membership/AddForm-3');
     })->name('membership.add3');
-
 
     Route::get('/admin/membership/guest/history', function () {
         return Inertia::render('App/Admin/Membership/Guest');
@@ -377,17 +367,21 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/Checkout');
     })->name('membership.checkout');
 
-
-
     Route::get('/admin/membership/visit/detail', function () {
         return Inertia::render('App/Admin/Membership/Detail');
     })->name('membership.detail');
 
-
-
     Route::get('/admin/membership/full/detail', function () {
         return Inertia::render('App/Admin/Membership/CompleteDetail');
     })->name('membership.detail2');
+
+    // Family Members Archive route
+    Route::get('/admin/membership/family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('membership.family-members');
+
+    // Family Applied Member
+    Route::get('/admin/membership/applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
+    Route::post('/admin/membership/applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
+    Route::put('/admin/membership/applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
 
     // tenant route
     Route::get('tenant', [TenantController::class, 'index'])->name('tenant.index');

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\Category;
 use App\Models\FinancialInvoice;
+use App\Models\Member;
 use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
 use App\Models\SubscriptionType;
@@ -27,7 +29,6 @@ class SubscriptionController extends Controller
         return Inertia::render('App/Admin/Subscription/Dashboard', compact('subscriptions', 'newSubscriptionsToday', 'totalRevenue'));
     }
 
-
     public function monthlyFee()
     {
         // Get all monthly subscriptions
@@ -42,13 +43,13 @@ class SubscriptionController extends Controller
         // Collected Fee: paid invoices only
         $collectedFee = FinancialInvoice::where('status', 'paid')
             ->where('invoice_type', 'subscription')
-            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.subscription_id'))"), $monthlySubscriptionIds)
+            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.subscription_id'))"), $monthlySubscriptionIds)
             ->sum('total_price');
 
         // Pending Fee: unpaid/due invoices
-        $pendingFee = FinancialInvoice::whereIn('status', ['unpaid', 'due']) // adjust if you use other terms
+        $pendingFee = FinancialInvoice::whereIn('status', ['unpaid', 'due'])  // adjust if you use other terms
             ->where('invoice_type', 'subscription')
-            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.subscription_id'))"), $monthlySubscriptionIds)
+            ->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.subscription_id'))"), $monthlySubscriptionIds)
             ->sum('total_price');
 
         // Latest 5 monthly subscriptions
@@ -102,9 +103,9 @@ class SubscriptionController extends Controller
             'status' => 'in_active',
         ]);
 
-        $data = $subscription->toArray(); // Convert Eloquent model to array
-        $data['invoice_type'] = 'subscription'; // Add custom fiel
-        $data['amount'] = $request->amount; // Add custom fiel
+        $data = $subscription->toArray();  // Convert Eloquent model to array
+        $data['invoice_type'] = 'subscription';  // Add custom fiel
+        $data['amount'] = $request->amount;  // Add custom fiel
 
         $invoice_no = $this->getInvoiceNo();
         $member_id = Auth::user()->id;
@@ -177,14 +178,141 @@ class SubscriptionController extends Controller
         return response()->json(['success' => true, 'message' => 'Payment successful']);
     }
 
-    public function unpaidInvoices($userId)
+    public function customerInvoices($userId)
     {
-        $invoices = FinancialInvoice::where('customer_id', $userId)
+        $invoices = FinancialInvoice::with('customer')
+            ->where('customer_id', $userId)
             ->whereIn('invoice_type', ['membership', 'subscription'])
-            ->where('status', 'unpaid')
-            ->get();
+            ->orderBy('issue_date', 'desc')
+            ->get()
+            ->map(function ($invoice) {
+                $invoice->is_overdue = $invoice->due_date && $invoice->status !== 'paid' && now()->gt($invoice->due_date);
+                return $invoice;
+            });
 
         return response()->json($invoices);
+    }
+
+    public function payMultipleInvoices(Request $request)
+    {
+        $request->validate([
+            'invoice_ids' => 'required|array',
+            'invoice_ids.*' => 'exists:financial_invoices,id',
+            'method' => 'required|in:cash,card',
+        ]);
+
+        foreach ($request->invoice_ids as $id) {
+            $invoice = FinancialInvoice::find($id);
+
+            if (!$invoice || $invoice->status === 'paid')
+                continue;
+
+            $invoice->update([
+                'status' => 'paid',
+                'payment_method' => $request->method,
+                'payment_date' => now(),
+            ]);
+        }
+
+        return response()->json(['message' => 'Selected invoices marked as paid.']);
+    }
+
+    public function createAndPay(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|exists:users,id',
+            'invoice_type' => 'required|in:membership,subscription',
+            'subscription_type' => 'required|in:one_time,monthly,quarter,yearly',
+            'amount' => 'required|numeric|min:0',
+            'discount_type' => 'nullable|in:fixed,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
+            'method' => 'required|string',
+            'subscription_id' => 'nullable|exists:subscriptions,id',
+            'receipt' => 'nullable|file',
+            'prepay_quarters' => 'nullable|array',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $invoiceNo = $this->getInvoiceNo();
+            $paidAmount = $request->amount;
+            $discountDetails = null;
+            $receiptPath = null;
+
+            if ($request->discount_type && $request->discount_value) {
+                if ($request->discount_type === 'fixed') {
+                    $paidAmount -= $request->discount_value;
+                } elseif ($request->discount_type === 'percentage') {
+                    $paidAmount -= ($paidAmount * $request->discount_value / 100);
+                }
+                $discountDetails = json_encode([
+                    'type' => $request->discount_type,
+                    'value' => $request->discount_value,
+                ]);
+            }
+
+            if ($request->hasFile('receipt')) {
+                $receiptPath = FileHelper::saveImage($request->file('receipt'), 'reciepts');
+            }
+
+            $now = now();
+            $paidForMonth = null;
+            $paidForQuarter = null;
+
+            if ($request->subscription_type === 'monthly') {
+                $paidForMonth = $now->format('Y-m');
+            }
+
+            if ($request->subscription_type === 'quarter') {
+                $paidForQuarter = $request->prepay_quarters ?? [];
+            }
+
+            // ✅ Check paused status for current period
+            $member = Member::with('pausedHistories')->where('user_id', $request->customer_id)->first();
+            $billingStart = $now->copy()->startOfMonth();
+            $billingEnd = $now->copy()->endOfMonth();
+            $wasPaused = false;
+
+            foreach ($member->pausedHistories as $history) {
+                $pausedFrom = \Carbon\Carbon::parse($history->start_date);
+                $pausedTo = $history->end_date ? \Carbon\Carbon::parse($history->end_date) : now();
+
+                if ($billingStart->lte($pausedTo) && $billingEnd->gte($pausedFrom)) {
+                    $wasPaused = true;
+                    $paidAmount *= 0.5;
+                    break;
+                }
+            }
+
+            $invoice = FinancialInvoice::create([
+                'invoice_no' => $invoiceNo,
+                'customer_id' => $request->customer_id,
+                'invoice_type' => $request->invoice_type,
+                'subscription_type' => $request->subscription_type,
+                'discount_type' => $request->discount_type,
+                'discount_value' => $request->discount_value,
+                'discount_details' => $discountDetails,
+                'amount' => $request->amount,
+                'total_price' => $paidAmount,
+                'paid_amount' => $paidAmount,
+                'customer_charges' => 0,
+                'issue_date' => $now,
+                'due_date' => $now,
+                'paid_for_month' => $paidForMonth,
+                'paid_for_quarter' => $paidForQuarter ? json_encode($paidForQuarter) : null,
+                'payment_method' => $request->method,
+                'payment_date' => $now,
+                'reciept' => $receiptPath,
+                'status' => 'paid',
+            ]);
+
+            DB::commit();
+            return response()->json(['message' => 'Invoice created and paid successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Something went wrong.', 'details' => $e->getMessage()], 500);
+        }
     }
 
     public function payInvoice($invoiceId)
@@ -215,7 +343,18 @@ class SubscriptionController extends Controller
         return response()->json($customers);
     }
 
+    public function byUser($userId)
+    {
+        $subscriptions = Subscription::where('user_id', $userId)->get()->map(function ($s) {
+            return [
+                'id' => $s->id,
+                'subscription_type' => $s->subscription_type,
+                'category' => SubscriptionCategory::where('id', $s->category['id']),
+            ];
+        });
 
+        return response()->json($subscriptions);
+    }
 
     private function getInvoiceNo()
     {

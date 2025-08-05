@@ -1,3 +1,4 @@
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -144,7 +145,7 @@ const ReservationDialog = () => {
         return date.toLocaleString('en-US', options);
     }
 
-    const isDisabled = !orderDetails.member;
+    const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0;
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -202,42 +203,7 @@ const ReservationDialog = () => {
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '14px', color: '#121212' }}>
                             Customer Name or Scan Member Card
                         </Typography>
-                        <Autocomplete
-                            fullWidth
-                            freeSolo
-                            size="small"
-                            options={members}
-                            value={orderDetails.member || null} // Ensure value is null if member is not set
-                            getOptionLabel={(option) => (option && typeof option === 'object' ? option.name || '' : option || '')} // Handle null or string
-                            onInputChange={(event, value) => handleSearch(event, 'user')}
-                            onChange={(event, value) => handleAutocompleteChange(event, value, 'member')}
-                            loading={searchLoading}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    fullWidth
-                                    sx={{ p: 0 }}
-                                    placeholder="Enter name or scan member card"
-                                    variant="outlined"
-                                    error={!!errors['member.id']}
-                                    helperText={errors['member.id']}
-                                    InputProps={{
-                                        ...params.InputProps,
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <QrCodeScannerIcon fontSize="small" />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            )}
-                            renderOption={(props, option) => (
-                                <li {...props}>
-                                    <span>{option.name}</span>
-                                    <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
-                                </li>
-                            )}
-                        />
+                        <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
                     </Box>
 
                     {/* Customer Qty and Down Payment */}

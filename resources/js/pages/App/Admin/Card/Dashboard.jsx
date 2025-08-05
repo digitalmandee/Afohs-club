@@ -1,27 +1,46 @@
 import { useState } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment } from '@mui/material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment, Tooltip, Box } from '@mui/material';
 import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import { router } from '@inertiajs/react';
-import CardFilter from "./Filter";
-import UserCardComponent from "./UserCard";
+import CardFilter from './Filter';
+import UserCardComponent from './UserCard';
 import SubscriptionFilter from '../Subscription/Filter';
-import InvoiceSlip from '../Subscription/Invoice';
 import SubscriptionCardComponent from '../Subscription/UserCard';
+import MembershipCardComponent from '../Membership/UserCard';
+import MembershipDashboardFilter from '../Membership/MembershipDashboardFilter';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const CardsDashboard = ({ members = [] }) => {
+const CardsDashboard = ({ members, total_active_members }) => {
     // Modal state
     const [open, setOpen] = useState(true);
-    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
-    const [selectedMember, setSelectedMember] = useState(null); // New state for selected member
-    console.log('membersData', members);
+    const [selectMember, setSelectMember] = useState(null);
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [filteredMembers, setFilteredMembers] = useState(members.data);
+
+    // Extract unique status and member type values from members
+    const statusOptions = [
+        { label: 'All type', value: 'all', icon: null },
+        { label: 'Active', value: 'active', icon: null },
+        { label: 'Suspended', value: 'suspended', icon: null },
+        { label: 'Cancelled', value: 'cancelled', icon: null },
+        { label: 'Pause', value: 'pause', icon: null },
+    ];
+
+    const memberTypeOptions = [
+        { label: 'All types', value: 'all' },
+        ...[...new Set(members.data.map((member) => member.member?.member_type?.name).filter((name) => name))].map((name) => ({
+            label: name,
+            value: name,
+        })),
+    ];
 
     return (
         <>
@@ -53,7 +72,7 @@ const CardsDashboard = ({ members = [] }) => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Active Member</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>320</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_active_members}</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -66,7 +85,7 @@ const CardsDashboard = ({ members = [] }) => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>New Subscribers Today</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>10</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>0</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -79,7 +98,7 @@ const CardsDashboard = ({ members = [] }) => {
                                         </Avatar>
                                     </div>
                                     <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Revenue</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>300,00</Typography>
+                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>0</Typography>
                                 </CardContent>
                             </Card>
                         </div>
@@ -113,9 +132,7 @@ const CardsDashboard = ({ members = [] }) => {
                                         backgroundColor: 'transparent',
                                         marginRight: 10,
                                     }}
-                                    onClick={() => {
-                                        setOpenFilterModal(true); // open the modal
-                                    }}
+                                    onClick={() => setOpenFilterModal(true)}
                                 >
                                     Filter
                                 </Button>
@@ -150,55 +167,38 @@ const CardsDashboard = ({ members = [] }) => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {members.map((member) => (
-                                        <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell
-                                                sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    setSelectedMember(member); // save the clicked member
-                                                    setOpenProfileModal(true); // open the modal
-                                                }}
-                                            >
-                                                {member.user_id}
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.first_name}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.member_type?.name || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.type}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.card_issue_date}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member?.member?.card_expiry_date}</TableCell>
+                                    {filteredMembers.map((user) => (
+                                        <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.member?.membership_no || 'N/A'}</TableCell>
                                             <TableCell>
-                                                <span
-                                                    style={{
-                                                        color: member?.member?.card_status
-                                                            === 'active' ? '#2e7d32' : member.member?.card_status
-                                                                === 'inactive' ? '#FFA90B' : '#d32f2f',
-                                                        fontWeight: 'medium',
-                                                        cursor: 'pointer',
-                                                    }}
-                                                    onClick={(e) => showMemberDetails(member, e)}
-                                                >
-                                                    {member?.member?.card_status}
-                                                    {member.status === 'inactive' && (
-                                                        <img
-                                                            src="/assets/system-expired.png"
-                                                            alt=""
-                                                            style={{
-                                                                width: 25,
-                                                                height: 25,
-                                                                marginLeft: 2,
-                                                                marginBottom: 5,
-                                                            }}
-                                                        />
-                                                    )}
-                                                </span>
-                                            </TableCell>
+                                                <div className="d-flex align-items-center">
+                                                    <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
+                                                    <div>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
+                                                            {user.first_name}
 
+                                                            {user.member?.is_document_enabled && (
+                                                                <Tooltip title="Documents missing" arrow>
+                                                                    <WarningAmberIcon color="warning" fontSize="small" />
+                                                                </Tooltip>
+                                                            )}
+                                                        </Typography>
+
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.email}</Typography>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.category || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.card_issue_date || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.card_expiry_date || 'N/A'}</TableCell>
+                                            <TableCell>{user.member?.card_status || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Button
                                                     style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
                                                     onClick={() => {
-                                                        setSelectedMember(member); // Set the selected member
-                                                        setOpenCardModal(true); // Open the modal
+                                                        setSelectMember(user);
+                                                        setOpenCardModal(true);
                                                     }}
                                                 >
                                                     View
@@ -208,14 +208,33 @@ const CardsDashboard = ({ members = [] }) => {
                                     ))}
                                 </TableBody>
                             </Table>
+                            <Box display="flex" justifyContent="center" mt={2}>
+                                {members.links?.map((link, index) => (
+                                    <Button
+                                        key={index}
+                                        onClick={() => link.url && router.visit(link.url)}
+                                        disabled={!link.url}
+                                        variant={link.active ? 'contained' : 'outlined'}
+                                        size="small"
+                                        style={{
+                                            margin: '0 5px',
+                                            minWidth: '36px',
+                                            padding: '6px 10px',
+                                            fontWeight: link.active ? 'bold' : 'normal',
+                                            backgroundColor: link.active ? '#333' : '#fff',
+                                        }}
+                                    >
+                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    </Button>
+                                ))}
+                            </Box>
                         </TableContainer>
+
+                        {/* Filter Modal */}
+                        <MembershipDashboardFilter openFilterModal={openFilterModal} setOpenFilterModal={setOpenFilterModal} members={members.data} filteredMembers={filteredMembers} setFilteredMembers={setFilteredMembers} statusOptions={statusOptions} memberTypeOptions={memberTypeOptions} />
                     </div>
-                    <CardFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
-                    <SubscriptionCardComponent member={selectedMember} open={openCardModal} onClose={() => setOpenCardModal(false)} />
 
-                    <UserCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectedMember} />
-
-                    <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members.data} />
 
                     {/* <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} /> */}
                 </div>

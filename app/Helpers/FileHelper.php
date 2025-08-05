@@ -26,7 +26,7 @@ class FileHelper
         $image->move($destinationPath, $filename);
 
         // Return the full URL of the image
-        return "tenants/{$tenantId}/{$folder}/{$filename}";
+        return "/tenants/{$tenantId}/{$folder}/{$filename}";
     }
 
     public static function saveBinaryImage(string $binaryData, string $folder, string $filename = null): string

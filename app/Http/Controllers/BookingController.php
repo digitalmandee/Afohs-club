@@ -4,28 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\Booking;
-use App\Models\Room;
 use App\Models\BookingEvents;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
+use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\RoomCategory;
 use App\Models\RoomChargesType;
 use App\Models\RoomMiniBar;
 use App\Models\RoomType;
 use App\Models\User;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class BookingController extends Controller
 {
     public function index()
     {
         // Step 1: Build bookingId => invoice mapping
-        $invoices = FinancialInvoice::get();
+        $invoices = FinancialInvoice::where('invoice_type', 'room_booking')->get();
 
         $bookingInvoiceMap = [];
 
@@ -41,9 +41,7 @@ class BookingController extends Controller
         }
 
         // Step 2: Get all RoomBookings
-        $bookings = RoomBooking::with('room', 'customer', 'customer.member')
-            ->latest()
-            ->get();
+        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
 
         // Step 3: Attach invoice data to each booking
         $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
@@ -55,7 +53,6 @@ class BookingController extends Controller
         $totalBookings = RoomBooking::count();
         $totalRoomBookings = RoomBooking::count();
 
-
         $rooms = Room::latest()->get();
 
         $totalRooms = $rooms->count();
@@ -63,9 +60,10 @@ class BookingController extends Controller
         // Determine unavailable rooms today
         $conflictedRooms = RoomBooking::query()
             ->whereIn('status', ['confirmed', 'pending'])
-            ->where('check_in_date', '<', now()->addDay()) // today and future
-            ->where('check_out_date', '>', now()) // overlapping today
-            ->pluck('room_id')->unique();
+            ->where('check_in_date', '<', now()->addDay())  // today and future
+            ->where('check_out_date', '>', now())  // overlapping today
+            ->pluck('room_id')
+            ->unique();
 
         $availableRoomsToday = Room::query()
             ->whereNotIn('id', $conflictedRooms)
@@ -82,24 +80,23 @@ class BookingController extends Controller
 
         $roomTypes = RoomType::where('status', 'active')->select('id', 'name')->get();
 
-
         return Inertia::render('App/Admin/Booking/Dashboard', [
             'data' => $data,
             'roomTypes' => $roomTypes
         ]);
     }
 
-
     public function search(Request $request)
     {
-        $checkin = $request->query('checkin'); // Y-m-d
-        $checkout = $request->query('checkout'); // Y-m-d
-        $persons = $request->query('persons'); // int
+        $checkin = $request->query('checkin');  // Y-m-d
+        $checkout = $request->query('checkout');  // Y-m-d
+        $persons = $request->query('persons');  // int
 
         $conflicted = RoomBooking::query()
             ->whereIn('status', ['confirmed', 'pending'])
             ->where(function ($query) use ($checkin, $checkout) {
-                $query->where('check_in_date', '<', $checkout)
+                $query
+                    ->where('check_in_date', '<', $checkout)
                     ->where('check_out_date', '>', $checkin);
             })
             ->pluck('room_id');
@@ -112,7 +109,6 @@ class BookingController extends Controller
 
         return response()->json($available);
     }
-
 
     //     public function roomsAndEvents()
     // {
@@ -128,7 +124,6 @@ class BookingController extends Controller
     //         'roomsEvent' => $roomsEvents,
     //     ]);
     // }
-
 
     public function booking(Request $request)
     {
@@ -148,12 +143,14 @@ class BookingController extends Controller
     {
         $booking = RoomBooking::with(['customer', 'customer.member', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
         Log::info($booking->room);
-        $booking =  [
+        $booking = [
             'id' => $booking->id,
             'bookingNo' => $booking->booking_no,
             'bookingDate' => $booking->booking_date,
             'checkInDate' => $booking->check_in_date,
+            'checkInTime' => $booking->check_in_time,
             'checkOutDate' => $booking->check_out_date,
+            'checkOutTime' => $booking->check_out_time ?? now()->format('H:i'),
             'arrivalDetails' => $booking->arrival_details,
             'departureDetails' => $booking->departure_details,
             'bookingType' => $booking->booking_type,
@@ -219,16 +216,18 @@ class BookingController extends Controller
 
     public function familyMembers($id)
     {
-        $members = User::role('user', 'web')->select(
-            'users.id',
-            'users.first_name',
-            'users.last_name',
-            'users.email',
-            'users.phone_number',
-            'members.family_suffix',
-            'user_details.cnic_no',
-            'user_details.current_address',
-        )->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
+        $members = User::role('user', 'web')
+            ->select(
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'users.email',
+                'users.phone_number',
+                'members.family_suffix',
+                'user_details.cnic_no',
+                'user_details.current_address',
+            )
+            ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
             ->leftJoin('members', 'users.id', '=', 'members.user_id')
             ->where('users.parent_user_id', $id)
             ->limit(10)
@@ -292,7 +291,7 @@ class BookingController extends Controller
             'status' => 'pending',
         ]);
 
-        $data = $booking->toArray(); // Convert Eloquent model to array
+        $data = $booking->toArray();  // Convert Eloquent model to array
         $data['invoice_type'] = $bookingType === 'room' ? 'room_booking' : 'event_booking';
         $data['amount'] = $request->totalPayment;
         $invoice_no = $this->getInvoiceNo();
@@ -340,7 +339,7 @@ class BookingController extends Controller
 
         $booking = RoomBooking::find($invoice->data[0]['booking_id']);
         if ($request->booking_status) {
-            $booking->status =  $request->booking_status;
+            $booking->status = $request->booking_status;
         }
         $booking->save();
 
@@ -357,7 +356,7 @@ class BookingController extends Controller
 
     private function getBookingId()
     {
-        $booking_id =  (int) RoomBooking::max('booking_no');
+        $booking_id = (int) RoomBooking::max('booking_no');
         return $booking_id + 1;
     }
 

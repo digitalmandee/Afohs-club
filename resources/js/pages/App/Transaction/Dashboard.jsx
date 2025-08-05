@@ -432,9 +432,6 @@ function TransactionDashboard({ Invoices, totalOrders }) {
         orderStatus: true,
     });
 
-    const [openRejectModal, setOpenRejectModal] = useState(false);
-    const [rejectReason, setRejectReason] = useState('');
-
     const handleTabChange = (tab) => {
         setActiveTab(tab);
     };
@@ -467,9 +464,9 @@ function TransactionDashboard({ Invoices, totalOrders }) {
 
     const handleOpenPayment = (order) => {
         setSelectedOrder(order);
-        if (order.status === 'paid') {
+        if (order.payment_status === 'paid') {
             setOpenPaymentSuccessModal(true);
-        } else if (order.status === 'unpaid') {
+        } else if (order.payment_status === 'unpaid') {
             setOpenPaymentModal(true);
             setOpenOrderDetailModal(false);
         }
@@ -653,7 +650,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                             <Grid container spacing={2}>
                                 <Grid item xs={12}>
                                     {/* <pre>{JSON.stringify(Invoices, null, 2)}</pre> */}
-                                    {Invoices.map((order) => (
+                                    {Invoices?.map((order) => (
                                         <Card
                                             sx={{
                                                 ...styles.orderCard,
@@ -671,7 +668,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                         >
                                             <CardContent>
                                                 <Box display="flex" alignItems="center">
-                                                    <Avatar style={getAvatarStyle(order.order.order_type)}>{order.order.table?.table_no}</Avatar>
+                                                    <Avatar style={getAvatarStyle(order.order_type)}>{order.table?.table_no}</Avatar>
 
                                                     <Avatar
                                                         style={{
@@ -697,7 +694,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     fontSize: '18px',
                                                                 }}
                                                             >
-                                                                {order.order?.user?.name}
+                                                                {order?.member?.full_name} ({order.member?.membership_no})
                                                             </Typography>
                                                             {order.isVIP && <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />}
                                                         </Box>
@@ -740,28 +737,28 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 <Box display="flex" alignItems="center" justifyContent="space-between" mt={1}>
                                                     <Box display="flex" alignItems="center">
                                                         <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                            #{order?.order.order_number}
+                                                            #{order?.order_number}
                                                         </Typography>
 
                                                         <Chip
                                                             label={
-                                                                order?.order.status === 'pending'
+                                                                order?.status === 'pending'
                                                                     ? 'Pending'
-                                                                    : order?.order?.status === 'in_progress'
+                                                                    : order?.status === 'in_progress'
                                                                       ? 'In Progress'
-                                                                      : order?.order?.status === 'completed' && order.status === 'paid'
+                                                                      : order?.status === 'completed' && order.payment_status === 'paid'
                                                                         ? 'Completed'
-                                                                        : order?.order?.status === 'completed'
+                                                                        : order?.status === 'completed'
                                                                           ? 'Ready to Serve' // Don't show label if completed
-                                                                          : order?.order?.status === 'cancelled'
+                                                                          : order?.status === 'cancelled'
                                                                             ? 'Order Cancelled'
                                                                             : 'Unknown' // Default if status is not recognized
                                                             }
                                                             size="small"
                                                             style={{
                                                                 ...styles.statusChip,
-                                                                backgroundColor: getStatusChipColor(order?.order.status),
-                                                                color: getStatusChipTextColor(order?.order.status),
+                                                                backgroundColor: getStatusChipColor(order?.status),
+                                                                color: getStatusChipTextColor(order?.status),
                                                             }}
                                                         />
                                                     </Box>
@@ -781,7 +778,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 color: 'white',
                                                             }}
                                                         >
-                                                            {order.status === 'paid' ? 'Paid' : order.status == 'cancelled' ? 'Cancelled' : 'Payment Now'}
+                                                            {order.payment_status === 'paid' ? 'Paid' : order.payment_status == 'cancelled' ? 'Cancelled' : 'Payment Now'}
                                                         </Button>
                                                     </Box>
                                                 </Box>
@@ -1293,7 +1290,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                     <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} orderDetail={orderDetail} handleOpenTrackOrder={handleOpenTrackOrder} />
 
                     {/* Payment Modal */}
-                    <PaymentNow invoiceData={selectedOrder} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} />
+                    <PaymentNow invoiceData={selectedOrder} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} setSelectedOrder={setSelectedOrder} />
 
                     {/* Payment Success Modal */}
                     <Dialog
@@ -1352,7 +1349,6 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             Rs {selectedOrder?.total_price}
                                         </Typography>
                                     </Box>
-
                                     <Grid container spacing={2} mb={4}>
                                         <Grid item xs={6}>
                                             <Typography variant="subtitle2" color="text.secondary" mb={1}>
@@ -1364,8 +1360,8 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             {/* <Typography variant="body1">Total Cash</Typography> */}
                                         </Grid>
                                         <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="subtitle2" color="text.secondary" mb={1}>
-                                                Cash
+                                            <Typography variant="subtitle2" color="text.secondary" mb={1} textTransform="capitalize">
+                                                {selectedOrder?.payment_method ? selectedOrder.payment_method.replace(/_/g, ' ') : ''}
                                             </Typography>
                                             <Typography variant="body1">Rs {selectedOrder?.paid_amount}</Typography>
                                         </Grid>
@@ -1382,7 +1378,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 Customer Changes
                                             </Typography>
                                             <Typography variant="body1" fontWeight="medium">
-                                                Rs {selectedOrder?.customer_change}
+                                                Rs {selectedOrder?.paid_amount - selectedOrder?.total_price}
                                             </Typography>
                                         </Box>
                                     </Box>

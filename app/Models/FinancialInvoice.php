@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class FinancialInvoice extends Model
+class FinancialInvoice extends BaseModel
 {
     protected $fillable = [
         'invoice_no',
@@ -22,11 +20,16 @@ class FinancialInvoice extends Model
         'issue_date',
         'due_date',
         'paid_for_month',
+        'paid_for_quarter',
         'payment_method',
         'payment_date',
         'reciept',
         'data',
-        'status'
+        'remarks',
+        'status',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
     protected $casts = [
@@ -37,6 +40,12 @@ class FinancialInvoice extends Model
     {
         return $this->belongsTo(User::class, 'customer_id', 'id');
     }
+
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id', 'user_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'member_id', 'id');

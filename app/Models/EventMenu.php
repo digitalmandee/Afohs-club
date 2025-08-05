@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EventMenu extends BaseModel
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'name',
@@ -17,4 +17,9 @@ class EventMenu extends BaseModel
         'updated_by',
         'deleted_by',
     ];
+
+    public function items()
+    {
+        return $this->hasMany(EventMenuItem::class);
+    }
 }

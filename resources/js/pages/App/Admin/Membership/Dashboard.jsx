@@ -1,86 +1,76 @@
 import { useState } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, Alert, Slide, InputAdornment, Snackbar, Menu, MenuItem } from '@mui/material';
-import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard } from '@mui/icons-material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Search, FilterAlt, People, CreditCard, LocalDining as DiningIcon, TakeoutDining as TakeoutIcon, TwoWheeler as DeliveryIcon } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import MembershipSuspensionDialog from './Modal';
 import MembershipCancellationDialog from './CancelModal';
-import MemberProfileModal from './Profile';
 import MembershipCardComponent from './UserCard';
-import MemberFilter from './MemberFilter';
 import InvoiceSlip from './Invoice';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import ActivateMembershipDialog from './ActivateMembershipDialog';
+import { MdModeEdit } from 'react-icons/md';
+import { FaEdit } from 'react-icons/fa';
+import MembershipPauseDialog from './MembershipPauseDialog';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
+const styles = {
+    root: {
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        fontFamily: 'Arial, sans-serif',
+    },
+};
+
 const MembershipDashboard = ({ members = [], total_members, total_payment }) => {
     // Modal state
     const [open, setOpen] = useState(true);
-    const [openModal, setOpenModal] = useState(false);
-    const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [activateModalOpen, setActivateModalOpen] = useState(false);
     const [openProfileModal, setOpenProfileModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
-    const [openInvoiceModal, setOpenInvoiceModal] = useState(false); // State for InvoiceSlip modal
     const [selectMember, setSelectMember] = useState(null);
-    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
+    const [filteredMembers, setFilteredMembers] = useState(members);
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
+    const [pauseModalOpen, setPauseModalOpen] = useState(false);
 
-    const handleStatusClick = (event, member) => {
-        setStatusAnchorEl(event.currentTarget);
-        setSelectedMember(member);
-    };
+    // Extract unique status and member type values from members
+    const statusOptions = [
+        { label: 'All type', value: 'all', icon: null },
+        { label: 'Active', value: 'active', icon: null },
+        { label: 'Suspended', value: 'suspended', icon: null },
+        { label: 'Cancelled', value: 'cancelled', icon: null },
+        { label: 'Absent', value: 'pause', icon: null },
+    ];
 
-    const handleStatusClose = () => {
-        setStatusAnchorEl(null);
-    };
-
-    // console.log('Member prop:', member); // Debug: Log the member prop
-
-    const handleOpenModal = (member, event, type = 'actions') => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const position = {
-            top: rect.top + window.scrollY,
-            left: rect.left + window.scrollX,
-        };
-        setModalPosition(position);
-        setOpenModal(true);
-    };
-
-    const handleCloseModal = () => {
-        setOpenModal(false);
-    };
+    const memberTypeOptions = [
+        { label: 'All types', value: 'all' },
+        ...[...new Set(members.map((member) => member.member?.member_type?.name).filter((name) => name))].map((name) => ({
+            label: name,
+            value: name,
+        })),
+    ];
 
     const handleCancelMembership = () => {
         setCancelModalOpen(false);
     };
 
-    const handleConfirmSuspend = () => {
-        setSuspensionModalOpen(false);
-    };
-
-    const showMemberDetails = (member, event) => {
-        handleOpenModal(member, event, 'details');
-    };
-
     const getAvailableStatusActions = (currentStatus) => {
-        const allStatuses = ['active', 'suspended', 'cancelled'];
+        const allStatuses = ['active', 'suspended', 'cancelled', 'pause'];
         return allStatuses.filter((status) => status.toLowerCase() !== currentStatus?.toLowerCase());
     };
 
     const handleStatusUpdate = (memberId, newStatus) => {
         const foundMember = members.find((m) => m.id === memberId);
         if (foundMember) {
-            console.log('Member found:', foundMember);
-            foundMember.member.card_status = newStatus;
-        } else {
-            console.log('Member not found:', memberId);
+            foundMember.member.status = newStatus;
         }
     };
 
@@ -159,85 +149,73 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                             </Card>
                         </div>
                     </div>
-
                     {/* Recently Joined Section */}
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
-
-                            <div className="d-flex">
-                                <TextField
-                                    placeholder="Search by name, member type etc"
-                                    variant="outlined"
-                                    size="small"
-                                    style={{ width: '350px', marginRight: '10px' }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Search />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<FilterAlt />}
-                                    style={{
-                                        border: '1px solid #063455',
-                                        color: '#333',
-                                        textTransform: 'none',
-                                        backgroundColor: 'transparent',
-                                    }}
-                                    onClick={() => setOpenFilterModal(true)}
-                                >
-                                    Filter
-                                </Button>
-                            </div>
                         </div>
                         {/* Members Table */}
                         <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Membership ID</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member Type</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Card</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {members.map((user) => (
+                                    {filteredMembers.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
-                                                {user.member?.member_category?.name} {user.member?.membership_no || 'N/A'}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.membership_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.first_name}</Typography>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.email}</Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
+                                                            {user.full_name}
+
+                                                            {user.is_document_enabled && (
+                                                                <Tooltip title="Documents missing" arrow>
+                                                                    <WarningAmberIcon color="warning" fontSize="small" />
+                                                                </Tooltip>
+                                                            )}
+                                                        </Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member?.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <PopupState variant="popover" popupId={`status-popup-${user.id}`}>
                                                     {(popupState) => (
                                                         <>
                                                             <span
                                                                 style={{
-                                                                    color: user.member?.card_status === 'active' ? '#2e7d32' : user.member?.card_status === 'Suspend' ? '#FFA90B' : '#d32f2f',
+                                                                    color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f',
                                                                     fontWeight: 'medium',
                                                                     cursor: 'pointer',
                                                                 }}
                                                                 {...bindTrigger(popupState)}
                                                             >
-                                                                {user.member?.card_status || 'N/A'}
-                                                                {user.member?.card_status === 'suspended' && (
+                                                                {user.status || 'N/A'}
+                                                                {user.status === 'suspended' && (
                                                                     <img
                                                                         src="/assets/system-expired.png"
                                                                         alt=""
@@ -249,27 +227,19 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                                         }}
                                                                     />
                                                                 )}
+                                                                <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
                                                             </span>
-
                                                             <Menu {...bindMenu(popupState)}>
-                                                                {getAvailableStatusActions(user.member?.card_status).map((statusOption) => (
+                                                                {getAvailableStatusActions(user.status).map((statusOption) => (
                                                                     <MenuItem
                                                                         key={statusOption}
                                                                         onClick={() => {
                                                                             popupState.close();
-
-                                                                            if (statusOption === 'suspended') {
-                                                                                setSelectMember(user);
-                                                                                setSuspensionModalOpen(true);
-                                                                            } else if (statusOption === 'cancelled') {
-                                                                                setSelectMember(user);
-                                                                                setCancelModalOpen(true);
-                                                                            } else if (statusOption === 'active') {
-                                                                                setSelectMember(user);
-                                                                                setActivateModalOpen(true);
-                                                                                // Optional: trigger activate logic/modal here
-                                                                                console.log('Activate clicked');
-                                                                            }
+                                                                            setSelectMember(user);
+                                                                            if (statusOption === 'suspended') setSuspensionModalOpen(true);
+                                                                            else if (statusOption === 'cancelled') setCancelModalOpen(true);
+                                                                            else if (statusOption === 'active') setActivateModalOpen(true);
+                                                                            else if (statusOption === 'pause') setPauseModalOpen(true);
                                                                         }}
                                                                     >
                                                                         {statusOption === 'active' ? 'Activate' : statusOption}
@@ -280,10 +250,13 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                     )}
                                                 </PopupState>
                                             </TableCell>
-
                                             <TableCell>
                                                 <Button
-                                                    style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
+                                                    style={{
+                                                        color: '#0C67AA',
+                                                        textDecoration: 'underline',
+                                                        textTransform: 'none',
+                                                    }}
                                                     onClick={() => {
                                                         setSelectMember(user);
                                                         setOpenCardModal(true);
@@ -293,11 +266,15 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                 </Button>
                                             </TableCell>
                                             <TableCell>
-                                                {user.member?.card_status === 'Expired' || user.member?.card_status === 'Suspend' ? (
+                                                {user.card_status === 'Expired' || user.card_status === 'Suspend' ? (
                                                     <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
                                                 ) : (
                                                     <Button
-                                                        style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
+                                                        style={{
+                                                            color: '#0C67AA',
+                                                            textDecoration: 'underline',
+                                                            textTransform: 'none',
+                                                        }}
                                                         onClick={() => {
                                                             setSelectMember(user);
                                                             setOpenInvoiceModal(true);
@@ -308,13 +285,8 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <IconButton
-                                                    onClick={() => {
-                                                        setSelectMember(user);
-                                                        setOpenProfileModal(true);
-                                                    }}
-                                                >
-                                                    <MoreVert />
+                                                <IconButton onClick={() => router.visit(route('membership.edit', user.id))}>
+                                                    <FaEdit size={18} />
                                                 </IconButton>
                                             </TableCell>
                                         </TableRow>
@@ -323,16 +295,17 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                             </Table>
                         </TableContainer>
                     </div>
-
-                    <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.member?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
-                    <MemberProfileModal open={openProfileModal} onClose={() => setOpenProfileModal(false)} member={selectMember} memberData={members} />
-                    <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
-                    <MemberFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.member?.invoice_id} />
                 </div>
             </div>
+
+            <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+            <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+            <MembershipCancellationDialog open={cancelModalOpen} onClose={() => setCancelModalOpen(false)} onConfirm={handleCancelMembership} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+
+            <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
+
+            <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
+            <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.user_id} />
         </>
     );
 };

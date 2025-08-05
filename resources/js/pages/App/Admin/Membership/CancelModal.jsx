@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Box, Typography, TextField, Button, Dialog, DialogContent, DialogActions, IconButton, Snackbar } from '@mui/material';
+import { Box, Typography, TextField, Button, Dialog, DialogContent, DialogActions, IconButton } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { enqueueSnackbar } from 'notistack';
 
 const MembershipCancellationDialog = ({ open, onClose, memberId, onSuccess }) => {
     const [cancelReason, setCancelReason] = useState('');
     const [loading, setLoading] = useState(false);
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', error: false });
     const [error, setError] = useState('');
 
     const handleCancel = async () => {
@@ -25,12 +25,11 @@ const MembershipCancellationDialog = ({ open, onClose, memberId, onSuccess }) =>
             };
 
             await axios.post(route('membership.update-status'), payload); // Adjust route if needed
-
-            setSnackbar({ open: true, message: 'Membership cancelled successfully', error: false });
+            enqueueSnackbar('Membership cancelled successfully', { variant: 'success' });
             onClose();
             onSuccess?.('cancelled'); // Send back updated status
         } catch (err) {
-            setSnackbar({ open: true, message: 'Failed to cancel membership', error: true });
+            enqueueSnackbar('Failed to cancel membership', { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -114,20 +113,6 @@ const MembershipCancellationDialog = ({ open, onClose, memberId, onSuccess }) =>
                     {loading ? 'Processing...' : 'Confirm Cancellation'}
                 </Button>
             </DialogActions>
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={3000}
-                onClose={() => setSnackbar({ ...snackbar, open: false })}
-                message={snackbar.message}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                ContentProps={{
-                    sx: {
-                        bgcolor: snackbar.error ? 'error.main' : 'success.main',
-                        color: '#fff',
-                    },
-                }}
-            />
         </Dialog>
     );
 };

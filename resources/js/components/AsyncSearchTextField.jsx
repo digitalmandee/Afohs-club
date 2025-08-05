@@ -9,10 +9,12 @@ const AsyncSearchTextField = ({
     onChange,
     endpoint,
     queryParam = 'q', // key to send query like ?q=ali
+    params = {},
     placeholder = '',
     fullWidth = true,
     disabled = false,
     debounceTime = 300,
+    size = 'medium',
     resultFormat = (item) => `${item.label}`,
 }) => {
     const [inputValue, setInputValue] = useState(value?.label || '');
@@ -40,7 +42,9 @@ const AsyncSearchTextField = ({
 
         try {
             setLoading(true);
-            const res = await axios.get(`${endpoint}?${queryParam}=${query}`);
+            const url = route(endpoint, { ...params, [queryParam]: query });
+
+            const res = await axios.get(url);
             setSuggestions(res.data.results);
         } catch (err) {
             console.error('Search failed:', err);
@@ -72,6 +76,7 @@ const AsyncSearchTextField = ({
             <TextField
                 label={label}
                 name={name}
+                size={size}
                 value={inputValue}
                 onChange={handleInputChange}
                 placeholder={placeholder}

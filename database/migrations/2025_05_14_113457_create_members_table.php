@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -20,17 +19,17 @@ return new class extends Migration
             // $table->string('membership_category')->nullable();
             $table->string('membership_no')->nullable()->unique();
             $table->date('membership_date')->nullable();
-            $table->enum('card_status', ['active', 'inactive', 'suspended', 'cancelled'])->default('inactive')->nullable();
+            $table->enum('card_status', ['active', 'inactive', 'suspended', 'cancelled', 'pause'])->default('inactive')->nullable();
             $table->date('card_issue_date')->nullable();
             $table->date('card_expiry_date')->nullable();
             $table->date('from_date')->nullable();
             $table->date('to_date')->nullable();
             $table->string('member_image')->nullable();
-            $table->string('full_name')->nullable(); // For family members
-            $table->string('relation')->nullable(); // For family members
-            $table->date('start_date')->nullable(); // For family members
-            $table->date('end_date')->nullable(); // For family members
-            $table->string('picture')->nullable(); // For family members
+            $table->string('full_name')->nullable();  // For family members
+            $table->string('relation')->nullable();  // For family members
+            $table->date('start_date')->nullable();  // For family members
+            $table->date('end_date')->nullable();  // For family members
+            $table->string('picture')->nullable();  // For family members
             $table->timestamps();
         });
     }

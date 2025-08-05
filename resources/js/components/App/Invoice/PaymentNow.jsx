@@ -5,7 +5,7 @@ import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import Receipt from './Receipt';
 
-const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleClosePayment }) => {
+const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleClosePayment, setSelectedOrder }) => {
     // Payment state
     const [inputAmount, setInputAmount] = useState('0');
     const [customerChanges, setCustomerChanges] = useState('0');
@@ -98,15 +98,17 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         // Prepare form data for credit card (with file)
         if (activePaymentMethod === 'credit_card') {
             const formData = new FormData();
-            formData.append('invoice_id', invoiceData.id);
+            formData.append('order_id', invoiceData.id);
             formData.append('paid_amount', inputAmount);
             formData.append('payment_method', 'credit_card');
             formData.append('credit_card_type', creditCardType);
             formData.append('receipt', receiptFile);
+            console.log(formData);
 
             router.post(route('order.payment'), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Payment successful', { variant: 'success' });
+                    setSelectedOrder((prev) => ({ ...prev, paid_amount: inputAmount, payment_status: 'paid' }));
                     openSuccessPayment();
                 },
                 onError: (errors) => {
@@ -128,7 +130,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             const paidAmount = activePaymentMethod === 'split_payment' ? (parseFloat(cashAmount || 0) + parseFloat(creditCardAmount || 0) + parseFloat(bankTransferAmount || 0)).toFixed(2) : inputAmount;
 
             const payload = {
-                invoice_id: invoiceData?.id,
+                order_id: invoiceData?.id,
                 paid_amount: paidAmount,
                 customer_changes: customerChanges,
                 payment_method: activePaymentMethod,
@@ -141,6 +143,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
             router.post(route('order.payment'), payload, {
                 onSuccess: () => {
+                    setSelectedOrder((prev) => ({ ...prev, paid_amount: inputAmount, payment_status: 'paid' }));
                     enqueueSnackbar('Payment successful', { variant: 'success' });
                     openSuccessPayment();
                 },
@@ -172,10 +175,10 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     useEffect(() => {
         if (activePaymentMethod === 'split_payment') {
-            const totalPaid = parseFloat(cashAmount || 0) + parseFloat(creditCardAmount || 0) + parseFloat(bankTransferAmount || 0);
-            const change = (totalPaid - invoiceData.total_price).toFixed(2);
+            const totalPaid = Number(cashAmount) + Number(creditCardAmount) + Number(bankTransferAmount);
+            const change = totalPaid - Number(invoiceData?.total_price);
             setCustomerChanges(change);
-            setInputAmount(totalPaid.toFixed(2)); // Optional: track total paid in inputAmount too
+            setInputAmount(totalPaid); // Optional: track total paid in inputAmount too
         }
     }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData?.total_price, activePaymentMethod]);
 
@@ -279,19 +282,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 <Typography variant="subtitle1" mb={1}>
                                     Input Amount
                                 </Typography>
-                                <TextField
-                                    fullWidth
-                                    value={inputAmount}
-                                    onChange={(e) => handleQuickAmountClick(e.target.value)}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Typography variant="body1">Rs</Typography>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{ mb: 2 }}
-                                />
+                                <WholeNumberInput value={inputAmount} onChange={handleQuickAmountClick} />
 
                                 <Typography variant="subtitle1" mb={1}>
                                     Customer Changes
@@ -463,16 +454,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 <Typography variant="subtitle1" mb={1}>
                                     Amount
                                 </Typography>
-                                <TextField
-                                    fullWidth
-                                    type="number"
-                                    value={inputAmount}
-                                    onChange={(e) => setInputAmount(e.target.value)}
-                                    InputProps={{
-                                        startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
-                                    }}
-                                    sx={{ mb: 3 }}
-                                />
+                                <WholeNumberInput value={inputAmount} onChange={setInputAmount} />
 
                                 <Typography variant="subtitle1" mb={1}>
                                     Credit Card Type
@@ -497,18 +479,17 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 <Typography variant="subtitle1" mb={1}>
                                     Cash
                                 </Typography>
-                                <TextField fullWidth type="number" value={cashAmount} onChange={(e) => setCashAmount(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} sx={{ mb: 3 }} />
+                                <WholeNumberInput value={cashAmount} onChange={setCashAmount} />
 
                                 <Typography variant="subtitle1" mb={1}>
                                     Credit Card
                                 </Typography>
-                                <TextField fullWidth type="number" value={creditCardAmount} onChange={(e) => setCreditCardAmount(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} sx={{ mb: 3 }} />
+                                <WholeNumberInput value={creditCardAmount} onChange={setCreditCardAmount} />
 
                                 <Typography variant="subtitle1" mb={1}>
                                     Bank Transfer
                                 </Typography>
-                                <TextField fullWidth type="number" value={bankTransferAmount} onChange={(e) => setBankTransferAmount(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} sx={{ mb: 3 }} />
-
+                                <WholeNumberInput value={bankTransferAmount} onChange={setBankTransferAmount} />
                                 <Typography variant="subtitle1" mb={1}>
                                     Customer Changes
                                 </Typography>
@@ -519,7 +500,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         alignItems: 'center',
                                     }}
                                 >
-                                    <Typography variant="h5" fontWeight="bold" color={Number.parseFloat(customerChanges) < 0 ? '#f44336' : '#333'}>
+                                    <Typography variant="h5" fontWeight="bold" color={Number.parseInt(customerChanges, 10) < 0 ? '#f44336' : '#333'}>
                                         Rs {customerChanges}
                                     </Typography>
                                 </Box>
@@ -636,3 +617,37 @@ const styles = {
         textTransform: 'none',
     },
 };
+
+function WholeNumberInput({ label, value, onChange, sx = {} }) {
+    const handleChange = (e) => {
+        const val = e.target.value;
+        if (/^\d*$/.test(val)) {
+            onChange(val);
+        }
+    };
+
+    return (
+        <TextField
+            fullWidth
+            type="number"
+            label={label}
+            value={value}
+            onChange={handleChange}
+            onKeyDown={(e) => {
+                if (e.key === '.' || e.key === ',' || e.key === 'e') {
+                    e.preventDefault();
+                }
+            }}
+            inputProps={{
+                inputMode: 'numeric',
+                pattern: '[0-9]*',
+                min: '0',
+                step: '1',
+            }}
+            InputProps={{
+                startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+            }}
+            sx={{ mb: 3, ...sx }}
+        />
+    );
+}

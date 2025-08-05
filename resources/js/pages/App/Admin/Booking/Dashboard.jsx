@@ -16,6 +16,7 @@ import { DateRange, DateRangePicker } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { addDays, format } from 'date-fns';
+import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -525,6 +526,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+    const [showCheckInModal, setShowCheckInModal] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchResultsFilter, setSearchResultsFilter] = useState(false);
@@ -712,6 +714,9 @@ const BookingDashboard = ({ data, roomTypes }) => {
                             </Col>
                         </Row>
 
+                        {/* Room Checkin Modal  */}
+                        <RoomCheckInModal open={showCheckInModal} onClose={() => setShowCheckInModal(false)} bookingId={selectedBooking?.id} />
+
                         {/* TODO: Remove invoice modal when reverting to original print functionality */}
                         <Modal show={showInvoiceModal} onHide={handleCloseInvoice} className="custom-dialog-right" size="lg" aria-labelledby="invoice-modal-title">
                             <Modal.Body>
@@ -721,7 +726,10 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                 <Button variant="secondary" onClick={handleCloseInvoice}>
                                     Close
                                 </Button>
-                                {selectedBooking?.status === 'confirmed' ? (
+                                <Button variant="secondary" onClick={() => setShowCheckInModal(true)}>
+                                    Checked In
+                                </Button>
+                                {!['checked_out', 'cancelled', 'no_show', 'refunded'].includes(selectedBooking?.status) ? (
                                     <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking?.id }))}>
                                         Edit
                                     </Button>
@@ -816,13 +824,13 @@ const BookingDashboard = ({ data, roomTypes }) => {
 
                                 {!searchResultsFilter && data.bookingsData.length > 0 ? (
                                     data.bookingsData.map((booking, index) => {
-                                        const durationInDays = dayjs(booking.check_in_date).diff(dayjs(booking.check_out_date), 'day');
+                                        const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
 
                                         return (
                                             <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handleShowInvoice(booking)}>
-                                                <Card.Body className="p-2">
+                                                <Card.Body className="p-3">
                                                     <Row>
-                                                        <Col md={2} className="d-flex justify-content-center">
+                                                        {/* <Col md={2} className="d-flex justify-content-center">
                                                             <img
                                                                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
                                                                 alt={booking.type}
@@ -831,9 +839,9 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                                     objectFit: 'cover',
                                                                 }}
                                                             />
-                                                        </Col>
-                                                        <Col md={10}>
-                                                            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                                                        </Col> */}
+                                                        <Col md={12}>
+                                                            <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap">
                                                                 <div>
                                                                     <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}</Typography>
                                                                     <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>

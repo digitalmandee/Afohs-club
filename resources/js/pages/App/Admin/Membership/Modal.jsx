@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Box, Typography, TextField, Dialog, DialogContent, DialogActions, IconButton, Radio, RadioGroup, FormControlLabel, FormControl, Button, Snackbar } from '@mui/material';
+import { Box, Typography, TextField, Dialog, DialogContent, DialogActions, IconButton, Radio, RadioGroup, FormControlLabel, FormControl, Button } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { enqueueSnackbar } from 'notistack';
 
 const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
     const [suspensionReason, setSuspensionReason] = useState('');
     const [suspensionDuration, setSuspensionDuration] = useState('1Day');
     const [customDate, setCustomDate] = useState('');
     const [loading, setLoading] = useState(false);
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', error: false });
     const [errors, setErrors] = useState({});
 
     const handleSuspend = async () => {
@@ -41,11 +41,11 @@ const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
             };
 
             await axios.post(route('membership.update-status'), payload);
-            setSnackbar({ open: true, message: 'Member suspended successfully', error: false });
+            enqueueSnackbar('Membership suspended successfully', { variant: 'success' });
             onClose();
             onSuccess?.('suspended');
         } catch (err) {
-            setSnackbar({ open: true, message: 'Failed to suspend member', error: true });
+            enqueueSnackbar('Failed to suspend membership', { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -175,20 +175,6 @@ const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
                     {loading ? 'Processing...' : 'Confirm Suspend'}
                 </Button>
             </DialogActions>
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={3000}
-                onClose={() => setSnackbar({ ...snackbar, open: false })}
-                message={snackbar.message}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                ContentProps={{
-                    sx: {
-                        bgcolor: snackbar.error ? 'error.main' : 'success.main',
-                        color: '#fff',
-                    },
-                }}
-            />
         </Dialog>
     );
 };

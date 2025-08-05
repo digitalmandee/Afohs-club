@@ -11,25 +11,25 @@ const handlePrintReceipt = (invoice) => {
     // Map data to invoiceData for consistency with JSX
     const invoiceData = {
         billTo: {
-            name: invoice.customer?.first_name || 'N/A',
-            category: invoice.customer?.member?.member_type?.name || 'Member',
-            membershipId: invoice.customer?.user_id || 'N/A',
-            contactNumber: invoice.customer?.phone_number || 'N/A',
-            city: invoice.customer.user_detail?.current_city || 'N/A',
+            name: invoice.member?.full_name || 'N/A',
+            category: invoice.member?.member_type?.name || 'Member',
+            membershipId: invoice.member?.membership_no || 'N/A',
+            contactNumber: invoice.member?.mobile_number_a || 'N/A',
+            city: invoice.member?.current_city || 'N/A',
             familyMember: 'Non',
         },
         details: {
-            invoiceNumber: '7171',
-            issueDate: invoice.customer?.member?.card_expiry_date,
-            paymentMethod: 'On Cash',
+            invoiceNumber: invoice.invoice_no || 'N/A',
+            issueDate: invoice.member?.card_expiry_date,
+            paymentMethod: invoice.payment_method,
         },
         items: [
             {
-                srNo: 0,
-                description: 'Member Charges',
-                invoiceAmount: 0,
-                remainingAmount: 0,
-                paidAmount: 0,
+                srNo: 1,
+                description: invoice.invoice_type,
+                invoiceAmount: invoice.amount,
+                remainingAmount: invoice.customer_charges,
+                paidAmount: invoice.status === 'paid' || invoice.status === 'overdue' ? invoice.paid_amount : 0,
             },
         ],
         summary: {
@@ -39,7 +39,7 @@ const handlePrintReceipt = (invoice) => {
         },
         note: 'This is a computer-generated receipt. It does not require any signature or stamp.',
         paymentNote: 'If paid by credit card or cheque, 5% surcharge will be added to the total amount.',
-        amountInWords: 'Zero',
+        amountInWords: 0,
         sentBy: 'Admin',
     };
 
@@ -153,11 +153,11 @@ const handlePrintReceipt = (invoice) => {
                     </thead>
                     <tbody>
                         <tr>
-                          <td class="table-body-cell">${invoice.invoice_number}</td>
-                          <td class="table-body-cell">${invoice.member_type?.name}</td>
-                          <td class="table-body-cell">${invoice.total_amount}</td>
+                          <td class="table-body-cell">1</td>
+                          <td class="table-body-cell">${invoice.invoice_type}</td>
+                          <td class="table-body-cell">${invoice.total_price}</td>
                           <td class="table-body-cell">${invoice.customer_charges}</td>
-                          <td class="table-body-cell">${invoice.amount_paid}</td>
+                          <td class="table-body-cell">${invoice.paid_amount}</td>
                         </tr>
                     </tbody>
                   </table>
@@ -168,7 +168,7 @@ const handlePrintReceipt = (invoice) => {
                   <div class="summary-box">
                     <div class="summary-row">
                       <span class="typography-body2-bold">Grand Total</span>
-                      <span class="typography-body2">Rs ${invoice.total_amount}</span>
+                      <span class="typography-body2">Rs ${invoice.total_price}</span>
                     </div>
                     <div class="summary-row">
                       <span class="typography-body2-bold">Remaining Amount</span>
@@ -176,7 +176,7 @@ const handlePrintReceipt = (invoice) => {
                     </div>
                     <div class="summary-row">
                       <span class="typography-body2-bold">Paid Amount</span>
-                      <span class="typography-body2">Rs ${invoice.amount_paid}</span>
+                      <span class="typography-body2">Rs ${invoice.paid_amount}</span>
                     </div>
                   </div>
                 </div>
@@ -192,7 +192,7 @@ const handlePrintReceipt = (invoice) => {
                   </div>
                   <div class="notes-item">
                     <div class="typography-body2">If paid by credit card or cheque, 5% surcharge will be added to the total amount.</div>
-                    <div class="amount-in-words">AMOUNT IN WORDS: ${toWords(invoice.total_amount)}</div>
+                    <div class="amount-in-words">AMOUNT IN WORDS: ${toWords(invoice.total_price)}</div>
                   </div>
                 </div>
               </div>
@@ -289,32 +289,32 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                             <Grid container spacing={2} sx={{ mb: 4 }}>
                                 <Grid item xs={6}>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
-                                        Bill To {invoice.customer?.user_id ? `- ${invoice.customer.user_id}` : ''}
+                                        Bill To {invoice.member.membership_no}
                                     </Typography>
                                     <Box sx={{ ml: 0 }}>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Name: </span>
-                                            {invoice.customer.first_name} {invoice.customer.middle_name} {invoice.customer.last_name}
+                                            {invoice.member.full_name}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Category: </span>
-                                            {invoice.customer?.member?.member_type?.name}
+                                            {invoice.member.member_type?.name}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Membership #: </span>
-                                            {invoice.customer.user_id}
+                                            {invoice.member.membership_no}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Contact #: </span>
-                                            {invoice.customer.phone_number}
+                                            {invoice.member.mobile_number_a}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>City: </span>
-                                            {invoice.customer?.user_detail?.current_city}
+                                            {invoice.member?.current_city}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Family Member: </span>
-                                            {invoice.customer?.family_members_count ?? 0}
+                                            {invoice.member?.family_members_count ?? 0}
                                         </Typography>
                                     </Box>
                                 </Grid>
@@ -357,15 +357,13 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {invoice.data.map((item, index) => (
-                                            <TableRow>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{index + 1}</TableCell>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item?.name || item?.category?.name}</TableCell>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.amount}</TableCell>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.customer_charges}</TableCell>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.status === 'paid' || invoice.status === 'overdue' ? item.amount : 0}</TableCell>
-                                            </TableRow>
-                                        ))}
+                                        <TableRow>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>1</TableCell>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5, textTransform: 'capitalize' }}>{invoice.invoice_type}</TableCell>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.amount}</TableCell>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.customer_charges}</TableCell>
+                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.status === 'paid' || invoice.status === 'overdue' ? invoice.paid_amount : 0}</TableCell>
+                                        </TableRow>
                                     </TableBody>
                                 </Table>
                             </TableContainer>

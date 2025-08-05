@@ -82,7 +82,7 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
                 }}
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('events.manage'))}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('events.dashboard'))}>
                         <IconButton>
                             <ArrowBackIcon sx={{ color: '#555' }} />
                         </IconButton>

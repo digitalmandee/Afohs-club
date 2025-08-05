@@ -5,19 +5,24 @@ import { enqueueSnackbar } from 'notistack';
 
 const CreateRoom = () => {
     const { props } = usePage();
-    const [photoUrl, setPhotoUrl] = useState(null);
+    const [photoUrl, setPhotoUrl] = useState(props.room?.photo_path ? `/${props.room.photo_path}` : null);
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef(null);
 
-    const [categoryCharges, setCategoryCharges] = useState(props.categories);
+    const [categoryCharges, setCategoryCharges] = useState(
+        props.categories.map((cat) => ({
+            ...cat,
+            amount: props.room?.category_charges?.find((c) => c.room_category_id === cat.id)?.amount || '',
+        })),
+    );
 
     // Room Form state
     const [roomForm, setRoomForm] = useState({
-        name: '',
-        number_of_beds: '',
-        max_capacity: '',
-        number_of_bathrooms: '',
-        room_type_id: '',
+        name: props.room?.name || '',
+        number_of_beds: props.room?.number_of_beds?.toString() || '',
+        max_capacity: props.room?.max_capacity?.toString() || '',
+        number_of_bathrooms: props.room?.number_of_bathrooms?.toString() || '',
+        room_type_id: props.room?.room_type_id?.toString() || '',
         photo: null,
     });
 
@@ -97,7 +102,10 @@ const CreateRoom = () => {
 
         setLoading(true);
 
-        router.post(route('rooms.store'), data, {
+        const method = 'post';
+        const url = props.room ? route('rooms.update', props.room.id) : route('rooms.store');
+
+        router[method](url, data, {
             forceFormData: true,
             onSuccess: () => {
                 setRoomForm({
@@ -379,7 +387,7 @@ const CreateRoom = () => {
                             px: 4,
                         }}
                     >
-                        Save
+                        {props.room ? 'Update Room' : 'Save'}
                     </Button>
                 </Box>
             </Box>
