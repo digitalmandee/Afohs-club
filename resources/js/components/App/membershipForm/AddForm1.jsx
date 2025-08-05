@@ -44,7 +44,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     const handleSubmit = () => {
         const errors = {};
 
-        if (!data.coa_account) errors.coa_account = 'COA Account is required';
+        // if (!data.coa_account) errors.coa_account = 'COA Account is required';
         if (!data.first_name) errors.first_name = 'First Name is required';
         if (!data.last_name) errors.last_name = 'Last Name is required';
         if (!data.guardian_name) errors.guardian_name = 'This Name is required';
