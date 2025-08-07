@@ -133,12 +133,19 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
             setErrors({});
 
             if (isEditMode) {
-                await axios.put(route('applied-member.update', memberData.id), dataToSubmit, {
+                const response = await axios.put(route('applied-member.update', memberData.id), dataToSubmit, {
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
                     },
                 });
+                const data = response.data;
+
                 enqueueSnackbar('Applied member updated successfully.', { variant: 'success' });
+                if (data.is_permanent_member) {
+                    router.visit(route('membership.edit', data.member_id));
+                } else {
+                    router.visit(route('applied-member.index'));
+                }
             } else {
                 await axios.post(route('applied-member.store'), dataToSubmit, {
                     headers: {
@@ -146,9 +153,8 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                     },
                 });
                 enqueueSnackbar('Applied member created successfully.', { variant: 'success' });
+                router.visit(route('applied-member.index'));
             }
-
-            router.visit(route('applied-member.index'));
         } catch (error) {
             console.error('Submission error:', {
                 status: error.response?.status,

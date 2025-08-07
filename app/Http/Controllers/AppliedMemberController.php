@@ -158,7 +158,7 @@ class AppliedMemberController extends Controller
                 'end_date' => $request->end_date,
                 'is_permanent_member' => $request->is_permanent_member,
             ]);
-
+            $newMemberId = null;
             // If is_permanent_member is true, distribute data to other tables and assign role
             if ($request->is_permanent_member) {
                 // Create or update user in users table
@@ -181,11 +181,11 @@ class AppliedMemberController extends Controller
                 }
 
                 // Create or update member in member table
-                Member::updateOrCreate(
+                $member = Member::updateOrCreate(
                     ['user_id' => $user->id],
                     [
                         'application_no' => Member::generateNextApplicationNo(),
-                        'membership_no' => Member::generateNextMembershipNo(),
+                        'membership_no' => Member::generateNextMembershipNumber(),
                         'full_name' => $request->name,
                         'first_name' => $request->name,
                         'personal_email' => $request->email,
@@ -196,9 +196,11 @@ class AppliedMemberController extends Controller
                         'end_date' => $request->end_date,
                     ]
                 );
+
+                $newMemberId = $member->id;
             }
 
-            return response()->json(['message' => 'Applied member updated successfully.'], 200);
+            return response()->json(['message' => 'Applied member updated successfully.', 'is_permanent_member' => $request->is_permanent_member, 'member_id' => $newMemberId], 200);
         } catch (QueryException $e) {
             Log::error('Database error updating applied member: ' . $e->getMessage(), ['id' => $id, 'request' => $request->all()]);
             return response()->json(['error' => 'Database error: ' . $e->getMessage()], 500);
