@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('member_status_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('status', ['active', 'suspended', 'cancelled', 'pause']);
+            $table->enum('status', ['active', 'suspended', 'cancelled', 'absent']);
             $table->string('reason')->nullable();
             $table->date('start_date');
             $table->date('end_date')->nullable();

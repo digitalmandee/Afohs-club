@@ -47,7 +47,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
         { label: 'Active', value: 'active', icon: null },
         { label: 'Suspended', value: 'suspended', icon: null },
         { label: 'Cancelled', value: 'cancelled', icon: null },
-        { label: 'Absent', value: 'pause', icon: null },
+        { label: 'Absent', value: 'absent', icon: null },
     ];
 
     const memberTypeOptions = [
@@ -63,14 +63,14 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
     };
 
     const getAvailableStatusActions = (currentStatus) => {
-        const allStatuses = ['active', 'suspended', 'cancelled', 'pause'];
+        const allStatuses = ['active', 'suspended', 'cancelled', 'absent'];
         return allStatuses.filter((status) => status.toLowerCase() !== currentStatus?.toLowerCase());
     };
 
     const handleStatusUpdate = (memberId, newStatus) => {
         const foundMember = members.find((m) => m.id === memberId);
         if (foundMember) {
-            foundMember.member.status = newStatus;
+            foundMember.status = newStatus;
         }
     };
 
@@ -239,7 +239,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                                             if (statusOption === 'suspended') setSuspensionModalOpen(true);
                                                                             else if (statusOption === 'cancelled') setCancelModalOpen(true);
                                                                             else if (statusOption === 'active') setActivateModalOpen(true);
-                                                                            else if (statusOption === 'pause') setPauseModalOpen(true);
+                                                                            else if (statusOption === 'absent') setPauseModalOpen(true);
                                                                         }}
                                                                     >
                                                                         {statusOption === 'active' ? 'Activate' : statusOption}

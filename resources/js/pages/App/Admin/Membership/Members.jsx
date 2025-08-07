@@ -57,12 +57,12 @@ const AllMembers = ({ members }) => {
         { label: 'Active', value: 'active', icon: null },
         { label: 'Suspended', value: 'suspended', icon: null },
         { label: 'Cancelled', value: 'cancelled', icon: null },
-        { label: 'Pause', value: 'pause', icon: null },
+        { label: 'Absent', value: 'absent', icon: null },
     ];
 
     const memberTypeOptions = [
         { label: 'All types', value: 'all' },
-        ...[...new Set(members.data.map((member) => member.member?.member_type?.name).filter((name) => name))].map((name) => ({
+        ...[...new Set(members.data.map((member) => member.member_type?.name).filter((name) => name))].map((name) => ({
             label: name,
             value: name,
         })),
@@ -73,14 +73,14 @@ const AllMembers = ({ members }) => {
     };
 
     const getAvailableStatusActions = (currentStatus) => {
-        const allStatuses = ['active', 'suspended', 'cancelled', 'pause'];
+        const allStatuses = ['active', 'suspended', 'cancelled', 'absent'];
         return allStatuses.filter((status) => status.toLowerCase() !== currentStatus?.toLowerCase());
     };
 
     const handleStatusUpdate = (memberId, newStatus) => {
         const foundMember = members.data.find((m) => m.id === memberId);
         if (foundMember) {
-            foundMember.member.status = newStatus;
+            foundMember.status = newStatus;
         }
     };
 
@@ -202,7 +202,7 @@ const AllMembers = ({ members }) => {
                                                                             if (statusOption === 'suspended') setSuspensionModalOpen(true);
                                                                             else if (statusOption === 'cancelled') setCancelModalOpen(true);
                                                                             else if (statusOption === 'active') setActivateModalOpen(true);
-                                                                            else if (statusOption === 'pause') setPauseModalOpen(true);
+                                                                            else if (statusOption === 'absent') setPauseModalOpen(true);
                                                                         }}
                                                                     >
                                                                         {statusOption === 'active' ? 'Activate' : statusOption}

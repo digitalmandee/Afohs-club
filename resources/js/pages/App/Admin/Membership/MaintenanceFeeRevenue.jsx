@@ -2,8 +2,10 @@ import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Autocomplete, TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button } from '@mui/material';
 import { toWords } from 'number-to-words';
+import MaintenanceFeeFilter from './MaintenanceFeeFilter';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -13,6 +15,7 @@ const MaintenanceFeeRevenue = () => {
 
     // Modal state
     const [open, setOpen] = useState(true);
+    const [openFilterModal, setOpenFilterModal] = useState(false);
 
     const { categories, filters, all_statuses, all_categories } = usePage().props;
 
@@ -47,47 +50,23 @@ const MaintenanceFeeRevenue = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-                    <div className="mb-4 d-flex gap-4 align-items-end">
-                        <div>
-                            <label className="form-label">Status</label>
-                            <select
-                                multiple
-                                className="form-select"
-                                value={selectedStatuses}
-                                onChange={(e) => {
-                                    setSelectedStatuses(Array.from(e.target.selectedOptions, (o) => o.value));
-                                }}
-                            >
-                                {all_statuses.map((status, idx) => (
-                                    <option key={idx} value={status}>
-                                        {status}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="form-label">Member Category</label>
-                            <select
-                                multiple
-                                className="form-select"
-                                value={selectedCategories}
-                                onChange={(e) => {
-                                    setSelectedCategories(Array.from(e.target.selectedOptions, (o) => o.value));
-                                }}
-                            >
-                                {all_categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <button className="btn btn-primary" onClick={applyFilters}>
-                                Apply Filters
-                            </button>
-                        </div>
+                <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+                    {/* Top Bar */}
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <Typography sx={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Maintenance Revenue</Typography>
+                        <Button
+                            variant="outlined"
+                            startIcon={<FilterAltIcon />}
+                            style={{
+                                borderColor: '#ccc',
+                                color: '#333',
+                                textTransform: 'none',
+                                backgroundColor: 'transparent',
+                            }}
+                            onClick={() => setOpenFilterModal(true)}
+                        >
+                            Filter
+                        </Button>
                     </div>
 
                     {/* Members Table */}
@@ -128,6 +107,9 @@ const MaintenanceFeeRevenue = () => {
                             </TableBody>
                         </Table>
                     </TableContainer>
+
+                    {/* Filter Modal */}
+                    <MaintenanceFeeFilter openFilterModal={openFilterModal} setOpenFilterModal={setOpenFilterModal} filters={filters} />
                 </div>
             </div>
         </>

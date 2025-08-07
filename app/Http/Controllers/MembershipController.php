@@ -599,7 +599,7 @@ class MembershipController extends Controller
     {
         $request->validate([
             'member_id' => 'required|exists:members,id',
-            'status' => 'required|in:active,suspended,cancelled,pause',
+            'status' => 'required|in:active,suspended,cancelled,absent',
             'reason' => 'nullable|string',
             'duration_type' => 'nullable|in:1Day,1Monthly,1Year,CustomDate',
             'custom_end_date' => 'nullable|date',
@@ -631,7 +631,7 @@ class MembershipController extends Controller
         try {
             $member->update([
                 'status' => $request->status,
-                'paused_at' => $request->status === 'pause' ? now() : null,
+                'paused_at' => $request->status === 'absent' ? now() : null,
             ]);
 
             $member->user->statusHistories()->whereNull('end_date')->update(['end_date' => now()]);
@@ -651,33 +651,6 @@ class MembershipController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Failed to update status'], 500);
         }
-    }
-
-    // Membership Pause
-    public function membershipPause(Request $request)
-    {
-        $member = User::with('member')->findOrFail($request->member_id);
-
-        Log::info($member);
-
-        // End previous status
-        $member->statusHistories()->whereNull('ended_at')->update(['ended_at' => now()]);
-
-        // Create new status
-        $member->statusHistories()->create([
-            'status' => 'pause',
-            'started_at' => now(),
-        ]);
-
-        // Update current card_status in member table
-        if ($member->member) {
-            $member->member->update(['card_status' => 'pause']);
-        } else {
-            // Log or handle the case when member is missing
-            Log::warning("No member record found for user ID: {$member->id}");
-        }
-
-        return back()->with('success', 'Membership paused successfully.');
     }
 
     // User No
