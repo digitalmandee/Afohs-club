@@ -19,6 +19,7 @@ use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FamilyMembersArchiveConroller;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\MemberCategoryController;
+use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoomBookingController;
@@ -327,6 +328,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // get member invoice
     Route::get('financial-invoice/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
+
+    // Membership Maintanance Revenue
+    Route::get('/admin/membership/maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
 
     // Members types

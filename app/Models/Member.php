@@ -75,13 +75,13 @@ class Member extends Model
         'category_ids' => 'array',
         'is_document_missing' => 'boolean',
         'documents' => 'array',
-        'education' => 'array',
         'date_of_birth' => 'date',
     ];
 
     public static function generateNextMembershipNumber(): string
     {
         $lastNumber = self::orderBy('id', 'desc')
+            ->whereNull('parent_id')
             ->pluck('membership_no')
             ->map(function ($number) {
                 // Extract the base numeric part (e.g., from "AR 002", "PR 1000-1")

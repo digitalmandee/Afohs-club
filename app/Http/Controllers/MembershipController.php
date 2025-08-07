@@ -41,13 +41,12 @@ class MembershipController extends Controller
 
     public function create()
     {
-        $userNo = $this->getUserNo();
         $membershipNo = Member::generateNextMembershipNumber();
         $applicationNo = Member::generateNextApplicationNo();
 
         $memberTypesData = MemberType::select('id', 'name')->get();
         $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('userNo', 'membershipNo', 'applicationNo', 'memberTypesData', 'membercategories'));
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'applicationNo', 'memberTypesData', 'membercategories'));
     }
 
     public function edit(Request $request)
@@ -255,7 +254,7 @@ class MembershipController extends Controller
                 'gender' => $request->gender,
                 'ntn' => $request->ntn,
                 'date_of_birth' => $request->date_of_birth,
-                'education' => json_encode($request->education ?? []),
+                'education' => $request->education,
                 'mobile_number_a' => $request->mobile_number_a,
                 'mobile_number_b' => $request->mobile_number_b,
                 'mobile_number_c' => $request->mobile_number_c,
@@ -292,6 +291,12 @@ class MembershipController extends Controller
 
                     $familyUser->assignRole('user');
 
+                    $familyqrCodeData = route('member.profile', ['id' => $familyUser->id]);
+
+                    // Create QR code image and save it
+                    $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
+                    $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
+
                     Member::create([
                         'user_id' => $familyUser->id,
                         'application_no' => Member::generateNextApplicationNo(),
@@ -303,6 +308,7 @@ class MembershipController extends Controller
                         'personal_email' => $familyMemberData['email'],
                         'relation' => $familyMemberData['relation'],
                         'date_of_birth' => $familyMemberData['date_of_birth'],
+                        'qr_code' => $qrImagePath,
                         'status' => $familyMemberData['status'],
                         'start_date' => $familyMemberData['start_date'] ?? null,
                         'end_date' => $familyMemberData['end_date'] ?? null,
@@ -371,6 +377,7 @@ class MembershipController extends Controller
 
             $member = Member::findOrFail($request->member_id);
 
+            $memberImagePath = $member->profile_photo;
             // Save new profile photo if uploaded
             if ($request->hasFile('profile_photo')) {
                 $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'member_images');
@@ -386,8 +393,8 @@ class MembershipController extends Controller
 
             // Update User basic info
             $member->user->update([
-                'email' => $request->personal_email,
                 'name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'email' => $request->personal_email,
                 'phone_number' => $request->mobile_number_a,
             ]);
 
@@ -397,7 +404,7 @@ class MembershipController extends Controller
                 'membership_no' => $request->membership_no,
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
-                'last_name' => $request->middle_name,
+                'last_name' => $request->last_name,
                 'full_name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
                 'profile_photo' => $memberImagePath,
                 'kinship' => $request->kinship['id'] ?? null,
@@ -420,7 +427,7 @@ class MembershipController extends Controller
                 'gender' => $request->gender,
                 'ntn' => $request->ntn,
                 'date_of_birth' => $request->date_of_birth,
-                'education' => json_encode($request->education ?? []),
+                'education' => $request->education,
                 'mobile_number_a' => $request->mobile_number_a,
                 'mobile_number_b' => $request->mobile_number_b,
                 'mobile_number_c' => $request->mobile_number_c,
@@ -440,18 +447,85 @@ class MembershipController extends Controller
                 'documents' => $documentPaths,
             ]);
 
-            // foreach ($request->family_members as $newMemberData) {
-            //     if (str_starts_with($newMemberData['id'], 'new-')) {
-            //         // New member
-            //         Member::create($newMemberData);
-            //     } elseif (!empty($newMemberData['id'])) {
-            //         // Update existing member
-            //         $member = Member::find($newMemberData['id']);
-            //         if ($member) {
-            //             $member->update($newMemberData);
-            //         }
-            //     }
-            // }
+            foreach ($request->family_members as $newMemberData) {
+                if (str_starts_with($newMemberData['id'], 'new-')) {
+                    // Handle family member image
+                    $familyMemberImagePath = null;
+                    if (!empty($newMemberData['picture'])) {
+                        $familyMemberImagePath = FileHelper::saveImage($newMemberData['picture'], 'member_images');
+                    }
+                    // Create User for family member (no password)
+                    $familyUser = User::create([
+                        'email' => $newMemberData['email'],
+                        'password' => isset($validated['password']) ? $validated['password'] : null,
+                        'name' => $newMemberData['full_name'],
+                        'profile_photo' => $familyMemberImagePath
+                    ]);
+
+                    $familyUser->assignRole('user');
+
+                    $familyqrCodeData = route('member.profile', ['id' => $familyUser->id]);
+
+                    // Create QR code image and save it
+                    $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
+                    $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
+                    Log::info($member);
+                    Member::create([
+                        'user_id' => $familyUser->id,
+                        'application_no' => Member::generateNextApplicationNo(),
+                        'parent_id' => $member->user_id,
+                        'profile_photo' => $familyMemberImagePath,
+                        'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
+                        'family_suffix' => $newMemberData['family_suffix'],
+                        'full_name' => $newMemberData['full_name'],
+                        'personal_email' => $newMemberData['email'],
+                        'relation' => $newMemberData['relation'],
+                        'date_of_birth' => $newMemberData['date_of_birth'],
+                        'qr_code' => $qrImagePath,
+                        'status' => $newMemberData['status'],
+                        'start_date' => $newMemberData['start_date'] ?? null,
+                        'end_date' => $newMemberData['end_date'] ?? null,
+                        'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
+                        'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
+                        'cnic_no' => $newMemberData['cnic'],
+                        'mobile_number_a' => $newMemberData['phone_number'],
+                    ]);
+                } elseif (!empty($newMemberData['id'])) {
+                    $updateFamily = Member::find($newMemberData['id']);
+                    if ($updateFamily) {
+                        // Update family member image if changed
+                        $familyMemberImagePath = $updateFamily->profile_photo;
+                        if (!empty($newMemberData['picture']) && $newMemberData['picture'] !== $updateFamily->profile_photo) {
+                            $familyMemberImagePath = FileHelper::saveImage($newMemberData['picture'], 'member_images');
+                        }
+
+                        // Update related user info
+                        if ($updateFamily->user) {
+                            $updateFamily->user->update([
+                                'name' => $newMemberData['full_name'],
+                                'email' => $newMemberData['email'],
+                                'profile_photo' => $familyMemberImagePath,
+                            ]);
+                        }
+
+                        // Update member fields
+                        $updateFamily->update([
+                            'full_name' => $newMemberData['full_name'],
+                            'profile_photo' => $familyMemberImagePath,
+                            'personal_email' => $newMemberData['email'],
+                            'relation' => $newMemberData['relation'],
+                            'date_of_birth' => $newMemberData['date_of_birth'],
+                            'status' => $newMemberData['status'],
+                            'start_date' => $newMemberData['start_date'] ?? null,
+                            'end_date' => $newMemberData['end_date'] ?? null,
+                            'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
+                            'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
+                            'cnic_no' => $newMemberData['cnic'],
+                            'mobile_number_a' => $newMemberData['phone_number'],
+                        ]);
+                    }
+                }
+            }
 
             DB::commit();
 

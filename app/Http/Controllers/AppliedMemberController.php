@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppliedMember;
+use App\Models\Member;
 use App\Models\User;
 use App\Models\UserDetail;
-use App\Models\Member;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
 
 class AppliedMemberController extends Controller
 {
@@ -50,9 +50,12 @@ class AppliedMemberController extends Controller
             ];
         }
 
+        $membershipNo = AppliedMember::generateMembershipNumber();
+
         return Inertia::render('App/Admin/Membership/AppliedMember', [
             'familyGroups' => $members,
             'memberData' => $memberData,
+            'membershipNo' => $membershipNo,
             'mode' => $request->query('mode', 'list'),
         ]);
     }
@@ -93,7 +96,7 @@ class AppliedMemberController extends Controller
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
                 'address' => $request->address ?: null,
-                'cnic' => $request->cnic, // Use raw CNIC with hyphens
+                'cnic' => $request->cnic,  // Use raw CNIC with hyphens
                 'amount_paid' => (float) $request->amount_paid,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
@@ -149,7 +152,7 @@ class AppliedMemberController extends Controller
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
                 'address' => $request->address ?: null,
-                'cnic' => $request->cnic, // Use raw CNIC with hyphens
+                'cnic' => $request->cnic,  // Use raw CNIC with hyphens
                 'amount_paid' => (float) $request->amount_paid,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
@@ -162,10 +165,10 @@ class AppliedMemberController extends Controller
                 $user = User::updateOrCreate(
                     ['email' => $request->email],
                     [
-                        'first_name' => $request->name,
+                        'name' => $request->name,
                         'email' => $request->email,
                         'phone_number' => $request->phone_number,
-                        'password' => bcrypt('default_password'), // Adjust as per your requirements
+                        'password' => bcrypt('123456'),  // Adjust as per your requirements
                     ]
                 );
 
@@ -177,20 +180,18 @@ class AppliedMemberController extends Controller
                     $member->update(['member_id' => $user->id]);
                 }
 
-                // Create or update user details in user_details table
-                UserDetail::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'phone_number' => $request->phone_number,
-                        'current_address' => $request->address ?: null,
-                        'cnic_no' => $request->cnic, // Use raw CNIC with hyphens
-                    ]
-                );
-
                 // Create or update member in member table
                 Member::updateOrCreate(
                     ['user_id' => $user->id],
                     [
+                        'application_no' => Member::generateNextApplicationNo(),
+                        'membership_no' => Member::generateNextMembershipNo(),
+                        'full_name' => $request->name,
+                        'first_name' => $request->name,
+                        'personal_email' => $request->email,
+                        'mobile_number_a' => $request->phone_number,
+                        'current_address' => $request->address ?: null,
+                        'cnic_no' => $request->cnic,
                         'start_date' => $request->start_date,
                         'end_date' => $request->end_date,
                     ]

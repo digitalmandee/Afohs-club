@@ -18,7 +18,7 @@ const drawerWidthClosed = 110;
 const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState(3);
+    const [step, setStep] = useState(1);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
 
     const getNormalizedUserData = (user) => {

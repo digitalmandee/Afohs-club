@@ -13,17 +13,14 @@ use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
-
-
     public function index(Request $request)
     {
-        $categoriesList = Category::where('tenant_id', tenant()->id)->select('id', 'name', 'image')->withCount('products')->get(); // ← Make sure this line is present
+        $categoriesList = Category::where('tenant_id', tenant()->id)->select('id', 'name', 'image')->withCount('products')->get();  // ← Make sure this line is present
 
         return Inertia::render('App/Inventory/Category', [
-            'categoriesList' => $categoriesList, // ← Make sure this key matches the React destructuring
+            'categoriesList' => $categoriesList,  // ← Make sure this key matches the React destructuring
         ]);
     }
-
 
     public function getCategories()
     {
@@ -43,6 +40,8 @@ class CategoryController extends Controller
             $path = FileHelper::saveImage($request->file('image'), 'categories');
             $validated['image'] = $path;
         }
+
+        $validated['tenant_id'] = tenant()->id;
 
         Category::create($validated);
 
@@ -76,7 +75,6 @@ class CategoryController extends Controller
 
         return redirect()->back()->with('success', 'Category updated.');
     }
-
 
     public function destroy(Request $request, Category $category)
     {

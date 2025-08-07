@@ -299,6 +299,10 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Finance',
                     path: route('membership.finance'),
                 },
+                {
+                    text: 'Maintanance Fee Revenue',
+                    path: route('membership.maintanance-fee-revenue'),
+                },
             ],
         },
 

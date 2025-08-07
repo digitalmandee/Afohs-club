@@ -17,7 +17,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
     const isEditMode = Boolean(memberData);
 
     const [formData, setFormData] = useState({
-        member_id: '',
+        member_id: props.membershipNo,
         name: '',
         email: '',
         phone_number: '',
@@ -196,135 +196,41 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                     <form onSubmit={handleSubmit}>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Member ID</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                name="member_id"
-                                value={formData.member_id}
-                                onChange={handleInputChange}
-                                type="number"
-                                error={!!errors.member_id}
-                                helperText={errors.member_id || 'Must be unique if provided'}
-                            />
+                            <TextField fullWidth size="small" name="member_id" value={formData.member_id} onChange={handleInputChange} type="number" error={!!errors.member_id} helperText={errors.member_id || 'Must be unique if provided'} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Name *</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                required
-                                error={!!errors.name}
-                                helperText={errors.name}
-                            />
+                            <TextField fullWidth size="small" name="name" value={formData.name} onChange={handleInputChange} required error={!!errors.name} helperText={errors.name} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Email *</Typography>
-                            <TextField
-                                type="email"
-                                fullWidth
-                                size="small"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                required
-                                error={!!errors.email}
-                                helperText={errors.email}
-                            />
+                            <TextField type="email" fullWidth size="small" name="email" value={formData.email} onChange={handleInputChange} required error={!!errors.email} helperText={errors.email} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Phone Number *</Typography>
-                            <TextField
-                                type="tel"
-                                inputProps={{ maxLength: 11 }}
-                                fullWidth
-                                size="small"
-                                name="phone_number"
-                                placeholder="Enter 11-digit phone number"
-                                value={formData.phone_number}
-                                onChange={handlePhoneChange}
-                                required
-                                error={!!errors.phone_number}
-                                helperText={errors.phone_number}
-                            />
+                            <TextField type="tel" inputProps={{ maxLength: 11 }} fullWidth size="small" name="phone_number" placeholder="Enter 11-digit phone number" value={formData.phone_number} onChange={handlePhoneChange} required error={!!errors.phone_number} helperText={errors.phone_number} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Address</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                name="address"
-                                value={formData.address}
-                                onChange={handleInputChange}
-                                error={!!errors.address}
-                                helperText={errors.address}
-                            />
+                            <TextField fullWidth size="small" name="address" value={formData.address} onChange={handleInputChange} error={!!errors.address} helperText={errors.address} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>CNIC *</Typography>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                placeholder="XXXXX-XXXXXXX-X"
-                                size="small"
-                                name="cnic"
-                                value={formData.cnic}
-                                error={!!errors.cnic}
-                                helperText={errors.cnic}
-                                onChange={handleCnicChange}
-                                inputProps={{ maxLength: 15 }}
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
-                            />
+                            <TextField fullWidth variant="outlined" placeholder="XXXXX-XXXXXXX-X" size="small" name="cnic" value={formData.cnic} error={!!errors.cnic} helperText={errors.cnic} onChange={handleCnicChange} inputProps={{ maxLength: 15 }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Amount Paid *</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                name="amount_paid"
-                                value={formData.amount_paid}
-                                onChange={handleInputChange}
-                                type="number"
-                                inputProps={{ min: 0, step: '0.01' }}
-                                required
-                                error={!!errors.amount_paid}
-                                helperText={errors.amount_paid}
-                            />
+                            <TextField fullWidth size="small" name="amount_paid" value={formData.amount_paid} onChange={handleInputChange} type="number" inputProps={{ min: 0, step: '0.01' }} required error={!!errors.amount_paid} helperText={errors.amount_paid} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Start Date *</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                name="start_date"
-                                disabled={isEditMode}
-                                value={formData.start_date}
-                                onChange={handleInputChange}
-                                type="date"
-                                InputLabelProps={{ shrink: true }}
-                                required
-                                error={!!errors.start_date}
-                                helperText={errors.start_date}
-                            />
+                            <TextField fullWidth size="small" name="start_date" disabled={isEditMode} value={formData.start_date} onChange={handleInputChange} type="date" InputLabelProps={{ shrink: true }} required error={!!errors.start_date} helperText={errors.start_date} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>End Date *</Typography>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                name="end_date"
-                                value={formData.end_date}
-                                onChange={handleInputChange}
-                                type="date"
-                                InputLabelProps={{ shrink: true }}
-                                required
-                                error={!!errors.end_date}
-                                helperText={errors.end_date}
-                            />
+                            <TextField fullWidth size="small" name="end_date" value={formData.end_date} onChange={handleInputChange} type="date" InputLabelProps={{ shrink: true }} required error={!!errors.end_date} helperText={errors.end_date} />
                         </Box>
-                        {isEditMode &&
+                        {isEditMode && (
                             <Box sx={{ mb: 2 }}>
                                 <FormControlLabel
                                     control={
@@ -342,19 +248,13 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                                     label="Make Permanent Member"
                                 />
                             </Box>
-                        }
+                        )}
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                             <Button variant="outlined" onClick={() => router.get(route('applied-member.index'))}>
                                 Cancel
                             </Button>
-                            <Button
-                                disabled={loading}
-                                variant="contained"
-                                type="submit"
-                                sx={{ backgroundColor: '#0c4b6e', '&:hover': { backgroundColor: '#083854' } }}
-                            >
-                                {isEditMode ? (loading ? 'Updating...' : 'Update') : (loading ? 'Saving...' : 'Save')}
-
+                            <Button disabled={loading} variant="contained" type="submit" sx={{ backgroundColor: '#0c4b6e', '&:hover': { backgroundColor: '#083854' } }}>
+                                {isEditMode ? (loading ? 'Updating...' : 'Update') : loading ? 'Saving...' : 'Save'}
                             </Button>
                         </Box>
                     </form>
