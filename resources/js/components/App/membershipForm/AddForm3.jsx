@@ -435,15 +435,15 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 }
                                             }}
                                             displayEmpty
+                                            renderValue={(selected) => {
+                                                if (!selected) {
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
+                                                }
+                                                const item = membercategories.find((item) => item.id == Number(selected));
+                                                return item ? item.description + ' (' + item.name + ')' : '';
+                                            }}
                                             SelectProps={{
                                                 displayEmpty: true,
-                                                renderValue: (selected) => {
-                                                    if (!selected) {
-                                                        return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
-                                                    }
-                                                    const item = membercategories.find((item) => item.id == Number(selected));
-                                                    return item ? item.name : '';
-                                                },
                                             }}
                                             sx={{
                                                 '& .MuiOutlinedInput-notchedOutline': {
@@ -456,7 +456,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             </MenuItem>
                                             {membercategories?.map((item) => (
                                                 <MenuItem value={item.id} key={item.id}>
-                                                    {item.name}
+                                                    {item.description} ({item.name})
                                                 </MenuItem>
                                             ))}
                                         </Select>
@@ -485,7 +485,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 const kinshipNum = kinshipParts[1]?.split('-')[0];
 
                                                 const existingMembers = [];
-                                                let suffix = 1;
+                                                let suffix = kinshipUser.total_kinships + 1;
                                                 while (existingMembers.includes(`${prefix} ${kinshipNum}-${suffix}`)) {
                                                     suffix++;
                                                 }

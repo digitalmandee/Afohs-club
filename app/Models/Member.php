@@ -14,6 +14,7 @@ class Member extends Model
         'member_type_id',
         'member_category_id',
         'profile_photo',
+        'kinship',
         'parent_id',
         'family_suffix',
         'first_name',

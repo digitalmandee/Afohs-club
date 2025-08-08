@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -93,33 +94,31 @@ class UserController extends Controller
                     'users.id',
                     'users.email',
                     'users.phone_number',
-                    'members.first_name',
-                    'members.last_name',
+                    'members.full_name',
                     'members.membership_no',
                     'members.cnic_no',
                     'members.current_address',
-                    'member_categories.name as category_name'
+                    'member_categories.name as category_name',
+                    DB::raw('(SELECT COUNT(*) FROM members AS fm WHERE fm.kinship = users.id) as total_kinships')
                 )
                 ->leftJoin('members', 'users.id', '=', 'members.user_id')
                 ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
-                ->whereNull('users.parent_user_id')
+                ->whereNull('members.parent_id')
                 ->where(function ($q) use ($query) {
                     $q
-                        ->where('members.first_name', 'like', "%{$query}%")
-                        ->orWhere('members.last_name', 'like', "%{$query}%")
-                        ->orWhereRaw("CONCAT(members.first_name, ' ', members.last_name) LIKE ?", ["%{$query}%"])
+                        ->where('members.full_name', 'like', "%{$query}%")
                         ->orWhere('members.membership_no', 'like', "%{$query}%");
                 })
                 ->limit(10)
                 ->get();
 
             $results = $members->map(function ($user) {
-                $fullName = trim("{$user->first_name} {$user->last_name}");
                 return [
                     'id' => $user->id,
                     'booking_type' => 'member',
-                    'name' => $fullName,
-                    'label' => "{$fullName} ({$user->membership_no})",
+                    'total_kinships' => $user->total_kinships,
+                    'name' => $user->full_name,
+                    'label' => "{$user->full_name} ({$user->membership_no})",
                     'membership_no' => $user->membership_no,
                     'email' => $user->email,
                     'cnic' => $user->cnic_no,

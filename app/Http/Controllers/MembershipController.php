@@ -45,7 +45,7 @@ class MembershipController extends Controller
         $applicationNo = Member::generateNextApplicationNo();
 
         $memberTypesData = MemberType::select('id', 'name')->get();
-        $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
+        $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')->where('status', 'active')->get();
         return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'applicationNo', 'memberTypesData', 'membercategories'));
     }
 
@@ -76,7 +76,7 @@ class MembershipController extends Controller
             ];
         });
         $memberTypesData = MemberType::all();
-        $membercategories = MemberCategory::select('id', 'name', 'fee', 'subscription_fee')->where('status', 'active')->get();
+        $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')->where('status', 'active')->get();
         return Inertia::render('App/Admin/Membership/MembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories'));
     }
 
