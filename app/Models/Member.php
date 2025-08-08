@@ -21,6 +21,7 @@ class Member extends Model
         'last_name',
         'full_name',
         'relation',
+        'martial_status',
         'phone_number',
         'start_date',
         'end_date',

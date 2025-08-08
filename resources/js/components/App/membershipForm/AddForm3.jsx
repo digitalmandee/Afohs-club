@@ -539,10 +539,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         onChange={(e) => {
                                             handleChange(e);
                                         }}
-                                        inputProps={{
-                                            maxLength: 12,
-                                            inputMode: 'numeric',
-                                        }}
                                         sx={{
                                             '& .MuiOutlinedInput-notchedOutline': {
                                                 borderColor: '#ccc',
