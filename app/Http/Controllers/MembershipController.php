@@ -57,6 +57,7 @@ class MembershipController extends Controller
                 'id' => $member->id,
                 'membership_no' => $member->membership_no,
                 'application_no' => $member->application_no,
+                'barcode_no' => $member->barcode_no,
                 'family_suffix' => $member->family_suffix,
                 'full_name' => $member->full_name,
                 'member_type_id' => $user->member_type_id,
@@ -156,9 +157,10 @@ class MembershipController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'personal_email' => 'required|email|unique:members,personal_email',
+                'personal_email' => 'nullable|email|unique:members,personal_email',
+                'barcode_no' => 'nullable|string|unique:members,barcode_no',
                 'family_members' => 'array',
-                'family_members.*.email' => 'required|email|distinct|different:email|unique:members,personal_email',
+                'family_members.*.email' => 'nullable|email|distinct|different:email|unique:members,personal_email',
                 'cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
                 'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
             ], [
@@ -205,8 +207,9 @@ class MembershipController extends Controller
 
             // Create primary user
             $primaryUser = User::create([
-                'email' => $request->personal_email,
+                'email' => $request->personal_email ?? null,
                 'name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'password' => null,
                 'phone_number' => $request->mobile_number_a,
                 'profile_photo' => $memberImagePath
             ]);
@@ -228,6 +231,7 @@ class MembershipController extends Controller
                 'user_id' => $primaryUser->id,
                 'application_no' => $applicationNo,
                 'first_name' => $request->first_name,
+                'barcode_no' => $request->barcode_no ?? null,
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
                 'full_name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
@@ -283,8 +287,8 @@ class MembershipController extends Controller
                     }
                     // Create User for family member (no password)
                     $familyUser = User::create([
-                        'email' => $familyMemberData['email'],
-                        'password' => isset($validated['password']) ? $validated['password'] : null,
+                        'email' => $familyMemberData['email'] ?? null,
+                        'password' => null,
                         'name' => $familyMemberData['full_name'],
                         'profile_photo' => $familyMemberImagePath
                     ]);
@@ -299,7 +303,7 @@ class MembershipController extends Controller
 
                     Member::create([
                         'user_id' => $familyUser->id,
-                        'application_no' => Member::generateNextApplicationNo(),
+                        'barcode_no' => $familyMemberData['barcode_no'] ?? null,
                         'parent_id' => $primaryUser->id,
                         'profile_photo' => $familyMemberImagePath,
                         'membership_no' => $mainMember->membership_no . '-' . $familyMemberData['family_suffix'],
@@ -321,7 +325,6 @@ class MembershipController extends Controller
             }
 
             $memberTypeArray = $memberCategory->toArray();  // includes all fields from DB
-            Log::info($memberTypeArray);
 
             $memberTypeArray['amount'] = $memberCategory->fee;
             $memberTypeArray['invoice_type'] = 'membership';
@@ -364,7 +367,7 @@ class MembershipController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'member_id' => 'required|exists:members,id',
-                'personal_email' => 'required|email|unique:members,personal_email,' . $request->member_id,
+                'personal_email' => 'nullable|email|unique:members,personal_email,' . $request->member_id,
                 'family_members' => 'array',
                 // 'family_members.*.email' => 'required|email|distinct|different:email|unique:members,personal_email',
             ]);
@@ -394,7 +397,7 @@ class MembershipController extends Controller
             // Update User basic info
             $member->user->update([
                 'name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
-                'email' => $request->personal_email,
+                'email' => $request->personal_email ?? null,
                 'phone_number' => $request->mobile_number_a,
             ]);
 
@@ -402,6 +405,7 @@ class MembershipController extends Controller
 
             $member->update([
                 'membership_no' => $request->membership_no,
+                'barcode_no' => $request->barcode_no ?? null,
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
@@ -447,7 +451,9 @@ class MembershipController extends Controller
                 'documents' => $documentPaths,
             ]);
 
+            // Update Family Members
             foreach ($request->family_members as $newMemberData) {
+                // Check if family member is new
                 if (str_starts_with($newMemberData['id'], 'new-')) {
                     // Handle family member image
                     $familyMemberImagePath = null;
@@ -456,7 +462,7 @@ class MembershipController extends Controller
                     }
                     // Create User for family member (no password)
                     $familyUser = User::create([
-                        'email' => $newMemberData['email'],
+                        'email' => $newMemberData['email'] ?? null,
                         'password' => isset($validated['password']) ? $validated['password'] : null,
                         'name' => $newMemberData['full_name'],
                         'profile_photo' => $familyMemberImagePath
@@ -469,10 +475,10 @@ class MembershipController extends Controller
                     // Create QR code image and save it
                     $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
                     $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
-                    Log::info($member);
+
                     Member::create([
                         'user_id' => $familyUser->id,
-                        'application_no' => Member::generateNextApplicationNo(),
+                        'barcode_no' => $newMemberData['barcode_no'] ?? null,
                         'parent_id' => $member->user_id,
                         'profile_photo' => $familyMemberImagePath,
                         'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
@@ -491,6 +497,8 @@ class MembershipController extends Controller
                         'mobile_number_a' => $newMemberData['phone_number'],
                     ]);
                 } elseif (!empty($newMemberData['id'])) {
+                    // Update existing family member
+
                     $updateFamily = Member::find($newMemberData['id']);
                     if ($updateFamily) {
                         // Update family member image if changed
@@ -503,7 +511,7 @@ class MembershipController extends Controller
                         if ($updateFamily->user) {
                             $updateFamily->user->update([
                                 'name' => $newMemberData['full_name'],
-                                'email' => $newMemberData['email'],
+                                'email' => $newMemberData['email'] ?? null,
                                 'profile_photo' => $familyMemberImagePath,
                             ]);
                         }
@@ -511,6 +519,7 @@ class MembershipController extends Controller
                         // Update member fields
                         $updateFamily->update([
                             'full_name' => $newMemberData['full_name'],
+                            'barcode_no' => $newMemberData['barcode_no'] ?? null,
                             'profile_photo' => $familyMemberImagePath,
                             'personal_email' => $newMemberData['email'],
                             'relation' => $newMemberData['relation'],

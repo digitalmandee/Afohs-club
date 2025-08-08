@@ -9,6 +9,7 @@ class Member extends Model
     protected $fillable = [
         'user_id',
         'application_no',
+        'barcode_no',
         'membership_no',
         'member_type_id',
         'member_category_id',
@@ -99,15 +100,12 @@ class Member extends Model
     public static function generateNextApplicationNo(): string
     {
         $last = self::whereNotNull('application_no')
+            ->whereNull('parent_id')
             ->pluck('application_no')
             ->map(fn($no) => (int) $no)
             ->max() ?? 0;
 
         $next = $last + 1;
-
-        if ($next > 99) {
-            throw new \Exception('Application number limit reached.');
-        }
 
         return $next;
     }

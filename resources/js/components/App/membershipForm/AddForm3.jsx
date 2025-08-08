@@ -59,9 +59,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         if (!currentFamilyMember.relation) {
             errors.relation = 'Relation is required';
         }
-        if (!currentFamilyMember.email) {
-            errors.email = 'Email is required';
-        }
+        // if (!currentFamilyMember.email) {
+        //     errors.email = 'Email is required';
+        // }
         if (!currentFamilyMember.date_of_birth) {
             errors.date_of_birth = 'Date of Birth is required';
         }
@@ -79,24 +79,28 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         }
 
         // Email uniqueness
-        const mainEmail = data.email?.trim().toLowerCase();
-        const memberEmail = currentFamilyMember.email?.trim().toLowerCase();
+        if (!currentFamilyMember.email) {
+            delete errors.email;
+        } else {
+            const mainEmail = data.personal_email?.trim().toLowerCase() || '';
+            const memberEmail = currentFamilyMember.email?.trim().toLowerCase();
 
-        if (memberEmail === mainEmail) {
-            errors.email = 'Family member email must not be same as member email';
-        }
+            if (memberEmail === mainEmail) {
+                errors.email = 'Family member email must not be same as member email';
+            }
 
-        const emailAlreadyUsed = data.family_members.some((fm) => {
-            if (!fm.email) return false;
+            const emailAlreadyUsed = data.family_members.some((fm) => {
+                if (!fm.email) return false;
 
-            const fmEmail = fm.email.trim().toLowerCase();
-            console.log(isEdit, fm.id, currentFamilyMember.id);
-            if (isEdit && fm.id === currentFamilyMember.id) return false;
-            return fmEmail === memberEmail;
-        });
+                const fmEmail = fm.email.trim().toLowerCase();
+                console.log(isEdit, fm.id, currentFamilyMember.id);
+                if (isEdit && fm.id === currentFamilyMember.id) return false;
+                return fmEmail === memberEmail;
+            });
 
-        if (emailAlreadyUsed) {
-            errors.email = 'This email is already used by another family member';
+            if (emailAlreadyUsed) {
+                errors.email = 'This email is already used by another family member';
+            }
         }
 
         // Date validations
@@ -140,6 +144,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             application_no: '',
             family_suffix: '',
             full_name: '',
+            barcode_no: '',
             relation: '',
             cnic: '',
             phone_number: '',
@@ -523,6 +528,29 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                     />
                                 </Box>
 
+                                <Box sx={{ mb: 3 }}>
+                                    <Typography sx={{ mb: 1, fontWeight: 500 }}>Barcode Number</Typography>
+                                    <TextField
+                                        fullWidth
+                                        placeholder="e.g. 12345-24"
+                                        variant="outlined"
+                                        name="barcode_no"
+                                        value={data.barcode_no}
+                                        onChange={(e) => {
+                                            handleChange(e);
+                                        }}
+                                        inputProps={{
+                                            maxLength: 12,
+                                            inputMode: 'numeric',
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#ccc',
+                                            },
+                                        }}
+                                    />
+                                </Box>
+
                                 <Grid container spacing={2}>
                                     <Grid item xs={6}>
                                         <Box sx={{ mb: 3 }}>
@@ -802,15 +830,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                     <Box sx={{ mb: 3, display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
                                         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
                                             <Box component="span" sx={{ mr: 1, fontWeight: 500 }}>
-                                                Application Number :
-                                            </Box>
-                                            <Box component="span" sx={{ color: '#666' }}>
-                                                #{currentFamilyMember.application_no} <br />
-                                            </Box>
-                                        </Box>
-                                        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-                                            <Box component="span" sx={{ mr: 1, fontWeight: 500 }}>
-                                                Membership Number :
+                                                Family Membership Number :
                                             </Box>
                                             <Box component="span" sx={{ color: '#666' }}>
                                                 {data.membership_no}-{currentFamilyMember.family_suffix}
@@ -939,6 +959,30 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </Grid>
                                         <Grid item xs={6}>
                                             <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Barcode Number</Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    placeholder="e.g. 12345-24"
+                                                    variant="outlined"
+                                                    value={currentFamilyMember.barcode_no}
+                                                    onChange={(e) => handleFamilyMemberChange('barcode_no', e.target.value)}
+                                                    inputProps={{
+                                                        maxLength: 12,
+                                                        inputMode: 'numeric',
+                                                    }}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Grid>
+                                    </Grid>
+
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={6}>
+                                            <Box sx={{ mb: 3 }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Phone Number</Typography>
                                                 <TextField
                                                     fullWidth
@@ -954,9 +998,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 />
                                             </Box>
                                         </Grid>
-                                    </Grid>
-
-                                    <Grid container spacing={2}>
                                         <Grid item xs={6}>
                                             <Box sx={{ mb: 3 }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>CNIC</Typography>
@@ -975,6 +1016,31 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         if (value.length > 15) value = value.slice(0, 15);
                                                         handleFamilyMemberChange('cnic', value);
                                                     }}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#ccc',
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Grid>
+                                    </Grid>
+
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={6}>
+                                            <Box sx={{ mb: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Date of Birth *</Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    type="date"
+                                                    InputLabelProps={{ shrink: true }}
+                                                    placeholder="dd/mm/yyyy"
+                                                    variant="outlined"
+                                                    name="date_of_birth"
+                                                    error={!!familyMemberErrors.date_of_birth}
+                                                    helperText={familyMemberErrors.date_of_birth}
+                                                    value={currentFamilyMember.date_of_birth}
+                                                    onChange={(e) => handleFamilyMemberChange('date_of_birth', e.target.value)}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
@@ -1011,31 +1077,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         ))}
                                                     </Select>
                                                 </FormControl>
-                                            </Box>
-                                        </Grid>
-                                    </Grid>
-
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={6}>
-                                            <Box sx={{ mb: 3 }}>
-                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Date of Birth *</Typography>
-                                                <TextField
-                                                    fullWidth
-                                                    type="date"
-                                                    InputLabelProps={{ shrink: true }}
-                                                    placeholder="dd/mm/yyyy"
-                                                    variant="outlined"
-                                                    name="date_of_birth"
-                                                    error={!!familyMemberErrors.date_of_birth}
-                                                    helperText={familyMemberErrors.date_of_birth}
-                                                    value={currentFamilyMember.date_of_birth}
-                                                    onChange={(e) => handleFamilyMemberChange('date_of_birth', e.target.value)}
-                                                    sx={{
-                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#ccc',
-                                                        },
-                                                    }}
-                                                />
                                             </Box>
                                         </Grid>
                                         <Grid item xs={6}>
