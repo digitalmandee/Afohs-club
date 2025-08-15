@@ -19,7 +19,7 @@ return new class extends Migration {
             // $table->string('membership_category')->nullable();
             $table->string('membership_no')->nullable()->unique();
             $table->date('membership_date')->nullable();
-            $table->enum('card_status', ['active', 'inactive', 'suspended', 'cancelled', 'pause'])->default('inactive')->nullable();
+            $table->enum('card_status', ['active', 'inactive', 'suspended', 'cancelled', 'absent'])->default('inactive')->nullable();
             $table->date('card_issue_date')->nullable();
             $table->date('card_expiry_date')->nullable();
             $table->date('from_date')->nullable();

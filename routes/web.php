@@ -19,6 +19,7 @@ use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FamilyMembersArchiveConroller;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\MemberCategoryController;
+use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoomBookingController;
@@ -320,13 +321,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/membership/all', [MembershipController::class, 'allMembers'])->name('membership.members');
     Route::get('/membership/edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
     Route::post('/membership/update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
-    Route::post('/membership/pause', [MembershipController::class, 'membershipPause'])->name('membership.pause');
     Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
     Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
     Route::post('/membership/update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
 
     // get member invoice
     Route::get('financial-invoice/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
+
+    // Membership Maintanance Revenue
+    Route::get('/admin/membership/maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
 
     // Members types

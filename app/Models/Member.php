@@ -9,10 +9,12 @@ class Member extends Model
     protected $fillable = [
         'user_id',
         'application_no',
+        'barcode_no',
         'membership_no',
         'member_type_id',
         'member_category_id',
         'profile_photo',
+        'kinship',
         'parent_id',
         'family_suffix',
         'first_name',
@@ -20,6 +22,7 @@ class Member extends Model
         'last_name',
         'full_name',
         'relation',
+        'martial_status',
         'phone_number',
         'start_date',
         'end_date',
@@ -75,13 +78,13 @@ class Member extends Model
         'category_ids' => 'array',
         'is_document_missing' => 'boolean',
         'documents' => 'array',
-        'education' => 'array',
         'date_of_birth' => 'date',
     ];
 
     public static function generateNextMembershipNumber(): string
     {
         $lastNumber = self::orderBy('id', 'desc')
+            ->whereNull('parent_id')
             ->pluck('membership_no')
             ->map(function ($number) {
                 // Extract the base numeric part (e.g., from "AR 002", "PR 1000-1")
@@ -99,15 +102,12 @@ class Member extends Model
     public static function generateNextApplicationNo(): string
     {
         $last = self::whereNotNull('application_no')
+            ->whereNull('parent_id')
             ->pluck('application_no')
             ->map(fn($no) => (int) $no)
             ->max() ?? 0;
 
         $next = $last + 1;
-
-        if ($next > 99) {
-            throw new \Exception('Application number limit reached.');
-        }
 
         return $next;
     }

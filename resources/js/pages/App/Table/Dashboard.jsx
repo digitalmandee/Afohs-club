@@ -305,13 +305,13 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     // Days of the week with dates and reservation indicators
     const days = generateDaysArray();
 
-    // selectedDate is like "2", convert to number for comparison
-    const selectedDay = parseInt(selectedDate.date, 10);
+    const selectedFullDate = new Date(selectedDate.full_date);
 
     // floorsdata is an array of objects from backend
     const matchedFloors = floorsdata.filter((floor) => {
-        const floorDate = new Date(floor.created_at).getDate();
-        return floorDate <= selectedDay;
+        const floorDate = new Date(floor.created_at);
+
+        return floorDate <= selectedFullDate;
     });
 
     useEffect(() => {

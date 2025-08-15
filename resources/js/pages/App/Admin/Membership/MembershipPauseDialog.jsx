@@ -12,13 +12,13 @@ const MembershipPauseDialog = ({ open, onClose, memberId, onSuccess }) => {
         try {
             const payload = {
                 member_id: memberId,
-                status: 'pause',
+                status: 'absent',
             };
 
             await axios.post(route('membership.update-status'), payload); // Adjust route if needed
             enqueueSnackbar('Membership paused successfully', { variant: 'success' });
             onClose();
-            onSuccess?.('pause');
+            onSuccess?.('absent');
         } catch (err) {
             console.log(err);
             enqueueSnackbar('Failed to pause membership', { variant: 'error' });
@@ -29,9 +29,9 @@ const MembershipPauseDialog = ({ open, onClose, memberId, onSuccess }) => {
 
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle>Pause Membership</DialogTitle>
+            <DialogTitle>Absent Membership</DialogTitle>
             <DialogContent>
-                <Typography>Are you sure you want to pause this membership? This member will be charged 50% of their fee during the paused period.</Typography>
+                <Typography>Are you sure you want to absent this membership? This member will be charged 50% of their fee during the absent period.</Typography>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>

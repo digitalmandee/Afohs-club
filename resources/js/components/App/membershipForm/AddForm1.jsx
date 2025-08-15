@@ -423,6 +423,41 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 </LocalizationProvider>
                             </Grid>
 
+                            <Grid item xs={12}>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    Marital Status
+                                </Typography>
+                                <FormControl fullWidth size="small" error={!!formErrors.gender}>
+                                    <Select
+                                        value={data.marital_status || ''}
+                                        name="marital_status"
+                                        onChange={handleChange}
+                                        displayEmpty
+                                        renderValue={(selected) => {
+                                            if (!selected) {
+                                                return 'Choose Gender';
+                                            }
+                                            return selected;
+                                        }}
+                                        inputProps={{ 'aria-label': 'Without label' }}
+                                        IconComponent={() => <KeyboardArrowDown sx={{ position: 'absolute', right: 8, pointerEvents: 'none' }} />}
+                                    >
+                                        <MenuItem value="" disabled>
+                                            Choose Marital Status
+                                        </MenuItem>
+                                        <MenuItem value="Single">Single</MenuItem>
+                                        <MenuItem value="Married">Married</MenuItem>
+                                        <MenuItem value="Divorced">Divorced</MenuItem>
+                                        <MenuItem value="Widowed">Widowed</MenuItem>
+                                    </Select>
+                                    {formErrors.gender && (
+                                        <Typography variant="caption" color="error">
+                                            {formErrors.gender}
+                                        </Typography>
+                                    )}
+                                </FormControl>
+                            </Grid>
+
                             {/* Education */}
                             <Grid item xs={12}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>

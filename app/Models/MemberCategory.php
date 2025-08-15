@@ -16,4 +16,9 @@ class MemberCategory extends Model
         'subscription_fee',
         'status',
     ];
+
+    public function members()
+    {
+        return $this->hasMany(Member::class, 'member_category_id');
+    }
 }

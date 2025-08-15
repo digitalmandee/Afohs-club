@@ -18,7 +18,7 @@ const drawerWidthClosed = 110;
 const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState(3);
+    const [step, setStep] = useState(1);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
 
     const getNormalizedUserData = (user) => {
@@ -26,12 +26,14 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
 
         return {
             member_id: user.id || '',
-            profile_photo: user.profile_photo || '',
             application_no: user.application_no || '',
+            membership_no: user.membership_no || '',
+            barcode_no: user.barcode_no || '',
+            profile_photo: user.profile_photo || '',
             first_name: user.first_name || '',
             middle_name: user.middle_name || '',
             last_name: user.last_name || '',
-            membership_no: user.membership_no || '',
+            martial_status: user.martial_status || '',
             kinship: user.kinship || '',
             member_type_id: user.member_type_id || '',
             membership_category: user.member_category_id || '',
@@ -81,13 +83,15 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
 
     const defaultFormData = {
         profile_photo: '',
+        membership_no: membershipNo,
         application_no: applicationNo,
+        barcode_no: '',
         member_type_id: '',
         first_name: '',
         middle_name: '',
         last_name: '',
+        martial_status: '',
         kinship: '',
-        membership_no: membershipNo,
         membership_category: '',
         is_document_missing: false,
         missing_documents: '',
@@ -207,6 +211,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
     const [currentFamilyMember, setCurrentFamilyMember] = useState({
         id: 'new',
         application_no: '',
+        barcode_no: '',
         family_suffix: '',
         full_name: '',
         relation: '',

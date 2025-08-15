@@ -77,13 +77,6 @@ export default function Category({ categoriesList }) {
                 return;
             }
 
-            // Check image presence (new image or existing image)
-            if (!data.image && !data.existingImage) {
-                setErrorMessage('Category image is required.');
-                setShowError(true);
-                return;
-            }
-
             const formData = new FormData();
             formData.append('name', data.name);
             if (data.image) {

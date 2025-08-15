@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-    Typography, Button, Table, TableContainer, TableHead,
-    TableRow, TableCell, TableBody, Paper, InputAdornment,
-    TextField
-} from '@mui/material';
+import { Typography, Button, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, InputAdornment, TextField } from '@mui/material';
 import { Search, FilterAlt } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -40,9 +36,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                         <>
                             <div className="d-flex justify-content-between align-items-center">
                                 <div className="d-flex align-items-center">
-                                    <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>
-                                        Applied Member
-                                    </Typography>
+                                    <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Applied Member</Typography>
                                     {/* <pre>{JSON.stringify(familyGroups, null, 2)}</pre> */}
                                 </div>
                                 <Button
@@ -113,37 +107,17 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                             <TableBody>
                                                 {familyGroups.map((member, index) => (
                                                     <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.member_id}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.name}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.email}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.phone_number || 'N/A'}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.address || 'N/A'}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.cnic ? formatCnic(member.cnic) : 'N/A'}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.amount_paid}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.start_date}
-                                                        </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {member.end_date}
-                                                        </TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.member_id}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.email}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.phone_number || 'N/A'}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.address || 'N/A'}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.cnic ? formatCnic(member.cnic) : 'N/A'}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.amount_paid}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.start_date}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.end_date}</TableCell>
                                                         {member.is_permanent_member ? (
-                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                Permanent Member
-                                                            </TableCell>
+                                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>Permanent Member</TableCell>
                                                         ) : (
                                                             <TableCell>
                                                                 <Button
@@ -165,7 +139,6 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                         </Table>
                                     </TableContainer>
                                 </div>
-
                             </div>
                         </>
                     )}

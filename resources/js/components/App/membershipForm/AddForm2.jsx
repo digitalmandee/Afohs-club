@@ -38,7 +38,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
         // Basic validation
         const errors = {};
         if (!data.mobile_number_a) errors.mobile_number_a = 'Mobile Number (A) is required';
-        if (!data.personal_email) errors.personal_email = 'Personal Email is required';
+        // if (!data.personal_email) errors.personal_email = 'Personal Email is required';
         if (!data.current_address) errors.current_address = 'Address is required';
         if (!data.current_city) errors.current_city = 'City is required';
         if (!data.current_country) errors.current_country = 'Country is required';
