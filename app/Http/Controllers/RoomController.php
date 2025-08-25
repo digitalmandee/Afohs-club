@@ -9,6 +9,7 @@ use App\Models\EventLocation;
 use App\Models\FinancialInvoice;
 use App\Models\Room;
 use App\Models\RoomBooking;
+use App\Models\RoomBookingRequest;
 use App\Models\RoomCategory;
 use App\Models\RoomCategoryCharge;
 use App\Models\RoomType;

@@ -13,29 +13,27 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
 
     const [anchorEl, setAnchorEl] = useState(null);
     const [hoveredRoom, setHoveredRoom] = useState(null);
+    const [closeTimeout, setCloseTimeout] = useState(null);
+
+    const handlePopoverOpen = (event, room) => {
+        if (closeTimeout) clearTimeout(closeTimeout); // Cancel any pending close
+        setAnchorEl(event.currentTarget);
+        setHoveredRoom(room);
+    };
 
     const handlePopoverClose = () => {
         setAnchorEl(null);
         setHoveredRoom(null);
     };
 
-    const [closeTimeout, setCloseTimeout] = useState(null);
-
-    const handlePopoverOpen = (event, room) => {
-        if (closeTimeout) clearTimeout(closeTimeout);
-        setAnchorEl(event.currentTarget);
-        setHoveredRoom(room);
-    };
-
-    const handlePopoverDelayedClose = () => {
+    const startCloseTimer = () => {
         const timeout = setTimeout(() => {
-            setAnchorEl(null);
-            setHoveredRoom(null);
-        }, 200);
+            handlePopoverClose();
+        }, 400); // Increased delay for smoother experience
         setCloseTimeout(timeout);
     };
 
-    const cancelPopoverClose = () => {
+    const cancelCloseTimer = () => {
         if (closeTimeout) clearTimeout(closeTimeout);
     };
 
@@ -89,7 +87,7 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
                                                             {item.name} ({checkin && checkout && <span style={{ fontWeight: 'bold', color: '#121212' }}>{item.room_type?.name}</span>})
                                                         </h5>
                                                         <div>
-                                                            <Button size="small" variant="outlined" onMouseEnter={(e) => handlePopoverOpen(e, item)} onMouseLeave={handlePopoverDelayedClose} sx={{ textTransform: 'none', fontSize: 13, ml: 1 }}>
+                                                            <Button size="small" variant="outlined" onMouseEnter={(e) => handlePopoverOpen(e, item)} sx={{ textTransform: 'none', fontSize: 13, ml: 1 }}>
                                                                 Per night charges
                                                             </Button>
                                                         </div>
@@ -152,14 +150,14 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
 
             {/* Popover for Category Charges */}
             <Popover
-                open={open}
+                open={Boolean(anchorEl)}
                 anchorEl={anchorEl}
-                onClose={handlePopoverDelayedClose}
+                onClose={handlePopoverClose}
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                 transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
                 PaperProps={{
-                    onMouseEnter: cancelPopoverClose,
-                    onMouseLeave: handlePopoverDelayedClose,
+                    onMouseEnter: cancelCloseTimer,
+                    onMouseLeave: startCloseTimer,
                     sx: {
                         p: 2,
                         pointerEvents: 'auto',
@@ -169,7 +167,7 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
             >
                 {hoveredRoom?.category_charges?.length > 0 ? (
                     <Box>
-                        <Typography fontWeight="bold" gutterBottom>
+                        <Typography fontSize={14} fontWeight="bold" gutterBottom>
                             Per Night Category Charges:
                         </Typography>
                         {hoveredRoom.category_charges.map((charge, idx) => (

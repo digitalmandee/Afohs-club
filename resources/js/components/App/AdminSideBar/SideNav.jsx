@@ -203,6 +203,10 @@ export default function SideNav({ open, setOpen }) {
                             path: route('rooms.manage'),
                         },
                         {
+                            text: 'Room Request',
+                            path: route('rooms.request'),
+                        },
+                        {
                             text: 'Add Room',
                             path: route('rooms.add'),
                         },
