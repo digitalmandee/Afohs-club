@@ -103,7 +103,7 @@ class BookingController extends Controller
 
         $available = Room::query()
             ->whereNotIn('id', $conflicted)
-            ->where('max_capacity', '>', $persons)
+            ->where('max_capacity', '>=', $persons)
             ->with('roomType', 'categoryCharges', 'categoryCharges.Category')
             ->get();
 

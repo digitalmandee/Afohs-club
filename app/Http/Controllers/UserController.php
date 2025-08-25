@@ -159,6 +159,7 @@ class UserController extends Controller
             // Case 3: bookingType like guest-1, guest-2 => Filter customers by guest_type_id
         } elseif (Str::startsWith($bookingType, 'guest-')) {
             $guestTypeId = (int) Str::after($bookingType, 'guest-');
+            Log::info($guestTypeId);
 
             $guests = Customer::select(
                 'id', 'customer_no', 'name', 'email', 'contact', 'cnic', 'address', 'member_name', 'member_no', 'guest_type_id'

@@ -281,11 +281,11 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 <Grid item xs={12}>
                     <FormLabel>Booking Type</FormLabel>
                     <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
-                        <FormControlLabel value="Member" control={<Radio />} label="Member" />
-                        <FormControlLabel value="Corporate Member" control={<Radio />} label="Corporate Member" />
-                        <FormControlLabel value="Applied Member" control={<Radio />} label="Applied Member" />
-                        <FormControlLabel value="Affiliated Member" control={<Radio />} label="Affiliated Member" />
-                        <FormControlLabel value="VIP Guest" control={<Radio />} label="VIP Guest" />
+                        <FormControlLabel value="0" control={<Radio />} label="Member" />
+                        <FormControlLabel value="0" control={<Radio />} label="Corporate Member" />
+                        <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
+                        <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" />
+                        <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" />
                     </RadioGroup>
                 </Grid>
 
