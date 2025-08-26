@@ -88,7 +88,7 @@ class UserController extends Controller
         }
 
         // Case 1: bookingType = 0 => Search in Users table (members)
-        if ($bookingType === '0') {
+        if ($bookingType === '0' || $bookingType === '2') {
             $members = User::role('user', 'web')
                 ->select(
                     'users.id',
@@ -159,9 +159,8 @@ class UserController extends Controller
             // Case 3: bookingType like guest-1, guest-2 => Filter customers by guest_type_id
         } elseif (Str::startsWith($bookingType, 'guest-')) {
             $guestTypeId = (int) Str::after($bookingType, 'guest-');
-            Log::info($guestTypeId);
 
-            $guests = Customer::select(
+            $customers = Customer::select(
                 'id', 'customer_no', 'name', 'email', 'contact', 'cnic', 'address', 'member_name', 'member_no', 'guest_type_id'
             )
                 ->where('guest_type_id', $guestTypeId)
@@ -175,17 +174,17 @@ class UserController extends Controller
                 ->limit(10)
                 ->get();
 
-            $results = $guests->map(function ($guest) {
+            $results = $customers->map(function ($customer) {
                 return [
-                    'id' => $guest->id,
+                    'id' => $customer->id,
                     'booking_type' => 'guest',
-                    'name' => $guest->name,
-                    'label' => "{$guest->name} ({$guest->guest_no})",
-                    'customer_no' => $guest->customer_no,
-                    'email' => $guest->email,
-                    'cnic' => $guest->cnic,
-                    'phone' => $guest->contact,
-                    'address' => $guest->address,
+                    'name' => $customer->name,
+                    'label' => "{$customer->name} ({$customer->customer_no})",
+                    'customer_no' => $customer->customer_no,
+                    'email' => $customer->email,
+                    'cnic' => $customer->cnic,
+                    'phone' => $customer->contact,
+                    'address' => $customer->address,
                 ];
             });
         } else {

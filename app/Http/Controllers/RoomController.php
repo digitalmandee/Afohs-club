@@ -37,7 +37,7 @@ class RoomController extends Controller
         }
 
         // Step 2: Get all RoomBookings
-        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
+        $bookings = RoomBooking::with('room', 'customer', 'member')->latest()->get();
 
         // Step 3: Attach invoice data to each booking
         $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
@@ -96,6 +96,70 @@ class RoomController extends Controller
         return Inertia::render('App/Admin/Booking/RoomManage', [
             'data' => $data,
             'rooms' => $rooms,
+        ]);
+    }
+
+    public function dashboard()
+    {
+        // Step 1: Build bookingId => invoice mapping
+        $invoices = FinancialInvoice::where('invoice_type', 'room_booking')->get();
+
+        $bookingInvoiceMap = [];
+
+        foreach ($invoices as $invoice) {
+            foreach ($invoice->data as $entry) {
+                if (!empty($entry['booking_id'])) {
+                    $bookingInvoiceMap[$entry['booking_id']] = [
+                        'id' => $invoice->id,
+                        'status' => $invoice->status,
+                    ];
+                }
+            }
+        }
+
+        // Step 2: Get all RoomBookings
+        $bookings = RoomBooking::with('room', 'customer', 'member')->latest()->take(10)->get();
+
+        // Step 3: Attach invoice data to each booking
+        $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
+            $invoice = $bookingInvoiceMap[$booking->id] ?? null;
+            $booking->invoice = $invoice;
+            return $booking;
+        });
+
+        $totalBookings = RoomBooking::count();
+        $totalRoomBookings = RoomBooking::count();
+
+        $rooms = Room::latest()->get();
+
+        $totalRooms = $rooms->count();
+
+        // Determine unavailable rooms today
+        $conflictedRooms = RoomBooking::query()
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where('check_in_date', '<', now()->addDay())  // today and future
+            ->where('check_out_date', '>', now())  // overlapping today
+            ->pluck('room_id')
+            ->unique();
+
+        $availableRoomsToday = Room::query()
+            ->whereNotIn('id', $conflictedRooms)
+            ->count();
+
+        $data = [
+            'bookingsData' => $bookings,
+            'rooms' => $rooms,
+            'totalRooms' => $totalRooms,
+            'availableRoomsToday' => $availableRoomsToday,
+            'totalBookings' => $totalBookings,
+            'totalRoomBookings' => $totalRoomBookings,
+        ];
+
+        $roomTypes = RoomType::where('status', 'active')->select('id', 'name')->get();
+
+        return Inertia::render('App/Admin/Booking/Dashboard', [
+            'data' => $data,
+            'roomTypes' => $roomTypes
         ]);
     }
 
