@@ -101,12 +101,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         Route::group(['prefix' => 'rooms'], function () {
             Route::get('/', [RoomController::class, 'allRooms'])->name('rooms.all');
-            Route::get('/dashboard', [RoomController::class, 'index'])->name('rooms.manage');
+            Route::get('dashboard', [RoomController::class, 'dashboard'])->name('rooms.dashboard');
+            Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage');
             Route::get('add', [RoomController::class, 'create'])->name('rooms.add');
             Route::post('store', [RoomController::class, 'store'])->name('rooms.store');
             Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit');
             Route::post('{id}', [RoomController::class, 'update'])->name('rooms.update');
             Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+            // Room Calendar
+            Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar');
+
             // get room booking data
             Route::get('api/bookings/{id}', [RoomBookingController::class, 'showRoomBooking'])->name('api.room.booking.show');
             Route::post('api/bookings/check-in', [RoomBookingController::class, 'checkIn'])->name('api.room.booking.checkin');
@@ -154,16 +158,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::delete('/events/locations/{id}', [EventController::class, 'deleteLocation'])->name('events.locations.delete');
 
     // Admin Booking Routes
-    Route::get('/booking/dashboard', [BookingController::class, 'index'])->name('rooms.dashboard');
     Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
-    Route::get('/booking/roomsAndEvents', [BookingController::class, 'roomsAndEvents'])->name('rooms.roomsAndEvents');
     Route::get('/booking/new', [BookingController::class, 'booking'])->name('rooms.booking');
     Route::get('/booking/edit/{id}', [BookingController::class, 'editbooking'])->name('rooms.booking.edit');
     Route::post('/booking/update/{id}', [RoomBookingController::class, 'update'])->name('rooms.booking.update');
     Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
     Route::post('/room/booking', [RoomBookingController::class, 'store'])->name('rooms.booking.store');
-    Route::get('/room/booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar');
     Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar');
 
     // Search

@@ -11,6 +11,7 @@ class RoomBooking extends BaseModel
     protected $fillable = [
         'booking_no',
         'customer_id',
+        'member_id',
         'booking_date',
         'check_in_date',
         'check_in_time',
@@ -57,6 +58,7 @@ class RoomBooking extends BaseModel
     {
         return $this->hasMany(RoomBookingMiniBarItem::class);
     }
+
     public function otherCharges()
     {
         return $this->hasMany(RoomBookingOtherCharge::class);
@@ -69,6 +71,11 @@ class RoomBooking extends BaseModel
 
     public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'customer_id', 'id');
+    }
+
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id', 'user_id');
     }
 }

@@ -196,7 +196,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             >
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
-                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit('/booking/dashboard')}>
+                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                         <ArrowBack />
                     </IconButton>
                     <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>

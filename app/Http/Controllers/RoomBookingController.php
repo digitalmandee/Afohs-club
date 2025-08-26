@@ -63,9 +63,8 @@ class RoomBookingController extends Controller
                 }
             }
 
-            $booking = RoomBooking::create([
+            $bookingData = [
                 'booking_no' => $this->getBookingId(),
-                'customer_id' => (int) $data['guest']['id'],
                 'booking_date' => $data['bookingDate'] ?? null,
                 'check_in_date' => $data['checkInDate'] ?? null,
                 'check_out_date' => $data['checkOutDate'] ?? null,
@@ -95,11 +94,20 @@ class RoomBookingController extends Controller
                 'security_deposit' => $data['securityDeposit'] ?? null,
                 'discount_type' => $data['discountType'] ?? null,
                 'discount_value' => $data['discount'] ?? 0,
-                'grand_total' => ($data['grandTotal']),
+                'grand_total' => $data['grandTotal'],
                 'additional_notes' => $data['notes'] ?? null,
                 'booking_docs' => json_encode($documentPaths),
                 'status' => 'confirmed',
-            ]);
+            ];
+
+            // ✅ Assign IDs based on booking_type
+            if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
+                $bookingData['member_id'] = (int) $data['guest']['id'];
+            } else {
+                $bookingData['customer_id'] = (int) $data['guest']['id'];
+            }
+
+            $booking = RoomBooking::create($bookingData);
 
             foreach ($data['mini_bar_items'] ?? [] as $item) {
                 if (!empty($item['item'])) {
@@ -114,15 +122,14 @@ class RoomBookingController extends Controller
                 }
             }
 
-            $invoice = FinancialInvoice::create([
+            $invoiceData = [
                 'invoice_no' => $this->getInvoiceNo(),
-                'customer_id' => (int) $data['guest']['id'],
-                'member_id' => Auth::user()->id,
                 'invoice_type' => 'room_booking',
                 'discount_type' => $data['discountType'] ?? null,
                 'discount_value' => $data['discount'] ?? 0,
                 'amount' => $booking->grand_total,
                 'total_price' => $booking->grand_total,
+                'advance_payment' => $data['securityDeposit'] ?? 0,
                 'paid_amount' => 0,
                 'status' => 'unpaid',
                 'data' => [
@@ -132,7 +139,16 @@ class RoomBookingController extends Controller
                         'amount' => $booking->grand_total
                     ]
                 ],
-            ]);
+            ];
+
+            // ✅ Assign IDs based on guest type
+            if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
+                $invoiceData['member_id'] = (int) $data['guest']['id'];
+            } else {
+                $invoiceData['customer_id'] = (int) $data['guest']['id'];
+            }
+
+            $invoice = FinancialInvoice::create($invoiceData);
 
             DB::commit();
 
@@ -172,8 +188,6 @@ class RoomBookingController extends Controller
             'discountType' => 'nullable|string',
             'discount' => 'nullable|numeric',
             'notes' => 'nullable|string',
-            'documents' => 'nullable|array',
-            'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,docx',
             'mini_bar_items' => 'nullable|array',
             'other_charges' => 'nullable|array',
             'statusType' => 'nullable|string',
@@ -195,7 +209,6 @@ class RoomBookingController extends Controller
             }
 
             $booking->update([
-                // 'customer_id' => (int)$data['guest']['id'],
                 // 'booking_date' => $data['bookingDate'] ?? null,
                 'check_in_date' => $data['checkInDate'] ?? null,
                 'check_out_date' => $data['checkOutDate'] ?? null,
@@ -248,8 +261,18 @@ class RoomBookingController extends Controller
             }
 
             // 🔄 Update Invoice
+            $invoiceData = [];
+            if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
+                $invoiceData['member_id'] = (int) $data['guest']['id'];
+            } else {
+                $invoiceData['customer_id'] = (int) $data['guest']['id'];
+            }
             $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
-                ->where('customer_id', $booking->customer_id)
+                ->where(function ($query) use ($invoiceData) {
+                    foreach ($invoiceData as $key => $value) {
+                        $query->where($key, $value);
+                    }
+                })
                 ->whereJsonContains('data', [['booking_id' => $booking->id]])
                 ->first();
 
@@ -289,12 +312,12 @@ class RoomBookingController extends Controller
     {
         $bookings = RoomBooking::whereMonth('check_in_date', $req->month)
             ->whereYear('check_in_date', $req->year)
-            ->with('room', 'customer')
+            ->with('room', 'customer', 'member:id,user_id,membership_no,full_name,personal_email')
             ->get()
             ->map(fn($b) => [
                 'id' => $b->id,
                 'booking_no' => $b->booking_no,
-                'guest_name' => $b->customer->first_name . ' ' . $b->customer->last_name,
+                'guest_name' => $b->customer ? $b->customer->name : ($b->member ? $b->member->full_name : ''),
                 'room_number' => $b->room->name,
                 'check_in_date' => $b->check_in_date,
                 'check_out_date' => $b->check_out_date,
@@ -309,7 +332,7 @@ class RoomBookingController extends Controller
     // Show Room Booking
     public function showRoomBooking($id)
     {
-        $booking = RoomBooking::with('room', 'customer', 'customer.member:id,user_id,membership_no', 'room', 'room.roomType')->findOrFail($id);
+        $booking = RoomBooking::with('room', 'customer', 'member:id,user_id,membership_no,full_name,personal_email', 'room', 'room.roomType')->findOrFail($id);
         $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
             ->select('id', 'customer_id', 'data', 'status')
             ->where('customer_id', $booking->customer_id)

@@ -103,6 +103,23 @@ const dialogStyles = `
 }
 `;
 
+function getBookingTypeLabel(type) {
+    switch (type) {
+        case '0':
+            return 'Member';
+        case '2':
+            return 'Corporate Member';
+        case 'guest-1':
+            return 'Applied Member';
+        case 'guest-2':
+            return 'Affiliated Member';
+        case 'guest-3':
+            return 'VIP Guest';
+        default:
+            return 'Booking';
+    }
+}
+
 // TODO: Remove invoice popup logic and revert to original handlePrintReceipt after testing
 const generateInvoiceContent = (booking) => {
     if (!booking) return '';
@@ -223,17 +240,30 @@ const generateInvoiceContent = (booking) => {
                             Lahore, Pakistan
                         </div>
                     </div>
-                    <div class="grid-item-center"><div class="typography-h6" style="color: #333; margin-top: 20px">${(booking.booking_type || 'Booking').charAt(0).toUpperCase() + (booking.booking_type || 'Booking').slice(1)} Booking</div></div>
+                    <div class="grid-item-center">
+                        <div class="typography-h6" style="color: #333; margin-top: 20px">
+                        ${getBookingTypeLabel(booking.booking_type)}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Bill To Section -->
                 <div style="margin-bottom: 20px">
                     <div class="subtitle1">Bill To - #${booking.booking_no || 'N/A'}</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer?.first_name || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Membership ID: </span>${booking.customer?.member?.membership_no || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Phone Number: </span>${booking.customer?.phone_number || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Email: </span>${booking.customer?.email || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</div>
+                        <div class="typography-body2">
+                          <span style="font-weight: bold">Membership ID: </span>
+                          ${booking.customer ? booking.customer.customer_no : booking.member ? booking.member.membership_no : 'N/A'}
+                        </div>
+                        <div class="typography-body2">
+                          <span style="font-weight: bold">Phone Number: </span>
+                          ${booking.customer ? booking.customer.contact : booking.member ? booking.member.mobile_number_a : 'N/A'}
+                        </div>
+                        <div class="typography-body2">
+                          <span style="font-weight: bold">Email: </span>
+                          ${booking.customer ? booking.customer.email : booking.member ? booking.member.personal_email : 'N/A'}
+                        </div>
                     </div>
                 </div>
 
@@ -244,9 +274,9 @@ const generateInvoiceContent = (booking) => {
                         <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no ? booking.booking_no.padStart(6, '0') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.typeable?.max_capacity || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Number of Beds: </span>${booking.room?.number_of_beds || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.room?.number_of_bathrooms}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('MMMM D, YYYY') : 'N/A'}</div>
@@ -265,11 +295,11 @@ const generateInvoiceContent = (booking) => {
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Balance Due</span>
-                    <span class="typography-body2">Rs ${booking.remaining_amount || '0'}</span>
+                    <span class="typography-body2">Rs ${booking.grand_total - booking.security_deposit || '0'}</span>
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Amount Paid</span>
-                    <span class="typography-body2">Rs ${booking.paid_amount || booking.total_payment || '0'}</span>
+                    <span class="typography-body2">Rs ${booking.paid_amount || booking.security_deposit || '0'}</span>
                 </div>
             </div>
         </div>
@@ -540,6 +570,8 @@ const BookingDashboard = ({ data, roomTypes }) => {
     // TODO: Remove selected booking state when reverting to original print functionality
     const [selectedBooking, setSelectedBooking] = useState(null);
 
+    const filteredBookings = data.bookingsData.filter((booking) => (booking.room?.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
+
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
     };
@@ -727,7 +759,7 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                     Close
                                 </Button>
                                 <Button variant="secondary" onClick={() => setShowCheckInModal(true)}>
-                                    Checked In
+                                    Check In
                                 </Button>
                                 {!['checked_out', 'cancelled', 'no_show', 'refunded'].includes(selectedBooking?.status) ? (
                                     <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking?.id }))}>
@@ -822,28 +854,18 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                     </Col>
                                 </Row>
 
-                                {!searchResultsFilter && data.bookingsData.length > 0 ? (
-                                    data.bookingsData.map((booking, index) => {
+                                {!searchResultsFilter && filteredBookings.length > 0 ? (
+                                    filteredBookings.map((booking, index) => {
                                         const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
 
                                         return (
                                             <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handleShowInvoice(booking)}>
                                                 <Card.Body className="p-3">
                                                     <Row>
-                                                        {/* <Col md={2} className="d-flex justify-content-center">
-                                                            <img
-                                                                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
-                                                                alt={booking.type}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    objectFit: 'cover',
-                                                                }}
-                                                            />
-                                                        </Col> */}
                                                         <Col md={12}>
                                                             <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap">
                                                                 <div>
-                                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}</Typography>
+                                                                    <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</Typography>
                                                                     <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
                                                                         Created on {booking.booking_date}
                                                                     </Typography>

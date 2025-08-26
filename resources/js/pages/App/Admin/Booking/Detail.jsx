@@ -41,7 +41,7 @@ const BookingDetail = () => {
             >
                 <Container sx={{ px: 4, py: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 4 }}>
-                        <IconButton edge="start" sx={{ mr: 1 }} onClick={() => router.visit('/booking/dashboard')}>
+                        <IconButton edge="start" sx={{ mr: 1 }} onClick={() => router.visit(route('rooms.dashboard'))}>
                             <ArrowBackIcon />
                         </IconButton>
                         <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>

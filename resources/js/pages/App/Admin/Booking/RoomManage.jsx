@@ -94,6 +94,23 @@ const dialogStyles = `
 }
 `;
 
+function getBookingTypeLabel(type) {
+    switch (type) {
+        case '0':
+            return 'Member';
+        case '2':
+            return 'Corporate Member';
+        case 'guest-1':
+            return 'Applied Member';
+        case 'guest-2':
+            return 'Affiliated Member';
+        case 'guest-3':
+            return 'VIP Guest';
+        default:
+            return 'Booking';
+    }
+}
+
 // TODO: Remove invoice popup logic and revert to original handlePrintReceipt after testing
 const generateInvoiceContent = (booking) => {
     if (!booking) return '';
@@ -214,17 +231,30 @@ const generateInvoiceContent = (booking) => {
                             Lahore, Pakistan
                         </div>
                     </div>
-                    <div class="grid-item-center"><div class="typography-h6" style="color: #333; margin-top: 20px">${(booking.booking_type || 'Booking').charAt(0).toUpperCase() + (booking.booking_type || 'Booking').slice(1)} Booking</div></div>
+                    <div class="grid-item-center">
+                        <div class="typography-h6" style="color: #333; margin-top: 20px">
+                        ${getBookingTypeLabel(booking.booking_type)}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Bill To Section -->
                 <div style="margin-bottom: 20px">
                     <div class="subtitle1">Bill To - #${booking.booking_no || 'N/A'}</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer?.first_name || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Membership ID: </span>${booking.customer?.member?.membership_no || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Phone Number: </span>${booking.customer?.phone_number || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Email: </span>${booking.customer?.email || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</div>
+                        <div class="typography-body2">
+                          <span style="font-weight: bold">Membership ID: </span>
+                          ${booking.customer ? booking.customer.customer_no : booking.member ? booking.member.membership_no : 'N/A'}
+                        </div>
+                        <div class="typography-body2">
+                          <span style="font-weight: bold">Phone Number: </span>
+                          ${booking.customer ? booking.customer.contact : booking.member ? booking.member.mobile_number_a : 'N/A'}
+                        </div>
+                        <div class="typography-body2">
+                          <span style="font-weight: bold">Email: </span>
+                          ${booking.customer ? booking.customer.email : booking.member ? booking.member.personal_email : 'N/A'}
+                        </div>
                     </div>
                 </div>
 
@@ -235,9 +265,9 @@ const generateInvoiceContent = (booking) => {
                         <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no ? booking.booking_no.padStart(6, '0') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${booking.booking_type || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.typeable?.max_capacity || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Number of Beds: </span>${booking.room?.number_of_beds || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.room?.number_of_bathrooms}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('MMMM D, YYYY') : 'N/A'}</div>
@@ -256,11 +286,11 @@ const generateInvoiceContent = (booking) => {
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Balance Due</span>
-                    <span class="typography-body2">Rs ${booking.remaining_amount || '0'}</span>
+                    <span class="typography-body2">Rs ${booking.grand_total - booking.security_deposit || '0'}</span>
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Amount Paid</span>
-                    <span class="typography-body2">Rs ${booking.paid_amount || booking.total_payment || '0'}</span>
+                    <span class="typography-body2">Rs ${booking.paid_amount || booking.security_deposit || '0'}</span>
                 </div>
             </div>
         </div>
@@ -404,123 +434,11 @@ const RoomScreen = ({ rooms, data }) => {
                             backgroundColor: '#F6F6F6',
                         }}
                     >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <IconButton sx={{ mr: 1, color: '#063455' }}>
-                                    <ArrowBack />
-                                </IconButton>
-                                <Typography
-                                    sx={{
-                                        color: '#063455',
-                                        fontSize: '30px',
-                                        fontWeight: 500,
-                                    }}
-                                >
-                                    Rooms
-                                </Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 2 }}>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<Add />}
-                                    sx={{
-                                        border: '1px solid #063455',
-                                        color: '#333',
-                                        bgcolor: 'white',
-                                        '&:hover': {
-                                            border: '1px solid #063455',
-                                            bgcolor: '#FFFFFF',
-                                        },
-                                    }}
-                                    onClick={() => router.visit(route('rooms.add', { type: 'room' }))}
-                                >
-                                    Add Room
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        bgcolor: '#063455',
-                                        '&:hover': {
-                                            bgcolor: '#063455',
-                                        },
-                                    }}
-                                    onClick={() => router.visit('/booking/dashboard')}
-                                >
-                                    Booking
-                                </Button>
-                            </Box>
-                        </Box>
-
-                        <Box sx={{ mb: 2 }}>
-                            <Box textAlign="right" pb={2}>
-                                <Button
-                                    variant="text"
-                                    sx={{
-                                        color: '#0a3d62',
-                                        fontWeight: 500,
-                                        fontSize: '16px',
-                                    }}
-                                    onClick={() => router.visit(route('rooms.all'))}
-                                >
-                                    View All
-                                </Button>
-                            </Box>
-
-                            <Grid container spacing={2}>
-                                {rooms.slice(0, 4).map((roomTypes, index) => (
-                                    <Grid item xs={12} sm={6} key={index}>
-                                        <Paper
-                                            elevation={0}
-                                            sx={{
-                                                borderRadius: 1,
-                                                overflow: 'hidden',
-                                                alignItems: 'center',
-                                                display: 'flex',
-                                                height: '100px',
-                                                bgcolor: '#FFFFFF',
-                                            }}
-                                        >
-                                            <Avatar src={'/' + roomTypes?.photo_path} alt={roomTypes?.name} sx={{ width: 80, height: 80, ml: 2 }} />
-
-                                            <Box sx={{ p: 2, width: '80%' }}>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                    <Typography variant="h6" fontWeight="medium">
-                                                        {roomTypes.name}
-                                                    </Typography>
-                                                </Box>
-
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Bed fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {roomTypes.number_of_beds} Beds
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Person fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {roomTypes.max_capacity} Guest
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Bathroom fontSize="small" sx={{ color: '#666', mr: 0.5 }} />
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {roomTypes.number_of_bathrooms} Bathroom
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                            </Box>
-                                        </Paper>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </Box>
-
                         {/* Search and Filter */}
-                        <Row className="align-items-center mt-5 mb-3">
+                        <Row className="align-items-center mt-2 mb-3">
                             <Col>
-                                <Typography variant="h6" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '24px' }}>
-                                    Recently Booking
+                                <Typography variant="h4" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '32px' }}>
+                                    Room Bookings
                                 </Typography>
                             </Col>
                             <Col xs="auto" className="d-flex gap-3">
@@ -622,20 +540,10 @@ const RoomScreen = ({ rooms, data }) => {
                                     <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handleShowInvoice(booking)}>
                                         <Card.Body className="p-3">
                                             <Row>
-                                                {/* <Col md={2} className="d-flex justify-content-center">
-                                                    <img
-                                                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IuCtZ2a4wrWMZXu6pYSfLcMMwigfuK.png"
-                                                        alt={booking.type}
-                                                        style={{
-                                                            width: '100%',
-                                                            objectFit: 'cover',
-                                                        }}
-                                                    />
-                                                </Col> */}
                                                 <Col md={12}>
                                                     <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap">
                                                         <div>
-                                                            <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.booking_type ? booking.booking_type.charAt(0).toUpperCase() + booking.booking_type.slice(1) : 'Booking'}</Typography>
+                                                            <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</Typography>
                                                             <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
                                                                 Created on {booking.booking_date}
                                                             </Typography>

@@ -15,6 +15,7 @@ class FinancialInvoice extends BaseModel
         'discount_details',
         'amount',
         'total_price',
+        'advance_payment',
         'paid_amount',
         'customer_charges',
         'issue_date',

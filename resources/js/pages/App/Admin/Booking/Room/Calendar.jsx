@@ -138,7 +138,7 @@ const RoomCalendar = () => {
             >
                 <Box px={2}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton style={{ color: '#063455' }} onClick={() => router.visit('/booking/dashboard')}>
+                        <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                             <ArrowBack />
                         </IconButton>
                         <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '24px' }}>

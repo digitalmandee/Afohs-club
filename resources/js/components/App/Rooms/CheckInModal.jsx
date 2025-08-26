@@ -20,8 +20,8 @@ const RoomCheckInModal = ({ open, onClose, bookingId }) => {
                 const booking = res.data.booking;
                 setCheckInDate(booking.check_in_date || booking.booking_date);
                 setBookingInfo({
-                    customerName: booking.customer.first_name + ' ' + booking.customer.last_name,
-                    email: booking.customer.email,
+                    customerName: booking.customer ? booking.customer.name : booking.member?.full_name || 'N/A',
+                    email: booking.customer ? booking.customer.email : booking.member?.personal_email || 'N/A',
                     bookingId: booking.booking_no,
                     roomName: booking.room?.room_type?.name + ' - ' + booking.room?.name,
                     charges: booking.grand_total,
@@ -29,7 +29,9 @@ const RoomCheckInModal = ({ open, onClose, bookingId }) => {
                     status: booking.status, // Add status
                 });
             })
-            .catch(() => {
+            .catch((error) => {
+                console.log(error);
+
                 enqueueSnackbar('Failed to load booking data.', { variant: 'error' });
             })
             .finally(() => setLoading(false));
