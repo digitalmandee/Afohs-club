@@ -149,6 +149,8 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             statusType: isCheckout ? 'checked_out' : '',
         };
 
+        console.log('newData', isCheckout ? 'checked_out' : '', urlParamsObject?.type, newData);
+
         // Proceed with actual submission
         const payload = objectToFormData(newData);
 

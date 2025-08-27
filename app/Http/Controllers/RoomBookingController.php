@@ -208,6 +208,8 @@ class RoomBookingController extends Controller
                 }
             }
 
+            Log::info($data['statusType']);
+
             $booking->update([
                 // 'booking_date' => $data['bookingDate'] ?? null,
                 'check_in_date' => $data['checkInDate'] ?? null,
