@@ -314,4 +314,30 @@ class RoomController extends Controller
 
         return redirect()->route('rooms.all')->with('success', 'Room deleted successfully.');
     }
+
+    // CheckIn Rooms
+    public function checkInIndex()
+    {
+        $bookings = RoomBooking::with(['room', 'member', 'customer'])
+            ->where('status', 'confirmed')
+            ->orderBy('booking_date', 'desc')
+            ->get();
+
+        return Inertia::render('App/Admin/Booking/Room/CheckIn', [
+            'bookings' => $bookings,
+        ]);
+    }
+
+    // CheckOut Rooms
+    public function checkOutIndex()
+    {
+        $bookings = RoomBooking::with(['room', 'member', 'customer'])
+            ->where('status', 'checked_in')
+            ->orderBy('booking_date', 'desc')
+            ->get();
+
+        return Inertia::render('App/Admin/Booking/Room/CheckOut', [
+            'bookings' => $bookings,
+        ]);
+    }
 }

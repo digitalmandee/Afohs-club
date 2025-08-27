@@ -104,6 +104,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('dashboard', [RoomController::class, 'dashboard'])->name('rooms.dashboard');
             Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage');
             Route::get('add', [RoomController::class, 'create'])->name('rooms.add');
+            Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin');
+            Route::get('check-out', [RoomController::class, 'checkOutIndex'])->name('rooms.checkout');
             Route::post('store', [RoomController::class, 'store'])->name('rooms.store');
             Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit');
             Route::post('{id}', [RoomController::class, 'update'])->name('rooms.update');

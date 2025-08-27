@@ -54,6 +54,16 @@ class RoomBooking extends BaseModel
 
     protected $casts = ['additional_data' => 'array'];
 
+    protected $appends = ['invoice'];
+
+    public function getInvoiceAttribute()
+    {
+        return FinancialInvoice::where('invoice_type', 'room_booking')
+            ->whereJsonContains('data', [['booking_id' => $this->id]])
+            ->select('id', 'status')
+            ->first();
+    }
+
     public function miniBarItems()
     {
         return $this->hasMany(RoomBookingMiniBarItem::class);

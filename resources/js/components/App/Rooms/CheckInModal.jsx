@@ -49,7 +49,7 @@ const RoomCheckInModal = ({ open, onClose, bookingId }) => {
             })
             .then(() => {
                 enqueueSnackbar('Check-in successful.', { variant: 'success' });
-                onClose();
+                onClose('success');
             })
             .catch((err) => {
                 if (err.response?.data?.message) {
