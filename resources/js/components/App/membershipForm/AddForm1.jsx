@@ -427,7 +427,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Marital Status
                                 </Typography>
-                                <FormControl fullWidth size="small" error={!!formErrors.gender}>
+                                <FormControl fullWidth size="small" error={!!formErrors.marital_status}>
                                     <Select
                                         value={data.marital_status || ''}
                                         name="marital_status"
@@ -435,7 +435,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         displayEmpty
                                         renderValue={(selected) => {
                                             if (!selected) {
-                                                return 'Choose Gender';
+                                                return 'Choose Marital Status';
                                             }
                                             return selected;
                                         }}
@@ -450,9 +450,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         <MenuItem value="Divorced">Divorced</MenuItem>
                                         <MenuItem value="Widowed">Widowed</MenuItem>
                                     </Select>
-                                    {formErrors.gender && (
+                                    {formErrors.marital_status && (
                                         <Typography variant="caption" color="error">
-                                            {formErrors.gender}
+                                            {formErrors.marital_status}
                                         </Typography>
                                     )}
                                 </FormControl>

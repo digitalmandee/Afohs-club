@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { TextField, Button, Paper, Typography, Grid, Box, IconButton, Checkbox, FormControlLabel, Autocomplete } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { TextField, Button, Paper, Typography, Grid, Box, IconButton, Checkbox, FormControlLabel, Autocomplete, MenuItem, Select, FormControl } from '@mui/material';
+import { ArrowBack, KeyboardArrowDown } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { countries } from '@/constants/countries';
 
@@ -218,7 +218,36 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Relation
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" placeholder="Enter Relationship" size="small" name="emergency_relation" value={data.emergency_relation} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <FormControl fullWidth size="small" error={!!formErrors.emergency_relation}>
+                                        <Select
+                                            value={data.emergency_relation || ''}
+                                            name="emergency_relation"
+                                            onChange={handleChange}
+                                            displayEmpty
+                                            renderValue={(selected) => {
+                                                if (!selected) {
+                                                    return 'Choose Relation';
+                                                }
+                                                return selected;
+                                            }}
+                                            inputProps={{ 'aria-label': 'Without label' }}
+                                            IconComponent={() => <KeyboardArrowDown sx={{ position: 'absolute', right: 8, pointerEvents: 'none' }} />}
+                                        >
+                                            <MenuItem value="" disabled>
+                                                Choose Relation
+                                            </MenuItem>
+                                            {['Father', 'Son', 'Daughter', 'Wife', 'Mother', 'Grand Son', 'Grand Daughter', 'Second Wife', 'Husband', 'Sister', 'Brother', 'Nephew', 'Niece', 'Father in law', 'Mother in Law'].map((item, index) => (
+                                                <MenuItem key={index} value={item} sx={{ textTransform: 'capitalize' }}>
+                                                    {item}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                        {formErrors.emergency_relation && (
+                                            <Typography variant="caption" color="error">
+                                                {formErrors.emergency_relation}
+                                            </Typography>
+                                        )}
+                                    </FormControl>
                                 </Grid>
 
                                 {/* Contact Number */}
