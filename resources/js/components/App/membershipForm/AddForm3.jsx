@@ -657,7 +657,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     displayEmpty
                                                     renderValue={() => {
                                                         const status = data.status;
-                                                        return status ? <Typography sx={{ textTransform: 'capitalize' }}>{status}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                        const label = status ? status.replace(/_/g, ' ') : '';
+                                                        return status ? <Typography sx={{ textTransform: 'capitalize' }}>{label}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
                                                     }}
                                                     sx={{
                                                         '& .MuiOutlinedInput-notchedOutline': {
@@ -665,11 +666,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         },
                                                     }}
                                                 >
-                                                    {['active', 'inactive', 'suspended', 'cancelled', 'pause'].map((status) => (
-                                                        <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
-                                                            {status}
-                                                        </MenuItem>
-                                                    ))}
+                                                    {['active', 'inactive', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
+                                                        const label = status.replace(/_/g, ' ');
+                                                        return (
+                                                            <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
+                                                                {label}
+                                                            </MenuItem>
+                                                        );
+                                                    })}
                                                 </Select>
                                             </FormControl>
                                         </Box>
@@ -1194,6 +1198,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     displayEmpty
                                                     renderValue={() => {
                                                         const status = currentFamilyMember.status;
+                                                        const label = status ? status.replace(/_/g, ' ') : '';
                                                         return status ? <Typography sx={{ textTransform: 'capitalize' }}>{status}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
                                                     }}
                                                     sx={{
@@ -1203,11 +1208,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         },
                                                     }}
                                                 >
-                                                    {['active', 'inactive', 'suspended', 'cancelled', 'pause'].map((status) => (
-                                                        <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
-                                                            {status}
-                                                        </MenuItem>
-                                                    ))}
+                                                    {['active', 'inactive', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
+                                                        const label = status.replace(/_/g, ' ');
+                                                        return (
+                                                            <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
+                                                                {label}
+                                                            </MenuItem>
+                                                        );
+                                                    })}
                                                 </Select>
                                             </Box>
                                         </Grid>
