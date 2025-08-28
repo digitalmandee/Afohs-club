@@ -532,7 +532,7 @@ class MembershipController extends Controller
                             'end_date' => $newMemberData['end_date'] ?? null,
                             'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
                             'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
-                            'cnic_no' => $newMemberData['cnic'],
+                            'cnic_no' => $newMemberData['cnic'] ?? null,
                             'mobile_number_a' => $newMemberData['phone_number'] ?? null,
                         ]);
                     }
@@ -611,7 +611,7 @@ class MembershipController extends Controller
     {
         $request->validate([
             'member_id' => 'required|exists:members,id',
-            'status' => 'required|in:active,suspended,cancelled,absent',
+            'status' => 'required|in:active,suspended,cancelled,absent,expired,terminated,not_assign,in_suspension_process',
             'reason' => 'nullable|string',
             'duration_type' => 'nullable|in:1Day,1Monthly,1Year,CustomDate',
             'custom_end_date' => 'nullable|date',
