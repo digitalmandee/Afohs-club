@@ -81,7 +81,7 @@ class RoomBooking extends BaseModel
 
     public function customer()
     {
-        return $this->belongsTo(User::class, 'customer_id', 'id');
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
 
     public function member()

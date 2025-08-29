@@ -18,17 +18,78 @@ use Inertia\Inertia;
 
 class RoomController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Step 1: Build bookingId => invoice mapping
-        $invoices = FinancialInvoice::where('invoice_type', 'room_booking')->get();
+        // ✅ Collect filters
+        $filters = $request->only(['room_type', 'booking_status', 'start_date', 'end_date', 'search']);
 
-        $bookingInvoiceMap = [];
+        // ✅ Base query with relations
+        $query = RoomBooking::with([
+            'room:id,name,room_type_id',
+            'customer:id,customer_no,email,name',
+            'member:id,user_id,membership_no,full_name'
+        ])->latest();
 
-        foreach ($invoices as $invoice) {
+        // ✅ Apply Room Type filter
+        if (!empty($filters['room_type'])) {
+            $query->whereHas('room', function ($q) use ($filters) {
+                $q->where('room_type_id', $filters['room_type']);
+            });
+        }
+
+        // ✅ Apply Booking Status filter
+        if (!empty($filters['booking_status'])) {
+            $query->where('status', $filters['booking_status']);
+        }
+
+        // ✅ Apply Date Range filter
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $query->whereBetween('booking_date', [$filters['start_date'], $filters['end_date']]);
+            // Replace `booking_date` with actual column name if different
+        }
+
+        // ✅ Apply search filter
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->whereHas('room', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('customer', function ($sub) use ($search) {
+                        $sub
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('customer_no', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('member', function ($sub) use ($search) {
+                        $sub
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // ✅ Paginate results and keep query string
+        $bookings = $query->paginate(10)->withQueryString();
+
+        // ✅ Get booking IDs for current page
+        $bookingIds = $bookings->pluck('id');
+
+        // ✅ Fetch invoices linked to these bookings
+        $invoiceData = FinancialInvoice::where('invoice_type', 'room_booking')
+            ->where(function ($q) use ($bookingIds) {
+                $q->whereJsonContains('data->*.booking_id', $bookingIds);
+            })
+            ->select('id', 'status', 'data')
+            ->get();
+
+        // ✅ Map invoices by booking_id
+        $invoiceMap = [];
+        foreach ($invoiceData as $invoice) {
             foreach ($invoice->data as $entry) {
                 if (!empty($entry['booking_id'])) {
-                    $bookingInvoiceMap[$entry['booking_id']] = [
+                    $invoiceMap[$entry['booking_id']] = [
                         'id' => $invoice->id,
                         'status' => $invoice->status,
                     ];
@@ -36,79 +97,72 @@ class RoomController extends Controller
             }
         }
 
-        // Step 2: Get all RoomBookings
-        $bookings = RoomBooking::with('room', 'customer', 'member')->latest()->get();
-
-        // Step 3: Attach invoice data to each booking
-        $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
-            $invoice = $bookingInvoiceMap[$booking->id] ?? null;
-            $booking->invoice = $invoice;
+        // ✅ Attach invoices to bookings
+        $bookings->getCollection()->transform(function ($booking) use ($invoiceMap) {
+            $booking->invoice = $invoiceMap[$booking->id] ?? null;
             return $booking;
         });
 
-        $totalBookings = Booking::count();
-        $totalRoomBookings = Booking::where('booking_type', 'room')->count();
-        $totalEventBookings = Booking::where('booking_type', 'event')->count();
-
-        $rooms = Room::latest()->get();
-        $events = BookingEvents::latest()->get();
-
-        $totalRooms = $rooms->count();
-        $totalEvents = $events->count();
-
-        $conflictedRooms = Booking::query()
-            ->where('booking_type', 'room')
-            ->whereIn('status', ['confirmed', 'pending'])
-            ->where('checkin', '<', now()->addDay())
-            ->where('checkout', '>', now())
-            ->pluck('type_id')
-            ->unique();
-
-        $availableRoomsToday = Room::query()
-            ->whereNotIn('id', $conflictedRooms)
-            ->count();
-
-        $conflictedEvents = Booking::query()
-            ->where('booking_type', 'event')
-            ->whereIn('status', ['confirmed', 'pending'])
-            ->where('checkin', '<', now()->addDay())
-            ->where('checkout', '>', now())
-            ->pluck('type_id')
-            ->unique();
-
-        $availableEventsToday = BookingEvents::query()
-            ->whereNotIn('id', $conflictedEvents)
-            ->count();
-
-        $data = [
-            'bookingsData' => $bookings,
-            'rooms' => $rooms,
-            'events' => $events,
-            'totalRooms' => $totalRooms,
-            'totalEvents' => $totalEvents,
-            'availableRoomsToday' => $availableRoomsToday,
-            'availableEventsToday' => $availableEventsToday,
-            'totalBookings' => $totalBookings,
-            'totalRoomBookings' => $totalRoomBookings,
-            'totalEventBookings' => $totalEventBookings,
-        ];
-
+        // ✅ Return Inertia page with data
         return Inertia::render('App/Admin/Booking/RoomManage', [
-            'data' => $data,
-            'rooms' => $rooms,
+            'bookings' => $bookings,
+            'filters' => $filters,  // ✅ Pass filters to front-end
+            'roomTypes' => RoomType::select('id', 'name')->get(),  // ✅ Pass room types dynamically
         ]);
+    }
+
+    public function bookingInvoice($id)
+    {
+        // ✅ Fetch the booking with relations
+        $booking = RoomBooking::with([
+            'room',
+            'customer',
+            'member'
+        ])->findOrFail($id);
+
+        // ✅ Find invoice linked to this booking
+        $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
+            ->whereJsonContains('data->*.booking_id', $id)
+            ->select('id', 'status', 'data')
+            ->first();
+
+        $booking->invoice = $invoice ? [
+            'id' => $invoice->id,
+            'status' => $invoice->status,
+        ] : null;
+
+        return response()->json(['success' => true, 'booking' => $booking]);
     }
 
     public function dashboard()
     {
-        // Step 1: Build bookingId => invoice mapping
-        $invoices = FinancialInvoice::where('invoice_type', 'room_booking')->get();
+        // Step 1: Get the latest bookings
+        $bookings = RoomBooking::with('room:id,name,room_type_id',
+                'customer:id,customer_no,email,name',
+                'member:id,user_id,membership_no,full_name')
+            ->latest()
+            ->take(6)
+            ->get();
 
+        // Extract booking IDs
+        $bookingIds = $bookings->pluck('id')->toArray();
+
+        // Step 2: Fetch only invoices linked to these bookings
+        $invoices = FinancialInvoice::where('invoice_type', 'room_booking')
+            ->where(function ($q) use ($bookingIds) {
+                foreach ($bookingIds as $id) {
+                    // Check if JSON column contains booking_id
+                    $q->orWhereJsonContains('data->*.booking_id', $id);
+                }
+            })
+            ->get();
+
+        // Step 3: Build bookingId => invoice mapping
         $bookingInvoiceMap = [];
 
         foreach ($invoices as $invoice) {
             foreach ($invoice->data as $entry) {
-                if (!empty($entry['booking_id'])) {
+                if (!empty($entry['booking_id']) && in_array($entry['booking_id'], $bookingIds)) {
                     $bookingInvoiceMap[$entry['booking_id']] = [
                         'id' => $invoice->id,
                         'status' => $invoice->status,
@@ -117,28 +171,23 @@ class RoomController extends Controller
             }
         }
 
-        // Step 2: Get all RoomBookings
-        $bookings = RoomBooking::with('room', 'customer', 'member')->latest()->take(10)->get();
-
-        // Step 3: Attach invoice data to each booking
+        // Step 4: Attach invoice data to bookings
         $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
-            $invoice = $bookingInvoiceMap[$booking->id] ?? null;
-            $booking->invoice = $invoice;
+            $booking->invoice = $bookingInvoiceMap[$booking->id] ?? null;
             return $booking;
         });
 
+        // Other stats
         $totalBookings = RoomBooking::count();
         $totalRoomBookings = RoomBooking::count();
 
         $rooms = Room::latest()->get();
-
         $totalRooms = $rooms->count();
 
-        // Determine unavailable rooms today
         $conflictedRooms = RoomBooking::query()
             ->whereIn('status', ['confirmed', 'pending'])
-            ->where('check_in_date', '<', now()->addDay())  // today and future
-            ->where('check_out_date', '>', now())  // overlapping today
+            ->where('check_in_date', '<', now()->addDay())
+            ->where('check_out_date', '>', now())
             ->pluck('room_id')
             ->unique();
 
@@ -318,10 +367,15 @@ class RoomController extends Controller
     // CheckIn Rooms
     public function checkInIndex()
     {
-        $bookings = RoomBooking::with(['room', 'member', 'customer'])
+        $query = RoomBooking::with([
+            'room:id,name,room_type_id',
+            'customer:id,customer_no,email,name',
+            'member:id,user_id,membership_no,full_name'
+        ])
             ->where('status', 'confirmed')
             ->orderBy('booking_date', 'desc')
-            ->get();
+            ->latest();
+        $bookings = $query->paginate(10)->withQueryString();
 
         return Inertia::render('App/Admin/Booking/Room/CheckIn', [
             'bookings' => $bookings,
@@ -331,10 +385,16 @@ class RoomController extends Controller
     // CheckOut Rooms
     public function checkOutIndex()
     {
-        $bookings = RoomBooking::with(['room', 'member', 'customer'])
+        $query = RoomBooking::with([
+            'room:id,name,room_type_id',
+            'customer:id,customer_no,email,name',
+            'member:id,user_id,membership_no,full_name'
+        ])
             ->where('status', 'checked_in')
             ->orderBy('booking_date', 'desc')
-            ->get();
+            ->latest();
+
+        $bookings = $query->paginate(10)->withQueryString();
 
         return Inertia::render('App/Admin/Booking/Room/CheckOut', [
             'bookings' => $bookings,

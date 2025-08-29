@@ -102,6 +102,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::group(['prefix' => 'rooms'], function () {
             Route::get('/', [RoomController::class, 'allRooms'])->name('rooms.all');
             Route::get('dashboard', [RoomController::class, 'dashboard'])->name('rooms.dashboard');
+            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice');
             Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage');
             Route::get('add', [RoomController::class, 'create'])->name('rooms.add');
             Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin');

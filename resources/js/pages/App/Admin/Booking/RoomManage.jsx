@@ -1,15 +1,14 @@
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import { Link, router } from '@inertiajs/react';
-import { Add, ArrowBack, Bathroom, Bed, FilterAlt, Person, Search } from '@mui/icons-material';
-import { Avatar, Box, Button, Grid, IconButton, Paper, ThemeProvider, Typography, createTheme } from '@mui/material';
+import { router } from '@inertiajs/react';
+import { FilterAlt, Search } from '@mui/icons-material';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState } from 'react';
-import { Badge, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap';
+import { useEffect, useMemo, useState } from 'react';
+import { Badge, Col, Container, Form, Modal, Row } from 'react-bootstrap';
 import RoomBookingFilter from './BookingFilter';
 import dayjs from 'dayjs'; // Added for duration calculation
-import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
-
-import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
+import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
+import debounce from 'lodash.debounce';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -96,71 +95,30 @@ const dialogStyles = `
 }
 `;
 
-// TODO: Remove this utility function when reverting to original print functionality
-const numberToWords = (num) => {
-    const units = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
-    const teens = ['TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN', 'SIXTEEN', 'SEVENTEEN', 'EIGHTEEN', 'NINETEEN'];
-    const tens = ['', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY', 'EIGHTY', 'NINETY'];
-    const thousands = ['', 'THOUSAND', 'MILLION', 'BILLION'];
-
-    if (num === 0) return 'ZERO';
-    let word = '';
-    let i = 0;
-
-    while (num > 0) {
-        let chunk = num % 1000;
-        if (chunk) {
-            let chunkWord = '';
-            if (chunk >= 100) {
-                chunkWord += units[Math.floor(chunk / 100)] + ' HUNDRED ';
-                chunk %= 100;
-            }
-            if (chunk >= 20) {
-                chunkWord += tens[Math.floor(chunk / 10)] + ' ';
-                chunk %= 10;
-            }
-            if (chunk >= 10) {
-                chunkWord += teens[chunk - 10] + ' ';
-            } else if (chunk > 0) {
-                chunkWord += units[chunk] + ' ';
-            }
-            word = chunkWord + thousands[i] + (word ? ' ' : '') + word;
-        }
-        num = Math.floor(num / 1000);
-        i++;
-    }
-    return word.trim();
-};
-
-const RoomScreen = ({ rooms, data }) => {
+const RoomScreen = ({ bookings }) => {
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
-    const [showResultsModal, setShowResultsModal] = useState(false);
-    const [showAvailableRooms, setShowAvailableRooms] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
 
-    const [showCheckInModal, setShowCheckInModal] = useState(false);
+    const [filteredBookings, setFilteredBookings] = useState(bookings.data || []); // Initialize with all bookings
+
     // TODO: Remove invoice modal state when reverting to original print functionality
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     // TODO: Remove selected booking state when reverting to original print functionality
     const [selectedBooking, setSelectedBooking] = useState(null);
-    // console.log('rooms', data);
 
-    // TODO: Replaced static bookingsData with data.bookingsData from props
-    const filteredBookings = data.bookingsData.filter((booking) => (booking.room?.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
+    const debouncedSearch = useMemo(
+        () =>
+            debounce((value) => {
+                router.get(route('rooms.manage'), { search: value }, { preserveState: true });
+            }, 500), // 500ms delay
+        [],
+    );
 
-    const handleOpenBookingModal = () => {
-        setShowAvailabilityModal(true);
-    };
-
-    const handleCloseAvailabilityModal = () => {
-        setShowAvailabilityModal(false);
-        setShowAvailableRooms(false); // reset view on close
-    };
-
-    const handleShowAvailableRooms = () => {
-        setShowAvailableRooms(true);
+    // ✅ Handle input change
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        debouncedSearch(e.target.value);
     };
 
     // TODO: Remove invoice modal handler when reverting to original print functionality
@@ -175,28 +133,12 @@ const RoomScreen = ({ rooms, data }) => {
         setSelectedBooking(null);
     };
 
-    const handleSearch = async (searchParams) => {
-        setLoading(true);
-        try {
-            const response = await axios.get(route('rooms.booking.search'), {
-                params: searchParams,
-            });
-            setBookingType(searchParams.bookingType);
-            console.log(searchParams.checkin, searchParams.checkout);
-
-            setCheckIn(searchParams.checkin);
-            setCheckOut(searchParams.checkout);
-            setSearchResultsFilter(true);
-            setSearchResults(response.data);
-        } catch (error) {
-            console.error('Error fetching search results', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleFilterClose = () => setShowFilter(false);
     const handleFilterShow = () => setShowFilter(true);
+
+    useEffect(() => {
+        setFilteredBookings(bookings.data || []);
+    }, [bookings]);
 
     return (
         <>
@@ -230,7 +172,7 @@ const RoomScreen = ({ rooms, data }) => {
                                         placeholder="Search"
                                         aria-label="Search"
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={handleSearchChange}
                                         style={{
                                             paddingLeft: '2rem',
                                             borderColor: '#ced4da',
@@ -239,6 +181,7 @@ const RoomScreen = ({ rooms, data }) => {
                                             fontSize: '0.9rem',
                                         }}
                                     />
+
                                     <Search
                                         style={{
                                             position: 'absolute',
@@ -267,215 +210,105 @@ const RoomScreen = ({ rooms, data }) => {
                                 </Button>
                             </Col>
                         </Row>
-                        {/* TODO: Remove invoice modal when reverting to original print functionality */}
-                        <Modal show={showInvoiceModal} onHide={handleCloseInvoice} className="custom-dialog-right" size="lg" aria-labelledby="invoice-modal-title">
-                            <Modal.Body>
-                                <div dangerouslySetInnerHTML={{ __html: selectedBooking ? generateInvoiceContent(selectedBooking) : '' }} />
-                                {/* ✅ Documents Preview */}
-                                {JSONParse(selectedBooking?.booking_docs) && JSONParse(selectedBooking?.booking_docs).length > 0 && (
-                                    <div style={{ marginTop: '20px' }}>
-                                        <h5>Attached Documents</h5>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                                            {JSONParse(selectedBooking?.booking_docs).map((doc, index) => {
-                                                const ext = doc.split('.').pop().toLowerCase();
 
-                                                // ✅ For images
-                                                if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
-                                                    return (
-                                                        <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                            <img src={doc} alt={`Document ${index + 1}`} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} onClick={() => window.open(doc, '_blank')} />
-                                                            <p style={{ fontSize: '12px', marginTop: '5px' }}>Image</p>
-                                                        </div>
-                                                    );
-                                                }
+                        {/* TODO: Updated to use filteredBookings from data.bookings */}
 
-                                                // ✅ For PDF
-                                                if (ext === 'pdf') {
-                                                    return (
-                                                        <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                            <img
-                                                                src="/assets/pdf-icon.png" // You can use a static icon
-                                                                alt="PDF"
-                                                                style={{ width: '60px', cursor: 'pointer' }}
-                                                                onClick={() => window.open(doc, '_blank')}
-                                                            />
-                                                            <p style={{ fontSize: '12px', marginTop: '5px' }}>PDF</p>
-                                                        </div>
-                                                    );
-                                                }
+                        <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none' }}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
+                                        <TableCell sx={{ fontWeight: 600 }}>Booking ID</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Booking Date</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Persons</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Per Day Charge</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Total Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {filteredBookings.length > 0 ? (
+                                        filteredBookings.map((booking, index) => {
+                                            const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
 
-                                                // ✅ For DOCX
-                                                if (ext === 'docx' || ext === 'doc') {
-                                                    return (
-                                                        <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                            <img
-                                                                src="/assets/word-icon.png" // Use a static Word icon
-                                                                alt="DOCX"
-                                                                style={{ width: '60px', cursor: 'pointer' }}
-                                                                onClick={() => window.open(doc, '_blank')}
-                                                            />
-                                                            <p style={{ fontSize: '12px', marginTop: '5px' }}>Word</p>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                return null; // For unknown file types
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </Modal.Body>
-                            <Modal.Footer>
-                                <Button variant="secondary" onClick={handleCloseInvoice}>
-                                    Close
-                                </Button>
-                                {selectedBooking?.status === 'confirmed' && (
-                                    <Button variant="secondary" onClick={() => setShowCheckInModal(true)}>
-                                        Check In
-                                    </Button>
-                                )}
-                                {selectedBooking?.status === 'checked_in' && (
-                                    <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking.id, type: 'checkout' }))}>
-                                        Check Out
-                                    </Button>
-                                )}
-                                {!['checked_out', 'cancelled', 'no_show', 'refunded'].includes(selectedBooking?.status) ? (
-                                    <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking?.id }))}>
-                                        Edit
-                                    </Button>
-                                ) : (
-                                    ''
-                                )}
-                                {selectedBooking?.invoice?.status === 'unpaid' ? (
-                                    <Button variant="success" onClick={() => router.visit(route('booking.payment', { invoice_no: selectedBooking?.invoice?.id }))}>
-                                        Pay Now
-                                    </Button>
-                                ) : selectedBooking?.invoice?.status === 'paid' ? (
-                                    <Button variant="outline-success" disabled>
-                                        Paid
-                                    </Button>
-                                ) : null}
-
-                                {/* TODO: Optional - Keep print button if needed during testing */}
-                                <Button
-                                    style={{ backgroundColor: '#003366', color: 'white' }}
-                                    onClick={() => {
-                                        const printWindow = window.open('', '_blank');
-                                        printWindow.document.write(`${generateInvoiceContent(selectedBooking)}`);
-                                        printWindow.document.close();
-                                        printWindow.focus();
-                                        setTimeout(() => {
-                                            printWindow.print();
-                                            printWindow.close();
-                                        }, 250);
-                                    }}
-                                >
-                                    Print
-                                </Button>
-                            </Modal.Footer>
-                        </Modal>
-                        {/* TODO: Updated to use filteredBookings from data.bookingsData */}
-                        {filteredBookings.length > 0 ? (
-                            filteredBookings.map((booking, index) => {
-                                const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
-
-                                return (
-                                    <Card key={index} className="mb-2" style={{ border: '1px solid #e0e0e0', cursor: 'pointer' }} onClick={() => handleShowInvoice(booking)}>
-                                        <Card.Body className="p-3">
-                                            <Row>
-                                                <Col md={12}>
-                                                    <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap">
-                                                        <div>
-                                                            <Typography style={{ fontWeight: 500, fontSize: '20px', color: '#121212' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</Typography>
-                                                            <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px', fontWeight: 400 }}>
-                                                                Created on {booking.booking_date}
-                                                            </Typography>
-                                                        </div>
+                                            return (
+                                                <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
+                                                    <TableCell>#{booking.booking_no}</TableCell>
+                                                    <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
+                                                    <TableCell>{booking.booking_date}</TableCell>
+                                                    <TableCell>{booking.room?.name}</TableCell>
+                                                    <TableCell>{booking.persons}</TableCell>
+                                                    <TableCell>{durationInDays}</TableCell>
+                                                    <TableCell>{booking.per_day_charge}</TableCell>
+                                                    <TableCell>{booking.grand_total}</TableCell>
+                                                    <TableCell>
                                                         <Badge
-                                                            onClick={() => router.visit(route('rooms.dashboard'))}
                                                             bg=""
                                                             style={{
-                                                                backgroundColor: booking.status === 'confirmed' ? '#0e5f3c' : '#842029',
+                                                                backgroundColor: booking.status.replace(/_/g, '').toLowerCase() === 'confirmed' ? '#0e5f3c' : '#842029',
                                                                 color: 'white',
-                                                                padding: '6px 14px',
+                                                                padding: '5px 10px',
                                                                 borderRadius: '6px',
-                                                                fontSize: '0.85rem',
+                                                                fontSize: '0.8rem',
                                                                 fontWeight: 500,
                                                                 minWidth: '100px',
                                                                 textAlign: 'center',
-                                                                cursor: 'pointer',
-                                                                borderRadius: '0px',
+                                                                borderRadius: '10px',
+                                                                textTransform: 'capitalize',
                                                             }}
                                                         >
-                                                            {booking.status}
+                                                            {booking.status.replace(/_/g, ' ')}
                                                         </Badge>
-                                                    </div>
-                                                    <Row className="text-start mt-2">
-                                                        <Col md={3} sm={6} className="mb-2">
-                                                            <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                Booking ID
-                                                            </Typography>
-                                                            <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                # {booking.booking_no}
-                                                            </Typography>
-                                                        </Col>
-                                                        <Col md={4} sm={6} className="mb-2">
-                                                            <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                Duration
-                                                            </Typography>
-                                                            <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                {durationInDays}
-                                                            </Typography>
-                                                        </Col>
-                                                        <Col md={2} sm={6} className="mb-2">
-                                                            <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                Room
-                                                            </Typography>
-                                                            <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                {booking.room?.name}
-                                                            </Typography>
-                                                        </Col>
-                                                        <Col md={2} sm={6} className="mb-2">
-                                                            <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                {booking.booking_type === 'room' ? 'Price Per Night' : 'Price Per Person'}
-                                                            </Typography>
-                                                            <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                {booking.per_day_charge}
-                                                            </Typography>
-                                                        </Col>
-                                                        <Col md={2} sm={6} className="mb-2">
-                                                            <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                Total Payment
-                                                            </Typography>
-                                                            <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                {booking.grand_total}
-                                                            </Typography>
-                                                        </Col>
-                                                        <Col md={2} sm={6} className="mb-2">
-                                                            <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
-                                                                Adults
-                                                            </Typography>
-                                                            <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
-                                                                {booking.persons}
-                                                            </Typography>
-                                                        </Col>
-                                                    </Row>
-                                                </Col>
-                                            </Row>
-                                        </Card.Body>
-                                    </Card>
-                                );
-                            })
-                        ) : (
-                            <Typography>No bookings found for the selected criteria.</Typography>
-                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button variant="outlined" size="small" color="secondary" onClick={() => handleShowInvoice(booking)}>
+                                                            View
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={9} align="center">
+                                                No bookings found.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
 
-                        {/* Room Checkin Modal  */}
-                        <RoomCheckInModal open={showCheckInModal} onClose={() => setShowCheckInModal(false)} bookingId={selectedBooking?.id} />
+                        <Box display="flex" justifyContent="center" mt={2}>
+                            {bookings.links?.map((link, index) => (
+                                <Button
+                                    key={index}
+                                    onClick={() => link.url && router.visit(link.url)}
+                                    disabled={!link.url}
+                                    variant={link.active ? 'contained' : 'outlined'}
+                                    size="small"
+                                    style={{
+                                        margin: '0 5px',
+                                        minWidth: '36px',
+                                        padding: '6px 10px',
+                                        fontWeight: link.active ? 'bold' : 'normal',
+                                        backgroundColor: link.active ? '#333' : '#fff',
+                                    }}
+                                >
+                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                </Button>
+                            ))}
+                        </Box>
+
+                        {/* Booking Invoice Modal */}
+                        <BookingInvoiceModal open={showInvoiceModal} onClose={() => handleCloseInvoice()} bookingId={selectedBooking?.id} setBookings={setFilteredBookings} />
 
                         <Modal show={showFilter} onHide={handleFilterClose} dialogClassName="custom-dialog-right" backdrop={true} keyboard={true}>
                             <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
-                                <RoomBookingFilter />
+                                <RoomBookingFilter onClose={handleFilterClose} />
                             </Modal.Body>
                         </Modal>
                     </Container>

@@ -1,345 +1,214 @@
-"use client"
-import { useState } from "react"
-import {
-    Box,
-    Typography,
-    IconButton,
-    Chip,
-    TextField,
-    Button,
-    Dialog,
-    DialogContent,
-    DialogActions,
-    InputAdornment,
-    Collapse,
-} from "@mui/material"
-import {
-    Close as CloseIcon,
-    ExpandMore as ExpandMoreIcon,
-    ExpandLess as ExpandLessIcon,
-    CalendarToday as CalendarIcon,
-} from "@mui/icons-material"
-// import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+'use client';
+import { useState } from 'react';
+import { Box, Typography, IconButton, Chip, TextField, Button, DialogContent, DialogActions, Collapse } from '@mui/material';
+import { Close as CloseIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
+import { router, usePage } from '@inertiajs/react';
 
-const RoomBookingFilter = () => {
-    const [open, setOpen] = useState(true)
-    const [roomType, setRoomType] = useState("deluxe")
-    const [bookingStatus, setBookingStatus] = useState("all")
-    const [eventDate, setEventDate] = useState("")
-    const [startDate, setStartDate] = useState("")
-    const [endDate, setEndDate] = useState("")
+const RoomBookingFilter = ({ onClose }) => {
+    const { roomTypes, filters } = usePage().props;
 
-    // State to track which sections are expanded
+    const [open, setOpen] = useState(true);
+
+    // ✅ Initialize from backend filters
+    const [roomType, setRoomType] = useState(filters.room_type || '');
+    const [bookingStatus, setBookingStatus] = useState(filters.booking_status || 'all');
+    const [startDate, setStartDate] = useState(filters.start_date || '');
+    const [endDate, setEndDate] = useState(filters.end_date || '');
+
     const [expanded, setExpanded] = useState({
         roomType: true,
         bookingStatus: true,
-        eventDate: true,
         dateRange: true,
-    })
+    });
 
     const handleClose = () => {
-        setOpen(false)
-    }
+        setOpen(false);
+        if (onClose) onClose();
+    };
 
     const handleRoomTypeChange = (type) => {
-        setRoomType(type)
-    }
+        setRoomType((prev) => (prev === type ? '' : type));
+    };
 
-    const handleBookingStatusChange = (status) => {
-        setBookingStatus(status)
-    }
+    const handleBookingStatusChange = (status) => setBookingStatus(status);
 
-    const handleResetFilter = () => {
-        setRoomType("deluxe")
-        setBookingStatus("all")
-        setEventDate("")
-        setStartDate("")
-        setEndDate("")
-    }
-
+    /** ✅ Apply Filters (backend call using Inertia) */
     const handleApplyFilters = () => {
-        // Apply filters logic here
-        console.log({
-            roomType,
-            bookingStatus,
-            eventDate,
-            dateRange: { startDate, endDate },
-        })
-        handleClose()
-    }
+        router.get(
+            route('rooms.manage'),
+            {
+                room_type: roomType || '',
+                booking_status: bookingStatus !== 'all' ? bookingStatus : '',
+                start_date: startDate,
+                end_date: endDate,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+            },
+        );
+        handleClose();
+    };
 
-    // Toggle section expansion
+    /** ✅ Reset Filters */
+    const handleResetFilter = () => {
+        setRoomType('');
+        setBookingStatus('all');
+        setStartDate('');
+        setEndDate('');
+
+        router.get(route('rooms.manage'), {}, { preserveScroll: true, preserveState: true, replace: true });
+    };
+
     const toggleSection = (section) => {
-        setExpanded({
-            ...expanded,
-            [section]: !expanded[section],
-        })
-    }
+        setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
+    };
 
     return (
-        <>
-            <Box sx={{
-                px: 2,
-                py: 1
-            }}>
-                <Box sx={{ px: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="h6" fontWeight="500" fontSize="32px" sx={{
-                        color: '#121212'
-                    }}>
-                        Room Booking Filter
-                    </Typography>
-                    <IconButton onClick={handleClose} size="small">
-                        <CloseIcon />
-                    </IconButton>
+        <Box sx={{ px: 2, py: 1 }}>
+            <Box sx={{ px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6" fontWeight="500" fontSize="32px" sx={{ color: '#121212' }}>
+                    Room Booking Filter
+                </Typography>
+                <IconButton onClick={handleClose} size="small">
+                    <CloseIcon />
+                </IconButton>
+            </Box>
+
+            <DialogContent sx={{ p: 2 }}>
+                {/* ✅ Room Type Filter */}
+                <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: expanded.roomType ? 1.5 : 0,
+                            cursor: 'pointer',
+                        }}
+                        onClick={() => toggleSection('roomType')}
+                    >
+                        <Typography variant="body1" fontWeight="medium">
+                            Room Type
+                        </Typography>
+                        {expanded.roomType ? <ExpandMoreIcon fontSize="small" sx={{ color: '#999' }} /> : <ExpandLessIcon fontSize="small" sx={{ color: '#999' }} />}
+                    </Box>
+                    <Collapse in={expanded.roomType}>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {roomTypes.map((type) => (
+                                <Chip
+                                    key={type.id}
+                                    label={type.name}
+                                    onClick={() => handleRoomTypeChange(type.id)}
+                                    sx={{
+                                        bgcolor: roomType == type.id ? '#0a3d62' : '#e3f2fd',
+                                        color: roomType == type.id ? 'white' : '#333',
+                                        '&:hover': {
+                                            bgcolor: roomType == type.id ? '#0a3d62' : '#d0e8fd',
+                                        },
+                                    }}
+                                />
+                            ))}
+                        </Box>
+                    </Collapse>
                 </Box>
 
-                <DialogContent sx={{ p: 2 }}>
-                    {/* Room Type */}
-                    <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.roomType ? 1.5 : 0,
-                                cursor: "pointer",
-                            }}
-                            onClick={() => toggleSection("roomType")}
-                        >
-                            <Typography variant="body1" fontWeight="medium">
-                                Room Type
-                            </Typography>
-                            {expanded.roomType ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
-                        </Box>
-                        <Collapse in={expanded.roomType}>
-                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                <Chip
-                                    label="Deluxe room"
-                                    onClick={() => handleRoomTypeChange("deluxe")}
-                                    sx={{
-                                        bgcolor: roomType === "deluxe" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "deluxe" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "deluxe" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "deluxe" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Standard room"
-                                    onClick={() => handleRoomTypeChange("standard")}
-                                    sx={{
-                                        bgcolor: roomType === "standard" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "standard" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "standard" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "standard" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Suit room"
-                                    onClick={() => handleRoomTypeChange("suit")}
-                                    sx={{
-                                        bgcolor: roomType === "suit" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "suit" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "suit" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "suit" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Family room"
-                                    onClick={() => handleRoomTypeChange("family")}
-                                    sx={{
-                                        bgcolor: roomType === "family" ? "#0a3d62" : "#e3f2fd",
-                                        color: roomType === "family" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: roomType === "family" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: roomType === "family" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                            </Box>
-                        </Collapse>
-                    </Box>
-
-                    {/* Booking Status */}
-                    <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.bookingStatus ? 1.5 : 0,
-                                cursor: "pointer",
-                            }}
-                            onClick={() => toggleSection("bookingStatus")}
-                        >
-                            <Typography variant="body1" fontWeight="medium">
-                                Booking Status
-                            </Typography>
-                            {expanded.bookingStatus ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
-                        </Box>
-                        <Collapse in={expanded.bookingStatus}>
-                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                <Chip
-                                    label="All type"
-                                    onClick={() => handleBookingStatusChange("all")}
-                                    sx={{
-                                        bgcolor: bookingStatus === "all" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "all" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: bookingStatus === "all" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "all" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Confirmed"
-                                    onClick={() => handleBookingStatusChange("confirmed")}
-                                    sx={{
-                                        bgcolor: bookingStatus === "confirmed" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "confirmed" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: bookingStatus === "confirmed" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "confirmed" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Pending"
-                                    onClick={() => handleBookingStatusChange("pending")}
-                                    sx={{
-                                        bgcolor: bookingStatus === "pending" ? "#0a3d62" : "#e3f2fd",
-                                        color: bookingStatus === "pending" ? "white" : "#333",
-                                        borderRadius: 1,
-                                        fontWeight: bookingStatus === "pending" ? 500 : 400,
-                                        "&:hover": {
-                                            bgcolor: bookingStatus === "pending" ? "#0a3d62" : "#d0e8fd",
-                                        },
-                                    }}
-                                />
-                            </Box>
-                        </Collapse>
-                    </Box>
-
-                    {/* Date Range */}
-                    <Box sx={{ px: 2, py: 2, border: "1px solid #E3E3E3" }}>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: expanded.dateRange ? 1.5 : 0,
-                                cursor: "pointer",
-                            }}
-                            onClick={() => toggleSection("dateRange")}
-                        >
-                            <Typography variant="body1" fontWeight="medium">
-                                Date Range
-                            </Typography>
-                            {expanded.dateRange ? (
-                                <ExpandMoreIcon fontSize="small" sx={{ color: "#999" }} />
-                            ) : (
-                                <ExpandLessIcon fontSize="small" sx={{ color: "#999" }} />
-                            )}
-                        </Box>
-
-                        <Collapse in={expanded.dateRange}>
-                            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                {/* Start Date */}
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ width: 80 }}>
-                                        Start date
-                                    </Typography>
-                                    <TextField
-                                        type="date"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        fullWidth
-                                        size="small"
-                                        sx={{ maxWidth: 300 }}
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                    />
-                                </Box>
-
-                                {/* End Date */}
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ width: 80 }}>
-                                        End date
-                                    </Typography>
-                                    <TextField
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        fullWidth
-                                        size="small"
-                                        sx={{ maxWidth: 300 }}
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                    />
-                                </Box>
-                            </Box>
-                        </Collapse>
-                    </Box>
-                </DialogContent>
-
-                <DialogActions sx={{ p: 2, justifyContent: "flex-end" }}>
-                    <Button
-                        variant="outlined"
-                        onClick={handleResetFilter}
+                {/* ✅ Booking Status Filter */}
+                <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
+                    <Box
                         sx={{
-                            borderColor: "#ccc",
-                            color: "#333",
-                            borderRadius: 1,
-                            textTransform: "none",
-                            mr: 1,
-                            "&:hover": {
-                                borderColor: "#999",
-                                bgcolor: "rgba(0,0,0,0.04)",
-                            },
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: expanded.bookingStatus ? 1.5 : 0,
+                            cursor: 'pointer',
                         }}
+                        onClick={() => toggleSection('bookingStatus')}
                     >
-                        Reset Filter
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleApplyFilters}
-                        sx={{
-                            bgcolor: "#0a3d62",
-                            color: "white",
-                            borderRadius: 1,
-                            textTransform: "none",
-                            "&:hover": {
-                                bgcolor: "#0c2461",
-                            },
-                        }}
-                    >
-                        Apply Filters
-                    </Button>
-                </DialogActions>
-            </Box>
-        </>
-    )
-}
+                        <Typography variant="body1" fontWeight="medium">
+                            Booking Status
+                        </Typography>
+                        {expanded.bookingStatus ? <ExpandMoreIcon fontSize="small" sx={{ color: '#999' }} /> : <ExpandLessIcon fontSize="small" sx={{ color: '#999' }} />}
+                    </Box>
+                    <Collapse in={expanded.bookingStatus}>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {['all', 'confirmed', 'pending', 'checked_in', 'checked_out'].map((status) => (
+                                <Chip
+                                    key={status}
+                                    label={status.replace('_', ' ').toUpperCase()}
+                                    onClick={() => handleBookingStatusChange(status)}
+                                    sx={{
+                                        bgcolor: bookingStatus === status ? '#0a3d62' : '#e3f2fd',
+                                        color: bookingStatus === status ? 'white' : '#333',
+                                        borderRadius: 1,
+                                        fontWeight: bookingStatus === status ? 500 : 400,
+                                        '&:hover': { bgcolor: bookingStatus === status ? '#0a3d62' : '#d0e8fd' },
+                                    }}
+                                />
+                            ))}
+                        </Box>
+                    </Collapse>
+                </Box>
 
-export default RoomBookingFilter
+                {/* ✅ Date Range */}
+                <Box sx={{ px: 2, py: 2, border: '1px solid #E3E3E3' }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: expanded.dateRange ? 1.5 : 0,
+                            cursor: 'pointer',
+                        }}
+                        onClick={() => toggleSection('dateRange')}
+                    >
+                        <Typography variant="body1" fontWeight="medium">
+                            Date Range
+                        </Typography>
+                        {expanded.dateRange ? <ExpandMoreIcon fontSize="small" sx={{ color: '#999' }} /> : <ExpandLessIcon fontSize="small" sx={{ color: '#999' }} />}
+                    </Box>
+                    <Collapse in={expanded.dateRange}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {/* Start Date */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography variant="body2" color="text.secondary" sx={{ width: 80 }}>
+                                    Start date
+                                </Typography>
+                                <TextField type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} fullWidth size="small" sx={{ maxWidth: 300 }} />
+                            </Box>
+                            {/* End Date */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography variant="body2" color="text.secondary" sx={{ width: 80 }}>
+                                    End date
+                                </Typography>
+                                <TextField type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} fullWidth size="small" sx={{ maxWidth: 300 }} />
+                            </Box>
+                        </Box>
+                    </Collapse>
+                </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 2, justifyContent: 'flex-end' }}>
+                <Button variant="outlined" onClick={handleResetFilter} sx={{ borderColor: '#ccc', color: '#333', borderRadius: 1, textTransform: 'none', mr: 1 }}>
+                    Reset Filter
+                </Button>
+                <Button
+                    variant="contained"
+                    onClick={handleApplyFilters}
+                    sx={{
+                        bgcolor: '#0a3d62',
+                        color: 'white',
+                        borderRadius: 1,
+                        textTransform: 'none',
+                        '&:hover': { bgcolor: '#0c2461' },
+                    }}
+                >
+                    Apply Filters
+                </Button>
+            </DialogActions>
+        </Box>
+    );
+};
+
+export default RoomBookingFilter;

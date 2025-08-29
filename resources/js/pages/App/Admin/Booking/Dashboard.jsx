@@ -19,6 +19,7 @@ import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { addDays, format } from 'date-fns';
 import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
+import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -317,7 +318,14 @@ const BookingDashboard = ({ data, roomTypes }) => {
     // TODO: Remove selected booking state when reverting to original print functionality
     const [selectedBooking, setSelectedBooking] = useState(null);
 
-    const filteredBookings = data.bookingsData.filter((booking) => (booking.room?.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
+    const [filteredBookings, setFilteredBookings] = useState(data.bookingsData || []);
+
+    const displayedBookings = filteredBookings.filter((booking) => {
+        const term = searchTerm.toLowerCase();
+        return (booking.customer?.name || '').toLowerCase().includes(term) || (booking.member?.full_name || '').toLowerCase().includes(term) || (booking.room?.name || '').toLowerCase().includes(term) || booking.booking_no?.toString().includes(term);
+    });
+
+    // const filteredBookings = data.bookingsData.filter((booking) => (booking.room?.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
     const handleOpenBookingModal = () => {
         setShowAvailabilityModal(true);
@@ -493,118 +501,6 @@ const BookingDashboard = ({ data, roomTypes }) => {
                             </Col>
                         </Row>
 
-                        {/* Room Checkin Modal  */}
-                        <RoomCheckInModal open={showCheckInModal} onClose={() => setShowCheckInModal(false)} bookingId={selectedBooking?.id} />
-
-                        {/* TODO: Remove invoice modal when reverting to original print functionality */}
-                        <Modal show={showInvoiceModal} onHide={handleCloseInvoice} className="custom-dialog-right" size="lg" aria-labelledby="invoice-modal-title">
-                            <Modal.Body>
-                                <div dangerouslySetInnerHTML={{ __html: selectedBooking ? generateInvoiceContent(selectedBooking) : '' }} />
-
-                                {/* ✅ Documents Preview */}
-                                {JSONParse(selectedBooking?.booking_docs) && JSONParse(selectedBooking?.booking_docs).length > 0 && (
-                                    <div style={{ marginTop: '20px' }}>
-                                        <h5>Attached Documents</h5>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                                            {JSONParse(selectedBooking?.booking_docs).map((doc, index) => {
-                                                const ext = doc.split('.').pop().toLowerCase();
-
-                                                // ✅ For images
-                                                if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
-                                                    return (
-                                                        <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                            <img src={doc} alt={`Document ${index + 1}`} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} onClick={() => window.open(doc, '_blank')} />
-                                                            <p style={{ fontSize: '12px', marginTop: '5px' }}>Image</p>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                // ✅ For PDF
-                                                if (ext === 'pdf') {
-                                                    return (
-                                                        <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                            <img
-                                                                src="/assets/pdf-icon.png" // You can use a static icon
-                                                                alt="PDF"
-                                                                style={{ width: '60px', cursor: 'pointer' }}
-                                                                onClick={() => window.open(doc, '_blank')}
-                                                            />
-                                                            <p style={{ fontSize: '12px', marginTop: '5px' }}>PDF</p>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                // ✅ For DOCX
-                                                if (ext === 'docx' || ext === 'doc') {
-                                                    return (
-                                                        <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                            <img
-                                                                src="/assets/word-icon.png" // Use a static Word icon
-                                                                alt="DOCX"
-                                                                style={{ width: '60px', cursor: 'pointer' }}
-                                                                onClick={() => window.open(doc, '_blank')}
-                                                            />
-                                                            <p style={{ fontSize: '12px', marginTop: '5px' }}>Word</p>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                return null; // For unknown file types
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </Modal.Body>
-                            <Modal.Footer>
-                                <Button variant="secondary" onClick={handleCloseInvoice}>
-                                    Close
-                                </Button>
-                                {selectedBooking?.status === 'confirmed' && (
-                                    <Button variant="secondary" onClick={() => setShowCheckInModal(true)}>
-                                        Check In
-                                    </Button>
-                                )}
-                                {selectedBooking?.status === 'checked_in' && (
-                                    <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking.id, type: 'checkout' }))}>
-                                        Check Out
-                                    </Button>
-                                )}
-                                {!['checked_out', 'cancelled', 'no_show', 'refunded'].includes(selectedBooking?.status) ? (
-                                    <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking?.id }))}>
-                                        Edit
-                                    </Button>
-                                ) : (
-                                    ''
-                                )}
-                                {selectedBooking?.invoice?.status === 'unpaid' ? (
-                                    <Button variant="success" onClick={() => router.visit(route('booking.payment', { invoice_no: selectedBooking?.invoice?.id }))}>
-                                        Pay Now
-                                    </Button>
-                                ) : selectedBooking?.invoice?.status === 'paid' ? (
-                                    <Button variant="outline-success" disabled>
-                                        Paid
-                                    </Button>
-                                ) : null}
-
-                                {/* TODO: Optional - Keep print button if needed during testing */}
-                                <Button
-                                    style={{ backgroundColor: '#003366', color: 'white' }}
-                                    onClick={() => {
-                                        const printWindow = window.open('', '_blank');
-                                        printWindow.document.write(`${generateInvoiceContent(selectedBooking)}`);
-                                        printWindow.document.close();
-                                        printWindow.focus();
-                                        setTimeout(() => {
-                                            printWindow.print();
-                                            printWindow.close();
-                                        }, 250);
-                                    }}
-                                >
-                                    Print
-                                </Button>
-                            </Modal.Footer>
-                        </Modal>
-
                         {loading && (
                             <div className="p-4">
                                 <Typography>Loading...</Typography>
@@ -646,24 +542,11 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                 }}
                                             />
                                         </div>
-                                        <Button
-                                            variant="outline-secondary"
-                                            className="d-flex align-items-center gap-1"
-                                            style={{
-                                                border: '1px solid #063455',
-                                                borderRadius: '0px',
-                                                backgroundColor: 'transparent',
-                                                color: '#495057',
-                                            }}
-                                            onClick={handleFilterShow}
-                                        >
-                                            <FilterAlt fontSize="small" /> Filter
-                                        </Button>
                                     </Col>
                                 </Row>
 
-                                {!searchResultsFilter && filteredBookings.length > 0 ? (
-                                    filteredBookings.map((booking, index) => {
+                                {!searchResultsFilter && displayedBookings.length > 0 ? (
+                                    displayedBookings.map((booking, index) => {
                                         const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
 
                                         return (
@@ -758,6 +641,9 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                 )}
                             </>
                         )}
+
+                        {/* Booking Invoice Modal */}
+                        <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} setBookings={setFilteredBookings} />
 
                         {!loading && searchResultsFilter && <AvailableRooms data={searchResults} type={bookingType} checkin={checkin} checkout={checkout} persons={adults} />}
                     </Container>

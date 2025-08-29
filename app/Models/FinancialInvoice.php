@@ -39,16 +39,11 @@ class FinancialInvoice extends BaseModel
 
     public function customer()
     {
-        return $this->belongsTo(User::class, 'customer_id', 'id');
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
 
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id', 'user_id');
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'member_id', 'id');
     }
 }
