@@ -312,8 +312,20 @@ class RoomBookingController extends Controller
 
     public function getCalendar(Request $req)
     {
-        $bookings = RoomBooking::whereMonth('check_in_date', $req->month)
-            ->whereYear('check_in_date', $req->year)
+        $monthStart = Carbon::createFromDate($req->year, $req->month, 1)->startOfMonth();
+        $monthEnd = (clone $monthStart)->endOfMonth();
+
+        $bookings = RoomBooking::where(function ($query) use ($monthStart, $monthEnd) {
+            $query
+                ->whereBetween('check_in_date', [$monthStart, $monthEnd])
+                ->orWhereBetween('check_out_date', [$monthStart, $monthEnd])
+                ->orWhere(function ($q) use ($monthStart, $monthEnd) {
+                    // Booking starts before month and ends after month
+                    $q
+                        ->where('check_in_date', '<', $monthStart)
+                        ->where('check_out_date', '>', $monthEnd);
+                });
+        })
             ->with('room', 'customer', 'member:id,user_id,membership_no,full_name,personal_email')
             ->get()
             ->map(fn($b) => [

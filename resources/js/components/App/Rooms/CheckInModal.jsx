@@ -116,7 +116,7 @@ const RoomCheckInModal = ({ open, onClose, bookingId }) => {
                 <Button onClick={onClose} variant="outlined" disabled={submitting}>
                     Cancel
                 </Button>
-                <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading || submitting || !isStatusAllowed}>
+                <Button onClick={handleSubmit} variant="contained" style={{ backgroundColor: '#063455', color: '#fff' }} disabled={loading || submitting || !isStatusAllowed}>
                     {submitting ? 'Submitting...' : 'Submit'}
                 </Button>
             </DialogActions>
