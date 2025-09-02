@@ -37,7 +37,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         persons: urlParamsObject?.persons || '',
         arrivalDetails: '',
         departureDetails: '',
-        bookingType: 'Member',
+        bookingType: 0,
         guest: '',
         familyMember: '',
         room: room || '',
@@ -190,7 +190,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
             >
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
-                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit('/booking/dashboard')}>
+                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                         <ArrowBack />
                     </IconButton>
                     <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
@@ -281,16 +281,16 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 <Grid item xs={12}>
                     <FormLabel>Booking Type</FormLabel>
                     <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
-                        <FormControlLabel value="Member" control={<Radio />} label="Member" />
-                        <FormControlLabel value="Corporate Member" control={<Radio />} label="Corporate Member" />
-                        <FormControlLabel value="Applied Member" control={<Radio />} label="Applied Member" />
-                        <FormControlLabel value="Affiliated Member" control={<Radio />} label="Affiliated Member" />
-                        <FormControlLabel value="VIP Guest" control={<Radio />} label="VIP Guest" />
+                        <FormControlLabel value="0" control={<Radio />} label="Member" />
+                        <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
+                        <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
+                        <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" />
+                        <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" />
                     </RadioGroup>
                 </Grid>
 
                 <Grid item xs={12}>
-                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="admin.api.search-users" placeholder="Search members..." />
+                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: formData.bookingType }} placeholder="Search members..." />
                     {errors.guest && (
                         <Typography variant="body2" color="error">
                             {errors.guest}
@@ -302,21 +302,26 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                             <Typography variant="h5" sx={{ mb: 1 }}>
                                 Member Information
                             </Typography>
-                            <Typography variant="body1">Member #: {formData.guest?.membership_no}</Typography>
+                            <Typography variant="body1">{formData.guest?.booking_type == 'member' ? `Member # ${formData.guest?.membership_no}` : `Guest # ${formData.guest?.customer_no}`}</Typography>
                             <Typography variant="body1">Email: {formData.guest?.email}</Typography>
                             <Typography variant="body1">Phone: {formData.guest?.phone}</Typography>
+                            <Typography variant="body1">Cnic / Passport: {formData.guest?.cnic}</Typography>
                             <Typography variant="body1">Address: {formData.guest?.address}</Typography>
-                            <FormControl fullWidth sx={{ mt: 2 }}>
-                                <InputLabel>Select Family Member</InputLabel>
-                                <Select value={formData.familyMember} onChange={handleChange} name="familyMember" label="Select Family Member">
-                                    <MenuItem value="">Select Family Member</MenuItem>
-                                    {familyMembers?.map((member) => (
-                                        <MenuItem key={member.id} value={member.id}>
-                                            {member.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                            {formData.guest?.booking_type == 'member' ? (
+                                <FormControl fullWidth sx={{ mt: 2 }}>
+                                    <InputLabel>Select Family Member</InputLabel>
+                                    <Select value={formData.familyMember} onChange={handleChange} name="familyMember" label="Select Family Member">
+                                        <MenuItem value="">Select Family Member</MenuItem>
+                                        {familyMembers?.map((member) => (
+                                            <MenuItem key={member.id} value={member.id}>
+                                                {member.label}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            ) : (
+                                ''
+                            )}
                         </Box>
                     )}
                 </Grid>

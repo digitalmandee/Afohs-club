@@ -98,7 +98,9 @@ class MembershipController extends Controller
 
         // Filter: CNIC
         if ($request->filled('cnic')) {
-            $query->where('cnic_no', 'like', '%' . $request->cnic . '%');
+            $cnic = str_replace('-', '', $request->cnic);
+
+            $query->whereRaw("REPLACE(cnic_no, '-', '') LIKE ?", ["%{$cnic}%"]);
         }
 
         // Filter: Contact
@@ -157,6 +159,7 @@ class MembershipController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
+                'membership_no' => 'nullable|string|unique:members,membership_no',
                 'personal_email' => 'nullable|email|unique:members,personal_email',
                 'barcode_no' => 'nullable|string|unique:members,barcode_no',
                 'family_members' => 'array',
@@ -164,11 +167,9 @@ class MembershipController extends Controller
                 'cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
                 'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
             ], [
-                'cnic_no.unique' => "The primary user's CNIC already exists.",
-                'family_members.*.cnic.unique' => "The family member's CNIC already exists.",
-            ], [
-                'members.cnic_no' => 'Primary User CNIC',
-                'family_members.*.cnic' => 'Family Member CNIC',
+                'membership_no.unique' => 'Membership number already exists.⚠️',
+                'cnic_no.unique' => 'Member CNIC already exists.⚠️',
+                'family_members.*.cnic.unique' => "Family member's CNIC already exists.⚠️",
             ]);
 
             // Custom validation to check if family member CNIC matches primary user CNIC
@@ -456,6 +457,7 @@ class MembershipController extends Controller
             // Update Family Members
             foreach ($request->family_members as $newMemberData) {
                 // Check if family member is new
+
                 if (str_starts_with($newMemberData['id'], 'new-')) {
                     // Handle family member image
                     $familyMemberImagePath = null;
@@ -486,7 +488,7 @@ class MembershipController extends Controller
                         'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
                         'family_suffix' => $newMemberData['family_suffix'],
                         'full_name' => $newMemberData['full_name'],
-                        'personal_email' => $newMemberData['email'],
+                        'personal_email' => $newMemberData['email'] ?? null,
                         'relation' => $newMemberData['relation'],
                         'date_of_birth' => $newMemberData['date_of_birth'],
                         'qr_code' => $qrImagePath,
@@ -496,7 +498,7 @@ class MembershipController extends Controller
                         'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
                         'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
                         'cnic_no' => $newMemberData['cnic'],
-                        'mobile_number_a' => $newMemberData['phone_number'],
+                        'mobile_number_a' => $newMemberData['phone_number'] ?? null,
                     ]);
                 } elseif (!empty($newMemberData['id'])) {
                     // Update existing family member
@@ -523,16 +525,16 @@ class MembershipController extends Controller
                             'full_name' => $newMemberData['full_name'],
                             'barcode_no' => $newMemberData['barcode_no'] ?? null,
                             'profile_photo' => $familyMemberImagePath,
-                            'personal_email' => $newMemberData['email'],
+                            'personal_email' => $newMemberData['email'] ?? null,
                             'relation' => $newMemberData['relation'],
                             'date_of_birth' => $newMemberData['date_of_birth'],
-                            'status' => $newMemberData['status'],
+                            'status' => $newMemberData['status'] ?? null,
                             'start_date' => $newMemberData['start_date'] ?? null,
                             'end_date' => $newMemberData['end_date'] ?? null,
                             'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
                             'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
-                            'cnic_no' => $newMemberData['cnic'],
-                            'mobile_number_a' => $newMemberData['phone_number'],
+                            'cnic_no' => $newMemberData['cnic'] ?? null,
+                            'mobile_number_a' => $newMemberData['phone_number'] ?? null,
                         ]);
                     }
                 }
@@ -610,7 +612,7 @@ class MembershipController extends Controller
     {
         $request->validate([
             'member_id' => 'required|exists:members,id',
-            'status' => 'required|in:active,suspended,cancelled,absent',
+            'status' => 'required|in:active,suspended,cancelled,absent,expired,terminated,not_assign,in_suspension_process',
             'reason' => 'nullable|string',
             'duration_type' => 'nullable|in:1Day,1Monthly,1Year,CustomDate',
             'custom_end_date' => 'nullable|date',

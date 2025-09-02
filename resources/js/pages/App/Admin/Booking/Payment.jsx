@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Container, Button, Form, InputGroup, Modal, Card, Row, Col } from 'react-bootstrap';
 import { ArrowBack, CheckCircle, Add, Remove, Print, CreditCard, EventNote, AccountBalance, KeyboardArrowRight, Check } from '@mui/icons-material';
-import { IconButton, Divider, Box, Autocomplete, TextField, Typography, Select, MenuItem } from '@mui/material';
+import { IconButton, Divider, Box, Autocomplete, TextField, Typography, Select, MenuItem, Grid } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
@@ -17,9 +17,13 @@ const BookingPayment = ({ invoice }) => {
 
     const [paymentMethod, setPaymentMethod] = useState('cash');
 
+    const advancePayment = parseFloat(invoice?.advance_payment || 0);
+    const totalPrice = parseFloat(invoice?.total_price || 0);
+    const remainingAmount = totalPrice - advancePayment;
+
     const [invoiceForm, setInvoiceForm] = useState({
-        user_id: invoice?.customer?.id,
-        inputAmount: invoice?.total_price?.toString() || '0',
+        user_id: invoice.customer ? invoice.customer.id : invoice.member ? invoice.member.id : '',
+        inputAmount: remainingAmount.toString() || '0',
         customerCharges: '0.00',
         paymentMethod: 'cash',
         bookingStatus: '',
@@ -66,7 +70,7 @@ const BookingPayment = ({ invoice }) => {
 
     const [error, setError] = useState('');
 
-    const minAmount = parseFloat(invoice?.total_price || 0);
+    const minAmount = remainingAmount > 0 ? remainingAmount : 0;
 
     const handlePaymentChange = (e) => {
         const { name, value, files } = e.target;
@@ -106,7 +110,11 @@ const BookingPayment = ({ invoice }) => {
         }
 
         if (inputAmount < minAmount) {
-            setError(`Amount must be at least Rs ${minAmount.toFixed(2)}.`);
+            if (advancePayment > 0) {
+                setError(`Amount must be at least Rs ${minAmount.toFixed(2)} (remaining after advance).`);
+            } else {
+                setError(`Amount must be at least Rs ${minAmount.toFixed(2)}`);
+            }
             return;
         }
 
@@ -114,6 +122,8 @@ const BookingPayment = ({ invoice }) => {
         data.append('user_id', invoiceForm.user_id);
         data.append('amount', invoice.amount); // or any other base you need
         data.append('total_amount', inputAmount);
+        data.append('advance_payment', advancePayment);
+        data.append('remaining_amount', remainingAmount);
         data.append('invoice_no', invoice.invoice_no); // optionally link to invoice
         data.append('customer_charges', parseFloat(invoiceForm.customerCharges));
         data.append('booking_status', invoiceForm.bookingStatus);
@@ -178,7 +188,7 @@ const BookingPayment = ({ invoice }) => {
             >
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
-                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit('/booking/dashboard')}>
+                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                         <ArrowBack />
                     </IconButton>
                     <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
@@ -188,21 +198,38 @@ const BookingPayment = ({ invoice }) => {
 
                 <div className="my-4 p-4 bg-white rounded border" style={{ maxWidth: '700px', margin: '0 auto' }}>
                     <Card className="mb-4 p-3">
-                        <h5 style={{ color: '#003366', fontWeight: 600 }}>Customer Info</h5>
-                        <p className="mb-1">
-                            <strong>Name:</strong> {invoice?.customer?.first_name} {invoice?.customer?.last_name}
-                        </p>
-                        <p className="mb-1">
-                            <strong>Email:</strong> {invoice?.customer?.email}
-                        </p>
-                        <p className="mb-1">
-                            <strong>Booking No:</strong> #{invoice?.data?.[0]?.booking_no}
-                        </p>
-                        <p className="mb-1">
-                            <strong>Status:</strong> {invoice.status}
-                        </p>
+                        <Box>
+                            <h5 style={{ color: '#003366', fontWeight: 600 }}>Customer Info</h5>
+                        </Box>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <p className="mb-1">
+                                    <strong>{invoice.customer ? 'Customer' : 'Member'}: </strong>
+                                    {invoice.customer ? invoice.customer?.customer_no : invoice.member?.membership_no}
+                                </p>
+                                <p className="mb-1">
+                                    <strong>Name:</strong> {invoice.customer ? invoice.customer.name : invoice.member ? invoice.member.full_name : 'N/A'}
+                                </p>
+                                <p className="mb-1">
+                                    <strong>Email:</strong> {invoice.customer ? invoice.customer.email : invoice.member ? invoice.member.personal_email : 'N/A'}
+                                </p>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <p className="mb-1">
+                                    <strong>Booking No:</strong> #{invoice?.data?.[0]?.booking_no}
+                                </p>
+                                <p className="mb-1">
+                                    <strong>Status:</strong> {invoice.status}
+                                </p>
+                                <p className="mb-1">
+                                    <strong>Advance Paid:</strong> Rs {advancePayment.toFixed(2)}
+                                </p>
+                                <p className="mb-1">
+                                    <strong>Remaining:</strong> Rs {remainingAmount.toFixed(2)}
+                                </p>
+                            </Grid>
+                        </Grid>
                     </Card>
-
                     <h6
                         className="mb-4"
                         style={{

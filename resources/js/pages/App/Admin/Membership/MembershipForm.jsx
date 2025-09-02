@@ -15,6 +15,8 @@ import { objectToFormData } from '@/helpers/objectToFormData';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
+const LOCAL_STORAGE_KEY = 'membershipFormData';
+
 const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -135,7 +137,17 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         family_members: [],
     };
 
-    const [formsData, setFormsData] = useState(getNormalizedUserData(user));
+    const isEditMode = !!user?.id;
+
+    const [formsData, setFormsData] = useState(() => {
+        if (!isEditMode) {
+            const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedData) {
+                return JSON.parse(savedData);
+            }
+        }
+        return getNormalizedUserData(user);
+    });
 
     const handleChangeData = (name, value) => {
         addDataInState(name, value);
@@ -145,6 +157,12 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         const { name, value } = e.target;
         addDataInState(name, value);
     };
+
+    useEffect(() => {
+        if (!isEditMode) {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formsData));
+        }
+    }, [formsData, isEditMode]);
 
     useEffect(() => {
         if (!sameAsCurrent) return;
@@ -244,8 +262,10 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
 
                 const invoiceNo = response.data?.invoice_no || user.invoice_id;
                 if (!isEditMode) {
+                    localStorage.removeItem(LOCAL_STORAGE_KEY);
                     router.visit(route('membership.allpayment') + `?invoice_no=${invoiceNo}`);
-                } else {
+                }
+                {
                     router.visit(route('membership.dashboard'));
                 }
             })
@@ -253,7 +273,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 if (error.response?.status === 422 && error.response.data.errors) {
                     Object.entries(error.response.data.errors).forEach(([field, messages]) => {
                         const label = field.replace(/\./g, ' → ');
-                        messages.forEach((msg) => enqueueSnackbar(`${label}: ${msg}`, { variant: 'error' }));
+                        messages.forEach((msg) => enqueueSnackbar(msg, { variant: 'error' }));
                     });
                 } else {
                     enqueueSnackbar(error.response?.data?.error || 'Something went wrong.', { variant: 'error' });

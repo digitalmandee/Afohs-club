@@ -11,6 +11,7 @@ class RoomBooking extends BaseModel
     protected $fillable = [
         'booking_no',
         'customer_id',
+        'member_id',
         'booking_date',
         'check_in_date',
         'check_in_time',
@@ -53,10 +54,21 @@ class RoomBooking extends BaseModel
 
     protected $casts = ['additional_data' => 'array'];
 
+    protected $appends = ['invoice'];
+
+    public function getInvoiceAttribute()
+    {
+        return FinancialInvoice::where('invoice_type', 'room_booking')
+            ->whereJsonContains('data', [['booking_id' => $this->id]])
+            ->select('id', 'status')
+            ->first();
+    }
+
     public function miniBarItems()
     {
         return $this->hasMany(RoomBookingMiniBarItem::class);
     }
+
     public function otherCharges()
     {
         return $this->hasMany(RoomBookingOtherCharge::class);
@@ -69,6 +81,11 @@ class RoomBooking extends BaseModel
 
     public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
+
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id', 'user_id');
     }
 }

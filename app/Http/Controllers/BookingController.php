@@ -41,7 +41,7 @@ class BookingController extends Controller
         }
 
         // Step 2: Get all RoomBookings
-        $bookings = RoomBooking::with('room', 'customer', 'customer.member')->latest()->get();
+        $bookings = RoomBooking::with('room', 'customer', 'member')->latest()->take(10)->get();
 
         // Step 3: Attach invoice data to each booking
         $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
@@ -90,8 +90,11 @@ class BookingController extends Controller
     {
         $checkin = $request->query('checkin');  // Y-m-d
         $checkout = $request->query('checkout');  // Y-m-d
-        $persons = $request->query('persons');  // int
+        $persons = (int) $request->query('persons');  // int
 
+        $maxCapacityLimit = $persons + 2;
+
+        // Find conflicted rooms (already booked)
         $conflicted = RoomBooking::query()
             ->whereIn('status', ['confirmed', 'pending'])
             ->where(function ($query) use ($checkin, $checkout) {
@@ -101,10 +104,11 @@ class BookingController extends Controller
             })
             ->pluck('room_id');
 
+        // Get available rooms with capacity rule
         $available = Room::query()
             ->whereNotIn('id', $conflicted)
-            ->where('max_capacity', '>', $persons)
-            ->with('roomType', 'categoryCharges', 'categoryCharges.Category')
+            ->whereBetween('max_capacity', [$persons, $maxCapacityLimit])
+            ->with(['roomType', 'categoryCharges', 'categoryCharges.Category'])
             ->get();
 
         return response()->json($available);
@@ -141,8 +145,9 @@ class BookingController extends Controller
 
     public function editbooking(Request $request, $id)
     {
-        $booking = RoomBooking::with(['customer', 'customer.member', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
+        $booking = RoomBooking::with(['customer', 'member', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
         Log::info($booking->room);
+        $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : null));
         $booking = [
             'id' => $booking->id,
             'bookingNo' => $booking->booking_no,
@@ -155,12 +160,13 @@ class BookingController extends Controller
             'departureDetails' => $booking->departure_details,
             'bookingType' => $booking->booking_type,
             'guest' => [
-                'id' => $booking->customer_id,
-                'name' => $booking->customer->first_name ?? null,
-                'label' => $booking->customer->first_name ?? null,
-                'email' => $booking->customer->email ?? null,
-                'phone' => $booking->customer->phone_number ?? null,
-                'membership_no' => $booking->customer->member->membership_no ?? null,
+                'id' => $booking->customer ? $booking->customer->id : ($booking->member ? $booking->member->user_id : null),
+                'booking_type' => $booking->customer ? 'customer' : ($booking->member ? 'member' : null),
+                'name' => $fullName,
+                'label' => $fullName,
+                'email' => $booking->customer ? $booking->customer->email : ($booking->member ? $booking->member->personal_email : null),
+                'phone' => $booking->customer ? $booking->customer->contact : ($booking->member ? $booking->member->mobile_number_a : null),
+                'membership_no' => $booking->customer ? $booking->customer->customer_no : ($booking->member ? $booking->member->membership_no : null),
             ],
             'guestFirstName' => $booking->guest_first_name,
             'guestLastName' => $booking->guest_last_name,
@@ -203,7 +209,7 @@ class BookingController extends Controller
     {
         $invoice_no = $request->query('invoice_no');
 
-        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer:id,first_name,last_name,email', 'customer.member.memberType')->first();
+        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,user_id,membership_no,full_name,personal_email', 'member.memberType')->first();
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);
@@ -318,8 +324,20 @@ class BookingController extends Controller
     {
         $request->validate([
             'invoice_no' => 'required|exists:financial_invoices,invoice_no',
-            'amount' => 'required|numeric',
+            'amount' => 'required|numeric|min:0',
         ]);
+
+        $invoice = FinancialInvoice::where('invoice_no', $request->invoice_no)->first();
+
+        // Calculate remaining balance
+        $remaining = $invoice->total_price - $invoice->paid_amount;
+
+        if ($request->amount < $remaining) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Amount must be at least Rs ' . number_format($remaining, 2)
+            ], 422);
+        }
 
         DB::beginTransaction();
 
@@ -328,13 +346,12 @@ class BookingController extends Controller
             $recieptPath = FileHelper::saveImage($request->file('reciept'), 'reciepts');
         }
 
-        $invoice = FinancialInvoice::where('invoice_no', $request->invoice_no)->first();
         $invoice->payment_date = now();
-        $invoice->paid_amount = $request->total_amount;
-        $invoice->customer_charges = $request->customer_charges;
+        $invoice->paid_amount = $invoice->paid_amount + $request->amount;  // ✅ accumulate payments
+        $invoice->customer_charges = $request->customer_charges ?? $invoice->customer_charges;
         $invoice->payment_method = $request->payment_method;
         $invoice->reciept = $recieptPath;
-        $invoice->status = 'paid';
+        $invoice->status = $invoice->paid_amount >= $invoice->total_price ? 'paid' : 'partial';
         $invoice->save();
 
         $booking = RoomBooking::find($invoice->data[0]['booking_id']);

@@ -18,6 +18,6 @@ class RoomCategoryCharge extends Model
 
     public function Category()
     {
-        return $this->belongsTo(RoomCategory::class);
+        return $this->belongsTo(RoomCategory::class, 'room_category_id', 'id');
     }
 }

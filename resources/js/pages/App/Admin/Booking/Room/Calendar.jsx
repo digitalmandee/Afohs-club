@@ -23,7 +23,7 @@ const RoomCalendar = () => {
 
     const fetchData = async () => {
         try {
-            const { data } = await axios.get('/api/room-bookings/calendar', {
+            const { data } = await axios.get(route('api.bookings.calendar'), {
                 params: { month, year },
             });
 
@@ -75,9 +75,15 @@ const RoomCalendar = () => {
 
     const statusBar = (s) => ({ booked: 'blue', checked_in: 'black', checked_out: 'black', refund: 'black' })[s] || 'black';
 
+    // Calculate dynamic days based on month and next month
+    const startDate = moment(`${year}-${month}-01`);
+    const daysInMonth = startDate.daysInMonth(); // current month
+    const nextMonthDays = startDate.clone().add(1, 'month').daysInMonth(); // next month
+    const totalDays = daysInMonth + nextMonthDays; // show current + next month
+
     const dpConfig = {
-        startDate: `${year}-${month}-01`,
-        days: 31,
+        startDate: startDate.format('YYYY-MM-DD'),
+        days: totalDays, // dynamic total days
         scale: 'Day',
         treeEnabled: true,
         treePreventParentUsage: true,
@@ -112,20 +118,6 @@ const RoomCalendar = () => {
         setSelectedBooking(null);
     };
 
-    const handleCheckInSubmit = async () => {
-        try {
-            await axios.post('/api/room-bookings/check-in', {
-                booking_id: selectedBooking.id,
-                check_in_date: selectedBooking.check_in_date,
-                check_in_time: '12:00', // default for now
-            });
-            setCheckInDialogOpen(false);
-            fetchData(); // Refresh calendar
-        } catch (error) {
-            console.error('Check-in failed:', error);
-        }
-    };
-
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -138,7 +130,7 @@ const RoomCalendar = () => {
             >
                 <Box px={2}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton style={{ color: '#063455' }} onClick={() => router.visit('/booking/dashboard')}>
+                        <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                             <ArrowBack />
                         </IconButton>
                         <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '24px' }}>
