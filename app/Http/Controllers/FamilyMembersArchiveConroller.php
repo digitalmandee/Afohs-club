@@ -29,7 +29,9 @@ class FamilyMembersArchiveConroller extends Controller
 
         // CNIC
         if ($request->filled('cnic')) {
-            $query->where('cnic_no', 'like', '%' . $request->cnic . '%');
+            $cnic = str_replace('-', '', $request->cnic);
+
+            $query->whereRaw("REPLACE(cnic_no, '-', '') LIKE ?", ["%{$cnic}%"]);
         }
 
         // Contact
