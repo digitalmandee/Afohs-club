@@ -98,7 +98,9 @@ class MembershipController extends Controller
 
         // Filter: CNIC
         if ($request->filled('cnic')) {
-            $query->where('cnic_no', 'like', '%' . $request->cnic . '%');
+            $cnic = str_replace('-', '', $request->cnic);
+
+            $query->whereRaw("REPLACE(cnic_no, '-', '') LIKE ?", ["%{$cnic}%"]);
         }
 
         // Filter: Contact
@@ -157,6 +159,7 @@ class MembershipController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
+                'membership_no' => 'nullable|string|unique:members,membership_no',
                 'personal_email' => 'nullable|email|unique:members,personal_email',
                 'barcode_no' => 'nullable|string|unique:members,barcode_no',
                 'family_members' => 'array',
@@ -164,11 +167,9 @@ class MembershipController extends Controller
                 'cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
                 'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
             ], [
-                'cnic_no.unique' => "The primary user's CNIC already exists.",
-                'family_members.*.cnic.unique' => "The family member's CNIC already exists.",
-            ], [
-                'members.cnic_no' => 'Primary User CNIC',
-                'family_members.*.cnic' => 'Family Member CNIC',
+                'membership_no.unique' => 'Membership number already exists.⚠️',
+                'cnic_no.unique' => 'Member CNIC already exists.⚠️',
+                'family_members.*.cnic.unique' => "Family member's CNIC already exists.⚠️",
             ]);
 
             // Custom validation to check if family member CNIC matches primary user CNIC
