@@ -35,23 +35,6 @@ const TakeAwayDialog = () => {
         }
     }, []);
 
-    const handleSearch = async (event, role) => {
-        const query = event?.target?.value;
-        if (query) {
-            const results = await searchUser(query, role);
-            if (role === 'user') setMembers(results);
-            else setWaiters(results);
-        } else {
-            if (role === 'user') setMembers([]);
-            else setWaiters([]);
-        }
-    };
-
-    const handleAutocompleteChange = (event, value, field) => {
-        handleOrderDetailChange(field, value);
-        // setErrors({ ...errors, [field]: '' }); // Clear error on change
-    };
-
     const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0;
 
     useEffect(() => {

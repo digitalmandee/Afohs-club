@@ -10,16 +10,16 @@ import DineDialog from './Dine';
 import ReservationDialog from './Reservation';
 import TakeAwayDialog from './Takeaway';
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
-    const page = usePage().props;
-
+const NewOrder = ({ orderNo, memberTypes }) => {
     const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails } = useOrderStore();
 
     const [open, setOpen] = useState(true);
+    const [floorTables, setFloorTables] = useState([]);
     const [showData, setShowData] = useState(false);
 
     // get weeks in month
@@ -42,6 +42,22 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
             time: dayjs().format('HH:mm'),
         });
     }, []);
+
+    const loadFloorTables = async () => {
+        try {
+            const response = await axios.get(route('api.floors-with-tables'));
+            setFloorTables(response.data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // Call when user selects DineIn or Reservation
+    useEffect(() => {
+        if (orderDetails.order_type === 'dineIn' || orderDetails.order_type === 'reservation') {
+            loadFloorTables();
+        }
+    }, [orderDetails.order_type]);
 
     return (
         <>

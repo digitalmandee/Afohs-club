@@ -70,6 +70,9 @@ export const useOrderStore = create((set, get) => ({
         kitchen_note: '',
         staff_note: '',
         payment_note: '',
+        nature_of_function: '',
+        theme_of_function: '',
+        special_request: '',
     },
 
     resetOrderDetails: () =>
@@ -91,6 +94,9 @@ export const useOrderStore = create((set, get) => ({
                 kitchen_note: '',
                 staff_note: '',
                 payment_note: '',
+                nature_of_function: '',
+                theme_of_function: '',
+                special_request: '',
             },
         })),
     setInitialOrder: ({ orderNo, memberTypes, floorTables, time, table }) =>

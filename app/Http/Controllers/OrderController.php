@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
+use App\Models\Table;
 use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
@@ -30,9 +31,41 @@ class OrderController extends Controller
         $orderNo = $this->getOrderNo();
         $memberTypes = MemberType::select('id', 'name')->get();
 
+        $floorData = null;
+        $tableData = null;
+
+        // If query params exist, fetch floor and table
+        if ($request->filled('floor')) {
+            $floorId = $request->get('floor');
+            $tableId = $request->get('table');
+
+            $floorQuery = Floor::select('id', 'name')
+                ->where('status', 1)
+                ->where('id', $floorId);
+
+            if ($tableId) {
+                // Directly fetch the single table instead of returning an array
+                $tableData = Table::select('id', 'floor_id', 'table_no', 'capacity')
+                    ->where('floor_id', $floorId)
+                    ->where('id', $tableId)
+                    ->first();
+            }
+
+            $floorData = $floorQuery->first();
+        }
+
+        return Inertia::render('App/Order/New/Index', [
+            'orderNo' => $orderNo,
+            'memberTypes' => $memberTypes,
+            'selectedFloor' => $floorData,
+            'selectedTable' => $tableData,
+        ]);
+    }
+
+    public function getFloorsWithTables()
+    {
         $today = Carbon::today()->toDateString();
 
-        // Fetch floors and their tables, along with today's relevant orders and invoices
         $floorTables = Floor::select('id', 'name')
             ->where('status', 1)
             ->with(['tables' => function ($query) use ($today) {
@@ -47,19 +80,15 @@ class OrderController extends Controller
             }])
             ->get();
 
-        // Process is_available flag based on today's orders and invoice status
         foreach ($floorTables as $floor) {
             foreach ($floor->tables as $table) {
                 $isAvailable = true;
 
                 foreach ($table->orders as $order) {
-                    // Invoice missing or unpaid → not available
                     if (!$order || $order->payment_status === 'unpaid') {
                         $isAvailable = false;
                         break;
                     }
-
-                    // Only allow availability if order is completed AND invoice is paid
                     if (!($order->status === 'completed' && $order->payment_status === 'paid')) {
                         $isAvailable = false;
                         break;
@@ -67,17 +96,11 @@ class OrderController extends Controller
                 }
 
                 $table->is_available = $isAvailable;
-
-                // Optional cleanup
                 unset($table->orders);
             }
         }
 
-        return Inertia::render('App/Order/New/Index', [
-            'orderNo' => $orderNo,
-            'memberTypes' => $memberTypes,
-            'floorTables' => $floorTables,
-        ]);
+        return response()->json($floorTables);
     }
 
     public function orderManagement(Request $request)
@@ -136,6 +159,9 @@ class OrderController extends Controller
             'start_date' => $date,
             'start_time' => $request->time,
             'down_payment' => $request->down_payment,
+            'nature_of_function' => $request->nature_of_function,
+            'theme_of_function' => $request->theme_of_function,
+            'special_request' => $request->special_request,
             'table_id' => $request->table,
             'status' => 'saved',
         ]);
