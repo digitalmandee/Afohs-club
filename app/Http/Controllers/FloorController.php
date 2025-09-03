@@ -164,15 +164,17 @@ class FloorController extends Controller
         $floor = Floor::where('id', $floorId)
             ->whereDate('created_at', '<=', $parsedDate)
             ->with(['tables' => function ($query) use ($parsedDate) {
-                $query->whereDate('created_at', '<=', $parsedDate)
+                $query
+                    ->whereDate('created_at', '<=', $parsedDate)
                     ->select('id', 'floor_id', 'table_no', 'capacity')
                     ->with(['orders' => function ($orderQuery) use ($parsedDate) {
-                        $orderQuery->select('id', 'table_id', 'status', 'start_date', 'user_id')
+                        $orderQuery
+                            ->select('id', 'table_id', 'status', 'start_date', 'member_id')
                             ->whereDate('start_date', $parsedDate)
                             ->whereIn('status', ['pending', 'in_progress', 'completed'])
                             ->with([
                                 'invoice:id,order_id,status',
-                                'user:id,user_id,name',
+                                'member:id,user_id,full_name',
                             ]);
                     }]);
             }])
@@ -191,11 +193,11 @@ class FloorController extends Controller
                 foreach ($table->orders as $order) {
                     $invoice = $order->invoice;
 
-                    if (!$bookedBy && $order->user) {
+                    if (!$bookedBy && $order->member) {
                         $bookedBy = [
                             'order_id' => $order->id,
-                            'id' => $order->user->user_id,
-                            'name' => $order->user->name,
+                            'id' => $order->member->user_id,
+                            'name' => $order->member->full_name,
                         ];
                     }
 

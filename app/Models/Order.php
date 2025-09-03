@@ -57,14 +57,14 @@ class Order extends Model
         return $this->belongsTo(Table::class);
     }
 
-    public function user()
-    {
-        return $this->belongsTo(Member::class);
-    }
-
     public function member()
     {
-        return $this->belongsTo(Member::class, 'user_id', 'user_id');
+        return $this->belongsTo(Member::class, 'member_id', 'user_id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Member::class, 'customer_id', 'id');
     }
 
     public function invoice()

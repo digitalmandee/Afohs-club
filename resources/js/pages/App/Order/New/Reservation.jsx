@@ -12,8 +12,14 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
+
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 const ReservationDialog = () => {
     const { selectedFloor, selectedTable } = usePage().props;
@@ -43,13 +49,28 @@ const ReservationDialog = () => {
     const id = open ? 'month-year-picker' : undefined;
 
     const handleSaveOrder = async () => {
-        // Client-side validation
         const newErrors = {};
+
         if (!orderDetails.member?.id) newErrors['member.id'] = 'Please select a member.';
         if (!orderDetails.date) newErrors.date = 'Please select a date.';
         if (!orderDetails.start_time) newErrors.start_time = 'Please select start time.';
         if (!orderDetails.end_time) newErrors.end_time = 'Please select end time.';
-        else if (orderDetails.start_time >= orderDetails.end_time) newErrors.end_time = 'End time must be after start time.';
+
+        if (orderDetails.start_time && orderDetails.end_time) {
+            const start = dayjs(orderDetails.start_time, 'HH:mm');
+            const end = dayjs(orderDetails.end_time, 'HH:mm');
+
+            if (start.isSameOrAfter(end)) {
+                newErrors.end_time = 'End time must be after start time.';
+            }
+
+            const isStartAvailable = availableSlots.some((slot) => start.isSameOrAfter(dayjs(slot.start, 'HH:mm')) && start.isBefore(dayjs(slot.end, 'HH:mm')));
+            const isEndAvailable = availableSlots.some((slot) => end.isAfter(dayjs(slot.start, 'HH:mm')) && end.isSameOrBefore(dayjs(slot.end, 'HH:mm')));
+
+            if (!isStartAvailable) newErrors.start_time = 'Start time is not available.';
+            if (!isEndAvailable) newErrors.end_time = 'End time is not available.';
+        }
+
         if (!orderDetails.person_count || orderDetails.person_count < 1) newErrors.person_count = 'Please enter a valid number of persons.';
         if (orderDetails.down_payment !== undefined && orderDetails.down_payment < 0) newErrors.down_payment = 'Please enter a valid down payment.';
 
@@ -60,32 +81,23 @@ const ReservationDialog = () => {
         }
 
         try {
-            const response = await axios.post(route('order.reservation'), orderDetails);
+            const payload = {
+                ...orderDetails,
+                table: selectedTable?.id || null,
+            };
+            const response = await axios.post(route('order.reservation'), payload);
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
-            // Reset unused Form state (preserved as per request)
-            setForm({
-                member: null,
-                date: '',
-                time: '',
-                custom_time: '',
-                person_count: '',
-                down_payment: '',
-                note: '',
-            });
-            // Reset orderDetails fields
+            setForm({ member: null, date: '', time: '', custom_time: '', person_count: '', down_payment: '', note: '' });
             handleOrderDetailChange('member', null);
             handleOrderDetailChange('date', null);
             handleOrderDetailChange('custom_time', '');
             handleOrderDetailChange('person_count', '');
             handleOrderDetailChange('down_payment', '');
             handleOrderDetailChange('price', '');
-            // Reset local state
             setErrors({});
-            router.visit(route('order.new')); // Redirect after success
+            router.visit(route('order.new'));
         } catch (error) {
             if (error.response?.status === 422) {
-                console.log(error.response);
-
                 setErrors(error.response.data.errors);
                 enqueueSnackbar('Validation error: Please fix the form fields.', { variant: 'error' });
             } else {
@@ -127,13 +139,13 @@ const ReservationDialog = () => {
     const handleStartTimeChange = (newValue) => {
         const newStart = newValue ? newValue.format('HH:mm') : '';
 
-        // ✅ Restrict to end_time
-        if (orderDetails.end_time && newStart > orderDetails.end_time) {
-            enqueueSnackbar('Start time cannot be after end time', { variant: 'error' });
+        // Start cannot be after End
+        if (orderDetails.end_time && newStart >= orderDetails.end_time) {
+            enqueueSnackbar('Start time cannot be after or equal to End time', { variant: 'error' });
             return;
         }
 
-        // ✅ Check if within available slots
+        // ✅ Check if Start is inside available slots
         const isValid = availableSlots.some((slot) => newStart >= slot.start && newStart < slot.end);
         if (!isValid) {
             enqueueSnackbar('Selected start time is not in available slots', { variant: 'error' });
@@ -143,17 +155,18 @@ const ReservationDialog = () => {
         handleOrderDetailChange('start_time', newStart);
     };
 
+    // ✅ Handle End Time Change
     const handleEndTimeChange = (newValue) => {
         const newEnd = newValue ? newValue.format('HH:mm') : '';
 
-        // ✅ Restrict to start_time
-        if (orderDetails.start_time && formattedTime <= orderDetails.start_time) {
-            enqueueSnackbar('End time cannot be before start time', { variant: 'error' });
+        // End cannot be before Start
+        if (orderDetails.start_time && newEnd <= orderDetails.start_time) {
+            enqueueSnackbar('End time cannot be before or equal to Start time', { variant: 'error' });
             return;
         }
 
-        // ✅ Check if within available slots
-        const isValid = availableSlots.some((slot) => newEnd >= slot.start && newEnd <= slot.end);
+        // ✅ Check if End is inside available slots
+        const isValid = availableSlots.some((slot) => newEnd > slot.start && newEnd <= slot.end);
         if (!isValid) {
             enqueueSnackbar('Selected end time is not in available slots', { variant: 'error' });
             return;
@@ -162,23 +175,31 @@ const ReservationDialog = () => {
         handleOrderDetailChange('end_time', newEnd);
     };
 
-    // Disable invalid start times
-    const disableStartTime = (time, clockType) => {
+    // ✅ Disable invalid Start Times
+    const disableStartTime = (time) => {
         const formattedTime = time.format('HH:mm');
+
+        // If End is selected, disable times >= End
         if (orderDetails.end_time && formattedTime >= orderDetails.end_time) {
             return true;
         }
+
+        // Disable if not in available slots
         return !availableSlots.some((slot) => formattedTime >= slot.start && formattedTime < slot.end);
     };
 
-    const disableEndTime = (time, clockType) => {
+    // ✅ Disable invalid End Times
+    const disableEndTime = (time) => {
         const formattedTime = time.format('HH:mm');
+
+        // If Start is selected, disable times <= Start
         if (orderDetails.start_time && formattedTime <= orderDetails.start_time) {
             return true;
         }
+
+        // Disable if not in available slots
         return !availableSlots.some((slot) => formattedTime > slot.start && formattedTime <= slot.end);
     };
-
     return (
         <>
             <Box
@@ -558,7 +579,6 @@ const ReservationDialog = () => {
                                     sx={{ width: '100%' }}
                                     value={orderDetails.start_time ? dayjs(orderDetails.start_time, 'HH:mm') : null}
                                     onChange={handleStartTimeChange}
-                                    // onChange={(newValue) => handleOrderDetailChange('start_time', newValue ? newValue.format('HH:mm') : '')}
                                     shouldDisableTime={disableStartTime}
                                     renderInput={(params) => (
                                         <TextField
@@ -581,17 +601,17 @@ const ReservationDialog = () => {
                             </LocalizationProvider>
                         </Grid>
 
+                        {/* ✅ End Time */}
                         <Grid item xs={4}>
                             <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
                                 End Time
                             </Typography>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <TimePicker
-                                    sx={{ width: '100%' }}
                                     label="End Time"
+                                    sx={{ width: '100%' }}
                                     value={orderDetails.end_time ? dayjs(orderDetails.end_time, 'HH:mm') : null}
                                     onChange={handleEndTimeChange}
-                                    // onChange={(newValue) => handleOrderDetailChange('end_time', newValue ? newValue.format('HH:mm') : '')}
                                     shouldDisableTime={disableEndTime}
                                     renderInput={(params) => (
                                         <TextField
@@ -654,19 +674,6 @@ const ReservationDialog = () => {
                             onClick={handleSaveOrder}
                         >
                             Save Order
-                        </Button>
-                        <Button
-                            variant="contained"
-                            endIcon={<ArrowForwardIcon />}
-                            sx={{
-                                bgcolor: '#0c3b5c',
-                                '&:hover': { bgcolor: '#072a42' },
-                                textTransform: 'none',
-                            }}
-                            disabled={isDisabled}
-                            onClick={() => router.visit(route('order.menu'))}
-                        >
-                            Choose Menu
                         </Button>
                     </Box>
                 </Box>
