@@ -17,14 +17,11 @@ const drawerWidthClosed = 110;
 
 const steps = ['Booking Details', 'Room Selection', 'Charges', 'Upload'];
 
-const urlParams = new URLSearchParams(window.location.search);
-const urlParamsObject = Object.fromEntries([...urlParams.entries()].map(([key, value]) => [key, value]));
-const isCheckout = urlParamsObject?.type === 'checkout' ? true : false;
-
 const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     // Access query parameters
-    const { props } = usePage();
-
+    const { url } = usePage();
+    const urlParams = new URLSearchParams(url.split('?')[1] || '');
+    const isCheckout = urlParams.get('type') === 'checkout';
     // Main state for booking type
     const [open, setOpen] = useState(false);
     const [activeStep, setActiveStep] = useState(0);
@@ -149,8 +146,6 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             statusType: isCheckout ? 'checked_out' : '',
         };
 
-        console.log('newData', isCheckout ? 'checked_out' : '', urlParamsObject?.type, newData);
-
         // Proceed with actual submission
         const payload = objectToFormData(newData);
 
@@ -174,13 +169,13 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     const renderStepContent = (step) => {
         switch (step) {
             case 0:
-                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} />;
+                return <BookingDetails formData={formData} handleChange={handleChange} isCheckout={isCheckout} errors={errors} />;
             case 1:
-                return <RoomSelection formData={formData} handleChange={handleChange} errors={errors} />;
+                return <RoomSelection formData={formData} handleChange={handleChange} isCheckout={isCheckout} errors={errors} />;
             case 2:
-                return <ChargesInfo formData={formData} handleChange={handleChange} />;
+                return <ChargesInfo formData={formData} handleChange={handleChange} isCheckout={isCheckout} />;
             case 3:
-                return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleFileRemove={handleFileRemove} />;
+                return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleFileRemove={handleFileRemove} isCheckout={isCheckout} />;
             default:
                 return <Typography>Step not implemented yet</Typography>;
         }
@@ -242,7 +237,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
                                     Back
                                 </Button>
                                 <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}>
-                                    {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                                    {activeStep === steps.length - 1 ? (isCheckout ? 'Checkout' : 'Finish') : 'Next'}
                                 </Button>
                             </Box>
                         </Box>
@@ -254,7 +249,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
 };
 export default EditRoomBooking;
 
-const BookingDetails = ({ formData, handleChange, errors }) => {
+const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
     useEffect(() => {
         if (formData.guest) {
@@ -384,7 +379,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
     );
 };
 
-const RoomSelection = ({ formData, handleChange, errors }) => {
+const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
     const { props } = usePage();
 
     // Automatically calculate nights between check-in and check-out
@@ -447,7 +442,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
     );
 };
 
-const ChargesInfo = ({ formData, handleChange }) => {
+const ChargesInfo = ({ formData, handleChange, isCheckout }) => {
     const { props } = usePage();
 
     const [miniBarItems, setMiniBarItems] = useState();
@@ -619,7 +614,7 @@ const ChargesInfo = ({ formData, handleChange }) => {
     );
 };
 
-const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove }) => (
+const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove, isCheckout }) => (
     <Grid container spacing={2}>
         <Grid item xs={12}>
             <InputLabel>Upload Documents (PDF or Images)</InputLabel>

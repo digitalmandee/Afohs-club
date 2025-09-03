@@ -110,11 +110,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         const start = new Date(currentFamilyMember.start_date);
         const end = new Date(currentFamilyMember.end_date);
 
-        if (currentFamilyMember.start_date && currentFamilyMember.end_date && start > expiryDate && end > expiryDate) {
-            errors.date = 'Start and End dates are beyond card expiry';
-        } else if (currentFamilyMember.start_date && currentFamilyMember.end_date && !(start >= issueDate && end <= expiryDate)) {
-            errors.date = 'Family member dates are outside the valid card date range';
-        }
+        // if (!currentFamilyMember.start_date || currentFamilyMember.end_date) {
+        //     errors.date = 'Start and End dates are beyond card expiry';
+        // }
 
         if (Object.keys(errors).length > 0) {
             setFamilyMemberErrors(errors);

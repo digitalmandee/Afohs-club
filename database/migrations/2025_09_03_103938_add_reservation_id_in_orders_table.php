@@ -11,9 +11,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->string('nature_of_function')->nullable()->after('down_payment');
-            $table->string('theme_of_function')->nullable()->after('nature_of_function');
-            $table->text('special_request')->nullable()->after('theme_of_function');
+            $table->unsignedBigInteger('reservation_id')->nullable()->after('id');
+            $table->foreign('reservation_id')->references('id')->on('reservations')->onDelete('set null');
+            $table->dropColumn('order_number');
         });
     }
 
@@ -23,7 +23,9 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            //
+            $table->dropForeign(['reservation_id']);
+            $table->dropColumn('reservation_id');
+            $table->string('order_number')->after('id');
         });
     }
 };

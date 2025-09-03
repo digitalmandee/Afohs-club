@@ -146,7 +146,6 @@ class BookingController extends Controller
     public function editbooking(Request $request, $id)
     {
         $booking = RoomBooking::with(['customer', 'member', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
-        Log::info($booking->room);
         $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : null));
         $booking = [
             'id' => $booking->id,

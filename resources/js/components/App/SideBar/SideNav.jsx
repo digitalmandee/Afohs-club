@@ -28,13 +28,8 @@ import LogoutScreen from './Logout';
 import NotificationsPanel from './Notification';
 import EmployeeProfileScreen from './Profile';
 import { Modal, Slide } from '@mui/material';
-import KitchenIcon from '@/components/App/Icons/KitchenManagement';
-import MemberIcon from '@/components/App/Icons/Member';
-import TableIcon from '@/components/App/Icons/TableManagement';
 import CategoryIcon from '@mui/icons-material/Category';
-import AddressType from '../Icons/AddressType';
 import { MdManageHistory } from 'react-icons/md';
-import { FaUser } from 'react-icons/fa';
 import { useEffect } from 'react';
 
 const drawerWidthOpen = 240; // Set open width to 240px
@@ -113,6 +108,7 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
         { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index'), permission: 'order' },
         { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category'), permission: 'order' },
+        { text: 'Reservations', icon: <PaymentsIcon />, path: route('reservations.index'), permission: 'order' },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index'), permission: 'order' },
         {
             text: 'Table Management',

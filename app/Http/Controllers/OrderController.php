@@ -134,8 +134,8 @@ class OrderController extends Controller
     // Get next order number
     private function getOrderNo()
     {
-        $orderNo = Order::max('order_number');
-        $orderNo = $orderNo + 1;
+        $lastOrder = Order::select('id')->latest()->first();
+        $orderNo = (int) $lastOrder->id + 1;
         return $orderNo;
     }
 
@@ -144,29 +144,6 @@ class OrderController extends Controller
         $invoicNo = FinancialInvoice::max('invoice_no');
         $invoicNo = (int) $invoicNo + 1;
         return $invoicNo;
-    }
-
-    public function orderReservation(Request $request)
-    {
-        $date = $request->input('date');
-        $date = Carbon::parse($date)->setTimezone('Asia/Karachi')->toDateString();
-
-        $order = Order::create([
-            'order_number' => $this->getOrderNo(),
-            'user_id' => $request->member['id'],
-            'order_type' => $request->order_type,
-            'person_count' => $request->person_count,
-            'start_date' => $date,
-            'start_time' => $request->time,
-            'down_payment' => $request->down_payment,
-            'nature_of_function' => $request->nature_of_function,
-            'theme_of_function' => $request->theme_of_function,
-            'special_request' => $request->special_request,
-            'table_id' => $request->table,
-            'status' => 'saved',
-        ]);
-
-        return response()->json(['message' => 'Order placed successfully.', 'order' => $order], 200);
     }
 
     public function sendToKitchen(Request $request)

@@ -53,8 +53,11 @@ Route::group([
         // Route::post('/waiters', [WaiterController::class, 'store'])->name('waiters.store');
         // Route::put('/waiters/{id}/update', [WaiterController::class, 'update'])->name('waiters.update');
 
+        // Reservations
+        Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+
         // Order Management
-        Route::post('/order/reservation', [OrderController::class, 'orderReservation'])->name('order.reservation');
+        Route::post('/order/reservation', [ReservationController::class, 'orderReservation'])->name('order.reservation');
         Route::get('/new/order', [OrderController::class, 'index'])->name('order.new');
         Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
         Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
