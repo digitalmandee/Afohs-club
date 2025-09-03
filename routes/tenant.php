@@ -10,6 +10,7 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
@@ -140,9 +141,13 @@ Route::group([
         Route::post('/kitchens', [KitchenController::class, 'store'])->name('kitchens.store');
         Route::put('/kitchens/{id}/update', [KitchenController::class, 'update'])->name('kitchens.update');
 
-        Route::get('/test', function () {
-            return Inertia::render('App/Test');
-        })->name('test');
+        // Route::get('/test', function () {
+        //     return Inertia::render('App/Test');
+        // })->name('test');
+
+        // Api Floors with Tables
+        Route::get('/api/floors-with-tables', [OrderController::class, 'getFloorsWithTables'])->name('api.floors-with-tables');
+        Route::get('/tables/{table}/available-times', [ReservationController::class, 'availableTimes'])->name('tables.available-times');
     });
 
     // Login Authentication Routes
