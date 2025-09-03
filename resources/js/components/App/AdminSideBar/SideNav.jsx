@@ -618,13 +618,13 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' },
                     }}
                 >
-                    <List sx={{ mt: 1 }}>
+                    <List sx={{ mt: 2 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
                             const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));
                             return (
                                 <Box key={text} sx={{ position: 'relative' }}>
-                                    <ListItem disablePadding sx={{ display: 'block', px: 1 }}>
+                                    <ListItem disablePadding sx={{ display: 'block', px: 1, py:0.1 }}>
                                         <Box
                                             sx={{
                                                 borderRadius: '12px',
@@ -715,8 +715,8 @@ export default function SideNav({ open, setOpen }) {
                                                     const isNestedOpen = openDropdown[child.text];
 
                                                     return (
-                                                        <Box key={child.text} sx={{ my: 0.3 }}>
-                                                            <ListItem disablePadding sx={{ pl: 3 }}>
+                                                        <Box key={child.text} sx={{ my: 0.2 }}>
+                                                            <ListItem disablePadding sx={{ pl: 2, pr:5 }}>
                                                                 <ListItemButton
                                                                     onClick={() => {
                                                                         if (hasNested) {
@@ -767,11 +767,11 @@ export default function SideNav({ open, setOpen }) {
                                                                         {child.children.map((sub) => {
                                                                             const isSubSelected = url === normalizePath(sub.path);
                                                                             return (
-                                                                                <ListItem key={sub.text} disablePadding sx={{ pl: 5 }}>
+                                                                                <ListItem key={sub.text} disablePadding sx={{ py:0.1, pl: 3, pr:10 }}>
                                                                                     <ListItemButton
                                                                                         onClick={() => router.visit(sub.path)}
                                                                                         sx={{
-                                                                                            minHeight: 36,
+                                                                                            minHeight: 16,
                                                                                             borderRadius: '12px',
                                                                                             backgroundColor: isSubSelected ? '#063455' : 'transparent',
                                                                                             '&:hover': {
@@ -887,10 +887,10 @@ function HoverMenuList({ items, level }) {
                                     top: position.top,
                                     left: position.left,
                                     zIndex: 2000 + level,
-                                    background: '#222',
-                                    borderRadius: 2,
-                                    boxShadow: 3,
-                                    minWidth: 180,
+                                    // background: '#222',
+                                    // borderRadius: 2,
+                                    // boxShadow: 3,
+                                    // minWidth: 180,
                                     py: 1,
                                 }}
                             >
