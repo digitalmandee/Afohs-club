@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="icon" href="/afohs-icon.png">
-    <title inertia>AFOHS CLUB &#8211; Enjoy the Pride</title>
+    <title inertia>{!! config('app.name', 'Laravel') !!}</title>
 
     @routes
     @viteReactRefresh

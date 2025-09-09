@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Typography, Button, TextField, IconButton } from '@mui/material';
+import { Box, Typography, Button, TextField, IconButton, DialogContent } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 
@@ -31,44 +31,58 @@ const ReservationFilter = ({ onClose }) => {
     };
 
     return (
-        <Box sx={{ padding: 3, width: '300px', background: '#fff', border: '1px solid #ddd' }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Filter Reservations</Typography>
-                <IconButton onClick={onClose}>
+        <Box sx={{ p: 2 }}>
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6" fontWeight="500" fontSize="24px" sx={{ color: '#121212' }}>
+                    Filter Reservations
+                </Typography>
+                <Button onClick={onClose} size="small">
                     <CloseIcon />
-                </IconButton>
+                </Button>
             </Box>
 
             {/* Status Filter */}
-            <Box mb={2}>
-                <Typography>Status</Typography>
-                <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: '100%', padding: '8px' }}>
-                    <option value="all">All</option>
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </Box>
+            <DialogContent sx={{ p: 2 }}>
+                <Box mb={2}>
+                    <Typography>Status</Typography>
+                    <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: '100%', padding: '8px' }}>
+                        <option value="all">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </Box>
 
-            {/* Date Range */}
-            <Box mb={2}>
-                <Typography>Start Date</Typography>
-                <TextField type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} fullWidth size="small" />
-            </Box>
-            <Box mb={2}>
-                <Typography>End Date</Typography>
-                <TextField type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} fullWidth size="small" />
-            </Box>
+                {/* Date Range */}
+                <Box mb={2}>
+                    <Typography>Start Date</Typography>
+                    <TextField type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} fullWidth size="small" />
+                </Box>
+                <Box mb={2}>
+                    <Typography>End Date</Typography>
+                    <TextField type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} fullWidth size="small" />
+                </Box>
 
-            <Box display="flex" justifyContent="flex-end" gap={1}>
-                <Button variant="outlined" onClick={resetFilters}>
-                    Reset
-                </Button>
-                <Button variant="contained" onClick={applyFilters}>
-                    Apply
-                </Button>
-            </Box>
+                <Box display="flex" justifyContent="flex-end" gap={1}>
+                    <Button variant="outlined" onClick={resetFilters} sx={{ borderColor: '#ccc', color: '#333', borderRadius: 1, textTransform: 'none', mr: 1 }}>
+                        Reset
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={applyFilters}
+                        sx={{
+                            bgcolor: '#0a3d62',
+                            color: 'white',
+                            borderRadius: 1,
+                            textTransform: 'none',
+                            '&:hover': { bgcolor: '#0c2461' },
+                        }}
+                    >
+                        Apply
+                    </Button>
+                </Box>
+            </DialogContent>
         </Box>
     );
 };

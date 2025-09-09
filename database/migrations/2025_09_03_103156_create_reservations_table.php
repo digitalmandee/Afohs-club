@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->date('date')->nullable();
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
-            $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->nullable();
+            $table->enum('status', ['pending', 'cancelled', 'completed'])->nullable();
             $table->timestamps();
 
             $table->foreign('member_id')->references('id')->on('users')->onDelete('cascade');

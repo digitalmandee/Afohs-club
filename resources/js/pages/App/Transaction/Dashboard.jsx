@@ -737,7 +737,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 <Box display="flex" alignItems="center" justifyContent="space-between" mt={1}>
                                                     <Box display="flex" alignItems="center">
                                                         <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                            #{order?.order_number}
+                                                            #{order?.id}
                                                         </Typography>
 
                                                         <Chip

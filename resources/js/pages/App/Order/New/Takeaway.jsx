@@ -115,7 +115,7 @@ const TakeAwayDialog = () => {
                         textTransform: 'none',
                     }}
                     disabled={isDisabled}
-                    onClick={() => router.visit(route('order.menu'))}
+                    onClick={() => router.visit(route('order.menu', { member_id: orderDetails.member.id, order_type: 'takeaway' }))}
                 >
                     Choose Menu
                 </Button>

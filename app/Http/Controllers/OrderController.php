@@ -7,11 +7,13 @@ use App\Models\Category;
 use App\Models\FinancialInvoice;
 use App\Models\Floor;
 use App\Models\Invoices;
+use App\Models\Member;
 use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
+use App\Models\Reservation;
 use App\Models\Table;
 use App\Models\Tenant;
 use App\Models\User;
@@ -114,7 +116,10 @@ class OrderController extends Controller
 
     public function savedOrder()
     {
-        $orders = Order::where('status', 'saved')->with('user:id,name')->get();
+        $today = Carbon::today()->toDateString();
+        $orders = Reservation::whereDate('date', $today)
+            ->with('member:user_id,full_name,membership_no', 'table:id,table_no')
+            ->get();
 
         return response()->json([
             'SavedOrders' => $orders,
@@ -128,14 +133,80 @@ class OrderController extends Controller
         $activeTenantId = tenant()->id;
         $latestCategory = Category::where('tenant_id', $activeTenantId)->latest()->first();
         $firstCategoryId = $latestCategory->id ?? null;
-        return Inertia::render('App/Order/OrderMenu', compact('totalSavedOrders', 'allrestaurants', 'activeTenantId', 'firstCategoryId'));
+
+        // 🔎 Case 1: Reservation flow
+        $reservation = null;
+        if ($request->has('reservation_id')) {
+            $reservation = Reservation::where('id', $request->reservation_id)
+                ->with([
+                    'member:user_id,full_name,membership_no',
+                    'table:id,table_no,floor_id',
+                ])
+                ->first();
+        }
+
+        // 🔎 Case 2: Direct order flow (via query params)
+        $orderContext = null;
+        if ($request->has('order_type')) {
+            if ($request->filled('order_type')) {
+                $orderContext = [
+                    'order_type' => $request->get('order_type'),
+                ];
+            }
+            if ($request->filled('person_count')) {
+                $orderContext = [
+                    'person_count' => $request->get('person_count'),
+                ];
+            }
+
+            // Member
+            if ($request->filled('member_id')) {
+                $member = Member::select('user_id', 'full_name', 'membership_no')
+                    ->where('user_id', $request->member_id)
+                    ->first();
+                $orderContext['member'] = [
+                    'id' => $member->user_id,
+                    'name' => $member->full_name,
+                    'membership_no' => $member->membership_no,
+                ];
+            }
+
+            // Table
+            if ($request->filled('table_id')) {
+                $orderContext['table'] = Table::select('id', 'table_no', 'floor_id')
+                    ->find($request->table_id);
+            }
+
+            // Waiter
+            if ($request->filled('waiter_id')) {
+                $orderContext['waiter'] = User::select('id', 'name')
+                    ->find($request->waiter_id);
+            }
+
+            // Floor (optional, in case frontend needs it separately)
+            if ($request->filled('floor_id')) {
+                $orderContext['floor'] = $request->get('floor_id');
+            }
+        }
+
+        $orderNo = $this->getOrderNo();
+
+        return Inertia::render('App/Order/OrderMenu', [
+            'totalSavedOrders' => $totalSavedOrders,
+            'allrestaurants' => $allrestaurants,
+            'activeTenantId' => $activeTenantId,
+            'firstCategoryId' => $firstCategoryId,
+            'reservation' => $reservation,  // Reservation flow
+            'orderContext' => $orderContext,  // Direct order flow with related details
+            'orderNo' => $orderNo,
+        ]);
     }
 
     // Get next order number
     private function getOrderNo()
     {
         $lastOrder = Order::select('id')->latest()->first();
-        $orderNo = (int) $lastOrder->id + 1;
+        $orderNo = $lastOrder ? (int) $lastOrder->id + 1 : 1;
         return $orderNo;
     }
 
@@ -149,26 +220,25 @@ class OrderController extends Controller
     public function sendToKitchen(Request $request)
     {
         $request->validate([
-            'member.id' => 'required|exists:users,id',
+            'member.id' => 'required|exists:members,user_id',
             'order_items' => 'required|array',
             'order_items.*.id' => 'required|exists:products,id',
             'price' => 'required|numeric',
             'kitchen_note' => 'nullable|string',
             'staff_note' => 'nullable|string',
             'payment_note' => 'nullable|string',
+            'reservation_id' => 'nullable|exists:reservations,id',
         ]);
 
         DB::beginTransaction();
 
         try {
-            // Order creation or update
             $order = Order::updateOrCreate(
                 ['id' => $request->id],
                 [
-                    'order_number' => $request->id ? $request->order_no : $this->getOrderNo(),
-                    'user_id' => $request->member['id'],
+                    'member_id' => $request->member['id'],
                     'waiter_id' => $request->waiter['id'] ?? null,
-                    'table_id' => $request->table,
+                    'table_id' => $request->table['id'] ?? null,
                     'order_type' => $request->order_type,
                     'person_count' => $request->person_count,
                     'start_date' => Carbon::parse($request->date)->toDateString(),
@@ -179,47 +249,48 @@ class OrderController extends Controller
                     'kitchen_note' => $request->kitchen_note,
                     'staff_note' => $request->staff_note,
                     'payment_note' => $request->payment_note,
+                    'reservation_id' => $request->reservation_id ?? null,
                 ]
             );
 
-            // Group items by kitchen
-            $groupedByKitchen = collect($request->order_items)->groupBy('kitchen_id');
+            // Mark reservation completed
+            if ($request->order_type === 'reservation' && $request->filled('reservation_id')) {
+                Reservation::where('id', $request->reservation_id)->update([
+                    'status' => 'completed'
+                ]);
+            }
 
+            $groupedByKitchen = collect($request->order_items)->groupBy('kitchen_id');
             $totalCostPrice = 0;
 
-            // Insert order items
             foreach ($groupedByKitchen as $kitchenId => $items) {
-                // Ensure kitchenId is null if empty or not numeric
                 $safeKitchenId = (is_numeric($kitchenId) && $kitchenId !== '') ? (int) $kitchenId : null;
+
                 foreach ($items as $item) {
-                    $productData = $item;
-                    $productId = $productData['id'];
+                    $productId = $item['id'];
                     $productQty = $item['quantity'] ?? 1;
 
                     $product = Product::find($productId);
 
                     if (!$product || $product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
-                        return redirect()->back()->withErrors(['Insufficient stock for product: ' . ($product->name ?? 'Unknown')]);
+                        throw new \Exception('Insufficient stock for product: ' . ($product->name ?? 'Unknown'));
                     }
 
-                    // Deduct stock for product
                     $product->decrement('current_stock', $productQty);
 
-                    // Deduct variant stock if any are selected
-                    if (!empty($productData['variants'])) {
-                        foreach ($productData['variants'] as $variant) {
+                    if (!empty($item['variants'])) {
+                        foreach ($item['variants'] as $variant) {
                             $variantValue = ProductVariantValue::find($variant['id']);
                             if (!$variantValue || $variantValue->stock < 0) {
-                                return redirect()->back()->withErrors(['Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown')]);
+                                throw new \Exception('Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown'));
                             }
                             $totalCostPrice += $variantValue->additional_price;
-
                             $variantValue->decrement('stock', 1);
                         }
                     }
 
                     $totalCostPrice += $product->cost_of_goods_sold * $productQty;
-                    // Create order item (save original item JSON for reference)
+
                     OrderItem::create([
                         'order_id' => $order->id,
                         'kitchen_id' => $safeKitchenId,
@@ -228,7 +299,7 @@ class OrderController extends Controller
                     ]);
                 }
             }
-            Log::info($totalCostPrice);
+
             $order->update([
                 'tax' => $request->tax,
                 'discount' => $request->discount,
@@ -236,7 +307,6 @@ class OrderController extends Controller
                 'cost_price' => $totalCostPrice,
             ]);
 
-            // Create invoice
             FinancialInvoice::create([
                 'invoice_no' => $this->getInvoiceNo(),
                 'member_id' => $request->member['id'],
@@ -255,20 +325,23 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // Load relationships for broadcasting
             $order->load(['table', 'orderItems']);
-            Log::info('Order created: ' . $order->id);
-            // Broadcast the event
             broadcast(new OrderCreated($order));
-
-            // Print the orders per kitchen
             $this->printOrdersForKitchens($groupedByKitchen, $order);
 
-            return redirect()->back()->with('success', 'Order sent to kitchen.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Order sent to kitchen successfully.',
+                'order' => $order
+            ]);
         } catch (\Throwable $th) {
-            // DB::rollBack();
+            DB::rollBack();
             Log::error('Error sending order to kitchen: ' . $th->getMessage());
-            return redirect()->back()->with('error', 'Failed to send order to kitchen.');
+
+            return response()->json([
+                'success' => false,
+                'message' => $th->getMessage(),
+            ], 500);
         }
     }
 

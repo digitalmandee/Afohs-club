@@ -173,7 +173,7 @@ class FloorController extends Controller
                             ->whereDate('start_date', $parsedDate)
                             ->whereIn('status', ['pending', 'in_progress', 'completed'])
                             ->with([
-                                'invoice:id,order_id,status',
+                                'invoice:id,status',
                                 'member:id,user_id,full_name',
                             ]);
                     }]);
