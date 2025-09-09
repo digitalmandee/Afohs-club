@@ -202,8 +202,6 @@ const TableManagement = ({ floorsdata, tablesData }) => {
 
     useEffect(() => {
         if (selectedDate.full_date) {
-            console.log(selectedDate.full_date);
-
             axios
                 .get(route('floors.getFloors'), {
                     params: {

@@ -12,8 +12,11 @@ class Order extends Model
     // protected $dates = ['order_time' => 'datetime:Y-m-d\TH:i:s\Z'];
 
     protected $fillable = [
-        'order_number',
-        'user_id',
+        'reservation_id',
+        'member_id',
+        'customer_id',
+        'room_booking_id',
+        'event_booking_id',
         'cashier_id',
         'waiter_id',
         'table_id',
@@ -69,7 +72,9 @@ class Order extends Model
 
     public function invoice()
     {
-        return $this->hasOne(Invoices::class);
+        return $this
+            ->hasOne(FinancialInvoice::class, 'id')
+            ->whereJsonContains('data->order_id', $this->id);
     }
 
     public function cashier()

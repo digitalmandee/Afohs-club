@@ -3,9 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
-class Reservation extends Model
+class Reservation extends BaseModel
 {
     use HasFactory;
 
@@ -22,6 +21,9 @@ class Reservation extends Model
         'start_time',
         'end_time',
         'status',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function table()

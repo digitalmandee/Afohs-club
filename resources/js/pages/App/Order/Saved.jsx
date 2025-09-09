@@ -197,13 +197,13 @@ const OrderSaved = ({ setActiveView }) => {
                                     <Avatar
                                         sx={{
                                             bgcolor: '#0C67AA',
-                                            width: 36,
-                                            height: 36,
-                                            fontSize: '16px',
+                                            width: 32,
+                                            height: 32,
+                                            fontSize: '14px',
                                             color: '#FFFFFF',
                                         }}
                                     >
-                                        {order.table_id}
+                                        {order.table.table_no}
                                     </Avatar>
                                     {isModalVisible && <CancelOrder onClose={() => setIsModalVisible(false)} onConfirm={handleCancelOrder} />}
                                     {isNotificationVisible && (
@@ -245,17 +245,17 @@ const OrderSaved = ({ setActiveView }) => {
                                         sx={{
                                             ml: 1,
                                             bgcolor: '#E3E3E3',
-                                            width: 36,
-                                            height: 36,
+                                            width: 32,
+                                            height: 32,
                                         }}
                                     >
-                                        <img src="/assets/food-tray.png" alt="" />
+                                        <img src="/assets/food-tray.png" style={{ height: 24, width: 24 }} alt="" />
                                     </IconButton>
                                 </Box>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                     <Typography variant="body1" sx={{ fontWeight: 500, mr: 1 }}>
-                                        {order.user.name}
+                                        {order.member.full_name} ({order.member.membership_no})
                                     </Typography>
 
                                     <img
@@ -280,7 +280,7 @@ const OrderSaved = ({ setActiveView }) => {
                                         }}
                                     >
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            #{order.order_number}
+                                            #{order.id}
                                         </Typography>
                                     </Box>
 
