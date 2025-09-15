@@ -31,6 +31,13 @@ class Reservation extends BaseModel
         return $this->belongsTo(Table::class);
     }
 
+    // Reservation.php
+
+    public function order()
+    {
+        return $this->hasOne(Order::class, 'reservation_id');
+    }
+
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id', 'user_id');
