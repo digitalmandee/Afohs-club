@@ -318,9 +318,9 @@ const Reservations = () => {
                     </Modal>
 
                     {/* Cancel Confirmation Modal */}
-                    <Modal show={showCancelModal} onHide={() => setShowCancelModal(false)} dialogClassName="custom-dialog-right" centered>
+                    <Modal show={showCancelModal} onHide={() => setShowCancelModal(false)} centered>
                         <Modal.Header style={{ padding: 8 }}>
-                            <Modal.Title>
+                            <Modal.Title sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 Cancel Reservation{' '}
                                 <Button onClick={() => setShowCancelModal(false)} size="small">
                                     <CloseIcon />

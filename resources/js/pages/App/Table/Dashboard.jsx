@@ -23,8 +23,7 @@ const ItemTypes = {
 };
 
 // DraggableTable component
-const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) => {
-    // Set up drag functionality
+const DraggableTable = ({ data, index, moveTable, onClick, fill }) => {
     const [{ isDragging }, drag] = useDrag(() => ({
         type: ItemTypes.TABLE,
         item: { id: data.id, index },
@@ -33,14 +32,12 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
         }),
     }));
 
-    // Set up drop functionality
     const [, drop] = useDrop(
         () => ({
             accept: ItemTypes.TABLE,
             hover: (draggedItem) => {
                 if (draggedItem.id !== data.id) {
                     moveTable(draggedItem.index, index);
-                    // Update the index in the dragged item to reflect its new position
                     draggedItem.index = index;
                 }
             },
@@ -48,24 +45,30 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
         [data.id, index, moveTable],
     );
 
-    // Determine text color based on reservation status
-    const getTextColor = (data) => {
-        if (!data.is_available) return '#059669';
-        if (fill === '#cfe7ff') return '#3b82f6';
-        return '#6b7280';
+    const reservationCount = data?.reservations?.length || 0;
+    const orderCount = data?.orders?.length || 0;
+
+    // Find current reservation
+    const currentReservation = data?.reservations?.find((res) => res.is_current);
+
+    const getTextColor = () => {
+        if (currentReservation) return 'black'; // white text on dark reservation bg
+        if (!data.is_available) return '#059669'; // green text if unavailable
+        if (fill === '#cfe7ff') return '#3b82f6'; // blue
+        return '#6b7280'; // gray
     };
-    const getBgColor = (data) => {
-        if (!data.is_available) return '#d1fae5';
-        return 'white';
+
+    const getBgColor = () => {
+        if (currentReservation) return '#d0ebff'; // dark bg for reservation
+        if (!data.is_available) return '#d1fae5'; // light green bg for busy
+        return 'white'; // default
     };
 
     return (
         <Box
             onClick={onClick}
-            // ref={(node) => drag(drop(node))}
+            ref={(node) => drag(drop(node))}
             sx={{
-                // width,
-                // height,
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
@@ -74,12 +77,11 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
                 opacity: isDragging ? 0.5 : 1,
                 cursor: 'move',
                 transition: 'all 0.2s',
-                '&:hover': {
-                    transform: 'scale(1.02)',
-                },
+                '&:hover': { transform: 'scale(1.02)' },
             }}
         >
-            {data.capacity == 2 ? <Table2Icon fillColor={getBgColor(data)} /> : data.capacity == 4 ? <Table1Icon fillColor={getBgColor(data)} /> : data.capacity == 6 ? <Table6Icon fillColor={getBgColor(data)} /> : data.capacity == 8 ? <Table8Icon fillColor={getBgColor(data)} /> : data.capacity == 10 ? <Table10Icon fillColor={getBgColor(data)} /> : null}
+            {/* Table shape */}
+            {data.capacity == 2 ? <Table2Icon fillColor={getBgColor()} /> : data.capacity == 4 ? <Table1Icon fillColor={getBgColor()} /> : data.capacity == 6 ? <Table6Icon fillColor={getBgColor()} /> : data.capacity == 8 ? <Table8Icon fillColor={getBgColor()} /> : data.capacity == 10 ? <Table10Icon fillColor={getBgColor()} /> : null}
 
             <Box
                 sx={{
@@ -91,18 +93,40 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
                     justifyContent: 'center',
                 }}
             >
-                <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor(data) }}>
+                {/* Table number */}
+                <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor() }}>
                     {data.table_no}
                 </Typography>
-                {!data.is_available && (
+
+                {/* Active reservation display */}
+                {currentReservation && (
                     <>
-                        <Typography variant="caption" sx={{ color: getTextColor(data), fontWeight: 'medium' }}>
+                        <Typography variant="caption" sx={{ color: 'black', fontWeight: 'medium' }}>
+                            #{currentReservation?.id}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.7rem', color: 'black' }}>
+                            {currentReservation.member?.full_name}
+                        </Typography>
+                    </>
+                )}
+
+                {/* Booked by info (orders) */}
+                {!data.is_available && !currentReservation && (
+                    <>
+                        <Typography variant="caption" sx={{ color: getTextColor(), fontWeight: 'medium' }}>
                             #{data.booked_by?.id}
                         </Typography>
                         <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.65rem' }}>
                             {data.booked_by?.name}
                         </Typography>
                     </>
+                )}
+
+                {/* Reservation & order counts */}
+                {(reservationCount > 0 || orderCount > 0) && (
+                    <Typography variant="caption" sx={{ color: '#374151', fontSize: '0.7rem', mt: 0.3 }}>
+                        Res: {reservationCount} | Orders: {orderCount}
+                    </Typography>
                 )}
             </Box>
         </Box>
@@ -130,11 +154,14 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     const [tables, setTables] = useState([]);
 
     const handleOpenReservation = (table) => {
-        console.log('Opening reservation for table:', table);
-
         setSelectedTable(table);
-        if (!table.is_available) setOpenAvailableOrder(true);
-        else setOpenReservation(true);
+
+        // If table has ongoing reservation/order or direct order
+        // if (!table.is_available) {
+        // setOpenAvailableOrder(true); // show ActiveTable
+        // } else {
+        setOpenReservation(true); // show AddReservation
+        // }
     };
 
     const handleCloseReservation = () => {
@@ -602,7 +629,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                             maxWidth: 600,
                                             width: '90%',
                                             maxHeight: '90vh',
-                                            overflow: 'auto', // or remove if you want to hide scroll
+                                            overflow: 'auto',
                                         }}
                                     >
                                         <ActiveTable table={selectedTable} floorName={activefloor?.name} onClose={handleCloseReservation} />

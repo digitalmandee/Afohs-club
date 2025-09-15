@@ -67,18 +67,34 @@ class OrderController extends Controller
     public function getFloorsWithTables()
     {
         $today = Carbon::today()->toDateString();
+        $now = Carbon::now('Asia/Karachi');
 
         $floorTables = Floor::select('id', 'name')
             ->where('status', 1)
             ->with(['tables' => function ($query) use ($today) {
                 $query
                     ->select('id', 'floor_id', 'table_no', 'capacity')
-                    ->with(['orders' => function ($orderQuery) use ($today) {
-                        $orderQuery
-                            ->select('id', 'table_id', 'status', 'start_date', 'payment_status')
-                            ->whereDate('start_date', $today)
-                            ->whereIn('status', ['pending', 'in_progress', 'completed']);
-                    }]);
+                    ->with([
+                        'orders' => function ($orderQuery) use ($today) {
+                            $orderQuery
+                                ->select('id', 'table_id', 'status', 'start_date')
+                                ->whereDate('start_date', $today)
+                                ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                                ->with(['invoice:id,status']);
+                        },
+                        'reservations' => function ($resQuery) use ($today) {
+                            $resQuery
+                                ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'status')
+                                ->whereDate('date', $today)
+                                ->with([
+                                    'order' => function ($q) {
+                                        $q
+                                            ->select('id', 'table_id', 'status')
+                                            ->with('invoice:id,status');
+                                    }
+                                ]);
+                        }
+                    ]);
             }])
             ->get();
 
@@ -86,19 +102,47 @@ class OrderController extends Controller
             foreach ($floor->tables as $table) {
                 $isAvailable = true;
 
-                foreach ($table->orders as $order) {
-                    if (!$order || $order->payment_status === 'unpaid') {
-                        $isAvailable = false;
-                        break;
+                // 🔹 Check reservations first
+                foreach ($table->reservations as $reservation) {
+                    $startTime = Carbon::parse($reservation->date . ' ' . $reservation->start_time, 'Asia/Karachi')->subMinutes(15);
+                    $endTime = Carbon::parse($reservation->date . ' ' . $reservation->end_time, 'Asia/Karachi')->addMinutes(5);
+
+                    // Only block table if current time is within reservation window and reservation not completed
+                    if ($reservation->status !== 'completed' && $now->between($startTime, $endTime)) {
+                        if ($reservation->order) {
+                            $invoice = $reservation->order->invoice;
+                            if (!$invoice || $invoice->status !== 'paid' || $reservation->order->status !== 'completed') {
+                                $isAvailable = false;
+                                break;
+                            }
+                        } else {
+                            // No order but reservation is active → block table
+                            $isAvailable = false;
+                            break;
+                        }
                     }
-                    if (!($order->status === 'completed' && $order->payment_status === 'paid')) {
-                        $isAvailable = false;
-                        break;
+                }
+
+                // 🔹 If still available, check direct orders (not tied to reservation)
+                if ($isAvailable) {
+                    foreach ($table->orders as $order) {
+                        $invoice = $order->invoice;
+
+                        if (
+                            !$invoice ||
+                            $invoice->status !== 'paid' ||
+                            $order->status !== 'completed'
+                        ) {
+                            $isAvailable = false;
+                            break;
+                        }
                     }
                 }
 
                 $table->is_available = $isAvailable;
-                unset($table->orders);
+
+                // Hide relations from response
+                unset($table->orders, $table->reservations);
             }
         }
 

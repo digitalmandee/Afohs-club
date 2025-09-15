@@ -14,7 +14,7 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $orders = Order::whereIn('order_type', ['dineIn', 'takeaway'])->with([
+        $orders = Order::whereIn('order_type', ['dineIn', 'takeaway', 'reservation'])->with([
             'member',
             'table:id,table_no',
             'orderItems:id,order_id',

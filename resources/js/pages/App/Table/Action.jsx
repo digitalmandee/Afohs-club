@@ -1,23 +1,21 @@
-'use client';
-
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { Add as AddIcon, ChevronRight as ChevronRightIcon, RadioButtonUnchecked as CircleIcon, Close as CloseIcon, CallMerge as MergeIcon, OpenWith as MoveIcon } from '@mui/icons-material';
-import { Box, Divider, IconButton, List, ListItem, ListItemIcon, ListItemSecondaryAction, ListItemText, Paper, Switch, Typography } from '@mui/material';
+import { Box, Dialog, Divider, IconButton, List, ListItem, ListItemIcon, ListItemSecondaryAction, ListItemText, Paper, Switch, Typography } from '@mui/material';
 import { useState } from 'react';
+import OrderDetails from './OrderDetails';
 
-const AddReservation = ({ table = {}, tableName = 'Table', onClose }) => {
-    const { handleOrderTypeChange, handleOrderDetailChange } = useOrderStore();
+const ActiveTable = ({ table = {}, tableName = 'Table', onClose }) => {
+    const { handleOrderTypeChange } = useOrderStore();
     const [notAvailableActive, setNotAvailableActive] = useState(false);
+    const [orderDrawerOpen, setOrderDrawerOpen] = useState(false);
 
-    const handleToggleNotAvailable = () => {
-        setNotAvailableActive(!notAvailableActive);
-    };
+    const toggleOrderDrawer = (open) => () => setOrderDrawerOpen(open);
+
+    const handleToggleNotAvailable = () => setNotAvailableActive(!notAvailableActive);
 
     const handleAddNewReservation = () => {
         handleOrderTypeChange('reservation');
-        // handleOrderDetailChange('floor', table?.floor_id);
-        // handleOrderDetailChange('table', table?.id);
 
         router.visit(route('order.new'), {
             data: {
@@ -29,12 +27,22 @@ const AddReservation = ({ table = {}, tableName = 'Table', onClose }) => {
         });
     };
 
+    // 🔹 Extract order or reservation
+    const currentReservation = table?.reservations?.[0];
+    const currentOrder = table?.orders?.[0];
+
+    const reservationId = currentReservation?.id;
+    const orderId = currentReservation?.order?.id || currentOrder?.id || table?.booked_by?.order_id;
+
+    const orderType = currentReservation?.order?.order_type || currentOrder?.order_type || (reservationId ? 'reservation' : null);
+
+    const hasReservationOrOrder = !!reservationId || !!orderId;
+
     return (
         <Paper
             elevation={0}
             sx={{
                 width: '100%',
-                // maxWidth: 360,
                 borderRadius: 2,
                 overflow: 'hidden',
             }}
@@ -67,14 +75,7 @@ const AddReservation = ({ table = {}, tableName = 'Table', onClose }) => {
             {/* Action Items */}
             <List sx={{ py: 0 }}>
                 {/* Add New Reservation */}
-                <ListItem
-                    button
-                    onClick={handleAddNewReservation}
-                    sx={{
-                        py: 1.5,
-                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' },
-                    }}
-                >
+                <ListItem button onClick={handleAddNewReservation} sx={{ py: 1.5, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}>
                     <ListItemIcon sx={{ minWidth: 40 }}>
                         <AddIcon sx={{ color: 'primary.main' }} />
                     </ListItemIcon>
@@ -90,16 +91,29 @@ const AddReservation = ({ table = {}, tableName = 'Table', onClose }) => {
                     </ListItemSecondaryAction>
                 </ListItem>
 
+                {/* Show if has order or reservation */}
+                {hasReservationOrOrder && (
+                    <ListItem button onClick={toggleOrderDrawer(true)} sx={{ py: 1.5, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}>
+                        <ListItemIcon sx={{ minWidth: 40 }}>
+                            <AddIcon sx={{ color: 'primary.main' }} />
+                        </ListItemIcon>
+                        <ListItemText
+                            primary={
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    Order / Reservation Details
+                                </Typography>
+                            }
+                        />
+                        <ListItemSecondaryAction>
+                            <ChevronRightIcon color="action" />
+                        </ListItemSecondaryAction>
+                    </ListItem>
+                )}
+
                 <Divider />
 
                 {/* Merge Table */}
-                <ListItem
-                    button
-                    sx={{
-                        py: 1.5,
-                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' },
-                    }}
-                >
+                <ListItem button sx={{ py: 1.5, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}>
                     <ListItemIcon sx={{ minWidth: 40 }}>
                         <MergeIcon sx={{ transform: 'rotate(90deg)' }} />
                     </ListItemIcon>
@@ -118,13 +132,7 @@ const AddReservation = ({ table = {}, tableName = 'Table', onClose }) => {
                 <Divider />
 
                 {/* Move Table */}
-                <ListItem
-                    button
-                    sx={{
-                        py: 1.5,
-                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' },
-                    }}
-                >
+                <ListItem button sx={{ py: 1.5, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}>
                     <ListItemIcon sx={{ minWidth: 40 }}>
                         <MoveIcon />
                     </ListItemIcon>
@@ -143,11 +151,7 @@ const AddReservation = ({ table = {}, tableName = 'Table', onClose }) => {
                 <Divider />
 
                 {/* Not Available */}
-                <ListItem
-                    sx={{
-                        py: 1.5,
-                    }}
-                >
+                <ListItem sx={{ py: 1.5 }}>
                     <ListItemIcon sx={{ minWidth: 40 }}>
                         <CircleIcon sx={{ color: 'text.secondary' }} />
                     </ListItemIcon>
@@ -177,8 +181,29 @@ const AddReservation = ({ table = {}, tableName = 'Table', onClose }) => {
                     </ListItemSecondaryAction>
                 </ListItem>
             </List>
+
+            {/* Drawer/Dialog for Details */}
+            <Dialog
+                open={orderDrawerOpen}
+                onClose={toggleOrderDrawer(false)}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{
+                    sx: {
+                        borderRadius: 1,
+                        m: 0,
+                        position: 'fixed',
+                        right: 0,
+                        top: 0,
+                        height: '100%',
+                        maxHeight: '100%',
+                    },
+                }}
+            >
+                {hasReservationOrOrder ? <OrderDetails orderId={orderId || reservationId} type={orderId ? 'order' : 'reservation'} onClose={toggleOrderDrawer(false)} /> : <Typography sx={{ p: 3 }}>No active order or reservation for this table.</Typography>}
+            </Dialog>
         </Paper>
     );
 };
 
-export default AddReservation;
+export default ActiveTable;
