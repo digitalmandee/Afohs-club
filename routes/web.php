@@ -9,6 +9,9 @@ use App\Http\Controllers\AppliedMemberController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeDepartmentController;
+use App\Http\Controllers\EmployeeTypeController;
 use App\Http\Controllers\EventBookingController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMenuAddOnsController;
@@ -85,6 +88,22 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/employee/attendance/report', function () {
         return Inertia::render('App/Admin/Employee/AttendanceReport');
     })->name('employee.attendancereport');
+
+    // Employeee Management
+    Route::prefix('admin/employees')->group(function () {
+        Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('employees.dashboard');
+        Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
+        Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
+        Route::get('/types', [EmployeeTypeController::class, 'index'])->name('employees.types');
+    });
+
+    Route::prefix('api')->group(function () {
+        Route::resource('departments', EmployeeDepartmentController::class)->except(['create', 'show', 'edit']);
+        // Replace index with your own custom function
+        Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll');
+        Route::resource('employee-types', EmployeeTypeController::class)->except(['create', 'index', 'show', 'edit']);
+        Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store');
+    });
 
     // Membership Booking Routes
     Route::get('/admin/membership/finance', function () {
@@ -400,9 +419,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::put('/admin/membership/applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
 
     // tenant route
-    Route::get('tenant', [TenantController::class, 'index'])->name('tenant.index');
-    Route::get('tenant/register', [TenantController::class, 'create'])->name('tenant.create');
-    Route::post('tenant/store', [TenantController::class, 'store'])->name('tenant.store');
+    Route::get('locations', [TenantController::class, 'index'])->name('locations.index');
+    Route::get('locations/register', [TenantController::class, 'create'])->name('locations.create');
+    Route::post('locations/store', [TenantController::class, 'store'])->name('locations.store');
 });
 
 // Central guest-only auth routes

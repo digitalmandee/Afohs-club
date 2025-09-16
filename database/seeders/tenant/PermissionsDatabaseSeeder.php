@@ -2,9 +2,9 @@
 
 namespace Database\Seeders\Tenant;
 
-use App\Models\User;
 use App\Models\Restaurant;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -24,6 +24,7 @@ class PermissionsDatabaseSeeder extends Seeder
             'super-admin' => Permission::all()->pluck('name'),
             'admin' => ['dashboard', 'order', 'user', 'admin'],
             'employee' => ['dashboard', 'order'],
+            'cashier' => ['dashboard', 'order'],
             'waiter' => ['dashboard', 'order'],
             'kitchen' => ['kitchen'],
             'user' => ['dashboard'],

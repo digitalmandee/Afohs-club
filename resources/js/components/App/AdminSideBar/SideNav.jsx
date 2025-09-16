@@ -324,44 +324,48 @@ export default function SideNav({ open, setOpen }) {
             children: [
                 {
                     text: 'Dashboard',
-                    path: route('employee.dashboard'),
+                    path: route('employees.dashboard'),
                 },
-                {
-                    text: 'Employee List',
-                    path: route('employee.employeeList'),
-                },
+                // {
+                //     text: 'Employee List',
+                //     path: route('employee.employeeList'),
+                // },
                 {
                     text: 'Department',
-                    path: route('employee.departmentlist'),
+                    path: route('employees.departments'),
                 },
                 {
-                    text: 'Attendance',
-                    path: route('employee.attendance'),
+                    text: 'Type',
+                    path: route('employees.types'),
                 },
-                {
-                    text: 'Leave Category',
-                    path: route('employee.leavecategory'),
-                },
-                {
-                    text: 'Leave Management',
-                    path: route('employee.leavemanagement'),
-                },
-                {
-                    text: 'Leave Report',
-                    path: route('employee.leavereport'),
-                },
-                {
-                    text: 'Attendance Report',
-                    path: route('employee.attendancereport'),
-                },
-                {
-                    text: 'Monthly Report',
-                    path: route('employee.monthlyreport'),
-                },
-                {
-                    text: 'Payroll',
-                    path: route('employee.payroll'),
-                },
+                // {
+                //     text: 'Attendance',
+                //     path: route('employee.attendance'),
+                // },
+                // {
+                //     text: 'Leave Category',
+                //     path: route('employee.leavecategory'),
+                // },
+                // {
+                //     text: 'Leave Management',
+                //     path: route('employee.leavemanagement'),
+                // },
+                // {
+                //     text: 'Leave Report',
+                //     path: route('employee.leavereport'),
+                // },
+                // {
+                //     text: 'Attendance Report',
+                //     path: route('employee.attendancereport'),
+                // },
+                // {
+                //     text: 'Monthly Report',
+                //     path: route('employee.monthlyreport'),
+                // },
+                // {
+                //     text: 'Payroll',
+                //     path: route('employee.payroll'),
+                // },
             ],
         },
         {
@@ -425,16 +429,16 @@ export default function SideNav({ open, setOpen }) {
             ],
         },
         {
-            text: 'Restaurants',
+            text: 'Locations',
             icon: <PeopleIcon />,
             children: [
                 {
                     text: 'Dashboard',
-                    path: route('tenant.index'),
+                    path: route('locations.index'),
                 },
                 {
-                    text: 'Create Restaurant',
-                    path: route('tenant.create'),
+                    text: 'Create New',
+                    path: route('locations.create'),
                 },
             ],
         },
@@ -624,7 +628,7 @@ export default function SideNav({ open, setOpen }) {
                             const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));
                             return (
                                 <Box key={text} sx={{ position: 'relative' }}>
-                                    <ListItem disablePadding sx={{ display: 'block', px: 1, py:0.1 }}>
+                                    <ListItem disablePadding sx={{ display: 'block', px: 1, py: 0.1 }}>
                                         <Box
                                             sx={{
                                                 borderRadius: '12px',
@@ -716,7 +720,7 @@ export default function SideNav({ open, setOpen }) {
 
                                                     return (
                                                         <Box key={child.text} sx={{ my: 0.2 }}>
-                                                            <ListItem disablePadding sx={{ pl: 2, pr:5 }}>
+                                                            <ListItem disablePadding sx={{ pl: 2, pr: 5 }}>
                                                                 <ListItemButton
                                                                     onClick={() => {
                                                                         if (hasNested) {
@@ -767,7 +771,7 @@ export default function SideNav({ open, setOpen }) {
                                                                         {child.children.map((sub) => {
                                                                             const isSubSelected = url === normalizePath(sub.path);
                                                                             return (
-                                                                                <ListItem key={sub.text} disablePadding sx={{ py:0.1, pl: 3, pr:10 }}>
+                                                                                <ListItem key={sub.text} disablePadding sx={{ py: 0.1, pl: 3, pr: 10 }}>
                                                                                     <ListItemButton
                                                                                         onClick={() => router.visit(sub.path)}
                                                                                         sx={{

@@ -65,6 +65,11 @@ class User extends Authenticatable
         return $this->hasOne(Member::class);
     }
 
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
+
     /**
      * Get the user's detail.
      */
@@ -112,6 +117,6 @@ class User extends Authenticatable
      */
     public function setPasswordAttribute($password)
     {
-        $this->attributes['password'] = $password ? $password : Hash::make(123456);
+        $this->attributes['password'] = $password ? $password : Hash::make(1234);
     }
 }

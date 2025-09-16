@@ -26,7 +26,7 @@ const Index = ({ tenants }) => {
                 {/* Page Header */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                     <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
-                        Tenant Management
+                        Location Management
                     </Typography>
                     <Button
                         variant="contained"
@@ -39,9 +39,9 @@ const Index = ({ tenants }) => {
                                 backgroundColor: '#063455',
                             },
                         }}
-                        onClick={() => router.visit(route('tenant.create'))}
+                        onClick={() => router.visit(route('locations.create'))}
                     >
-                        Create Tenant
+                        Create Location
                     </Button>
                 </Box>
 
@@ -59,7 +59,6 @@ const Index = ({ tenants }) => {
                         <TableHead sx={{ backgroundColor: '#E5E5EA' }}>
                             <TableRow>
                                 <TableCell sx={{ fontWeight: 600, fontSize: '16px' }}>Name</TableCell>
-                                <TableCell sx={{ fontWeight: 600, fontSize: '16px' }}>Email</TableCell>
                                 <TableCell sx={{ fontWeight: 600, fontSize: '16px' }}>Domain(s)</TableCell>
                                 <TableCell sx={{ fontWeight: 600, fontSize: '16px' }}>Action</TableCell>
                             </TableRow>
@@ -75,7 +74,6 @@ const Index = ({ tenants }) => {
                                 tenants.map((tenant, index) => (
                                     <TableRow key={index}>
                                         <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>{tenant.name}</TableCell>
-                                        <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>{tenant.email}</TableCell>
                                         <TableCell sx={{ fontSize: '15px', color: '#6C6C6C' }}>{tenant.domains.map((d) => d.domain).join(', ')}</TableCell>
                                         <TableCell>
                                             <Button
