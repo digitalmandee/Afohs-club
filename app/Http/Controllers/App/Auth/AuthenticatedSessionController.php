@@ -36,11 +36,19 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::guard('tenant')->user();
 
-        if ($user->hasRole('kitchen', 'web')) {
-            return redirect()->intended(route('kitchen.index', absolute: false));
+        // ✅ Only cashier can proceed
+        if ($user->hasRole('cashier')) {
+            return redirect()->intended(route('tenant.dashboard', absolute: false));
         }
 
-        return redirect()->intended(route('tenant.dashboard', absolute: false));
+        // ❌ Not cashier → logout & send back error
+        Auth::guard('tenant')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return back()->withErrors([
+            'employee_id' => 'Access denied. Only cashier can log in.',
+        ]);
     }
 
     /**

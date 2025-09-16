@@ -136,7 +136,7 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                                             },
                                         }}
                                         sx={{
-                                            width: 60,
+                                            width: '100%',
                                             height: 70,
                                             '.MuiOutlinedInput-notchedOutline': {
                                                 borderColor: '#063455',

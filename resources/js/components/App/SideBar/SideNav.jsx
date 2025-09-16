@@ -142,6 +142,20 @@ export default function SideNav({ open, setOpen }) {
         },
     ];
 
+    // 👇 Detect tab/window close
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            // if (!manualLogout) {
+            // Show logoutSuccess view
+            setShowProfile(true);
+            setProfileView('logoutSuccess');
+            // }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, []);
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'F12') {

@@ -33,27 +33,25 @@ class TenantController extends Controller
      */
     public function store(Request $request)
     {
-        $fullDomain = $request->input('domain_name') . '.' . config('app.domain');
-
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
             'domain_name' => 'required|string|max:255',
-            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         // Custom domain validation
-        if (Domain::where('domain', $fullDomain)->exists()) {
+        if (Domain::where('domain', $request->input('domain_name'))->exists()) {
             return back()->withErrors(['domain_name' => 'The domain is already taken.'])->withInput();
         }
+
+        $validatedData['id'] = $request->input('domain_name');
 
         $tenant = Tenant::create($validatedData);
 
         $tenant->domains()->create([
-            'domain' => $fullDomain,
+            'domain' => $request->input('domain_name'),
         ]);
 
-        return to_route('tenant.register');
+        return to_route('locations.register');
     }
 
     /**
