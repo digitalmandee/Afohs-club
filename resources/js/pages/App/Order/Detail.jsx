@@ -687,7 +687,7 @@ const OrderDetail = ({ handleEditItem }) => {
                 </Button> */}
                 <Button
                     variant="outlined"
-                    disabled={orderDetails.order_items.length === 0 || !orderDetails.member}
+                    disabled={orderDetails.order_items.length === 0 || !orderDetails.member || isLoading}
                     onClick={() => {
                         if (orderDetails.order_type === 'reservation') {
                             handleOpenPopup(); // open popup first

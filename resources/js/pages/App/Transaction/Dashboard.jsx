@@ -566,6 +566,8 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                 return '#e8f5e9';
             case 'cancelled':
                 return '#ffebee';
+            case 'refund':
+                return '#ffebee';
             default:
                 return '#e0e0e0';
         }
@@ -578,6 +580,8 @@ function TransactionDashboard({ Invoices, totalOrders }) {
             case 'completed':
                 return '#388e3c';
             case 'cancelled':
+                return '#d32f2f';
+            case 'refund':
                 return '#d32f2f';
             default:
                 return '#616161';
@@ -645,7 +649,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                         fontSize: '36px',
                                     }}
                                 >
-                                    {Invoices.length}{' '}
+                                    {totalOrders}{' '}
                                     <span
                                         style={{
                                             fontSize: '16px',
@@ -783,7 +787,9 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                           ? 'Ready to Serve' // Don't show label if completed
                                                                           : order?.status === 'cancelled'
                                                                             ? 'Order Cancelled'
-                                                                            : 'Unknown' // Default if status is not recognized
+                                                                            : order?.status === 'refund'
+                                                                              ? 'Refunded'
+                                                                              : 'Unknown' // Default if status is not recognized
                                                             }
                                                             size="small"
                                                             style={{

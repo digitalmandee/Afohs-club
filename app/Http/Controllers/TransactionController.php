@@ -106,7 +106,7 @@ class TransactionController extends Controller
         // ===============================
         // Total Orders
         // ===============================
-        $totalOrders = Order::count();
+        $totalOrders = Order::whereNotIn('status', ['cancelled', 'refund'])->count();
 
         return Inertia::render('App/Transaction/Dashboard', [
             'Invoices' => $orders,

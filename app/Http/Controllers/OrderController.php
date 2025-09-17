@@ -79,8 +79,7 @@ class OrderController extends Controller
                             $orderQuery
                                 ->select('id', 'table_id', 'status', 'start_date')
                                 ->whereDate('start_date', $today)
-                                ->whereIn('status', ['pending', 'in_progress', 'completed'])
-                                ->with(['invoice:id,status']);
+                                ->whereIn('status', ['pending', 'in_progress', 'completed']);
                         },
                         'reservations' => function ($resQuery) use ($today) {
                             $resQuery
@@ -89,14 +88,34 @@ class OrderController extends Controller
                                 ->with([
                                     'order' => function ($q) {
                                         $q
-                                            ->select('id', 'table_id', 'status')
-                                            ->with('invoice:id,status');
+                                            ->select('id', 'table_id', 'status');
                                     }
                                 ]);
                         }
                     ]);
             }])
             ->get();
+        // 🔗 Attach invoices manually
+        $floorTables->each(function ($floor) {
+            $floor->tables->each(function ($table) {
+                $table->orders->each(function ($order) {
+                    $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
+                        ->select('id', 'status', 'data')
+                        ->first();
+                    $order->invoice = $invoice;
+                });
+
+                // If you also want reservation’s order invoice
+                $table->reservations->each(function ($reservation) {
+                    if ($reservation->order) {
+                        $invoice = FinancialInvoice::whereJsonContains('data->order_id', $reservation->order->id)
+                            ->select('id', 'status', 'data')
+                            ->first();
+                        $reservation->order->invoice = $invoice;
+                    }
+                });
+            });
+        });
 
         foreach ($floorTables as $floor) {
             foreach ($floor->tables as $table) {
@@ -151,7 +170,7 @@ class OrderController extends Controller
 
     public function orderManagement(Request $request)
     {
-        $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,kitchen_id,order_item,status', 'member:id,user_id,member_type_id,full_name,membership_no', 'member.memberType:id,name'])->latest()->get();
+        $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType', 'member:id,user_id,member_type_id,full_name,membership_no', 'member.memberType:id,name'])->latest()->get();
         $categoriesList = Category::where('tenant_id', tenant()->id)->select('id', 'name')->get();
         $allrestaurants = Tenant::select('id', 'name')->get();
 
@@ -304,11 +323,11 @@ class OrderController extends Controller
                 ]);
             }
 
-            $groupedByKitchen = collect($request->order_items)->groupBy('kitchen_id');
+            $groupedByKitchen = collect($request->order_items)->groupBy('tenant_id');
             $totalCostPrice = 0;
 
             foreach ($groupedByKitchen as $kitchenId => $items) {
-                $safeKitchenId = (is_numeric($kitchenId) && $kitchenId !== '') ? (int) $kitchenId : null;
+                $safeKitchenId = is_numeric($kitchenId) ? (int) $kitchenId : (string) $kitchenId;
 
                 foreach ($items as $item) {
                     $productId = $item['id'];
@@ -337,7 +356,7 @@ class OrderController extends Controller
 
                     OrderItem::create([
                         'order_id' => $order->id,
-                        'kitchen_id' => $safeKitchenId,
+                        'tenant_id' => $safeKitchenId,
                         'order_item' => $item,
                         'status' => 'pending',
                     ]);
@@ -392,13 +411,13 @@ class OrderController extends Controller
     protected function printOrdersForKitchens($groupedByKitchen, $order)
     {
         foreach ($groupedByKitchen as $kitchenId => $items) {
-            $kitchen = User::with('kitchenDetail')->find($kitchenId);
-            if (!$kitchen || !$kitchen->kitchenDetail || !$kitchen->kitchenDetail->printer_ip)
+            $kitchen = Tenant::find($kitchenId);
+            if (!$kitchen || !$kitchen->printer_ip)
                 continue;
 
             try {
-                $printerIp = $kitchen->kitchenDetail->printer_ip;
-                $printerPort = $kitchen->kitchenDetail->printer_port ?? 9100;
+                $printerIp = $kitchen->printer_ip;
+                $printerPort = $kitchen->printer_port ?? 9100;
 
                 $connector = new NetworkPrintConnector($printerIp, $printerPort);
                 $printer = new Printer($connector);
@@ -406,7 +425,7 @@ class OrderController extends Controller
                 // Print header
                 $printer->setJustification(Printer::JUSTIFY_CENTER);
                 $printer->text("Kitchen: {$kitchen->name}\n");
-                $printer->text("Order #: {$order->order_number}\n");
+                $printer->text("Order #: {$order->id}\n");
                 $printer->text("Table: {$order->table->table_no}\n");
                 $printer->text(date('Y-m-d H:i:s') . "\n");
                 $printer->text("--------------------------------\n");
@@ -477,11 +496,19 @@ class OrderController extends Controller
             $order = Order::findOrFail($id);
 
             // Update only price fields if both are present
-            $updateData = ['status' => $validated['status']];
+            // Update order fields
+            $updateData = [
+                'status' => $validated['status'],
+                'remark' => $request->remark ?? null,
+                'instructions' => $request->instructions ?? null,
+                'cancelType' => $request->cancelType ?? null,
+            ];
+
             if ($request->has('subtotal') && $request->has('total_price')) {
                 $updateData['amount'] = $validated['subtotal'];
                 $updateData['total_price'] = $validated['total_price'];
             }
+
             $order->update($updateData);
 
             // Update existing order items
@@ -490,13 +517,16 @@ class OrderController extends Controller
                 $order->orderItems()->where('id', $itemId)->update([
                     'order_item' => $itemData['order_item'],
                     'status' => $itemData['status'],
+                    'remark' => $itemData['remark'] ?? null,
+                    'instructions' => $itemData['instructions'] ?? null,
+                    'cancelType' => $itemData['cancelType'] ?? null,
                 ]);
             }
 
             // Add new order items
             foreach ($validated['new_items'] ?? [] as $itemData) {
                 $order->orderItems()->create([
-                    'kitchen_id' => $itemData['order_item']['kitchen_id'] ?? null,
+                    'tenant_id' => $itemData['order_item']['tenant_id'] ?? null,
                     'order_item' => $itemData['order_item'],
                     'status' => 'pending',
                 ]);
@@ -509,7 +539,7 @@ class OrderController extends Controller
                 ->first();
 
             if ($financialInvoice && $financialInvoice->status !== 'paid') {
-                if ($validated['status'] === 'cancelled') {
+                if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
                 } elseif ($request->has('subtotal') && $request->has('total_price')) {

@@ -98,7 +98,7 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url, component, props } = usePage();
-    const { auth } = usePage().props;
+    const { auth, tenant } = usePage().props;
 
     const [showNotification, setShowNotification] = React.useState(false);
     const [showProfile, setShowProfile] = React.useState(false);
@@ -219,6 +219,9 @@ export default function SideNav({ open, setOpen }) {
                         )}{' '}
                         {/* Toggle between icons */}
                     </IconButton>
+                    <Typography variant="h5" sx={{ color: '#063455', fontWeight: 'bold' }}>
+                        {tenant.name}
+                    </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {/* Notification Icon */}
                         <IconButton
