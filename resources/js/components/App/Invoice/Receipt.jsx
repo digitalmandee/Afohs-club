@@ -63,7 +63,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
             <div class="order-id">
               <div>Order Id</div>
-              <div><strong>#${data.order_number}</strong></div>
+              <div><strong>#${data.id}</strong></div>
             </div>
 
             <div class="row">
@@ -168,7 +168,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                     Order Id
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                    #{paymentData.order_number}
+                    #{paymentData.id}
                 </Typography>
             </Box>
 

@@ -36,6 +36,8 @@ class TenantController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'domain_name' => 'required|string|max:255',
+            'printer_ip' => 'required|string|max:255',
+            'printer_port' => 'required',
         ]);
 
         // Custom domain validation
@@ -51,7 +53,7 @@ class TenantController extends Controller
             'domain' => $request->input('domain_name'),
         ]);
 
-        return to_route('locations.register');
+        return to_route('locations.create');
     }
 
     /**

@@ -14,12 +14,27 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $orders = Order::whereIn('order_type', ['dineIn', 'takeaway', 'reservation'])->with([
-            'member',
-            'table:id,table_no',
-            'orderItems:id,order_id',
-        ])->latest()->get()->map(function ($order) {
-            $order->order_items_count = $order->orderItems->count() ?? 0;
+        $orders = Order::whereIn('order_type', ['dineIn', 'takeaway', 'reservation'])
+            ->with(['member', 'table:id,table_no', 'orderItems:id,order_id'])
+            ->latest()
+            ->get();
+
+        // Only fetch invoices where JSON contains order_id
+        $orderIds = $orders->pluck('id')->toArray();
+        $invoices = FinancialInvoice::select('id', 'data', 'status')->where(function ($query) use ($orderIds) {
+            foreach ($orderIds as $id) {
+                $query->orWhereJsonContains('data->order_id', $id);
+            }
+        })->get();
+
+        // Attach invoices to orders
+        $orders->map(function ($order) use ($invoices) {
+            $order->invoice = $invoices->first(function ($invoice) use ($order) {
+                $data = $invoice->data;
+                return isset($data['order_id']) && $data['order_id'] == $order->id;
+            });
+
+            $order->order_items_count = $order->orderItems->count();
             return $order;
         });
 

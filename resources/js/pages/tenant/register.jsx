@@ -13,6 +13,8 @@ const Register = () => {
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         name: '',
         domain_name: '',
+        printer_ip: '',
+        printer_port: '',
     });
 
     // 👇 function to convert name → slug
@@ -86,6 +88,14 @@ const Register = () => {
                                 {/* Domain Name (auto-filled, but editable if needed) */}
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <TextField label="Domain Name" type="text" required fullWidth autoComplete="domain_name" value={data.domain_name} onChange={(e) => setData('domain_name', slugify(e.target.value))} disabled={processing} placeholder="example" error={!!errors.domain_name} helperText={errors.domain_name} variant="outlined" />
+                                </div>
+
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField label="Printer IP" fullWidth placeholder="e.g. 192.168.1.100" name="printer_ip" value={data.printer_ip} onChange={(e) => setData('printer_ip', e.target.value)} error={!!errors.printer_ip} helperText={errors.printer_ip} />
+                                </div>
+
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <TextField label="Printer Port" fullWidth placeholder="e.g. 9100" name="printer_port" value={data.printer_port} onChange={(e) => setData('printer_port', e.target.value)} error={!!errors.printer_port} helperText={errors.printer_port} />
                                 </div>
 
                                 {/* Submit */}

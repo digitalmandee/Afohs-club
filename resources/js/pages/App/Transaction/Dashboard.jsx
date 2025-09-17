@@ -464,9 +464,9 @@ function TransactionDashboard({ Invoices, totalOrders }) {
 
     const handleOpenPayment = (order) => {
         setSelectedOrder(order);
-        if (order.payment_status === 'paid') {
+        if (order.invoice?.status === 'paid') {
             setOpenPaymentSuccessModal(true);
-        } else if (order.payment_status === 'unpaid') {
+        } else if (order.invoice?.status === 'unpaid') {
             setOpenPaymentModal(true);
             setOpenOrderDetailModal(false);
         }
@@ -746,7 +746,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     ? 'Pending'
                                                                     : order?.status === 'in_progress'
                                                                       ? 'In Progress'
-                                                                      : order?.status === 'completed' && order.payment_status === 'paid'
+                                                                      : order?.status === 'completed' && order.invoice?.status === 'paid'
                                                                         ? 'Completed'
                                                                         : order?.status === 'completed'
                                                                           ? 'Ready to Serve' // Don't show label if completed
@@ -778,7 +778,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 color: 'white',
                                                             }}
                                                         >
-                                                            {order.payment_status === 'paid' ? 'Paid' : order.payment_status == 'cancelled' ? 'Cancelled' : 'Payment Now'}
+                                                            {order.invoice?.status === 'paid' ? 'Paid' : order.invoice?.status == 'unpaid' ? 'Payment Now' : 'Cancelled'}
                                                         </Button>
                                                     </Box>
                                                 </Box>

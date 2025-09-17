@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     // protected $dates = ['order_time' => 'datetime:Y-m-d\TH:i:s\Z'];
 
@@ -48,6 +49,7 @@ class Order extends Model
         'credit_card_type',
         'payment_method',
         'reciept',
+        'tenant_id',
     ];
 
     public function orderItems()
@@ -70,12 +72,10 @@ class Order extends Model
         return $this->belongsTo(Member::class, 'customer_id', 'id');
     }
 
-    public function invoice()
-    {
-        return $this
-            ->hasOne(FinancialInvoice::class, 'id')
-            ->whereJsonContains('data->order_id', $this->id);
-    }
+    // public function invoice()
+    // {
+    //     return $this->hasOne(FinancialInvoice::class)->whereJsonContains('data->order_id', $this->id);
+    // }
 
     public function cashier()
     {

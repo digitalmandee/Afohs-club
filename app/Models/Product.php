@@ -13,7 +13,6 @@ class Product extends Model
 
     protected $fillable = [
         'name',
-        'kitchen_id',
         'menu_code',
         'description',
         'images',
@@ -44,10 +43,12 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
     public function kitchen()
     {
         return $this->belongsTo(User::class, 'kitchen_id', 'id');
     }
+
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class);

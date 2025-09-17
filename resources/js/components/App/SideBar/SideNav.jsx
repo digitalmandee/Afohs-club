@@ -122,12 +122,6 @@ export default function SideNav({ open, setOpen }) {
             path: route('order.management'),
             permission: 'order',
         },
-        // {
-        //     text: 'Kitchens',
-        //     icon: <img src="/assets/Kitchen.svg" alt="Kitchen icon" className="svg-img-icon" />,
-        //     path: route('kitchens.index'),
-        //     permission: 'order',
-        // },
         {
             text: 'Members',
             icon: <IoPeople style={{ height: 20, width: 20 }} />,
@@ -142,18 +136,23 @@ export default function SideNav({ open, setOpen }) {
         },
     ];
 
-    // 👇 Detect tab/window close
+    // Attach beforeunload event
     useEffect(() => {
         const handleBeforeUnload = (e) => {
-            // if (!manualLogout) {
-            // Show logoutSuccess view
+            console.log('Before unload event triggered');
+
+            // Block tab close
+            e.preventDefault();
+            e.returnValue = ''; // required for Chrome
             setShowProfile(true);
             setProfileView('logoutSuccess');
-            // }
+            return ''; // required for some browsers
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
     }, []);
 
     useEffect(() => {

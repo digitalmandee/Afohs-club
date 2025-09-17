@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\EmployeeLog;
 use App\Models\EmployeeType;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -117,5 +119,15 @@ class EmployeeController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
         }
+    }
+
+    public function employeeLog(Request $request)
+    {
+        $employeeId = Auth::user()->employee->id;
+        $logs = EmployeeLog::where('employee_id', $employeeId)
+            ->orderByDesc('logged_at')
+            ->get();
+
+        return response()->json($logs);
     }
 }

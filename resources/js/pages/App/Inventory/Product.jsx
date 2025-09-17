@@ -21,7 +21,6 @@ const AddProduct = ({ product, id }) => {
                   name: '',
                   menu_code: '',
                   category_id: '',
-                  kitchen: '',
                   current_stock: '',
                   minimal_stock: '',
                   outOfStock: false,
@@ -50,9 +49,7 @@ const AddProduct = ({ product, id }) => {
     );
 
     const [categories, setCategories] = useState([]);
-    const [kitchens, setKitchens] = useState([]);
     const [addMenuStep, setAddMenuStep] = useState(1);
-    const [loadingKitchen, setLoadingKitchen] = useState(false);
     const [uploadedImages, setUploadedImages] = useState([]);
     const [formData, setFormData] = useState({
         discountValue: data.discountValue || '',
@@ -82,7 +79,6 @@ const AddProduct = ({ product, id }) => {
             validationErrors.forEach((error) => {
                 if (error.includes('Name')) newFieldErrors.name = error;
                 if (error.includes('Category')) newFieldErrors.category_id = error;
-                if (error.includes('Kitchen')) newFieldErrors.kitchen = error;
                 if (error.includes('Current stock')) newFieldErrors.current_stock = error;
                 if (error.includes('Minimal stock')) newFieldErrors.minimal_stock = error;
                 if (error.includes('order type')) newFieldErrors.available_order_types = error;
@@ -101,7 +97,6 @@ const AddProduct = ({ product, id }) => {
         const errors = [];
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.category_id) errors.push('Category is required');
-        if (!menu.kitchen) errors.push('Kitchen is required');
         if (!menu.current_stock || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
         if (!menu.minimal_stock || isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
         if (!menu.available_order_types || menu.available_order_types.length === 0) errors.push('At least one order type must be selected');
@@ -256,7 +251,6 @@ const AddProduct = ({ product, id }) => {
             ...data,
             discount: data.discountValue || null,
             discountType: data.discountType || null,
-            kitchen: data.kitchen ? { id: data.kitchen.id } : null,
         }));
         submit(id ? 'put' : 'post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
             onSuccess: () => {
@@ -287,14 +281,6 @@ const AddProduct = ({ product, id }) => {
         }
     }, [data.cost_of_goods_sold, data.base_price]);
 
-    const fetchKitchens = () => {
-        setLoadingKitchen(true);
-        axios.get(route('kitchens.all')).then((response) => {
-            setKitchens(response.data.kitchens);
-            setLoadingKitchen(false);
-        });
-    };
-
     const fetchCategories = () => {
         axios.get(route('inventory.categories')).then((response) => {
             console.log(response.data);
@@ -304,7 +290,6 @@ const AddProduct = ({ product, id }) => {
 
     useEffect(() => {
         fetchCategories();
-        fetchKitchens();
     }, []);
 
     // Render
@@ -399,82 +384,33 @@ const AddProduct = ({ product, id }) => {
                                         </Typography>
                                         <TextField fullWidth placeholder="e.g. A001" name="menu_code" value={data.menu_code} onChange={handleInputChange} variant="outlined" size="small" />
                                     </Grid>
-                                    <Grid container item xs={12} spacing={3}>
-                                        <Grid item xs={12} md={6}>
-                                            <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
-                                                Categories
-                                            </Typography>
-                                            <TextField
-                                                select
-                                                fullWidth
-                                                placeholder="Choose category"
-                                                name="category_id"
-                                                value={data.category_id}
-                                                onChange={handleInputChange}
-                                                variant="outlined"
-                                                size="small"
-                                                SelectProps={{
-                                                    displayEmpty: true,
-                                                }}
-                                                error={!!fieldErrors.category_id}
-                                                helperText={fieldErrors.category_id}
-                                            >
-                                                <MenuItem value="">Choose category</MenuItem>
-                                                {categories?.length > 0 &&
-                                                    categories.map(({ id, name }) => (
-                                                        <MenuItem key={id} value={id}>
-                                                            {name}
-                                                        </MenuItem>
-                                                    ))}
-                                            </TextField>
-                                        </Grid>
-                                        <Grid item xs={12} md={6}>
-                                            <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
-                                                Kitchen
-                                            </Typography>
-                                            <Autocomplete
-                                                fullWidth
-                                                freeSolo
-                                                size="small"
-                                                options={kitchens}
-                                                value={data.kitchen}
-                                                getOptionLabel={(option) => option?.name || ''}
-                                                onChange={(event, value) => {
-                                                    setData((prev) => ({
-                                                        ...prev,
-                                                        kitchen: value || null,
-                                                    }));
-                                                    setFieldErrors((prev) => ({ ...prev, kitchen: '' }));
-                                                }}
-                                                loading={loadingKitchen}
-                                                renderInput={(params) => (
-                                                    <TextField
-                                                        {...params}
-                                                        fullWidth
-                                                        sx={{ p: 0 }}
-                                                        placeholder="Select Kitchen"
-                                                        variant="outlined"
-                                                        error={!!fieldErrors.kitchen}
-                                                        helperText={fieldErrors.kitchen}
-                                                        InputProps={{
-                                                            ...params.InputProps,
-                                                            endAdornment: (
-                                                                <InputAdornment position="end">
-                                                                    <ChevronDown fontSize="small" />
-                                                                </InputAdornment>
-                                                            ),
-                                                        }}
-                                                    />
-                                                )}
-                                                filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
-                                                renderOption={(props, option) => (
-                                                    <li {...props}>
-                                                        <span>{option.name}</span>
-                                                        <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
-                                                    </li>
-                                                )}
-                                            />
-                                        </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                            Categories
+                                        </Typography>
+                                        <TextField
+                                            select
+                                            fullWidth
+                                            placeholder="Choose category"
+                                            name="category_id"
+                                            value={data.category_id}
+                                            onChange={handleInputChange}
+                                            variant="outlined"
+                                            size="small"
+                                            SelectProps={{
+                                                displayEmpty: true,
+                                            }}
+                                            error={!!fieldErrors.category_id}
+                                            helperText={fieldErrors.category_id}
+                                        >
+                                            <MenuItem value="">Choose category</MenuItem>
+                                            {categories?.length > 0 &&
+                                                categories.map(({ id, name }) => (
+                                                    <MenuItem key={id} value={id}>
+                                                        {name}
+                                                    </MenuItem>
+                                                ))}
+                                        </TextField>
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>

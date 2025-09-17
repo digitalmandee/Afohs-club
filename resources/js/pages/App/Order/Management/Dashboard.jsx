@@ -29,12 +29,25 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
     const [showCancelModal, setShowCancelModal] = useState(false);
 
     const handleOpenCancelModal = () => setShowCancelModal(true);
-    const handleCloseCancelModal = () => setShowCancelModal(false);
+    const handleCloseCancelModal = () => {
+        setSelectedCard(null);
+        setShowCancelModal(false);
+    };
 
     const handleConfirmCancel = () => {
         // Do your cancel logic here (API call, state update, etc.)
-        console.log('Order cancelled');
-        setShowCancelModal(false);
+        const payload = { status: 'cancelled' };
+        router.post(route('orders.update', { id: selectedCard.id }), payload, {
+            preserveScroll: true,
+            onSuccess: () => {
+                enqueueSnackbar('Order updated successfully!', { variant: 'success' });
+                setSelectedCard(null);
+                setShowCancelModal(false);
+            },
+            onError: (errors) => {
+                enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+            },
+        });
     };
 
     // Handle category button click
@@ -46,11 +59,20 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
         const updatedItems = orderItems.filter((item) => typeof item.id === 'string' && item.id.startsWith('update-'));
         const newItems = orderItems.filter((item) => item.id === 'new');
 
-        const subtotal = orderItems.reduce((total, item) => total + (item.total_price || 0), 0);
-        const discount = 0;
-        const taxRate = 0.12;
-        const taxAmount = subtotal * taxRate;
-        const total = subtotal + taxAmount - discount;
+        // Exclude canceled items
+        const activeItems = orderItems.filter((item) => item.status !== 'cancelled');
+
+        const subtotal = Math.round(activeItems.reduce((acc, item) => acc + item.order_item.total_price, 0));
+
+        const discount = Number(selectedCard.discount) || 0;
+        const discountedSubtotal = subtotal - discount;
+
+        // Now apply tax on the discounted amount
+        const taxRate = Number(selectedCard.tax) || 0;
+        const taxAmount = Math.round(discountedSubtotal * taxRate);
+
+        // Final total
+        const total = Math.round(discountedSubtotal + taxAmount);
 
         const payload = {
             updated_items: updatedItems,
@@ -91,7 +113,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
         if (searchText.trim()) {
             const lowercased = searchText.toLowerCase();
             filtered = filtered.filter((order) => {
-                return order.order_number.toString().includes(lowercased) || (order.member?.full_name && order.member.full_name.toLowerCase().includes(lowercased)) || (order.member?.membership_no && order.member.membership_no.toLowerCase().includes(lowercased)) || (order.table?.table_no && order.table.table_no.toLowerCase().includes(lowercased));
+                return order.id.toString().includes(lowercased) || (order.member?.full_name && order.member.full_name.toLowerCase().includes(lowercased)) || (order.member?.membership_no && order.member.membership_no.toLowerCase().includes(lowercased)) || (order.table?.table_no && order.table.table_no.toLowerCase().includes(lowercased));
             });
         }
 
@@ -221,7 +243,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                     >
                                         {/* Header */}
                                         <Box sx={{ bgcolor: '#063455', color: 'white', p: 2, position: 'relative' }}>
-                                            <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px', color: '#FFFFFF' }}>#{card.order_number}</Typography>
+                                            <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px', color: '#FFFFFF' }}>#{card.id}</Typography>
                                             <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px', color: '#FFFFFF' }}>
                                                 {card.member?.full_name} ({card.member?.membership_no})
                                                 <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
@@ -263,7 +285,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                         {/* Order Items */}
                                         <List sx={{ py: 0 }}>
                                             {card.order_items.slice(0, 4).map((item, index) => (
-                                                <ListItem key={index} divider={index < card.order_items.length - 1} sx={{ py: 1, px: 2 }}>
+                                                <ListItem key={index} divider={index < card.order_items.length - 1} sx={{ py: 1, px: 2, textDecoration: item.status === 'cancelled' ? 'line-through' : 'none', opacity: item.status === 'cancelled' ? 0.6 : 1 }}>
                                                     <ListItemText
                                                         sx={{
                                                             color: '#121212',
@@ -290,7 +312,15 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
 
                                         {/* Action Buttons */}
                                         <Box sx={{ display: 'flex', p: 2, gap: 2 }}>
-                                            <Button variant="outlined" fullWidth sx={{ borderColor: '#003153', color: '#003153', textTransform: 'none', py: 1 }} onClick={handleOpenCancelModal}>
+                                            <Button
+                                                variant="outlined"
+                                                fullWidth
+                                                sx={{ borderColor: '#003153', color: '#003153', textTransform: 'none', py: 1 }}
+                                                onClick={() => {
+                                                    setSelectedCard(card);
+                                                    handleOpenCancelModal();
+                                                }}
+                                            >
                                                 Cancel
                                             </Button>
                                             <Button

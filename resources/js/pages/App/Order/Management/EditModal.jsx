@@ -1,6 +1,6 @@
 import { AccessTime, Add } from '@mui/icons-material';
 import { Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AddItems from './AddItem';
 import VariantSelectorDialog from '../VariantSelectorDialog';
 
@@ -12,6 +12,10 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [orderStatus, setOrderStatus] = useState(order?.status || 'pending');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setOrderStatus(order?.status || 'pending');
+    }, [order]);
 
     const handleQuantityChange = (index, delta) => {
         setOrderItems((prev) =>
@@ -32,6 +36,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     order_item: {
                         ...item.order_item,
                         quantity: updatedQty > 0 ? updatedQty : 1, // prevent quantity going below 1
+                        total_price: item.order_item.price * (updatedQty > 0 ? updatedQty : 1),
                     },
                 };
             }),

@@ -6,6 +6,7 @@ use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\WaiterController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
@@ -138,7 +139,7 @@ Route::group([
         Route::post('/order-payment', [TransactionController::class, 'OrderPayment'])->name('order.payment');
 
         // Kitchen Dashboard
-        Route::get('/kitchens', [KitchenController::class, 'indexPage'])->name('kitchens.index');
+        // Route::get('/kitchens', [KitchenController::class, 'indexPage'])->name('kitchens.index');
         Route::get('/kitchens/create', [KitchenController::class, 'create'])->name('kitchens.create');
         Route::get('/kitchens/{id}/edit', [KitchenController::class, 'edit'])->name('kitchens.edit');
         Route::post('/kitchens', [KitchenController::class, 'store'])->name('kitchens.store');
@@ -151,6 +152,8 @@ Route::group([
         // Api Floors with Tables
         Route::get('/api/floors-with-tables', [OrderController::class, 'getFloorsWithTables'])->name('api.floors-with-tables');
         Route::get('/tables/{table}/available-times', [ReservationController::class, 'availableTimes'])->name('tables.available-times');
+        // Employee Log
+        Route::get('/api/employee-logs', [EmployeeController::class, 'employeeLog'])->name('api.employee-logs');
     });
 
     // Login Authentication Routes
