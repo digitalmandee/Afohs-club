@@ -34,9 +34,14 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
         setShowCancelModal(false);
     };
 
-    const handleConfirmCancel = () => {
-        // Do your cancel logic here (API call, state update, etc.)
-        const payload = { status: 'cancelled' };
+    const handleConfirmCancel = (cancelData) => {
+        const payload = {
+            status: 'cancelled',
+            remark: cancelData.remark,
+            instructions: cancelData.instructions,
+            cancelType: cancelData.cancelType,
+        };
+
         router.post(route('orders.update', { id: selectedCard.id }), payload, {
             preserveScroll: true,
             onSuccess: () => {
@@ -153,7 +158,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                         {/* Right - Search + Filter */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             {/* Category Filter dropdown */}
-                            <FormControl sx={{ width: '250px' }}>
+                            <FormControl sx={{ width: '200px' }}>
                                 {/* <InputLabel id="category-select-label">Select Category</InputLabel> */}
                                 <Select
                                     labelId="category-select-label"
@@ -194,7 +199,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                     alignItems: 'center',
                                     border: '1px solid #121212',
                                     borderRadius: '0px',
-                                    width: '350px',
+                                    width: '300px',
                                     height: '40px',
                                     padding: '4px 8px',
                                     backgroundColor: '#FFFFFF',
@@ -315,13 +320,14 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                             <Button
                                                 variant="outlined"
                                                 fullWidth
-                                                sx={{ borderColor: '#003153', color: '#003153', textTransform: 'none', py: 1 }}
+                                                disabled={card.status === 'cancelled'}
+                                                sx={{ borderColor: '#003153', color: '#003153', bgcolor: card.status === 'cancelled' ? '#E3E3E3' : 'transparent', textTransform: 'none', py: 1 }}
                                                 onClick={() => {
                                                     setSelectedCard(card);
                                                     handleOpenCancelModal();
                                                 }}
                                             >
-                                                Cancel
+                                                {card.status === 'cancelled' ? 'Cancelled' : 'Cancel'}
                                             </Button>
                                             <Button
                                                 variant="contained"
@@ -352,7 +358,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                             </Grid>
                         )}
                     </Grid>
-                    {showCancelModal && <CancelOrder onClose={handleCloseCancelModal} onConfirm={handleConfirmCancel} />}
+                    {showCancelModal && <CancelOrder order={selectedCard} onClose={handleCloseCancelModal} onConfirm={handleConfirmCancel} />}
                     <Drawer
                         anchor="right"
                         open={isFilterOpen}

@@ -70,7 +70,7 @@ const OrderMenu = () => {
                     price: parseFloat(product.base_price),
                     total_price: parseFloat(product.base_price),
                     quantity: 1,
-                    kitchen_id: product.kitchen_id,
+                    tenant_id: product.tenant_id,
                     category: product.category?.name || '',
                     variants: [],
                 };

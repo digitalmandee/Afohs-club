@@ -78,27 +78,9 @@ class User extends Authenticatable
         return $this->hasOne(UserDetail::class);
     }
 
-    public function userDetails()
-    {
-        return $this->hasOne(UserDetail::class);
-    }
-
-    /**
-     * Get the Card Payments.
-     */
-    public function cardPayment()
-    {
-        return $this->hasOne(CardPayment::class);
-    }
-
     /**
      * Get the kitchen detail.
      */
-    public function kitchenDetail()
-    {
-        return $this->hasOne(kitchenDetail::class, 'kitchen_id', 'id');
-    }
-
     public function familyMembers()
     {
         return $this->hasMany(User::class, 'parent_user_id');

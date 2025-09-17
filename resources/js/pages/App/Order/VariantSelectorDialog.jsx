@@ -65,7 +65,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
             id: product.id,
             name: product.name,
             price: parseFloat(product.base_price),
-            kitchen_id: product.kitchen_id,
+            tenant_id: product.tenant_id,
             total_price,
             quantity,
             category: product.category?.name || '',

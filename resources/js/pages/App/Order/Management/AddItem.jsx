@@ -38,7 +38,7 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants })
                 price: parseFloat(product.base_price),
                 total_price: parseFloat(product.base_price),
                 quantity: 1,
-                kitchen_id: product.kitchen_id,
+                tenant_id: product.tenant_id,
                 category: product.category?.name || '',
                 variants: [],
             };
@@ -398,7 +398,7 @@ const VariantSelector = ({ product, onConfirm, onClose, initialItem = null }) =>
             id: product.id,
             name: product.name,
             price: parseFloat(product.base_price),
-            kitchen_id: product.kitchen_id,
+            tenant_id: product.tenant_id,
             total_price,
             quantity,
             category: product.category?.name || '',

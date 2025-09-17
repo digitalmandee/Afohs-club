@@ -170,27 +170,25 @@ class FloorController extends Controller
                     ->whereDate('created_at', '<=', $parsedDate)
                     ->select('id', 'floor_id', 'table_no', 'capacity')
                     ->with([
-                        // Reservations for the day (only those with non-completed orders or no order yet)
+                        // Reservations for the day
                         'reservations' => function ($resQuery) use ($parsedDate) {
                             $resQuery
                                 ->whereDate('date', $parsedDate)
                                 ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'member_id')
                                 ->with([
                                     'order' => function ($orderQuery) {
-                                        $orderQuery
-                                            ->select('id', 'reservation_id', 'table_id', 'status', 'order_type', 'start_date', 'member_id');
+                                        $orderQuery->select('id', 'reservation_id', 'table_id', 'status', 'order_type', 'start_date', 'member_id');
                                     },
                                     'member:id,user_id,full_name',
-                                    'order.invoice:id,status',
                                 ]);
                         },
-                        // Direct dinein/takeaway orders (not completed only)
+                        // Direct dinein/takeaway orders
                         'orders' => function ($orderQuery) use ($parsedDate) {
                             $orderQuery
                                 ->whereDate('start_date', $parsedDate)
                                 ->whereNull('reservation_id')
                                 ->whereIn('order_type', ['dinein', 'takeaway'])
-                                ->whereIn('status', ['pending', 'in_progress'])  // only active orders
+                                ->whereIn('status', ['pending', 'in_progress'])
                                 ->select('id', 'table_id', 'order_type', 'status', 'start_date', 'member_id')
                                 ->with([
                                     'member:id,user_id,full_name',
@@ -200,13 +198,30 @@ class FloorController extends Controller
             }])
             ->first();
 
-        // Now attach invoices via map
+        // Attach invoices
         $floor->tables->map(function ($table) {
+            // Attach invoice for orders
             $table->orders = $table->orders->map(function ($order) {
-                $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->select('id', 'status', 'data')->first();
+                $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
+                    ->select('id', 'status', 'data')
+                    ->first();
                 $order->invoice = $invoice;
                 return $order;
             });
+
+            // Attach invoice for reservations
+            $table->reservations = $table->reservations->map(function ($reservation) {
+                if ($reservation->order) {
+                    $invoice = FinancialInvoice::whereJsonContains('data->order_id', $reservation->order->id)
+                        ->select('id', 'status', 'data')
+                        ->first();
+                    $reservation->invoice = $invoice;
+                } else {
+                    $reservation->invoice = null;
+                }
+                return $reservation;
+            });
+
             return $table;
         });
 

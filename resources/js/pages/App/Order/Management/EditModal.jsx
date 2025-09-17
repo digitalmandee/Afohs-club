@@ -1,5 +1,5 @@
 import { AccessTime, Add } from '@mui/icons-material';
-import { Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide, Select, MenuItem, InputLabel, FormControl, FormControlLabel, Radio, TextField, RadioGroup, Collapse } from '@mui/material';
 import { useEffect, useState } from 'react';
 import AddItems from './AddItem';
 import VariantSelectorDialog from '../VariantSelectorDialog';
@@ -12,6 +12,34 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [orderStatus, setOrderStatus] = useState(order?.status || 'pending');
     const [loading, setLoading] = useState(false);
+
+    const [openCancelDetails, setOpenCancelDetails] = useState({});
+
+    const toggleCancelDetails = (index) => {
+        setOpenCancelDetails((prev) => ({
+            ...prev,
+            [index]: !prev[index], // toggle only this item
+        }));
+    };
+
+    const updateItem = (index, updates) => {
+        setOrderItems((prev) =>
+            prev.map((item, i) => {
+                if (i !== index) return item;
+
+                let updatedId = item.id;
+                if (item.id && typeof item.id === 'number') {
+                    updatedId = `update-${item.id}`;
+                }
+
+                return {
+                    ...item,
+                    id: updatedId,
+                    ...updates, // merge root-level updates (instructions, remark, cancelType)
+                };
+            }),
+        );
+    };
 
     useEffect(() => {
         setOrderStatus(order?.status || 'pending');
@@ -53,11 +81,24 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     updatedId = `update-${item.id}`;
                 }
 
-                return {
-                    ...item,
-                    id: updatedId,
-                    status: item.status === 'cancelled' ? 'pending' : 'cancelled',
-                };
+                if (item.status === 'cancelled') {
+                    // Unchecking → restore + clear cancel fields
+                    return {
+                        ...item,
+                        id: updatedId,
+                        status: 'pending',
+                        remark: 'CANCELLED BY CUSTOMER',
+                        instructions: '',
+                        cancelType: 'void',
+                    };
+                } else {
+                    // Checking → cancel
+                    return {
+                        ...item,
+                        id: updatedId,
+                        status: 'cancelled',
+                    };
+                }
             }),
         );
     };
@@ -117,7 +158,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                 <DialogContent
                     sx={{
                         p: 0,
-                        width: showAddItem ? '100%' : '400px', // expand when adding
+                        width: showAddItem ? '100%' : '600px', // expand when adding
                         maxWidth: '100vw',
                         height: '90vh',
                         display: 'flex',
@@ -213,7 +254,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                         {/* Scrollable Order Items */}
                         <Box
                             sx={{
-                                maxHeight: showAddItem ? 'calc(100vh - 200px)' : '300px',
+                                maxHeight: 'calc(100vh - 300px)',
                                 overflowY: 'auto',
                                 '&::-webkit-scrollbar': {
                                     display: 'none',
@@ -247,52 +288,73 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                             <List sx={{ py: 0 }}>
                                 {orderItems.length > 0 &&
                                     orderItems.map((item, index) => (
-                                        <ListItem
-                                            key={index}
-                                            divider
-                                            sx={{
-                                                py: 0,
-                                                px: 2,
-                                                ...(item.status === 'cancelled' && {
-                                                    '& .MuiListItemText-primary': {
-                                                        textDecoration: 'line-through',
-                                                    },
-                                                }),
-                                            }}
-                                        >
-                                            <ListItemText primary={item.order_item?.name} onClick={() => handleItemClick(item, index)} sx={{ cursor: 'pointer' }} />
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <IconButton size="small" onClick={() => handleQuantityChange(index, -1)} sx={{ color: '#003153' }}>
-                                                    <Typography sx={{ fontSize: 16, fontWeight: 'bold' }}>-</Typography>
-                                                </IconButton>
-                                                <Typography sx={{ mx: 1 }}>{item.order_item.quantity}x</Typography>
-                                                <IconButton size="small" onClick={() => handleQuantityChange(index, 1)} sx={{ color: '#003153' }}>
-                                                    <Typography sx={{ fontSize: 16, fontWeight: 'bold' }}>+</Typography>
-                                                </IconButton>
+                                        <Box key={index}>
+                                            <ListItem
+                                                divider
+                                                sx={{
+                                                    py: 0,
+                                                    px: 2,
+                                                    ...(item.status === 'cancelled' && {
+                                                        '& .MuiListItemText-primary': {
+                                                            textDecoration: 'line-through',
+                                                        },
+                                                    }),
+                                                }}
+                                            >
+                                                <ListItemText primary={item.order_item?.name} onClick={() => handleItemClick(item, index)} sx={{ cursor: 'pointer' }} />
 
-                                                {item.id === 'new' ? (
-                                                    <IconButton
-                                                        onClick={() => {
-                                                            setOrderItems((prev) => prev.filter((_, i) => i !== index));
-                                                        }}
-                                                        sx={{ color: '#d32f2f', fontSize: 16 }}
-                                                    >
-                                                        ✕
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <IconButton size="small" onClick={() => handleQuantityChange(index, -1)} sx={{ color: '#003153' }}>
+                                                        <Typography sx={{ fontSize: 16, fontWeight: 'bold' }}>-</Typography>
                                                     </IconButton>
-                                                ) : (
+                                                    <Typography sx={{ mx: 1 }}>{item.order_item.quantity}x</Typography>
+                                                    <IconButton size="small" onClick={() => handleQuantityChange(index, 1)} sx={{ color: '#003153' }}>
+                                                        <Typography sx={{ fontSize: 16, fontWeight: 'bold' }}>+</Typography>
+                                                    </IconButton>
+
                                                     <Checkbox
                                                         checked={item.status === 'cancelled'}
-                                                        onChange={() => handleRemoveToggle(index)}
-                                                        sx={{
-                                                            color: '#ccc',
-                                                            '&.Mui-checked': {
-                                                                color: '#003153',
-                                                            },
+                                                        onChange={() => {
+                                                            handleRemoveToggle(index);
+                                                            toggleCancelDetails(index);
                                                         }}
                                                     />
-                                                )}
-                                            </Box>
-                                        </ListItem>
+
+                                                    {item.status === 'cancelled' && (
+                                                        <Button variant="text" size="small" onClick={() => toggleCancelDetails(index)} sx={{ textTransform: 'none', color: '#d32f2f' }}>
+                                                            Details
+                                                        </Button>
+                                                    )}
+                                                </Box>
+                                            </ListItem>
+                                            {/* Inline Collapse for Cancel Details */}
+                                            <Collapse in={openCancelDetails[index] && item.status === 'cancelled'}>
+                                                <Box sx={{ px: 4, py: 2, bgcolor: '#f9f9f9' }}>
+                                                    <FormControl fullWidth sx={{ mb: 2 }}>
+                                                        <InputLabel>Remark</InputLabel>
+                                                        <Select size="small" value={item.remark || ''} onChange={(e) => updateItem(index, { remark: e.target.value })}>
+                                                            <MenuItem value="CANCELLED BY CUSTOMER">CANCELLED BY CUSTOMER</MenuItem>
+                                                            <MenuItem value="GUEST MIND CHANGE">GUEST MIND CHANGE</MenuItem>
+                                                            <MenuItem value="FOOD COMPLAIN">FOOD COMPLAIN</MenuItem>
+                                                            <MenuItem value="GUEST DIDN'T PICK THE CALL">GUEST DIDN'T PICK THE CALL</MenuItem>
+                                                            <MenuItem value="GUEST DIDN'T LIKE THE FOOD">GUEST DIDN'T LIKE THE FOOD</MenuItem>
+                                                            <MenuItem value="OTHER">OTHER</MenuItem>
+                                                            <MenuItem value="WRONG PUNCHING">WRONG PUNCHING</MenuItem>
+                                                            <MenuItem value="RUN OUT">RUN OUT</MenuItem>
+                                                            <MenuItem value="DIDN'T SERVED">DIDN'T SERVED</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+
+                                                    <TextField size="small" label="Instructions" multiline rows={2} fullWidth sx={{ mb: 2 }} value={item.instructions || ''} onChange={(e) => updateItem(index, { instructions: e.target.value })} />
+
+                                                    <RadioGroup row value={item.cancelType || ''} onChange={(e) => updateItem(index, { cancelType: e.target.value })}>
+                                                        <FormControlLabel value="void" control={<Radio size="small" />} label="Void" />
+                                                        <FormControlLabel value="return" control={<Radio size="small" />} label="Return" />
+                                                        <FormControlLabel value="complementary" control={<Radio size="small" />} label="Complementary" />
+                                                    </RadioGroup>
+                                                </Box>
+                                            </Collapse>
+                                        </Box>
                                     ))}
                             </List>
 
