@@ -453,26 +453,36 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Validate status and items first
         $validated = $request->validate([
-            'subtotal' => 'required|numeric',
-            'discount' => 'required|numeric',
-            'total_price' => 'required|numeric',
             'updated_items' => 'nullable|array',
             'new_items' => 'nullable|array',
             'status' => 'required|in:saved,pending,in_progress,completed,cancelled,no_show,refund',
+            'subtotal' => 'nullable|numeric',
+            'total_price' => 'nullable|numeric',
+            'discount' => 'nullable|numeric',
         ]);
+
+        // Custom check for subtotal/total_price dependency
+        if (($request->has('subtotal') && !$request->has('total_price')) ||
+                ($request->has('total_price') && !$request->has('subtotal'))) {
+            return redirect()->back()->withErrors([
+                'subtotal' => 'Subtotal and total_price must be provided together.'
+            ]);
+        }
 
         DB::beginTransaction();
 
         try {
             $order = Order::findOrFail($id);
 
-            // Update order base amount
-            $order->update([
-                'amount' => $validated['subtotal'],
-                'total_price' => $validated['total_price'],
-                'status' => $validated['status'],
-            ]);
+            // Update only price fields if both are present
+            $updateData = ['status' => $validated['status']];
+            if ($request->has('subtotal') && $request->has('total_price')) {
+                $updateData['amount'] = $validated['subtotal'];
+                $updateData['total_price'] = $validated['total_price'];
+            }
+            $order->update($updateData);
 
             // Update existing order items
             foreach ($validated['updated_items'] ?? [] as $itemData) {
@@ -492,12 +502,24 @@ class OrderController extends Controller
                 ]);
             }
 
-            FinancialInvoice::where('member_id', $order->user_id)
+            // Update financial invoice if exists and not paid
+            $financialInvoice = FinancialInvoice::where('member_id', $order->member_id)
+                ->where('invoice_type', 'food_order')
                 ->whereJsonContains('data', ['order_id' => $order->id])
-                ->update([
-                    'amount' => $validated['subtotal'],
-                    'total_price' => $validated['total_price'],
-                ]);
+                ->first();
+
+            if ($financialInvoice && $financialInvoice->status !== 'paid') {
+                if ($validated['status'] === 'cancelled') {
+                    // Mark invoice as cancelled
+                    $financialInvoice->update(['status' => 'cancelled']);
+                } elseif ($request->has('subtotal') && $request->has('total_price')) {
+                    // Otherwise update amounts if provided
+                    $financialInvoice->update([
+                        'amount' => $validated['subtotal'],
+                        'total_price' => $validated['total_price'],
+                    ]);
+                }
+            }
 
             DB::commit();
 
