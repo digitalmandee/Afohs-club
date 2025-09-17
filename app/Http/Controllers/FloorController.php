@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FinancialInvoice;
 use App\Models\Floor;
 use App\Models\Order;
 use App\Models\Reservation;
@@ -192,13 +193,22 @@ class FloorController extends Controller
                                 ->whereIn('status', ['pending', 'in_progress'])  // only active orders
                                 ->select('id', 'table_id', 'order_type', 'status', 'start_date', 'member_id')
                                 ->with([
-                                    'invoice:id,status',
                                     'member:id,user_id,full_name',
                                 ]);
                         }
                     ]);
             }])
             ->first();
+
+        // Now attach invoices via map
+        $floor->tables->map(function ($table) {
+            $table->orders = $table->orders->map(function ($order) {
+                $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->select('id', 'status', 'data')->first();
+                $order->invoice = $invoice;
+                return $order;
+            });
+            return $table;
+        });
 
         $totalCapacity = 0;
         $availableCapacity = 0;
@@ -285,10 +295,15 @@ class FloorController extends Controller
             'member:id,user_id,full_name',
             'table:id,table_no',
             'orderItems:id,order_id,order_item,status',
-            'invoice:id,total_price,amount,data,status',
         ])->find($id);
 
         if ($order) {
+            // Attach invoice dynamically
+            $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
+                ->select('id', 'total_price', 'amount', 'data', 'status')
+                ->first();
+            $order->invoice = $invoice;
+
             return response()->json(['success' => true, 'type' => 'order', 'data' => $order]);
         }
 
@@ -296,15 +311,18 @@ class FloorController extends Controller
         $reservation = Reservation::with([
             'member:id,user_id,full_name',
             'table:id,table_no',
-            'order' => function ($q) {
-                $q->with([
-                    'orderItems:id,order_item,status',
-                    'invoice:id,total_price,amount,data,status',
-                ]);
-            }
+            'order.orderItems:id,order_id,order_item,status',
         ])->find($id);
 
         if ($reservation) {
+            // Attach invoice dynamically to reservation's order
+            if ($reservation->order) {
+                $invoice = FinancialInvoice::whereJsonContains('data->order_id', $reservation->order->id)
+                    ->select('id', 'total_price', 'amount', 'data', 'status')
+                    ->first();
+                $reservation->order->invoice = $invoice;
+            }
+
             return response()->json(['success' => true, 'type' => 'reservation', 'data' => $reservation]);
         }
 
