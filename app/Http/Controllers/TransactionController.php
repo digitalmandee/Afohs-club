@@ -12,23 +12,88 @@ use Inertia\Inertia;
 
 class TransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::whereIn('order_type', ['dineIn', 'takeaway', 'reservation'])
-            ->with(['member', 'table:id,table_no', 'orderItems:id,order_id'])
-            ->latest()
+        $query = Order::query()
+            ->whereIn('order_type', ['dineIn', 'takeaway', 'reservation'])
+            ->with(['member', 'table:id,table_no', 'orderItems:id,order_id']);
+
+        // ===============================
+        // FILTER: Search by member name or membership_no
+        // ===============================
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('member', function ($q) use ($search) {
+                $q
+                    ->where('full_name', 'like', "%$search%")
+                    ->orWhere('membership_no', 'like', "%$search%");
+            });
+        }
+
+        // ===============================
+        // FILTER: Order Type
+        // ===============================
+        if ($request->has('orderType') && $request->orderType != 'all') {
+            $orderTypeMap = [
+                'dineIn' => 'dineIn',
+                'takeaway' => 'takeaway',
+                'reservation' => 'reservation',
+            ];
+            if (isset($orderTypeMap[$request->orderType])) {
+                $query->where('order_type', $orderTypeMap[$request->orderType]);
+            }
+        }
+
+        // ===============================
+        // FILTER: Order Status
+        // ===============================
+        if ($request->has('orderStatus') && $request->orderStatus != 'all') {
+            $statusMap = [
+                'ready' => 'completed',
+                'cooking' => 'in_progress',
+                'waiting' => 'pending',
+                'completed' => 'completed',
+                'cancelled' => 'cancelled',
+            ];
+            if (isset($statusMap[$request->orderStatus])) {
+                $query->where('status', $statusMap[$request->orderStatus]);
+            }
+        }
+
+        // ===============================
+        // FILTER: Member Status
+        // ===============================
+        if ($request->has('memberStatus') && $request->memberStatus != 'all') {
+            $query->whereHas('member', function ($q) use ($request) {
+                $q->where('status', $request->memberStatus);
+            });
+        }
+
+        // ===============================
+        // SORTING
+        // ===============================
+        $sort = $request->sort ?? 'desc';
+        $query->orderBy('id', $sort);
+
+        // ===============================
+        // PAGINATION
+        // ===============================
+        $perPage = 10;
+        $orders = $query->paginate($perPage)->withQueryString();
+
+        // ===============================
+        // Attach invoices to orders
+        // ===============================
+        $orderIds = $orders->pluck('id')->toArray();
+        $invoices = FinancialInvoice::select('id', 'data', 'status')
+            ->where(function ($q) use ($orderIds) {
+                foreach ($orderIds as $id) {
+                    $q->orWhereJsonContains('data->order_id', $id);
+                }
+            })
             ->get();
 
-        // Only fetch invoices where JSON contains order_id
-        $orderIds = $orders->pluck('id')->toArray();
-        $invoices = FinancialInvoice::select('id', 'data', 'status')->where(function ($query) use ($orderIds) {
-            foreach ($orderIds as $id) {
-                $query->orWhereJsonContains('data->order_id', $id);
-            }
-        })->get();
-
-        // Attach invoices to orders
-        $orders->map(function ($order) use ($invoices) {
+        $orders->getCollection()->transform(function ($order) use ($invoices) {
             $order->invoice = $invoices->first(function ($invoice) use ($order) {
                 $data = $invoice->data;
                 return isset($data['order_id']) && $data['order_id'] == $order->id;
@@ -38,11 +103,15 @@ class TransactionController extends Controller
             return $order;
         });
 
+        // ===============================
+        // Total Orders
+        // ===============================
         $totalOrders = Order::count();
 
         return Inertia::render('App/Transaction/Dashboard', [
             'Invoices' => $orders,
             'totalOrders' => $totalOrders,
+            'filters' => $request->all(),
         ]);
     }
 
