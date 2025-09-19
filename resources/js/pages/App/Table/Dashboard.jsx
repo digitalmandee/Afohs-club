@@ -218,13 +218,12 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     // Days of the week with dates and reservation indicators
     const days = generateDaysArray();
 
-    const selectedFullDate = new Date(selectedDate.full_date);
+    // floorsdata is an array of objects
+    const selectedDateStr = new Date(selectedDate.full_date).toISOString().split('T')[0];
 
-    // floorsdata is an array of objects from backend
     const matchedFloors = floorsdata.filter((floor) => {
-        const floorDate = new Date(floor.created_at);
-
-        return floorDate <= selectedFullDate;
+        const floorDateStr = new Date(floor.created_at).toISOString().split('T')[0];
+        return floorDateStr <= selectedDateStr;
     });
 
     useEffect(() => {

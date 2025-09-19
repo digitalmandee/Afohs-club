@@ -12,14 +12,14 @@ import { enqueueSnackbar } from 'notistack';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
+const Dashboard = ({ orders, allrestaurants, filters }) => {
     const [open, setOpen] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     // Search Order
-    const [searchText, setSearchText] = useState('');
-    const [filteredOrders, setFilteredOrders] = useState(orders);
+    const [searchText, setSearchText] = useState(filters.search || '');
+    const [filteredOrders, setFilteredOrders] = useState(orders.data);
     // Add state for category filtering
     const [activeCategory, setActiveCategory] = useState('All Menus');
 
@@ -53,11 +53,6 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                 enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
             },
         });
-    };
-
-    // Handle category button click
-    const handleCategoryClick = (category) => {
-        setActiveCategory(category);
     };
 
     const onSave = (status) => {
@@ -107,7 +102,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
 
     // Search and Category Filter for Orders
     useEffect(() => {
-        let filtered = [...orders];
+        let filtered = [...orders.data];
 
         // Filter by category
         if (activeCategory !== 'All Menus') {
@@ -158,41 +153,6 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                         {/* Right - Search + Filter */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             {/* Category Filter dropdown */}
-                            <FormControl sx={{ width: '200px' }}>
-                                {/* <InputLabel id="category-select-label">Select Category</InputLabel> */}
-                                <Select
-                                    labelId="category-select-label"
-                                    value={activeCategory}
-                                    label="Select Category"
-                                    onChange={(e) => handleCategoryClick(e.target.value)}
-                                    sx={{
-                                        borderRadius: 0, // Match the border radius of Search and Filter
-                                        backgroundColor: '#FFFFFF', // Match Search background
-                                        height: '40px', // Match height of Search and Filter
-                                        border: '1px solid #121212', // Match Search border
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            border: 'none', // Remove default MUI border
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                                            border: 'none',
-                                        },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                            border: 'none',
-                                        },
-                                        '& .MuiSelect-select': {
-                                            padding: '4px 8px', // Match Search padding
-                                            color: '#121212', // Match Search text color
-                                        },
-                                    }}
-                                >
-                                    <MenuItem value="All Menus">All Category</MenuItem>
-                                    {categoriesList.map((category) => (
-                                        <MenuItem key={category.id} value={category.id}>
-                                            {category.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
                             <div
                                 style={{
                                     display: 'flex',
@@ -247,9 +207,9 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                         }}
                                     >
                                         {/* Header */}
-                                        <Box sx={{ bgcolor: '#063455', color: 'white', p: 2, position: 'relative' }}>
-                                            <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px', color: '#FFFFFF' }}>#{card.id}</Typography>
-                                            <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px', color: '#FFFFFF' }}>
+                                        <Box sx={{ bgcolor: card.status === 'cancelled' ? '#FF0000' : card.status === 'refund' ? '#FFA500' : card.status === 'in_progress' ? '#E6E6E6' : card.status === 'completed' ? '#4BB543' : '#063455', color: card.status === 'cancelled' ? '#FFFFFF' : card.status === 'refund' ? '#FFFFFF' : card.status === 'in_progress' ? '#000000' : card.status === 'completed' ? '#FFFFFF' : '#FFFFFF', p: 2, position: 'relative' }}>
+                                            <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px' }}>#{card.id}</Typography>
+                                            <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px' }}>
                                                 {card.member?.full_name} ({card.member?.membership_no})
                                                 <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
                                                     ({card.order_type})
@@ -270,7 +230,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                                 <Typography variant="caption">{card.start_time}</Typography>
                                             </Box>
                                             <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                                                <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px', color: '#FFFFFF' }}>{card.member?.member_type?.name}</Typography>
+                                                <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member?.member_type?.name}</Typography>
                                                 <Box display="flex">
                                                     <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
                                                     <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>

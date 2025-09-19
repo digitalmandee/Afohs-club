@@ -8,6 +8,7 @@ use App\Models\Invoices;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class TransactionController extends Controller
@@ -164,7 +165,7 @@ class TransactionController extends Controller
         $invoice->payment_status = 'paid';
         $invoice->save();
 
-        FinancialInvoice::where('member_id', $invoice->user_id)
+        FinancialInvoice::where('member_id', $invoice->member_id)
             ->whereJsonContains('data', ['order_id' => $invoice->id])
             ->update([
                 'status' => 'paid',
@@ -172,6 +173,8 @@ class TransactionController extends Controller
                 'payment_method' => $request->payment_method,
                 'paid_amount' => $request->paid_amount
             ]);
+
+        Log::info('Invoice updated for member ' . $request->order_id);
 
         return redirect()->back()->with('success', 'Payment successful');
     }

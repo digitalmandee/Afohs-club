@@ -139,8 +139,6 @@ export default function SideNav({ open, setOpen }) {
     // Attach beforeunload event
     useEffect(() => {
         const handleBeforeUnload = (e) => {
-            console.log('Before unload event triggered');
-
             // Block tab close
             e.preventDefault();
             e.returnValue = ''; // required for Chrome

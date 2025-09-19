@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App\Auth;
 
+use App\Helpers\TenantLogout;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\TenantLoginRequest;
 use App\Models\EmployeeLog;
@@ -64,22 +65,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $user = Auth::guard('tenant')->user();
-
-        if ($user) {
-            // 🔹 Save employee log
-            EmployeeLog::create([
-                'employee_id' => $user->employee->id,  // assuming user has employee_id relation/column
-                'type' => 'logout',  // or 'shift_end' if you want strict shift naming
-                'logged_at' => now(),
-            ]);
-        }
-
-        // 🔹 Proceed with logout
-        Auth::guard('tenant')->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        TenantLogout::logout($request);
 
         return redirect(route('tenant.login'));
     }

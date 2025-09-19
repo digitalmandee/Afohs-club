@@ -161,6 +161,9 @@ class FloorController extends Controller
         $date = $request->date;
         $floorId = $request->floor;
 
+        Log::info('Date: ' . $date);
+        Log::info('Floor ID: ' . $floorId);
+
         $parsedDate = Carbon::parse($date)->startOfDay();
 
         $floor = Floor::where('id', $floorId)
@@ -198,37 +201,37 @@ class FloorController extends Controller
             }])
             ->first();
 
-        // Attach invoices
-        $floor->tables->map(function ($table) {
-            // Attach invoice for orders
-            $table->orders = $table->orders->map(function ($order) {
-                $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
-                    ->select('id', 'status', 'data')
-                    ->first();
-                $order->invoice = $invoice;
-                return $order;
-            });
-
-            // Attach invoice for reservations
-            $table->reservations = $table->reservations->map(function ($reservation) {
-                if ($reservation->order) {
-                    $invoice = FinancialInvoice::whereJsonContains('data->order_id', $reservation->order->id)
-                        ->select('id', 'status', 'data')
-                        ->first();
-                    $reservation->invoice = $invoice;
-                } else {
-                    $reservation->invoice = null;
-                }
-                return $reservation;
-            });
-
-            return $table;
-        });
-
         $totalCapacity = 0;
         $availableCapacity = 0;
 
         if ($floor) {
+            // Attach invoices
+            $floor->tables->map(function ($table) {
+                // Attach invoice for orders
+                $table->orders = $table->orders->map(function ($order) {
+                    $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
+                        ->select('id', 'status', 'data')
+                        ->first();
+                    $order->invoice = $invoice;
+                    return $order;
+                });
+
+                // Attach invoice for reservations
+                $table->reservations = $table->reservations->map(function ($reservation) {
+                    if ($reservation->order) {
+                        $invoice = FinancialInvoice::whereJsonContains('data->order_id', $reservation->order->id)
+                            ->select('id', 'status', 'data')
+                            ->first();
+                        $reservation->invoice = $invoice;
+                    } else {
+                        $reservation->invoice = null;
+                    }
+                    return $reservation;
+                });
+
+                return $table;
+            });
+
             foreach ($floor->tables as $table) {
                 $isAvailable = true;
                 $bookedBy = null;
@@ -293,8 +296,6 @@ class FloorController extends Controller
                 }
             }
         }
-
-        Log::info($floor);
 
         return response()->json([
             'floor' => $floor,

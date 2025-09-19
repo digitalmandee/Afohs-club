@@ -1,18 +1,20 @@
 'use client';
-import { useState } from 'react';
-import { Box, Typography, IconButton, Chip, TextField, Button, Dialog, DialogContent, DialogActions, InputAdornment, Collapse } from '@mui/material';
-import { Close as CloseIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, CalendarToday as CalendarIcon } from '@mui/icons-material';
-// import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
-const OrderFilter = () => {
-    const [open, setOpen] = useState(true);
-    const [roomType, setRoomType] = useState('all');
-    const [bookingStatus, setBookingStatus] = useState('all');
+import { useState } from 'react';
+import { Box, Typography, IconButton, Chip, Button, DialogContent, DialogActions, Collapse } from '@mui/material';
+import { Close as CloseIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
+import { router, usePage } from '@inertiajs/react';
+
+const OrderFilter = ({ onClose }) => {
+    const { filters } = usePage().props;
+
+    const [roomType, setRoomType] = useState(filters.time || 'all');
+    const [bookingStatus, setBookingStatus] = useState(filters.type || 'all');
     const [eventDate, setEventDate] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
-    // State to track which sections are expanded
+    // Expanded sections
     const [expanded, setExpanded] = useState({
         roomType: true,
         bookingStatus: true,
@@ -20,43 +22,50 @@ const OrderFilter = () => {
         dateRange: true,
     });
 
-    const handleClose = () => {
-        setOpen(false);
-    };
-
-    const handleRoomTypeChange = (type) => {
-        setRoomType(type);
-    };
-
-    const handleBookingStatusChange = (status) => {
-        setBookingStatus(status);
-    };
-
     const handleResetFilter = () => {
         setRoomType('all');
         setBookingStatus('all');
         setEventDate('');
         setStartDate('');
         setEndDate('');
+
+        // 🚀 Reload orders without filters
+        router.get(route('order.management'), {}, { preserveState: true, replace: true });
+        onClose();
     };
 
     const handleApplyFilters = () => {
-        // Apply filters logic here
-        console.log({
-            roomType,
-            bookingStatus,
-            eventDate,
-            dateRange: { startDate, endDate },
+        const filters = {
+            time: roomType,
+            type: bookingStatus,
+            start_date: startDate || undefined,
+            end_date: endDate || undefined,
+        };
+
+        // 🚀 Trigger Inertia request with filters
+        router.get(route('order.management'), filters, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
         });
-        handleClose();
+
+        onClose();
     };
 
-    // Toggle section expansion
     const toggleSection = (section) => {
         setExpanded({
             ...expanded,
             [section]: !expanded[section],
         });
+    };
+
+    // 🚀 Handlers for filters
+    const handleRoomTypeChange = (value) => {
+        setRoomType(value);
+    };
+
+    const handleBookingStatusChange = (value) => {
+        setBookingStatus(value);
     };
 
     return (
@@ -68,12 +77,13 @@ const OrderFilter = () => {
                     height: '416px',
                     maxWidth: '600px',
                     overflowY: 'auto',
-                    scrollbarWidth: 'none', // Firefox
+                    scrollbarWidth: 'none',
                     '&::-webkit-scrollbar': {
-                        display: 'none', // Chrome, Safari
+                        display: 'none',
                     },
                 }}
             >
+                {/* Header */}
                 <Box sx={{ px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography
                         variant="h6"
@@ -85,13 +95,13 @@ const OrderFilter = () => {
                     >
                         Order Filter
                     </Typography>
-                    <IconButton onClick={handleClose} size="small">
+                    <IconButton onClick={onClose} size="small">
                         <CloseIcon />
                     </IconButton>
                 </Box>
 
                 <DialogContent sx={{ p: 2 }}>
-                    {/* Room Type */}
+                    {/* Find By Time */}
                     <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
                         <Box
                             sx={{
@@ -151,14 +161,14 @@ const OrderFilter = () => {
                                 />
                                 <Chip
                                     label="This Week"
-                                    onClick={() => handleRoomTypeChange('this week')}
+                                    onClick={() => handleRoomTypeChange('this_week')}
                                     sx={{
-                                        bgcolor: roomType === 'this week' ? '#0a3d62' : '#e3f2fd',
-                                        color: roomType === 'this week' ? 'white' : '#333',
+                                        bgcolor: roomType === 'this_week' ? '#0a3d62' : '#e3f2fd',
+                                        color: roomType === 'this_week' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: roomType === 'this week' ? 500 : 400,
+                                        fontWeight: roomType === 'this_week' ? 500 : 400,
                                         '&:hover': {
-                                            bgcolor: roomType === 'this week' ? '#0a3d62' : '#d0e8fd',
+                                            bgcolor: roomType === 'this_week' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
@@ -166,7 +176,7 @@ const OrderFilter = () => {
                         </Collapse>
                     </Box>
 
-                    {/* Booking Status */}
+                    {/* Order Type */}
                     <Box sx={{ mb: 3, px: 2, py: 2, border: '1px solid #E3E3E3' }}>
                         <Box
                             sx={{
@@ -200,40 +210,14 @@ const OrderFilter = () => {
                                 />
                                 <Chip
                                     label="Dine"
-                                    onClick={() => handleBookingStatusChange('dine')}
+                                    onClick={() => handleBookingStatusChange('dineIn')}
                                     sx={{
-                                        bgcolor: bookingStatus === 'dine' ? '#0a3d62' : '#e3f2fd',
-                                        color: bookingStatus === 'dine' ? 'white' : '#333',
+                                        bgcolor: bookingStatus === 'dineIn' ? '#0a3d62' : '#e3f2fd',
+                                        color: bookingStatus === 'dineIn' ? 'white' : '#333',
                                         borderRadius: 1,
-                                        fontWeight: bookingStatus === 'dine' ? 500 : 400,
+                                        fontWeight: bookingStatus === 'dineIn' ? 500 : 400,
                                         '&:hover': {
-                                            bgcolor: bookingStatus === 'dine' ? '#0a3d62' : '#d0e8fd',
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Pickup"
-                                    onClick={() => handleBookingStatusChange('pickup')}
-                                    sx={{
-                                        bgcolor: bookingStatus === 'pickup' ? '#0a3d62' : '#e3f2fd',
-                                        color: bookingStatus === 'pickup' ? 'white' : '#333',
-                                        borderRadius: 1,
-                                        fontWeight: bookingStatus === 'pickup' ? 500 : 400,
-                                        '&:hover': {
-                                            bgcolor: bookingStatus === 'pickup' ? '#0a3d62' : '#d0e8fd',
-                                        },
-                                    }}
-                                />
-                                <Chip
-                                    label="Delivery"
-                                    onClick={() => handleBookingStatusChange('delivery')}
-                                    sx={{
-                                        bgcolor: bookingStatus === 'delivery' ? '#0a3d62' : '#e3f2fd',
-                                        color: bookingStatus === 'delivery' ? 'white' : '#333',
-                                        borderRadius: 1,
-                                        fontWeight: bookingStatus === 'delivery' ? 500 : 400,
-                                        '&:hover': {
-                                            bgcolor: bookingStatus === 'delivery' ? '#0a3d62' : '#d0e8fd',
+                                            bgcolor: bookingStatus === 'dineIn' ? '#0a3d62' : '#d0e8fd',
                                         },
                                     }}
                                 />
@@ -268,6 +252,7 @@ const OrderFilter = () => {
                     </Box>
                 </DialogContent>
 
+                {/* Footer buttons */}
                 <DialogActions sx={{ p: 2, justifyContent: 'flex-end' }}>
                     <Button
                         variant="outlined"
