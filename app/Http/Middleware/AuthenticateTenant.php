@@ -2,35 +2,36 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
-use Illuminate\Auth\Middleware\Authenticate as Middleware;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
+use App\Helpers\TenantLogout;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
+use Closure;
 
 class AuthenticateTenant
 {
     public function handle(Request $request, Closure $next, string $guard = 'tenant'): Response
     {
-        if (!Auth::guard($guard)->check()) {
-            if (!$request->expectsJson()) {
-                // Try to resolve tenant ID via the tenancy package
-                $tenantId = tenant('id') ?? $this->resolveFromPath($request);
+        $currentTenant = tenant('id');  // Always available after InitializeTenancyByPath
 
-                if ($tenantId) {
-                    return redirect()->route('tenant.login', ['tenant' => $tenantId]);
-                }
+        if (Auth::guard($guard)->check()) {
+            // Compare logged-in tenant vs current tenant
+            $loggedInTenant = session('tenant_id');
 
-                return redirect()->route('login', ['tenant' => $tenantId]);
+            if ($loggedInTenant && $loggedInTenant !== $currentTenant) {
+                TenantLogout::logout($request);
+
+                return redirect()->route('tenant.login', ['tenant' => $currentTenant]);
             }
         }
 
-        return $next($request);
-    }
+        if (!Auth::guard($guard)->check()) {
+            return redirect()->route('tenant.login', ['tenant' => $currentTenant]);
+        }
 
-    protected function resolveFromPath(Request $request)
-    {
-        return $request->route('tenant');
+        // Always store tenant in session
+        session(['tenant_id' => $currentTenant]);
+
+        return $next($request);
     }
 }

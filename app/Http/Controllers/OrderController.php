@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\OrderCreated;
+use App\Jobs\PrintOrderJob;
 use App\Models\Category;
 use App\Models\FinancialInvoice;
 use App\Models\Floor;
@@ -170,11 +171,68 @@ class OrderController extends Controller
 
     public function orderManagement(Request $request)
     {
-        $orders = Order::with(['table:id,table_no', 'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType', 'member:id,user_id,member_type_id,full_name,membership_no', 'member.memberType:id,name'])->latest()->get();
-        $categoriesList = Category::where('tenant_id', tenant()->id)->select('id', 'name')->get();
+        $query = Order::with([
+            'table:id,table_no',
+            'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
+            'member:id,user_id,member_type_id,full_name,membership_no',
+            'member.memberType:id,name'
+        ]);
         $allrestaurants = Tenant::select('id', 'name')->get();
 
-        return Inertia::render('App/Order/Management/Dashboard', compact('orders', 'categoriesList', 'allrestaurants'));
+        // 🔍 Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('id', 'like', "%$search%")
+                    ->orWhereHas('member', fn($q) =>
+                        $q
+                            ->where('full_name', 'like', "%$search%")
+                            ->orWhere('membership_no', 'like', "%$search%"))
+                    ->orWhereHas('table', fn($q) =>
+                        $q->where('table_no', 'like', "%$search%"));
+            });
+        }
+
+        // 📅 Time filter
+        if ($request->time && $request->time !== 'all') {
+            $today = now();
+
+            switch ($request->time) {
+                case 'today':
+                    $query->whereDate('start_date', $today->toDateString());
+                    break;
+
+                case 'yesterday':
+                    $query->whereDate('start_date', $today->copy()->subDay()->toDateString());
+                    break;
+
+                case 'this_week':
+                    $query->whereBetween(
+                        DB::raw('DATE(start_date)'),
+                        [$today->copy()->startOfWeek()->toDateString(), $today->copy()->endOfWeek()->toDateString()]
+                    );
+                    break;
+            }
+        }
+
+        // 📅 Date range filter
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
+        }
+
+        // 🍽 Order type
+        if ($request->type && $request->type !== 'all') {
+            $query->where('order_type', $request->type);
+        }
+
+        $orders = $query->latest()->paginate(20)->withQueryString();
+
+        return Inertia::render('App/Order/Management/Dashboard', [
+            'orders' => $orders,
+            'allrestaurants' => $allrestaurants,
+            'filters' => $request->only('search', 'time', 'type', 'start_date', 'end_date')
+        ]);
     }
 
     public function savedOrder()
@@ -390,7 +448,9 @@ class OrderController extends Controller
 
             $order->load(['table', 'orderItems']);
             broadcast(new OrderCreated($order));
-            $this->printOrdersForKitchens($groupedByKitchen, $order);
+
+            // Dispatch print job (async, no delay in API response)
+            dispatch(new PrintOrderJob($groupedByKitchen, $order));
 
             return response()->json([
                 'success' => true,
@@ -405,43 +465,6 @@ class OrderController extends Controller
                 'success' => false,
                 'message' => $th->getMessage(),
             ], 500);
-        }
-    }
-
-    protected function printOrdersForKitchens($groupedByKitchen, $order)
-    {
-        foreach ($groupedByKitchen as $kitchenId => $items) {
-            $kitchen = Tenant::find($kitchenId);
-            if (!$kitchen || !$kitchen->printer_ip)
-                continue;
-
-            try {
-                $printerIp = $kitchen->printer_ip;
-                $printerPort = $kitchen->printer_port ?? 9100;
-
-                $connector = new NetworkPrintConnector($printerIp, $printerPort);
-                $printer = new Printer($connector);
-
-                // Print header
-                $printer->setJustification(Printer::JUSTIFY_CENTER);
-                $printer->text("Kitchen: {$kitchen->name}\n");
-                $printer->text("Order #: {$order->id}\n");
-                $printer->text("Table: {$order->table->table_no}\n");
-                $printer->text(date('Y-m-d H:i:s') . "\n");
-                $printer->text("--------------------------------\n");
-
-                // Print each item
-                foreach ($items as $item) {
-                    $this->printItem($printer, $item);
-                }
-
-                // Finalize the print
-                $printer->feed(1);
-                $printer->cut();
-                $printer->close();
-            } catch (\Throwable $th) {
-                Log::error("Printer error for Kitchen {$kitchenId}: " . $th->getMessage());
-            }
         }
     }
 

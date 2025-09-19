@@ -486,15 +486,6 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 >
                                                                     {item.member.full_name} ({item.member.membership_no})
                                                                 </Typography>
-                                                                <img
-                                                                    src="/assets/Diamond.png"
-                                                                    alt=""
-                                                                    style={{
-                                                                        width: 24,
-                                                                        height: 24,
-                                                                        marginLeft: '0.5rem',
-                                                                    }}
-                                                                />
                                                             </Box>
                                                             <Box
                                                                 sx={{
@@ -511,7 +502,9 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 >
                                                                     🕙
                                                                 </Box>
-                                                                <Typography variant="caption">{formatTime(item.start_time)}</Typography>
+                                                                <Typography variant="caption">
+                                                                    {formatTime(item.start_time)} - {formatTime(item.end_time)}
+                                                                </Typography>
                                                             </Box>
                                                         </Box>
 
@@ -522,7 +515,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 fontSize: '12px',
                                                             }}
                                                         >
-                                                            {item.person_count} Person • {item.order_items_count} Items
+                                                            {item.person_count} Person
                                                         </Typography>
                                                     </Box>
                                                 </Box>
@@ -543,7 +536,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                             alignItems: 'center',
                                                         }}
                                                     >
-                                                        <Chip
+                                                        {/* <Chip
                                                             label={`#${item.order_number}`}
                                                             size="small"
                                                             variant="outlined"
@@ -556,7 +549,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 fontSize: '0.75rem',
                                                                 fontWeight: 'medium',
                                                             }}
-                                                        />
+                                                        /> */}
                                                         {/* <Chip
                                                             label="DP : 50%"
                                                             size="small"

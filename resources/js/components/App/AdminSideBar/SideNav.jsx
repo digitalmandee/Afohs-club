@@ -433,7 +433,7 @@ export default function SideNav({ open, setOpen }) {
             icon: <PeopleIcon />,
             children: [
                 {
-                    text: 'Dashboard',
+                    text: 'All Locations',
                     path: route('locations.index'),
                 },
                 {
