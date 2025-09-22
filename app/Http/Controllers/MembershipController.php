@@ -244,8 +244,6 @@ class MembershipController extends Controller
             $memberCategory = MemberCategory::find($request->membership_category, ['id', 'name', 'fee', 'subscription_fee']);
             // Create primary member record
 
-            Log::info('martial_status ' . $request->martial_status);
-
             $mainMember = Member::create([
                 'user_id' => $primaryUser->id,
                 'application_no' => $applicationNo,
