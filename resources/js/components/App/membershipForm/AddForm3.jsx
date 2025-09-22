@@ -743,7 +743,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        {JSON.stringify(data.documents)}
                                         <InputLabel>Upload Documents (PDF or Images)</InputLabel>
                                         <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8, marginBottom: 8 }} />
                                         <Grid container spacing={1}>
