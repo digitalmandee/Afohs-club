@@ -27,6 +27,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         });
     };
 
+    const handleFamilyPictureDelete = () => {
+        setCurrentFamilyMember({
+            ...currentFamilyMember,
+            picture: null,
+            picture_preview: null,
+        });
+    };
+
     const AddFamilyMember = () => {
         const maxApplicationNo = data.family_members.length ? Math.max(...data.family_members.map((f) => f.application_no)) : data.application_no;
 
@@ -184,15 +192,46 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         }
     };
 
-    const handleDeleteFamilyMember = (index) => {
+    const handleDeleteFamilyMember = (family, index) => {
+        if (family.id) {
+            // Existing record → mark for deletion
+            const updatedDeleted = [...data.deleted_family_members, family.id];
+            handleChangeData('deleted_family_members', updatedDeleted);
+        }
+
+        // Remove from UI regardless
         const updatedMembers = [...data.family_members];
         updatedMembers.splice(index, 1);
         handleChangeData('family_members', updatedMembers);
+
+        // Reset form
+        setCurrentFamilyMember({
+            application_no: '',
+            family_suffix: '',
+            full_name: '',
+            barcode_no: '',
+            relation: '',
+            cnic: '',
+            phone_number: '',
+            email: '',
+            member_type_id: '',
+            date_of_birth: '',
+            membership_category: '',
+            start_date: '',
+            end_date: '',
+            card_issue_date: '',
+            card_expiry_date: '',
+            status: 'active',
+            picture: null,
+            picture_preview: null,
+            is_document_missing: false,
+            documents: '',
+        });
     };
 
     const handleEditFamilyMember = (index) => {
         const family = data.family_members[index];
-        setCurrentFamilyMember({ ...family });
+        setCurrentFamilyMember({ ...family, picture_preview: family.picture });
         setShowFamilyMember(true);
     };
 
@@ -704,31 +743,37 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6}>
+                                        {JSON.stringify(data.documents)}
                                         <InputLabel>Upload Documents (PDF or Images)</InputLabel>
                                         <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8, marginBottom: 8 }} />
                                         <Grid container spacing={1}>
-                                            {[...(data.previewFiles || [])].map((file, idx) => (
-                                                <Grid item key={idx}>
-                                                    <Box
-                                                        sx={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            border: '1px solid #ccc',
-                                                            borderRadius: 1,
-                                                            px: 1,
-                                                            py: 0.5,
-                                                            backgroundColor: '#f9f9f9',
-                                                        }}
-                                                    >
-                                                        <Typography variant="body2" sx={{ mr: 1 }}>
-                                                            {file.name}
-                                                        </Typography>
-                                                        <IconButton size="small" onClick={() => handleFileRemove(idx)}>
-                                                            <CloseIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Box>
-                                                </Grid>
-                                            ))}
+                                            {[...(data.previewFiles || [])].map((file, idx) => {
+                                                // If it's a string (path from DB), extract filename
+                                                const fileName = typeof file === 'string' ? file.split('/').pop() : (file?.name ?? '');
+
+                                                return (
+                                                    <Grid item key={idx}>
+                                                        <Box
+                                                            sx={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                border: '1px solid #ccc',
+                                                                borderRadius: 1,
+                                                                px: 1,
+                                                                py: 0.5,
+                                                                backgroundColor: '#f9f9f9',
+                                                            }}
+                                                        >
+                                                            <Typography variant="body2" sx={{ mr: 1 }}>
+                                                                {fileName}
+                                                            </Typography>
+                                                            <IconButton size="small" onClick={() => handleFileRemove(idx)}>
+                                                                <CloseIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Box>
+                                                    </Grid>
+                                                );
+                                            })}
                                         </Grid>
                                     </Grid>
 
@@ -856,7 +901,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 <IconButton size="small" onClick={() => handleEditFamilyMember(index)} sx={{ mr: 1 }}>
                                                                     <EditIcon fontSize="small" />
                                                                 </IconButton>
-                                                                <IconButton size="small" onClick={() => handleDeleteFamilyMember(index)} disabled={typeof family.id === 'number' || (typeof family.id === 'string' && !family.id.startsWith('new-'))}>
+                                                                {family.id}
+                                                                <IconButton size="small" onClick={() => handleDeleteFamilyMember(family, index)}>
                                                                     <DeleteIcon fontSize="small" />
                                                                 </IconButton>
                                                             </Box>
@@ -906,7 +952,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 <>
                                                                     <img src={currentFamilyMember.picture_preview} alt="Family member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                                     <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
-                                                                        <IconButton size="small" sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={() => handleFamilyMemberChange('picture_preview', null)}>
+                                                                        <IconButton size="small" sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={handleFamilyPictureDelete}>
                                                                             <DeleteIcon fontSize="small" />
                                                                         </IconButton>
                                                                     </Box>
