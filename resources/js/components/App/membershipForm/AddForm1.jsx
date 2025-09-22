@@ -427,10 +427,10 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Marital Status
                                 </Typography>
-                                <FormControl fullWidth size="small" error={!!formErrors.marital_status}>
+                                <FormControl fullWidth size="small" error={!!formErrors.martial_status}>
                                     <Select
-                                        value={data.marital_status || ''}
-                                        name="marital_status"
+                                        value={data.martial_status || ''}
+                                        name="martial_status"
                                         onChange={handleChange}
                                         displayEmpty
                                         renderValue={(selected) => {
@@ -450,9 +450,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         <MenuItem value="Divorced">Divorced</MenuItem>
                                         <MenuItem value="Widowed">Widowed</MenuItem>
                                     </Select>
-                                    {formErrors.marital_status && (
+                                    {formErrors.martial_status && (
                                         <Typography variant="caption" color="error">
-                                            {formErrors.marital_status}
+                                            {formErrors.martial_status}
                                         </Typography>
                                     )}
                                 </FormControl>

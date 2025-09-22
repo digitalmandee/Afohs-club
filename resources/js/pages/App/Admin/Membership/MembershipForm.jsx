@@ -80,6 +80,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             documents: user.documents || [],
             previewFiles: user.documents || [],
             family_members: familyMembers || [],
+            deleted_family_members: [],
         };
     };
 
@@ -135,6 +136,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         documents: [],
         previewFiles: [],
         family_members: [],
+        deleted_family_members: [],
     };
 
     const isEditMode = !!user?.id;

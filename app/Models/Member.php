@@ -117,6 +117,11 @@ class Member extends Model
         return $this->belongsTo(MemberType::class);
     }
 
+    public function kinshipMember()
+    {
+        return $this->belongsTo(Member::class, 'kinship', 'user_id');
+    }
+
     public function memberCategory()
     {
         return $this->belongsTo(MemberCategory::class);
