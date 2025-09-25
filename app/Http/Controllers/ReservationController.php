@@ -147,4 +147,15 @@ class ReservationController extends Controller
 
         return response()->json(array_values($availableSlots));
     }
+
+    public function cancel(Reservation $reservation)
+    {
+        if ($reservation->status === 'cancelled') {
+            return back()->with('error', 'Reservation already cancelled.');
+        }
+
+        $reservation->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'Reservation cancelled successfully.');
+    }
 }
