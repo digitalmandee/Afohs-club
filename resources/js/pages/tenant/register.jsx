@@ -4,42 +4,56 @@ import { useState } from 'react';
 
 import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
 import { Col, Container, Row } from 'react-bootstrap';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Register = () => {
+const Register = ({ tenant }) => {
     const [open, setOpen] = useState(true);
-    const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
-        name: '',
-        domain_name: '',
-        printer_ip: '',
-        printer_port: '',
+    const isEdit = !!tenant;
+
+    const { data, setData, post, put, processing, errors, reset } = useForm({
+        name: tenant?.name || '',
+        domain_name: tenant?.id || '',
+        printer_ip: tenant?.printer_ip || '',
+        printer_port: tenant?.printer_port || '',
     });
 
-    // 👇 function to convert name → slug
-    const slugify = (value) => {
-        return value
+    const slugify = (value) =>
+        value
             .toLowerCase()
             .trim()
-            .replace(/[^a-z0-9\s-]/g, '') // remove special chars
-            .replace(/\s+/g, '-') // spaces → dashes
-            .replace(/-+/g, '-'); // collapse multiple dashes
-    };
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
 
     const handleNameChange = (e) => {
         const nameValue = e.target.value;
         setData('name', nameValue);
-        setData('domain_name', slugify(nameValue)); // auto-fill domain
+
+        // Only auto-update domain on create
+        if (!isEdit) {
+            setData('domain_name', slugify(nameValue));
+        }
     };
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('locations.store'));
-        if (recentlySuccessful) {
-            enqueueSnackbar('Location created successfully!', { variant: 'success' });
-            setData('name', '');
-            setData('domain_name', '');
+
+        if (isEdit) {
+            put(route('locations.update', tenant.id), {
+                preserveScroll: true,
+                onSuccess: () => enqueueSnackbar('Tenant updated successfully!', { variant: 'success' }),
+            });
+        } else {
+            post(route('locations.store'), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    enqueueSnackbar('Kitchen created successfully!', { variant: 'success' });
+                    reset(['name', 'domain_name', 'printer_ip', 'printer_port']);
+                },
+            });
         }
     };
 
@@ -66,7 +80,7 @@ const Register = () => {
                         <Row className="align-items-center mb-4">
                             <Col>
                                 <Typography variant="h5" mb={2} style={{ color: '#063455', fontWeight: 500 }}>
-                                    Create New Location
+                                    Create New Kitchen
                                 </Typography>
                             </Col>
                         </Row>
@@ -87,22 +101,22 @@ const Register = () => {
 
                                 {/* Domain Name (auto-filled, but editable if needed) */}
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    <TextField label="Domain Name" type="text" required fullWidth autoComplete="domain_name" value={data.domain_name} onChange={(e) => setData('domain_name', slugify(e.target.value))} disabled={processing} placeholder="example" error={!!errors.domain_name} helperText={errors.domain_name} variant="outlined" />
+                                    <TextField label="Domain Name" type="text" required fullWidth autoComplete="domain_name" value={data.domain_name} onChange={(e) => setData('domain_name', slugify(e.target.value))} disabled={isEdit || processing} placeholder="example" error={!!errors.domain_name} helperText={errors.domain_name} variant="outlined" />
                                 </div>
 
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    <TextField label="Printer IP" fullWidth placeholder="e.g. 192.168.1.100" name="printer_ip" value={data.printer_ip} onChange={(e) => setData('printer_ip', e.target.value)} error={!!errors.printer_ip} helperText={errors.printer_ip} />
+                                    <TextField label="Printer IP*" fullWidth placeholder="e.g. 192.168.1.100" name="printer_ip" value={data.printer_ip} onChange={(e) => setData('printer_ip', e.target.value)} error={!!errors.printer_ip} helperText={errors.printer_ip} />
                                 </div>
 
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    <TextField label="Printer Port" fullWidth placeholder="e.g. 9100" name="printer_port" value={data.printer_port} onChange={(e) => setData('printer_port', e.target.value)} error={!!errors.printer_port} helperText={errors.printer_port} />
+                                    <TextField label="Printer Port*" fullWidth placeholder="e.g. 9100" name="printer_port" value={data.printer_port} onChange={(e) => setData('printer_port', e.target.value)} error={!!errors.printer_port} helperText={errors.printer_port} />
                                 </div>
 
                                 {/* Submit */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <Button type="submit" variant="contained" color="primary" disabled={processing} fullWidth>
+                                    <Button type="submit" variant="contained" sx={{ backgroundColor: '#003366', textTransform: 'none' }} disabled={processing} fullWidth>
                                         {processing && <CircularProgress size={24} style={{ marginRight: '10px' }} />}
-                                        Create Location
+                                        {isEdit ? 'Update Kitchen' : 'Create Kitchen'}
                                     </Button>
                                 </div>
                             </form>

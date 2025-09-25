@@ -67,17 +67,25 @@ class TenantController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Tenant $tenant)
     {
-        //
+        return Inertia::render('tenant/register', [
+            'tenant' => $tenant,  // pass existing tenant
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Tenant $tenant)
     {
-        //
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'printer_ip' => 'required|string|max:255',
+            'printer_port' => 'required',
+        ]);
+
+        // Update tenant
+        $tenant->update($validatedData);
+
+        return to_route('locations.index')->with('success', 'Tenant updated successfully!');
     }
 
     /**

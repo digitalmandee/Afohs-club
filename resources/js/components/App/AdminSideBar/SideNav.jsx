@@ -414,26 +414,26 @@ export default function SideNav({ open, setOpen }) {
             icon: <FaRegAddressCard style={{ width: 25, height: 25 }} />,
             path: route('cards.dashboard'),
         },
+        // {
+        //     text: 'Kitchen',
+        //     icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
+        //     children: [
+        //         {
+        //             text: 'Dashboard',
+        //             path: route('kitchen.dashboard'),
+        //         },
+        //         {
+        //             text: 'Customer History',
+        //             path: route('kitchen.history'),
+        //         },
+        //     ],
+        // },
         {
-            text: 'Kitchen',
+            text: 'Kitchens',
             icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
             children: [
                 {
                     text: 'Dashboard',
-                    path: route('kitchen.dashboard'),
-                },
-                {
-                    text: 'Customer History',
-                    path: route('kitchen.history'),
-                },
-            ],
-        },
-        {
-            text: 'Locations',
-            icon: <PeopleIcon />,
-            children: [
-                {
-                    text: 'All Locations',
                     path: route('locations.index'),
                 },
                 {

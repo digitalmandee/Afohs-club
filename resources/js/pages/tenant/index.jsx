@@ -26,7 +26,7 @@ const Index = ({ tenants }) => {
                 {/* Page Header */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                     <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
-                        Location Management
+                        Kitchen Dashboard
                     </Typography>
                     <Button
                         variant="contained"
@@ -41,7 +41,7 @@ const Index = ({ tenants }) => {
                         }}
                         onClick={() => router.visit(route('locations.create'))}
                     >
-                        Create Location
+                        Create Kitchen
                     </Button>
                 </Box>
 
@@ -84,7 +84,7 @@ const Index = ({ tenants }) => {
                                                     color: '#0D2B4E',
                                                     fontWeight: 500,
                                                 }}
-                                                onClick={() => router.visit(route('tenant.edit', tenant.id))}
+                                                onClick={() => router.visit(route('locations.edit', tenant.id))}
                                             >
                                                 Edit
                                             </Button>
