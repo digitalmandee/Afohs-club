@@ -56,6 +56,7 @@ Route::group([
 
         // Reservations
         Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+        Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
 
         // Order Management
         Route::post('/order/reservation', [ReservationController::class, 'orderReservation'])->name('order.reservation');

@@ -14,7 +14,7 @@ class AuthController extends Controller
     public function checkUserId(Request $request)
     {
         $request->validate([
-            'employee_id' => 'required|numeric',
+            'employee_id' => 'required',
         ]);
 
         // Step 1: Find employee by employee_id
