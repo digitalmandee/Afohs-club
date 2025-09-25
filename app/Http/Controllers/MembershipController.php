@@ -491,8 +491,6 @@ class MembershipController extends Controller
                 'documents' => $documentPaths,
             ]);
 
-            Log::info($request->family_members);
-
             // Update Family Members
             if ($request->filled('family_members')) {
                 foreach ($request->family_members as $newMemberData) {
@@ -581,8 +579,6 @@ class MembershipController extends Controller
                     }
                 }
             }
-            Log::info('Yes');
-            Log::info($request->deleted_family_members);
 
             // ✅ Handle family member deletions
             if ($request->filled('deleted_family_members')) {
