@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class UserController extends Controller
         )
             ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
             ->leftJoin('users', 'members.user_id', '=', 'users.id')
-            ->whereNull('users.parent_user_id')
+            ->whereNull('members.parent_id')
             ->where(function ($q) use ($query) {
                 $q
                     ->where('members.full_name', 'like', "%{$query}%")
@@ -64,9 +65,14 @@ class UserController extends Controller
     // get waiters
     public function waiters()
     {
-        $waiters = User::role('waiter', 'web')->select('id', 'name', 'email')->get();
+        $waiters = Employee::whereHas('employeeType', function ($q) {
+            $q->where('slug', 'waiter');
+        })->select('id', 'employee_id', 'name', 'email')->get();
 
-        return response()->json(['success' => true, 'waiters' => $waiters], 200);
+        return response()->json([
+            'success' => true,
+            'waiters' => $waiters
+        ], 200);
     }
 
     public function kitchens()

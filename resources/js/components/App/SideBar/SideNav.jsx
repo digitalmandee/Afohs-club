@@ -137,21 +137,21 @@ export default function SideNav({ open, setOpen }) {
     ];
 
     // Attach beforeunload event
-    useEffect(() => {
-        const handleBeforeUnload = (e) => {
-            // Block tab close
-            e.preventDefault();
-            e.returnValue = ''; // required for Chrome
-            setShowProfile(true);
-            setProfileView('logoutSuccess');
-            return ''; // required for some browsers
-        };
+    // useEffect(() => {
+    //     const handleBeforeUnload = (e) => {
+    //         // Block tab close
+    //         e.preventDefault();
+    //         e.returnValue = ''; // required for Chrome
+    //         setShowProfile(true);
+    //         setProfileView('logoutSuccess');
+    //         return ''; // required for some browsers
+    //     };
 
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, []);
+    //     window.addEventListener('beforeunload', handleBeforeUnload);
+    //     return () => {
+    //         window.removeEventListener('beforeunload', handleBeforeUnload);
+    //     };
+    // }, []);
 
     useEffect(() => {
         const handleKeyDown = (e) => {

@@ -80,7 +80,7 @@ class MembershipController extends Controller
                 'membership_category' => $user->member_category_id,
                 'relation' => $member->relation,
                 'cnic' => $member->cnic_no,
-                'date_of_birth' => $member->date_of_birth,
+                'date_of_birth' => optional($member->date_of_birth)->format('Y-m-d'),
                 'phone_number' => $member->mobile_number_a,
                 'email' => $member->personal_email,
                 'start_date' => $member->start_date,
@@ -562,6 +562,7 @@ class MembershipController extends Controller
 
                             // Update member fields
                             $updateFamily->update([
+                                'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
                                 'full_name' => $newMemberData['full_name'],
                                 'barcode_no' => $newMemberData['barcode_no'] ?? null,
                                 'profile_photo' => $familyMemberImagePath,

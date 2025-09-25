@@ -44,6 +44,9 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
+// Route::get('/', function () {
+//     return dd(ini_get('post_max_size'), ini_get('upload_max_filesize'));
+// });
 
 Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name('member.profile');
 
@@ -422,6 +425,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('locations', [TenantController::class, 'index'])->name('locations.index');
     Route::get('locations/register', [TenantController::class, 'create'])->name('locations.create');
     Route::post('locations/store', [TenantController::class, 'store'])->name('locations.store');
+    Route::get('locations/{tenant}/edit', [TenantController::class, 'edit'])->name('locations.edit');
+    Route::put('locations/{tenant}', [TenantController::class, 'update'])->name('locations.update');
 });
 
 // Central guest-only auth routes
