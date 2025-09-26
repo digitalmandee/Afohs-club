@@ -124,7 +124,7 @@ const Dashboard = ({ FinancialInvoice }) => {
                                         width: '200px',
                                         color: 'white',
                                     }}
-                                    onClick={() => router.visit('/finance/add/transaction')}
+                                    onClick={() => router.visit(route('finance.transaction.create'))}
                                 >
                                     <span style={{ marginRight: '5px', fontSize: '20px' }}>+</span> Add Transaction
                                 </Button>
@@ -403,13 +403,13 @@ const Dashboard = ({ FinancialInvoice }) => {
                                                     >
                                                         {invoice.invoice_no}
                                                     </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.member_id}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.member ? invoice.member.full_name : invoice.customer ? invoice.customer.name : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.subscription_type || 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.payment_method}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{invoice.amount}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{new Date(invoice.payment_date).toLocaleDateString()}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>{invoice.user?.phone_number ?? 'N/A'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>{invoice.user?.name ?? 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>{invoice.member?.phone_number ?? 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>{invoice.created_by?.name ?? 'N/A'}</TableCell>
                                                     <TableCell>
                                                         <span
                                                             style={{

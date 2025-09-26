@@ -21,7 +21,7 @@ const Transaction = ({ FinancialData }) => {
     const [selectMember, setSelectMember] = useState(null); // State for selected member
     const rowsPerPage = 6;
 
-    console.log("FinancialData", FinancialData);
+    console.log('FinancialData', FinancialData);
 
     // Calculate total pages
     const totalPages = Math.ceil((FinancialData || []).length / rowsPerPage);
@@ -115,9 +115,9 @@ const Transaction = ({ FinancialData }) => {
                                             >
                                                 {member.invoice_no}
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.member_id}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.member ? member.member.full_name : member.customer ? member.customer.name : 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.subscription_type}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.payment_method.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.payment_method}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.amount}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}> {new Date(member.payment_date).toLocaleDateString()}</TableCell>
                                             <TableCell
@@ -127,7 +127,7 @@ const Transaction = ({ FinancialData }) => {
                                                     fontSize: '14px',
                                                 }}
                                             >
-                                                {member.user?.phone_number}
+                                                {member.member?.phone_number}
                                             </TableCell>
                                             <TableCell
                                                 style={{
@@ -136,7 +136,7 @@ const Transaction = ({ FinancialData }) => {
                                                     fontSize: '14px',
                                                 }}
                                             >
-                                                {member.user?.name}
+                                                {member.created_by?.name}
                                             </TableCell>
                                             <TableCell>
                                                 <Button
@@ -155,12 +155,7 @@ const Transaction = ({ FinancialData }) => {
                             </Table>
                         </TableContainer>
                         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-                            <Pagination
-                                count={totalPages}
-                                page={page}
-                                onChange={(event, value) => setPage(value)}
-                                color="primary"
-                            />
+                            <Pagination count={totalPages} page={page} onChange={(event, value) => setPage(value)} color="primary" />
                         </div>
                     </div>
                     <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />

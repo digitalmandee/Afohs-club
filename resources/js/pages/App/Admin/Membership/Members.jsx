@@ -100,22 +100,10 @@ const AllMembers = ({ members }) => {
                     <div className="mx-3">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography sx={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>All Members</Typography>
-                            <div className="d-flex">
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<FilterAlt />}
-                                    style={{
-                                        borderColor: '#ccc',
-                                        color: '#333',
-                                        textTransform: 'none',
-                                        backgroundColor: 'transparent',
-                                    }}
-                                    onClick={() => setOpenFilterModal(true)}
-                                >
-                                    Filter
-                                </Button>
-                            </div>
                         </div>
+
+                        {/* Filter Modal */}
+                        <MembershipDashboardFilter />
 
                         {/* Members Table */}
                         <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
@@ -277,9 +265,6 @@ const AllMembers = ({ members }) => {
                                 ))}
                             </Box>
                         </TableContainer>
-
-                        {/* Filter Modal */}
-                        <MembershipDashboardFilter openFilterModal={openFilterModal} setOpenFilterModal={setOpenFilterModal} members={members.data} filteredMembers={filteredMembers} setFilteredMembers={setFilteredMembers} statusOptions={statusOptions} memberTypeOptions={memberTypeOptions} />
                     </div>
 
                     {/* Modal */}

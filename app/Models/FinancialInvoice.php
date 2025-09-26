@@ -46,4 +46,9 @@ class FinancialInvoice extends BaseModel
     {
         return $this->belongsTo(Member::class, 'member_id', 'user_id');
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by', 'id');
+    }
 }

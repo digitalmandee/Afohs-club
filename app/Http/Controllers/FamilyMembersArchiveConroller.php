@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Member;
+use App\Models\MemberType;
 use App\Models\User;
 use App\Models\UserDetail;
 use Carbon\Carbon;
@@ -15,7 +16,7 @@ class FamilyMembersArchiveConroller extends Controller
     {
         $query = Member::whereNotNull('parent_id')
             ->select('id', 'full_name', 'membership_no', 'parent_id', 'family_suffix', 'personal_email', 'mobile_number_a', 'cnic_no', 'date_of_birth', 'card_issue_date', 'card_status', 'relation', 'status')
-            ->with(['parent:id,user_id,member_type_id,full_name,membership_no', 'parent.memberType:id,name']);
+            ->with(['parent:id,user_id,member_type_id,full_name,membership_no']);
 
         // Membership No
         if ($request->filled('membership_no')) {
@@ -63,8 +64,8 @@ class FamilyMembersArchiveConroller extends Controller
 
         // Member Type
         if ($request->filled('member_type') && $request->member_type !== 'all') {
-            $query->whereHas('parent.memberType', function ($q) use ($request) {
-                $q->where('name', $request->member_type);
+            $query->whereHas('parent', function ($q) use ($request) {
+                $q->where('member_type_id', $request->member_type);
             });
         }
 
@@ -83,10 +84,11 @@ class FamilyMembersArchiveConroller extends Controller
             $query->whereDate('date_of_birth', '>=', Carbon::now()->subYears($request->max_age + 1)->addDay()->toDateString());
         }
 
-        $familyGroups = $query->latest()->get();
+        $familyGroups = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('App/Admin/Membership/FamilyMembersArchive', [
             'familyGroups' => $familyGroups,
+            'memberTypes' => MemberType::all(['id', 'name']),
             'filters' => $request->all(),
         ]);
     }
