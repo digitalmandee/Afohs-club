@@ -2,10 +2,12 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
-use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Inertia\Inertia;
+use Stancl\Tenancy\Exceptions\TenantCouldNotBeIdentifiedByPathException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,5 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
-    })->create();
+        $exceptions->render(function (TenantCouldNotBeIdentifiedByPathException $e, $request) {
+            return Inertia::render('Errors/TenantNotFound', [
+                'message' => 'The tenant you are looking for does not exist.'
+            ])->toResponse($request)->setStatusCode(404);
+        });
+    })
+    ->create();

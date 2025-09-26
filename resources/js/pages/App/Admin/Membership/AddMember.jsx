@@ -14,7 +14,7 @@ const AddMemberModal = ({ open, handleClose, onSuccess }) => {
 
         try {
             const res = await axios.post(
-                '/members/member-types/store',
+                route('member-types.store'),
                 { name },
                 {
                     headers: { 'X-CSRF-TOKEN': csrfToken },

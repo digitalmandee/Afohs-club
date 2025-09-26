@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment } from '@mui/material';
+import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Box } from '@mui/material';
 import { Search, FilterAlt, ExpandMore, ExpandLess } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import FamilyFilter from './Family/Filter';
+import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const FamilyMembersArchive = ({ familyGroups = [] }) => {
+const FamilyMembersArchive = ({ familyGroups }) => {
     const [open, setOpen] = useState(true);
-    const [openFilterModal, setOpenFilterModal] = useState(false);
     const [expandedRow, setExpandedRow] = useState(null);
 
     const toggleRow = (id) => {
@@ -49,23 +49,10 @@ const FamilyMembersArchive = ({ familyGroups = [] }) => {
                     <div className="mx-0">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Family Members Archive</Typography>
-
-                            <div className="d-flex">
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<FilterAlt />}
-                                    style={{
-                                        border: '1px solid #063455',
-                                        color: '#333',
-                                        textTransform: 'none',
-                                        backgroundColor: 'transparent',
-                                    }}
-                                    onClick={() => setOpenFilterModal(true)}
-                                >
-                                    Filter
-                                </Button>
-                            </div>
                         </div>
+
+                        {/* Filter */}
+                        <FamilyFilter />
 
                         {/* Members Table */}
                         <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
@@ -86,7 +73,7 @@ const FamilyMembersArchive = ({ familyGroups = [] }) => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {familyGroups.map((user, index) => (
+                                    {familyGroups.data.map((user, index) => (
                                         <React.Fragment key={user.id}>
                                             <TableRow style={{ borderBottom: '1px solid #eee' }}>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_no}</TableCell>
@@ -108,17 +95,28 @@ const FamilyMembersArchive = ({ familyGroups = [] }) => {
                                     ))}
                                 </TableBody>
                             </Table>
-                        </TableContainer>
 
-                        <FamilyFilter
-                            openFilterModal={openFilterModal}
-                            setOpenFilterModal={setOpenFilterModal}
-                            members={familyGroups}
-                            filteredMembers={familyGroups}
-                            setFilteredMembers={() => {}} // not needed anymore since filters hit the backend
-                            statusOptions={['active', 'suspended', 'cancelled', 'pause']}
-                            memberTypeOptions={[...new Set(familyGroups.map((f) => f?.parent?.member_type?.name).filter(Boolean))]}
-                        />
+                            <Box display="flex" justifyContent="center" mt={2}>
+                                {familyGroups.links?.map((link, index) => (
+                                    <Button
+                                        key={index}
+                                        onClick={() => link.url && router.visit(link.url)}
+                                        disabled={!link.url}
+                                        variant={link.active ? 'contained' : 'outlined'}
+                                        size="small"
+                                        style={{
+                                            margin: '0 5px',
+                                            minWidth: '36px',
+                                            padding: '6px 10px',
+                                            fontWeight: link.active ? 'bold' : 'normal',
+                                            backgroundColor: link.active ? '#333' : '#fff',
+                                        }}
+                                    >
+                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    </Button>
+                                ))}
+                            </Box>
+                        </TableContainer>
                     </div>
                 </div>
             </div>

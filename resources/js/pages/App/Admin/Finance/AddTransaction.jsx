@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {
-    TextField,
-    Button,
-    Typography,
-    Box,
-    Paper,
-    MenuItem,
-    FormControl
-} from '@mui/material';
-import {
-    ArrowBack as ArrowBackIcon,
-    KeyboardArrowDown as KeyboardArrowDownIcon
-} from '@mui/icons-material';
+import { TextField, Button, Typography, Box, Paper, MenuItem, FormControl } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from '@mui/icons-material';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import SearchIcon from '@mui/icons-material/Search';
 import { router } from '@inertiajs/react';
@@ -135,7 +124,7 @@ const AddTransactionInformation = ({ categories2 }) => {
 
         if (Object.keys(newErrors).length === 0) {
             try {
-                const response = await axios.post('/finance/add/transaction', formData);
+                const response = await axios.post(route('finance.transaction.post'), formData);
                 router.visit('/finance/dashboard');
                 console.log('Transaction added successfully:', response.data);
                 // Optionally redirect or reset form
@@ -180,7 +169,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                         fontFamily: 'Arial, sans-serif',
                         padding: '20px',
                         backgroundColor: '#FFF',
-                        minHeight: '100vh'
+                        minHeight: '100vh',
                     }}
                 >
                     {/* Header with back button and title */}
@@ -191,7 +180,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                 cursor: 'pointer',
                                 marginRight: '10px',
                                 color: '#555',
-                                fontSize: '24px'
+                                fontSize: '24px',
                             }}
                         />
                         <Typography
@@ -199,7 +188,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                             style={{
                                 fontWeight: '600',
                                 color: '#555',
-                                fontSize: '24px'
+                                fontSize: '24px',
                             }}
                         >
                             Add New Transaction
@@ -213,7 +202,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                             maxWidth: '630px',
                             margin: '0 auto',
                             padding: '30px',
-                            borderRadius: '4px'
+                            borderRadius: '4px',
                         }}
                     >
                         <form onSubmit={handleSubmit}>
@@ -227,7 +216,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                                 marginBottom: '8px',
                                                 color: '#333',
                                                 fontSize: '14px',
-                                                fontWeight: '500'
+                                                fontWeight: '500',
                                             }}
                                         >
                                             Name
@@ -244,7 +233,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                             // error={!!errors.guestName}
                                             // helperText={errors.guestName}
                                             InputProps={{
-                                                style: { fontSize: '14px' }
+                                                style: { fontSize: '14px' },
                                             }}
                                         />
                                     </div>
@@ -255,7 +244,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                                 marginBottom: '8px',
                                                 color: '#333',
                                                 fontSize: '14px',
-                                                fontWeight: '500'
+                                                fontWeight: '500',
                                             }}
                                         >
                                             Contact Number
@@ -272,7 +261,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                             error={!!errors.phone}
                                             helperText={errors.phone}
                                             InputProps={{
-                                                style: { fontSize: '14px' }
+                                                style: { fontSize: '14px' },
                                             }}
                                         />
                                     </div>
@@ -287,7 +276,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         marginBottom: '8px',
                                         color: '#333',
                                         fontSize: '14px',
-                                        fontWeight: 500
+                                        fontWeight: 500,
                                     }}
                                 >
                                     Category
@@ -313,10 +302,10 @@ const AddTransactionInformation = ({ categories2 }) => {
                                                 const item = categories2.find((item) => item.id === Number(selected));
                                                 return item ? item.name : '';
                                             },
-                                            IconComponent: KeyboardArrowDownIcon
+                                            IconComponent: KeyboardArrowDownIcon,
                                         }}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     >
                                         <MenuItem value="">
@@ -339,7 +328,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         marginBottom: '8px',
                                         color: '#333',
                                         fontSize: '14px',
-                                        fontWeight: 500
+                                        fontWeight: 500,
                                     }}
                                 >
                                     Selection Type
@@ -366,10 +355,10 @@ const AddTransactionInformation = ({ categories2 }) => {
                                                 const item = subscriptionTypes.find((item) => item.value === selected);
                                                 return item ? item.label : '';
                                             },
-                                            IconComponent: KeyboardArrowDownIcon
+                                            IconComponent: KeyboardArrowDownIcon,
                                         }}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     >
                                         <MenuItem value="">
@@ -392,7 +381,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         marginBottom: '8px',
                                         color: '#333',
                                         fontSize: '14px',
-                                        fontWeight: 500
+                                        fontWeight: 500,
                                     }}
                                 >
                                     Payment Type
@@ -418,10 +407,10 @@ const AddTransactionInformation = ({ categories2 }) => {
                                                 }
                                                 return selected.replace('_', ' ').toUpperCase();
                                             },
-                                            IconComponent: KeyboardArrowDownIcon
+                                            IconComponent: KeyboardArrowDownIcon,
                                         }}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     >
                                         <MenuItem value="">
@@ -445,7 +434,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                             marginBottom: '8px',
                                             color: '#333',
                                             fontSize: '14px',
-                                            fontWeight: 500
+                                            fontWeight: 500,
                                         }}
                                     >
                                         Start Date
@@ -461,10 +450,10 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         error={!!errors.startDate}
                                         helperText={errors.startDate}
                                         inputProps={{
-                                            min: today
+                                            min: today,
                                         }}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     />
                                 </div>
@@ -475,7 +464,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                             marginBottom: '8px',
                                             color: '#333',
                                             fontSize: '14px',
-                                            fontWeight: 500
+                                            fontWeight: 500,
                                         }}
                                     >
                                         Expire Date
@@ -491,10 +480,10 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         error={!!errors.expiryDate}
                                         helperText={errors.expiryDate}
                                         inputProps={{
-                                            min: formData.startDate || today
+                                            min: formData.startDate || today,
                                         }}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     />
                                 </div>
@@ -508,7 +497,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         marginBottom: '8px',
                                         color: '#333',
                                         fontSize: '14px',
-                                        fontWeight: 500
+                                        fontWeight: 500,
                                     }}
                                 >
                                     Total Amount
@@ -527,7 +516,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         error={!!errors.amount}
                                         helperText={errors.amount}
                                         InputProps={{
-                                            style: { fontSize: '14px' }
+                                            style: { fontSize: '14px' },
                                         }}
                                     />
                                 </FormControl>
@@ -541,7 +530,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         marginRight: '10px',
                                         color: '#333',
                                         textTransform: 'none',
-                                        fontSize: '14px'
+                                        fontSize: '14px',
                                     }}
                                     onClick={() => window.history.back()}
                                 >
@@ -555,7 +544,7 @@ const AddTransactionInformation = ({ categories2 }) => {
                                         color: 'white',
                                         textTransform: 'none',
                                         fontSize: '14px',
-                                        padding: '6px 16px'
+                                        padding: '6px 16px',
                                     }}
                                 >
                                     Add Transaction

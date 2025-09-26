@@ -608,24 +608,6 @@ class MembershipController extends Controller
         }
     }
 
-    public function updateMemberStatus(Request $request, $id)
-    {
-        $request->validate([
-            'card_status' => 'required|string|in:Active,In Active,Expired',
-        ]);
-
-        try {
-            $member = Member::findOrFail($id);
-            $member->card_status = $request->card_status;
-            $member->save();
-
-            return response()->json(['message' => 'Member status updated successfully']);
-        } catch (\Exception $e) {
-            Log::error('Error updating member status: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update member status'], 500);
-        }
-    }
-
     // Get Member Invoices
     public function getMemberInvoices($id)
     {
@@ -652,8 +634,6 @@ class MembershipController extends Controller
                 ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
                 ->orWhereRaw("CONCAT(first_name, ' ', middle_name, ' ', last_name) LIKE ?", ["%{$query}%"]);
         })->select('id', 'user_id', 'first_name', 'middle_name', 'last_name', 'email', 'phone_number')->get();
-
-        Log::info($members);
 
         return response()->json(['results' => $members]);
     }
