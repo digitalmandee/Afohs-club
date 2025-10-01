@@ -50,8 +50,8 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
               </div>
 
               <div class="customer-info">
-                <p><strong>Customer:</strong> ${paymentData.member.full_name}</p>
-                <p><strong>Table:</strong> ${paymentData.table.table_no}</p>
+                <p><strong>Customer:</strong> ${paymentData.member?.full_name || paymentData.customer?.name}</p>
+                ${paymentData.table ? `<p><strong>Table:</strong> ${paymentData.table?.table_no}</p>` : ''}
                 <p><strong>Date:</strong> ${paymentData.start_date}</p>
                 <p><strong>Cashier:</strong> ${paymentData.cashier?.name || 'N/A'}</p>
               </div>
@@ -141,10 +141,10 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                     mr: 1,
                                 }}
                             >
-                                {paymentData.member.full_name ? paymentData.member.full_name.charAt(0).toUpperCase() : ''}
+                                {paymentData.member ? paymentData.member?.full_name.charAt(0) : paymentData.customer?.name.charAt(0)}
                             </Avatar>
                             <Typography variant="subtitle1" fontWeight="medium">
-                                {paymentData.member.full_name} ({paymentData.member.membership_no})
+                                {paymentData.member ? `${paymentData.member?.full_name} (${paymentData.member?.membership_no})` : `${paymentData.customer?.name} (${paymentData.customer?.customer_no})`}
                             </Typography>
                             {/* {orderDetail.isVIP && (
                             <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />
@@ -158,7 +158,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                         height: 36,
                                     }}
                                 >
-                                    {paymentData.table.table_no}
+                                    {paymentData.table?.table_no}
                                 </Avatar>
                                 <IconButton size="small" sx={{ border: '1px solid #e0e0e0' }}>
                                     <HomeIcon />

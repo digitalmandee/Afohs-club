@@ -484,7 +484,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                         mr: 1,
                                                                     }}
                                                                 >
-                                                                    {item.member.full_name} ({item.member.membership_no})
+                                                                    {item.member?.full_name} ({item.member?.membership_no})
                                                                 </Typography>
                                                             </Box>
                                                             <Box
@@ -1343,7 +1343,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 mb: 0.5,
                                                             }}
                                                         >
-                                                            {order.member.full_name}
+                                                            {order.member?.full_name}
                                                             <img
                                                                 src="/assets/Diamond.png"
                                                                 alt=""
@@ -1410,7 +1410,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                 </Box>
                                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                                     <Chip
-                                                        label={`#${order.order_number}`}
+                                                        label={`#${order.id}`}
                                                         size="small"
                                                         variant="outlined"
                                                         sx={{

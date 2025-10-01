@@ -54,6 +54,7 @@ export const useOrderStore = create((set, get) => ({
     orderDetails: {
         order_no: '',
         order_type: 'dineIn',
+        member_type: 1,
         membership_type: '',
         member: {},
         person_count: 1,
@@ -73,6 +74,7 @@ export const useOrderStore = create((set, get) => ({
         nature_of_function: '',
         theme_of_function: '',
         special_request: '',
+        address: '',
     },
 
     resetOrderDetails: () =>
@@ -97,6 +99,7 @@ export const useOrderStore = create((set, get) => ({
                 nature_of_function: '',
                 theme_of_function: '',
                 special_request: '',
+                address: '',
             },
         })),
     setInitialOrder: ({ orderNo, memberTypes, floorTables, time, table }) =>
@@ -134,6 +137,9 @@ export const useOrderStore = create((set, get) => ({
         handleOrderDetailChange('order_type', value);
         if (value === 'reservation') {
             handleOrderDetailChange('time', '13:00');
+        }
+        if (value !== 'delivery') {
+            handleOrderDetailChange('address', '');
         }
     },
 

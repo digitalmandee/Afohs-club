@@ -8,12 +8,15 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // Step 2: Nullify any waiter_id that still doesn't exist in employees
-        DB::table('orders')
-            ->whereNotIn('waiter_id', DB::table('employees')->pluck('id'))
-            ->update(['waiter_id' => null]);
+        // Step 1: Drop the old foreign key if it exists
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropForeign(['waiter_id']);
+        });
 
-        // Step 3: Add foreign key to employees table
+        // Step 2: Nullify invalid waiter_id
+        DB::table('orders')->update(['waiter_id' => null]);
+
+        // Step 3: Add new foreign key to employees table
         Schema::table('orders', function (Blueprint $table) {
             $table
                 ->foreign('waiter_id')

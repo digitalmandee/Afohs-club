@@ -178,9 +178,7 @@ const Reservations = () => {
                                         filteredReservations.map((reservation) => (
                                             <TableRow key={reservation.id} style={{ borderBottom: '1px solid #eee' }}>
                                                 <TableCell>#{reservation.id}</TableCell>
-                                                <TableCell>
-                                                    {reservation.member?.full_name || 'N/A'} ({reservation.member?.membership_no})
-                                                </TableCell>
+                                                <TableCell>{reservation.member ? `${reservation.member?.full_name} (${reservation.member?.membership_no})` : `${reservation.customer?.name} (${reservation.customer?.customer_no})`}</TableCell>
                                                 <TableCell>{reservation.date}</TableCell>
                                                 <TableCell>
                                                     {reservation.start_time} - {reservation.end_time}

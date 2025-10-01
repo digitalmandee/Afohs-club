@@ -37,7 +37,8 @@ class DatabaseSeeder extends Seeder
             ProductDatabaseSeeder::class,
             MemberCategorySeeder::class,
             BookingEventSeeder::class,
-            BookingSeeder::class,
+            EmployeeTypeSeeder::class,
+            // BookingSeeder::class,
             // OrderDatabaseSeeder::class
         ]);
     }

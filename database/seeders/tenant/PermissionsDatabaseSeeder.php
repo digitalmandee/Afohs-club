@@ -24,8 +24,8 @@ class PermissionsDatabaseSeeder extends Seeder
             'super-admin' => Permission::all()->pluck('name'),
             'admin' => ['dashboard', 'order', 'user', 'admin'],
             'employee' => ['dashboard', 'order'],
-            'cashier' => ['dashboard', 'order'],
-            'waiter' => ['dashboard', 'order'],
+            'cashier' => ['order'],
+            'waiter' => ['order'],
             'kitchen' => ['kitchen'],
             'user' => ['dashboard'],
         ];

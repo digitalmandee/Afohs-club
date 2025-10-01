@@ -1,13 +1,14 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { AccessTime, FilterAlt as FilterIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Paper, Select, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography } from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
 import OrderFilter from './Filter';
 import { router } from '@inertiajs/react';
 import { enqueueSnackbar } from 'notistack';
+import debounce from 'lodash.debounce';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -18,7 +19,7 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
     const [selectedCard, setSelectedCard] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     // Search Order
-    const [searchText, setSearchText] = useState(filters.search || '');
+    const [search, setSearch] = useState(filters.search || '');
     const [filteredOrders, setFilteredOrders] = useState(orders.data);
     // Add state for category filtering
     const [activeCategory, setActiveCategory] = useState('All Menus');
@@ -100,25 +101,20 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
         });
     };
 
-    // Search and Category Filter for Orders
-    useEffect(() => {
-        let filtered = [...orders.data];
+    // Debounced function to trigger search after user stops typing
+    const triggerSearch = useMemo(
+        () =>
+            debounce((value) => {
+                router.get(route('order.management'), { ...filters, search: value, page: 1 }, { preserveState: true });
+            }, 500), // 500ms delay
+        [],
+    );
 
-        // Filter by category
-        if (activeCategory !== 'All Menus') {
-            filtered = filtered.filter((order) => order.order_items.some((item) => item.order_item.category_id === activeCategory));
-        }
-
-        // Filter by search term
-        if (searchText.trim()) {
-            const lowercased = searchText.toLowerCase();
-            filtered = filtered.filter((order) => {
-                return order.id.toString().includes(lowercased) || (order.member?.full_name && order.member.full_name.toLowerCase().includes(lowercased)) || (order.member?.membership_no && order.member.membership_no.toLowerCase().includes(lowercased)) || (order.table?.table_no && order.table.table_no.toLowerCase().includes(lowercased));
-            });
-        }
-
-        setFilteredOrders(filtered);
-    }, [searchText, activeCategory, orders]);
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearch(value);
+        triggerSearch(value); // call debounced function
+    };
 
     return (
         <>
@@ -166,7 +162,7 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                                 }}
                             >
                                 <SearchIcon style={{ color: '#121212', marginRight: '8px' }} />
-                                <InputBase placeholder="Search by order ID, client name, or member ID" fullWidth sx={{ fontSize: '14px' }} inputProps={{ style: { padding: 0 } }} value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+                                <InputBase placeholder="Search by order ID, client name, or member ID" fullWidth sx={{ fontSize: '14px' }} inputProps={{ style: { padding: 0 } }} value={search} onChange={handleSearchChange} />
                             </div>
 
                             <Button
@@ -193,8 +189,8 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                             mt: 2,
                         }}
                     >
-                        {filteredOrders.length > 0 ? (
-                            filteredOrders.map((card, index) => (
+                        {orders.data.length > 0 ? (
+                            orders.data.map((card, index) => (
                                 <Grid item xs={12} sm={6} md={4} key={index}>
                                     <Paper
                                         elevation={1}
@@ -210,7 +206,7 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                                         <Box sx={{ bgcolor: card.status === 'cancelled' ? '#FF0000' : card.status === 'refund' ? '#FFA500' : card.status === 'in_progress' ? '#E6E6E6' : card.status === 'completed' ? '#4BB543' : '#063455', color: card.status === 'cancelled' ? '#FFFFFF' : card.status === 'refund' ? '#FFFFFF' : card.status === 'in_progress' ? '#000000' : card.status === 'completed' ? '#FFFFFF' : '#FFFFFF', p: 2, position: 'relative' }}>
                                             <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px' }}>#{card.id}</Typography>
                                             <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px' }}>
-                                                {card.member?.full_name} ({card.member?.membership_no})
+                                                {card.member ? `${card.member?.full_name} (${card.member?.membership_no})` : `${card.customer?.name} (${card.customer?.customer_no})`}
                                                 <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
                                                     ({card.order_type})
                                                 </Typography>
@@ -226,8 +222,10 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                                                     borderRadius: 0.5,
                                                 }}
                                             >
-                                                <AccessTime fontSize="small" sx={{ fontSize: 16, mr: 0.5 }} />
-                                                <Typography variant="caption">{card.start_time}</Typography>
+                                                <AccessTime fontSize="small" sx={{ fontSize: 16, color: '#fff', mr: 0.5 }} />
+                                                <Typography variant="caption" sx={{ color: '#fff' }}>
+                                                    {card.start_time}
+                                                </Typography>
                                             </Box>
                                             <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
                                                 <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member?.member_type?.name}</Typography>
@@ -318,6 +316,24 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                             </Grid>
                         )}
                     </Grid>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'end', py: 4 }}>
+                        <Pagination
+                            count={orders.last_page}
+                            page={orders.current_page}
+                            onChange={(e, page) =>
+                                router.get(
+                                    route('order.management'),
+                                    {
+                                        page,
+                                        search,
+                                        ...filters,
+                                    },
+                                    { preserveState: true },
+                                )
+                            }
+                        />
+                    </Box>
                     {showCancelModal && <CancelOrder order={selectedCard} onClose={handleCloseCancelModal} onConfirm={handleConfirmCancel} />}
                     <Drawer
                         anchor="right"
