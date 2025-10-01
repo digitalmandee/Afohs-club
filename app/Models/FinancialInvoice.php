@@ -18,6 +18,8 @@ class FinancialInvoice extends BaseModel
         'advance_payment',
         'paid_amount',
         'customer_charges',
+        'period_start',
+        'period_end',
         'issue_date',
         'due_date',
         'paid_for_month',

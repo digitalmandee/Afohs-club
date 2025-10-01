@@ -8,6 +8,8 @@ import ClearIcon from '@mui/icons-material/Clear';
 import axios from 'axios';
 import DescriptionIcon from '@mui/icons-material/Description';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import PaymentNow from '@/components/App/Invoice/PaymentNow';
+import { objectToFormData } from '@/helpers/objectToFormData';
 
 const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange, clearOrderItems } = useOrderStore();
@@ -30,8 +32,22 @@ const OrderDetail = ({ handleEditItem }) => {
 
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
+    const [openPaymentModal, setOpenPaymentModal] = useState(false);
+
     const handleOpenPopup = () => setIsPopupOpen(true);
     const handleClosePopup = () => setIsPopupOpen(false);
+
+    const handleOpenPayment = () => {
+        setOpenPaymentModal(true);
+    };
+
+    const handleSuccessPayment = () => {
+        setOpenPaymentModal(false);
+    };
+
+    const handleClosePayment = () => {
+        setOpenPaymentModal(false);
+    };
 
     const handleInputChange = (e) => {
         setFormData({
@@ -105,7 +121,7 @@ const OrderDetail = ({ handleEditItem }) => {
     const handleSendToKitchen = async (extra = {}) => {
         setIsLoading(true);
 
-        const payload = {
+        const newPayload = {
             ...orderDetails,
             ...extra, // include waiter + time if passed
             price: subtotal,
@@ -118,6 +134,8 @@ const OrderDetail = ({ handleEditItem }) => {
             staff_note: notes.staff_note,
             payment_note: notes.payment_note,
         };
+
+        const payload = objectToFormData(newPayload);
 
         await axios
             .post(route('order.send-to-kitchen'), payload)
@@ -691,6 +709,8 @@ const OrderDetail = ({ handleEditItem }) => {
                     onClick={() => {
                         if (orderDetails.order_type === 'reservation') {
                             handleOpenPopup(); // open popup first
+                        } else if (orderDetails.order_type === 'takeaway') {
+                            handleOpenPayment(); // directly send
                         } else {
                             handleSendToKitchen(); // directly send
                         }
@@ -719,6 +739,7 @@ const OrderDetail = ({ handleEditItem }) => {
                 </Button>
             </Box>
 
+            {/* Reservation Popup */}
             <Dialog open={isPopupOpen} onClose={handleClosePopup} maxWidth="md" fullWidth>
                 <DialogTitle>Continue Reservation Order</DialogTitle>
                 <DialogContent>
@@ -763,6 +784,36 @@ const OrderDetail = ({ handleEditItem }) => {
                     </Box>
                 </DialogContent>
             </Dialog>
+
+            {/* Payment Modal */}
+            <PaymentNow invoiceData={{ ...orderDetails, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
+
+            {/* Takeaway Popup */}
+            {/* <Dialog open={isTakeawayPopupOpen} onClose={handleClosePayment} maxWidth="md" fullWidth>
+                <DialogTitle>Continue Takeaway Order</DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ mb: 2 }}>Are you sure you want to continue with takeaway order #{orderDetails.order_no}?</Typography>
+
+                    <TextField label="Payment Amount" name="payment_amount" type="number" value={orderDetails.payment_amount} onChange={handleInputChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} />
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                        <Button onClick={handleClosePayment} sx={{ mr: 1 }}>
+                            Cancel
+                        </Button>
+                        <Button
+                            disabled={!orderDetails.waiter || !orderDetails.time}
+                            variant="contained"
+                            onClick={() => {
+                                // merge waiter/time into order and send
+                                handleSendToKitchen();
+                                handleClosePayment();
+                            }}
+                        >
+                            Confirm & Send
+                        </Button>
+                    </Box>
+                </DialogContent>
+            </Dialog> */}
         </>
     );
 };

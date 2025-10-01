@@ -41,6 +41,7 @@ class Order extends Model
         'staff_note',
         'payment_note',
         'tax',
+        'address',
         'discount',
         'total_price',
         'cost_price',
@@ -72,7 +73,7 @@ class Order extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Member::class, 'customer_id', 'id');
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
 
     // public function invoice()

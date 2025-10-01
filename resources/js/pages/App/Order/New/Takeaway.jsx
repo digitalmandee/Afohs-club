@@ -2,61 +2,46 @@ import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { Autocomplete, Box, Button, Grid, InputAdornment, TextField, Typography } from '@mui/material';
-import axios from 'axios';
-import { useCallback, useEffect, useState } from 'react';
+import { Box, Button, FormControl, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography } from '@mui/material';
+import { useEffect } from 'react';
 
 const TakeAwayDialog = () => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
-    const [members, setMembers] = useState([]);
-    const [searchLoading, setSearchLoading] = useState(false);
+    const isMemberSelected = !!orderDetails.member && Object.keys(orderDetails.member).length > 0;
+    const requiresAddress = orderDetails.order_type === 'delivery';
+    const isDisabled = !isMemberSelected || (requiresAddress && !orderDetails.address);
 
-    // Search Members
-    const searchUser = useCallback(async (query, role) => {
-        if (!query) return []; // Don't make a request if the query is empty.
-        setSearchLoading(true);
+    const handleMemberType = (value) => {
+        handleOrderDetailChange('member_type', value);
+        handleOrderDetailChange('member', {});
+    };
 
-        try {
-            const response = await axios.get(route('user.search'), {
-                params: { query, role },
-            });
-            if (response.data.success) {
-                return response.data.results;
-            } else {
-                return [];
-            }
-        } catch (error) {
-            console.error('Error fetching search results:', error);
-            return [];
-        } finally {
-            setSearchLoading(false);
-        }
-    }, []);
-
-    const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0;
+    const handleMemberChange = (value) => {
+        handleOrderDetailChange('member', value);
+        handleOrderDetailChange('address', value?.address || '');
+    };
 
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'F10' && !isDisabled) {
-                e.preventDefault(); // Optional: prevent browser behavior
+                e.preventDefault();
                 router.visit(route('order.menu'));
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isDisabled, router]);
+    }, [isDisabled]);
 
     return (
         <Box>
+            {/* Order Header */}
             <Box sx={{ px: 2, mb: 2 }}>
                 <Box
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: '',
                         bgcolor: '#F6F6F6',
                         px: 2,
                         py: 1.5,
@@ -77,45 +62,97 @@ const TakeAwayDialog = () => {
                 </Box>
             </Box>
 
+            {/* Customer Search */}
+            <Box sx={{ px: 2, mb: 2 }}>
+                <FormControl component="fieldset">
+                    <RadioGroup row name="membership-type" value={orderDetails.member_type} onChange={(e) => handleMemberType(e.target.value)}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: 1,
+                                width: '100%',
+                            }}
+                        >
+                            {[
+                                { id: 1, name: 'Member' },
+                                { id: 2, name: 'Guest' },
+                            ].map((option) => {
+                                const isSelected = orderDetails.member_type == option.id;
+                                return (
+                                    <Box
+                                        key={option.id}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            border: `1px solid ${isSelected ? '#A27B5C' : '#E3E3E3'}`,
+                                            bgcolor: isSelected ? '#FCF7EF' : 'transparent',
+                                            borderRadius: 1,
+                                            px: 2,
+                                            py: 1,
+                                            transition: 'all 0.2s ease-in-out',
+                                        }}
+                                    >
+                                        <FormControlLabel
+                                            value={option.id}
+                                            control={<Radio size="small" />}
+                                            label={<Typography variant="body2">{option.name}</Typography>}
+                                            sx={{
+                                                m: 0,
+                                                width: '100%',
+                                                '& .MuiFormControlLabel-label': {
+                                                    flexGrow: 1,
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                );
+                            })}
+                        </Box>
+                    </RadioGroup>
+                </FormControl>
+            </Box>
             <Grid container spacing={2} sx={{ px: 2, mb: 2 }}>
                 <Grid item xs={12}>
-                    <Typography variant="body2" sx={{ mb: 0.5, color: '#121212', fontSize: '14px' }}>
+                    <Typography variant="body2" sx={{ mb: 0.5, fontSize: '14px', color: '#121212' }}>
                         Customer Name
                     </Typography>
-                    <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" params={{ member_type: orderDetails.membership_type }} onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
+                    <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" params={{ type: orderDetails.member_type }} onChange={(e) => handleMemberChange(e.target.value)} size="small" />
                 </Grid>
+
+                {/* Delivery Address */}
+                {requiresAddress && (
+                    <Grid item xs={12}>
+                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '14px', color: '#121212' }}>
+                            Delivery Address
+                        </Typography>
+                        <TextField placeholder="Enter delivery address" fullWidth size="small" value={orderDetails.address || ''} onChange={(e) => handleOrderDetailChange('address', e.target.value)} />
+                    </Grid>
+                )}
             </Grid>
 
             {/* Footer */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    p: 2,
-                    // borderTop: '1px solid #e0e0e0'
-                }}
-            >
-                <Button
-                    sx={{
-                        color: '#666',
-                        textTransform: 'none',
-                        mr: 1,
-                    }}
-                >
-                    Cancel
-                </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
+                <Button sx={{ color: '#666', textTransform: 'none', mr: 1 }}>Cancel</Button>
                 <Button
                     variant="contained"
                     endIcon={<ArrowForwardIcon />}
                     sx={{
                         bgcolor: '#0c3b5c',
-                        '&:hover': {
-                            bgcolor: '#072a42',
-                        },
+                        '&:hover': { bgcolor: '#072a42' },
                         textTransform: 'none',
                     }}
                     disabled={isDisabled}
-                    onClick={() => router.visit(route('order.menu', { member_id: orderDetails.member.id, order_type: 'takeaway' }))}
+                    onClick={() =>
+                        router.visit(
+                            route('order.menu', {
+                                member_id: orderDetails.member.id,
+                                member_type: orderDetails.member_type,
+                                order_type: orderDetails.order_type,
+                                address: orderDetails.address || null,
+                            }),
+                        )
+                    }
                 >
                     Choose Menu
                 </Button>

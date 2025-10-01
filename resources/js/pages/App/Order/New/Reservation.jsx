@@ -6,7 +6,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { Autocomplete, Box, Button, ClickAwayListener, Grid, InputAdornment, Paper, Popper, Radio, TextField, Typography } from '@mui/material';
+import { Autocomplete, Box, Button, ClickAwayListener, FormControl, FormControlLabel, Grid, InputAdornment, Paper, Popper, Radio, RadioGroup, TextField, Typography } from '@mui/material';
 import { StaticDatePicker, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -43,6 +43,11 @@ const ReservationDialog = () => {
     const handleDateChange = (newValue) => {
         setMonthYear(newValue);
         setAnchorEl(null);
+    };
+
+    const handleMemberType = (value) => {
+        handleOrderDetailChange('member_type', value);
+        handleOrderDetailChange('member', {});
     };
 
     const open = Boolean(anchorEl);
@@ -265,12 +270,62 @@ const ReservationDialog = () => {
                         </Paper>
                     </Box>
 
+                    <Box sx={{ px: 2, mb: 2 }}>
+                        <FormControl component="fieldset">
+                            <RadioGroup row name="membership-type" value={orderDetails.member_type} onChange={(e) => handleMemberType(e.target.value)}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: 1,
+                                        width: '100%',
+                                    }}
+                                >
+                                    {[
+                                        { id: 1, name: 'Member' },
+                                        { id: 2, name: 'Guest' },
+                                    ].map((option) => {
+                                        const isSelected = orderDetails.member_type == option.id;
+                                        return (
+                                            <Box
+                                                key={option.id}
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    border: `1px solid ${isSelected ? '#A27B5C' : '#E3E3E3'}`,
+                                                    bgcolor: isSelected ? '#FCF7EF' : 'transparent',
+                                                    borderRadius: 1,
+                                                    px: 2,
+                                                    py: 1,
+                                                    transition: 'all 0.2s ease-in-out',
+                                                }}
+                                            >
+                                                <FormControlLabel
+                                                    value={option.id}
+                                                    control={<Radio size="small" />}
+                                                    label={<Typography variant="body2">{option.name}</Typography>}
+                                                    sx={{
+                                                        m: 0,
+                                                        width: '100%',
+                                                        '& .MuiFormControlLabel-label': {
+                                                            flexGrow: 1,
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        );
+                                    })}
+                                </Box>
+                            </RadioGroup>
+                        </FormControl>
+                    </Box>
+
                     {/* Customer Name */}
                     <Box sx={{ mb: 2 }}>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '14px', color: '#121212' }}>
                             Customer Name or Scan Member Card
                         </Typography>
-                        <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
+                        <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" onChange={(e) => handleOrderDetailChange('member', e.target.value)} params={{ type: orderDetails.member_type }} size="small" />
                     </Box>
 
                     {/* Customer Qty and Down Payment */}

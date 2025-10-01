@@ -117,10 +117,10 @@ const OrderDetails = ({ orderId, onClose }) => {
                                         mr: 1,
                                     }}
                                 >
-                                    Q
+                                    {data.member?.full_name?.charAt(0) || data.customer?.name?.charAt(0)}
                                 </Avatar>
                                 <Typography variant="body2" fontWeight="medium">
-                                    {data.member?.full_name}
+                                    {data.member?.full_name || data.customer?.name}
                                 </Typography>
                             </Box>
                         </Box>

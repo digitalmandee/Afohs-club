@@ -303,76 +303,6 @@ const styles = {
     },
 };
 
-const orderDetail = {
-    id: '#123',
-    customer: 'Qafi Latif',
-    tableNumber: 'T14',
-    date: '12. Jan 2024',
-    cashier: 'Tynisha Obey',
-    cashierAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-    workingTime: '15.00 - 22.00 PM',
-    isVIP: true,
-    items: [
-        {
-            name: 'Cappucino',
-            category: 'Coffee & Beverage',
-            variant: 'Ice, Large, Normal sugar',
-            quantity: 1,
-            price: 5.0,
-            image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-        },
-        {
-            name: 'Buttermilk Waffle',
-            category: 'Food & Snack',
-            variant: 'Choco',
-            quantity: 2,
-            price: 5.0,
-            image: 'https://images.unsplash.com/photo-1562376552-0d160a2f35b6?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-        },
-        {
-            name: 'At Home Classic',
-            category: 'Imaji at Home',
-            variant: '250 gr',
-            quantity: 1,
-            price: 4.0,
-            image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-        },
-    ],
-    subtotal: 19.0,
-    discount: 0,
-    tax: 2.28,
-    total: 16.72,
-    payment: {
-        method: 'Cash',
-        amount: 20.0,
-        change: 3.28,
-    },
-};
-
-const paymentOrderDetail = {
-    id: 'ORDER001',
-    customer: 'Ravi Kamil',
-    tableNumber: 'T2',
-    date: 'Wed, May 27, 2020 • 9:27:53 AM',
-    cashier: 'Tynisha Obey',
-    workingTime: '15.00 - 22.00 PM',
-    items: [
-        { name: 'Cappuccino', quantity: 2, price: 5.0, total: 10.0 },
-        { name: 'Soda Beverage', quantity: 3, price: 5.0, total: 15.0 },
-        { name: 'Chocolate Croissant', quantity: 2, price: 5.0, total: 10.0 },
-        { name: 'French Toast Sugar', quantity: 3, price: 4.0, total: 12.0 },
-    ],
-    subtotal: 47.0,
-    discount: 0,
-    tax: 5.64,
-    total: 52.64,
-    payment: {
-        method: 'Cash',
-        amount: 60.0,
-        change: 7.36,
-    },
-};
-
 const trackingSteps = [
     {
         title: 'Successfully Delivered',
@@ -501,11 +431,6 @@ function TransactionDashboard({ Invoices, totalOrders }) {
         setOpenPaymentModal(false);
     };
 
-    const handlePayNow = () => {
-        setOpenPaymentModal(false);
-        setOpenPaymentSuccessModal(true);
-    };
-
     const handleClosePaymentSuccess = () => {
         setOpenPaymentSuccessModal(false);
     };
@@ -523,7 +448,6 @@ function TransactionDashboard({ Invoices, totalOrders }) {
             {
                 ...filters,
                 search,
-                orderType: activeTab,
                 page: 1,
             },
             { preserveState: true },
@@ -624,7 +548,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                             }}
                         >
                             <Box display="flex" gap={1} mb={2}>
-                                {['all', 'dineIn', 'takeaway', 'reservation'].map((type) => (
+                                {['all', 'dineIn', 'delivery', 'takeaway', 'reservation'].map((type) => (
                                     <Button key={type} style={activeTab === type ? styles.activeTabButton : styles.tabButton} variant={activeTab === type ? 'contained' : 'outlined'} onClick={() => handleTabChange(type)}>
                                         {type === 'all' ? 'All Transactions' : type.charAt(0).toUpperCase() + type.slice(1)}
                                     </Button>
@@ -649,7 +573,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                         fontSize: '36px',
                                     }}
                                 >
-                                    {totalOrders}{' '}
+                                    {Invoices ? Invoices.data.length : 0}{' '}
                                     <span
                                         style={{
                                             fontSize: '16px',
@@ -729,9 +653,9 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     fontSize: '18px',
                                                                 }}
                                                             >
-                                                                {order?.member?.full_name} ({order.member?.membership_no})
+                                                                {order.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order.customer?.name} (${order.customer?.customer_no})`}
                                                             </Typography>
-                                                            {order.isVIP && <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />}
+                                                            {/* {order.isVIP && <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />} */}
                                                         </Box>
                                                         <Typography
                                                             variant="body2"
@@ -741,7 +665,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 fontSize: '14px',
                                                             }}
                                                         >
-                                                            {order.order_items_count} Items
+                                                            {order.order_items_count} Items ({order.member_id ? 'Member' : 'Guest'})
                                                         </Typography>
                                                     </Box>
                                                     <Box textAlign="right">
@@ -1025,6 +949,11 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                     icon: <DiningIcon />,
                                                 },
                                                 {
+                                                    label: 'Delivery',
+                                                    value: 'delivery',
+                                                    icon: <DiningIcon />,
+                                                },
+                                                {
                                                     label: 'Takeaway',
                                                     value: 'takeaway',
                                                     icon: <TakeoutIcon />,
@@ -1279,7 +1208,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                     </Dialog>
 
                     {/* Order Detail Modal */}
-                    <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} orderDetail={orderDetail} handleOpenTrackOrder={handleOpenTrackOrder} />
+                    <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} handleOpenTrackOrder={handleOpenTrackOrder} />
 
                     {/* Payment Modal */}
                     <PaymentNow invoiceData={selectedOrder} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} setSelectedOrder={setSelectedOrder} />

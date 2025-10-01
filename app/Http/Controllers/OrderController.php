@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Events\OrderCreated;
+use App\Helpers\FileHelper;
 use App\Jobs\PrintOrderJob;
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\FinancialInvoice;
 use App\Models\Floor;
 use App\Models\Invoices;
@@ -20,6 +22,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -175,13 +178,14 @@ class OrderController extends Controller
             'table:id,table_no',
             'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
             'member:id,user_id,member_type_id,full_name,membership_no',
+            'customer:id,name,customer_no',
             'member.memberType:id,name'
         ]);
         $allrestaurants = Tenant::select('id', 'name')->get();
 
         // 🔍 Search
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim(preg_replace('/\s+/', ' ', $request->search));
             $query->where(function ($q) use ($search) {
                 $q
                     ->where('id', 'like', "%$search%")
@@ -189,6 +193,10 @@ class OrderController extends Controller
                         $q
                             ->where('full_name', 'like', "%$search%")
                             ->orWhere('membership_no', 'like', "%$search%"))
+                    ->orWhereHas('customer', fn($q) =>
+                        $q
+                            ->where('name', 'like', "%$search%")
+                            ->orWhere('customer_no', 'like', "%$search%"))
                     ->orWhereHas('table', fn($q) =>
                         $q->where('table_no', 'like', "%$search%"));
             });
@@ -239,7 +247,7 @@ class OrderController extends Controller
     {
         $today = Carbon::today()->toDateString();
         $orders = Reservation::whereDate('date', $today)
-            ->with('member:user_id,full_name,membership_no', 'table:id,table_no')
+            ->with('member:user_id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no')
             ->get();
 
         return response()->json([
@@ -261,6 +269,7 @@ class OrderController extends Controller
             $reservation = Reservation::where('id', $request->reservation_id)
                 ->with([
                     'member:user_id,full_name,membership_no',
+                    'customer:id,name,customer_no',
                     'table:id,table_no,floor_id',
                 ])
                 ->first();
@@ -281,15 +290,32 @@ class OrderController extends Controller
             }
 
             // Member
-            if ($request->filled('member_id')) {
-                $member = Member::select('user_id', 'full_name', 'membership_no')
-                    ->where('user_id', $request->member_id)
-                    ->first();
-                $orderContext['member'] = [
-                    'id' => $member->user_id,
-                    'name' => $member->full_name,
-                    'membership_no' => $member->membership_no,
-                ];
+            if ($request->filled('member_id') && $request->filled('member_type')) {
+                if ($request->member_type == 1) {
+                    $member = Member::select('user_id', 'full_name', 'membership_no', 'personal_email', 'current_address')
+                        ->where('user_id', $request->member_id)
+                        ->first();
+                    $orderContext['member'] = [
+                        'id' => $member->user_id,
+                        'booking_type' => 'member',
+                        'name' => $member->full_name,
+                        'membership_no' => $member->membership_no,
+                        'email' => $member->personal_email,
+                        'address' => $member->current_address
+                    ];
+                } elseif ($request->member_type == 2) {
+                    $customer = Customer::select('id', 'name', 'customer_no', 'email', 'address')
+                        ->where('id', $request->member_id)
+                        ->first();
+                    $orderContext['member'] = [
+                        'id' => $customer->id,
+                        'customer_no' => $customer->customer_no,
+                        'booking_type' => 'guest',
+                        'name' => $customer->name,
+                        'email' => $customer->email,
+                        'address' => $customer->address
+                    ];
+                }
             }
 
             // Table
@@ -341,7 +367,7 @@ class OrderController extends Controller
     public function sendToKitchen(Request $request)
     {
         $request->validate([
-            'member.id' => 'required|exists:members,user_id',
+            // 'member.id' => 'required|exists:members,user_id',
             'order_items' => 'required|array',
             'order_items.*.id' => 'required|exists:products,id',
             'price' => 'required|numeric',
@@ -354,25 +380,66 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
+            $totalDue = $request->price;
+            $orderType = $request->order_type;
+
+            if ($orderType == 'takeaway' && $request->payment['paid_amount'] < $totalDue) {
+                return back()->withErrors(['paid_amount' => 'The paid amount is not enough to cover the total price of the invoice.']);
+            }
+
+            $orderData = [
+                'waiter_id' => $request->waiter['id'] ?? null,
+                'table_id' => $request->table['id'] ?? null,
+                'order_type' => $request->order_type,
+                'person_count' => $request->person_count,
+                'start_date' => Carbon::parse($request->date)->toDateString(),
+                'start_time' => $request->time,
+                'down_payment' => $request->down_payment,
+                'amount' => $request->price,
+                'status' => 'pending',
+                'kitchen_note' => $request->kitchen_note,
+                'staff_note' => $request->staff_note,
+                'payment_note' => $request->payment_note,
+                'reservation_id' => $request->reservation_id ?? null,
+                'address' => $request->address
+            ];
+
+            if ($request->member['booking_type'] == 'member') {
+                $orderData['member_id'] = $request->member['id'];
+            } else {
+                $orderData['customer_id'] = $request->member['id'];
+            }
+
+            if ($orderType == 'takeaway') {
+                $orderData['cashier_id'] = Auth::user()->id;
+                $orderData['payment_method'] = $request->payment['payment_method'];
+                $orderData['paid_amount'] = $request->payment['paid_amount'];
+
+                if ($request->payment['payment_method'] === 'credit_card') {
+                    $orderData['credit_card_type'] = $request->payment['credit_card_type'];
+                    // Handle receipt saving if applicable
+                    // Example:
+                    if ($request->hasFile('receipt')) {
+                        $path = FileHelper::saveImage($request->file('receipt'), 'receipts');
+                        $orderData['receipt'] = $path;
+                    }
+                }
+                if ($request->payment['payment_method'] === 'split_payment') {
+                    $orderData['cash_amount'] = $request->payment['cash'];
+                    $orderData['credit_card_amount'] = $request->payment['credit_card'];
+                    $orderData['bank_amount'] = $request->payment['bank_transfer'];
+                }
+                $orderData['paid_at'] = now();
+                $orderData['payment_status'] = 'paid';
+            }
+            Log::info('Pass');
+
             $order = Order::updateOrCreate(
                 ['id' => $request->id],
-                [
-                    'member_id' => $request->member['id'],
-                    'waiter_id' => $request->waiter['id'] ?? null,
-                    'table_id' => $request->table['id'] ?? null,
-                    'order_type' => $request->order_type,
-                    'person_count' => $request->person_count,
-                    'start_date' => Carbon::parse($request->date)->toDateString(),
-                    'start_time' => $request->time,
-                    'down_payment' => $request->down_payment,
-                    'amount' => $request->price,
-                    'status' => 'pending',
-                    'kitchen_note' => $request->kitchen_note,
-                    'staff_note' => $request->staff_note,
-                    'payment_note' => $request->payment_note,
-                    'reservation_id' => $request->reservation_id ?? null,
-                ]
+                $orderData
             );
+
+            Log::info('Order created/updated successfully');
 
             // Mark reservation completed
             if ($request->order_type === 'reservation' && $request->filled('reservation_id')) {
@@ -428,9 +495,8 @@ class OrderController extends Controller
                 'cost_price' => $totalCostPrice,
             ]);
 
-            FinancialInvoice::create([
+            $invoiceData = [
                 'invoice_no' => $this->getInvoiceNo(),
-                'member_id' => $request->member['id'],
                 'invoice_type' => 'food_order',
                 'amount' => $request->price,
                 'total_price' => $request->total_price,
@@ -442,7 +508,22 @@ class OrderController extends Controller
                 'data' => [
                     'order_id' => $order->id,
                 ],
-            ]);
+            ];
+
+            if ($request->member['booking_type'] == 'member') {
+                $invoiceData['member_id'] = $request->member['id'];
+            } else {
+                $invoiceData['customer_id'] = $request->member['id'];
+            }
+
+            if ($orderType == 'takeaway') {
+                $invoiceData['status'] = 'paid';
+                $invoiceData['payment_date'] = now();
+                $invoiceData['payment_method'] = $request->payment['payment_method'];
+                $invoiceData['paid_amount'] = $request->payment['paid_amount'];
+            }
+
+            FinancialInvoice::create($invoiceData);
 
             DB::commit();
 

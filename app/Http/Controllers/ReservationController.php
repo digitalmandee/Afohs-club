@@ -13,7 +13,7 @@ class ReservationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Reservation::with(['member:user_id,full_name,membership_no,mobile_number_a', 'table']);
+        $query = Reservation::with(['member:user_id,full_name,membership_no,mobile_number_a', 'customer:id,name,customer_no', 'table']);
 
         // ✅ Apply filters
         if ($request->filled('status')) {
@@ -26,6 +26,8 @@ class ReservationController extends Controller
             $search = $request->search;
             $query->whereHas('member', function ($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%");
+            })->orWhereHas('customer', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
             });
         }
 
@@ -40,7 +42,7 @@ class ReservationController extends Controller
     public function orderReservation(Request $request)
     {
         $validated = $request->validate([
-            'member.id' => 'required|exists:members,user_id',
+            // 'member.id' => 'required|exists:members,user_id',
             'person_count' => 'required|integer|min:1',
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
@@ -61,8 +63,7 @@ class ReservationController extends Controller
 
         $date = Carbon::parse($validated['date'])->setTimezone('Asia/Karachi')->toDateString();
 
-        $order = Reservation::create([
-            'member_id' => $validated['member']['id'],
+        $reservationData = [
             'person_count' => $validated['person_count'],
             'date' => $date,
             'start_time' => $validated['start_time'],
@@ -73,7 +74,15 @@ class ReservationController extends Controller
             'special_request' => $validated['special_request'] ?? null,
             'table_id' => $validated['table'] ?? null,
             'status' => 'pending',
-        ]);
+        ];
+
+        if ($request->member['booking_type'] == 'member') {
+            $reservationData['member_id'] = $request->member['id'];
+        } else {
+            $reservationData['customer_id'] = $request->member['id'];
+        }
+
+        $order = Reservation::create($reservationData);
 
         return response()->json([
             'message' => 'Order placed successfully.',

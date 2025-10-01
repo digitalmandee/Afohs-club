@@ -222,10 +222,12 @@ class MembershipController extends Controller
                 }
             }
 
+            $fullName = trim(preg_replace('/\s+/', ' ', $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name));
+
             // Create primary user
             $primaryUser = User::create([
                 'email' => $request->personal_email ?? null,
-                'name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'name' => $fullName,
                 'password' => null,
                 'phone_number' => $request->mobile_number_a,
                 'profile_photo' => $memberImagePath
@@ -251,7 +253,7 @@ class MembershipController extends Controller
                 'barcode_no' => $request->barcode_no ?? null,
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
-                'full_name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'full_name' => $fullName,
                 'profile_photo' => $memberImagePath,
                 'martial_status' => $request->martial_status,
                 'kinship' => $request->kinship['id'] ?? null,
@@ -342,38 +344,38 @@ class MembershipController extends Controller
                 }
             }
 
-            $memberTypeArray = $memberCategory->toArray();  // includes all fields from DB
+            // $memberTypeArray = $memberCategory->toArray();  // includes all fields from DB
 
-            $memberTypeArray['amount'] = $memberCategory->fee;
-            $memberTypeArray['invoice_type'] = 'membership';
+            // $memberTypeArray['amount'] = $memberCategory->fee;
+            // $memberTypeArray['invoice_type'] = 'membership';
 
-            $data = [$memberTypeArray];
+            // $data = [$memberTypeArray];
 
-            // Create membership invoice
-            $now = Carbon::now();
-            $quarter = ceil($now->month / 3);  // Calculate quarter number (1 to 4)
-            $paidForQuarter = $now->year . '-Q' . $quarter;
+            // // Create membership invoice
+            // $now = Carbon::now();
+            // $quarter = ceil($now->month / 3);  // Calculate quarter number (1 to 4)
+            // $paidForQuarter = $now->year . '-Q' . $quarter;
 
-            $invoice = FinancialInvoice::create([
-                'invoice_no' => $this->getInvoiceNo(),
-                'member_id' => $primaryUser->id,
-                'amount' => $memberCategory->subscription_fee * 3,
-                'subscription_type' => 'quarter',
-                'invoice_type' => 'membership',
-                'issue_date' => $now,
-                'paid_for_quarter' => $paidForQuarter,
-                'data' => $data,
-                'status' => 'unpaid',
-            ]);
+            // $invoice = FinancialInvoice::create([
+            //     'invoice_no' => $this->getInvoiceNo(),
+            //     'member_id' => $primaryUser->id,
+            //     'amount' => $memberCategory->subscription_fee * 3,
+            //     'subscription_type' => 'quarter',
+            //     'invoice_type' => 'membership',
+            //     'issue_date' => $now,
+            //     'paid_for_quarter' => $paidForQuarter,
+            //     'data' => $data,
+            //     'status' => 'unpaid',
+            // ]);
 
-            // Add membership invoice id to member
-            $member = Member::where('user_id', $primaryUser->id)->first();
-            $member->invoice_id = $invoice->id;
-            $member->save();
+            // // Add membership invoice id to member
+            // $member = Member::where('user_id', $primaryUser->id)->first();
+            // $member->invoice_id = $invoice->id;
+            // $member->save();
 
             DB::commit();
 
-            return response()->json(['message' => 'Membership created successfully.', 'invoice_no' => $invoice->invoice_no], 200);
+            return response()->json(['message' => 'Membership created successfully.'], 200);
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
             return response()->json(['error' => 'Failed to submit membership details: ' . $th->getMessage()], 500);
@@ -433,9 +435,12 @@ class MembershipController extends Controller
                     @unlink($absolutePath);
                 }
             }
+
+            $fullName = trim(preg_replace('/\s+/', ' ', $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name));
+
             // Update User basic info
             $member->user->update([
-                'name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'name' => $fullName,
                 'email' => $request->personal_email ?? null,
                 'phone_number' => $request->mobile_number_a,
             ]);
@@ -448,7 +453,7 @@ class MembershipController extends Controller
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
-                'full_name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'full_name' => $fullName,
                 'profile_photo' => $memberImagePath,
                 'martial_status' => $request->martial_status,
                 'kinship' => $request->kinship['id'] ?? null,

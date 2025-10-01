@@ -154,6 +154,18 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
         }, 250);
     };
 
+    const taxAmount = () => {
+        const subtotal = paymentData.amount;
+
+        const discount = Number(paymentData.discount) || 0;
+        const discountedSubtotal = subtotal - discount;
+
+        // Now apply tax on the discounted amount
+        const taxRate = Number(paymentData.tax) || 0;
+        const taxAmount = Math.round(discountedSubtotal * taxRate);
+        return taxAmount;
+    };
+
     return (
         <Box sx={styles.receiptContainer}>
             <Box sx={styles.receiptHeader}>
@@ -185,14 +197,14 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption" color="text.secondary">
                     Customer Name
                 </Typography>
-                <Typography variant="caption">{paymentData.member?.full_name}</Typography>
+                <Typography variant="caption">{paymentData.member?.full_name || paymentData.customer?.name}</Typography>
             </Box>
 
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
-                    Member Id Card
+                    {paymentData.member ? 'Member Id Card' : 'Customer Id Card'}
                 </Typography>
-                <Typography variant="caption">{paymentData.member?.membership_no}</Typography>
+                <Typography variant="caption">{paymentData.member?.membership_no || paymentData.customer?.customer_no}</Typography>
             </Box>
 
             <Box sx={styles.receiptRow}>
@@ -202,12 +214,14 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption">{paymentData.order_type}</Typography>
             </Box>
 
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Table Number
-                </Typography>
-                <Typography variant="caption">{paymentData?.table?.table_no}</Typography>
-            </Box>
+            {paymentData.table && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        Table Number
+                    </Typography>
+                    <Typography variant="caption">{paymentData.table?.table_no}</Typography>
+                </Box>
+            )}
 
             <Box sx={styles.receiptDivider} />
 
@@ -243,9 +257,9 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
-                    Tax (12%)
+                    Tax ({paymentData.tax * 100}%)
                 </Typography>
-                <Typography variant="caption">Rs {(paymentData.amount * 0.12).toFixed(2)}</Typography>
+                <Typography variant="caption">Rs {taxAmount()}</Typography>
             </Box>
             <Box sx={styles.receiptDivider} />
             <Box sx={styles.receiptRow}>

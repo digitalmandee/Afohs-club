@@ -16,8 +16,8 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $query = Order::query()
-            ->whereIn('order_type', ['dineIn', 'takeaway', 'reservation'])
-            ->with(['member', 'table:id,table_no', 'orderItems:id,order_id']);
+            ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation'])
+            ->with(['member:id,user_id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no', 'orderItems:id,order_id']);
 
         // ===============================
         // FILTER: Search by member name or membership_no
@@ -38,6 +38,7 @@ class TransactionController extends Controller
             $orderTypeMap = [
                 'dineIn' => 'dineIn',
                 'takeaway' => 'takeaway',
+                'delivery' => 'delivery',
                 'reservation' => 'reservation',
             ];
             if (isset($orderTypeMap[$request->orderType])) {
@@ -104,21 +105,15 @@ class TransactionController extends Controller
             return $order;
         });
 
-        // ===============================
-        // Total Orders
-        // ===============================
-        $totalOrders = Order::whereNotIn('status', ['cancelled', 'refund'])->count();
-
         return Inertia::render('App/Transaction/Dashboard', [
             'Invoices' => $orders,
-            'totalOrders' => $totalOrders,
             'filters' => $request->all(),
         ]);
     }
 
     public function PaymentOrderData($invoiceId)
     {
-        $order = Order::where('id', $invoiceId)->with(['member:id,user_id,full_name,membership_no', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
+        $order = Order::where('id', $invoiceId)->with(['member:id,user_id,full_name,membership_no', 'customer:id,name,customer_no', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
         return $order;
     }
 
@@ -173,8 +168,6 @@ class TransactionController extends Controller
                 'payment_method' => $request->payment_method,
                 'paid_amount' => $request->paid_amount
             ]);
-
-        Log::info('Invoice updated for member ' . $request->order_id);
 
         return redirect()->back()->with('success', 'Payment successful');
     }

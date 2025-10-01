@@ -122,10 +122,16 @@ export default function SideNav({ open, setOpen }) {
             path: route('order.management'),
             permission: 'order',
         },
+        // {
+        //     text: 'Members',
+        //     icon: <IoPeople style={{ height: 20, width: 20 }} />,
+        //     path: route('members.index'),
+        //     permission: 'order',
+        // },
         {
-            text: 'Members',
+            text: 'Guests',
             icon: <IoPeople style={{ height: 20, width: 20 }} />,
-            path: route('members.index'),
+            path: route('customers.index'),
             permission: 'order',
         },
         {

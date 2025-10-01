@@ -222,6 +222,19 @@ const OrderFilter = ({ onClose }) => {
                                     }}
                                 />
                                 <Chip
+                                    label="Delivery"
+                                    onClick={() => handleBookingStatusChange('delivery')}
+                                    sx={{
+                                        bgcolor: bookingStatus === 'delivery' ? '#0a3d62' : '#e3f2fd',
+                                        color: bookingStatus === 'delivery' ? 'white' : '#333',
+                                        borderRadius: 1,
+                                        fontWeight: bookingStatus === 'delivery' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: bookingStatus === 'delivery' ? '#0a3d62' : '#d0e8fd',
+                                        },
+                                    }}
+                                />
+                                <Chip
                                     label="Takeaway"
                                     onClick={() => handleBookingStatusChange('takeaway')}
                                     sx={{

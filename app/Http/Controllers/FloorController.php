@@ -161,9 +161,6 @@ class FloorController extends Controller
         $date = $request->date;
         $floorId = $request->floor;
 
-        Log::info('Date: ' . $date);
-        Log::info('Floor ID: ' . $floorId);
-
         $parsedDate = Carbon::parse($date)->startOfDay();
 
         $floor = Floor::where('id', $floorId)
@@ -309,6 +306,7 @@ class FloorController extends Controller
         // Check if ID is an order
         $order = Order::with([
             'member:id,user_id,full_name',
+            'customer:id,name,customer_no',
             'table:id,table_no',
             'orderItems:id,order_id,order_item,status',
         ])->find($id);

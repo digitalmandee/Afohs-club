@@ -227,6 +227,12 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     });
 
     useEffect(() => {
+        if (matchedFloors.length > 0) {
+            setSelectedFloor(matchedFloors[0].id);
+        }
+    }, [matchedFloors]);
+
+    useEffect(() => {
         if (selectedDate.full_date) {
             axios
                 .get(route('floors.getFloors'), {
