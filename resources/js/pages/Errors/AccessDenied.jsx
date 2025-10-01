@@ -61,7 +61,7 @@ const AccessDenied = ({ message }) => {
 
                         {/* Heading */}
                         <Typography variant="h2" color="error" gutterBottom sx={{ fontWeight: 'bold' }}>
-                            404
+                            403
                         </Typography>
                         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
                             {message || 'Access Denied'}
