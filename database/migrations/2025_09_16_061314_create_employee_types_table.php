@@ -10,15 +10,18 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('employee_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->string('slug')->unique();
-            $table->bigInteger('created_by')->nullable();
-            $table->bigInteger('updated_by')->nullable();
-            $table->bigInteger('deleted_by')->nullable();
-            $table->timestamps();
-        });
+        // Only create the table if it doesn't exist
+        if (!Schema::hasTable('employee_types')) {
+            Schema::create('employee_types', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->string('slug')->unique();
+                $table->bigInteger('created_by')->nullable();
+                $table->bigInteger('updated_by')->nullable();
+                $table->bigInteger('deleted_by')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

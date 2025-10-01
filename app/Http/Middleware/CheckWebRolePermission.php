@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 use Closure;
@@ -17,7 +18,7 @@ class CheckWebRolePermission
      */
     public function handle(Request $request, Closure $next, $roles = null, $permissions = null)
     {
-        $user = $request->user('tenant');  // use tenant guard
+        $user = $request->user('tenant');
         if (!$user) {
             return abort(403);
         }
@@ -47,6 +48,8 @@ class CheckWebRolePermission
         if ($permissions) {
             $permissionsArray = explode('|', $permissions);
             $hasPermission = false;
+
+            Log::info('user permissions: ' . json_encode($user->getAllPermissions()->pluck('name')->toArray()));
 
             foreach ($permissionsArray as $perm) {
                 if ($user->hasPermissionTo($perm, $guard)) {
