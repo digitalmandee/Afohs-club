@@ -63,7 +63,10 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
         // Exclude canceled items
         const activeItems = orderItems.filter((item) => item.status !== 'cancelled');
 
-        const subtotal = Math.round(activeItems.reduce((acc, item) => acc + item.order_item.total_price, 0));
+        console.log(activeItems);
+        
+
+        const subtotal = Math.round(activeItems.reduce((acc, item) => acc + Number(item.order_item.total_price || 0), 0));
 
         const discount = Number(selectedCard.discount) || 0;
         const discountedSubtotal = subtotal - discount;
