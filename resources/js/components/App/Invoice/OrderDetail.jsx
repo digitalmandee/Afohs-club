@@ -144,7 +144,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                 {paymentData.member ? paymentData.member?.full_name.charAt(0) : paymentData.customer?.name.charAt(0)}
                             </Avatar>
                             <Typography variant="subtitle1" fontWeight="medium">
-                                {paymentData.member ? `${paymentData.member?.full_name} (${paymentData.member?.membership_no})` : `${paymentData.customer?.name} (${paymentData.customer?.customer_no})`}
+                                {paymentData.member ? `${paymentData.member?.full_name} (${paymentData.member?.membership_no})` : `${paymentData.customer?.name}`}
                             </Typography>
                             {/* {orderDetail.isVIP && (
                             <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />
@@ -244,7 +244,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                     <Typography variant="caption" color="text.secondary" display="block">
                                         {item.order_item.category}
                                     </Typography>
-                                    {item.order_item.variants.length > 0 && (
+                                    {item.order_item.variants && item.order_item.variants.length > 0 && (
                                         <Typography variant="caption" color="text.secondary">
                                             Variant: {item.order_item.variants.map((v) => v.value).join(', ')}
                                         </Typography>
@@ -255,7 +255,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                         Qty: {item.order_item.quantity} x Rs {item.order_item.price}
                                     </Typography>
                                     <Typography variant="subtitle2" fontWeight="bold" display="block">
-                                        Rs {item.order_item.total_price.toFixed(2)}
+                                        Rs {item.order_item.total_price}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -312,7 +312,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                             <Box display="flex" alignItems="center" mt={0.5}>
                                 <ReceiptIcon fontSize="small" sx={{ mr: 1, color: '#0a3d62' }} />
                                 <Typography variant="body2" fontWeight="medium">
-                                    {paymentData.payment_method}
+                                    {paymentData.payment_method || 'N/A'}
                                 </Typography>
                             </Box>
                         </Box>
@@ -321,7 +321,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                                 Cash Total
                             </Typography>
                             <Typography variant="body2" fontWeight="medium" mt={0.5}>
-                                Rs {paymentData.paid_amount}
+                                Rs {paymentData.paid_amount || 'N/A'}
                             </Typography>
                         </Box>
                         <Box>

@@ -13,11 +13,30 @@ const LoginActivityScreen = ({ setProfileView }) => {
                 const response = await axios.get(route('api.employee-logs'));
 
                 // Map API data if needed
-                const activities = response.data.map((log) => ({
-                    date: new Date(log.logged_at).toLocaleDateString(),
-                    time: new Date(log.logged_at).toLocaleTimeString(),
-                    activity: log.type === 'shift_start' ? 'Login' : log.type === 'shift_end' ? 'Logout' : log.type.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-                }));
+                const activities = response.data.map((log) => {
+                    // Parse datetime string as local time (not UTC)
+                    // Format: "2025-10-02 12:34:59"
+                    const [datePart, timePart] = log.logged_at.split(' ');
+                    const [year, month, day] = datePart.split('-');
+                    const [hour, minute, second] = timePart.split(':');
+                    
+                    // Create date in local timezone
+                    const logDate = new Date(year, month - 1, day, hour, minute, second);
+                    
+                    return {
+                        date: logDate.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: '2-digit' 
+                        }),
+                        time: logDate.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true 
+                        }),
+                        activity: log.type === 'login' ? 'Login' : log.type === 'logout' ? 'Logout' : log.type.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+                    };
+                });
                 setLoginActivities(activities);
             } catch (error) {
                 console.error('Failed to fetch logs:', error);

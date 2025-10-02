@@ -143,6 +143,8 @@ const OrderDetail = ({ handleEditItem }) => {
                 console.log('Server response:', res.data);
                 // ✅ Use res.data, not response.data
                 enqueueSnackbar(res.data?.message || 'Your order has been successfully sent to the kitchen!', { variant: 'success' });
+
+                router.visit(route('order.management'));
             })
             .catch((error) => {
                 console.log(error);
@@ -786,34 +788,7 @@ const OrderDetail = ({ handleEditItem }) => {
             </Dialog>
 
             {/* Payment Modal */}
-            <PaymentNow invoiceData={{ ...orderDetails, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
-
-            {/* Takeaway Popup */}
-            {/* <Dialog open={isTakeawayPopupOpen} onClose={handleClosePayment} maxWidth="md" fullWidth>
-                <DialogTitle>Continue Takeaway Order</DialogTitle>
-                <DialogContent>
-                    <Typography sx={{ mb: 2 }}>Are you sure you want to continue with takeaway order #{orderDetails.order_no}?</Typography>
-
-                    <TextField label="Payment Amount" name="payment_amount" type="number" value={orderDetails.payment_amount} onChange={handleInputChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} />
-
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                        <Button onClick={handleClosePayment} sx={{ mr: 1 }}>
-                            Cancel
-                        </Button>
-                        <Button
-                            disabled={!orderDetails.waiter || !orderDetails.time}
-                            variant="contained"
-                            onClick={() => {
-                                // merge waiter/time into order and send
-                                handleSendToKitchen();
-                                handleClosePayment();
-                            }}
-                        >
-                            Confirm & Send
-                        </Button>
-                    </Box>
-                </DialogContent>
-            </Dialog> */}
+            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: formData.discountType, discount_value: formData.discountValue, discount: discountAmount, price: subtotal, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
         </>
     );
 };

@@ -12,6 +12,10 @@ class EmployeeLog extends Model
 
     protected $fillable = ['employee_id', 'type', 'logged_at', 'tenant_id'];
 
+    protected $casts = [
+        'logged_at' => 'datetime',
+    ];
+
     public function employee()
     {
         return $this->belongsTo(Employee::class);

@@ -14,6 +14,7 @@ const AccessDenied = ({ message }) => {
 
     return (
         <>
+            <Head title="Access Denied" />
             <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
@@ -30,7 +31,6 @@ const AccessDenied = ({ message }) => {
                         padding: 2,
                     }}
                 >
-                    <Head title="Tenant Not Found" />
                     <Paper
                         elevation={8}
                         className="text-center p-5"

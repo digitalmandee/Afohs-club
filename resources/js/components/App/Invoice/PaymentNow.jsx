@@ -247,7 +247,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     height: '100vh',
                     maxHeight: '100vh',
                     width: '100%',
-                    maxWidth: mode === 'payment' ? '1000px' : '600px',
+                    maxWidth: '1000px',
                     borderRadius: 0,
                     overflow: 'auto',
                 },
@@ -256,6 +256,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             <Box sx={{ display: 'flex', height: '100vh' }}>
                 {/* Left Side - Receipt */}
                 {mode === 'payment' && <Receipt invoiceId={invoiceData?.id} openModal={openPaymentModal} showButtons={false} />}
+                {mode === 'order' && <Receipt invoiceData={invoiceData} openModal={openPaymentModal} showButtons={false} />}
 
                 {/* Right Side - Payment */}
                 <Box sx={{ flex: 1, p: 3 }}>

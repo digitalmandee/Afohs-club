@@ -176,6 +176,9 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                             transition: 'width 0.3s ease',
                             borderRight: showAddItem ? '1px solid #ccc' : 'none',
                             overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: 'calc(100vh - 64px)',
                         }}
                     >
                         {/* Sticky Header */}
@@ -254,10 +257,14 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                         {/* Scrollable Order Items */}
                         <Box
                             sx={{
-                                maxHeight: 'calc(100vh - 300px)',
+                                flex: 1,
                                 overflowY: 'auto',
                                 '&::-webkit-scrollbar': {
-                                    display: 'none',
+                                    width: '6px',
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    backgroundColor: '#ccc',
+                                    borderRadius: '3px',
                                 },
                             }}
                         >
@@ -380,8 +387,54 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                             )}
                         </Box>
 
+                        {/* Notes Section - Sticky at bottom before footer */}
+                        {(order?.kitchen_note || order?.staff_note || order?.payment_note) && (
+                            <Box 
+                                sx={{ 
+                                    px: 2, 
+                                    py: 1.5,
+                                    borderTop: '1px solid #e0e0e0',
+                                    bgcolor: '#f9f9f9',
+                                }}
+                            >
+                                <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#063455', mb: 1, display: 'block' }}>
+                                    Notes:
+                                </Typography>
+                                {order.kitchen_note && (
+                                    <Box sx={{ mb: 0.5 }}>
+                                        <Typography variant="caption" component="span" fontWeight="bold" sx={{ color: '#555' }}>
+                                            • Kitchen:{' '}
+                                        </Typography>
+                                        <Typography variant="caption" component="span" sx={{ color: '#666' }}>
+                                            {order.kitchen_note}
+                                        </Typography>
+                                    </Box>
+                                )}
+                                {order.staff_note && (
+                                    <Box sx={{ mb: 0.5 }}>
+                                        <Typography variant="caption" component="span" fontWeight="bold" sx={{ color: '#555' }}>
+                                            • Staff:{' '}
+                                        </Typography>
+                                        <Typography variant="caption" component="span" sx={{ color: '#666' }}>
+                                            {order.staff_note}
+                                        </Typography>
+                                    </Box>
+                                )}
+                                {order.payment_note && (
+                                    <Box sx={{ mb: 0.5 }}>
+                                        <Typography variant="caption" component="span" fontWeight="bold" sx={{ color: '#555' }}>
+                                            • Payment:{' '}
+                                        </Typography>
+                                        <Typography variant="caption" component="span" sx={{ color: '#666' }}>
+                                            {order.payment_note}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Box>
+                        )}
+
                         {/* Footer */}
-                        <Box sx={{ display: 'flex', p: 2, gap: 2 }}>
+                        <Box sx={{ display: 'flex', p: 2, gap: 2, borderTop: '1px solid #e0e0e0' }}>
                             <Button
                                 variant="outlined"
                                 fullWidth
