@@ -174,12 +174,13 @@ class FloorController extends Controller
                         'reservations' => function ($resQuery) use ($parsedDate) {
                             $resQuery
                                 ->whereDate('date', $parsedDate)
-                                ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'member_id')
+                                ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'member_id','customer_id')
                                 ->with([
                                     'order' => function ($orderQuery) {
                                         $orderQuery->select('id', 'reservation_id', 'table_id', 'status', 'order_type', 'start_date', 'member_id');
                                     },
                                     'member:id,user_id,full_name',
+                                    'customer:id,name',
                                 ]);
                         },
                         // Direct dinein/takeaway orders
@@ -189,9 +190,10 @@ class FloorController extends Controller
                                 ->whereNull('reservation_id')
                                 ->whereIn('order_type', ['dinein', 'takeaway'])
                                 ->whereIn('status', ['pending', 'in_progress'])
-                                ->select('id', 'table_id', 'order_type', 'status', 'start_date', 'member_id')
+                                ->select('id', 'table_id', 'order_type', 'status', 'start_date', 'member_id','customer_id')
                                 ->with([
                                     'member:id,user_id,full_name',
+                                    'customer:id,name',
                                 ]);
                         }
                     ]);
@@ -247,13 +249,25 @@ class FloorController extends Controller
                         $now <= $reservation->end_time
                     );
 
-                    if ($reservation->member && !$bookedBy) {
-                        $bookedBy = [
-                            'reservation_id' => $reservation->id,
-                            'id' => $reservation->member->user_id,
-                            'name' => $reservation->member->full_name,
-                            'time_slot' => $reservation->start_time . ' - ' . $reservation->end_time,
-                        ];
+                    // Priority: customer first, then member
+                    if (!$bookedBy) {
+                        if ($reservation->customer) {
+                            $bookedBy = [
+                                'reservation_id' => $reservation->id,
+                                'id' => $reservation->customer->id,
+                                'name' => $reservation->customer->name,
+                                'time_slot' => $reservation->start_time . ' - ' . $reservation->end_time,
+                                'type' => 'customer',
+                            ];
+                        } elseif ($reservation->member) {
+                            $bookedBy = [
+                                'reservation_id' => $reservation->id,
+                                'id' => $reservation->member->user_id,
+                                'name' => $reservation->member->full_name,
+                                'time_slot' => $reservation->start_time . ' - ' . $reservation->end_time,
+                                'type' => 'member',
+                            ];
+                        }
                     }
 
                     if (!$order) {
@@ -271,13 +285,25 @@ class FloorController extends Controller
                 foreach ($table->orders as $order) {
                     $invoice = $order->invoice;
 
-                    if (!$bookedBy && $order->member) {
-                        $bookedBy = [
-                            'order_id' => $order->id,
-                            'id' => $order->member->user_id,
-                            'name' => $order->member->full_name,
-                            'type' => $order->order_type,
-                        ];
+                    // Priority: customer first, then member
+                    if (!$bookedBy) {
+                        if ($order->customer) {
+                            $bookedBy = [
+                                'order_id' => $order->id,
+                                'id' => $order->customer->id,
+                                'name' => $order->customer->name,
+                                'order_type' => $order->order_type,
+                                'type' => 'customer',
+                            ];
+                        } elseif ($order->member) {
+                            $bookedBy = [
+                                'order_id' => $order->id,
+                                'id' => $order->member->user_id,
+                                'name' => $order->member->full_name,
+                                'order_type' => $order->order_type,
+                                'type' => 'member',
+                            ];
+                        }
                     }
 
                     if (!$invoice || $invoice->status !== 'paid' || $order->status !== 'completed') {

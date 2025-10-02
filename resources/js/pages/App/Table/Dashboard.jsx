@@ -105,7 +105,7 @@ const DraggableTable = ({ data, index, moveTable, onClick, fill }) => {
                             #{currentReservation?.id}
                         </Typography>
                         <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.7rem', color: 'black' }}>
-                            {currentReservation.member?.full_name}
+                            {currentReservation.member?.full_name || currentReservation.customer?.name}
                         </Typography>
                     </>
                 )}

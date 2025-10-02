@@ -41,11 +41,6 @@ class UserController extends Controller
                         ->orWhere('members.membership_no', 'like', "%{$query}%");
                 });
 
-            // Apply member_type filter if provided (only for 'user' role)
-            if (!empty($memberType)) {
-                $members->where('members.member_type_id', $memberType);
-            }
-
             $members = $members->limit(10)->get();
 
             $results = $members->map(function ($user) {

@@ -126,7 +126,18 @@ class EmployeeController extends Controller
         $employeeId = Auth::user()->employee->id;
         $logs = EmployeeLog::where('employee_id', $employeeId)
             ->orderByDesc('logged_at')
-            ->get();
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'employee_id' => $log->employee_id,
+                    'type' => $log->type,
+                    // Format as string without timezone conversion
+                    'logged_at' => $log->logged_at->format('Y-m-d H:i:s'),
+                    'created_at' => $log->created_at,
+                    'updated_at' => $log->updated_at,
+                ];
+            });
 
         return response()->json($logs);
     }

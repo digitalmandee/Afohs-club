@@ -255,7 +255,7 @@ const OrderSaved = ({ setActiveView }) => {
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                     <Typography variant="body1" sx={{ fontWeight: 500, mr: 1 }}>
-                                        {order.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order.customer?.name} (${order.customer?.customer_no})`}
+                                        {order.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order.customer?.name}`}
                                     </Typography>
 
                                     <img

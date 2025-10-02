@@ -104,7 +104,7 @@ export default function SideNav({ open, setOpen }) {
     const [showProfile, setShowProfile] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard'), permission: 'dashboard' },
+        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard'), permission: 'order' },
         { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
         { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index'), permission: 'order' },
         { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category'), permission: 'order' },

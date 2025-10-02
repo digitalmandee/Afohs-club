@@ -206,7 +206,7 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                                         <Box sx={{ bgcolor: card.status === 'cancelled' ? '#FF0000' : card.status === 'refund' ? '#FFA500' : card.status === 'in_progress' ? '#E6E6E6' : card.status === 'completed' ? '#4BB543' : '#063455', color: card.status === 'cancelled' ? '#FFFFFF' : card.status === 'refund' ? '#FFFFFF' : card.status === 'in_progress' ? '#000000' : card.status === 'completed' ? '#FFFFFF' : '#FFFFFF', p: 2, position: 'relative' }}>
                                             <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px' }}>#{card.id}</Typography>
                                             <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px' }}>
-                                                {card.member ? `${card.member?.full_name} (${card.member?.membership_no})` : `${card.customer?.name} (${card.customer?.customer_no})`}
+                                                {card.member ? `${card.member?.full_name} (${card.member?.membership_no})` : `${card.customer?.name}`}
                                                 <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
                                                     ({card.order_type})
                                                 </Typography>
