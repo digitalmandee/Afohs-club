@@ -24,7 +24,7 @@ class CustomerRequest extends FormRequest
         return [
             'name'        => 'required|string|max:255',
             'contact'     => 'required|string|max:255',
-            'gender'      => 'required|in:male,female,other',
+            'gender'      => 'nullable|in:male,female,other',
             'guest_type_id' => 'required|exists:guest_types,id',
             'email'       => 'nullable|email',
             'cnic'        => 'nullable|string|max:255',

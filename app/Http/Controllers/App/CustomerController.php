@@ -43,14 +43,14 @@ class CustomerController extends Controller
         $data = $request->validated();
         $data['customer_no'] = $this->getCustomerNo();
         Customer::create($data);
-        return redirect()->route('guests.index')->with('success', 'Customer created successfully.');
+        return redirect()->route('customers.index')->with('success', 'Customer created successfully.');
     }
 
     public function update(CustomerRequest $request, Customer $customer)
     {
         $data = $request->validated();
         $customer->update($data);
-        return redirect()->route('guests.index')->with('success', 'Customer updated successfully.');
+        return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
     }
 
     public function destroy($id)

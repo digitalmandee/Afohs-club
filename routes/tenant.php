@@ -50,6 +50,7 @@ Route::group([
 
         // Members
         Route::resource('customers', CustomerController::class)->except(['show']);
+        
         Route::get('/members', [MembersController::class, 'index'])->name('members.index');
 
         // Waiter Dashboard

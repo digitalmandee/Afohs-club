@@ -35,7 +35,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        isEdit ? put(route('guests.update', customer.id)) : post(route('guests.store'));
+        isEdit ? put(route('customers.update', customer.id)) : post(route('guests.store'));
     };
 
     return (

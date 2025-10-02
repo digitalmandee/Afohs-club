@@ -66,7 +66,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                     <TextField fullWidth label="Name*" margin="normal" value={data.name} onChange={(e) => setData('name', e.target.value)} error={!!errors.name} helperText={errors.name} />
                     <TextField fullWidth label="Contact*" margin="normal" value={data.contact} onChange={(e) => setData('contact', e.target.value)} error={!!errors.contact} helperText={errors.contact} />
 
-                    <TextField fullWidth select label="Gender*" margin="normal" value={data.gender} onChange={(e) => setData('gender', e.target.value)} error={!!errors.gender} helperText={errors.gender}>
+                    <TextField fullWidth select label="Gender" margin="normal" value={data.gender} onChange={(e) => setData('gender', e.target.value)} error={!!errors.gender} helperText={errors.gender}>
                         {genderOptions.map((option) => (
                             <MenuItem key={option} value={option}>
                                 {option}
