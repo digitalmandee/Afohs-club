@@ -584,6 +584,7 @@ class OrderController extends Controller
             'subtotal' => 'nullable|numeric',
             'total_price' => 'nullable|numeric',
             'discount' => 'nullable|numeric',
+            'tax_rate' => 'nullable|numeric',
         ]);
 
         // Custom check for subtotal/total_price dependency
@@ -608,9 +609,20 @@ class OrderController extends Controller
                 'cancelType' => $request->cancelType ?? null,
             ];
 
-            if ($request->has('subtotal') && $request->has('total_price')) {
+            if ($request->has('subtotal') && $request->has('total_price') && 
+                $validated['subtotal'] !== null && $validated['total_price'] !== null) {
                 $updateData['amount'] = $validated['subtotal'];
                 $updateData['total_price'] = $validated['total_price'];
+                
+                // Update discount if provided
+                if ($request->has('discount')) {
+                    $updateData['discount'] = $validated['discount'];
+                }
+                
+                // Update tax if provided
+                if ($request->has('tax_rate')) {
+                    $updateData['tax'] = $validated['tax_rate'];
+                }
             }
 
             $order->update($updateData);
@@ -646,7 +658,8 @@ class OrderController extends Controller
                 if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
-                } elseif ($request->has('subtotal') && $request->has('total_price')) {
+                } elseif ($request->has('subtotal') && $request->has('total_price') && 
+                          $validated['subtotal'] !== null && $validated['total_price'] !== null) {
                     // Otherwise update amounts if provided
                     $financialInvoice->update([
                         'amount' => $validated['subtotal'],

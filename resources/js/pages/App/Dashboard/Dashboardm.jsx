@@ -107,8 +107,8 @@ const Dashboard = () => {
                 <Box sx={{ flexGrow: 1, p: 2, bgcolor: '#f5f7fa' }}>
                     <Grid container spacing={2}>
                         {/* first column */}
-                        {auth.role == 'super-admin' && (
-                            <Grid item xs={12} md={5.3}>
+                        <Grid item xs={12} md={auth.role == 'super-admin' ? 5.3 : 12}>
+                            {auth.role == 'super-admin' && (
                                 <Paper
                                     sx={{
                                         bgcolor: '#0e3151',
@@ -281,265 +281,266 @@ const Dashboard = () => {
                                         </Grid>
                                     </Box>
                                 </Paper>
-                                <Paper elevation={0} sx={{ p: 2, mt: 2 }}>
-                                    <Box
+                            )}
+                            <Paper elevation={0} sx={{ p: 2, mt: 2 }}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        mb: 2,
+                                    }}
+                                >
+                                    <Typography
+                                        variant="subtitle1"
                                         sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            mb: 2,
+                                            fontWeight: '500',
+                                            fontSize: '20px',
+                                            color: '#121212',
                                         }}
                                     >
-                                        <Typography
-                                            variant="subtitle1"
-                                            sx={{
-                                                fontWeight: '500',
-                                                fontSize: '20px',
-                                                color: '#121212',
-                                            }}
-                                        >
-                                            Reservation Order
-                                        </Typography>
-                                        <img
-                                            src="/assets/arrowicon.png"
-                                            alt=""
-                                            style={{
-                                                height: '32px',
-                                                width: '32px',
-                                                // marginLeft:'10px',
-                                                cursor: 'pointer',
-                                            }}
-                                            onClick={() => setShowReserve(true)}
-                                        />
+                                        Reservation Order
+                                    </Typography>
+                                    <img
+                                        src="/assets/arrowicon.png"
+                                        alt=""
+                                        style={{
+                                            height: '32px',
+                                            width: '32px',
+                                            // marginLeft:'10px',
+                                            cursor: 'pointer',
+                                        }}
+                                        onClick={() => setShowReserve(true)}
+                                    />
+                                </Box>
+                                <Modal open={showReserve} onClose={() => setShowReserve(false)} aria-labelledby="reservation-order-modal" sx={{ zIndex: 1300 }}>
+                                    <Box
+                                        sx={{
+                                            position: 'fixed',
+                                            top: '10px',
+                                            bottom: '10px',
+                                            right: 10,
+                                            width: { xs: '100%', sm: 600 },
+                                            bgcolor: '#fff',
+                                            boxShadow: 4,
+                                            zIndex: 1300,
+                                            overflowY: 'auto',
+                                            borderRadius: 2,
+                                            scrollbarWidth: 'none',
+                                            '&::-webkit-scrollbar': {
+                                                display: 'none',
+                                            },
+                                        }}
+                                    >
+                                        {/* Replace this with your actual component */}
+                                        <ReservationOrder />
                                     </Box>
-                                    <Modal open={showReserve} onClose={() => setShowReserve(false)} aria-labelledby="reservation-order-modal" sx={{ zIndex: 1300 }}>
-                                        <Box
-                                            sx={{
-                                                position: 'fixed',
-                                                top: '10px',
-                                                bottom: '10px',
-                                                right: 10,
-                                                width: { xs: '100%', sm: 600 },
-                                                bgcolor: '#fff',
-                                                boxShadow: 4,
-                                                zIndex: 1300,
-                                                overflowY: 'auto',
-                                                borderRadius: 2,
-                                                scrollbarWidth: 'none',
-                                                '&::-webkit-scrollbar': {
-                                                    display: 'none',
-                                                },
-                                            }}
-                                        >
-                                            {/* Replace this with your actual component */}
-                                            <ReservationOrder />
+                                </Modal>
+
+                                {/* Calendar Days */}
+                                <Grid container spacing={0} sx={{ mb: 2 }}>
+                                    {weekDays.map((day, index) => {
+                                        const isSelected = selectedDate.toDateString() === new Date(day.date).toDateString();
+
+                                        return (
+                                            <Grid
+                                                item
+                                                key={index}
+                                                xs={12 / 7}
+                                                onClick={() => setSelectedDate(new Date(day.date))}
+                                                sx={{
+                                                    cursor: 'pointer',
+                                                    textAlign: 'center',
+                                                    p: 1,
+                                                    border: '1px solid #e0e0e0',
+                                                    bgcolor: isSelected ? '#e6f0fa' : 'white',
+                                                }}
+                                            >
+                                                <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500 }}>
+                                                    {day.label}
+                                                </Typography>
+                                                <Box sx={{ mt: 1 }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                        {day.dayNum}
+                                                    </Typography>
+                                                </Box>
+
+                                                {day.orders_count > 0 && (
+                                                    <Box
+                                                        sx={{
+                                                            mt: 1,
+                                                            mx: 'auto',
+                                                            width: 24,
+                                                            height: 24,
+                                                            bgcolor: '#1976d2',
+                                                            color: 'white',
+                                                            borderRadius: '50%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 'bold',
+                                                        }}
+                                                    >
+                                                        {day.orders_count}
+                                                    </Box>
+                                                )}
+                                            </Grid>
+                                        );
+                                    })}
+                                </Grid>
+
+                                {/* Reservation List */}
+                                <Box sx={{ mt: 3 }}>
+                                    {/* Reservation 1 */}
+                                    {loading ? (
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                                            <CircularProgress />
                                         </Box>
-                                    </Modal>
-
-                                    {/* Calendar Days */}
-                                    <Grid container spacing={0} sx={{ mb: 2 }}>
-                                        {weekDays.map((day, index) => {
-                                            const isSelected = selectedDate.toDateString() === new Date(day.date).toDateString();
-
-                                            return (
-                                                <Grid
-                                                    item
-                                                    key={index}
-                                                    xs={12 / 7}
-                                                    onClick={() => setSelectedDate(new Date(day.date))}
+                                    ) : orderReservtions.length > 0 ? (
+                                        orderReservtions.map((item, index) => (
+                                            <Box
+                                                key={index}
+                                                sx={{
+                                                    bgcolor: '#F6F6F6',
+                                                    borderRadius: 1,
+                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                                    overflow: 'hidden',
+                                                    mb: 2,
+                                                }}
+                                            >
+                                                {/* Customer info section */}
+                                                <Box
                                                     sx={{
-                                                        cursor: 'pointer',
-                                                        textAlign: 'center',
-                                                        p: 1,
-                                                        border: '1px solid #e0e0e0',
-                                                        bgcolor: isSelected ? '#e6f0fa' : 'white',
+                                                        p: 2,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
                                                     }}
                                                 >
-                                                    <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500 }}>
-                                                        {day.label}
-                                                    </Typography>
-                                                    <Box sx={{ mt: 1 }}>
-                                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                            {day.dayNum}
-                                                        </Typography>
-                                                    </Box>
-
-                                                    {day.orders_count > 0 && (
+                                                    {item.table_id && (
                                                         <Box
                                                             sx={{
-                                                                mt: 1,
-                                                                mx: 'auto',
-                                                                width: 24,
-                                                                height: 24,
-                                                                bgcolor: '#1976d2',
-                                                                color: 'white',
-                                                                borderRadius: '50%',
                                                                 display: 'flex',
                                                                 alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                fontSize: '0.75rem',
-                                                                fontWeight: 'bold',
+                                                                mr: 1,
                                                             }}
                                                         >
-                                                            {day.orders_count}
+                                                            <Button
+                                                                variant="contained"
+                                                                sx={{
+                                                                    bgcolor: '#0C67AA',
+                                                                    color: 'white',
+                                                                    borderRadius: '50%',
+                                                                    minWidth: 45,
+                                                                    height: 45,
+                                                                    p: 0,
+                                                                    fontWeight: '500',
+                                                                    fontSize: '0.875rem',
+                                                                }}
+                                                            >
+                                                                {item.table?.table_no}
+                                                            </Button>
                                                         </Box>
                                                     )}
-                                                </Grid>
-                                            );
-                                        })}
-                                    </Grid>
 
-                                    {/* Reservation List */}
-                                    <Box sx={{ mt: 3 }}>
-                                        {/* Reservation 1 */}
-                                        {loading ? (
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                                                <CircularProgress />
-                                            </Box>
-                                        ) : orderReservtions.length > 0 ? (
-                                            orderReservtions.map((item, index) => (
-                                                <Box
-                                                    key={index}
-                                                    sx={{
-                                                        bgcolor: '#F6F6F6',
-                                                        borderRadius: 1,
-                                                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                                        overflow: 'hidden',
-                                                        mb: 2,
-                                                    }}
-                                                >
-                                                    {/* Customer info section */}
                                                     <Box
                                                         sx={{
-                                                            p: 2,
+                                                            mr: 2,
+                                                            bgcolor: '#E3E3E3',
+                                                            borderRadius: '50%',
+                                                            width: 45,
+                                                            height: 45,
                                                             display: 'flex',
                                                             alignItems: 'center',
+                                                            justifyContent: 'center',
                                                         }}
                                                     >
-                                                        {item.table_id && (
-                                                            <Box
-                                                                sx={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    mr: 1,
-                                                                }}
-                                                            >
-                                                                <Button
-                                                                    variant="contained"
-                                                                    sx={{
-                                                                        bgcolor: '#0C67AA',
-                                                                        color: 'white',
-                                                                        borderRadius: '50%',
-                                                                        minWidth: 45,
-                                                                        height: 45,
-                                                                        p: 0,
-                                                                        fontWeight: '500',
-                                                                        fontSize: '0.875rem',
-                                                                    }}
-                                                                >
-                                                                    {item.table?.table_no}
-                                                                </Button>
-                                                            </Box>
-                                                        )}
-
-                                                        <Box
-                                                            sx={{
-                                                                mr: 2,
-                                                                bgcolor: '#E3E3E3',
-                                                                borderRadius: '50%',
-                                                                width: 45,
-                                                                height: 45,
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
+                                                        <img
+                                                            src="/assets/sofa.png"
+                                                            alt=""
+                                                            style={{
+                                                                height: 22,
+                                                                width: 22,
                                                             }}
-                                                        >
-                                                            <img
-                                                                src="/assets/sofa.png"
-                                                                alt=""
-                                                                style={{
-                                                                    height: 22,
-                                                                    width: 22,
-                                                                }}
-                                                            />
-                                                        </Box>
-
-                                                        <Box sx={{ flexGrow: 1 }}>
-                                                            <Box
-                                                                sx={{
-                                                                    display: 'flex',
-                                                                    justifyContent: 'space-between',
-                                                                    alignItems: 'center',
-                                                                }}
-                                                            >
-                                                                <Box
-                                                                    sx={{
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                    }}
-                                                                >
-                                                                    <Typography
-                                                                        variant="subtitle1"
-                                                                        sx={{
-                                                                            fontWeight: '500',
-                                                                            fontSize: '16px',
-                                                                            color: '#121212',
-                                                                            mr: 1,
-                                                                        }}
-                                                                    >
-                                                                        {item.member?.full_name} ({item.member?.membership_no})
-                                                                    </Typography>
-                                                                </Box>
-                                                                <Box
-                                                                    sx={{
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                    }}
-                                                                >
-                                                                    <Box
-                                                                        component="span"
-                                                                        sx={{
-                                                                            mr: 0.5,
-                                                                            fontSize: '1rem',
-                                                                        }}
-                                                                    >
-                                                                        🕙
-                                                                    </Box>
-                                                                    <Typography variant="caption">
-                                                                        {formatTime(item.start_time)} - {formatTime(item.end_time)}
-                                                                    </Typography>
-                                                                </Box>
-                                                            </Box>
-
-                                                            <Typography
-                                                                variant="caption"
-                                                                sx={{
-                                                                    color: '#7F7F7F',
-                                                                    fontSize: '12px',
-                                                                }}
-                                                            >
-                                                                {item.person_count} Person
-                                                            </Typography>
-                                                        </Box>
+                                                        />
                                                     </Box>
 
-                                                    {/* Order actions section */}
-                                                    <Box
-                                                        sx={{
-                                                            // borderTop: '1px solid #f0f0f0',
-                                                            p: 2,
-                                                            display: 'flex',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                        }}
-                                                    >
+                                                    <Box sx={{ flexGrow: 1 }}>
                                                         <Box
                                                             sx={{
                                                                 display: 'flex',
+                                                                justifyContent: 'space-between',
                                                                 alignItems: 'center',
                                                             }}
                                                         >
-                                                            {/* <Chip
+                                                            <Box
+                                                                sx={{
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                }}
+                                                            >
+                                                                <Typography
+                                                                    variant="subtitle1"
+                                                                    sx={{
+                                                                        fontWeight: '500',
+                                                                        fontSize: '16px',
+                                                                        color: '#121212',
+                                                                        mr: 1,
+                                                                    }}
+                                                                >
+                                                                    {item.member?.full_name} ({item.member?.membership_no})
+                                                                </Typography>
+                                                            </Box>
+                                                            <Box
+                                                                sx={{
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                }}
+                                                            >
+                                                                <Box
+                                                                    component="span"
+                                                                    sx={{
+                                                                        mr: 0.5,
+                                                                        fontSize: '1rem',
+                                                                    }}
+                                                                >
+                                                                    🕙
+                                                                </Box>
+                                                                <Typography variant="caption">
+                                                                    {formatTime(item.start_time)} - {formatTime(item.end_time)}
+                                                                </Typography>
+                                                            </Box>
+                                                        </Box>
+
+                                                        <Typography
+                                                            variant="caption"
+                                                            sx={{
+                                                                color: '#7F7F7F',
+                                                                fontSize: '12px',
+                                                            }}
+                                                        >
+                                                            {item.person_count} Person
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+
+                                                {/* Order actions section */}
+                                                <Box
+                                                    sx={{
+                                                        // borderTop: '1px solid #f0f0f0',
+                                                        p: 2,
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                        }}
+                                                    >
+                                                        {/* <Chip
                                                             label={`#${item.order_number}`}
                                                             size="small"
                                                             variant="outlined"
@@ -553,7 +554,7 @@ const Dashboard = () => {
                                                                 fontWeight: 'medium',
                                                             }}
                                                         /> */}
-                                                            {/* <Chip
+                                                        {/* <Chip
                                                             label="DP : 50%"
                                                             size="small"
                                                             variant="outlined"
@@ -566,55 +567,54 @@ const Dashboard = () => {
                                                                 fontSize: '0.75rem',
                                                             }}
                                                         /> */}
-                                                        </Box>
-                                                        <Box sx={{ ml: 'auto', mr: 2 }}>
-                                                            <img
-                                                                src="/assets/trash.png"
-                                                                alt=""
-                                                                style={{
-                                                                    height: 20,
-                                                                    width: 20,
-                                                                }}
-                                                            />
-                                                        </Box>
-                                                        <Button
-                                                            variant="contained"
-                                                            size="small"
-                                                            startIcon={
-                                                                <Box
-                                                                    component="span"
-                                                                    sx={{
-                                                                        fontSize: '0.875rem',
-                                                                    }}
-                                                                >
-                                                                    ✓
-                                                                </Box>
-                                                            }
-                                                            sx={{
-                                                                bgcolor: '#0e3151',
-                                                                color: 'white',
-                                                                textTransform: 'none',
-                                                                borderRadius: 0,
-                                                                px: 2,
-                                                                py: 0.5,
-                                                                fontSize: '0.875rem',
-                                                                '&:hover': {
-                                                                    bgcolor: '#0a2540',
-                                                                },
-                                                            }}
-                                                        >
-                                                            {item.status === 'saved' ? 'Process Order' : item.status === 'cancelled' ? 'Cancelled' : item.status === 'completed' ? 'Completed' : item.status === 'in_progress' ? 'Cooking process' : 'Pending'}
-                                                        </Button>
                                                     </Box>
+                                                    <Box sx={{ ml: 'auto', mr: 2 }}>
+                                                        <img
+                                                            src="/assets/trash.png"
+                                                            alt=""
+                                                            style={{
+                                                                height: 20,
+                                                                width: 20,
+                                                            }}
+                                                        />
+                                                    </Box>
+                                                    <Button
+                                                        variant="contained"
+                                                        size="small"
+                                                        startIcon={
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    fontSize: '0.875rem',
+                                                                }}
+                                                            >
+                                                                ✓
+                                                            </Box>
+                                                        }
+                                                        sx={{
+                                                            bgcolor: '#0e3151',
+                                                            color: 'white',
+                                                            textTransform: 'none',
+                                                            borderRadius: 0,
+                                                            px: 2,
+                                                            py: 0.5,
+                                                            fontSize: '0.875rem',
+                                                            '&:hover': {
+                                                                bgcolor: '#0a2540',
+                                                            },
+                                                        }}
+                                                    >
+                                                        {item.status === 'saved' ? 'Process Order' : item.status === 'cancelled' ? 'Cancelled' : item.status === 'completed' ? 'Completed' : item.status === 'in_progress' ? 'Cooking process' : 'Pending'}
+                                                    </Button>
                                                 </Box>
-                                            ))
-                                        ) : (
-                                            <Typography>No reservations found for this date.</Typography>
-                                        )}
-                                    </Box>
-                                </Paper>
-                            </Grid>
-                        )}
+                                            </Box>
+                                        ))
+                                    ) : (
+                                        <Typography>No reservations found for this date.</Typography>
+                                    )}
+                                </Box>
+                            </Paper>
+                        </Grid>
                         {/* second column */}
                         <Grid item xs={12} md={auth.role == 'super-admin' ? 3.4 : 8.7}>
                             {/* Top Right - Order Stats */}
