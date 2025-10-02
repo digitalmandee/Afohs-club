@@ -318,14 +318,30 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                     <IconButton size="small" onClick={() => handleQuantityChange(index, 1)} sx={{ color: '#003153' }}>
                                                         <Typography sx={{ fontSize: 16, fontWeight: 'bold' }}>+</Typography>
                                                     </IconButton>
-
-                                                    <Checkbox
-                                                        checked={item.status === 'cancelled'}
-                                                        onChange={() => {
-                                                            handleRemoveToggle(index);
-                                                            toggleCancelDetails(index);
-                                                        }}
-                                                    />
+                                                    {item.id === 'new' ? (
+                                                        <IconButton
+                                                            onClick={() => {
+                                                                setOrderItems((prev) => prev.filter((_, i) => i !== index));
+                                                            }}
+                                                            sx={{ color: '#d32f2f', fontSize: 16 }}
+                                                        >
+                                                            ✕
+                                                        </IconButton>
+                                                    ) : (
+                                                        <Checkbox
+                                                            checked={item.status === 'cancelled'}
+                                                            onChange={() => {
+                                                                handleRemoveToggle(index);
+                                                                toggleCancelDetails(index);
+                                                            }}
+                                                            sx={{
+                                                                color: '#ccc',
+                                                                '&.Mui-checked': {
+                                                                    color: '#003153',
+                                                                },
+                                                            }}
+                                                        />
+                                                    )}
 
                                                     {item.status === 'cancelled' && (
                                                         <Button variant="text" size="small" onClick={() => toggleCancelDetails(index)} sx={{ textTransform: 'none', color: '#d32f2f' }}>
@@ -389,9 +405,9 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
 
                         {/* Notes Section - Sticky at bottom before footer */}
                         {(order?.kitchen_note || order?.staff_note || order?.payment_note) && (
-                            <Box 
-                                sx={{ 
-                                    px: 2, 
+                            <Box
+                                sx={{
+                                    px: 2,
                                     py: 1.5,
                                     borderTop: '1px solid #e0e0e0',
                                     bgcolor: '#f9f9f9',
