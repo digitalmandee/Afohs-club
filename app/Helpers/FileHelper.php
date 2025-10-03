@@ -49,4 +49,20 @@ class FileHelper
 
         return "tenants/{$tenantId}/{$folder}/{$filename}";
     }
+
+    public static function deleteImage(string $imagePath): bool
+    {
+        // Remove leading slash if present
+        $imagePath = ltrim($imagePath, '/');
+        
+        // Build the full path to the image file
+        $fullPath = public_path($imagePath);
+        
+        // Check if file exists and delete it
+        if (file_exists($fullPath)) {
+            return unlink($fullPath);
+        }
+        
+        return false;
+    }
 }

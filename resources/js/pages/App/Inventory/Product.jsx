@@ -16,7 +16,7 @@ const AddProduct = ({ product, id }) => {
     const [open, setOpen] = useState(true);
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
-            ? { ...product, discountValue: product.discount || '', discountType: product.discount_type || 'percentage' }
+            ? { ...product, description: product.description || '', discountValue: product.discount || '', discountType: product.discount_type || 'percentage' }
             : {
                   name: '',
                   menu_code: '',
@@ -51,6 +51,8 @@ const AddProduct = ({ product, id }) => {
     const [categories, setCategories] = useState([]);
     const [addMenuStep, setAddMenuStep] = useState(1);
     const [uploadedImages, setUploadedImages] = useState([]);
+    const [existingImages, setExistingImages] = useState([]); // For existing images from server
+    const [deletedImages, setDeletedImages] = useState([]); // Track deleted images
     const [formData, setFormData] = useState({
         discountValue: data.discountValue || '',
         discountType: data.discountType || 'percentage',
@@ -236,6 +238,24 @@ const AddProduct = ({ product, id }) => {
         }
     };
 
+    // Handle existing image deletion
+    const handleDeleteExistingImage = (imageUrl) => {
+        setExistingImages((prev) => prev.filter(img => img !== imageUrl));
+        
+        // Convert full URL back to path for backend (remove origin, keep the full path)
+        const imagePath = imageUrl.replace(window.location.origin, '');
+        setDeletedImages((prev) => [...prev, imagePath]);
+    };
+
+    // Handle new uploaded image deletion
+    const handleDeleteUploadedImage = (index) => {
+        setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+        setData((prev) => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index),
+        }));
+    };
+
     const triggerFileInput = () => {
         fileInputRef.current.click();
     };
@@ -251,12 +271,16 @@ const AddProduct = ({ product, id }) => {
             ...data,
             discount: data.discountValue || null,
             discountType: data.discountType || null,
+            deleted_images: deletedImages, // Include deleted images for backend processing
+            ...(id && { _method: 'PUT' }), // Add _method field for updates
         }));
-        submit(id ? 'put' : 'post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
+        submit('post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
             onSuccess: () => {
-                enqueueSnackbar('Product added successfully', { variant: 'success' });
+                enqueueSnackbar(id ? 'Product updated successfully' : 'Product added successfully', { variant: 'success' });
                 reset();
                 setUploadedImages([]);
+                setExistingImages([]);
+                setDeletedImages([]);
                 router.visit(route('inventory.index'));
             },
             onError: (errors) => {
@@ -287,6 +311,19 @@ const AddProduct = ({ product, id }) => {
             setCategories(response.data.categories);
         });
     };
+
+    useEffect(() => {
+        fetchCategories();
+        
+        // Load existing images when editing
+        if (id && product && product.images) {
+            // Images already have full paths from FileHelper
+            const imageUrls = product.images.map(image => 
+                image.startsWith('http') ? image : `${window.location.origin}${image}`
+            );
+            setExistingImages(imageUrls);
+        }
+    }, [id, product]);
 
     useEffect(() => {
         fetchCategories();
@@ -790,29 +827,84 @@ const AddProduct = ({ product, id }) => {
                                 <Typography variant="body1" sx={{ mb: 2 }}>
                                     Menu Image
                                 </Typography>
-                                <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
-                                    {uploadedImages.length > 0 &&
-                                        uploadedImages.map((image, index) => (
-                                            <Box
-                                                key={index}
+                                <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
+                                    {/* Display existing images */}
+                                    {existingImages.map((image, index) => (
+                                        <Box
+                                            key={`existing-${index}`}
+                                            sx={{
+                                                position: 'relative',
+                                                width: 80,
+                                                height: 80,
+                                                borderRadius: 1,
+                                                overflow: 'hidden',
+                                            }}
+                                        >
+                                            <img
+                                                src={image}
+                                                alt={`Existing ${index + 1}`}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                }}
+                                            />
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => handleDeleteExistingImage(image)}
                                                 sx={{
-                                                    width: 80,
-                                                    height: 80,
-                                                    borderRadius: 1,
-                                                    overflow: 'hidden',
+                                                    position: 'absolute',
+                                                    top: 2,
+                                                    right: 2,
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                                    },
                                                 }}
                                             >
-                                                <img
-                                                    src={image || '/placeholder.svg'}
-                                                    alt={`Uploaded ${index + 1}`}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                    }}
-                                                />
-                                            </Box>
-                                        ))}
+                                                <CloseIcon fontSize="small" color="error" />
+                                            </IconButton>
+                                        </Box>
+                                    ))}
+                                    
+                                    {/* Display newly uploaded images */}
+                                    {uploadedImages.map((image, index) => (
+                                        <Box
+                                            key={`new-${index}`}
+                                            sx={{
+                                                position: 'relative',
+                                                width: 80,
+                                                height: 80,
+                                                borderRadius: 1,
+                                                overflow: 'hidden',
+                                            }}
+                                        >
+                                            <img
+                                                src={image}
+                                                alt={`New ${index + 1}`}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                }}
+                                            />
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => handleDeleteUploadedImage(index)}
+                                                sx={{
+                                                    position: 'absolute',
+                                                    top: 2,
+                                                    right: 2,
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                                    },
+                                                }}
+                                            >
+                                                <CloseIcon fontSize="small" color="error" />
+                                            </IconButton>
+                                        </Box>
+                                    ))}
                                     <Box
                                         sx={{
                                             width: 80,
@@ -884,7 +976,7 @@ const AddProduct = ({ product, id }) => {
                                         Maximum 500 characters
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
-                                        {data.description.length} / 500
+                                        {(data.description || '').length} / 500
                                     </Typography>
                                 </Box>
                             </Box>

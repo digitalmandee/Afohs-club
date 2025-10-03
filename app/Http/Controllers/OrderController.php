@@ -11,6 +11,7 @@ use App\Models\FinancialInvoice;
 use App\Models\Floor;
 use App\Models\Invoices;
 use App\Models\Member;
+use App\Models\Employee;
 use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -326,7 +327,7 @@ class OrderController extends Controller
 
             // Waiter
             if ($request->filled('waiter_id')) {
-                $orderContext['waiter'] = User::select('id', 'name')
+                $orderContext['waiter'] = Employee::select('id', 'name')
                     ->find($request->waiter_id);
             }
 

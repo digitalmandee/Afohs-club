@@ -323,9 +323,9 @@ const OrderDetail = ({ handleEditItem }) => {
                                 </Grid>
 
                                 <Grid item xs={4} sx={{ px: 1, borderRight: '1px solid #e0e0e0' }}>
-                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '12px' }}>Cashier</Typography>
+                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '12px' }}>Waiter</Typography>
                                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                                        <Avatar sx={{ width: 20, height: 20, mr: 1, fontSize: 10 }}>{orderDetails.waiter?.name?.charAt(0) || 'N'}</Avatar>
+                                        {/* <Avatar sx={{ width: 20, height: 20, mr: 1, fontSize: 10 }}>{orderDetails.waiter?.name?.charAt(0) || 'N'}</Avatar> */}
                                         <Typography variant="body2" fontWeight="medium">
                                             {orderDetails.waiter?.name || 'N/A'}
                                         </Typography>

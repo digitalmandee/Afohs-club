@@ -355,7 +355,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                 <Box sx={{ px: 4, py: 2, bgcolor: '#f9f9f9' }}>
                                                     <FormControl fullWidth sx={{ mb: 2 }}>
                                                         <InputLabel>Remark</InputLabel>
-                                                        <Select size="small" value={item.remark || ''} onChange={(e) => updateItem(index, { remark: e.target.value })}>
+                                                        <Select size="small" sx={{ py:1}} value={item.remark || ''} onChange={(e) => updateItem(index, { remark: e.target.value })}>
                                                             <MenuItem value="CANCELLED BY CUSTOMER">CANCELLED BY CUSTOMER</MenuItem>
                                                             <MenuItem value="GUEST MIND CHANGE">GUEST MIND CHANGE</MenuItem>
                                                             <MenuItem value="FOOD COMPLAIN">FOOD COMPLAIN</MenuItem>
@@ -369,12 +369,6 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                     </FormControl>
 
                                                     <TextField size="small" label="Instructions" multiline rows={2} fullWidth sx={{ mb: 2 }} value={item.instructions || ''} onChange={(e) => updateItem(index, { instructions: e.target.value })} />
-
-                                                    <RadioGroup row value={item.cancelType || ''} onChange={(e) => updateItem(index, { cancelType: e.target.value })}>
-                                                        <FormControlLabel value="void" control={<Radio size="small" />} label="Void" />
-                                                        <FormControlLabel value="return" control={<Radio size="small" />} label="Return" />
-                                                        <FormControlLabel value="complementary" control={<Radio size="small" />} label="Complementary" />
-                                                    </RadioGroup>
                                                 </Box>
                                             </Collapse>
                                         </Box>
