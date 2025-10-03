@@ -6,6 +6,7 @@ import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornme
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
+import VariantSelectorDialog from '../VariantSelectorDialog';
 
 const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants }) => {
     const [selectedCategory, setSelectedCategory] = useState(1);
@@ -65,6 +66,7 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants })
     };
 
     useEffect(() => {
+        setProducts([]);
         axios.get(route('products.categories'), { params: { tenant_id: selectedRestaurant } }).then((res) => setCategories(res.data.categories));
     }, [selectedRestaurant]);
 
@@ -112,14 +114,16 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants })
                     </Box>
 
                     {variantPopupOpen && variantProduct && (
-                        <VariantSelector
-                            product={variantProduct}
-                            initialItem={initialEditItem}
+                        <VariantSelectorDialog
+                            open={variantPopupOpen}
                             onClose={() => {
                                 setVariantPopupOpen(false);
                                 setEditingItemIndex(null);
                                 setInitialEditItem(null);
                             }}
+                            // product={variantProduct}
+                            productId={variantProduct?.id}
+                            initialItem={initialEditItem}
                             onConfirm={handleVariantConfirm}
                         />
                     )}

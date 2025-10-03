@@ -126,7 +126,7 @@ Route::group([
         Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
-        Route::put('/inventory/{id}/update', [InventoryController::class, 'update'])->name('inventory.update');
+        Route::post('/inventory/{id}/update', [InventoryController::class, 'update'])->name('inventory.update');
         Route::delete('/inventory/{id}/destroy', [InventoryController::class, 'destroy'])->name('inventory.destroy');
         Route::get('/add/product', function () {
             return Inertia::render('App/Inventory/Product');

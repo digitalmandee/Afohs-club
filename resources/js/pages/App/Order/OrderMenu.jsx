@@ -121,10 +121,10 @@ const OrderMenu = () => {
             console.log('reservation', reservation);
             handleOrderDetailChange('person_count', reservation.person_count);
             handleOrderDetailChange('table', reservation.table);
-            handleOrderDetailChange('order_no', orderNo);
             handleOrderDetailChange('reservation_id', reservation.id);
             handleOrderDetailChange('order_type', 'reservation');
         }
+        handleOrderDetailChange('order_no', orderNo);
         if (orderContext) {
             Object.entries(orderContext).forEach(([key, value]) => {
                 handleOrderDetailChange(key, value);
@@ -195,20 +195,6 @@ const OrderMenu = () => {
                             onConfirm={handleVariantConfirm}
                         />
                     )}
-                    {/* {variantPopupOpen && variantProduct && (
-                        <VariantSelector
-                            product={variantProduct}
-                            initialItem={initialEditItem}
-                            onClose={() => {
-                                setVariantPopupOpen(false);
-                                setEditingItemIndex(null);
-                                setInitialEditItem(null);
-                            }}
-                            onConfirm={handleVariantConfirm}
-                        />
-                    )} */}
-
-                    {/* <pre>{JSON.stringify(orderDetails, null, 2)}</pre> */}
 
                     {/* Main Content */}
                     <Box

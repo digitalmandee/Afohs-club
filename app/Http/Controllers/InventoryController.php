@@ -171,22 +171,51 @@ class InventoryController extends Controller
             'cost_of_goods_sold' => 'required|numeric|min:0',
             'base_price' => 'required|numeric|min:0',
             'profit' => 'required|numeric',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'images' => 'nullable|array',
+            'deleted_images' => 'nullable|array',
+            'deleted_images.*' => 'string',
         ]);
 
+        // Get current product to access existing images
+        $product = Product::find($id);
+        $oldImages = $product->images ?? [];
+        
+        // Step 1: Process request images (mix of new files and existing paths)
         $imagePaths = [];
-
-        if ($request->has('existing_images')) {
-            foreach ($request->input('existing_images') as $existingPath) {
-                $imagePaths[] = $existingPath;
+        $requestImages = $request->input('images', []);
+        
+        // Handle existing images that should be kept FIRST (from deleted_images logic)
+        $deletedImages = $request->input('deleted_images', []);
+        foreach ($oldImages as $oldImage) {
+            if (!in_array($oldImage, $deletedImages)) {
+                $imagePaths[] = $oldImage;
             }
         }
-
+        
+        // Handle file uploads and add them AFTER existing images
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
+            $uploadedFiles = $request->file('images');
+            foreach ($uploadedFiles as $image) {
                 $path = FileHelper::saveImage($image, 'products');
                 $imagePaths[] = $path;
+            }
+        }
+        
+        // Step 2: Find deleted images by comparing old vs new
+        $deletedImagePaths = [];
+        foreach ($oldImages as $oldImage) {
+            if (in_array($oldImage, $deletedImages)) {
+                $deletedImagePaths[] = $oldImage;
+            }
+        }
+        
+        // Step 3: Delete them from filesystem
+        foreach ($deletedImagePaths as $imagePath) {
+            $absolutePath = public_path(ltrim($imagePath, '/'));
+            
+            if (file_exists($absolutePath)) {
+                @unlink($absolutePath);
             }
         }
 
