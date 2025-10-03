@@ -9,7 +9,7 @@ class OrderItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['order_id', 'kitchen_id', 'order_item', 'status'];
+    protected $fillable = ['order_id', 'tenant_id', 'order_item', 'status', 'remark', 'instructions', 'cancelType'];
 
     protected $casts = ['order_item' => 'array'];
 }

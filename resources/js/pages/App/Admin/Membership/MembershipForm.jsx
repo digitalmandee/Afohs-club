@@ -80,6 +80,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             documents: user.documents || [],
             previewFiles: user.documents || [],
             family_members: familyMembers || [],
+            deleted_family_members: [],
         };
     };
 
@@ -135,6 +136,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         documents: [],
         previewFiles: [],
         family_members: [],
+        deleted_family_members: [],
     };
 
     const isEditMode = !!user?.id;
@@ -259,15 +261,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             .post(url, formData2)
             .then((response) => {
                 enqueueSnackbar(`Membership ${isEditMode ? 'updated' : 'created'} successfully.`, { variant: 'success' });
-
-                const invoiceNo = response.data?.invoice_no || user.invoice_id;
-                if (!isEditMode) {
-                    localStorage.removeItem(LOCAL_STORAGE_KEY);
-                    router.visit(route('membership.allpayment') + `?invoice_no=${invoiceNo}`);
-                }
-                {
-                    router.visit(route('membership.dashboard'));
-                }
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
+                router.visit(route('membership.dashboard'));
             })
             .catch((error) => {
                 if (error.response?.status === 422 && error.response.data.errors) {

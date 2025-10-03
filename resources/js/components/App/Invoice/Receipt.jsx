@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 // Receipt component for reuse
-const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, closeModal }) => {
+const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, showButtons = true, closeModal }) => {
     const { auth } = usePage().props;
     const user = auth.user;
 
@@ -14,7 +14,33 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
     const [paymentData, setPaymentData] = useState(null);
 
     useEffect(() => {
-        if (openModal && invoiceId) {
+        // If invoiceData is provided directly, use it (for order mode)
+        if (invoiceData) {
+            // Restructure the data to match expected format
+            const restructuredData = {
+                ...invoiceData,
+                id: invoiceData.id || null,
+                order_no: invoiceData.order_no || 'N/A',
+                start_date: invoiceData.date ? (typeof invoiceData.date === 'string' ? invoiceData.date : new Date(invoiceData.date).toLocaleDateString()) : new Date().toLocaleDateString(),
+                amount: invoiceData.price || invoiceData.amount || 0,
+                discount: invoiceData.discount || 0,
+                tax: invoiceData.tax || 0,
+                total_price: invoiceData.total_price || 0,
+                order_type: invoiceData.order_type || 'N/A',
+                member: invoiceData.member?.booking_type === 'member' ? invoiceData.member : null,
+                customer: invoiceData.member?.booking_type === 'guest' ? invoiceData.member : null,
+                table: invoiceData.table || null,
+                cashier: invoiceData.cashier || null,
+                waiter: invoiceData.waiter || null,
+                order_items: invoiceData.order_items || [],
+                amount: invoiceData.price || invoiceData.amount || 0,
+                paid_amount: invoiceData.paid_amount || null,
+            };
+            setPaymentData(restructuredData);
+            setLoading(false);
+        }
+        // Otherwise fetch by invoiceId (for payment mode)
+        else if (openModal && invoiceId) {
             setLoading(true);
             axios.get(route('transaction.invoice', { invoiceId: invoiceId })).then((response) => {
                 console.log('response', response.data);
@@ -23,7 +49,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 setLoading(false);
             });
         }
-    }, [openModal, invoiceId]); // Trigger on modal open and invoiceId change
+    }, [openModal, invoiceId, invoiceData]); // Trigger on modal open and invoiceId change
 
     if (loading) {
         return (
@@ -63,7 +89,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
             <div class="order-id">
               <div>Order Id</div>
-              <div><strong>#${data.order_number}</strong></div>
+              <div><strong>#${data.id || data.order_no || 'N/A'}</strong></div>
             </div>
 
             <div class="row">
@@ -75,13 +101,15 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
             <div class="row">
               <div>Customer Name</div>
-              <div>${data.member.full_name}</div>
+              <div>${data.member?.full_name || data.member?.name || data.customer?.name || 'N/A'}</div>
             </div>
 
-            <div class="row">
-              <div>Member Id Card</div>
-              <div>-</div>
-            </div>
+            ${data.member ? (
+                <div class="row">
+                    <div>Member Id Card</div>
+                    <div>${data.member?.membership_no}</div>
+                </div>
+            ):''}
 
             <div class="row">
               <div>Order Type</div>
@@ -99,10 +127,10 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 .map(
                     (item) => `
               <div style="margin-bottom: 10px;">
-                <div><strong>${item.order_item.name}</strong></div>
+                <div><strong>${item.order_item?.name || item.name}</strong></div>
                 <div class="row">
-                  <div>${item.order_item.quantity} x Rs ${item.order_item.price.toFixed(2)}</div>
-                  <div>Rs ${(item.order_item.quantity * item.order_item.price).toFixed(2)}</div>
+                  <div>${item.order_item?.quantity || item.quantity} x Rs ${(item.order_item?.total_price || item.price)}</div>
+                  <div>Rs ${((item.order_item?.quantity || item.quantity) * (item.order_item?.total_price || item.price))}</div>
                 </div>
               </div>
             `,
@@ -154,6 +182,18 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
         }, 250);
     };
 
+    const taxAmount = () => {
+        const subtotal = paymentData.amount;
+
+        const discount = Number(paymentData.discount) || 0;
+        const discountedSubtotal = subtotal - discount;
+
+        // Now apply tax on the discounted amount
+        const taxRate = Number(paymentData.tax) || 0;
+        const taxAmount = Math.round(discountedSubtotal * taxRate);
+        return taxAmount;
+    };
+
     return (
         <Box sx={styles.receiptContainer}>
             <Box sx={styles.receiptHeader}>
@@ -168,7 +208,7 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                     Order Id
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                    #{paymentData.order_number}
+                    #{paymentData.id || paymentData.order_no || 'N/A'}
                 </Typography>
             </Box>
 
@@ -185,15 +225,17 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption" color="text.secondary">
                     Customer Name
                 </Typography>
-                <Typography variant="caption">{paymentData.member?.full_name}</Typography>
+                <Typography variant="caption">{paymentData.member?.full_name || paymentData.member?.name || paymentData.customer?.name || 'N/A'}</Typography>
             </Box>
 
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Member Id Card
-                </Typography>
-                <Typography variant="caption">{paymentData.member?.membership_no}</Typography>
-            </Box>
+            {paymentData.member && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        {paymentData.member ? 'Member Id Card' : 'Customer Id Card'}
+                    </Typography>
+                    <Typography variant="caption">{paymentData.member?.membership_no}</Typography>
+                </Box>
+            )}
 
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
@@ -202,28 +244,31 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
                 <Typography variant="caption">{paymentData.order_type}</Typography>
             </Box>
 
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Table Number
-                </Typography>
-                <Typography variant="caption">{paymentData?.table?.table_no}</Typography>
-            </Box>
+            {paymentData.table && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        Table Number
+                    </Typography>
+                    <Typography variant="caption">{paymentData.table?.table_no}</Typography>
+                </Box>
+            )}
 
             <Box sx={styles.receiptDivider} />
 
-            {paymentData.order_items.map((item, index) => (
-                <Box key={index} mb={1.5}>
-                    <Typography variant="caption" fontWeight="medium">
-                        {item.order_item.name}
-                    </Typography>
-                    <Box sx={styles.receiptRow}>
-                        <Typography variant="caption" color="text.secondary">
-                            {item.order_item.quantity} x Rs {item.order_item.price}
+            {paymentData.order_items &&
+                paymentData.order_items.map((item, index) => (
+                    <Box key={index} mb={1.5}>
+                        <Typography variant="caption" fontWeight="medium">
+                            {item.order_item?.name || item.name}
                         </Typography>
-                        <Typography variant="caption">Rs {item.order_item.price}</Typography>
+                        <Box sx={styles.receiptRow}>
+                            <Typography variant="caption" color="text.secondary">
+                                {item.order_item?.quantity || item.quantity} x Rs {item.order_item?.total_price || item.price}
+                            </Typography>
+                            <Typography variant="caption">Rs {(item.order_item?.quantity || item.quantity) * (item.order_item?.total_price || item.price)}</Typography>
+                        </Box>
                     </Box>
-                </Box>
-            ))}
+                ))}
 
             <Box sx={styles.receiptDivider} />
 
@@ -243,23 +288,27 @@ const Receipt = ({ invoiceId = null, openModal = false, showButtons = true, clos
 
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
-                    Tax (12%)
+                    Tax ({paymentData.tax * 100}%)
                 </Typography>
-                <Typography variant="caption">Rs {(paymentData.amount * 0.12).toFixed(2)}</Typography>
+                <Typography variant="caption">Rs {taxAmount()}</Typography>
             </Box>
             <Box sx={styles.receiptDivider} />
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Total Cash
-                </Typography>
-                <Typography variant="caption">Rs{paymentData.paid_amount}</Typography>
-            </Box>
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Customer Changes
-                </Typography>
-                <Typography variant="caption">Rs{paymentData.paid_amount - paymentData.total_price}</Typography>
-            </Box>
+            {paymentData.paid_amount && (
+                <>
+                    <Box sx={styles.receiptRow}>
+                        <Typography variant="caption" color="text.secondary">
+                            Total Cash
+                        </Typography>
+                        <Typography variant="caption">Rs{paymentData.paid_amount}</Typography>
+                    </Box>
+                    <Box sx={styles.receiptRow}>
+                        <Typography variant="caption" color="text.secondary">
+                            Customer Changes
+                        </Typography>
+                        <Typography variant="caption">Rs{paymentData.paid_amount - paymentData.total_price}</Typography>
+                    </Box>
+                </>
+            )}
 
             <Box sx={styles.receiptTotal}>
                 <Typography variant="body2" fontWeight="bold" color="#0a3d62">

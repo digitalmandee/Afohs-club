@@ -1,25 +1,26 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { AccessTime, FilterAlt as FilterIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Paper, Select, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography } from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
 import OrderFilter from './Filter';
 import { router } from '@inertiajs/react';
 import { enqueueSnackbar } from 'notistack';
+import debounce from 'lodash.debounce';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
+const Dashboard = ({ orders, allrestaurants, filters }) => {
     const [open, setOpen] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     // Search Order
-    const [searchText, setSearchText] = useState('');
-    const [filteredOrders, setFilteredOrders] = useState(orders);
+    const [search, setSearch] = useState(filters.search || '');
+    const [filteredOrders, setFilteredOrders] = useState(orders.data);
     // Add state for category filtering
     const [activeCategory, setActiveCategory] = useState('All Menus');
 
@@ -29,28 +30,53 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
     const [showCancelModal, setShowCancelModal] = useState(false);
 
     const handleOpenCancelModal = () => setShowCancelModal(true);
-    const handleCloseCancelModal = () => setShowCancelModal(false);
-
-    const handleConfirmCancel = () => {
-        // Do your cancel logic here (API call, state update, etc.)
-        console.log('Order cancelled');
+    const handleCloseCancelModal = () => {
+        setSelectedCard(null);
         setShowCancelModal(false);
     };
 
-    // Handle category button click
-    const handleCategoryClick = (category) => {
-        setActiveCategory(category);
+    const handleConfirmCancel = (cancelData) => {
+        const payload = {
+            status: 'cancelled',
+            remark: cancelData.remark,
+            instructions: cancelData.instructions,
+            cancelType: cancelData.cancelType,
+        };
+
+        router.post(route('orders.update', { id: selectedCard.id }), payload, {
+            preserveScroll: true,
+            onSuccess: () => {
+                enqueueSnackbar('Order updated successfully!', { variant: 'success' });
+                setSelectedCard(null);
+                setShowCancelModal(false);
+            },
+            onError: (errors) => {
+                enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+            },
+        });
     };
 
     const onSave = (status) => {
         const updatedItems = orderItems.filter((item) => typeof item.id === 'string' && item.id.startsWith('update-'));
         const newItems = orderItems.filter((item) => item.id === 'new');
 
-        const subtotal = orderItems.reduce((total, item) => total + (item.total_price || 0), 0);
-        const discount = 0;
-        const taxRate = 0.12;
-        const taxAmount = subtotal * taxRate;
-        const total = subtotal + taxAmount - discount;
+        // Exclude canceled items
+        const activeItems = orderItems.filter((item) => item.status !== 'cancelled');
+
+        console.log(activeItems);
+        
+
+        const subtotal = Math.round(activeItems.reduce((acc, item) => acc + Number(item.order_item.total_price || 0), 0));
+
+        const discount = Number(selectedCard.discount) || 0;
+        const discountedSubtotal = subtotal - discount;
+
+        // Now apply tax on the discounted amount
+        const taxRate = Number(selectedCard.tax) || 0;
+        const taxAmount = Math.round(discountedSubtotal * taxRate);
+
+        // Final total
+        const total = Math.round(discountedSubtotal + taxAmount);
 
         const payload = {
             updated_items: updatedItems,
@@ -78,25 +104,20 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
         });
     };
 
-    // Search and Category Filter for Orders
-    useEffect(() => {
-        let filtered = [...orders];
+    // Debounced function to trigger search after user stops typing
+    const triggerSearch = useMemo(
+        () =>
+            debounce((value) => {
+                router.get(route('order.management'), { ...filters, search: value, page: 1 }, { preserveState: true });
+            }, 500), // 500ms delay
+        [],
+    );
 
-        // Filter by category
-        if (activeCategory !== 'All Menus') {
-            filtered = filtered.filter((order) => order.order_items.some((item) => item.order_item.category_id === activeCategory));
-        }
-
-        // Filter by search term
-        if (searchText.trim()) {
-            const lowercased = searchText.toLowerCase();
-            filtered = filtered.filter((order) => {
-                return order.order_number.toString().includes(lowercased) || (order.member?.full_name && order.member.full_name.toLowerCase().includes(lowercased)) || (order.member?.membership_no && order.member.membership_no.toLowerCase().includes(lowercased)) || (order.table?.table_no && order.table.table_no.toLowerCase().includes(lowercased));
-            });
-        }
-
-        setFilteredOrders(filtered);
-    }, [searchText, activeCategory, orders]);
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearch(value);
+        triggerSearch(value); // call debounced function
+    };
 
     return (
         <>
@@ -131,55 +152,20 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                         {/* Right - Search + Filter */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             {/* Category Filter dropdown */}
-                            <FormControl sx={{ width: '250px' }}>
-                                {/* <InputLabel id="category-select-label">Select Category</InputLabel> */}
-                                <Select
-                                    labelId="category-select-label"
-                                    value={activeCategory}
-                                    label="Select Category"
-                                    onChange={(e) => handleCategoryClick(e.target.value)}
-                                    sx={{
-                                        borderRadius: 0, // Match the border radius of Search and Filter
-                                        backgroundColor: '#FFFFFF', // Match Search background
-                                        height: '40px', // Match height of Search and Filter
-                                        border: '1px solid #121212', // Match Search border
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            border: 'none', // Remove default MUI border
-                                        },
-                                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                                            border: 'none',
-                                        },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                            border: 'none',
-                                        },
-                                        '& .MuiSelect-select': {
-                                            padding: '4px 8px', // Match Search padding
-                                            color: '#121212', // Match Search text color
-                                        },
-                                    }}
-                                >
-                                    <MenuItem value="All Menus">All Category</MenuItem>
-                                    {categoriesList.map((category) => (
-                                        <MenuItem key={category.id} value={category.id}>
-                                            {category.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
                             <div
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     border: '1px solid #121212',
                                     borderRadius: '0px',
-                                    width: '350px',
+                                    width: '300px',
                                     height: '40px',
                                     padding: '4px 8px',
                                     backgroundColor: '#FFFFFF',
                                 }}
                             >
                                 <SearchIcon style={{ color: '#121212', marginRight: '8px' }} />
-                                <InputBase placeholder="Search by order ID, client name, or member ID" fullWidth sx={{ fontSize: '14px' }} inputProps={{ style: { padding: 0 } }} value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+                                <InputBase placeholder="Search by order ID, client name, or member ID" fullWidth sx={{ fontSize: '14px' }} inputProps={{ style: { padding: 0 } }} value={search} onChange={handleSearchChange} />
                             </div>
 
                             <Button
@@ -206,8 +192,8 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                             mt: 2,
                         }}
                     >
-                        {filteredOrders.length > 0 ? (
-                            filteredOrders.map((card, index) => (
+                        {orders.data.length > 0 ? (
+                            orders.data.map((card, index) => (
                                 <Grid item xs={12} sm={6} md={4} key={index}>
                                     <Paper
                                         elevation={1}
@@ -220,10 +206,10 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                         }}
                                     >
                                         {/* Header */}
-                                        <Box sx={{ bgcolor: '#063455', color: 'white', p: 2, position: 'relative' }}>
-                                            <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px', color: '#FFFFFF' }}>#{card.order_number}</Typography>
-                                            <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px', color: '#FFFFFF' }}>
-                                                {card.member?.full_name} ({card.member?.membership_no})
+                                        <Box sx={{ bgcolor: card.status === 'cancelled' ? '#FF0000' : card.status === 'refund' ? '#FFA500' : card.status === 'in_progress' ? '#E6E6E6' : card.status === 'completed' ? '#4BB543' : '#063455', color: card.status === 'cancelled' ? '#FFFFFF' : card.status === 'refund' ? '#FFFFFF' : card.status === 'in_progress' ? '#000000' : card.status === 'completed' ? '#FFFFFF' : '#FFFFFF', p: 2, position: 'relative' }}>
+                                            <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px' }}>#{card.id}</Typography>
+                                            <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px' }}>
+                                                {card.member ? `${card.member?.full_name} (${card.member?.membership_no})` : `${card.customer?.name}`}
                                                 <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
                                                     ({card.order_type})
                                                 </Typography>
@@ -239,11 +225,13 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                                     borderRadius: 0.5,
                                                 }}
                                             >
-                                                <AccessTime fontSize="small" sx={{ fontSize: 16, mr: 0.5 }} />
-                                                <Typography variant="caption">{card.start_time}</Typography>
+                                                <AccessTime fontSize="small" sx={{ fontSize: 16, color: '#fff', mr: 0.5 }} />
+                                                <Typography variant="caption" sx={{ color: '#fff' }}>
+                                                    {card.start_time}
+                                                </Typography>
                                             </Box>
                                             <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                                                <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px', color: '#FFFFFF' }}>{card.member?.member_type?.name}</Typography>
+                                                <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member?.member_type?.name}</Typography>
                                                 <Box display="flex">
                                                     <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
                                                     <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>
@@ -263,7 +251,7 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                                         {/* Order Items */}
                                         <List sx={{ py: 0 }}>
                                             {card.order_items.slice(0, 4).map((item, index) => (
-                                                <ListItem key={index} divider={index < card.order_items.length - 1} sx={{ py: 1, px: 2 }}>
+                                                <ListItem key={index} divider={index < card.order_items.length - 1} sx={{ py: 1, px: 2, textDecoration: item.status === 'cancelled' ? 'line-through' : 'none', opacity: item.status === 'cancelled' ? 0.6 : 1 }}>
                                                     <ListItemText
                                                         sx={{
                                                             color: '#121212',
@@ -290,8 +278,17 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
 
                                         {/* Action Buttons */}
                                         <Box sx={{ display: 'flex', p: 2, gap: 2 }}>
-                                            <Button variant="outlined" fullWidth sx={{ borderColor: '#003153', color: '#003153', textTransform: 'none', py: 1 }} onClick={handleOpenCancelModal}>
-                                                Cancel
+                                            <Button
+                                                variant="outlined"
+                                                fullWidth
+                                                disabled={card.status === 'cancelled'}
+                                                sx={{ borderColor: '#003153', color: '#003153', bgcolor: card.status === 'cancelled' ? '#E3E3E3' : 'transparent', textTransform: 'none', py: 1 }}
+                                                onClick={() => {
+                                                    setSelectedCard(card);
+                                                    handleOpenCancelModal();
+                                                }}
+                                            >
+                                                {card.status === 'cancelled' ? 'Cancelled' : 'Cancel'}
                                             </Button>
                                             <Button
                                                 variant="contained"
@@ -322,7 +319,25 @@ const Dashboard = ({ orders, categoriesList = [], allrestaurants }) => {
                             </Grid>
                         )}
                     </Grid>
-                    {showCancelModal && <CancelOrder onClose={handleCloseCancelModal} onConfirm={handleConfirmCancel} />}
+
+                    <Box sx={{ display: 'flex', justifyContent: 'end', py: 4 }}>
+                        <Pagination
+                            count={orders.last_page}
+                            page={orders.current_page}
+                            onChange={(e, page) =>
+                                router.get(
+                                    route('order.management'),
+                                    {
+                                        page,
+                                        search,
+                                        ...filters,
+                                    },
+                                    { preserveState: true },
+                                )
+                            }
+                        />
+                    </Box>
+                    {showCancelModal && <CancelOrder order={selectedCard} onClose={handleCloseCancelModal} onConfirm={handleConfirmCancel} />}
                     <Drawer
                         anchor="right"
                         open={isFilterOpen}

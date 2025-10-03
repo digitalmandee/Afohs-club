@@ -45,6 +45,8 @@ const AsyncSearchTextField = ({
             const url = route(endpoint, { ...params, [queryParam]: query });
 
             const res = await axios.get(url);
+            console.log(res.data);
+
             setSuggestions(res.data.results);
         } catch (err) {
             console.error('Search failed:', err);

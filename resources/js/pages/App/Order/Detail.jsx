@@ -1,33 +1,60 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Save as SaveIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent } from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent, DialogTitle, Autocomplete } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import ClearIcon from '@mui/icons-material/Clear';
 import axios from 'axios';
 import DescriptionIcon from '@mui/icons-material/Description';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import PaymentNow from '@/components/App/Invoice/PaymentNow';
+import { objectToFormData } from '@/helpers/objectToFormData';
 
 const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange, clearOrderItems } = useOrderStore();
 
     const [openDiscountModal, setOpenDiscountModal] = useState(false);
-    const [isEditingDiscount, setIsEditingDiscount] = useState(false);
     const [editingQtyIndex, setEditingQtyIndex] = useState(null);
     const [tempQty, setTempQty] = useState(null);
-    const [discount, setDiscount] = useState(0);
     const [setting, setSetting] = useState(null);
     const [loadingSetting, setLoadingSetting] = useState(true);
     const [isEditingTax, setIsEditingTax] = useState(false);
     const [tempTax, setTempTax] = useState('');
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [waiters, setWaiters] = useState([]);
     const [notes, setNotes] = useState({
         kitchen_note: '',
         staff_note: '',
         payment_note: '',
     });
+
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+    const [openPaymentModal, setOpenPaymentModal] = useState(false);
+
+    const handleOpenPopup = () => setIsPopupOpen(true);
+    const handleClosePopup = () => setIsPopupOpen(false);
+
+    const handleOpenPayment = () => {
+        setOpenPaymentModal(true);
+    };
+
+    const handleSuccessPayment = () => {
+        setOpenPaymentModal(false);
+    };
+
+    const handleClosePayment = () => {
+        setOpenPaymentModal(false);
+    };
+
+    const handleInputChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+    };
 
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
@@ -69,6 +96,11 @@ const OrderDetail = ({ handleEditItem }) => {
         setOpenDiscountModal(true);
     };
 
+    const handleAutocompleteChange = (event, value, field) => {
+        handleOrderDetailChange(field, value);
+        // setErrors({ ...errors, [field]: '' }); // Clear error on change
+    };
+
     const rawSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
 
     const subtotal = Math.round(rawSubtotal);
@@ -86,12 +118,12 @@ const OrderDetail = ({ handleEditItem }) => {
     // Final total
     const total = Math.round(discountedSubtotal + taxAmount);
 
-    const handleSendToKitchen = async () => {
+    const handleSendToKitchen = async (extra = {}) => {
         setIsLoading(true);
-        console.log('orderDetails', orderDetails);
 
-        const payload = {
+        const newPayload = {
             ...orderDetails,
+            ...extra, // include waiter + time if passed
             price: subtotal,
             tax: taxRate,
             discount_type: formData.discountType,
@@ -103,23 +135,37 @@ const OrderDetail = ({ handleEditItem }) => {
             payment_note: notes.payment_note,
         };
 
-        console.log('payload', payload);
+        const payload = objectToFormData(newPayload);
 
-        router.post(route('order.send-to-kitchen'), payload, {
-            onSuccess: () => {
-                enqueueSnackbar('Your order has been successfully sent to the kitchen!', {
-                    variant: 'success',
-                });
+        await axios
+            .post(route('order.send-to-kitchen'), payload)
+            .then((res) => {
+                console.log('Server response:', res.data);
+                // ✅ Use res.data, not response.data
+                enqueueSnackbar(res.data?.message || 'Your order has been successfully sent to the kitchen!', { variant: 'success' });
+
+                router.visit(route('order.management'));
+            })
+            .catch((error) => {
+                console.log(error);
+
+                if (error.response) {
+                    if (error.response.status === 422) {
+                        // Validation errors
+                        const errors = error.response.data.errors;
+                        const errorMessage = Object.values(errors).flat().join(', ');
+                        enqueueSnackbar(`Validation failed: ${errorMessage}`, { variant: 'error' });
+                    } else {
+                        // Other server-side error
+                        enqueueSnackbar(error.response.data?.message || 'Something went wrong on server.', { variant: 'error' });
+                    }
+                } else {
+                    enqueueSnackbar('Network error. Please try again.', { variant: 'error' });
+                }
+            })
+            .finally(() => {
                 setIsLoading(false);
-            },
-            onError: (errors) => {
-                const errorMessage = Object.values(errors).join(', ') || 'Something went wrong';
-                enqueueSnackbar(`Failed to send order: ${errorMessage}`, {
-                    variant: 'error',
-                });
-                setIsLoading(false);
-            },
-        });
+            });
     };
 
     function formatTime(timeStr) {
@@ -156,7 +202,6 @@ const OrderDetail = ({ handleEditItem }) => {
     const handleClearOrderItems = () => {
         clearOrderItems();
         setFormData({ discountValue: '', discountType: 'percentage' });
-        setDiscount(0);
         setNotes({ kitchen_note: '', staff_note: '', payment_note: '' });
     };
 
@@ -164,7 +209,6 @@ const OrderDetail = ({ handleEditItem }) => {
         const val = Number(tempFormData.discountValue || 0);
         const calcDiscount = tempFormData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
         setFormData(tempFormData);
-        setDiscount(calcDiscount);
         setOpenDiscountModal(false);
     };
 
@@ -225,6 +269,10 @@ const OrderDetail = ({ handleEditItem }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [openDiscountDialog, handleTaxEditClick, handleSendToKitchen, handleClearOrderItems, handleOpen, orderDetails]);
 
+    useEffect(() => {
+        axios.get(route('waiters.all')).then((res) => setWaiters(res.data.waiters));
+    }, []);
+
     return (
         <>
             <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: '80vh' }}>
@@ -245,7 +293,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                     </Box>
                                 </Box>
                                 <Box sx={{ display: 'flex', gap: 1 }}>
-                                    {orderDetails.table && <Avatar sx={{ width: 28, height: 28, bgcolor: '#0C67AA', fontSize: 12 }}>{`T${orderDetails.table}`}</Avatar>}
+                                    {orderDetails.table && <Avatar sx={{ width: 28, height: 28, bgcolor: '#0C67AA', fontSize: 12 }}>{orderDetails.table?.table_no}</Avatar>}
                                     <Box
                                         sx={{
                                             height: 30,
@@ -297,7 +345,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                 <Chip
                                     label={
                                         <span>
-                                            <span style={{ color: '#7F7F7F' }}>Order Id : </span>
+                                            <span style={{ color: '#7F7F7F' }}>Order Id: </span>
                                             <span style={{ color: '#000' }}>#{orderDetails.order_no}</span>
                                         </span>
                                     }
@@ -646,7 +694,7 @@ const OrderDetail = ({ handleEditItem }) => {
             </Box>
             {/* Action Buttons */}
             <Box sx={{ mt: 1, position: 'sticky', bottom: 16, display: 'flex', gap: 1, px: 1, bgcolor: '#fff' }}>
-                <Button
+                {/* <Button
                     variant="outlined"
                     sx={{
                         flex: 1,
@@ -656,13 +704,19 @@ const OrderDetail = ({ handleEditItem }) => {
                     }}
                 >
                     Close
-                </Button>
+                </Button> */}
                 <Button
                     variant="outlined"
-                    disabled={orderDetails.order_items.length === 0 || !orderDetails.member}
-                    onClick={handleSendToKitchen}
-                    loading={isLoading}
-                    loadingPosition="start"
+                    disabled={orderDetails.order_items.length === 0 || !orderDetails.member || isLoading}
+                    onClick={() => {
+                        if (orderDetails.order_type === 'reservation') {
+                            handleOpenPopup(); // open popup first
+                        } else if (orderDetails.order_type === 'takeaway') {
+                            handleOpenPayment(); // directly send
+                        } else {
+                            handleSendToKitchen(); // directly send
+                        }
+                    }}
                     sx={{
                         flex: 2,
                         borderColor: '#063455',
@@ -686,6 +740,55 @@ const OrderDetail = ({ handleEditItem }) => {
                     Print Receipt
                 </Button>
             </Box>
+
+            {/* Reservation Popup */}
+            <Dialog open={isPopupOpen} onClose={handleClosePopup} maxWidth="md" fullWidth>
+                <DialogTitle>Continue Reservation Order</DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ mb: 2 }}>Are you sure you want to continue with reservation order #{orderDetails.order_no}?</Typography>
+
+                    {/* Select Waiter */}
+                    <Autocomplete
+                        label="Select Waiter"
+                        fullWidth
+                        options={waiters}
+                        value={orderDetails.waiter}
+                        getOptionLabel={(option) => option?.name || ''}
+                        onChange={(event, value) => handleAutocompleteChange(event, value, 'waiter')}
+                        renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Waiter" variant="outlined" />}
+                        filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
+                        renderOption={(props, option) => (
+                            <li {...props}>
+                                <span>{option.name}</span>
+                                <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
+                            </li>
+                        )}
+                    />
+
+                    {/* Select Time */}
+                    <TextField label="Select Time" name="time" type="time" value={orderDetails.time} onChange={handleInputChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} />
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                        <Button onClick={handleClosePopup} sx={{ mr: 1 }}>
+                            Cancel
+                        </Button>
+                        <Button
+                            disabled={!orderDetails.waiter || !orderDetails.time}
+                            variant="contained"
+                            onClick={() => {
+                                // merge waiter/time into order and send
+                                handleSendToKitchen();
+                                handleClosePopup();
+                            }}
+                        >
+                            Confirm & Send
+                        </Button>
+                    </Box>
+                </DialogContent>
+            </Dialog>
+
+            {/* Payment Modal */}
+            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: formData.discountType, discount_value: formData.discountValue, discount: discountAmount, price: subtotal, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
         </>
     );
 };

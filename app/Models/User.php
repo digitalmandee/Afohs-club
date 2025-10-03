@@ -12,6 +12,8 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
+    protected $guard_name = 'web';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -65,6 +67,11 @@ class User extends Authenticatable
         return $this->hasOne(Member::class);
     }
 
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
+
     /**
      * Get the user's detail.
      */
@@ -73,27 +80,9 @@ class User extends Authenticatable
         return $this->hasOne(UserDetail::class);
     }
 
-    public function userDetails()
-    {
-        return $this->hasOne(UserDetail::class);
-    }
-
-    /**
-     * Get the Card Payments.
-     */
-    public function cardPayment()
-    {
-        return $this->hasOne(CardPayment::class);
-    }
-
     /**
      * Get the kitchen detail.
      */
-    public function kitchenDetail()
-    {
-        return $this->hasOne(kitchenDetail::class, 'kitchen_id', 'id');
-    }
-
     public function familyMembers()
     {
         return $this->hasMany(User::class, 'parent_user_id');
@@ -112,6 +101,6 @@ class User extends Authenticatable
      */
     public function setPasswordAttribute($password)
     {
-        $this->attributes['password'] = $password ? $password : Hash::make(123456);
+        $this->attributes['password'] = $password ? $password : Hash::make(1234);
     }
 }

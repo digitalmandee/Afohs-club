@@ -28,6 +28,10 @@ const DineDialog = ({ memberTypes, floorTables }) => {
         handleOrderDetailChange('membership_type', value);
         handleOrderDetailChange('member', {});
     };
+    const handleMemberType = (value) => {
+        handleOrderDetailChange('member_type', value);
+        handleOrderDetailChange('member', {});
+    };
 
     const handleFilterOptionChange = (event, newFilterOption) => {
         if (newFilterOption !== null) {
@@ -97,7 +101,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
             </Box>
 
             {/* Membership Type Selection */}
-            <Box sx={{ px: 2, mb: 2 }}>
+            {/* <Box sx={{ px: 2, mb: 2 }}>
                 <FormControl component="fieldset">
                     <RadioGroup row name="membership-type" value={orderDetails.membership_type} onChange={(e) => handleMembershipType(e.target.value)}>
                         <Box
@@ -109,7 +113,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                             }}
                         >
                             {memberTypes.map((option) => {
-                                const isSelected = orderDetails.membership_type === option.id;
+                                const isSelected = orderDetails.membership_type == option.id;
                                 return (
                                     <Box
                                         key={option.id}
@@ -143,6 +147,56 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                         </Box>
                     </RadioGroup>
                 </FormControl>
+            </Box> */}
+
+            <Box sx={{ px: 2, mb: 2 }}>
+                <FormControl component="fieldset">
+                    <RadioGroup row name="membership-type" value={orderDetails.member_type} onChange={(e) => handleMemberType(e.target.value)}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: 1,
+                                width: '100%',
+                            }}
+                        >
+                            {[
+                                { id: 1, name: 'Member' },
+                                { id: 2, name: 'Guest' },
+                            ].map((option) => {
+                                const isSelected = orderDetails.member_type == option.id;
+                                return (
+                                    <Box
+                                        key={option.id}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            border: `1px solid ${isSelected ? '#A27B5C' : '#E3E3E3'}`,
+                                            bgcolor: isSelected ? '#FCF7EF' : 'transparent',
+                                            borderRadius: 1,
+                                            px: 2,
+                                            py: 1,
+                                            transition: 'all 0.2s ease-in-out',
+                                        }}
+                                    >
+                                        <FormControlLabel
+                                            value={option.id}
+                                            control={<Radio size="small" />}
+                                            label={<Typography variant="body2">{option.name}</Typography>}
+                                            sx={{
+                                                m: 0,
+                                                width: '100%',
+                                                '& .MuiFormControlLabel-label': {
+                                                    flexGrow: 1,
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                );
+                            })}
+                        </Box>
+                    </RadioGroup>
+                </FormControl>
             </Box>
 
             {/* Customer Information */}
@@ -151,7 +205,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
                         Customer Name
                     </Typography>
-                    <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" params={{ member_type: orderDetails.membership_type }} onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
+                    <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" params={{ type: orderDetails.member_type }} onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
                 </Grid>
                 <Grid item xs={4}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
@@ -265,7 +319,13 @@ const DineDialog = ({ memberTypes, floorTables }) => {
 
             {/* Table Selection */}
             <Box sx={{ px: 2, mb: 2 }}>
-                <RadioGroup value={orderDetails.table} onChange={(e) => handleOrderDetailChange('table', e.target.value)}>
+                <RadioGroup
+                    value={orderDetails.table ? JSON.stringify(orderDetails.table) : orderDetails.table}
+                    onChange={(e) => {
+                        console.log(e.target.value);
+                        handleOrderDetailChange('table', JSON.parse(e.target.value));
+                    }}
+                >
                     <Grid container spacing={1}>
                         {filteredTables.length > 0 &&
                             filteredTables.map((table) => (
@@ -274,8 +334,8 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                                         elevation={0}
                                         sx={{
                                             p: 1.5,
-                                            bgcolor: table.id === orderDetails.table ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
-                                            border: table.id === orderDetails.table ? '1px solid #A27B5C' : '1px solid #e0e0e0',
+                                            bgcolor: table.id === orderDetails.table?.id ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
+                                            border: table.id === orderDetails.table?.id ? '1px solid #A27B5C' : '1px solid #e0e0e0',
                                             borderRadius: 1,
                                             opacity: table.available ? 1 : 0.7,
                                         }}
@@ -301,7 +361,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                                                 </Typography>
                                                 {table.is_available ? (
                                                     <FormControlLabel
-                                                        value={table.id}
+                                                        value={JSON.stringify(table)}
                                                         control={<Radio size="small" />}
                                                         label=""
                                                         sx={{
@@ -352,7 +412,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                         textTransform: 'none',
                     }}
                     disabled={isDisabled}
-                    onClick={() => router.visit(route('order.menu'))}
+                    onClick={() => router.visit(route('order.menu', { table_id: orderDetails.table.id, member_id: orderDetails.member.id, member_type: orderDetails.member_type, waiter_id: orderDetails.waiter.id, person_count: orderDetails.person_count, floor_id: orderDetails.floor, order_type: 'dineIn' }))}
                 >
                     Choose Menu
                 </Button>

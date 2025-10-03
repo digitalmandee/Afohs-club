@@ -1,7 +1,7 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { useOrderStore } from '@/stores/useOrderStore';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
 import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import axios from 'axios';
@@ -14,7 +14,9 @@ import VariantSelectorDialog from './VariantSelectorDialog';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId }) => {
+const OrderMenu = () => {
+    const { orderNo, orderContext, totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId, reservation } = usePage().props;
+
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [open, setOpen] = useState(true);
@@ -68,7 +70,7 @@ const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCate
                     price: parseFloat(product.base_price),
                     total_price: parseFloat(product.base_price),
                     quantity: 1,
-                    kitchen_id: product.kitchen_id,
+                    tenant_id: product.tenant_id,
                     category: product.category?.name || '',
                     variants: [],
                 };
@@ -111,6 +113,24 @@ const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCate
             })
             .then((res) => setProducts(res.data.products));
     }, [selectedCategory]);
+
+    useEffect(() => {
+        if (reservation && (reservation.member || reservation.customer)) {
+            const memberData = { id: reservation.member ? reservation.member.user_id : reservation.customer.id, name: reservation.member ? reservation.member.full_name : reservation.customer.name, membership_no: reservation.member ? reservation.member.membership_no : reservation.customer.customer_no, booking_type: reservation.member ? 'member' : 'guest' };
+            handleOrderDetailChange('member', memberData);
+            console.log('reservation', reservation);
+            handleOrderDetailChange('person_count', reservation.person_count);
+            handleOrderDetailChange('table', reservation.table);
+            handleOrderDetailChange('order_no', orderNo);
+            handleOrderDetailChange('reservation_id', reservation.id);
+            handleOrderDetailChange('order_type', 'reservation');
+        }
+        if (orderContext) {
+            Object.entries(orderContext).forEach(([key, value]) => {
+                handleOrderDetailChange(key, value);
+            });
+        }
+    }, [reservation, orderContext]);
 
     return (
         <>
@@ -508,47 +528,6 @@ const OrderMenu = ({ totalSavedOrders, allrestaurants, activeTenantId, firstCate
                     </Box>
                 </Box>
             </div>
-
-            {/* Payment Modal */}
-            {/* <Modal
-                    open={showPayment}
-                    onClose={() => setShowPayment(false)}
-                    aria-labelledby="payment-modal-title"
-                    aria-describedby="payment-modal-description"
-                    closeAfterTransition
-                    sx={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                    }}
-                >
-                    <Slide
-                        direction="left"
-                        in={showPayment}
-                        mountOnEnter
-                        unmountOnExit
-                    >
-                        <Box
-                            sx={{
-                                position: "fixed",
-                                top: "10px",
-                                bottom: "10px",
-                                right: 10,
-                                width: { xs: "100%", sm: 900 },
-                                bgcolor: "#fff",
-                                boxShadow: 4,
-                                zIndex: 1300,
-                                overflowY: "auto",
-                                borderRadius: 1,
-                                scrollbarWidth: "none",
-                                "&::-webkit-scrollbar": {
-                                    display: "none",
-                                },
-                            }}
-                        >
-                            <PaymentPage />
-                        </Box>
-                    </Slide>
-                </Modal> */}
         </>
     );
 };

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import CancelOrder from './DelModal';
 import NewSelfOrder from './NewOrder';
 import ReservationOrder from './Reserve';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { Add } from '@mui/icons-material';
 import { Box, Button, Chip, CircularProgress, Grid, IconButton, Modal, Paper, Typography } from '@mui/material';
 import axios from 'axios';
@@ -11,7 +11,9 @@ import axios from 'axios';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, today_profit = 0, today_profit_margin = 0, total_transactions, total_orders, order_types }) => {
+const Dashboard = () => {
+    const { auth, today_revenue = 0, products_sold = 0, sales_change = 0, today_profit = 0, today_profit_margin = 0, total_transactions, total_orders, order_types } = usePage().props;
+
     const [open, setOpen] = useState(true);
     const [showReserve, setShowReserve] = useState(false);
     const [showOrder, setShowOrder] = useState(false);
@@ -105,179 +107,181 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                 <Box sx={{ flexGrow: 1, p: 2, bgcolor: '#f5f7fa' }}>
                     <Grid container spacing={2}>
                         {/* first column */}
-                        <Grid item xs={12} md={5.3}>
-                            <Paper
-                                sx={{
-                                    bgcolor: '#0e3151',
-                                    color: 'white',
-                                    height: '326px',
-                                    borderRadius: '8px',
-                                }}
-                            >
-                                <Box>
-                                    <Box
-                                        sx={{
-                                            bgcolor: '#456880',
-                                            p: 1.5,
-                                            borderRadius: '4px',
-                                            mb: 2,
-                                            position: 'relative',
-                                        }}
-                                    >
-                                        <Typography
-                                            variant="body2"
-                                            sx={{
-                                                fontWeight: '400',
-                                                color: 'white',
-                                                ml: 1,
-                                            }}
-                                        >
-                                            Sales up to <strong>{sales_change ?? 0}%</strong> compared to yesterday
-                                        </Typography>
+                        <Grid item xs={12} md={auth.role == 'super-admin' ? 5.3 : 12}>
+                            {auth.role == 'super-admin' && (
+                                <Paper
+                                    sx={{
+                                        bgcolor: '#0e3151',
+                                        color: 'white',
+                                        height: '326px',
+                                        borderRadius: '8px',
+                                    }}
+                                >
+                                    <Box>
                                         <Box
                                             sx={{
-                                                height: '1px',
-                                                bgcolor: '#ccc',
-                                                position: 'absolute',
-                                                bottom: '0',
-                                                left: '0',
-                                                right: '0',
-                                            }}
-                                        />
-                                    </Box>
-                                    <Box
-                                        sx={{
-                                            backgroundColor: '#083152',
-                                            color: '#fff',
-                                            px: 1,
-                                            borderRadius: 2,
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
+                                                bgcolor: '#456880',
+                                                p: 1.5,
+                                                borderRadius: '4px',
+                                                mb: 2,
+                                                position: 'relative',
                                             }}
                                         >
-                                            {/* Left Section - Revenue */}
-                                            <Box
+                                            <Typography
+                                                variant="body2"
                                                 sx={{
-                                                    flex: 1,
-                                                    textAlign: 'left',
-                                                    pl: 2,
+                                                    fontWeight: '400',
+                                                    color: 'white',
+                                                    ml: 1,
                                                 }}
                                             >
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{
-                                                        color: '#FFFFFF',
-                                                        fontSize: '14px',
-                                                        fontWeight: 400,
-                                                    }}
-                                                >
-                                                    Today Revenue
-                                                </Typography>
-                                                <Typography
-                                                    variant="h5"
-                                                    sx={{
-                                                        fontWeight: 'bold',
-                                                        mt: 1,
-                                                        fontSize: '34px',
-                                                        color: '#FFFFFF',
-                                                    }}
-                                                >
-                                                    Rs {Number(today_revenue).toFixed(2)}
-                                                </Typography>
-                                            </Box>
-
-                                            {/* Vertical Divider */}
+                                                Sales up to <strong>{sales_change ?? 0}%</strong> compared to yesterday
+                                            </Typography>
                                             <Box
                                                 sx={{
-                                                    width: '1.5px',
-                                                    height: '70px',
-                                                    bgcolor: '#B89274',
-                                                    // mx: 4,
+                                                    height: '1px',
+                                                    bgcolor: '#ccc',
+                                                    position: 'absolute',
+                                                    bottom: '0',
+                                                    left: '0',
+                                                    right: '0',
                                                 }}
                                             />
-
-                                            {/* Right Section - Profit */}
+                                        </Box>
+                                        <Box
+                                            sx={{
+                                                backgroundColor: '#083152',
+                                                color: '#fff',
+                                                px: 1,
+                                                borderRadius: 2,
+                                            }}
+                                        >
                                             <Box
                                                 sx={{
-                                                    flex: 1,
-                                                    textAlign: 'right',
-                                                    pr: 2,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
                                                 }}
                                             >
+                                                {/* Left Section - Revenue */}
                                                 <Box
                                                     sx={{
-                                                        display: 'flex',
-                                                        justifyContent: 'flex-end',
-                                                        alignItems: 'center',
-                                                        gap: 1,
+                                                        flex: 1,
+                                                        textAlign: 'left',
+                                                        pl: 2,
                                                     }}
                                                 >
-                                                    <Chip
-                                                        label={`${today_profit_margin} %`}
-                                                        size="small"
-                                                        sx={{
-                                                            bgcolor: '#ffffff33',
-                                                            color: '#fff',
-                                                            fontWeight: 500,
-                                                            height: 22,
-                                                            fontSize: '0.7rem',
-                                                            borderRadius: 0,
-                                                        }}
-                                                    />
                                                     <Typography
                                                         variant="body2"
                                                         sx={{
                                                             color: '#FFFFFF',
                                                             fontSize: '14px',
+                                                            fontWeight: 400,
                                                         }}
                                                     >
-                                                        Today Profit
+                                                        Today Revenue
+                                                    </Typography>
+                                                    <Typography
+                                                        variant="h5"
+                                                        sx={{
+                                                            fontWeight: 'bold',
+                                                            mt: 1,
+                                                            fontSize: '34px',
+                                                            color: '#FFFFFF',
+                                                        }}
+                                                    >
+                                                        Rs {Number(today_revenue).toFixed(2)}
                                                     </Typography>
                                                 </Box>
-                                                <Typography
-                                                    variant="h5"
+
+                                                {/* Vertical Divider */}
+                                                <Box
                                                     sx={{
-                                                        fontWeight: 'bold',
-                                                        mt: 1,
-                                                        fontSize: '34px',
-                                                        color: '#FFFFFF',
+                                                        width: '1.5px',
+                                                        height: '70px',
+                                                        bgcolor: '#B89274',
+                                                        // mx: 4,
+                                                    }}
+                                                />
+
+                                                {/* Right Section - Profit */}
+                                                <Box
+                                                    sx={{
+                                                        flex: 1,
+                                                        textAlign: 'right',
+                                                        pr: 2,
                                                     }}
                                                 >
-                                                    Rs {Number(today_profit).toFixed(2)}
-                                                </Typography>
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            justifyContent: 'flex-end',
+                                                            alignItems: 'center',
+                                                            gap: 1,
+                                                        }}
+                                                    >
+                                                        <Chip
+                                                            label={`${today_profit_margin} %`}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: '#ffffff33',
+                                                                color: '#fff',
+                                                                fontWeight: 500,
+                                                                height: 22,
+                                                                fontSize: '0.7rem',
+                                                                borderRadius: 0,
+                                                            }}
+                                                        />
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                color: '#FFFFFF',
+                                                                fontSize: '14px',
+                                                            }}
+                                                        >
+                                                            Today Profit
+                                                        </Typography>
+                                                    </Box>
+                                                    <Typography
+                                                        variant="h5"
+                                                        sx={{
+                                                            fontWeight: 'bold',
+                                                            mt: 1,
+                                                            fontSize: '34px',
+                                                            color: '#FFFFFF',
+                                                        }}
+                                                    >
+                                                        Rs {Number(today_profit).toFixed(2)}
+                                                    </Typography>
+                                                </Box>
                                             </Box>
                                         </Box>
+                                        <Grid
+                                            container
+                                            spacing={2}
+                                            sx={{
+                                                mt: 1,
+                                            }}
+                                        >
+                                            <Grid item xs={3} textAlign="center">
+                                                <Typography variant="h6">{order_types?.dineIn?.percentage ?? 0}%</Typography>
+                                                <Typography variant="caption">Dine In</Typography>
+                                            </Grid>
+                                            <Grid item xs={3} textAlign="center">
+                                                <Typography variant="h6">{order_types?.takeway?.percentage ?? 0}%</Typography>
+                                                <Typography variant="caption">Takeaway</Typography>
+                                            </Grid>
+                                            <Grid item xs={3} textAlign="center">
+                                                <Typography variant="h6">{order_types?.delivery?.percentage ?? 0}%</Typography>
+                                                <Typography variant="caption">Delivery</Typography>
+                                            </Grid>
+                                            <Grid item xs={3} textAlign="center">
+                                                <Typography variant="h6">{order_types?.pickup?.percentage ?? 0}%</Typography>
+                                                <Typography variant="caption">Pick Up</Typography>
+                                            </Grid>
+                                        </Grid>
                                     </Box>
-                                    <Grid
-                                        container
-                                        spacing={2}
-                                        sx={{
-                                            mt: 1,
-                                        }}
-                                    >
-                                        <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">{order_types?.dineIn?.percentage ?? 0}%</Typography>
-                                            <Typography variant="caption">Dine In</Typography>
-                                        </Grid>
-                                        <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">{order_types?.takeway?.percentage ?? 0}%</Typography>
-                                            <Typography variant="caption">Takeaway</Typography>
-                                        </Grid>
-                                        <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">{order_types?.delivery?.percentage ?? 0}%</Typography>
-                                            <Typography variant="caption">Delivery</Typography>
-                                        </Grid>
-                                        <Grid item xs={3} textAlign="center">
-                                            <Typography variant="h6">{order_types?.pickup?.percentage ?? 0}%</Typography>
-                                            <Typography variant="caption">Pick Up</Typography>
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                            </Paper>
+                                </Paper>
+                            )}
                             <Paper elevation={0} sx={{ p: 2, mt: 2 }}>
                                 <Box
                                     sx={{
@@ -484,17 +488,8 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                         mr: 1,
                                                                     }}
                                                                 >
-                                                                    {item.member.full_name} ({item.member.membership_no})
+                                                                    {item.member?.full_name} ({item.member?.membership_no})
                                                                 </Typography>
-                                                                <img
-                                                                    src="/assets/Diamond.png"
-                                                                    alt=""
-                                                                    style={{
-                                                                        width: 24,
-                                                                        height: 24,
-                                                                        marginLeft: '0.5rem',
-                                                                    }}
-                                                                />
                                                             </Box>
                                                             <Box
                                                                 sx={{
@@ -511,7 +506,9 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 >
                                                                     🕙
                                                                 </Box>
-                                                                <Typography variant="caption">{formatTime(item.start_time)}</Typography>
+                                                                <Typography variant="caption">
+                                                                    {formatTime(item.start_time)} - {formatTime(item.end_time)}
+                                                                </Typography>
                                                             </Box>
                                                         </Box>
 
@@ -522,7 +519,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 fontSize: '12px',
                                                             }}
                                                         >
-                                                            {item.person_count} Person • {item.order_items_count} Items
+                                                            {item.person_count} Person
                                                         </Typography>
                                                     </Box>
                                                 </Box>
@@ -543,7 +540,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                             alignItems: 'center',
                                                         }}
                                                     >
-                                                        <Chip
+                                                        {/* <Chip
                                                             label={`#${item.order_number}`}
                                                             size="small"
                                                             variant="outlined"
@@ -556,7 +553,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 fontSize: '0.75rem',
                                                                 fontWeight: 'medium',
                                                             }}
-                                                        />
+                                                        /> */}
                                                         {/* <Chip
                                                             label="DP : 50%"
                                                             size="small"
@@ -619,285 +616,288 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                             </Paper>
                         </Grid>
                         {/* second column */}
-                        <Grid item xs={12} md={3.4}>
+                        <Grid item xs={12} md={auth.role == 'super-admin' ? 3.4 : 8.7}>
                             {/* Top Right - Order Stats */}
-                            <Grid item xs={12}>
-                                <Grid container spacing={1.5}>
-                                    {/* Total Transactions Card */}
-                                    <Grid item xs={12}>
-                                        <Paper
-                                            sx={{
-                                                bgcolor: '#083152',
-                                                color: 'white',
-                                                p: 0,
-                                                // width: '320px',
-                                                height: '166px',
-                                                overflow: 'hidden',
-                                                borderRadius: 1,
-                                            }}
-                                        >
-                                            {/* Top section - Total Transactions */}
-                                            <Box
+                            {auth.role == 'super-admin' && (
+                                <Grid item xs={12}>
+                                    <Grid container spacing={1.5}>
+                                        {/* Total Transactions Card */}
+                                        <Grid item xs={12}>
+                                            <Paper
                                                 sx={{
+                                                    bgcolor: '#083152',
+                                                    color: 'white',
+                                                    p: 0,
+                                                    // width: '320px',
+                                                    height: '166px',
+                                                    overflow: 'hidden',
+                                                    borderRadius: 1,
+                                                }}
+                                            >
+                                                {/* Top section - Total Transactions */}
+                                                <Box
+                                                    sx={{
+                                                        p: 2,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    <Box
+                                                        sx={{
+                                                            bgcolor: 'transparent',
+                                                            p: 1.5,
+                                                            borderRadius: '50%',
+                                                            mr: 2,
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src="/assets/invoice.png"
+                                                            alt=""
+                                                            style={{
+                                                                width: 30,
+                                                                height: 30,
+                                                            }}
+                                                        />
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                color: '#C6C6C6',
+                                                                fontSize: '14px',
+                                                            }}
+                                                        >
+                                                            Total Transactions
+                                                        </Typography>
+                                                        <Typography
+                                                            variant="h4"
+                                                            sx={{
+                                                                fontWeight: 'bold',
+                                                                mt: 0.5,
+                                                                color: '#FFFFFF',
+                                                                fontSize: '20px',
+                                                            }}
+                                                        >
+                                                            {total_transactions}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                                <Box
+                                                    sx={{
+                                                        height: '1.5px',
+                                                        backgroundColor: '#566364',
+                                                        mx: 2, // Horizontal margin (left and right spacing)
+                                                        // my: 2
+                                                    }}
+                                                />
+                                                {/* Bottom section - Self Order and Mobile App */}
+                                                <Grid container sx={{ mt: 1 }}>
+                                                    <Grid
+                                                        item
+                                                        xs={6}
+                                                        sx={{
+                                                            p: 1,
+                                                            // ml:1
+                                                            // borderRight: '1px solid rgba(255,255,255,0.1)'
+                                                        }}
+                                                    >
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                color: '#C6C6C6',
+                                                                fontSize: '12px',
+                                                                ml: 2,
+                                                            }}
+                                                        >
+                                                            Self Order
+                                                        </Typography>
+                                                        <Typography
+                                                            variant="h5"
+                                                            sx={{
+                                                                fontWeight: 'bold',
+                                                                mt: 0.5,
+                                                                color: '#FFFFFF',
+                                                                fontSize: '18px',
+                                                                ml: 2,
+                                                            }}
+                                                        >
+                                                            0
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid item xs={6} sx={{ p: 1 }}>
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                color: '#C6C6C6',
+                                                                fontSize: '12px',
+                                                            }}
+                                                        >
+                                                            Mobile App
+                                                        </Typography>
+                                                        <Typography
+                                                            variant="h5"
+                                                            sx={{
+                                                                fontWeight: 'bold',
+                                                                mt: 0.5,
+                                                                color: '#FFFFFF',
+                                                                fontSize: '18px',
+                                                            }}
+                                                        >
+                                                            0
+                                                        </Typography>
+                                                    </Grid>
+                                                </Grid>
+                                            </Paper>
+                                        </Grid>
+
+                                        {/* Product Sold and Total Order Cards */}
+                                        <Grid item xs={6}>
+                                            <Paper
+                                                sx={{
+                                                    bgcolor: '#083152',
+                                                    color: 'white',
                                                     p: 2,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
+                                                    height: '148px',
                                                 }}
                                             >
                                                 <Box
                                                     sx={{
-                                                        bgcolor: 'transparent',
-                                                        p: 1.5,
-                                                        borderRadius: '50%',
-                                                        mr: 2,
                                                         display: 'flex',
-                                                        justifyContent: 'center',
                                                         alignItems: 'center',
+                                                        mb: 2,
                                                     }}
                                                 >
-                                                    <img
-                                                        src="/assets/invoice.png"
-                                                        alt=""
-                                                        style={{
-                                                            width: 30,
-                                                            height: 30,
+                                                    <Box
+                                                        sx={{
+                                                            bgcolor: 'transparent',
+                                                            p: 1.5,
+                                                            borderRadius: '50%',
+                                                            mr: 2,
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
                                                         }}
-                                                    />
+                                                    >
+                                                        <img
+                                                            src="/assets/box.png"
+                                                            alt=""
+                                                            style={{
+                                                                height: 30,
+                                                                width: 30,
+                                                            }}
+                                                        />
+                                                    </Box>
                                                 </Box>
-                                                <Box>
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{
-                                                            color: '#C6C6C6',
-                                                            fontSize: '14px',
-                                                        }}
-                                                    >
-                                                        Total Transactions
-                                                    </Typography>
-                                                    <Typography
-                                                        variant="h4"
-                                                        sx={{
-                                                            fontWeight: 'bold',
-                                                            mt: 0.5,
-                                                            color: '#FFFFFF',
-                                                            fontSize: '20px',
-                                                        }}
-                                                    >
-                                                        {total_transactions}
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                            <Box
-                                                sx={{
-                                                    height: '1.5px',
-                                                    backgroundColor: '#566364',
-                                                    mx: 2, // Horizontal margin (left and right spacing)
-                                                    // my: 2
-                                                }}
-                                            />
-                                            {/* Bottom section - Self Order and Mobile App */}
-                                            <Grid container sx={{ mt: 1 }}>
-                                                <Grid
-                                                    item
-                                                    xs={6}
+                                                <Typography
+                                                    variant="body2"
                                                     sx={{
-                                                        p: 1,
-                                                        // ml:1
-                                                        // borderRight: '1px solid rgba(255,255,255,0.1)'
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{
-                                                            color: '#C6C6C6',
-                                                            fontSize: '12px',
-                                                            ml: 2,
-                                                        }}
-                                                    >
-                                                        Self Order
-                                                    </Typography>
-                                                    <Typography
-                                                        variant="h5"
-                                                        sx={{
-                                                            fontWeight: 'bold',
-                                                            mt: 0.5,
-                                                            color: '#FFFFFF',
-                                                            fontSize: '18px',
-                                                            ml: 2,
-                                                        }}
-                                                    >
-                                                        0
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={6} sx={{ p: 1 }}>
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{
-                                                            color: '#C6C6C6',
-                                                            fontSize: '12px',
-                                                        }}
-                                                    >
-                                                        Mobile App
-                                                    </Typography>
-                                                    <Typography
-                                                        variant="h5"
-                                                        sx={{
-                                                            fontWeight: 'bold',
-                                                            mt: 0.5,
-                                                            color: '#FFFFFF',
-                                                            fontSize: '18px',
-                                                        }}
-                                                    >
-                                                        0
-                                                    </Typography>
-                                                </Grid>
-                                            </Grid>
-                                        </Paper>
-                                    </Grid>
-
-                                    {/* Product Sold and Total Order Cards */}
-                                    <Grid item xs={6}>
-                                        <Paper
-                                            sx={{
-                                                bgcolor: '#083152',
-                                                color: 'white',
-                                                p: 2,
-                                                height: '148px',
-                                            }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    mb: 2,
-                                                }}
-                                            >
-                                                <Box
-                                                    sx={{
-                                                        bgcolor: 'transparent',
-                                                        p: 1.5,
-                                                        borderRadius: '50%',
-                                                        mr: 2,
-                                                        display: 'flex',
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
-                                                    }}
-                                                >
-                                                    <img
-                                                        src="/assets/box.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 30,
-                                                            width: 30,
-                                                        }}
-                                                    />
-                                                </Box>
-                                            </Box>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    color: '#C6C6C6',
-                                                    fontSize: '14px',
-                                                }}
-                                            >
-                                                Product Sold
-                                            </Typography>
-                                            <Typography
-                                                variant="h5"
-                                                sx={{
-                                                    fontWeight: 'bold',
-                                                    mt: 1,
-                                                    color: '#FFFFFF',
-                                                    fontSize: '20px',
-                                                }}
-                                            >
-                                                {products_sold ?? 0}
-                                                <Box
-                                                    component="span"
-                                                    sx={{
-                                                        fontSize: '12px',
                                                         color: '#C6C6C6',
-                                                        fontWeight: 'normal',
+                                                        fontSize: '14px',
                                                     }}
                                                 >
-                                                    Items
-                                                </Box>
-                                            </Typography>
-                                        </Paper>
-                                    </Grid>
-
-                                    <Grid item xs={6}>
-                                        <Paper
-                                            sx={{
-                                                bgcolor: '#083152',
-                                                color: 'white',
-                                                p: 2,
-                                                height: '148px',
-                                            }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    mb: 2,
-                                                }}
-                                            >
-                                                <Box
+                                                    Product Sold
+                                                </Typography>
+                                                <Typography
+                                                    variant="h5"
                                                     sx={{
-                                                        bgcolor: 'transparent',
-                                                        p: 1.5,
-                                                        borderRadius: '50%',
-                                                        mr: 2,
-                                                        display: 'flex',
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
+                                                        fontWeight: 'bold',
+                                                        mt: 1,
+                                                        color: '#FFFFFF',
+                                                        fontSize: '20px',
                                                     }}
                                                 >
-                                                    <img
-                                                        src="/assets/receipt-list.png"
-                                                        alt=""
-                                                        style={{
-                                                            height: 30,
-                                                            width: 30,
+                                                    {products_sold ?? 0}
+                                                    <Box
+                                                        component="span"
+                                                        sx={{
+                                                            fontSize: '12px',
+                                                            color: '#C6C6C6',
+                                                            fontWeight: 'normal',
                                                         }}
-                                                    />
-                                                </Box>
-                                            </Box>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    color: '#C6C6C6',
-                                                    fontSize: '14px',
-                                                }}
-                                            >
-                                                Total Order
-                                            </Typography>
+                                                    >
+                                                        Items
+                                                    </Box>
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
 
-                                            <Typography
-                                                variant="h5"
+                                        <Grid item xs={6}>
+                                            <Paper
                                                 sx={{
-                                                    fontWeight: 'bold',
-                                                    mt: 1,
-                                                    color: '#FFFFFF',
-                                                    fontSize: '20px',
+                                                    bgcolor: '#083152',
+                                                    color: 'white',
+                                                    p: 2,
+                                                    height: '148px',
                                                 }}
                                             >
-                                                {total_orders}
                                                 <Box
-                                                    component="span"
                                                     sx={{
-                                                        fontSize: '12px',
-                                                        color: '#C6C6C6',
-                                                        fontWeight: 'normal',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        mb: 2,
                                                     }}
                                                 >
-                                                    Order
+                                                    <Box
+                                                        sx={{
+                                                            bgcolor: 'transparent',
+                                                            p: 1.5,
+                                                            borderRadius: '50%',
+                                                            mr: 2,
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src="/assets/receipt-list.png"
+                                                            alt=""
+                                                            style={{
+                                                                height: 30,
+                                                                width: 30,
+                                                            }}
+                                                        />
+                                                    </Box>
                                                 </Box>
-                                            </Typography>
-                                        </Paper>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                        color: '#C6C6C6',
+                                                        fontSize: '14px',
+                                                    }}
+                                                >
+                                                    Total Order
+                                                </Typography>
+
+                                                <Typography
+                                                    variant="h5"
+                                                    sx={{
+                                                        fontWeight: 'bold',
+                                                        mt: 1,
+                                                        color: '#FFFFFF',
+                                                        fontSize: '20px',
+                                                    }}
+                                                >
+                                                    {total_orders}
+                                                    <Box
+                                                        component="span"
+                                                        sx={{
+                                                            fontSize: '12px',
+                                                            color: '#C6C6C6',
+                                                            fontWeight: 'normal',
+                                                        }}
+                                                    >
+                                                        Order
+                                                    </Box>
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
                                     </Grid>
                                 </Grid>
-                            </Grid>
+                            )}
+
                             <Paper
                                 sx={{
                                     p: 0,
@@ -1162,6 +1162,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                 </Box>
                             </Paper>
                         </Grid>
+
                         {/* third column */}
                         <Grid item xs={12} md={3.3}>
                             <Box
@@ -1350,7 +1351,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                                 mb: 0.5,
                                                             }}
                                                         >
-                                                            {order.member.full_name}
+                                                            {order.member?.full_name}
                                                             <img
                                                                 src="/assets/Diamond.png"
                                                                 alt=""
@@ -1417,7 +1418,7 @@ const Dashboard = ({ today_revenue = 0, products_sold = 0, sales_change = 0, tod
                                                 </Box>
                                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                                     <Chip
-                                                        label={`#${order.order_number}`}
+                                                        label={`#${order.id}`}
                                                         size="small"
                                                         variant="outlined"
                                                         sx={{

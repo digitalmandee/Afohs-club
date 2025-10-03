@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Invoices;
 use App\Models\Order;
+use App\Models\Reservation;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -129,7 +130,7 @@ class DashboardController extends Controller
         $date = $request->query('date') ?: date('Y-m-d');
         $limit = $request->query('limit');
 
-        $orders = Order::where('order_type', 'reservation')->whereDate('start_date', $date)->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->withCount('orderItems')->limit($limit)->get();
+        $orders = Reservation::whereDate('date', $date)->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->limit($limit)->get();
 
         return response()->json(['success' => true, 'orders' => $orders]);
     }

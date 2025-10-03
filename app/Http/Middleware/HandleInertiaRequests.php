@@ -43,8 +43,9 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'tenant' => tenant(),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user()?->load('employee:id,user_id,employee_id,phone_no,designation,address'),
                 'role' => $request->user()?->roles->first()?->name ?? null,
                 'permissions' => $request->user()?->getAllPermissions()->pluck('name'),
             ],
@@ -53,7 +54,7 @@ class HandleInertiaRequests extends Middleware
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

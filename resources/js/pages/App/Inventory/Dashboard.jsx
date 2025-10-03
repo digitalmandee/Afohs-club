@@ -251,7 +251,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                         <div className="d-flex align-items-center mb-4">
                             <div className="d-flex align-items-center">
                                 <Typography variant="h4" component="h1" fontWeight="500" sx={{ mr: 2 }}>
-                                    {products.length}
+                                    {filteredProducts.length > 0 ? filteredProducts.length : 0}
                                 </Typography>
                                 <Typography variant="body1" color="#7F7F7F">
                                     Products

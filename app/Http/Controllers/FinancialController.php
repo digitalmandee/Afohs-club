@@ -18,9 +18,7 @@ class FinancialController extends Controller
 {
     public function index()
     {
-        $FinancialInvoice = FinancialInvoice::with(['user' => function ($query) {
-            $query->select('id', 'phone_number', 'name');
-        }])->latest()->get();
+        $FinancialInvoice = FinancialInvoice::with('member:id,user_id,full_name', 'customer:id,name,email', 'createdBy:id,name')->latest()->get();
         return Inertia::render('App/Admin/Finance/Dashboard', [
             'FinancialInvoice' => $FinancialInvoice,
         ]);
@@ -63,9 +61,7 @@ class FinancialController extends Controller
 
     public function getTransaction()
     {
-        $FinancialData = FinancialInvoice::with(['user' => function ($query) {
-            $query->select('id', 'phone_number', 'name');
-        }])->latest()->get();
+        $FinancialData = FinancialInvoice::with('member:id,user_id,full_name', 'customer:id,name,email', 'createdBy:id,name')->latest()->get();
         return Inertia::render('App/Admin/Finance/Transaction', [
             'FinancialData' => $FinancialData,
         ]);

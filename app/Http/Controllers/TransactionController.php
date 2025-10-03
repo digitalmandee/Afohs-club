@@ -8,32 +8,112 @@ use App\Models\Invoices;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class TransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::whereIn('order_type', ['dineIn', 'takeaway'])->with([
-            'member',
-            'table:id,table_no',
-            'orderItems:id,order_id',
-        ])->latest()->get()->map(function ($order) {
-            $order->order_items_count = $order->orderItems->count() ?? 0;
+        $query = Order::query()
+            ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation'])
+            ->with(['member:id,user_id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no', 'orderItems:id,order_id']);
+
+        // ===============================
+        // FILTER: Search by member name or membership_no
+        // ===============================
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('member', function ($q) use ($search) {
+                $q
+                    ->where('full_name', 'like', "%$search%")
+                    ->orWhere('membership_no', 'like', "%$search%");
+            });
+        }
+
+        // ===============================
+        // FILTER: Order Type
+        // ===============================
+        if ($request->has('orderType') && $request->orderType != 'all') {
+            $orderTypeMap = [
+                'dineIn' => 'dineIn',
+                'takeaway' => 'takeaway',
+                'delivery' => 'delivery',
+                'reservation' => 'reservation',
+            ];
+            if (isset($orderTypeMap[$request->orderType])) {
+                $query->where('order_type', $orderTypeMap[$request->orderType]);
+            }
+        }
+
+        // ===============================
+        // FILTER: Order Status
+        // ===============================
+        if ($request->has('orderStatus') && $request->orderStatus != 'all') {
+            $statusMap = [
+                'ready' => 'completed',
+                'cooking' => 'in_progress',
+                'waiting' => 'pending',
+                'completed' => 'completed',
+                'cancelled' => 'cancelled',
+            ];
+            if (isset($statusMap[$request->orderStatus])) {
+                $query->where('status', $statusMap[$request->orderStatus]);
+            }
+        }
+
+        // ===============================
+        // FILTER: Member Status
+        // ===============================
+        if ($request->has('memberStatus') && $request->memberStatus != 'all') {
+            $query->whereHas('member', function ($q) use ($request) {
+                $q->where('status', $request->memberStatus);
+            });
+        }
+
+        // ===============================
+        // SORTING
+        // ===============================
+        $sort = $request->sort ?? 'desc';
+        $query->orderBy('id', $sort);
+
+        // ===============================
+        // PAGINATION
+        // ===============================
+        $perPage = 10;
+        $orders = $query->paginate($perPage)->withQueryString();
+
+        // ===============================
+        // Attach invoices to orders
+        // ===============================
+        $orderIds = $orders->pluck('id')->toArray();
+        $invoices = FinancialInvoice::select('id', 'data', 'status')
+            ->where(function ($q) use ($orderIds) {
+                foreach ($orderIds as $id) {
+                    $q->orWhereJsonContains('data->order_id', $id);
+                }
+            })
+            ->get();
+
+        $orders->getCollection()->transform(function ($order) use ($invoices) {
+            $order->invoice = $invoices->first(function ($invoice) use ($order) {
+                $data = $invoice->data;
+                return isset($data['order_id']) && $data['order_id'] == $order->id;
+            });
+
+            $order->order_items_count = $order->orderItems->count();
             return $order;
         });
 
-        $totalOrders = Order::count();
-
         return Inertia::render('App/Transaction/Dashboard', [
             'Invoices' => $orders,
-            'totalOrders' => $totalOrders,
+            'filters' => $request->all(),
         ]);
     }
 
     public function PaymentOrderData($invoiceId)
     {
-        $order = Order::where('id', $invoiceId)->with(['member:id,user_id,full_name,membership_no', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
+        $order = Order::where('id', $invoiceId)->with(['member:id,user_id,full_name,membership_no', 'customer:id,name,customer_no', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
         return $order;
     }
 
@@ -80,7 +160,7 @@ class TransactionController extends Controller
         $invoice->payment_status = 'paid';
         $invoice->save();
 
-        FinancialInvoice::where('member_id', $invoice->user_id)
+        FinancialInvoice::where('member_id', $invoice->member_id)
             ->whereJsonContains('data', ['order_id' => $invoice->id])
             ->update([
                 'status' => 'paid',

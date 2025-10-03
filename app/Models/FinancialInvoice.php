@@ -18,6 +18,8 @@ class FinancialInvoice extends BaseModel
         'advance_payment',
         'paid_amount',
         'customer_charges',
+        'period_start',
+        'period_end',
         'issue_date',
         'due_date',
         'paid_for_month',
@@ -45,5 +47,10 @@ class FinancialInvoice extends BaseModel
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id', 'user_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by', 'id');
     }
 }

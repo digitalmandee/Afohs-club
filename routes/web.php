@@ -9,6 +9,9 @@ use App\Http\Controllers\AppliedMemberController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeDepartmentController;
+use App\Http\Controllers\EmployeeTypeController;
 use App\Http\Controllers\EventBookingController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMenuAddOnsController;
@@ -41,6 +44,9 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
+// Route::get('/', function () {
+//     return dd(ini_get('post_max_size'), ini_get('upload_max_filesize'));
+// });
 
 Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name('member.profile');
 
@@ -85,6 +91,22 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/employee/attendance/report', function () {
         return Inertia::render('App/Admin/Employee/AttendanceReport');
     })->name('employee.attendancereport');
+
+    // Employeee Management
+    Route::prefix('admin/employees')->group(function () {
+        Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('employees.dashboard');
+        Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
+        Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
+        Route::get('/types', [EmployeeTypeController::class, 'index'])->name('employees.types');
+    });
+
+    Route::prefix('api')->group(function () {
+        Route::resource('departments', EmployeeDepartmentController::class)->except(['create', 'show', 'edit']);
+        // Replace index with your own custom function
+        Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll');
+        Route::resource('employee-types', EmployeeTypeController::class)->except(['create', 'index', 'show', 'edit']);
+        Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store');
+    });
 
     // Membership Booking Routes
     Route::get('/admin/membership/finance', function () {
@@ -296,8 +318,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/finance/transaction', [FinancialController::class, 'getTransaction'])->name('finance.transaction');
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
 
-    Route::get('/finance/add/transaction', [FinancialController::class, 'create'])->name('finance.addtransaction');
-    Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.addtransaction');
+    Route::get('/finance/add/transaction', [FinancialController::class, 'create'])->name('finance.transaction.create');
+    Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.transaction.post');
 
     Route::get('/admin/manage/monthly/fee', [SubscriptionController::class, 'monthlyFee'])->name('subscription.monthly');
 
@@ -328,49 +350,47 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/card/dashboard', [CardController::class, 'index'])->name('cards.dashboard');
 
-    Route::get('/membership/history', [MembershipController::class, 'filterMember'])->name('membership.filter');
-    Route::get('/membership/filter', [MembershipController::class, 'filterMember'])->name('membership.filter');
-    Route::get('/membership/dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
-    Route::get('/membership/all', [MembershipController::class, 'allMembers'])->name('membership.members');
-    Route::get('/membership/edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
-    Route::post('/membership/update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
-    Route::get('membership/history', [MembershipController::class, 'membershipHistory'])->name('membership.history');
-    Route::post('/membership/store', [MembershipController::class, 'store'])->name('membership.store');
-    Route::post('/membership/update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
+    Route::group(['prefix' => 'admin/membership'], function () {
+        Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
+        Route::get('create', [MembershipController::class, 'create'])->name('membership.add');
+        Route::get('filter', [MembershipController::class, 'filterMember'])->name('membership.filter');
+        Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members');
+        Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
+        Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
+        Route::post('store', [MembershipController::class, 'store'])->name('membership.store');
+        Route::post('update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
+
+        // Membership Maintanance Revenue
+        Route::get('maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue');
+
+        // Family Members Archive route
+        Route::get('family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('membership.family-members');
+
+        // Family Applied Member
+        Route::get('applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
+        Route::post('applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
+        Route::put('applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
+
+        // Member Categories
+        Route::resource('member-categories', MemberCategoryController::class)->except('show');
+
+        // Members types
+        Route::get('member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+        Route::post('member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
+        Route::post('member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
+        Route::delete('member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
+
+        // payment
+        Route::get('payments', [PaymentController::class, 'index'])->name('membership.allpayment');
+        Route::post('payments/store', [PaymentController::class, 'store'])->name('membership.payment.store');
+    });
 
     // get member invoice
     Route::get('financial-invoice/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');
 
-    // Membership Maintanance Revenue
-    Route::get('/admin/membership/maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue');
     // Route::get('/member-types', [MembershipController::class, 'getAllMemberTypes']);
 
-    // Members types
-    Route::get('/admin/members/member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
-    Route::post('/members/member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
-    Route::post('/members/member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
-    Route::delete('/members/member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
-    Route::put('/members/{id}/status', [MembershipController::class, 'updateMemberStatus']);
-
-    // Member Categories
-    Route::resource('/admin/members/member-categories', MemberCategoryController::class)->except('show');
-
-    // payment
-    Route::get('/admin/membership/all/payments', [PaymentController::class, 'index'])->name('membership.allpayment');
-    Route::post('/admin/membership/payments/store', [PaymentController::class, 'store'])->name('membership.payment.store');
-
     // Membership Booking Routes
-
-    Route::get('/admin/add/personal/information', [MembershipController::class, 'create'])->name('membership.add');
-
-    Route::get('/admin/add/contact/information', function () {
-        return Inertia::render('App/Admin/Membership/AddForm-2');
-    })->name('membership.add2');
-
-    Route::get('/admin/add/membership/information', function () {
-        return Inertia::render('App/Admin/Membership/AddForm-3');
-    })->name('membership.add3');
-
     Route::get('/admin/membership/guest/history', function () {
         return Inertia::render('App/Admin/Membership/Guest');
     })->name('membership.guest');
@@ -391,18 +411,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Membership/CompleteDetail');
     })->name('membership.detail2');
 
-    // Family Members Archive route
-    Route::get('/admin/membership/family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('membership.family-members');
-
-    // Family Applied Member
-    Route::get('/admin/membership/applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
-    Route::post('/admin/membership/applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
-    Route::put('/admin/membership/applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
-
     // tenant route
-    Route::get('tenant', [TenantController::class, 'index'])->name('tenant.index');
-    Route::get('tenant/register', [TenantController::class, 'create'])->name('tenant.create');
-    Route::post('tenant/store', [TenantController::class, 'store'])->name('tenant.store');
+    Route::get('locations', [TenantController::class, 'index'])->name('locations.index');
+    Route::get('locations/register', [TenantController::class, 'create'])->name('locations.create');
+    Route::post('locations/store', [TenantController::class, 'store'])->name('locations.store');
+    Route::get('locations/{tenant}/edit', [TenantController::class, 'edit'])->name('locations.edit');
+    Route::put('locations/{tenant}', [TenantController::class, 'update'])->name('locations.update');
 });
 
 // Central guest-only auth routes

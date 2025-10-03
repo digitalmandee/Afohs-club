@@ -7,11 +7,11 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     const handleNumberClick = (number) => {
-        setData({ user_id: data.user_id + number });
+        setData({ employee_id: data.employee_id + number });
     };
 
     const handleBackspace = () => {
-        setData({ user_id: data.user_id.slice(0, -1) });
+        setData({ employee_id: data.employee_id.slice(0, -1) });
     };
 
     const handleSubmit = () => {
@@ -92,8 +92,8 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                     <TextField
                         fullWidth
                         placeholder="Your employee id"
-                        value={data.user_id}
-                        onChange={(e) => setData('user_id', e.target.value)}
+                        value={data.employee_id}
+                        onChange={(e) => setData('employee_id', e.target.value)}
                         variant="outlined"
                         size="small"
                         sx={{
@@ -102,9 +102,9 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
                             },
                         }}
                     />
-                    {errors.user_id && (
+                    {errors.employee_id && (
                         <Typography variant="body2" sx={{ color: 'red', mt: 1 }}>
-                            {errors.user_id}
+                            {errors.employee_id}
                         </Typography>
                     )}
                 </Box>

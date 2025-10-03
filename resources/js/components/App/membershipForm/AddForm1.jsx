@@ -252,10 +252,11 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         }}
                                         IconComponent={() => <KeyboardArrowDown sx={{ position: 'absolute', right: 8, pointerEvents: 'none' }} />}
                                     >
-                                        <MenuItem value="Mr">Mr.</MenuItem>
-                                        <MenuItem value="Mrs">Mrs.</MenuItem>
-                                        <MenuItem value="Ms">Ms.</MenuItem>
-                                        <MenuItem value="Dr">Dr.</MenuItem>
+                                        {['Dr.', 'Major', 'Gp Capt', 'Air Cdre', 'Lt Col', 'Col', 'Capt', 'Brig', 'Sq Ldr', 'Prof.', 'Flt. Lt', 'AVM', 'AM', 'Wg Cdr', 'Lt', 'AMC', '2/Lt', 'Capt. Dr.', 'Flg Off', 'Sub. Lt', 'Comd (PN)', 'Cdr (PN)', 'Lt (PN)', 'Cdr', 'Lt. Cdr', 'Cdre', 'Rear Admiral', 'Air Marshal', 'Mr'].map((item, index) => (
+                                            <MenuItem key={index} value={item}>
+                                                {item}
+                                            </MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -427,10 +428,10 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Marital Status
                                 </Typography>
-                                <FormControl fullWidth size="small" error={!!formErrors.marital_status}>
+                                <FormControl fullWidth size="small" error={!!formErrors.martial_status}>
                                     <Select
-                                        value={data.marital_status || ''}
-                                        name="marital_status"
+                                        value={data.martial_status || ''}
+                                        name="martial_status"
                                         onChange={handleChange}
                                         displayEmpty
                                         renderValue={(selected) => {
@@ -450,9 +451,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         <MenuItem value="Divorced">Divorced</MenuItem>
                                         <MenuItem value="Widowed">Widowed</MenuItem>
                                     </Select>
-                                    {formErrors.marital_status && (
+                                    {formErrors.martial_status && (
                                         <Typography variant="caption" color="error">
-                                            {formErrors.marital_status}
+                                            {formErrors.martial_status}
                                         </Typography>
                                     )}
                                 </FormControl>

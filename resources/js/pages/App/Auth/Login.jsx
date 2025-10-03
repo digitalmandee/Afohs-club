@@ -7,8 +7,8 @@ import { useState } from 'react';
 const Login = () => {
     const [activeTab, setActiveTab] = useState('signin');
     const { data, setData, post, processing, errors, reset, transform } = useForm({
-        user_id: '',
-        password: ['', '', '', '', '', ''],
+        employee_id: '',
+        password: ['', '', '', ''],
     });
 
     return (
@@ -17,19 +17,7 @@ const Login = () => {
 
             <AppAuthLayout>
                 {/* Active Page */}
-                {activeTab === 'signin' ? (
-                    <SignIn setActiveTab={setActiveTab} data={data} setData={setData} post={post} processing={processing} errors={errors} />
-                ) : (
-                    <EmployeeSignIn
-                        setActiveTab={setActiveTab}
-                        data={data}
-                        setData={setData}
-                        post={post}
-                        processing={processing}
-                        errors={errors}
-                        transform={transform}
-                    />
-                )}
+                {activeTab === 'signin' ? <SignIn setActiveTab={setActiveTab} data={data} setData={setData} post={post} processing={processing} errors={errors} /> : <EmployeeSignIn setActiveTab={setActiveTab} data={data} setData={setData} post={post} processing={processing} errors={errors} transform={transform} />}
             </AppAuthLayout>
         </>
     );

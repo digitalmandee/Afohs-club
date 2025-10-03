@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +30,7 @@ class TenantLoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'string'],
+            'employee_id' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,7 +44,29 @@ class TenantLoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (!Auth::guard('tenant')->attempt($this->only('user_id', 'password'), $this->boolean('remember'))) {
+        // Step 1: Find employee by provided employee_id
+        $employee = Employee::where('employee_id', $this->employee_id)->first();
+
+        if (!$employee) {
+            throw ValidationException::withMessages([
+                'employee_id' => __('auth.failed'),
+            ]);
+        }
+
+        // Step 2: Find linked user
+        $user = User::find($employee->user_id);
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'employee_id' => __('auth.failed'),
+            ]);
+        }
+
+        // Step 3: Try login using user credentials
+        if (!Auth::guard('tenant')->attempt([
+            'id' => $user->id,  // use primary user id
+            'password' => $this->password,
+        ], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

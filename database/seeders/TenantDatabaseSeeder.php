@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Database\Seeders\Tenant\FloorDatabaseSeeder;
 use Database\Seeders\Tenant\KitchenDatabaseSeeder;
-use Database\Seeders\Tenant\MemberTypeSeeder;
 use Database\Seeders\Tenant\OrderDatabaseSeeder;
 use Database\Seeders\Tenant\PermissionsDatabaseSeeder;
 use Database\Seeders\Tenant\ProductDatabaseSeeder;
@@ -19,7 +18,6 @@ class TenantDatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            MemberTypeSeeder::class,
             FloorDatabaseSeeder::class,
             PermissionsDatabaseSeeder::class,
             KitchenDatabaseSeeder::class,

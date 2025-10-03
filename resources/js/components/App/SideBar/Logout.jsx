@@ -5,9 +5,9 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableR
 
 const LogoutScreen = ({ setProfileView }) => {
     const revenueDetails = [
-        { method: 'Cash', amount: 'Rs 167,730.60' },
-        { method: 'Bank Transfer', amount: 'Rs 111,820.40' },
-        { method: 'QR Code', amount: 'Rs 223,640.60' },
+        { method: 'Cash', amount: 'Rs 0' },
+        { method: 'Bank Transfer', amount: 'Rs 0' },
+        { method: 'QR Code', amount: 'Rs 0' },
     ];
 
     const handleLogout = () => {
@@ -137,7 +137,7 @@ const LogoutScreen = ({ setProfileView }) => {
                     </Typography>
 
                     <Typography variant="h4" sx={{ color: '#0c3b5c', fontWeight: 'bold', mb: 2 }}>
-                        Rs 559,102
+                        Rs 0
                     </Typography>
 
                     <Box sx={{ textAlign: 'left' }}>

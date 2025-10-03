@@ -28,13 +28,8 @@ import LogoutScreen from './Logout';
 import NotificationsPanel from './Notification';
 import EmployeeProfileScreen from './Profile';
 import { Modal, Slide } from '@mui/material';
-import KitchenIcon from '@/components/App/Icons/KitchenManagement';
-import MemberIcon from '@/components/App/Icons/Member';
-import TableIcon from '@/components/App/Icons/TableManagement';
 import CategoryIcon from '@mui/icons-material/Category';
-import AddressType from '../Icons/AddressType';
 import { MdManageHistory } from 'react-icons/md';
-import { FaUser } from 'react-icons/fa';
 import { useEffect } from 'react';
 
 const drawerWidthOpen = 240; // Set open width to 240px
@@ -103,16 +98,17 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url, component, props } = usePage();
-    const { auth } = usePage().props;
+    const { auth, tenant } = usePage().props;
 
     const [showNotification, setShowNotification] = React.useState(false);
     const [showProfile, setShowProfile] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard'), permission: 'dashboard' },
+        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard'), permission: 'order' },
         { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
         { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index'), permission: 'order' },
         { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category'), permission: 'order' },
+        { text: 'Reservations', icon: <PaymentsIcon />, path: route('reservations.index'), permission: 'order' },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index'), permission: 'order' },
         {
             text: 'Table Management',
@@ -127,15 +123,15 @@ export default function SideNav({ open, setOpen }) {
             permission: 'order',
         },
         // {
-        //     text: 'Kitchens',
-        //     icon: <img src="/assets/Kitchen.svg" alt="Kitchen icon" className="svg-img-icon" />,
-        //     path: route('kitchens.index'),
+        //     text: 'Members',
+        //     icon: <IoPeople style={{ height: 20, width: 20 }} />,
+        //     path: route('members.index'),
         //     permission: 'order',
         // },
         {
-            text: 'Members',
+            text: 'Guests',
             icon: <IoPeople style={{ height: 20, width: 20 }} />,
-            path: route('members.index'),
+            path: route('customers.index'),
             permission: 'order',
         },
         {
@@ -145,6 +141,23 @@ export default function SideNav({ open, setOpen }) {
             permission: 'order',
         },
     ];
+
+    // Attach beforeunload event
+    // useEffect(() => {
+    //     const handleBeforeUnload = (e) => {
+    //         // Block tab close
+    //         e.preventDefault();
+    //         e.returnValue = ''; // required for Chrome
+    //         setShowProfile(true);
+    //         setProfileView('logoutSuccess');
+    //         return ''; // required for some browsers
+    //     };
+
+    //     window.addEventListener('beforeunload', handleBeforeUnload);
+    //     return () => {
+    //         window.removeEventListener('beforeunload', handleBeforeUnload);
+    //     };
+    // }, []);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -210,6 +223,9 @@ export default function SideNav({ open, setOpen }) {
                         )}{' '}
                         {/* Toggle between icons */}
                     </IconButton>
+                    <Typography variant="h5" sx={{ color: '#063455', fontWeight: 'bold' }}>
+                        {tenant.name}
+                    </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {/* Notification Icon */}
                         <IconButton

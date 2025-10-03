@@ -4,11 +4,13 @@ import OrderDetail from '@/components/App/Invoice/OrderDetail';
 import PaymentNow from '@/components/App/Invoice/PaymentNow';
 import Receipt from '@/components/App/Invoice/Receipt';
 import SideNav from '@/components/App/SideBar/SideNav';
+import { router } from '@inertiajs/react';
 import { CheckCircle as CheckCircleIcon, Check as CheckIcon, Circle as CircleIcon, Close as CloseIcon, TwoWheeler as DeliveryIcon, Diamond as DiamondIcon, LocalDining as DiningIcon, FilterAlt as FilterIcon, KeyboardArrowDown as KeyboardArrowDownIcon, Receipt as ReceiptIcon, EventSeat as ReservationIcon, Restaurant as RestaurantIcon, Search as SearchIcon, TakeoutDining as TakeoutIcon } from '@mui/icons-material';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
-import { Avatar, Box, Button, Card, CardContent, Chip, Collapse, Dialog, DialogContent, Grid, IconButton, InputAdornment, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Button, Card, CardContent, Chip, Collapse, Dialog, DialogContent, Grid, IconButton, InputAdornment, Pagination, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState } from 'react';
+import debounce from 'lodash.debounce';
+import { useMemo, useState } from 'react';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -301,76 +303,6 @@ const styles = {
     },
 };
 
-const orderDetail = {
-    id: '#123',
-    customer: 'Qafi Latif',
-    tableNumber: 'T14',
-    date: '12. Jan 2024',
-    cashier: 'Tynisha Obey',
-    cashierAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-    workingTime: '15.00 - 22.00 PM',
-    isVIP: true,
-    items: [
-        {
-            name: 'Cappucino',
-            category: 'Coffee & Beverage',
-            variant: 'Ice, Large, Normal sugar',
-            quantity: 1,
-            price: 5.0,
-            image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-        },
-        {
-            name: 'Buttermilk Waffle',
-            category: 'Food & Snack',
-            variant: 'Choco',
-            quantity: 2,
-            price: 5.0,
-            image: 'https://images.unsplash.com/photo-1562376552-0d160a2f35b6?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-        },
-        {
-            name: 'At Home Classic',
-            category: 'Imaji at Home',
-            variant: '250 gr',
-            quantity: 1,
-            price: 4.0,
-            image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-        },
-    ],
-    subtotal: 19.0,
-    discount: 0,
-    tax: 2.28,
-    total: 16.72,
-    payment: {
-        method: 'Cash',
-        amount: 20.0,
-        change: 3.28,
-    },
-};
-
-const paymentOrderDetail = {
-    id: 'ORDER001',
-    customer: 'Ravi Kamil',
-    tableNumber: 'T2',
-    date: 'Wed, May 27, 2020 • 9:27:53 AM',
-    cashier: 'Tynisha Obey',
-    workingTime: '15.00 - 22.00 PM',
-    items: [
-        { name: 'Cappuccino', quantity: 2, price: 5.0, total: 10.0 },
-        { name: 'Soda Beverage', quantity: 3, price: 5.0, total: 15.0 },
-        { name: 'Chocolate Croissant', quantity: 2, price: 5.0, total: 10.0 },
-        { name: 'French Toast Sugar', quantity: 3, price: 4.0, total: 12.0 },
-    ],
-    subtotal: 47.0,
-    discount: 0,
-    tax: 5.64,
-    total: 52.64,
-    payment: {
-        method: 'Cash',
-        amount: 60.0,
-        change: 7.36,
-    },
-};
-
 const trackingSteps = [
     {
         title: 'Successfully Delivered',
@@ -417,11 +349,13 @@ function TransactionDashboard({ Invoices, totalOrders }) {
     const [openPaymentModal, setOpenPaymentModal] = useState(false);
     const [openPaymentSuccessModal, setOpenPaymentSuccessModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [search, setSearch] = useState('');
+
     const [filters, setFilters] = useState({
-        sort: 'asc',
+        sort: 'desc',
         orderType: 'all',
-        memberStatus: 'all',
         orderStatus: 'all',
+        memberStatus: 'all',
     });
 
     // Filter sections expand/collapse state
@@ -432,8 +366,24 @@ function TransactionDashboard({ Invoices, totalOrders }) {
         orderStatus: true,
     });
 
-    const handleTabChange = (tab) => {
-        setActiveTab(tab);
+    const handleTabChange = (type) => {
+        setActiveTab(type);
+        router.get(route('transaction.index'), { orderType: type, search, page: 1 }, { preserveState: true });
+    };
+
+    // Debounced function to trigger search after user stops typing
+    const triggerSearch = useMemo(
+        () =>
+            debounce((value) => {
+                router.get(route('transaction.index'), { orderType: activeTab, search: value, page: 1 }, { preserveState: true });
+            }, 500), // 500ms delay
+        [activeTab],
+    );
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearch(value);
+        triggerSearch(value); // call debounced function
     };
 
     const handleOpenFilterModal = () => {
@@ -464,9 +414,9 @@ function TransactionDashboard({ Invoices, totalOrders }) {
 
     const handleOpenPayment = (order) => {
         setSelectedOrder(order);
-        if (order.payment_status === 'paid') {
+        if (order.invoice?.status === 'paid') {
             setOpenPaymentSuccessModal(true);
-        } else if (order.payment_status === 'unpaid') {
+        } else if (order.invoice?.status === 'unpaid') {
             setOpenPaymentModal(true);
             setOpenOrderDetailModal(false);
         }
@@ -481,11 +431,6 @@ function TransactionDashboard({ Invoices, totalOrders }) {
         setOpenPaymentModal(false);
     };
 
-    const handlePayNow = () => {
-        setOpenPaymentModal(false);
-        setOpenPaymentSuccessModal(true);
-    };
-
     const handleClosePaymentSuccess = () => {
         setOpenPaymentSuccessModal(false);
     };
@@ -497,17 +442,37 @@ function TransactionDashboard({ Invoices, totalOrders }) {
         }));
     };
 
-    const handleResetFilters = () => {
-        setFilters({
-            sort: 'asc',
-            orderType: 'all',
-            memberStatus: 'all',
-            orderStatus: 'all',
-        });
+    const handleApplyFilters = () => {
+        router.get(
+            route('transaction.index'),
+            {
+                ...filters,
+                search,
+                page: 1,
+            },
+            { preserveState: true },
+        );
+        handleCloseFilterModal();
     };
 
-    const handleApplyFilters = () => {
-        setOpenFilterModal(false);
+    const handleResetFilters = () => {
+        const reset = {
+            sort: 'desc',
+            orderType: 'all',
+            orderStatus: 'all',
+            memberStatus: 'all',
+        };
+        setFilters(reset);
+        router.get(
+            route('transaction.index'),
+            {
+                ...reset,
+                search,
+                page: 1,
+            },
+            { preserveState: true },
+        );
+        handleCloseFilterModal();
     };
 
     const toggleSection = (section) => {
@@ -525,6 +490,8 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                 return '#e8f5e9';
             case 'cancelled':
                 return '#ffebee';
+            case 'refund':
+                return '#ffebee';
             default:
                 return '#e0e0e0';
         }
@@ -537,6 +504,8 @@ function TransactionDashboard({ Invoices, totalOrders }) {
             case 'completed':
                 return '#388e3c';
             case 'cancelled':
+                return '#d32f2f';
+            case 'refund':
                 return '#d32f2f';
             default:
                 return '#616161';
@@ -578,24 +547,13 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                 borderRadius: '10px',
                             }}
                         >
-                            <Button style={activeTab === 'all' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('all')}>
-                                All transactions
-                            </Button>
-                            <Button style={activeTab === 'dine-in' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('dine-in')}>
-                                Dine In
-                            </Button>
-                            <Button style={activeTab === 'pickup' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('pickup')}>
-                                Pick Up
-                            </Button>
-                            <Button style={activeTab === 'delivery' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('delivery')}>
-                                Delivery
-                            </Button>
-                            <Button style={activeTab === 'takeaway' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('takeaway')}>
-                                Takeaway
-                            </Button>
-                            <Button style={activeTab === 'reservation' ? styles.activeTabButton : styles.tabButton} onClick={() => handleTabChange('reservation')}>
-                                Reservation
-                            </Button>
+                            <Box display="flex" gap={1} mb={2}>
+                                {['all', 'dineIn', 'delivery', 'takeaway', 'reservation'].map((type) => (
+                                    <Button key={type} style={activeTab === type ? styles.activeTabButton : styles.tabButton} variant={activeTab === type ? 'contained' : 'outlined'} onClick={() => handleTabChange(type)}>
+                                        {type === 'all' ? 'All Transactions' : type.charAt(0).toUpperCase() + type.slice(1)}
+                                    </Button>
+                                ))}
+                            </Box>
                         </Box>
                         <Box
                             p={2}
@@ -615,7 +573,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                         fontSize: '36px',
                                     }}
                                 >
-                                    {Invoices.length}{' '}
+                                    {Invoices ? Invoices.data.length : 0}{' '}
                                     <span
                                         style={{
                                             fontSize: '16px',
@@ -628,10 +586,10 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                 </Typography>
                                 <Box display="flex" gap={1}>
                                     <TextField
-                                        placeholder="Search"
-                                        variant="outlined"
+                                        placeholder="Search by member or order id"
                                         size="small"
-                                        sx={{ width: '300px' }}
+                                        value={search}
+                                        onChange={handleSearchChange}
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
@@ -639,6 +597,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 </InputAdornment>
                                             ),
                                         }}
+                                        sx={{ width: '300px' }}
                                     />
                                     <Button variant="contained" startIcon={<FilterIcon />} style={styles.filterButton} onClick={handleOpenFilterModal}>
                                         Filter
@@ -650,7 +609,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                             <Grid container spacing={2}>
                                 <Grid item xs={12}>
                                     {/* <pre>{JSON.stringify(Invoices, null, 2)}</pre> */}
-                                    {Invoices?.map((order) => (
+                                    {Invoices?.data?.map((order) => (
                                         <Card
                                             sx={{
                                                 ...styles.orderCard,
@@ -694,9 +653,9 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     fontSize: '18px',
                                                                 }}
                                                             >
-                                                                {order?.member?.full_name} ({order.member?.membership_no})
+                                                                {order.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order.customer?.name}`}
                                                             </Typography>
-                                                            {order.isVIP && <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />}
+                                                            {/* {order.isVIP && <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />} */}
                                                         </Box>
                                                         <Typography
                                                             variant="body2"
@@ -706,7 +665,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 fontSize: '14px',
                                                             }}
                                                         >
-                                                            {order.order_items_count} Items
+                                                            {order.order_items_count} Items ({order.member_id ? 'Member' : 'Guest'})
                                                         </Typography>
                                                     </Box>
                                                     <Box textAlign="right">
@@ -737,7 +696,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 <Box display="flex" alignItems="center" justifyContent="space-between" mt={1}>
                                                     <Box display="flex" alignItems="center">
                                                         <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                            #{order?.order_number}
+                                                            #{order?.id}
                                                         </Typography>
 
                                                         <Chip
@@ -746,13 +705,15 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     ? 'Pending'
                                                                     : order?.status === 'in_progress'
                                                                       ? 'In Progress'
-                                                                      : order?.status === 'completed' && order.payment_status === 'paid'
+                                                                      : order?.status === 'completed' && order.invoice?.status === 'paid'
                                                                         ? 'Completed'
                                                                         : order?.status === 'completed'
                                                                           ? 'Ready to Serve' // Don't show label if completed
                                                                           : order?.status === 'cancelled'
                                                                             ? 'Order Cancelled'
-                                                                            : 'Unknown' // Default if status is not recognized
+                                                                            : order?.status === 'refund'
+                                                                              ? 'Refunded'
+                                                                              : 'Unknown' // Default if status is not recognized
                                                             }
                                                             size="small"
                                                             style={{
@@ -778,13 +739,32 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 color: 'white',
                                                             }}
                                                         >
-                                                            {order.payment_status === 'paid' ? 'Paid' : order.payment_status == 'cancelled' ? 'Cancelled' : 'Payment Now'}
+                                                            {order.invoice?.status === 'paid' ? 'Paid' : order.invoice?.status == 'unpaid' ? 'Payment Now' : 'Cancelled'}
                                                         </Button>
                                                     </Box>
                                                 </Box>
                                             </CardContent>
                                         </Card>
                                     ))}
+
+                                    <Box sx={{ display: 'flex', justifyContent: 'end', mt: 3 }}>
+                                        <Pagination
+                                            count={Invoices.last_page}
+                                            page={Invoices.current_page}
+                                            onChange={(e, page) =>
+                                                router.get(
+                                                    route('transaction.index'),
+                                                    {
+                                                        page,
+                                                        search,
+                                                        orderType: activeTab,
+                                                        ...filters,
+                                                    },
+                                                    { preserveState: true },
+                                                )
+                                            }
+                                        />
+                                    </Box>
                                 </Grid>
                             </Grid>
                         </Box>
@@ -965,18 +945,13 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 },
                                                 {
                                                     label: 'Dine In',
-                                                    value: 'dine-in',
+                                                    value: 'dineIn',
                                                     icon: <DiningIcon />,
-                                                },
-                                                {
-                                                    label: 'Pick Up',
-                                                    value: 'pickup',
-                                                    icon: <TakeoutIcon />,
                                                 },
                                                 {
                                                     label: 'Delivery',
                                                     value: 'delivery',
-                                                    icon: <DeliveryIcon />,
+                                                    icon: <DiningIcon />,
                                                 },
                                                 {
                                                     label: 'Takeaway',
@@ -1063,65 +1038,11 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 }
                                             />
                                             <Chip
-                                                label="Ready to serve"
-                                                onClick={() => handleFilterChange('orderStatus', 'ready')}
-                                                sx={{
-                                                    backgroundColor: filters.orderStatus === 'ready' ? '#003049' : '#cce5ff',
-                                                    color: filters.orderStatus === 'ready' ? '#fff' : '#003049',
-                                                    fontWeight: 500,
-                                                    borderRadius: '20px',
-                                                    px: 2,
-                                                }}
-                                                icon={
-                                                    <CheckCircleIcon
-                                                        style={{
-                                                            color: filters.orderStatus === 'ready' ? 'white' : '#003049',
-                                                        }}
-                                                    />
-                                                }
-                                            />
-                                            <Chip
-                                                label="Cooking Process"
-                                                onClick={() => handleFilterChange('orderStatus', 'cooking')}
-                                                sx={{
-                                                    backgroundColor: filters.orderStatus === 'cooking' ? '#003049' : '#cce5ff',
-                                                    color: filters.orderStatus === 'cooking' ? '#fff' : '#003049',
-                                                    fontWeight: 500,
-                                                    borderRadius: '20px',
-                                                    px: 2,
-                                                }}
-                                                icon={
-                                                    <RestaurantIcon
-                                                        style={{
-                                                            color: filters.orderStatus === 'cooking' ? 'white' : '#003049',
-                                                        }}
-                                                    />
-                                                }
-                                            />
-                                            <Chip
-                                                label="Waiting to payment"
-                                                onClick={() => handleFilterChange('orderStatus', 'waiting')}
-                                                sx={{
-                                                    backgroundColor: filters.orderStatus === 'waiting' ? '#003049' : '#cce5ff',
-                                                    color: filters.orderStatus === 'waiting' ? '#fff' : '#003049',
-                                                    fontWeight: 500,
-                                                    borderRadius: '20px',
-                                                    px: 2,
-                                                }}
-                                                icon={
-                                                    <ReceiptIcon
-                                                        style={{
-                                                            color: filters.orderStatus === 'waiting' ? 'white' : '#003049',
-                                                        }}
-                                                    />
-                                                }
-                                            />
-                                            <Chip
                                                 label="Order done"
-                                                onClick={() => handleFilterChange('orderStatus', 'done')}
+                                                onClick={() => handleFilterChange('orderStatus', 'completed')}
                                                 sx={{
-                                                    backgroundColor: filters.orderStatus === 'done' ? '#003049' : '#cce5ff',
-                                                    color: filters.orderStatus === 'done' ? '#fff' : '#003049',
+                                                    backgroundColor: filters.orderStatus === 'completed' ? '#003049' : '#cce5ff',
+                                                    color: filters.orderStatus === 'completed' ? '#fff' : '#003049',
                                                     fontWeight: 500,
                                                     borderRadius: '20px',
                                                     px: 2,
@@ -1129,7 +1050,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 icon={
                                                     <CheckCircleIcon
                                                         style={{
-                                                            color: filters.orderStatus === 'done' ? 'white' : '#003049',
+                                                            color: filters.orderStatus === 'completed' ? 'white' : '#003049',
                                                         }}
                                                     />
                                                 }
@@ -1157,7 +1078,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                 </Collapse>
                             </Box>
                             {/* Member Status Section */}
-                            <Box
+                            {/* <Box
                                 className={styles.filterSection}
                                 sx={{
                                     mb: 3,
@@ -1253,7 +1174,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                         </Box>
                                     </Box>
                                 </Collapse>
-                            </Box>
+                            </Box> */}
 
                             {/* Footer Buttons */}
                             <Box display="flex" justifyContent="flex-end" gap={1} mt={3}>
@@ -1287,7 +1208,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                     </Dialog>
 
                     {/* Order Detail Modal */}
-                    <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} orderDetail={orderDetail} handleOpenTrackOrder={handleOpenTrackOrder} />
+                    <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} handleOpenTrackOrder={handleOpenTrackOrder} />
 
                     {/* Payment Modal */}
                     <PaymentNow invoiceData={selectedOrder} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} setSelectedOrder={setSelectedOrder} />

@@ -10,17 +10,16 @@ import DineDialog from './Dine';
 import ReservationDialog from './Reservation';
 import TakeAwayDialog from './Takeaway';
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
-    const page = usePage().props;
-
-    const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails } = useOrderStore();
+const NewOrder = ({ orderNo, memberTypes }) => {
+    const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [open, setOpen] = useState(true);
-    const [showData, setShowData] = useState(false);
+    const [floorTables, setFloorTables] = useState([]);
 
     // get weeks in month
     useEffect(() => {
@@ -42,6 +41,26 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
             time: dayjs().format('HH:mm'),
         });
     }, []);
+
+    const loadFloorTables = async () => {
+        try {
+            const response = await axios.get(route('api.floors-with-tables'));
+            setFloorTables(response.data);
+            if (response.data.length > 0) {
+                handleOrderDetailChange('floor', response.data[0].id);
+                handleOrderDetailChange('table', '');
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // Call when user selects DineIn or Reservation
+    useEffect(() => {
+        if (orderDetails.order_type === 'dineIn' || orderDetails.order_type === 'reservation') {
+            loadFloorTables();
+        }
+    }, [orderDetails.order_type]);
 
     return (
         <>
@@ -261,6 +280,33 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
                                 </ToggleButton>
 
                                 <ToggleButton
+                                    value="delivery"
+                                    aria-label="delivery"
+                                    sx={{
+                                        flex: 1,
+                                        py: 1.5,
+                                        flexDirection: 'column',
+                                        textTransform: 'none',
+                                        border: '1px solid #063455',
+                                        '&.Mui-selected': {
+                                            backgroundColor: '#B0DEFF',
+                                            color: '#1976d2',
+                                            '&:hover': {
+                                                backgroundColor: '#B0DEFF',
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <ShopIcon
+                                        sx={{
+                                            mb: 0.5,
+                                            fill: orderDetails.order_type === 'delivery' ? '#063455' : 'inherit',
+                                        }}
+                                    />
+                                    <Typography variant="body2">Delivery</Typography>
+                                </ToggleButton>
+
+                                <ToggleButton
                                     value="takeaway"
                                     aria-label="takeaway"
                                     sx={{
@@ -318,7 +364,7 @@ const NewOrder = ({ orderNo, memberTypes, floorTables }) => {
 
                         {/* =====  */}
                         {orderDetails.order_type === 'dineIn' && <DineDialog memberTypes={memberTypes} floorTables={floorTables} />}
-                        {orderDetails.order_type === 'takeaway' && <TakeAwayDialog />}
+                        {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog />}
                         {orderDetails.order_type === 'reservation' && <ReservationDialog />}
                     </Paper>
                 </Box>

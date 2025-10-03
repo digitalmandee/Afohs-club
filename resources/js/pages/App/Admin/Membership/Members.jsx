@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip, Drawer } from '@mui/material';
 import { Search, FilterAlt } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
@@ -16,6 +16,7 @@ import { MdModeEdit } from 'react-icons/md';
 import MembershipDashboardFilter from './MembershipDashboardFilter';
 import MembershipPauseDialog from './MembershipPauseDialog';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { JSONParse } from '@/helpers/generateTemplate';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -33,6 +34,7 @@ const AllMembers = ({ members }) => {
     const [selectMember, setSelectMember] = useState(null);
     const [filteredMembers, setFilteredMembers] = useState(members.data);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
+    const [openDocumentModal, setOpenDocumentModal] = useState(false);
     const [pauseModalOpen, setPauseModalOpen] = useState(false);
 
     const [filters, setFilters] = useState({
@@ -100,22 +102,10 @@ const AllMembers = ({ members }) => {
                     <div className="mx-3">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <Typography sx={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>All Members</Typography>
-                            <div className="d-flex">
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<FilterAlt />}
-                                    style={{
-                                        borderColor: '#ccc',
-                                        color: '#333',
-                                        textTransform: 'none',
-                                        backgroundColor: 'transparent',
-                                    }}
-                                    onClick={() => setOpenFilterModal(true)}
-                                >
-                                    Filter
-                                </Button>
-                            </div>
                         </div>
+
+                        {/* Filter Modal */}
+                        <MembershipDashboardFilter />
 
                         {/* Members Table */}
                         <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
@@ -134,6 +124,7 @@ const AllMembers = ({ members }) => {
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -248,6 +239,21 @@ const AllMembers = ({ members }) => {
                                                 )}
                                             </TableCell>
                                             <TableCell>
+                                                <Button
+                                                    style={{
+                                                        color: '#0C67AA',
+                                                        textDecoration: 'underline',
+                                                        textTransform: 'none',
+                                                    }}
+                                                    onClick={() => {
+                                                        setSelectMember(user);
+                                                        setOpenDocumentModal(true);
+                                                    }}
+                                                >
+                                                    View
+                                                </Button>
+                                            </TableCell>
+                                            <TableCell>
                                                 <IconButton onClick={() => router.visit(route('membership.edit', user.id))}>
                                                     <FaEdit size={18} />
                                                 </IconButton>
@@ -277,9 +283,6 @@ const AllMembers = ({ members }) => {
                                 ))}
                             </Box>
                         </TableContainer>
-
-                        {/* Filter Modal */}
-                        <MembershipDashboardFilter openFilterModal={openFilterModal} setOpenFilterModal={setOpenFilterModal} members={members.data} filteredMembers={filteredMembers} setFilteredMembers={setFilteredMembers} statusOptions={statusOptions} memberTypeOptions={memberTypeOptions} />
                     </div>
 
                     {/* Modal */}
@@ -291,6 +294,81 @@ const AllMembers = ({ members }) => {
 
                     <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
                     <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.user_id} />
+
+                    <Drawer
+                        anchor="top"
+                        open={openDocumentModal}
+                        onClose={() => setOpenDocumentModal(false)}
+                        ModalProps={{ keepMounted: true }}
+                        PaperProps={{
+                            sx: {
+                                margin: '20px auto 0',
+                                width: 600,
+                                borderRadius: '8px',
+                            },
+                        }}
+                    >
+                        <Box sx={{ p: 2 }}>
+                            {/* ✅ Documents Preview */}
+                            <h5 style={{ marginBottom: '10px', fontWeight: 700 }}>Attached Documents</h5>
+                            {selectMember && selectMember?.documents && selectMember?.documents.length > 0 && (
+                                <div style={{ marginTop: '20px' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                        {selectMember?.documents.map((doc, index) => {
+                                            const ext = doc.split('.').pop().toLowerCase();
+
+                                            // ✅ For images
+                                            if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+                                                return (
+                                                    <div key={index} style={{ width: '100px', textAlign: 'center' }}>
+                                                        <img src={doc} alt={`Document ${index + 1}`} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} onClick={() => window.open(doc, '_blank')} />
+                                                        <p style={{ fontSize: '12px', marginTop: '5px' }}>Image</p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            // ✅ For PDF
+                                            if (ext === 'pdf') {
+                                                return (
+                                                    <div key={index} style={{ width: '100px', textAlign: 'center' }}>
+                                                        <img
+                                                            src="/assets/pdf-icon.png" // You can use a static icon
+                                                            alt="PDF"
+                                                            style={{ width: '60px', cursor: 'pointer' }}
+                                                            onClick={() => window.open(doc, '_blank')}
+                                                        />
+                                                        <p style={{ fontSize: '12px', marginTop: '5px' }}>PDF</p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            // ✅ For DOCX
+                                            if (ext === 'docx' || ext === 'doc') {
+                                                return (
+                                                    <div key={index} style={{ width: '100px', textAlign: 'center' }}>
+                                                        <img
+                                                            src="/assets/word-icon.png" // Use a static Word icon
+                                                            alt="DOCX"
+                                                            style={{ width: '60px', cursor: 'pointer' }}
+                                                            onClick={() => window.open(doc, '_blank')}
+                                                        />
+                                                        <p style={{ fontSize: '12px', marginTop: '5px' }}>Word</p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            return null; // For unknown file types
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </Box>
+                        <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                            <Button variant="text" color="inherit" onClick={() => setOpenDocumentModal(false)}>
+                                Close
+                            </Button>
+                        </Box>
+                    </Drawer>
                 </div>
             </div>
         </>

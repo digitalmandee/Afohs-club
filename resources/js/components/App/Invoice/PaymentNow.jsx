@@ -5,7 +5,7 @@ import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import Receipt from './Receipt';
 
-const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleClosePayment, setSelectedOrder }) => {
+const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleClosePayment, setSelectedOrder, isLoading, mode = 'payment', handleSendToKitchen }) => {
     // Payment state
     const [inputAmount, setInputAmount] = useState('0');
     const [customerChanges, setCustomerChanges] = useState('0');
@@ -37,7 +37,8 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         setInputAmount(amount);
         // Calculate customer changes
         const total = invoiceData.total_price;
-        setCustomerChanges((amount - total).toFixed(2));
+        const changes = amount - total;
+        setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
     };
 
     const handleNumberClick = (number) => {
@@ -51,7 +52,8 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
         // Calculate customer changes
         const total = invoiceData.total_price;
-        setCustomerChanges((Number.parseFloat(newAmount) - total).toFixed(2));
+        const changes = Number.parseFloat(newAmount) - total;
+        setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
     };
 
     const handleDeleteClick = () => {
@@ -61,10 +63,12 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
             // Calculate customer changes
             const total = invoiceData.total_price;
-            setCustomerChanges((Number.parseFloat(newAmount) - total).toFixed(2));
+            const changes = Number.parseFloat(newAmount) - total;
+            setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
         } else {
             setInputAmount('0');
-            setCustomerChanges((0 - invoiceData.total_price).toFixed(2));
+            const total = 0 - invoiceData.total_price;
+            setCustomerChanges((total < 0 ? 0 : total).toFixed(2));
         }
     };
 
@@ -83,10 +87,57 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         }
     };
 
+    const handleOrderAndPay = async () => {
+        // Amount validation
+        console.log('Input amount:', inputAmount, 'Invoice total:', invoiceData.total_price);
+
+        if (parseFloat(inputAmount) < invoiceData.total_price) {
+            enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
+            return;
+        }
+
+        if (activePaymentMethod === 'credit_card' && !receiptFile) {
+            enqueueSnackbar('Please upload the receipt', { variant: 'warning' });
+            return;
+        }
+
+        let payload = {};
+
+        // Prepare form data for credit card (with file)
+        if (activePaymentMethod === 'credit_card') {
+            payload = {
+                payment: {
+                    paid_amount: inputAmount,
+                    payment_method: 'credit_card',
+                    credit_card_type: creditCardType,
+                },
+                receipt: receiptFile,
+            };
+        } else {
+            // For other payment methods (cash, bank) use regular payload
+            const paidAmount = activePaymentMethod === 'split_payment' ? (parseFloat(cashAmount || 0) + parseFloat(creditCardAmount || 0) + parseFloat(bankTransferAmount || 0)).toFixed(2) : inputAmount;
+
+            payload = {
+                payment: {
+                    paid_amount: paidAmount,
+                    customer_changes: customerChanges,
+                    payment_method: activePaymentMethod,
+                    ...(activePaymentMethod === 'split_payment' && {
+                        cash: cashAmount,
+                        credit_card: creditCardAmount,
+                        bank_transfer: bankTransferAmount,
+                    }),
+                },
+            };
+        }
+
+        await handleSendToKitchen(payload);
+    };
+
     const handlePayNow = () => {
         // Amount validation
         if (parseFloat(inputAmount) < invoiceData.total_price) {
-            enqueueSnackbar('Please enter the correct amount or greater', { variant: 'warning' });
+            enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
             return;
         }
 
@@ -103,7 +154,6 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             formData.append('payment_method', 'credit_card');
             formData.append('credit_card_type', creditCardType);
             formData.append('receipt', receiptFile);
-            console.log(formData);
 
             router.post(route('order.payment'), formData, {
                 onSuccess: () => {
@@ -177,7 +227,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         if (activePaymentMethod === 'split_payment') {
             const totalPaid = Number(cashAmount) + Number(creditCardAmount) + Number(bankTransferAmount);
             const change = totalPaid - Number(invoiceData?.total_price);
-            setCustomerChanges(change);
+            setCustomerChanges((change < 0 ? 0 : change).toFixed(2));
             setInputAmount(totalPaid); // Optional: track total paid in inputAmount too
         }
     }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData?.total_price, activePaymentMethod]);
@@ -205,7 +255,8 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         >
             <Box sx={{ display: 'flex', height: '100vh' }}>
                 {/* Left Side - Receipt */}
-                <Receipt invoiceId={invoiceData?.id} openModal={openPaymentModal} showButtons={false} />
+                {mode === 'payment' && <Receipt invoiceId={invoiceData?.id} openModal={openPaymentModal} showButtons={false} />}
+                {mode === 'order' && <Receipt invoiceData={invoiceData} openModal={openPaymentModal} showButtons={false} />}
 
                 {/* Right Side - Payment */}
                 <Box sx={{ flex: 1, p: 3 }}>
@@ -311,17 +362,17 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     <Button variant="outlined" onClick={() => handleQuickAmountClick(invoiceData.total_price.toString())} sx={styles.quickAmountButton}>
                                         Exact money
                                     </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('10.00')} sx={styles.quickAmountButton}>
-                                        Rs 10.00
+                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('10')} sx={styles.quickAmountButton}>
+                                        Rs 10
                                     </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('20.00')} sx={styles.quickAmountButton}>
-                                        Rs 20.00
+                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('20')} sx={styles.quickAmountButton}>
+                                        Rs 20
                                     </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('50.00')} sx={styles.quickAmountButton}>
-                                        Rs 50.00
+                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('50')} sx={styles.quickAmountButton}>
+                                        Rs 50
                                     </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('100.00')} sx={styles.quickAmountButton}>
-                                        Rs 100.00
+                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('100')} sx={styles.quickAmountButton}>
+                                        Rs 100
                                     </Button>
                                 </Box>
 
@@ -513,7 +564,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                         sx={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            mt: 4,
+                            py: 4,
                         }}
                     >
                         <Button
@@ -527,8 +578,8 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                         >
                             Cancel
                         </Button>
-                        <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={handlePayNow} sx={styles.payNowButton}>
-                            Pay Now
+                        <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={mode === 'payment' ? handlePayNow : handleOrderAndPay} sx={styles.payNowButton} disabled={isLoading} loading={isLoading} loadingPosition="start">
+                            {mode === 'payment' ? 'Pay Now' : 'Order & Pay'}
                         </Button>
                     </Box>
                 </Box>

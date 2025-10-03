@@ -4,33 +4,44 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     // protected $dates = ['order_time' => 'datetime:Y-m-d\TH:i:s\Z'];
 
     protected $fillable = [
-        'order_number',
-        'user_id',
+        'reservation_id',
+        'member_id',
+        'customer_id',
+        'room_booking_id',
+        'event_booking_id',
         'cashier_id',
         'waiter_id',
         'table_id',
         'order_type',
         'person_count',
         'down_payment',
+        'nature_of_function',
+        'theme_of_function',
+        'special_request',
         'amount',
         'start_date',
         'start_time',
         'order_time',
         'end_time',
         'status',
+        'remark',
+        'instructions',
+        'cancelType',
         'payment_status',
         'kitchen_note',
         'staff_note',
         'payment_note',
         'tax',
+        'address',
         'discount',
         'total_price',
         'cost_price',
@@ -42,6 +53,7 @@ class Order extends Model
         'credit_card_type',
         'payment_method',
         'reciept',
+        'tenant_id',
     ];
 
     public function orderItems()
@@ -54,20 +66,20 @@ class Order extends Model
         return $this->belongsTo(Table::class);
     }
 
-    public function user()
-    {
-        return $this->belongsTo(Member::class);
-    }
-
     public function member()
     {
-        return $this->belongsTo(Member::class, 'user_id', 'user_id');
+        return $this->belongsTo(Member::class, 'member_id', 'user_id');
     }
 
-    public function invoice()
+    public function customer()
     {
-        return $this->hasOne(Invoices::class);
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
+
+    // public function invoice()
+    // {
+    //     return $this->hasOne(FinancialInvoice::class)->whereJsonContains('data->order_id', $this->id);
+    // }
 
     public function cashier()
     {

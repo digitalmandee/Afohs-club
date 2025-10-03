@@ -51,7 +51,23 @@ class MembershipController extends Controller
 
     public function edit(Request $request)
     {
-        $user = Member::where('id', $request->id)->with('memberType')->first();
+        $user = Member::where('id', $request->id)->with('memberType', 'kinshipMember')->first();
+
+        // Replace kinship with only selected fields
+        if ($user->kinshipMember) {
+            $user->kinship = [
+                'id' => $user->kinshipMember['id'],
+                'booking_type' => 'member',
+                'name' => $user->kinshipMember['full_name'],
+                'label' => "{$user->kinshipMember['full_name']} ({$user->kinshipMember['membership_no']})",
+                'membership_no' => $user->kinshipMember['membership_no'],
+                'email' => $user->kinshipMember['personal_email'],
+                'cnic' => $user->kinshipMember['cnic_no'],
+                'phone' => $user->kinshipMember['mobile_number_a'],
+                'address' => $user->kinshipMember['current_address'],
+            ];
+        }
+
         $familyMembers = $user->familyMembers->map(function ($member) use ($user) {
             return [
                 'id' => $member->id,
@@ -64,7 +80,7 @@ class MembershipController extends Controller
                 'membership_category' => $user->member_category_id,
                 'relation' => $member->relation,
                 'cnic' => $member->cnic_no,
-                'date_of_birth' => $member->date_of_birth,
+                'date_of_birth' => optional($member->date_of_birth)->format('Y-m-d'),
                 'phone_number' => $member->mobile_number_a,
                 'email' => $member->personal_email,
                 'start_date' => $member->start_date,
@@ -206,10 +222,12 @@ class MembershipController extends Controller
                 }
             }
 
+            $fullName = trim(preg_replace('/\s+/', ' ', $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name));
+
             // Create primary user
             $primaryUser = User::create([
                 'email' => $request->personal_email ?? null,
-                'name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'name' => $fullName,
                 'password' => null,
                 'phone_number' => $request->mobile_number_a,
                 'profile_photo' => $memberImagePath
@@ -235,7 +253,7 @@ class MembershipController extends Controller
                 'barcode_no' => $request->barcode_no ?? null,
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
-                'full_name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'full_name' => $fullName,
                 'profile_photo' => $memberImagePath,
                 'martial_status' => $request->martial_status,
                 'kinship' => $request->kinship['id'] ?? null,
@@ -326,38 +344,38 @@ class MembershipController extends Controller
                 }
             }
 
-            $memberTypeArray = $memberCategory->toArray();  // includes all fields from DB
+            // $memberTypeArray = $memberCategory->toArray();  // includes all fields from DB
 
-            $memberTypeArray['amount'] = $memberCategory->fee;
-            $memberTypeArray['invoice_type'] = 'membership';
+            // $memberTypeArray['amount'] = $memberCategory->fee;
+            // $memberTypeArray['invoice_type'] = 'membership';
 
-            $data = [$memberTypeArray];
+            // $data = [$memberTypeArray];
 
-            // Create membership invoice
-            $now = Carbon::now();
-            $quarter = ceil($now->month / 3);  // Calculate quarter number (1 to 4)
-            $paidForQuarter = $now->year . '-Q' . $quarter;
+            // // Create membership invoice
+            // $now = Carbon::now();
+            // $quarter = ceil($now->month / 3);  // Calculate quarter number (1 to 4)
+            // $paidForQuarter = $now->year . '-Q' . $quarter;
 
-            $invoice = FinancialInvoice::create([
-                'invoice_no' => $this->getInvoiceNo(),
-                'member_id' => $primaryUser->id,
-                'amount' => $memberCategory->subscription_fee * 3,
-                'subscription_type' => 'quarter',
-                'invoice_type' => 'membership',
-                'issue_date' => $now,
-                'paid_for_quarter' => $paidForQuarter,
-                'data' => $data,
-                'status' => 'unpaid',
-            ]);
+            // $invoice = FinancialInvoice::create([
+            //     'invoice_no' => $this->getInvoiceNo(),
+            //     'member_id' => $primaryUser->id,
+            //     'amount' => $memberCategory->subscription_fee * 3,
+            //     'subscription_type' => 'quarter',
+            //     'invoice_type' => 'membership',
+            //     'issue_date' => $now,
+            //     'paid_for_quarter' => $paidForQuarter,
+            //     'data' => $data,
+            //     'status' => 'unpaid',
+            // ]);
 
-            // Add membership invoice id to member
-            $member = Member::where('user_id', $primaryUser->id)->first();
-            $member->invoice_id = $invoice->id;
-            $member->save();
+            // // Add membership invoice id to member
+            // $member = Member::where('user_id', $primaryUser->id)->first();
+            // $member->invoice_id = $invoice->id;
+            // $member->save();
 
             DB::commit();
 
-            return response()->json(['message' => 'Membership created successfully.', 'invoice_no' => $invoice->invoice_no], 200);
+            return response()->json(['message' => 'Membership created successfully.'], 200);
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
             return response()->json(['error' => 'Failed to submit membership details: ' . $th->getMessage()], 500);
@@ -389,16 +407,40 @@ class MembershipController extends Controller
                 $member->profile_photo = $memberImagePath;
             }
 
-            $documentPaths = $member->documents;
-            if ($request->hasFile('documents')) {
-                foreach ($request->file('documents') as $file) {
-                    $documentPaths[] = FileHelper::saveImage($file, 'member_documents');
+            $oldDocs = $member->documents ?? [];
+            $documentPaths = [];
+
+            // ✅ Always cast request documents to array
+            $requestDocs = (array) ($request->documents ?? []);
+
+            // Step 1: Loop through request documents
+            foreach ($requestDocs as $doc) {
+                if ($doc instanceof \Illuminate\Http\UploadedFile) {
+                    // It's a new file, save it
+                    $documentPaths[] = FileHelper::saveImage($doc, 'member_documents');
+                } elseif (!empty($doc)) {
+                    // It's an existing path, keep it (skip empties)
+                    $documentPaths[] = $doc;
                 }
             }
 
+            // Step 2: Find deleted docs
+            $deleted = array_diff($oldDocs, $documentPaths);
+
+            // Step 3: Delete them from filesystem
+            foreach ($deleted as $docPath) {
+                $absolutePath = public_path(ltrim($docPath, '/'));
+
+                if (file_exists($absolutePath)) {
+                    @unlink($absolutePath);
+                }
+            }
+
+            $fullName = trim(preg_replace('/\s+/', ' ', $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name));
+
             // Update User basic info
             $member->user->update([
-                'name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'name' => $fullName,
                 'email' => $request->personal_email ?? null,
                 'phone_number' => $request->mobile_number_a,
             ]);
@@ -411,7 +453,7 @@ class MembershipController extends Controller
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
-                'full_name' => $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name,
+                'full_name' => $fullName,
                 'profile_photo' => $memberImagePath,
                 'martial_status' => $request->martial_status,
                 'kinship' => $request->kinship['id'] ?? null,
@@ -455,87 +497,108 @@ class MembershipController extends Controller
             ]);
 
             // Update Family Members
-            foreach ($request->family_members as $newMemberData) {
-                // Check if family member is new
+            if ($request->filled('family_members')) {
+                foreach ($request->family_members as $newMemberData) {
+                    // Check if family member is new
 
-                if (str_starts_with($newMemberData['id'], 'new-')) {
-                    // Handle family member image
-                    $familyMemberImagePath = null;
-                    if (!empty($newMemberData['picture'])) {
-                        $familyMemberImagePath = FileHelper::saveImage($newMemberData['picture'], 'member_images');
-                    }
-                    // Create User for family member (no password)
-                    $familyUser = User::create([
-                        'email' => $newMemberData['email'] ?? null,
-                        'password' => isset($validated['password']) ? $validated['password'] : null,
-                        'name' => $newMemberData['full_name'],
-                        'profile_photo' => $familyMemberImagePath
-                    ]);
-
-                    $familyUser->assignRole('user');
-
-                    $familyqrCodeData = route('member.profile', ['id' => $familyUser->id]);
-
-                    // Create QR code image and save it
-                    $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
-                    $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
-
-                    Member::create([
-                        'user_id' => $familyUser->id,
-                        'barcode_no' => $newMemberData['barcode_no'] ?? null,
-                        'parent_id' => $member->user_id,
-                        'profile_photo' => $familyMemberImagePath,
-                        'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
-                        'family_suffix' => $newMemberData['family_suffix'],
-                        'full_name' => $newMemberData['full_name'],
-                        'personal_email' => $newMemberData['email'] ?? null,
-                        'relation' => $newMemberData['relation'],
-                        'date_of_birth' => $newMemberData['date_of_birth'],
-                        'qr_code' => $qrImagePath,
-                        'status' => $newMemberData['status'],
-                        'start_date' => $newMemberData['start_date'] ?? null,
-                        'end_date' => $newMemberData['end_date'] ?? null,
-                        'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
-                        'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
-                        'cnic_no' => $newMemberData['cnic'],
-                        'mobile_number_a' => $newMemberData['phone_number'] ?? null,
-                    ]);
-                } elseif (!empty($newMemberData['id'])) {
-                    // Update existing family member
-
-                    $updateFamily = Member::find($newMemberData['id']);
-                    if ($updateFamily) {
-                        // Update family member image if changed
-                        $familyMemberImagePath = $updateFamily->profile_photo;
-                        if (!empty($newMemberData['picture']) && $newMemberData['picture'] !== $updateFamily->profile_photo) {
+                    if (str_starts_with($newMemberData['id'], 'new-')) {
+                        // Handle family member image
+                        $familyMemberImagePath = null;
+                        if (!empty($newMemberData['picture'])) {
                             $familyMemberImagePath = FileHelper::saveImage($newMemberData['picture'], 'member_images');
                         }
+                        // Create User for family member (no password)
+                        $familyUser = User::create([
+                            'email' => $newMemberData['email'] ?? null,
+                            'password' => isset($validated['password']) ? $validated['password'] : null,
+                            'name' => $newMemberData['full_name'],
+                            'profile_photo' => $familyMemberImagePath
+                        ]);
 
-                        // Update related user info
-                        if ($updateFamily->user) {
-                            $updateFamily->user->update([
-                                'name' => $newMemberData['full_name'],
-                                'email' => $newMemberData['email'] ?? null,
-                                'profile_photo' => $familyMemberImagePath,
-                            ]);
-                        }
+                        $familyUser->assignRole('user');
 
-                        // Update member fields
-                        $updateFamily->update([
-                            'full_name' => $newMemberData['full_name'],
+                        $familyqrCodeData = route('member.profile', ['id' => $familyUser->id]);
+
+                        // Create QR code image and save it
+                        $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
+                        $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
+
+                        Member::create([
+                            'user_id' => $familyUser->id,
                             'barcode_no' => $newMemberData['barcode_no'] ?? null,
+                            'parent_id' => $member->user_id,
                             'profile_photo' => $familyMemberImagePath,
+                            'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
+                            'family_suffix' => $newMemberData['family_suffix'],
+                            'full_name' => $newMemberData['full_name'],
                             'personal_email' => $newMemberData['email'] ?? null,
                             'relation' => $newMemberData['relation'],
                             'date_of_birth' => $newMemberData['date_of_birth'],
-                            'status' => $newMemberData['status'] ?? null,
+                            'qr_code' => $qrImagePath,
+                            'status' => $newMemberData['status'],
                             'start_date' => $newMemberData['start_date'] ?? null,
                             'end_date' => $newMemberData['end_date'] ?? null,
                             'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
                             'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
-                            'cnic_no' => $newMemberData['cnic'] ?? null,
+                            'cnic_no' => $newMemberData['cnic'],
                             'mobile_number_a' => $newMemberData['phone_number'] ?? null,
                         ]);
+                    } elseif (!empty($newMemberData['id'])) {
+                        // Update existing family member
+
+                        $updateFamily = Member::find($newMemberData['id']);
+                        if ($updateFamily) {
+                            // Update family member image if changed
+                            $familyMemberImagePath = $updateFamily->profile_photo;
+                            if (!empty($newMemberData['picture']) && $newMemberData['picture'] !== $updateFamily->profile_photo) {
+                                $familyMemberImagePath = FileHelper::saveImage($newMemberData['picture'], 'member_images');
+                            }
+
+                            // Update related user info
+                            if ($updateFamily->user) {
+                                $updateFamily->user->update([
+                                    'name' => $newMemberData['full_name'],
+                                    'email' => $newMemberData['email'] ?? null,
+                                    'profile_photo' => $familyMemberImagePath,
+                                ]);
+                            }
+
+                            // Update member fields
+                            $updateFamily->update([
+                                'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
+                                'full_name' => $newMemberData['full_name'],
+                                'barcode_no' => $newMemberData['barcode_no'] ?? null,
+                                'profile_photo' => $familyMemberImagePath,
+                                'personal_email' => $newMemberData['email'] ?? null,
+                                'relation' => $newMemberData['relation'],
+                                'date_of_birth' => $newMemberData['date_of_birth'],
+                                'status' => $newMemberData['status'] ?? null,
+                                'start_date' => $newMemberData['start_date'] ?? null,
+                                'end_date' => $newMemberData['end_date'] ?? null,
+                                'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
+                                'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
+                                'cnic_no' => $newMemberData['cnic'] ?? null,
+                                'mobile_number_a' => $newMemberData['phone_number'] ?? null,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // ✅ Handle family member deletions
+            if ($request->filled('deleted_family_members')) {
+                $idsToDelete = $request->deleted_family_members;
+
+                foreach ($idsToDelete as $familyId) {
+                    $family = Member::find($familyId);
+
+                    if ($family && $family->parent_id == $member->user_id) {
+                        // Optionally also delete related User
+                        if ($family->user) {
+                            $family->user->delete();
+                        }
+
+                        $family->delete();
                     }
                 }
             }
@@ -547,24 +610,6 @@ class MembershipController extends Controller
             DB::rollBack();
             Log::error('Error updating member: ' . $th->getMessage());
             return response()->json(['error' => 'Failed to update membership details.'], 500);
-        }
-    }
-
-    public function updateMemberStatus(Request $request, $id)
-    {
-        $request->validate([
-            'card_status' => 'required|string|in:Active,In Active,Expired',
-        ]);
-
-        try {
-            $member = Member::findOrFail($id);
-            $member->card_status = $request->card_status;
-            $member->save();
-
-            return response()->json(['message' => 'Member status updated successfully']);
-        } catch (\Exception $e) {
-            Log::error('Error updating member status: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update member status'], 500);
         }
     }
 
@@ -594,8 +639,6 @@ class MembershipController extends Controller
                 ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
                 ->orWhereRaw("CONCAT(first_name, ' ', middle_name, ' ', last_name) LIKE ?", ["%{$query}%"]);
         })->select('id', 'user_id', 'first_name', 'middle_name', 'last_name', 'email', 'phone_number')->get();
-
-        Log::info($members);
 
         return response()->json(['results' => $members]);
     }

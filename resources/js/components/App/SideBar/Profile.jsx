@@ -62,7 +62,7 @@ const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Employee ID
                     </Typography>
-                    <Typography variant="body2">{auth.user.user_id}</Typography>
+                    <Typography variant="body2">{auth.user.employee.employee_id}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 1.5 }}>
@@ -76,14 +76,14 @@ const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Phone number
                     </Typography>
-                    <Typography variant="body2">{auth.user.phone || 'N/A'}</Typography>
+                    <Typography variant="body2">{auth.user.employee.phone_no || 'N/A'}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Address
                     </Typography>
-                    <Typography variant="body2">{auth.user.address || 'N/A'}</Typography>
+                    <Typography variant="body2">{auth.user.employee?.address || 'N/A'}</Typography>
                 </Box>
             </Box>
 

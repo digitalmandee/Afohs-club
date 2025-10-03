@@ -1,17 +1,50 @@
+import { router } from '@inertiajs/react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 const LoginActivityScreen = ({ setProfileView }) => {
-    const loginActivities = [
-        { date: '10 Aug, 2024', activity: 'Login', time: '09:50 am' },
-        { date: '10 Aug, 2024', activity: 'Logout', time: '15:02 pm' },
-        { date: '09 Aug, 2024', activity: 'Login', time: '09:50 am' },
-        { date: '09 Aug, 2024', activity: 'Logout', time: '15:02 pm' },
-        { date: '09 Aug, 2024', activity: 'Login', time: '09:50 am' },
-        { date: '09 Aug, 2024', activity: 'Logout', time: '15:02 pm' },
-        { date: '09 Aug, 2024', activity: 'Login', time: '09:50 am' },
-        { date: '09 Aug, 2024', activity: 'Logout', time: '15:02 pm' },
-    ];
+    const [loginActivities, setLoginActivities] = useState([]);
+
+    useEffect(() => {
+        const fetchLogs = async () => {
+            try {
+                const response = await axios.get(route('api.employee-logs'));
+
+                // Map API data if needed
+                const activities = response.data.map((log) => {
+                    // Parse datetime string as local time (not UTC)
+                    // Format: "2025-10-02 12:34:59"
+                    const [datePart, timePart] = log.logged_at.split(' ');
+                    const [year, month, day] = datePart.split('-');
+                    const [hour, minute, second] = timePart.split(':');
+                    
+                    // Create date in local timezone
+                    const logDate = new Date(year, month - 1, day, hour, minute, second);
+                    
+                    return {
+                        date: logDate.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: '2-digit' 
+                        }),
+                        time: logDate.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true 
+                        }),
+                        activity: log.type === 'login' ? 'Login' : log.type === 'logout' ? 'Logout' : log.type.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+                    };
+                });
+                setLoginActivities(activities);
+            } catch (error) {
+                console.error('Failed to fetch logs:', error);
+            }
+        };
+
+        fetchLogs();
+    }, []);
 
     return (
         <Box

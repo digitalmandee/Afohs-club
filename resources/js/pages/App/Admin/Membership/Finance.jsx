@@ -323,7 +323,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                                             borderColor: '#ccc',
                                         },
                                     }}
-                                    onClick={() => router.visit('/admin/membership/all/payments')}
+                                    onClick={() => router.visit(route('membership.allpayment'))}
                                 >
                                     View All
                                 </Button>

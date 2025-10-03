@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FinancialInvoice;
 use App\Models\Floor;
 use App\Models\Order;
+use App\Models\Reservation;
 use App\Models\Table;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -164,17 +166,37 @@ class FloorController extends Controller
         $floor = Floor::where('id', $floorId)
             ->whereDate('created_at', '<=', $parsedDate)
             ->with(['tables' => function ($query) use ($parsedDate) {
-                $query->whereDate('created_at', '<=', $parsedDate)
+                $query
+                    ->whereDate('created_at', '<=', $parsedDate)
                     ->select('id', 'floor_id', 'table_no', 'capacity')
-                    ->with(['orders' => function ($orderQuery) use ($parsedDate) {
-                        $orderQuery->select('id', 'table_id', 'status', 'start_date', 'user_id')
-                            ->whereDate('start_date', $parsedDate)
-                            ->whereIn('status', ['pending', 'in_progress', 'completed'])
-                            ->with([
-                                'invoice:id,order_id,status',
-                                'user:id,user_id,name',
-                            ]);
-                    }]);
+                    ->with([
+                        // Reservations for the day
+                        'reservations' => function ($resQuery) use ($parsedDate) {
+                            $resQuery
+                                ->whereDate('date', $parsedDate)
+                                ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'member_id','customer_id')
+                                ->with([
+                                    'order' => function ($orderQuery) {
+                                        $orderQuery->select('id', 'reservation_id', 'table_id', 'status', 'order_type', 'start_date', 'member_id');
+                                    },
+                                    'member:id,user_id,full_name',
+                                    'customer:id,name',
+                                ]);
+                        },
+                        // Direct dinein/takeaway orders
+                        'orders' => function ($orderQuery) use ($parsedDate) {
+                            $orderQuery
+                                ->whereDate('start_date', $parsedDate)
+                                ->whereNull('reservation_id')
+                                ->whereIn('order_type', ['dinein', 'takeaway'])
+                                ->whereIn('status', ['pending', 'in_progress'])
+                                ->select('id', 'table_id', 'order_type', 'status', 'start_date', 'member_id','customer_id')
+                                ->with([
+                                    'member:id,user_id,full_name',
+                                    'customer:id,name',
+                                ]);
+                        }
+                    ]);
             }])
             ->first();
 
@@ -182,31 +204,110 @@ class FloorController extends Controller
         $availableCapacity = 0;
 
         if ($floor) {
+            // Attach invoices
+            $floor->tables->map(function ($table) {
+                // Attach invoice for orders
+                $table->orders = $table->orders->map(function ($order) {
+                    $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
+                        ->select('id', 'status', 'data')
+                        ->first();
+                    $order->invoice = $invoice;
+                    return $order;
+                });
+
+                // Attach invoice for reservations
+                $table->reservations = $table->reservations->map(function ($reservation) {
+                    if ($reservation->order) {
+                        $invoice = FinancialInvoice::whereJsonContains('data->order_id', $reservation->order->id)
+                            ->select('id', 'status', 'data')
+                            ->first();
+                        $reservation->invoice = $invoice;
+                    } else {
+                        $reservation->invoice = null;
+                    }
+                    return $reservation;
+                });
+
+                return $table;
+            });
+
             foreach ($floor->tables as $table) {
                 $isAvailable = true;
                 $bookedBy = null;
 
                 $totalCapacity += $table->capacity;
 
+                // 🔹 Reservation check
+                foreach ($table->reservations as $reservation) {
+                    $order = $reservation->order;
+
+                    $now = Carbon::now()->format('H:i:s');
+
+                    // Add flag for active reservation
+                    $reservation->is_current = (
+                        $now >= $reservation->start_time &&
+                        $now <= $reservation->end_time
+                    );
+
+                    // Priority: customer first, then member
+                    if (!$bookedBy) {
+                        if ($reservation->customer) {
+                            $bookedBy = [
+                                'reservation_id' => $reservation->id,
+                                'id' => $reservation->customer->id,
+                                'name' => $reservation->customer->name,
+                                'time_slot' => $reservation->start_time . ' - ' . $reservation->end_time,
+                                'type' => 'customer',
+                            ];
+                        } elseif ($reservation->member) {
+                            $bookedBy = [
+                                'reservation_id' => $reservation->id,
+                                'id' => $reservation->member->user_id,
+                                'name' => $reservation->member->full_name,
+                                'time_slot' => $reservation->start_time . ' - ' . $reservation->end_time,
+                                'type' => 'member',
+                            ];
+                        }
+                    }
+
+                    if (!$order) {
+                        $isAvailable = false;
+                        continue;
+                    }
+
+                    $invoice = $order->invoice;
+                    if (!$invoice || $invoice->status !== 'paid' || $order->status !== 'completed') {
+                        $isAvailable = false;
+                    }
+                }
+
+                // 🔹 Direct dinein/takeaway orders
                 foreach ($table->orders as $order) {
                     $invoice = $order->invoice;
 
-                    if (!$bookedBy && $order->user) {
-                        $bookedBy = [
-                            'order_id' => $order->id,
-                            'id' => $order->user->user_id,
-                            'name' => $order->user->name,
-                        ];
+                    // Priority: customer first, then member
+                    if (!$bookedBy) {
+                        if ($order->customer) {
+                            $bookedBy = [
+                                'order_id' => $order->id,
+                                'id' => $order->customer->id,
+                                'name' => $order->customer->name,
+                                'order_type' => $order->order_type,
+                                'type' => 'customer',
+                            ];
+                        } elseif ($order->member) {
+                            $bookedBy = [
+                                'order_id' => $order->id,
+                                'id' => $order->member->user_id,
+                                'name' => $order->member->full_name,
+                                'order_type' => $order->order_type,
+                                'type' => 'member',
+                            ];
+                        }
                     }
 
-                    if (!$invoice || $invoice->status === 'unpaid') {
+                    if (!$invoice || $invoice->status !== 'paid' || $order->status !== 'completed') {
                         $isAvailable = false;
-                        break;
-                    }
-
-                    if (!($order->status === 'completed' && $invoice->status === 'paid')) {
-                        $isAvailable = false;
-                        break;
                     }
                 }
 
@@ -216,8 +317,6 @@ class FloorController extends Controller
                 if ($isAvailable) {
                     $availableCapacity += $table->capacity;
                 }
-
-                unset($table->orders);
             }
         }
 
@@ -230,11 +329,44 @@ class FloorController extends Controller
 
     public function tableOrderDetails(Request $request, $id)
     {
-        if (Order::where('id', $id)->exists()) {
-            $order = Order::with(['user:id,user_id,name', 'table:id,table_no', 'orderItems:id,order_id,order_item,status', 'invoice:id,order_id,total_price,discount,tax,amount'])->where('id', $id)->first();
+        // Check if ID is an order
+        $order = Order::with([
+            'member:id,user_id,full_name',
+            'customer:id,name,customer_no',
+            'table:id,table_no',
+            'orderItems:id,order_id,order_item,status',
+        ])->find($id);
 
-            return response()->json(['success' => true, 'order' => $order]);
+        if ($order) {
+            // Attach invoice dynamically
+            $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
+                ->select('id', 'total_price', 'amount', 'data', 'status')
+                ->first();
+            $order->invoice = $invoice;
+
+            return response()->json(['success' => true, 'type' => 'order', 'data' => $order]);
         }
+
+        // Otherwise, check if ID is a reservation
+        $reservation = Reservation::with([
+            'member:id,user_id,full_name',
+            'table:id,table_no',
+            'order.orderItems:id,order_id,order_item,status',
+        ])->find($id);
+
+        if ($reservation) {
+            // Attach invoice dynamically to reservation's order
+            if ($reservation->order) {
+                $invoice = FinancialInvoice::whereJsonContains('data->order_id', $reservation->order->id)
+                    ->select('id', 'total_price', 'amount', 'data', 'status')
+                    ->first();
+                $reservation->order->invoice = $invoice;
+            }
+
+            return response()->json(['success' => true, 'type' => 'reservation', 'data' => $reservation]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Not found'], 404);
     }
 
     public function destroy(Floor $floor)

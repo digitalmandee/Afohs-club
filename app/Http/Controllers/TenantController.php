@@ -33,27 +33,27 @@ class TenantController extends Controller
      */
     public function store(Request $request)
     {
-        $fullDomain = $request->input('domain_name') . '.' . config('app.domain');
-
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
             'domain_name' => 'required|string|max:255',
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'printer_ip' => 'required|string|max:255',
+            'printer_port' => 'required',
         ]);
 
         // Custom domain validation
-        if (Domain::where('domain', $fullDomain)->exists()) {
+        if (Domain::where('domain', $request->input('domain_name'))->exists()) {
             return back()->withErrors(['domain_name' => 'The domain is already taken.'])->withInput();
         }
+
+        $validatedData['id'] = $request->input('domain_name');
 
         $tenant = Tenant::create($validatedData);
 
         $tenant->domains()->create([
-            'domain' => $fullDomain,
+            'domain' => $request->input('domain_name'),
         ]);
 
-        return to_route('tenant.register');
+        return to_route('locations.create');
     }
 
     /**
@@ -67,17 +67,25 @@ class TenantController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Tenant $tenant)
     {
-        //
+        return Inertia::render('tenant/register', [
+            'tenant' => $tenant,  // pass existing tenant
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Tenant $tenant)
     {
-        //
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'printer_ip' => 'required|string|max:255',
+            'printer_port' => 'required',
+        ]);
+
+        // Update tenant
+        $tenant->update($validatedData);
+
+        return to_route('locations.index')->with('success', 'Tenant updated successfully!');
     }
 
     /**

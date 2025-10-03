@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\App\Auth;
 
+use App\Helpers\TenantLogout;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\TenantLoginRequest;
+use App\Models\EmployeeLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,11 +38,26 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::guard('tenant')->user();
 
-        if ($user->hasRole('kitchen', 'web')) {
-            return redirect()->intended(route('kitchen.index', absolute: false));
+        // ✅ Only cashier can proceed
+        if ($user->hasRole('cashier')) {
+            // 🔹 Save login log
+            EmployeeLog::create([
+                'employee_id' => $user->employee->id,
+                'type' => 'login',  // or 'shift_start' if you want shift naming
+                'logged_at' => now(),
+            ]);
+
+            return redirect()->intended(route('tenant.dashboard', absolute: false));
         }
 
-        return redirect()->intended(route('tenant.dashboard', absolute: false));
+        // ❌ Not cashier → logout & send back error
+        Auth::guard('tenant')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return back()->withErrors([
+            'employee_id' => 'Access denied. Only cashier can log in.',
+        ]);
     }
 
     /**
@@ -48,10 +65,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('tenant')->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        TenantLogout::logout($request);
 
         return redirect(route('tenant.login'));
     }
