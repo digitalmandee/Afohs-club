@@ -148,7 +148,16 @@ class DashboardController extends Controller
                 }
             ])->get();
         } else {
-            $orders = Order::where('order_type', $order_type)->whereDate('start_date', $date)->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->withCount([
+            $query = Order::whereDate('start_date', $date);
+            
+            // If order_type is takeaway, also include delivery orders
+            if ($order_type === 'takeaway') {
+                $query->whereIn('order_type', ['takeaway', 'delivery']);
+            } else {
+                $query->where('order_type', $order_type);
+            }
+            
+            $orders = $query->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->withCount([
                 'orderItems AS completed_order_items_count' => function ($query) {
                     $query->where('order_items.status', 'completed');
                 }
