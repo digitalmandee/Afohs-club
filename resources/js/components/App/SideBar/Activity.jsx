@@ -14,26 +14,32 @@ const LoginActivityScreen = ({ setProfileView }) => {
 
                 // Map API data if needed
                 const activities = response.data.map((log) => {
-                    // Parse datetime string as local time (not UTC)
+                    // Server is in US timezone, convert to Pakistan timezone (UTC+5)
                     // Format: "2025-10-02 12:34:59"
-                    const [datePart, timePart] = log.logged_at.split(' ');
-                    const [year, month, day] = datePart.split('-');
-                    const [hour, minute, second] = timePart.split(':');
+                    const serverDateTime = new Date(log.logged_at.replace(' ', 'T'));
                     
-                    // Create date in local timezone
-                    const logDate = new Date(year, month - 1, day, hour, minute, second);
+                    // Convert to Pakistan timezone (Asia/Karachi)
+                    const pakistanTime = new Date(serverDateTime.toLocaleString("en-US", {timeZone: "Asia/Karachi"}));
+                    
+                    // Format date for Pakistan timezone
+                    const formattedDate = pakistanTime.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short', 
+                        day: '2-digit',
+                        timeZone: 'Asia/Karachi'
+                    });
+                    
+                    // Format time for Pakistan timezone
+                    const formattedTime = pakistanTime.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true,
+                        timeZone: 'Asia/Karachi'
+                    });
                     
                     return {
-                        date: logDate.toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'short', 
-                            day: '2-digit' 
-                        }),
-                        time: logDate.toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: true 
-                        }),
+                        date: formattedDate,
+                        time: formattedTime,
                         activity: log.type === 'login' ? 'Login' : log.type === 'logout' ? 'Logout' : log.type.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
                     };
                 });
