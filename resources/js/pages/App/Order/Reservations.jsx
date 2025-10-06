@@ -14,7 +14,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { enqueueSnackbar } from 'notistack';
 
 const Reservations = () => {
-    const { reservations, filters } = usePage().props;
+    const { reservations, filters,tenant } = usePage().props;
+
 
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
@@ -254,11 +255,11 @@ const Reservations = () => {
                                     <p>
                                         Time: {selectedInvoice.start_time} - {selectedInvoice.end_time}
                                     </p>
-                                    <p>Restaurant: {selectedInvoice.restaurant?.name || 'Dhaba'}</p>
+                                    <p>Restaurant: {tenant.name}</p>
                                     <p>Table: {selectedInvoice.table?.table_no || 'N/A'}</p>
-                                    <p>Name: {selectedInvoice.member?.full_name}</p>
+                                    <p>Name: {selectedInvoice.member?.full_name || selectedInvoice.customer?.name}</p>
                                     <p>Type: {selectedInvoice.member?.member_type?.name || 'Member'}</p>
-                                    <p>Contact: {selectedInvoice.member?.mobile_number_a}</p>
+                                    <p>Contact: {selectedInvoice.member?.mobile_number_a || selectedInvoice.customer?.contact}</p>
                                     <hr />
                                     <h6>Advance Paid: {selectedInvoice.down_payment || '0'}</h6>
                                     <p style={{ fontSize: '12px', marginTop: '10px' }}>Thank you for making a reservation at AFOHS Club!</p>
