@@ -23,20 +23,31 @@ class FinancialInvoice extends BaseModel
         'issue_date',
         'due_date',
         'paid_for_month',
-        'paid_for_quarter',
         'payment_method',
         'payment_date',
-        'reciept',
+        'receipt', // Fixed spelling from 'reciept'
         'data',
         'remarks',
         'status',
         'created_by',
         'updated_by',
-        'deleted_by'
+        'deleted_by',
+        // New fields for transaction system
+        'fee_type',
+        'payment_frequency',
+        'quarter_number',
+        'valid_from',
+        'valid_to',
+        'credit_card_type'
     ];
 
     protected $casts = [
-        'data' => 'array'
+        'data' => 'array',
+        'valid_from' => 'date',
+        'valid_to' => 'date',
+        'issue_date' => 'date',
+        'due_date' => 'date',
+        'payment_date' => 'date'
     ];
 
     public function customer()
