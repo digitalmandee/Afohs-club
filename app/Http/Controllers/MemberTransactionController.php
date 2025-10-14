@@ -159,7 +159,7 @@ class MemberTransactionController extends Controller
 
     private function prepareInvoiceData($request, $member)
     {
-        $amount = $request->amount;
+        $amount = round($request->amount);
         $discountAmount = 0;
 
         // Calculate discount
@@ -171,7 +171,7 @@ class MemberTransactionController extends Controller
             }
         }
 
-        $totalPrice = $amount - $discountAmount;
+        $totalPrice = round($amount - $discountAmount);
         $data = [
             'member_id' => $request->member_id,
             'member_name' => $member->full_name,
@@ -363,6 +363,8 @@ class MemberTransactionController extends Controller
             'payments.*.payment_method' => 'sometimes|in:cash,credit_card',
             'payments.*.credit_card_type' => 'required_if:payments.*.payment_method,credit_card|in:mastercard,visa',
             'payments.*.receipt_file' => 'sometimes|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+            'payments.*.discount_type' => 'sometimes|in:percent,fixed',
+            'payments.*.discount_value' => 'sometimes|numeric|min:0',
             'payments.*.payment_frequency' => 'required_if:payments.*.fee_type,maintenance_fee|in:quarterly,half_yearly,three_quarters,annually',
             'payments.*.quarter_number' => 'required_if:payments.*.fee_type,maintenance_fee|integer|between:1,4',
         ]);
@@ -381,7 +383,7 @@ class MemberTransactionController extends Controller
 
             foreach ($request->payments as $index => $paymentData) {
                 // Calculate total amount with discount
-                $amount = floatval($paymentData['amount']);
+                $amount = round(floatval($paymentData['amount']));
                 $discountValue = floatval($paymentData['discount_value'] ?? 0);
                 $discountType = $paymentData['discount_type'] ?? '';
                 
@@ -393,6 +395,9 @@ class MemberTransactionController extends Controller
                         $totalPrice = $amount - $discountValue;
                     }
                 }
+                
+                // Round the final total price
+                $totalPrice = round($totalPrice);
 
                 // Handle receipt file upload for credit card payments
                 $receiptPath = null;
@@ -415,6 +420,7 @@ class MemberTransactionController extends Controller
                     'discount_type' => $discountType ?: null,
                     'discount_value' => $discountValue ?: null,
                     'total_price' => $totalPrice,
+                    'paid_amount' => $totalPrice,
                     'payment_method' => $paymentData['payment_method'] ?? 'cash',
                     'credit_card_type' => $paymentData['credit_card_type'] ?? null,
                     'receipt' => $receiptPath,
