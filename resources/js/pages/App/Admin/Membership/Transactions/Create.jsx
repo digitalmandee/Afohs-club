@@ -1099,6 +1099,8 @@ export default function CreateTransaction() {
                                                                 <TableCell>Invoice No</TableCell>
                                                                 <TableCell>Fee Type</TableCell>
                                                                 <TableCell>Amount</TableCell>
+                                                                <TableCell>Payment Method</TableCell>
+                                                                <TableCell>Receipt</TableCell>
                                                                 <TableCell>Status</TableCell>
                                                                 <TableCell>Payment Date</TableCell>
                                                                 <TableCell>Period</TableCell>
@@ -1114,6 +1116,30 @@ export default function CreateTransaction() {
                                                                         </TableCell>
                                                                         <TableCell>{formatCurrency(transaction.total_price)}</TableCell>
                                                                         <TableCell>
+                                                                            <Chip 
+                                                                                label={transaction.payment_method === 'credit_card' ? `💳 ${transaction.credit_card_type?.toUpperCase() || 'CARD'}` : '💵 CASH'} 
+                                                                                color={transaction.payment_method === 'credit_card' ? 'info' : 'default'} 
+                                                                                size="small" 
+                                                                            />
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {transaction.receipt ? (
+                                                                                <Button
+                                                                                    size="small"
+                                                                                    variant="outlined"
+                                                                                    startIcon={<Receipt />}
+                                                                                    onClick={() => window.open(`${transaction.receipt}`, '_blank')}
+                                                                                    sx={{ fontSize: '11px', py: 0.5, px: 1 }}
+                                                                                >
+                                                                                    View
+                                                                                </Button>
+                                                                            ) : (
+                                                                                <Typography variant="caption" color="text.secondary">
+                                                                                    No Receipt
+                                                                                </Typography>
+                                                                            )}
+                                                                        </TableCell>
+                                                                        <TableCell>
                                                                             <Chip label={transaction.status?.toUpperCase()} color={getStatusColor(transaction.status)} size="small" />
                                                                         </TableCell>
                                                                         <TableCell>{transaction.payment_date ? formatDate(transaction.payment_date) : '-'}</TableCell>
@@ -1122,7 +1148,7 @@ export default function CreateTransaction() {
                                                                 ))
                                                             ) : (
                                                                 <TableRow>
-                                                                    <TableCell colSpan={6} align="center">
+                                                                    <TableCell colSpan={8} align="center">
                                                                         <Typography color="textSecondary">{searchInvoice ? `No transactions found matching "${searchInvoice}"` : 'No transactions found for this member'}</Typography>
                                                                     </TableCell>
                                                                 </TableRow>

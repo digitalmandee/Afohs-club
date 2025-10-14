@@ -377,7 +377,6 @@ class MemberTransactionController extends Controller
         try {
             DB::beginTransaction();
 
-            $member = Member::where('user_id', $request->member_id)->first();
             $createdTransactions = [];
 
             foreach ($request->payments as $index => $paymentData) {
@@ -406,7 +405,7 @@ class MemberTransactionController extends Controller
 
                 // Create financial invoice
                 $transaction = FinancialInvoice::create([
-                    'member_id' => $member->id,
+                    'member_id' => $request->member_id,
                     'invoice_no' => $paymentData['invoice_no'],
                     'invoice_type' => $paymentData['fee_type'] === 'membership_fee' ? 'membership' : 'maintenance',
                     'fee_type' => $paymentData['fee_type'],
