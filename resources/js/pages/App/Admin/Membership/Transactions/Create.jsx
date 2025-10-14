@@ -318,13 +318,16 @@ export default function CreateTransaction() {
         const amount = parseFloat(data.amount) || 0;
         const discountValue = parseFloat(data.discount_value) || 0;
 
+        let total;
         if (data.discount_type === 'percent') {
-            return amount - (amount * discountValue) / 100;
+            total = amount - (amount * discountValue) / 100;
         } else if (data.discount_type === 'fixed') {
-            return amount - discountValue;
+            total = amount - discountValue;
+        } else {
+            total = amount;
         }
 
-        return amount;
+        return Math.round(total);
     };
 
     const validateDateOverlap = () => {
@@ -469,7 +472,9 @@ export default function CreateTransaction() {
         return new Intl.NumberFormat('en-PK', {
             style: 'currency',
             currency: 'PKR',
-        }).format(amount);
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(Math.round(amount));
     };
 
     const formatDate = (date) => {

@@ -156,18 +156,22 @@ export default function BulkMigration() {
         const amount = parseFloat(payment.amount) || 0;
         const discountValue = parseFloat(payment.discount_value) || 0;
 
-        if (!payment.discount_type || !discountValue) return amount;
+        if (!payment.discount_type || !discountValue) return Math.round(amount);
 
+        let total;
         if (payment.discount_type === 'percent') {
-            return amount - (amount * discountValue) / 100;
+            total = amount - (amount * discountValue) / 100;
         } else {
-            return amount - discountValue;
+            total = amount - discountValue;
         }
+        
+        return Math.round(total);
     };
 
     // Calculate grand total
     const calculateGrandTotal = () => {
-        return payments.reduce((total, payment) => total + calculatePaymentTotal(payment), 0);
+        const total = payments.reduce((total, payment) => total + calculatePaymentTotal(payment), 0);
+        return Math.round(total);
     };
 
     // Search function for invoice numbers
@@ -199,7 +203,8 @@ export default function BulkMigration() {
             style: 'currency',
             currency: 'PKR',
             minimumFractionDigits: 0,
-        }).format(amount);
+            maximumFractionDigits: 0,
+        }).format(Math.round(amount));
     };
 
     // Format date
@@ -453,6 +458,8 @@ export default function BulkMigration() {
                                                             <TableCell sx={{ fontWeight: 600 }}>Payment Frequency</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Quarter</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Amount</TableCell>
+                                                            <TableCell sx={{ fontWeight: 600 }}>Discount Type</TableCell>
+                                                            <TableCell sx={{ fontWeight: 600 }}>Discount Value</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Valid From</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Valid To</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Invoice No</TableCell>
@@ -514,6 +521,36 @@ export default function BulkMigration() {
                                                                     <TableCell>
                                                                         <TextField size="small" type="number" value={payment.amount} onChange={(e) => updatePayment(payment.id, 'amount', e.target.value)} sx={{ width: 100 }} />
                                                                     </TableCell>
+                                                                    
+                                                                    {/* Discount Type */}
+                                                                    <TableCell>
+                                                                        <FormControl size="small" sx={{ minWidth: 100 }}>
+                                                                            <Select
+                                                                                value={payment.discount_type || ''}
+                                                                                onChange={(e) => updatePayment(payment.id, 'discount_type', e.target.value)}
+                                                                                displayEmpty
+                                                                            >
+                                                                                <MenuItem value="">No Discount</MenuItem>
+                                                                                <MenuItem value="percent">% Percent</MenuItem>
+                                                                                <MenuItem value="fixed">💰 Fixed</MenuItem>
+                                                                            </Select>
+                                                                        </FormControl>
+                                                                    </TableCell>
+                                                                    
+                                                                    {/* Discount Value */}
+                                                                    <TableCell>
+                                                                        {payment.discount_type && (
+                                                                            <TextField
+                                                                                size="small"
+                                                                                type="number"
+                                                                                value={payment.discount_value}
+                                                                                onChange={(e) => updatePayment(payment.id, 'discount_value', e.target.value)}
+                                                                                placeholder={payment.discount_type === 'percent' ? '10' : '1000'}
+                                                                                sx={{ width: 80 }}
+                                                                            />
+                                                                        )}
+                                                                    </TableCell>
+                                                                    
                                                                     <TableCell>
                                                                         <TextField size="small" type="date" value={payment.valid_from} onChange={(e) => updatePayment(payment.id, 'valid_from', e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 140 }} />
                                                                     </TableCell>
