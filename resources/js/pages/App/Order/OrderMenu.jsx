@@ -118,7 +118,6 @@ const OrderMenu = () => {
         if (reservation && (reservation.member || reservation.customer)) {
             const memberData = { id: reservation.member ? reservation.member.user_id : reservation.customer.id, name: reservation.member ? reservation.member.full_name : reservation.customer.name, membership_no: reservation.member ? reservation.member.membership_no : reservation.customer.customer_no, booking_type: reservation.member ? 'member' : 'guest' };
             handleOrderDetailChange('member', memberData);
-            console.log('reservation', reservation);
             handleOrderDetailChange('person_count', reservation.person_count);
             handleOrderDetailChange('table', reservation.table);
             handleOrderDetailChange('reservation_id', reservation.id);

@@ -24,6 +24,7 @@ use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MemberTransactionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoomBookingController;
 use App\Http\Controllers\RoomBookingRequestController;
@@ -383,6 +384,23 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         // payment
         Route::get('payments', [PaymentController::class, 'index'])->name('membership.allpayment');
         Route::post('payments/store', [PaymentController::class, 'store'])->name('membership.payment.store');
+
+        // Member Transactions
+        Route::group(['prefix' => 'transactions'], function () {
+            Route::get('dashboard', [MemberTransactionController::class, 'index'])->name('membership.transactions.dashboard');
+            Route::get('create', [MemberTransactionController::class, 'create'])->name('membership.transactions.create');
+            Route::get('all', [MemberTransactionController::class, 'getAllTransactions'])->name('membership.transactions.index');
+            Route::get('search-members', [MemberTransactionController::class, 'searchMembers'])->name('membership.transactions.search-members');
+            Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('membership.transactions.search');
+            Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('membership.transactions.member');
+            Route::post('store', [MemberTransactionController::class, 'store'])->name('membership.transactions.store');
+            
+            // Bulk Migration Routes (Temporary for data migration)
+            Route::get('bulk-migration', [MemberTransactionController::class, 'bulkMigration'])->name('membership.transactions.bulk-migration');
+            Route::post('bulk-store', [MemberTransactionController::class, 'bulkStore'])->name('membership.transactions.bulk-store');
+            
+            Route::get('{id}', [MemberTransactionController::class, 'show'])->name('membership.transactions.show');
+        });
     });
 
     // get member invoice

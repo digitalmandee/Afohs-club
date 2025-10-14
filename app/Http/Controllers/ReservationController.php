@@ -13,7 +13,7 @@ class ReservationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Reservation::with(['member:user_id,full_name,membership_no,mobile_number_a', 'customer:id,name,customer_no', 'table']);
+        $query = Reservation::with(['member:user_id,full_name,membership_no,mobile_number_a', 'customer:id,name,customer_no,contact', 'table']);
 
         // ✅ Apply filters
         if ($request->filled('status')) {
@@ -164,6 +164,8 @@ class ReservationController extends Controller
         }
 
         $reservation->update(['status' => 'cancelled']);
+
+        $reservation->order()->update(['status' => 'cancelled']);
 
         return back()->with('success', 'Reservation cancelled successfully.');
     }

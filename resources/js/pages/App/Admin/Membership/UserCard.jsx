@@ -200,7 +200,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                     </CardContent>
                     <MembershipFooter>
                         <Typography variant="h6" fontWeight="medium">
-                            {member?.member_type?.name} Member
+                            Primary Member
                         </Typography>
                     </MembershipFooter>
                 </MembershipCard>

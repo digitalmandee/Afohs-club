@@ -33,7 +33,6 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 cashier: invoiceData.cashier || null,
                 waiter: invoiceData.waiter || null,
                 order_items: invoiceData.order_items || [],
-                amount: invoiceData.price || invoiceData.amount || 0,
                 paid_amount: invoiceData.paid_amount || null,
             };
             setPaymentData(restructuredData);

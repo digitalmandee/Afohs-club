@@ -138,7 +138,7 @@ const drawerWidthClosed = 110;
 
 const TableManagement = ({ floorsdata, tablesData }) => {
     const [open, setOpen] = useState(true);
-    const [selectedFloor, setSelectedFloor] = useState(1);
+    const [selectedFloor, setSelectedFloor] = useState(null);
     const today = new Date();
     const [selectedDate, setSelectedDate] = useState({
         date: today.getDate(),
@@ -228,7 +228,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
 
     useEffect(() => {
         if (matchedFloors.length > 0) {
-            setSelectedFloor(matchedFloors[0].id);
+            setSelectedFloor(selectedFloor || matchedFloors[0].id);
         }
     }, [matchedFloors]);
 

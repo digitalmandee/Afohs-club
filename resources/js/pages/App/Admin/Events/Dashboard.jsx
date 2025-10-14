@@ -649,7 +649,6 @@ const BookingDashboard = ({ data, roomTypes }) => {
                                                                         minWidth: '100px',
                                                                         textAlign: 'center',
                                                                         cursor: 'pointer',
-                                                                        borderRadius: '0px',
                                                                     }}
                                                                 >
                                                                     {booking.status}
