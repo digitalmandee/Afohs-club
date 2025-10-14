@@ -176,6 +176,10 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                             <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
                                 #{data.application_no}
                             </Typography>
+                            {/* add member status woth proper background design accordng */}
+                            <Typography variant="body1" sx={{ ml: 2, color: data.status === 'active' ? '#2e7d32' : (data.status === 'suspended' || data.status === 'cancelled') ? '#FFA90B' : '#d32f2f', textTransform: 'capitalize', fontWeight: 700 }}>
+                                ( {data.status} )
+                            </Typography>
                         </Box>
                     </Grid>
 
