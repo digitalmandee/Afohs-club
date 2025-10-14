@@ -109,7 +109,7 @@ const handlePrintMembershipCard = (member) => {
                     <img src="/assets/Logo.png" alt="AFOHS CLUB" class="logo" />
                     <div class="info-grid">
                         <div class="avatar-section">
-                            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1.PNG-DAILsdTgi3B4Lf6K9sR35Uu3o71eJ6.png" alt="Member Photo" class="avatar" />
+                            <img src="${member?.profile_photo || '/placeholder.svg'}" alt="Member Photo" class="avatar" />
                         </div>
                         <div>
                             <div class="label">Name</div>
@@ -124,7 +124,7 @@ const handlePrintMembershipCard = (member) => {
                         </div>
                     </div>
                 </div>
-                <div class="footer">${member?.member_type?.name || ''} Member</div>
+                <div class="footer">Primary Member</div>
             </div>
         </body>
         </html>
@@ -136,7 +136,7 @@ const handlePrintMembershipCard = (member) => {
     setTimeout(() => {
         printWindow.print();
         printWindow.close();
-    }, 250);
+    }, 500);
 };
 
 const MembershipCardComponent = ({ open, onClose, member }) => {
