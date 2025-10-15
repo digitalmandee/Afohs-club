@@ -47,6 +47,437 @@ export default function BulkMigration() {
         setPayments([createEmptyPayment()]);
     }, []);
 
+    // Auto-update payments when member changes
+    useEffect(() => {
+        if (selectedMember && memberTransactions.length >= 0) {
+            // Auto-update maintenance fee payments with suggested periods
+            payments.forEach((payment, index) => {
+                if (payment.fee_type === 'maintenance_fee' && payment.payment_frequency) {
+                    // Trigger auto-suggestion for this payment
+                    setTimeout(() => suggestMaintenancePeriod(payment.payment_frequency, index), 100);
+                }
+            });
+        }
+    }, [selectedMember, memberTransactions]);
+
+    // Quarter analysis function (from Create.jsx)
+    const analyzeQuarterStatus = (transactions, membershipDate) => {
+        const membershipYear = new Date(membershipDate).getFullYear();
+        const membershipMonth = new Date(membershipDate).getMonth(); // 0-based (0 = Jan, 11 = Dec)
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+
+        // Get maintenance fee transactions
+        const maintenanceTransactions = transactions.filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid');
+
+        // Sort transactions by validity end date (latest first)
+        const sortedTransactions = [...maintenanceTransactions].sort((a, b) => new Date(b.valid_to) - new Date(a.valid_to));
+
+        let paidQuarters = [];
+        let latestEndDate = null;
+
+        if (sortedTransactions.length > 0) {
+            const mostRecentTransaction = sortedTransactions[0];
+            const mostRecentEnd = new Date(mostRecentTransaction.valid_to);
+            
+            // Check if we've moved past the first year (December 31st of membership year)
+            const firstYearEnd = new Date(membershipYear, 11, 31); // Dec 31 of membership year
+            isFirstYear = mostRecentEnd <= firstYearEnd;
+            
+            latestEndDate = mostRecentEnd.toISOString().split('T')[0];
+        }
+
+        // Check if we're still in the first year (monthly payment system)
+        const firstYearEnd = new Date(Date.UTC(membershipYear, 11, 31)); // Dec 31 of membership year
+        const isFirstYear = !latestEndDate || new Date(latestEndDate) <= firstYearEnd;
+
+        if (isFirstYear) {
+            // FIRST YEAR: Monthly payment system (only show if still in first year AND not all months paid)
+            const monthsInFirstYear = [];
+            for (let month = membershipMonth + 1; month <= 11; month++) {
+                monthsInFirstYear.push(month);
+            }
+
+            const paidMonthsInFirstYear = [];
+            sortedTransactions.forEach((transaction) => {
+                const txStart = new Date(transaction.valid_from);
+                const txEnd = new Date(transaction.valid_to);
+                
+                let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
+                const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
+                
+                while (currentDate <= endDate) {
+                    const month = currentDate.getMonth();
+                    const year = currentDate.getFullYear();
+                    
+                    const monthStart = new Date(year, month, 1);
+                    const monthEnd = new Date(year, month + 1, 0);
+                    const hasOverlap = (txStart <= monthEnd && txEnd >= monthStart);
+                    
+                    if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonthsInFirstYear.includes(month)) {
+                        paidMonthsInFirstYear.push(month);
+                    }
+                    
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+            });
+
+            const allFirstYearMonthsPaid = paidMonthsInFirstYear.length >= monthsInFirstYear.length;
+
+            if (!allFirstYearMonthsPaid) {
+                // Map months to quarters for display (approximate)
+                paidMonthsInFirstYear.forEach(month => {
+                    const quarter = Math.floor(month / 3) + 1; // 0-2->Q1, 3-5->Q2, 6-8->Q3, 9-11->Q4
+                    if (!paidQuarters.includes(quarter)) {
+                        paidQuarters.push(quarter);
+                    }
+                });
+            }
+        } else {
+            // SUBSEQUENT YEARS: Quarterly payment logic (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
+            // Filter transactions for current quarterly cycle (include any transaction that goes into next year)
+            const quarterlyTransactions = sortedTransactions.filter((transaction) => {
+                const txStart = new Date(transaction.valid_from);
+                const txEnd = new Date(transaction.valid_to);
+                const txYear = txStart.getFullYear();
+                const endYear = txEnd.getFullYear();
+                
+                // Include transactions that start after membership year OR extend into next year
+                return txYear > membershipYear || endYear > membershipYear;
+            });
+
+            // Analyze which months are covered by all transactions combined
+            const paidMonthsInYear = new Set();
+            
+            quarterlyTransactions.forEach((transaction) => {
+                const txStart = new Date(transaction.valid_from);
+                const txEnd = new Date(transaction.valid_to);
+                
+                // Mark each month covered by this transaction
+                let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
+                const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
+                
+                while (currentDate <= endDate) {
+                    const year = currentDate.getFullYear();
+                    const month = currentDate.getMonth();
+                    
+                    // Only count months from years after membership year
+                    if (year > membershipYear) {
+                        const monthKey = `${year}-${month}`;
+                        paidMonthsInYear.add(monthKey);
+                    }
+                    
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+            });
+            
+            // Now check which quarters are completely covered and track partial quarters
+            const currentAnalysisYear = membershipYear + 1; // Start from year after membership
+            const partialQuarters = {}; // Track which quarters are partially paid
+            
+            for (let quarter = 1; quarter <= 4; quarter++) {
+                const quarterStartMonth = (quarter - 1) * 3; // Q1=0(Jan), Q2=3(Apr), Q3=6(Jul), Q4=9(Oct)
+                const monthsInQuarter = [quarterStartMonth, quarterStartMonth + 1, quarterStartMonth + 2];
+                
+                const paidMonthsInQuarter = monthsInQuarter.filter(month => {
+                    const monthKey = `${currentAnalysisYear}-${month}`;
+                    return paidMonthsInYear.has(monthKey);
+                });
+                
+                const allMonthsPaid = paidMonthsInQuarter.length === 3;
+                const someMonthsPaid = paidMonthsInQuarter.length > 0;
+                
+                if (allMonthsPaid) {
+                    paidQuarters.push(quarter);
+                } else if (someMonthsPaid) {
+                    // Track partial quarter info
+                    const unpaidMonths = monthsInQuarter.filter(month => {
+                        const monthKey = `${currentAnalysisYear}-${month}`;
+                        return !paidMonthsInYear.has(monthKey);
+                    });
+                    
+                    partialQuarters[quarter] = {
+                        paidMonths: paidMonthsInQuarter,
+                        unpaidMonths: unpaidMonths,
+                        nextUnpaidMonth: Math.min(...unpaidMonths)
+                    };
+                }
+            }
+            
+            // Store partial quarter info for later use
+            window.partialQuarters = partialQuarters;
+        }
+
+        paidQuarters.sort((a, b) => a - b);
+
+        // Determine next payment period
+        let nextQuarter = 1;
+        let isNewCycle = false;
+
+        if (isFirstYear) {
+            // For first year, determine next month to pay
+            const monthsInFirstYear = [];
+            for (let month = membershipMonth + 1; month <= 11; month++) {
+                monthsInFirstYear.push(month);
+            }
+
+            const paidMonths = [];
+            sortedTransactions.forEach((transaction) => {
+                const txStart = new Date(transaction.valid_from);
+                const txEnd = new Date(transaction.valid_to);
+                
+                // More accurate month detection: check each month the transaction spans
+                let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
+                const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
+                
+                while (currentDate <= endDate) {
+                    const month = currentDate.getMonth();
+                    const year = currentDate.getFullYear();
+                    
+                    // Check if this month overlaps with the transaction period
+                    const monthStart = new Date(year, month, 1);
+                    const monthEnd = new Date(year, month + 1, 0); // Last day of month
+                    
+                    // Transaction covers this month if there's any overlap
+                    const hasOverlap = (txStart <= monthEnd && txEnd >= monthStart);
+                    
+                    if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
+                        paidMonths.push(month);
+                    }
+                    
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+            });
+
+            // Check if all first year months are paid
+            if (paidMonths.length >= monthsInFirstYear.length) {
+                // Move to quarterly system for next year
+                nextQuarter = 1;
+                isNewCycle = true;
+            } else {
+                // Still in first year, find next month
+                const nextMonth = monthsInFirstYear.find(month => !paidMonths.includes(month));
+                nextQuarter = Math.floor((nextMonth || 0) / 3) + 1;
+            }
+        } else {
+            // Quarterly system logic
+            const hasAllQuarters = paidQuarters.includes(1) && paidQuarters.includes(2) && paidQuarters.includes(3) && paidQuarters.includes(4);
+            const partialQuarters = window.partialQuarters || {};
+            
+            if (hasAllQuarters) {
+                nextQuarter = 1;
+                isNewCycle = true;
+                paidQuarters = []; // Reset for new cycle display
+            } else {
+                // Check for partial quarters first (priority)
+                let foundPartialQuarter = false;
+                for (let i = 1; i <= 4; i++) {
+                    if (partialQuarters[i]) {
+                        nextQuarter = i;
+                        foundPartialQuarter = true;
+                        break;
+                    }
+                }
+                
+                // If no partial quarters, find next unpaid quarter
+                if (!foundPartialQuarter) {
+                    for (let i = 1; i <= 4; i++) {
+                        if (!paidQuarters.includes(i)) {
+                            nextQuarter = i;
+                            break;
+                        }
+                    }
+                }
+                isNewCycle = false;
+            }
+        }
+
+        return {
+            paidQuarters,
+            nextAvailableQuarter: nextQuarter,
+            currentYear: membershipYear,
+            isNewCycle,
+            latestEndDate,
+        };
+    };
+
+    // Payment suggestion function (from Create.jsx)
+    const suggestMaintenancePeriod = (frequency, paymentIndex) => {
+        if (!selectedMember) {
+            return;
+        }
+
+        const membershipDate = new Date(selectedMember.membership_date);
+        const membershipYear = membershipDate.getFullYear();
+        const membershipMonth = membershipDate.getMonth(); // 0-based
+        const currentYear = new Date().getFullYear();
+        
+        const quarterStatus = analyzeQuarterStatus(memberTransactions, membershipDate);
+
+        // Check if we're still in the first year (monthly payment system)
+        const firstYearEnd = new Date(Date.UTC(membershipYear, 11, 31)); // Dec 31 of membership year
+        const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
+        
+        // Check if all first year months are already paid
+        const monthsInFirstYear = [];
+        for (let month = membershipMonth + 1; month <= 11; month++) {
+            monthsInFirstYear.push(month);
+        }
+        
+        const paidMonths = [];
+        const maintenanceTransactions = memberTransactions.filter(t => t.fee_type === 'maintenance_fee' && t.status === 'paid');
+        maintenanceTransactions.forEach((transaction) => {
+            const txStart = new Date(transaction.valid_from);
+            const txEnd = new Date(transaction.valid_to);
+            
+            let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
+            const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
+            
+            while (currentDate <= endDate) {
+                const month = currentDate.getMonth();
+                const year = currentDate.getFullYear();
+                
+                const monthStart = new Date(year, month, 1);
+                const monthEnd = new Date(year, month + 1, 0);
+                const hasOverlap = (txStart <= monthEnd && txEnd >= monthStart);
+                
+                if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
+                    paidMonths.push(month);
+                }
+                
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+        });
+        
+        const allFirstYearMonthsPaid = paidMonths.length >= monthsInFirstYear.length;
+
+        let startDate, endDate, amount;
+
+        if (isFirstYear && !allFirstYearMonthsPaid) {
+            // FIRST YEAR: Monthly payment system (only if not all months are paid)
+            if (quarterStatus.latestEndDate && paidMonths.length > 0) {
+                // Continue from where last payment ended - start from first day of next month
+                const lastEndDate = new Date(quarterStatus.latestEndDate);
+                // Use UTC to avoid timezone issues and start from first day of next month
+                startDate = new Date(Date.UTC(lastEndDate.getUTCFullYear(), lastEndDate.getUTCMonth() + 1, 1));
+            } else {
+                // Start from the month after membership month (for new members or no payments)
+                // Use UTC to avoid timezone issues
+                startDate = new Date(Date.UTC(membershipYear, membershipMonth + 1, 1));
+            }
+
+            // Calculate how many months to pay based on frequency
+            let monthsToAdd;
+            if (frequency === 'monthly') {
+                monthsToAdd = 1;
+            } else if (frequency === 'quarterly') {
+                monthsToAdd = 3;
+            } else if (frequency === 'half_yearly') {
+                monthsToAdd = 6;
+            } else if (frequency === 'three_quarters') {
+                monthsToAdd = 9;
+            } else { // annually
+                monthsToAdd = 12;
+            }
+
+            // Calculate end date using complete months
+            endDate = new Date(startDate);
+            endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
+            endDate.setUTCDate(0); // Last day of previous month (complete month)
+
+            // Cap at December 31st of membership year
+            if (endDate > firstYearEnd) {
+                endDate = new Date(firstYearEnd);
+            }
+
+            // Calculate amount based on actual months covered
+            const actualMonths = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+            const monthlyFee = selectedMember.member_category.subscription_fee / 3; // Quarterly fee / 3 months
+            amount = Math.round(monthlyFee * actualMonths);
+
+        } else {
+            // SUBSEQUENT YEARS OR FIRST YEAR COMPLETE: Quarterly payment system (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
+            // But also support monthly payments and partial quarter completion
+            const partialQuarters = window.partialQuarters || {};
+            const currentPartialQuarter = partialQuarters[quarterStatus.nextAvailableQuarter];
+            
+            let quartersToAdd, monthsToAdd;
+            
+            // Check if we're completing a partial quarter
+            if (currentPartialQuarter && frequency === 'quarterly') {
+                // For partial quarter completion, only pay remaining months
+                monthsToAdd = currentPartialQuarter.unpaidMonths.length;
+                quartersToAdd = 1;
+            } else if (frequency === 'monthly') {
+                monthsToAdd = 1;
+                quartersToAdd = 1; // For calculation purposes
+            } else if (frequency === 'quarterly') {
+                monthsToAdd = 3;
+                quartersToAdd = 1;
+            } else if (frequency === 'half_yearly') {
+                monthsToAdd = 6;
+                quartersToAdd = 2;
+            } else if (frequency === 'three_quarters') {
+                monthsToAdd = 9;
+                quartersToAdd = 3;
+            } else { // annually
+                monthsToAdd = 12;
+                quartersToAdd = 4;
+            }
+
+            if (quarterStatus.latestEndDate && !allFirstYearMonthsPaid) {
+                // Continue from where last payment ended - start from first day of next month
+                const lastEndDate = new Date(quarterStatus.latestEndDate);
+                startDate = new Date(Date.UTC(lastEndDate.getUTCFullYear(), lastEndDate.getUTCMonth() + 1, 1));
+            } else if (allFirstYearMonthsPaid || !isFirstYear) {
+                // Start from January 1st of the year after membership year, or continue quarterly system
+                if (currentPartialQuarter) {
+                    // For partial quarters, start from the first unpaid month in that quarter
+                    const nextUnpaidMonth = currentPartialQuarter.nextUnpaidMonth;
+                    const currentYear = membershipYear + 1;
+                    startDate = new Date(Date.UTC(currentYear, nextUnpaidMonth, 1));
+                } else if (quarterStatus.latestEndDate) {
+                    const lastEndDate = new Date(quarterStatus.latestEndDate);
+                    startDate = new Date(Date.UTC(lastEndDate.getUTCFullYear(), lastEndDate.getUTCMonth() + 1, 1));
+                } else {
+                    startDate = new Date(Date.UTC(membershipYear + 1, 0, 1));
+                }
+            } else {
+                // Start from January 1st of the year after membership year
+                startDate = new Date(Date.UTC(membershipYear + 1, 0, 1));
+            }
+
+            // Calculate end date by adding months - complete months
+            endDate = new Date(startDate);
+            endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
+            endDate.setUTCDate(0); // Last day of previous month (complete month)
+
+            // Calculate amount based on frequency and partial quarter logic
+            if (frequency === 'monthly') {
+                const monthlyFee = selectedMember.member_category.subscription_fee / 3; // Quarterly fee / 3 months
+                amount = Math.round(monthlyFee);
+            } else if (currentPartialQuarter && frequency === 'quarterly') {
+                // For partial quarter completion, charge only for remaining months
+                const monthlyFee = selectedMember.member_category.subscription_fee / 3;
+                amount = Math.round(monthlyFee * monthsToAdd);
+            } else {
+                const quarterlyAmount = selectedMember.member_category.subscription_fee;
+                amount = quarterlyAmount * quartersToAdd;
+            }
+        }
+
+        // Update the specific payment in the array
+        const updatedPayments = [...payments];
+        updatedPayments[paymentIndex] = {
+            ...updatedPayments[paymentIndex],
+            valid_from: startDate.toISOString().split('T')[0],
+            valid_to: endDate.toISOString().split('T')[0],
+            amount: amount,
+            quarter_number: quarterStatus.nextAvailableQuarter
+        };
+        setPayments(updatedPayments);
+    };
+
     // Search members function
     const searchMembers = async (query) => {
         if (!query || query.length < 2) {
@@ -81,8 +512,17 @@ export default function BulkMigration() {
             setSearchInvoice(''); // Reset search
 
             enqueueSnackbar(`Selected member: ${member.full_name}`, { variant: 'info' });
+            
+            // Auto-update maintenance fee payments with suggested periods
+            const updatedPayments = payments.map((payment, index) => {
+                if (payment.fee_type === 'maintenance_fee' && payment.payment_frequency) {
+                    // Trigger auto-suggestion for this payment
+                    setTimeout(() => suggestMaintenancePeriod(payment.payment_frequency, index), 100);
+                }
+                return payment;
+            });
+            
         } catch (error) {
-            console.error('Error fetching member transactions:', error);
             enqueueSnackbar('Error loading member data', { variant: 'error' });
         } finally {
             setLoadingTransactions(false);
@@ -409,6 +849,26 @@ export default function BulkMigration() {
                                                         CNIC No: <strong>{selectedMember.cnic_no}</strong>
                                                     </Typography>
                                                 </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Membership Date: <strong>{new Date(selectedMember.membership_date).toLocaleDateString()}</strong>
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        💳 Membership Fee: <strong style={{color: '#059669'}}>Rs {selectedMember.member_category?.membership_fee?.toLocaleString() || 'N/A'}</strong>
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        🔧 Maintenance Fee: <strong style={{color: '#dc2626'}}>Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}</strong>
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        📅 Monthly Rate: <strong style={{color: '#7c3aed'}}>Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee / 3).toLocaleString() : 'N/A'}</strong>
+                                                    </Typography>
+                                                </Grid>
                                             </Grid>
                                         </Box>
                                     )}
@@ -495,12 +955,24 @@ export default function BulkMigration() {
                                                                     <TableCell>
                                                                         {payment.fee_type === 'maintenance_fee' && (
                                                                             <FormControl size="small" sx={{ minWidth: 120 }}>
-                                                                                <Select value={payment.payment_frequency} onChange={(e) => updatePayment(payment.id, 'payment_frequency', e.target.value)} displayEmpty>
+                                                                                <Select 
+                                                                                    value={payment.payment_frequency} 
+                                                                                    onChange={(e) => {
+                                                                                        updatePayment(payment.id, 'payment_frequency', e.target.value);
+                                                                                        // Auto-suggest dates and amounts when frequency changes
+                                                                                        const paymentIndex = payments.findIndex(p => p.id === payment.id);
+                                                                                        if (paymentIndex !== -1) {
+                                                                                            suggestMaintenancePeriod(e.target.value, paymentIndex);
+                                                                                        }
+                                                                                    }} 
+                                                                                    displayEmpty
+                                                                                >
                                                                                     <MenuItem value="">Select Frequency</MenuItem>
-                                                                                    <MenuItem value="quarterly">Quarterly</MenuItem>
-                                                                                    <MenuItem value="half_yearly">Half Yearly</MenuItem>
-                                                                                    <MenuItem value="three_quarters">3 Quarters</MenuItem>
-                                                                                    <MenuItem value="annually">Annually</MenuItem>
+                                                                                    <MenuItem value="monthly">📅 Monthly</MenuItem>
+                                                                                    <MenuItem value="quarterly">📅 Quarterly</MenuItem>
+                                                                                    <MenuItem value="half_yearly">📅 Half Yearly</MenuItem>
+                                                                                    <MenuItem value="three_quarters">📅 Three Quarters</MenuItem>
+                                                                                    <MenuItem value="annually">📅 Annually</MenuItem>
                                                                                 </Select>
                                                                             </FormControl>
                                                                         )}
