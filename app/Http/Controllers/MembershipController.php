@@ -56,7 +56,7 @@ class MembershipController extends Controller
         // Replace kinship with only selected fields
         if ($user->kinshipMember) {
             $user->kinship = [
-                'id' => $user->kinshipMember['id'],
+                'id' => $user->kinshipMember['user_id'],
                 'booking_type' => 'member',
                 'name' => $user->kinshipMember['full_name'],
                 'label' => "{$user->kinshipMember['full_name']} ({$user->kinshipMember['membership_no']})",
