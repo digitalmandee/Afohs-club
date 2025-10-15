@@ -107,9 +107,6 @@ const handlePrintReceipt = (invoice) => {
                         <span style="font-weight: bold;">Name: </span>${invoiceData.billTo.name}
                       </div>
                       <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Category: </span>${invoiceData.billTo.category}
-                      </div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
                         <span style="font-weight: bold;">Membership #: </span>${invoiceData.billTo.membershipId}
                       </div>
                       <div class="typography-body2" style="margin-bottom: 4px;">
@@ -117,9 +114,6 @@ const handlePrintReceipt = (invoice) => {
                       </div>
                       <div class="typography-body2" style="margin-bottom: 4px;">
                         <span style="font-weight: bold;">City: </span>${invoiceData.billTo.city}
-                      </div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Family Member: </span>${invoiceData.billTo.familyMember}
                       </div>
                     </div>
                   </div>
@@ -297,10 +291,6 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                             {invoice.member.full_name}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                            <span style={{ fontWeight: 'bold' }}>Category: </span>
-                                            {invoice.member.member_type?.name}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Membership #: </span>
                                             {invoice.member.membership_no}
                                         </Typography>
@@ -311,10 +301,6 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>City: </span>
                                             {invoice.member?.current_city}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                            <span style={{ fontWeight: 'bold' }}>Family Member: </span>
-                                            {invoice.member?.family_members_count ?? 0}
                                         </Typography>
                                     </Box>
                                 </Grid>
