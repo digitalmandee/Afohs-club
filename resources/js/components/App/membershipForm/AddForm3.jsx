@@ -49,7 +49,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             application_no: Number(maxApplicationNo) + 1,
             member_type_id: data.member_type_id,
             membership_category: data.membership_category,
-            start_date: new Date(),
             card_issue_date: data.card_issue_date,
             card_expiry_date: data.card_expiry_date,
         }));
@@ -80,9 +79,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         if (currentFamilyMember.cnic && currentFamilyMember.cnic === data.cnic_no) {
             errors.cnic = 'Family member CNIC must not be the same as the primary member CNIC';
         }
-        if (!currentFamilyMember.start_date) {
-            errors.start_date = 'Start Date is required';
-        }
+
         if (!currentFamilyMember.status) {
             errors.status = 'Status is required';
         }
@@ -115,8 +112,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         // Date validations
         const issueDate = new Date(data.card_issue_date);
         const expiryDate = new Date(data.card_expiry_date);
-        const start = new Date(currentFamilyMember.start_date);
-        const end = new Date(currentFamilyMember.end_date);
 
         // if (!currentFamilyMember.start_date || currentFamilyMember.end_date) {
         //     errors.date = 'Start and End dates are beyond card expiry';
