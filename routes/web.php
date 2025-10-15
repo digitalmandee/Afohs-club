@@ -9,6 +9,7 @@ use App\Http\Controllers\AppliedMemberController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDepartmentController;
 use App\Http\Controllers\EmployeeTypeController;
@@ -397,6 +398,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             
             // Bulk Migration Routes (Temporary for data migration)
             Route::get('bulk-migration', [MemberTransactionController::class, 'bulkMigration'])->name('membership.transactions.bulk-migration');
+        });
+
+        // Data Migration Routes (Test Environment Only)
+        Route::group(['prefix' => 'migration'], function () {
+            Route::get('dashboard', [DataMigrationController::class, 'index'])->name('membership.migration.dashboard');
+            Route::get('analyze', [DataMigrationController::class, 'analyzeData'])->name('membership.migration.analyze');
+            Route::post('test', [DataMigrationController::class, 'testMigration'])->name('membership.migration.test');
+            Route::get('sample-data', [DataMigrationController::class, 'getSampleData'])->name('membership.migration.sample-data');
+            Route::post('migrate', [DataMigrationController::class, 'migrate'])->name('membership.migration.migrate');
             Route::post('bulk-store', [MemberTransactionController::class, 'bulkStore'])->name('membership.transactions.bulk-store');
             
             Route::get('{id}', [MemberTransactionController::class, 'show'])->name('membership.transactions.show');

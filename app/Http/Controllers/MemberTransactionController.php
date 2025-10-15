@@ -107,7 +107,7 @@ class MemberTransactionController extends Controller
             $validator = Validator::make($request->all(), [
                 'member_id' => 'required|exists:members,user_id',
                 'fee_type' => 'required|in:membership_fee,maintenance_fee',
-                'payment_frequency' => 'required_if:fee_type,maintenance_fee|in:quarterly,half_yearly,three_quarters,annually',
+                'payment_frequency' => 'required_if:fee_type,maintenance_fee|in:monthly,quarterly,half_yearly,three_quarters,annually',
                 'amount' => 'required|numeric|min:0',
                 'discount_type' => 'nullable|in:percent,fixed',
                 'discount_value' => 'nullable|numeric|min:0',
@@ -365,7 +365,7 @@ class MemberTransactionController extends Controller
             'payments.*.receipt_file' => 'sometimes|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
             'payments.*.discount_type' => 'sometimes|in:percent,fixed',
             'payments.*.discount_value' => 'sometimes|numeric|min:0',
-            'payments.*.payment_frequency' => 'required_if:payments.*.fee_type,maintenance_fee|in:quarterly,half_yearly,three_quarters,annually',
+            'payments.*.payment_frequency' => 'required_if:payments.*.fee_type,maintenance_fee|in:monthly,quarterly,half_yearly,three_quarters,annually',
             'payments.*.quarter_number' => 'required_if:payments.*.fee_type,maintenance_fee|integer|between:1,4',
         ]);
 

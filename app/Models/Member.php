@@ -26,7 +26,6 @@ class Member extends Model
         'phone_number',
         'start_date',
         'end_date',
-        'picture',
         'membership_date',
         'card_status',
         'status',
