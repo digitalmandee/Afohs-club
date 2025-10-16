@@ -4,6 +4,7 @@ import { Search, FilterAlt, ExpandMore, ExpandLess } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import FamilyFilter from './Family/Filter';
+import MembershipCardComponent from './UserCard';
 import { router } from '@inertiajs/react';
 
 const drawerWidthOpen = 240;
@@ -12,10 +13,8 @@ const drawerWidthClosed = 110;
 const FamilyMembersArchive = ({ familyGroups }) => {
     const [open, setOpen] = useState(true);
     const [expandedRow, setExpandedRow] = useState(null);
-
-    const toggleRow = (id) => {
-        setExpandedRow(expandedRow === id ? null : id);
-    };
+    const [openCardModal, setOpenCardModal] = useState(false);
+    const [selectMember, setSelectMember] = useState(null);
 
     const calculateAge = (dob) => {
         if (!dob) return null;
@@ -70,6 +69,7 @@ const FamilyMembersArchive = ({ familyGroups }) => {
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Issue Date</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -90,6 +90,21 @@ const FamilyMembersArchive = ({ familyGroups }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_issue_date || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.status || 'N/A'}</TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        style={{
+                                                            color: '#0C67AA',
+                                                            textDecoration: 'underline',
+                                                            textTransform: 'none',
+                                                        }}
+                                                        onClick={() => {
+                                                            setSelectMember(user);
+                                                            setOpenCardModal(true);
+                                                        }}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         </React.Fragment>
                                     ))}
@@ -120,6 +135,14 @@ const FamilyMembersArchive = ({ familyGroups }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Member Details Modal */}
+            <MembershipCardComponent 
+                open={openCardModal} 
+                onClose={() => setOpenCardModal(false)} 
+                member={selectMember} 
+                memberData={familyGroups} 
+            />
         </>
     );
 };

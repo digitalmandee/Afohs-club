@@ -112,8 +112,8 @@ class MemberTransactionController extends Controller
                 'discount_type' => 'nullable|in:percent,fixed',
                 'discount_value' => 'nullable|numeric|min:0',
                 'payment_method' => 'required|in:cash,credit_card',
-                'valid_from' => 'required|date',
-                'valid_to' => 'required|date|after:valid_from',
+                'valid_from' => 'required_if:fee_type,maintenance_fee|date',
+                'valid_to' => 'required_if:fee_type,maintenance_fee|date|after:valid_from',
                 'starting_quarter' => 'nullable|integer|min:1|max:4',
                 'credit_card_type' => 'required_if:payment_method,credit_card|in:mastercard,visa',
                 'receipt_file' => 'required_if:payment_method,credit_card|file|mimes:jpeg,png,jpg,gif,pdf|max:2048'
@@ -211,9 +211,17 @@ class MemberTransactionController extends Controller
             'created_by' => Auth::id(),
         ];
 
-        // Use manual validity dates from request
-        $invoiceData['valid_from'] = $request->valid_from;
-        $invoiceData['valid_to'] = $request->valid_to;
+        // Handle dates based on fee type
+        if ($request->fee_type === 'membership_fee') {
+            // Membership fee is lifetime - set to member's joining date and far future
+            $memberJoinDate = Carbon::parse($member->membership_date);
+            $invoiceData['valid_from'] = $memberJoinDate->format('Y-m-d');
+            $invoiceData['valid_to'] = $memberJoinDate->addYears(50)->format('Y-m-d'); // Lifetime validity
+        } else {
+            // Use manual validity dates from request for maintenance fees
+            $invoiceData['valid_from'] = $request->valid_from;
+            $invoiceData['valid_to'] = $request->valid_to;
+        }
 
         // Handle maintenance fee specific data
         if ($request->fee_type === 'maintenance_fee') {
@@ -356,8 +364,8 @@ class MemberTransactionController extends Controller
             'payments' => 'required|array|min:1',
             'payments.*.fee_type' => 'required|in:membership_fee,maintenance_fee',
             'payments.*.amount' => 'required|numeric|min:0',
-            'payments.*.valid_from' => 'required|date',
-            'payments.*.valid_to' => 'required|date|after:valid_from',
+            'payments.*.valid_from' => 'required_if:payments.*.fee_type,maintenance_fee|date',
+            'payments.*.valid_to' => 'required_if:payments.*.fee_type,maintenance_fee|date|after:payments.*.valid_from',
             'payments.*.invoice_no' => 'required|string|unique:financial_invoices,invoice_no',
             'payments.*.payment_date' => 'required|date',
             'payments.*.payment_method' => 'sometimes|in:cash,credit_card',
@@ -379,6 +387,8 @@ class MemberTransactionController extends Controller
         try {
             DB::beginTransaction();
 
+            // Load member data for date calculations
+            $member = Member::where('user_id', $request->member_id)->first();
             $createdTransactions = [];
 
             foreach ($request->payments as $index => $paymentData) {
@@ -408,6 +418,17 @@ class MemberTransactionController extends Controller
                     }
                 }
 
+                // Handle dates based on fee type
+                $validFrom = $paymentData['valid_from'] ?? null;
+                $validTo = $paymentData['valid_to'] ?? null;
+                
+                if ($paymentData['fee_type'] === 'membership_fee') {
+                    // Membership fee is lifetime - set to member's joining date and far future
+                    $memberJoinDate = Carbon::parse($member->membership_date);
+                    $validFrom = $memberJoinDate->format('Y-m-d');
+                    $validTo = $memberJoinDate->copy()->addYears(50)->format('Y-m-d'); // Lifetime validity
+                }
+
                 // Create financial invoice
                 $transaction = FinancialInvoice::create([
                     'member_id' => $request->member_id,
@@ -426,8 +447,8 @@ class MemberTransactionController extends Controller
                     'receipt' => $receiptPath,
                     'status' => 'paid', // Assuming migrated data is already paid
                     'payment_date' => $paymentData['payment_date'],
-                    'valid_from' => $paymentData['valid_from'],
-                    'valid_to' => $paymentData['valid_to'],
+                    'valid_from' => $validFrom,
+                    'valid_to' => $validTo,
                     'created_by' => Auth::id(),
                     'created_at' => now(),
                     'updated_at' => now(),
