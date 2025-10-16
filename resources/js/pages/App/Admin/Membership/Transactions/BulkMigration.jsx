@@ -15,6 +15,7 @@ export default function BulkMigration() {
     const [searchLoading, setSearchLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [payments, setPayments] = useState([]);
+    const [validationErrors, setValidationErrors] = useState({});
 
     // Transaction history states
     const [memberTransactions, setMemberTransactions] = useState([]);
@@ -478,6 +479,135 @@ export default function BulkMigration() {
         setPayments(updatedPayments);
     };
 
+    // Validate payment fields
+    const validatePayment = (payment) => {
+        const errors = {};
+        
+        // Required fields validation
+        if (!payment.fee_type) {
+            errors.fee_type = 'Fee type is required';
+        }
+        
+        if (!payment.amount || payment.amount <= 0) {
+            errors.amount = 'Amount must be greater than 0';
+        }
+        
+        if (!payment.valid_from) {
+            errors.valid_from = 'Valid from date is required';
+        }
+        
+        if (!payment.valid_to) {
+            errors.valid_to = 'Valid to date is required';
+        }
+        
+        if (!payment.invoice_no) {
+            errors.invoice_no = 'Invoice number is required';
+        }
+        
+        if (!payment.payment_date) {
+            errors.payment_date = 'Payment date is required';
+        }
+        
+        // Maintenance fee specific validation
+        if (payment.fee_type === 'maintenance_fee') {
+            if (!payment.payment_frequency) {
+                errors.payment_frequency = 'Payment frequency is required for maintenance fee';
+            }
+            
+            if (!payment.quarter_number || payment.quarter_number < 1 || payment.quarter_number > 4) {
+                errors.quarter_number = 'Quarter number must be between 1-4';
+            }
+        }
+        
+        // Credit card validation
+        if (payment.payment_method === 'credit_card') {
+            if (!payment.credit_card_type) {
+                errors.credit_card_type = 'Credit card type is required';
+            }
+            
+            if (!payment.receipt_file) {
+                errors.receipt_file = 'Receipt file is required for credit card payments';
+            }
+        }
+        
+        // Date validation
+        if (payment.valid_from && payment.valid_to) {
+            const fromDate = new Date(payment.valid_from);
+            const toDate = new Date(payment.valid_to);
+            
+            if (toDate <= fromDate) {
+                errors.valid_to = 'Valid to date must be after valid from date';
+            }
+        }
+        
+        // Discount validation
+        if (payment.discount_type && payment.discount_value) {
+            const discountValue = parseFloat(payment.discount_value);
+            
+            if (payment.discount_type === 'percent' && (discountValue < 0 || discountValue > 100)) {
+                errors.discount_value = 'Percentage discount must be between 0-100';
+            }
+            
+            if (payment.discount_type === 'fixed' && discountValue < 0) {
+                errors.discount_value = 'Fixed discount cannot be negative';
+            }
+            
+            if (payment.discount_type === 'fixed' && discountValue >= parseFloat(payment.amount)) {
+                errors.discount_value = 'Fixed discount cannot be greater than or equal to amount';
+            }
+        }
+        
+        return errors;
+    };
+
+    // Validate all payments
+    const validateAllPayments = () => {
+        const allErrors = {};
+        let hasErrors = false;
+        
+        payments.forEach((payment) => {
+            const paymentErrors = validatePayment(payment);
+            if (Object.keys(paymentErrors).length > 0) {
+                allErrors[payment.id] = paymentErrors;
+                hasErrors = true;
+            }
+        });
+        
+        setValidationErrors(allErrors);
+        return !hasErrors;
+    };
+
+    // Update payment with validation
+    const updatePaymentWithValidation = (paymentId, field, value) => {
+        updatePayment(paymentId, field, value);
+        
+        // Clear validation error for this field
+        setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            if (newErrors[paymentId]) {
+                delete newErrors[paymentId][field];
+                if (Object.keys(newErrors[paymentId]).length === 0) {
+                    delete newErrors[paymentId];
+                }
+            }
+            return newErrors;
+        });
+        
+        // Re-validate this payment after a short delay
+        setTimeout(() => {
+            const payment = payments.find(p => p.id === paymentId);
+            if (payment) {
+                const errors = validatePayment({ ...payment, [field]: value });
+                if (Object.keys(errors).length > 0) {
+                    setValidationErrors(prev => ({
+                        ...prev,
+                        [paymentId]: errors
+                    }));
+                }
+            }
+        }, 500);
+    };
+
     // Search members function
     const searchMembers = async (query) => {
         if (!query || query.length < 2) {
@@ -680,6 +810,11 @@ export default function BulkMigration() {
         }
 
         // Validate all payments
+        if (!validateAllPayments()) {
+            enqueueSnackbar('Please fix all validation errors before submitting', { variant: 'error' });
+            return;
+        }
+
         const validPayments = payments.filter((p) => p.fee_type && p.amount && p.valid_from && p.valid_to && p.invoice_no);
 
         if (validPayments.length === 0) {
@@ -856,7 +991,7 @@ export default function BulkMigration() {
                                                 </Grid>
                                                 <Grid item xs={6}>
                                                     <Typography variant="body2" color="text.secondary">
-                                                        💳 Membership Fee: <strong style={{color: '#059669'}}>Rs {selectedMember.member_category?.membership_fee?.toLocaleString() || 'N/A'}</strong>
+                                                        💳 Membership Fee: <strong style={{color: '#059669'}}>Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}</strong>
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
@@ -937,12 +1072,12 @@ export default function BulkMigration() {
                                                             return (
                                                                 <TableRow key={payment.id}>
                                                                     <TableCell>
-                                                                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                                                                        <FormControl size="small" sx={{ minWidth: 120 }} error={!!(validationErrors[payment.id]?.fee_type)}>
                                                                             <Select
                                                                                 value={payment.fee_type || ''}
                                                                                 onChange={(e) => {
-                                                                                    console.log('Select onChange:', e.target.value, payment.id);
                                                                                     handleFeeTypeChange(payment.id, e.target.value);
+                                                                                    updatePaymentWithValidation(payment.id, 'fee_type', e.target.value);
                                                                                 }}
                                                                                 displayEmpty
                                                                             >
@@ -950,15 +1085,20 @@ export default function BulkMigration() {
                                                                                 <MenuItem value="membership_fee">💳 Membership</MenuItem>
                                                                                 <MenuItem value="maintenance_fee">🔧 Maintenance</MenuItem>
                                                                             </Select>
+                                                                            {validationErrors[payment.id]?.fee_type && (
+                                                                                <Typography variant="caption" color="error" sx={{ fontSize: '0.7rem', mt: 0.5 }}>
+                                                                                    {validationErrors[payment.id].fee_type}
+                                                                                </Typography>
+                                                                            )}
                                                                         </FormControl>
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         {payment.fee_type === 'maintenance_fee' && (
-                                                                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                                                            <FormControl size="small" sx={{ minWidth: 120 }} error={!!(validationErrors[payment.id]?.payment_frequency)}>
                                                                                 <Select 
                                                                                     value={payment.payment_frequency} 
                                                                                     onChange={(e) => {
-                                                                                        updatePayment(payment.id, 'payment_frequency', e.target.value);
+                                                                                        updatePaymentWithValidation(payment.id, 'payment_frequency', e.target.value);
                                                                                         // Auto-suggest dates and amounts when frequency changes
                                                                                         const paymentIndex = payments.findIndex(p => p.id === payment.id);
                                                                                         if (paymentIndex !== -1) {
@@ -974,6 +1114,11 @@ export default function BulkMigration() {
                                                                                     <MenuItem value="three_quarters">📅 Three Quarters</MenuItem>
                                                                                     <MenuItem value="annually">📅 Annually</MenuItem>
                                                                                 </Select>
+                                                                                {validationErrors[payment.id]?.payment_frequency && (
+                                                                                    <Typography variant="caption" color="error" sx={{ fontSize: '0.7rem', mt: 0.5 }}>
+                                                                                        {validationErrors[payment.id].payment_frequency}
+                                                                                    </Typography>
+                                                                                )}
                                                                             </FormControl>
                                                                         )}
                                                                     </TableCell>
@@ -991,21 +1136,34 @@ export default function BulkMigration() {
                                                                         )}
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        <TextField size="small" type="number" value={payment.amount} onChange={(e) => updatePayment(payment.id, 'amount', e.target.value)} sx={{ width: 100 }} />
+                                                                        <TextField 
+                                                                            size="small" 
+                                                                            type="number" 
+                                                                            value={payment.amount} 
+                                                                            onChange={(e) => updatePaymentWithValidation(payment.id, 'amount', e.target.value)} 
+                                                                            error={!!(validationErrors[payment.id]?.amount)}
+                                                                            helperText={validationErrors[payment.id]?.amount}
+                                                                            sx={{ width: 100 }} 
+                                                                        />
                                                                     </TableCell>
                                                                     
                                                                     {/* Discount Type */}
                                                                     <TableCell>
-                                                                        <FormControl size="small" sx={{ minWidth: 100 }}>
+                                                                        <FormControl size="small" sx={{ minWidth: 120 }} error={!!(validationErrors[payment.id]?.discount_type)}>
                                                                             <Select
-                                                                                value={payment.discount_type || ''}
-                                                                                onChange={(e) => updatePayment(payment.id, 'discount_type', e.target.value)}
+                                                                                value={payment.discount_type}
+                                                                                onChange={(e) => updatePaymentWithValidation(payment.id, 'discount_type', e.target.value)}
                                                                                 displayEmpty
                                                                             >
                                                                                 <MenuItem value="">No Discount</MenuItem>
                                                                                 <MenuItem value="percent">% Percent</MenuItem>
                                                                                 <MenuItem value="fixed">💰 Fixed</MenuItem>
                                                                             </Select>
+                                                                            {validationErrors[payment.id]?.discount_type && (
+                                                                                <Typography variant="caption" color="error" sx={{ fontSize: '0.7rem', mt: 0.5 }}>
+                                                                                    {validationErrors[payment.id].discount_type}
+                                                                                </Typography>
+                                                                            )}
                                                                         </FormControl>
                                                                     </TableCell>
                                                                     
@@ -1024,18 +1182,53 @@ export default function BulkMigration() {
                                                                     </TableCell>
                                                                     
                                                                     <TableCell>
-                                                                        <TextField size="small" type="date" value={payment.valid_from} onChange={(e) => updatePayment(payment.id, 'valid_from', e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 140 }} />
+                                                                        <TextField 
+                                                                            size="small" 
+                                                                            type="date" 
+                                                                            value={payment.valid_from} 
+                                                                            onChange={(e) => updatePaymentWithValidation(payment.id, 'valid_from', e.target.value)} 
+                                                                            error={!!(validationErrors[payment.id]?.valid_from)}
+                                                                            helperText={validationErrors[payment.id]?.valid_from}
+                                                                            InputLabelProps={{ shrink: true }} 
+                                                                            sx={{ width: 140 }} 
+                                                                        />
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        <TextField size="small" type="date" value={payment.valid_to} onChange={(e) => updatePayment(payment.id, 'valid_to', e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 140 }} />
+                                                                        <TextField 
+                                                                            size="small" 
+                                                                            type="date" 
+                                                                            value={payment.valid_to} 
+                                                                            onChange={(e) => updatePaymentWithValidation(payment.id, 'valid_to', e.target.value)} 
+                                                                            error={!!(validationErrors[payment.id]?.valid_to)}
+                                                                            helperText={validationErrors[payment.id]?.valid_to}
+                                                                            InputLabelProps={{ shrink: true }} 
+                                                                            sx={{ width: 140 }} 
+                                                                        />
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        <TextField size="small" value={payment.invoice_no} onChange={(e) => updatePayment(payment.id, 'invoice_no', e.target.value)} placeholder="1" sx={{ width: 100 }} />
+                                                                        <TextField 
+                                                                            size="small" 
+                                                                            value={payment.invoice_no} 
+                                                                            onChange={(e) => updatePaymentWithValidation(payment.id, 'invoice_no', e.target.value)} 
+                                                                            error={!!(validationErrors[payment.id]?.invoice_no)}
+                                                                            helperText={validationErrors[payment.id]?.invoice_no}
+                                                                            placeholder="1" 
+                                                                            sx={{ width: 100 }} 
+                                                                        />
                                                                     </TableCell>
 
                                                                     {/* Payment Date */}
                                                                     <TableCell>
-                                                                        <TextField size="small" type="date" value={payment.payment_date} onChange={(e) => updatePayment(payment.id, 'payment_date', e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 140 }} />
+                                                                        <TextField 
+                                                                            size="small" 
+                                                                            type="date" 
+                                                                            value={payment.payment_date} 
+                                                                            onChange={(e) => updatePaymentWithValidation(payment.id, 'payment_date', e.target.value)} 
+                                                                            error={!!(validationErrors[payment.id]?.payment_date)}
+                                                                            helperText={validationErrors[payment.id]?.payment_date}
+                                                                            InputLabelProps={{ shrink: true }} 
+                                                                            sx={{ width: 140 }} 
+                                                                        />
                                                                     </TableCell>
 
                                                                     {/* Payment Method */}

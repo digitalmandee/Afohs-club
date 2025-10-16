@@ -869,7 +869,7 @@ export default function CreateTransaction() {
                                                 </Typography>
                                             </Box>
                                             <Grid container spacing={1}>
-                                                <Grid item xs={12} sm={6}>
+                                                <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                                                         Full Name
                                                     </Typography>
@@ -877,7 +877,7 @@ export default function CreateTransaction() {
                                                         {selectedMember.full_name}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={12} sm={6}>
+                                                <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                                                         Membership No
                                                     </Typography>
@@ -885,15 +885,7 @@ export default function CreateTransaction() {
                                                         {selectedMember.membership_no}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={12} sm={6}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Category
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {selectedMember.member_category?.name}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12} sm={6}>
+                                                <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                                                         Membership Date
                                                     </Typography>
@@ -901,15 +893,15 @@ export default function CreateTransaction() {
                                                         {formatDate(selectedMember.membership_date)}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={12} sm={6}>
+                                                <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                                                         💳 Membership Fee
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
-                                                        Rs {selectedMember.member_category?.membership_fee?.toLocaleString() || 'N/A'}
+                                                        Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={12} sm={6}>
+                                                <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                                                         🔧 Maintenance Fee (Quarterly)
                                                     </Typography>
@@ -917,7 +909,7 @@ export default function CreateTransaction() {
                                                         Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={12} sm={6}>
+                                                <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                                                         📅 Monthly Rate
                                                     </Typography>
