@@ -57,32 +57,32 @@ export default function CreateTransaction() {
         }
     }, [selectedMember, memberTransactions]); // Trigger when member or their transactions change
 
-    // Auto-update payment suggestions when fee type changes to maintenance_fee
-    useEffect(() => {
-        if (selectedMember && data.fee_type === 'maintenance_fee') {
-            const currentFrequency = data.payment_frequency || 'quarterly';
-            suggestMaintenancePeriod(currentFrequency);
-        }
-    }, [data.fee_type]); // Trigger when fee type changes
-
     const analyzeQuarterStatus = (transactions, membershipDate) => {
+        if (!membershipDate) {
+            return {
+                paidQuarters: [],
+                nextAvailableQuarter: 1,
+                currentYear: new Date().getFullYear(),
+                isNewCycle: false,
+                latestEndDate: null,
+            };
+        }
+        
         const membershipYear = new Date(membershipDate).getFullYear();
         const membershipMonth = new Date(membershipDate).getMonth(); // 0-based (0 = Jan, 11 = Dec)
         const currentYear = new Date().getFullYear();
         const currentMonth = new Date().getMonth();
-
         // Get maintenance fee transactions
         const maintenanceTransactions = transactions.filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid');
-
         // Sort transactions by validity end date (latest first)
         const sortedTransactions = [...maintenanceTransactions].sort((a, b) => new Date(b.valid_to) - new Date(a.valid_to));
 
         let paidQuarters = [];
         let latestEndDate = null;
+        let showCompletedYear = false;
+        let isFirstYear = true; // Default to first year
         let completedCycles = 0;
-        let isFirstYear = true;
 
-        // Determine if we're still in the first year or subsequent years
         if (sortedTransactions.length > 0) {
             const mostRecentTransaction = sortedTransactions[0];
             const mostRecentEnd = new Date(mostRecentTransaction.valid_to);
@@ -138,29 +138,67 @@ export default function CreateTransaction() {
 
         } else {
             // SUBSEQUENT YEARS: Quarterly payment logic (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
-            // Find the current cycle start (January 1st after first year)
-            const currentCycleYear = membershipYear + Math.floor((currentYear - membershipYear));
-            const currentCycleStart = new Date(currentCycleYear, 0, 1); // Jan 1st
-            const currentCycleEnd = new Date(currentCycleYear, 11, 31); // Dec 31st
-
-            // Filter transactions for current quarterly cycle (include any transaction that goes into next year)
-            const quarterlyTransactions = sortedTransactions.filter((transaction) => {
-                const txStart = new Date(transaction.valid_from);
-                const txEnd = new Date(transaction.valid_to);
-                const txYear = txStart.getFullYear();
-                const endYear = txEnd.getFullYear();
+            // Determine the correct analysis year based on latest payment
+            let analysisYear = currentYear;
+            
+            // If we have payments, use the year after the latest payment end date
+            if (sortedTransactions.length > 0) {
+                const latestPaymentEnd = new Date(sortedTransactions[0].valid_to);
+                const latestPaymentYear = latestPaymentEnd.getFullYear();
+                const latestPaymentMonth = latestPaymentEnd.getMonth();
                 
-                // Include transactions that start after membership year OR extend into next year
-                return txYear > membershipYear || endYear > membershipYear;
-            });
+                console.log('Latest payment end:', latestPaymentEnd);
+                console.log('Latest payment year:', latestPaymentYear);
+                console.log('Current year:', currentYear);
+                
+                // Analyze the year of the latest payment to show its quarter status
+                analysisYear = latestPaymentYear;
+                
+                console.log('Analysis year determined:', analysisYear);
+            }
+            
+            // For quarter analysis, we need to check if the latest payment year is complete
+            // If latest payment ended in December of a future year, show all quarters as paid for that year
+            let quarterlyTransactions = [];
+            
+            if (sortedTransactions.length > 0) {
+                const latestPaymentEnd = new Date(sortedTransactions[0].valid_to);
+                const latestPaymentYear = latestPaymentEnd.getFullYear();
+                const latestPaymentMonth = latestPaymentEnd.getMonth();
+                
+                // If latest payment ended in December of any year, that year is complete
+                if (latestPaymentMonth === 11) { // December
+                    showCompletedYear = true;
+                    analysisYear = latestPaymentYear;
+                    // Show all quarters as paid for the completed year
+                    paidQuarters = [1, 2, 3, 4];
+                } else {
+                    // Show partial year progress
+                    quarterlyTransactions = sortedTransactions.filter((transaction) => {
+                        const txStart = new Date(transaction.valid_from);
+                        const txEnd = new Date(transaction.valid_to);
+                        
+                        // Include transactions that overlap with analysis year
+                        return (txStart.getFullYear() <= analysisYear && txEnd.getFullYear() >= analysisYear) ||
+                               (txStart.getFullYear() === analysisYear || txEnd.getFullYear() === analysisYear);
+                    });
+                }
+            } else {
+                // No transactions, analyze current year
+                quarterlyTransactions = [];
+            }
 
             // Analyze which months are covered by all transactions combined
             const paidMonthsInYear = new Set();
+            
+            console.log('Quarterly transactions to analyze:', quarterlyTransactions);
+            console.log('Analysis year:', analysisYear);
             
             quarterlyTransactions.forEach((transaction) => {
                 const txStart = new Date(transaction.valid_from);
                 const txEnd = new Date(transaction.valid_to);
                 
+                console.log(`Analyzing transaction: ${transaction.valid_from} to ${transaction.valid_to}`);
                 
                 // Mark each month covered by this transaction
                 let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
@@ -170,18 +208,23 @@ export default function CreateTransaction() {
                     const year = currentDate.getFullYear();
                     const month = currentDate.getMonth();
                     
-                    // Only count months from years after membership year
-                    if (year > membershipYear) {
+                    console.log(`Checking month: ${year}-${month}, analysisYear: ${analysisYear}`);
+                    
+                    // Count months from current analysis year
+                    if (year === analysisYear) {
                         const monthKey = `${year}-${month}`;
                         paidMonthsInYear.add(monthKey);
+                        console.log(`Added paid month: ${monthKey}`);
                     }
                     
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 }
             });
             
+            console.log('Paid months in year:', Array.from(paidMonthsInYear));
+            
             // Now check which quarters are completely covered and track partial quarters
-            const currentAnalysisYear = membershipYear + 1; // Start from year after membership
+            const currentAnalysisYear = analysisYear; // Use current year for analysis
             const partialQuarters = {}; // Track which quarters are partially paid
             
             for (let quarter = 1; quarter <= 4; quarter++) {
@@ -274,10 +317,15 @@ export default function CreateTransaction() {
             const hasAllQuarters = paidQuarters.includes(1) && paidQuarters.includes(2) && paidQuarters.includes(3) && paidQuarters.includes(4);
             const partialQuarters = window.partialQuarters || {};
             
-            if (hasAllQuarters) {
+            if (hasAllQuarters || showCompletedYear) {
                 nextQuarter = 1;
                 isNewCycle = true;
-                paidQuarters = []; // Reset for new cycle display
+                // If showing completed year, reset quarters for display of next year
+                if (showCompletedYear) {
+                    paidQuarters = [1, 2, 3, 4]; // Keep showing completed year
+                } else {
+                    paidQuarters = []; // Reset for new cycle display
+                }
             } else {
                 // Check for partial quarters first (priority)
                 let foundPartialQuarter = false;
@@ -305,7 +353,7 @@ export default function CreateTransaction() {
         return {
             paidQuarters,
             nextAvailableQuarter: nextQuarter,
-            currentYear: membershipYear,
+            currentYear: currentYear,
             isNewCycle,
             latestEndDate,
             completedCycles,
@@ -351,6 +399,7 @@ export default function CreateTransaction() {
 
             enqueueSnackbar(`Selected member: ${member.full_name}`, { variant: 'info' });
         } catch (error) {
+            console.log(error);
             enqueueSnackbar('Error loading member data', { variant: 'error' });
         } finally {
             setLoadingTransactions(false);
@@ -409,6 +458,15 @@ export default function CreateTransaction() {
         const membershipYear = membershipDate.getFullYear();
         const membershipMonth = membershipDate.getMonth(); // 0-based
         const currentYear = new Date().getFullYear();
+        
+        // Debug logging
+        console.log('=== SUGGEST MAINTENANCE PERIOD DEBUG ===');
+        console.log('Member:', selectedMember.full_name);
+        console.log('Membership Date:', membershipDate);
+        console.log('Membership Year:', membershipYear);
+        console.log('Current Year:', currentYear);
+        console.log('Transactions:', memberTransactions);
+        console.log('Quarter Status:', quarterStatus);
         
 
         // Check if we're still in the first year (monthly payment system)
@@ -531,17 +589,23 @@ export default function CreateTransaction() {
                 if (currentPartialQuarter) {
                     // For partial quarters, start from the first unpaid month in that quarter
                     const nextUnpaidMonth = currentPartialQuarter.nextUnpaidMonth;
-                    const currentYear = membershipYear + 1;
-                    startDate = new Date(Date.UTC(currentYear, nextUnpaidMonth, 1));
+                    // Use the year from latest payment, not current year
+                    const latestPaymentYear = quarterStatus.latestEndDate ? new Date(quarterStatus.latestEndDate).getFullYear() : currentYear;
+                    startDate = new Date(Date.UTC(latestPaymentYear, nextUnpaidMonth, 1));
                 } else if (quarterStatus.latestEndDate) {
                     const lastEndDate = new Date(quarterStatus.latestEndDate);
+                    console.log('Latest end date:', quarterStatus.latestEndDate);
+                    console.log('Calculated start date year:', lastEndDate.getUTCFullYear());
+                    console.log('Calculated start date month:', lastEndDate.getUTCMonth() + 1);
                     startDate = new Date(Date.UTC(lastEndDate.getUTCFullYear(), lastEndDate.getUTCMonth() + 1, 1));
+                    console.log('Final start date:', startDate.toISOString().split('T')[0]);
                 } else {
-                    startDate = new Date(Date.UTC(membershipYear + 1, 0, 1));
+                    // Start from current year if no previous payments
+                    startDate = new Date(Date.UTC(currentYear, 0, 1));
                 }
             } else {
-                // Start from January 1st of the year after membership year
-                startDate = new Date(Date.UTC(membershipYear + 1, 0, 1));
+                // Start from current year if no previous payments
+                startDate = new Date(Date.UTC(currentYear, 0, 1));
             }
 
             // Calculate end date by adding months - complete months
@@ -620,14 +684,105 @@ export default function CreateTransaction() {
         return { isValid: true };
     };
 
+    // Helper function to get first day of month from date
+    const getFirstDayOfMonth = (dateString) => {
+        if (!dateString) return '';
+        // Extract year and month from the date string
+        const [year, month] = dateString.split('-');
+        // Return first day of the same month
+        return `${year}-${month}-01`;
+    };
+
+    // Helper function to get last day of month from date
+    const getLastDayOfMonth = (dateString) => {
+        if (!dateString) return '';
+        // Extract year and month from the date string
+        const [year, month] = dateString.split('-');
+        // Create a date object for the first day of next month, then subtract 1 day
+        const nextMonth = new Date(parseInt(year), parseInt(month), 1); // This gives us first day of next month
+        const lastDay = new Date(nextMonth - 1); // Subtract 1 day to get last day of current month
+        
+        // Format as YYYY-MM-DD
+        const lastDayFormatted = lastDay.toISOString().split('T')[0];
+        return lastDayFormatted;
+    };
+
+    // Helper function to calculate period description from dates
+    const calculatePeriodDescription = (startDate, endDate) => {
+        if (!startDate || !endDate) return '';
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        // Calculate total months
+        const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+        
+        // Calculate quarters (3 months = 1 quarter)
+        const quarters = Math.round((monthsDiff / 3) * 10) / 10; // Round to 1 decimal place
+        
+        if (monthsDiff === 1) {
+            return '1 Month';
+        } else if (monthsDiff < 3) {
+            return `${monthsDiff} Months`;
+        } else if (quarters === 1) {
+            return '1 Quarter';
+        } else if (quarters % 1 === 0) {
+            return `${quarters} Quarters`;
+        } else {
+            return `${quarters} Quarters (${monthsDiff} months)`;
+        }
+    };
+
     // Real-time validation when dates change
     const handleDateChange = (field, value) => {
+        // For maintenance fees, enforce month boundaries
+        if (data.fee_type === 'maintenance_fee' && value) {
+            console.log(`Original ${field} value:`, value);
+            
+            if (field === 'valid_from') {
+                // Always set to first day of selected month
+                const correctedValue = getFirstDayOfMonth(value);
+                console.log(`Corrected ${field} value:`, correctedValue);
+                value = correctedValue;
+            } else if (field === 'valid_to') {
+                // Always set to last day of selected month
+                const correctedValue = getLastDayOfMonth(value);
+                console.log(`Corrected ${field} value:`, correctedValue);
+                value = correctedValue;
+            }
+        }
+        
         setData(field, value);
 
         // Update validation after a short delay
         setTimeout(() => {
             const validation = validateDateOverlap();
             setDateValidation(validation);
+            
+            // Recalculate amount if both dates are present and fee type is maintenance
+            if (data.fee_type === 'maintenance_fee' && selectedMember && data.valid_from && data.valid_to) {
+                const fromDate = new Date(field === 'valid_from' ? value : data.valid_from);
+                const toDate = new Date(field === 'valid_to' ? value : data.valid_to);
+                
+                if (fromDate && toDate && toDate > fromDate) {
+                    // Calculate number of months between dates
+                    const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + 
+                                     (toDate.getMonth() - fromDate.getMonth()) + 1;
+                    
+                    // Calculate quarters (round up to nearest quarter)
+                    const quarters = Math.ceil(monthsDiff / 3);
+                    
+                    // Calculate amount based on quarters
+                    const quarterlyFee = selectedMember.member_category.subscription_fee;
+                    const newAmount = quarterlyFee * quarters;
+                    
+                    setData('amount', newAmount);
+                    
+                    enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${quarters} quarters (${monthsDiff} months)`, { 
+                        variant: 'info' 
+                    });
+                }
+            }
         }, 100);
     };
 
@@ -1074,8 +1229,13 @@ export default function CreateTransaction() {
                                                                             )}
                                                                             
                                                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                                                <strong>Next payment:</strong> {isFirstYear ? 'Monthly payment' : `Quarter ${quarterStatus.nextAvailableQuarter}`}
-                                                                                {quarterStatus.isNewCycle && quarterStatus.latestEndDate && <span> (Starting from {formatDate(new Date(new Date(quarterStatus.latestEndDate).getTime() + 24 * 60 * 60 * 1000))})</span>}
+                                                                                <strong>Next payment:</strong> {isFirstYear ? 'Monthly payment system' : `Quarter ${quarterStatus.nextAvailableQuarter}`}
+                                                                                {!isFirstYear && quarterStatus.latestEndDate && (
+                                                                                    <span> (Last payment ended: {formatDate(quarterStatus.latestEndDate)})</span>
+                                                                                )}
+                                                                                {!quarterStatus.latestEndDate && !isFirstYear && (
+                                                                                    <span> (No previous maintenance payments found)</span>
+                                                                                )}
                                                                             </Typography>
                                                                         </>
                                                                     );
@@ -1085,32 +1245,51 @@ export default function CreateTransaction() {
 
                                                         <Grid item xs={12}>
                                                             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                Payment Options
+                                                                💡 Payment Period Selection
                                                             </Typography>
-                                                            <FormControl fullWidth>
-                                                                <Select
-                                                                    value={data.payment_frequency}
-                                                                    onChange={(e) => {
-                                                                        setData('payment_frequency', e.target.value);
-                                                                        suggestMaintenancePeriod(e.target.value);
-                                                                    }}
+                                                            <Alert severity="info" sx={{ mb: 2 }}>
+                                                                <Typography variant="body2">
+                                                                    <strong>Next suggested payment:</strong> Quarter {quarterStatus.nextAvailableQuarter} 
+                                                                    <br />
+                                                                    Select your desired payment period using the dates below. Amount will calculate automatically.
+                                                                </Typography>
+                                                            </Alert>
+                                                            
+                                                            {/* Quick Payment Period Buttons */}
+                                                            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                                                                <Button 
+                                                                    size="small" 
+                                                                    variant="outlined" 
+                                                                    onClick={() => suggestMaintenancePeriod('monthly')}
                                                                     sx={{ borderRadius: 2 }}
                                                                 >
-                                                                    <MenuItem value="monthly">📅 Pay Next Month Only</MenuItem>
-                                                                    <MenuItem value="quarterly">📅 Pay Next Quarter Only (Q{quarterStatus.nextAvailableQuarter})</MenuItem>
-                                                                    {quarterStatus.nextAvailableQuarter <= 3 && (
-                                                                        <MenuItem value="half_yearly">
-                                                                            📅 Pay Next 2 Quarters (Q{quarterStatus.nextAvailableQuarter}-Q{quarterStatus.nextAvailableQuarter + 1})
-                                                                        </MenuItem>
-                                                                    )}
-                                                                    {quarterStatus.nextAvailableQuarter <= 2 && (
-                                                                        <MenuItem value="three_quarters">
-                                                                            📅 Pay Next 3 Quarters (Q{quarterStatus.nextAvailableQuarter}-Q{quarterStatus.nextAvailableQuarter + 2})
-                                                                        </MenuItem>
-                                                                    )}
-                                                                    {quarterStatus.nextAvailableQuarter === 1 && <MenuItem value="annually">📅 Pay All 4 Quarters (Q1-Q4)</MenuItem>}
-                                                                </Select>
-                                                            </FormControl>
+                                                                    📅 1 Month
+                                                                </Button>
+                                                                <Button 
+                                                                    size="small" 
+                                                                    variant="outlined" 
+                                                                    onClick={() => suggestMaintenancePeriod('quarterly')}
+                                                                    sx={{ borderRadius: 2 }}
+                                                                >
+                                                                    📅 1 Quarter (3 months)
+                                                                </Button>
+                                                                <Button 
+                                                                    size="small" 
+                                                                    variant="outlined" 
+                                                                    onClick={() => suggestMaintenancePeriod('half_yearly')}
+                                                                    sx={{ borderRadius: 2 }}
+                                                                >
+                                                                    📅 6 Months
+                                                                </Button>
+                                                                <Button 
+                                                                    size="small" 
+                                                                    variant="outlined" 
+                                                                    onClick={() => suggestMaintenancePeriod('annually')}
+                                                                    sx={{ borderRadius: 2 }}
+                                                                >
+                                                                    📅 1 Year
+                                                                </Button>
+                                                            </Box>
                                                         </Grid>
                                                     </>
                                                 )}
@@ -1246,8 +1425,8 @@ export default function CreateTransaction() {
                                                     </Grid>
                                                 )}
 
-                                                {/* Validity Period Section */}
-                                                {selectedMember && data.fee_type && (
+                                                {/* Validity Period Section - Only show for maintenance fees */}
+                                                {selectedMember && data.fee_type === 'maintenance_fee' && (
                                                     <Grid item xs={12}>
                                                         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
                                                             Validity Period
@@ -1274,13 +1453,18 @@ export default function CreateTransaction() {
                                                                 <Grid item xs={6}>
                                                                     <TextField
                                                                         fullWidth
-                                                                        label="Valid From"
+                                                                        label={data.fee_type === 'maintenance_fee' ? "Valid From (1st of month)" : "Valid From"}
                                                                         type="date"
                                                                         value={data.valid_from}
                                                                         onChange={(e) => handleDateChange('valid_from', e.target.value)}
                                                                         InputLabelProps={{ shrink: true }}
                                                                         error={!!(errors.valid_from || formErrors.valid_from || !dateValidation.isValid)}
-                                                                        helperText={errors.valid_from || formErrors.valid_from?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '')}
+                                                                        helperText={
+                                                                            errors.valid_from || 
+                                                                            formErrors.valid_from?.[0] || 
+                                                                            (!dateValidation.isValid ? 'Date conflict detected' : '') ||
+                                                                            (data.fee_type === 'maintenance_fee' ? 'Will auto-set to 1st of selected month' : '')
+                                                                        }
                                                                         sx={{
                                                                             '& .MuiOutlinedInput-root': { borderRadius: 2 },
                                                                         }}
@@ -1289,13 +1473,18 @@ export default function CreateTransaction() {
                                                                 <Grid item xs={6}>
                                                                     <TextField
                                                                         fullWidth
-                                                                        label="Valid To"
+                                                                        label={data.fee_type === 'maintenance_fee' ? "Valid To (last day of month)" : "Valid To"}
                                                                         type="date"
                                                                         value={data.valid_to}
                                                                         onChange={(e) => handleDateChange('valid_to', e.target.value)}
                                                                         InputLabelProps={{ shrink: true }}
                                                                         error={!!(errors.valid_to || formErrors.valid_to || !dateValidation.isValid)}
-                                                                        helperText={errors.valid_to || formErrors.valid_to?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '')}
+                                                                        helperText={
+                                                                            errors.valid_to || 
+                                                                            formErrors.valid_to?.[0] || 
+                                                                            (!dateValidation.isValid ? 'Date conflict detected' : '') ||
+                                                                            (data.fee_type === 'maintenance_fee' ? 'Will auto-set to last day of selected month' : '')
+                                                                        }
                                                                         sx={{
                                                                             '& .MuiOutlinedInput-root': { borderRadius: 2 },
                                                                         }}
@@ -1314,7 +1503,7 @@ export default function CreateTransaction() {
                                                                     <Alert severity={dateValidation.isValid ? 'success' : 'warning'} sx={{ mt: 2, borderRadius: 2 }}>
                                                                         <strong>Selected Period:</strong> {formatDate(data.valid_from)} to {formatDate(data.valid_to)}
                                                                         {data.fee_type === 'membership_fee' && <span> (Membership Fee Validity)</span>}
-                                                                        {data.fee_type === 'maintenance_fee' && data.payment_frequency && <span> ({data.payment_frequency === 'monthly' ? '1 Month' : data.payment_frequency === 'quarterly' ? '1 Quarter' : data.payment_frequency === 'half_yearly' ? '2 Quarters' : data.payment_frequency === 'three_quarters' ? '3 Quarters' : data.payment_frequency === 'annually' ? '4 Quarters' : 'Custom Period'})</span>}
+                                                                        {data.fee_type === 'maintenance_fee' && data.valid_from && data.valid_to && <span> ({calculatePeriodDescription(data.valid_from, data.valid_to)})</span>}
                                                                     </Alert>
                                                                 </>
                                                             )}

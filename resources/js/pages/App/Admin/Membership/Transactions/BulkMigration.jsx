@@ -63,6 +63,16 @@ export default function BulkMigration() {
 
     // Quarter analysis function (from Create.jsx)
     const analyzeQuarterStatus = (transactions, membershipDate) => {
+        if (!membershipDate) {
+            return {
+                paidQuarters: [],
+                nextAvailableQuarter: 1,
+                currentYear: new Date().getFullYear(),
+                isNewCycle: false,
+                latestEndDate: null,
+            };
+        }
+        
         const membershipYear = new Date(membershipDate).getFullYear();
         const membershipMonth = new Date(membershipDate).getMonth(); // 0-based (0 = Jan, 11 = Dec)
         const currentYear = new Date().getFullYear();
@@ -136,15 +146,17 @@ export default function BulkMigration() {
             }
         } else {
             // SUBSEQUENT YEARS: Quarterly payment logic (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
-            // Filter transactions for current quarterly cycle (include any transaction that goes into next year)
+            // Use current year for analysis (not membership year + offset)
+            const analysisYear = currentYear;
+            
+            // Filter transactions for current year analysis
             const quarterlyTransactions = sortedTransactions.filter((transaction) => {
                 const txStart = new Date(transaction.valid_from);
                 const txEnd = new Date(transaction.valid_to);
-                const txYear = txStart.getFullYear();
-                const endYear = txEnd.getFullYear();
                 
-                // Include transactions that start after membership year OR extend into next year
-                return txYear > membershipYear || endYear > membershipYear;
+                // Include transactions that overlap with current analysis year
+                return (txStart.getFullYear() <= analysisYear && txEnd.getFullYear() >= analysisYear) ||
+                       (txStart.getFullYear() === analysisYear || txEnd.getFullYear() === analysisYear);
             });
 
             // Analyze which months are covered by all transactions combined
@@ -162,8 +174,8 @@ export default function BulkMigration() {
                     const year = currentDate.getFullYear();
                     const month = currentDate.getMonth();
                     
-                    // Only count months from years after membership year
-                    if (year > membershipYear) {
+                    // Count months from current analysis year
+                    if (year === analysisYear) {
                         const monthKey = `${year}-${month}`;
                         paidMonthsInYear.add(monthKey);
                     }
@@ -173,7 +185,7 @@ export default function BulkMigration() {
             });
             
             // Now check which quarters are completely covered and track partial quarters
-            const currentAnalysisYear = membershipYear + 1; // Start from year after membership
+            const currentAnalysisYear = analysisYear; // Use current year for analysis
             const partialQuarters = {}; // Track which quarters are partially paid
             
             for (let quarter = 1; quarter <= 4; quarter++) {
@@ -296,7 +308,7 @@ export default function BulkMigration() {
         return {
             paidQuarters,
             nextAvailableQuarter: nextQuarter,
-            currentYear: membershipYear,
+            currentYear: currentYear,
             isNewCycle,
             latestEndDate,
         };
@@ -435,17 +447,17 @@ export default function BulkMigration() {
                 if (currentPartialQuarter) {
                     // For partial quarters, start from the first unpaid month in that quarter
                     const nextUnpaidMonth = currentPartialQuarter.nextUnpaidMonth;
-                    const currentYear = membershipYear + 1;
                     startDate = new Date(Date.UTC(currentYear, nextUnpaidMonth, 1));
                 } else if (quarterStatus.latestEndDate) {
                     const lastEndDate = new Date(quarterStatus.latestEndDate);
                     startDate = new Date(Date.UTC(lastEndDate.getUTCFullYear(), lastEndDate.getUTCMonth() + 1, 1));
                 } else {
-                    startDate = new Date(Date.UTC(membershipYear + 1, 0, 1));
+                    // Start from current year if no previous payments
+                    startDate = new Date(Date.UTC(currentYear, 0, 1));
                 }
             } else {
-                // Start from January 1st of the year after membership year
-                startDate = new Date(Date.UTC(membershipYear + 1, 0, 1));
+                // Start from current year if no previous payments
+                startDate = new Date(Date.UTC(currentYear, 0, 1));
             }
 
             // Calculate end date by adding months - complete months
@@ -492,12 +504,15 @@ export default function BulkMigration() {
             errors.amount = 'Amount must be greater than 0';
         }
         
-        if (!payment.valid_from) {
-            errors.valid_from = 'Valid from date is required';
-        }
-        
-        if (!payment.valid_to) {
-            errors.valid_to = 'Valid to date is required';
+        // Only require dates for maintenance fees
+        if (payment.fee_type === 'maintenance_fee') {
+            if (!payment.valid_from) {
+                errors.valid_from = 'Valid from date is required for maintenance fees';
+            }
+            
+            if (!payment.valid_to) {
+                errors.valid_to = 'Valid to date is required for maintenance fees';
+            }
         }
         
         if (!payment.invoice_no) {
@@ -1050,13 +1065,16 @@ export default function BulkMigration() {
                                                     <TableHead>
                                                         <TableRow sx={{ bgcolor: 'grey.50' }}>
                                                             <TableCell sx={{ fontWeight: 600 }}>Fee Type</TableCell>
-                                                            <TableCell sx={{ fontWeight: 600 }}>Payment Frequency</TableCell>
-                                                            <TableCell sx={{ fontWeight: 600 }}>Quarter</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Amount</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Discount Type</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Discount Value</TableCell>
-                                                            <TableCell sx={{ fontWeight: 600 }}>Valid From</TableCell>
-                                                            <TableCell sx={{ fontWeight: 600 }}>Valid To</TableCell>
+                                                            {/* Only show date columns if any payment is maintenance fee */}
+                                                            {payments.some(p => p.fee_type === 'maintenance_fee') && (
+                                                                <>
+                                                                    <TableCell sx={{ fontWeight: 600 }}>Valid From</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 600 }}>Valid To</TableCell>
+                                                                </>
+                                                            )}
                                                             <TableCell sx={{ fontWeight: 600 }}>Invoice No</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Payment Date</TableCell>
                                                             <TableCell sx={{ fontWeight: 600 }}>Payment Method</TableCell>
@@ -1093,54 +1111,12 @@ export default function BulkMigration() {
                                                                         </FormControl>
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        {payment.fee_type === 'maintenance_fee' && (
-                                                                            <FormControl size="small" sx={{ minWidth: 120 }} error={!!(validationErrors[payment.id]?.payment_frequency)}>
-                                                                                <Select 
-                                                                                    value={payment.payment_frequency} 
-                                                                                    onChange={(e) => {
-                                                                                        updatePaymentWithValidation(payment.id, 'payment_frequency', e.target.value);
-                                                                                        // Auto-suggest dates and amounts when frequency changes
-                                                                                        const paymentIndex = payments.findIndex(p => p.id === payment.id);
-                                                                                        if (paymentIndex !== -1) {
-                                                                                            suggestMaintenancePeriod(e.target.value, paymentIndex);
-                                                                                        }
-                                                                                    }} 
-                                                                                    displayEmpty
-                                                                                >
-                                                                                    <MenuItem value="">Select Frequency</MenuItem>
-                                                                                    <MenuItem value="monthly">📅 Monthly</MenuItem>
-                                                                                    <MenuItem value="quarterly">📅 Quarterly</MenuItem>
-                                                                                    <MenuItem value="half_yearly">📅 Half Yearly</MenuItem>
-                                                                                    <MenuItem value="three_quarters">📅 Three Quarters</MenuItem>
-                                                                                    <MenuItem value="annually">📅 Annually</MenuItem>
-                                                                                </Select>
-                                                                                {validationErrors[payment.id]?.payment_frequency && (
-                                                                                    <Typography variant="caption" color="error" sx={{ fontSize: '0.7rem', mt: 0.5 }}>
-                                                                                        {validationErrors[payment.id].payment_frequency}
-                                                                                    </Typography>
-                                                                                )}
-                                                                            </FormControl>
-                                                                        )}
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        {payment.fee_type === 'maintenance_fee' && (
-                                                                            <FormControl size="small" sx={{ minWidth: 80 }}>
-                                                                                <Select value={payment.quarter_number} onChange={(e) => updatePayment(payment.id, 'quarter_number', e.target.value)} displayEmpty>
-                                                                                    <MenuItem value="">Quarter</MenuItem>
-                                                                                    <MenuItem value={1}>Q1</MenuItem>
-                                                                                    <MenuItem value={2}>Q2</MenuItem>
-                                                                                    <MenuItem value={3}>Q3</MenuItem>
-                                                                                    <MenuItem value={4}>Q4</MenuItem>
-                                                                                </Select>
-                                                                            </FormControl>
-                                                                        )}
-                                                                    </TableCell>
-                                                                    <TableCell>
                                                                         <TextField 
                                                                             size="small" 
                                                                             type="number" 
                                                                             value={payment.amount} 
                                                                             onChange={(e) => updatePaymentWithValidation(payment.id, 'amount', e.target.value)} 
+                                                                            onWheel={(e) => e.target.blur()}
                                                                             error={!!(validationErrors[payment.id]?.amount)}
                                                                             helperText={validationErrors[payment.id]?.amount}
                                                                             sx={{ width: 100 }} 
@@ -1175,36 +1151,54 @@ export default function BulkMigration() {
                                                                                 type="number"
                                                                                 value={payment.discount_value}
                                                                                 onChange={(e) => updatePayment(payment.id, 'discount_value', e.target.value)}
+                                                                                onWheel={(e) => e.target.blur()}
                                                                                 placeholder={payment.discount_type === 'percent' ? '10' : '1000'}
                                                                                 sx={{ width: 80 }}
                                                                             />
                                                                         )}
                                                                     </TableCell>
                                                                     
-                                                                    <TableCell>
-                                                                        <TextField 
-                                                                            size="small" 
-                                                                            type="date" 
-                                                                            value={payment.valid_from} 
-                                                                            onChange={(e) => updatePaymentWithValidation(payment.id, 'valid_from', e.target.value)} 
-                                                                            error={!!(validationErrors[payment.id]?.valid_from)}
-                                                                            helperText={validationErrors[payment.id]?.valid_from}
-                                                                            InputLabelProps={{ shrink: true }} 
-                                                                            sx={{ width: 140 }} 
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        <TextField 
-                                                                            size="small" 
-                                                                            type="date" 
-                                                                            value={payment.valid_to} 
-                                                                            onChange={(e) => updatePaymentWithValidation(payment.id, 'valid_to', e.target.value)} 
-                                                                            error={!!(validationErrors[payment.id]?.valid_to)}
-                                                                            helperText={validationErrors[payment.id]?.valid_to}
-                                                                            InputLabelProps={{ shrink: true }} 
-                                                                            sx={{ width: 140 }} 
-                                                                        />
-                                                                    </TableCell>
+                                                                    {/* Only show date fields if any payment is maintenance fee */}
+                                                                    {payments.some(p => p.fee_type === 'maintenance_fee') && (
+                                                                        <>
+                                                                            <TableCell>
+                                                                                {payment.fee_type === 'maintenance_fee' ? (
+                                                                                    <TextField 
+                                                                                        size="small" 
+                                                                                        type="date" 
+                                                                                        value={payment.valid_from} 
+                                                                                        onChange={(e) => updatePaymentWithValidation(payment.id, 'valid_from', e.target.value)} 
+                                                                                        error={!!(validationErrors[payment.id]?.valid_from)}
+                                                                                        helperText={validationErrors[payment.id]?.valid_from}
+                                                                                        InputLabelProps={{ shrink: true }} 
+                                                                                        sx={{ width: 140 }} 
+                                                                                    />
+                                                                                ) : (
+                                                                                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                                                                        Lifetime
+                                                                                    </Typography>
+                                                                                )}
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                                {payment.fee_type === 'maintenance_fee' ? (
+                                                                                    <TextField 
+                                                                                        size="small" 
+                                                                                        type="date" 
+                                                                                        value={payment.valid_to} 
+                                                                                        onChange={(e) => updatePaymentWithValidation(payment.id, 'valid_to', e.target.value)} 
+                                                                                        error={!!(validationErrors[payment.id]?.valid_to)}
+                                                                                        helperText={validationErrors[payment.id]?.valid_to}
+                                                                                        InputLabelProps={{ shrink: true }} 
+                                                                                        sx={{ width: 140 }} 
+                                                                                    />
+                                                                                ) : (
+                                                                                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                                                                        Lifetime
+                                                                                    </Typography>
+                                                                                )}
+                                                                            </TableCell>
+                                                                        </>
+                                                                    )}
                                                                     <TableCell>
                                                                         <TextField 
                                                                             size="small" 
