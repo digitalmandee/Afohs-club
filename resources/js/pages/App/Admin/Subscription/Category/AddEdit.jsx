@@ -23,7 +23,6 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
         name: '',
         description: '',
         fee: '',
-        subscription_fee: '',
         status: 'active',
     });
 
@@ -53,7 +52,6 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
             name: formData.name,
             description: formData.description || null,
             fee: parseInt(formData.fee, 10) || 0,
-            subscription_fee: parseInt(formData.subscription_fee, 10) || 0,
             status: formData.status,
         };
 
@@ -133,10 +131,6 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
                         <Box sx={{ mb: 2 }}>
                             <Typography>Fee</Typography>
                             <TextField fullWidth size="small" name="fee" value={formData.fee} onChange={handleInputChange} type="number" required />
-                        </Box>
-                        <Box sx={{ mb: 2 }}>
-                            <Typography>Subscription Fee</Typography>
-                            <TextField fullWidth size="small" name="subscription_fee" value={formData.subscription_fee} onChange={handleInputChange} type="number" required />
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Status</Typography>

@@ -111,12 +111,9 @@ const SubscriptionCategories = ({ subscriptionCategories }) => {
                                             <strong>Fee:</strong> {category.fee.toLocaleString()} Rs
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            <strong>Subscription Fee:</strong> {category.subscription_fee.toLocaleString()} Rs
+                                            <strong>Status:</strong> {category.status}
                                         </Typography>
                                     </Box>
-                                    <Typography variant="body2" color="text.secondary">
-                                        <strong>Status:</strong> {category.status}
-                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
