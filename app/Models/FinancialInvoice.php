@@ -38,7 +38,10 @@ class FinancialInvoice extends BaseModel
         'quarter_number',
         'valid_from',
         'valid_to',
-        'credit_card_type'
+        'credit_card_type',
+        // Subscription fields
+        'subscription_type_id',
+        'subscription_category_id'
     ];
 
     protected $casts = [
@@ -63,5 +66,15 @@ class FinancialInvoice extends BaseModel
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+
+    public function subscriptionType()
+    {
+        return $this->belongsTo(SubscriptionType::class, 'subscription_type_id', 'id');
+    }
+
+    public function subscriptionCategory()
+    {
+        return $this->belongsTo(SubscriptionCategory::class, 'subscription_category_id', 'id');
     }
 }

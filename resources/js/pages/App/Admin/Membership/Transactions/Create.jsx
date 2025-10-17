@@ -11,7 +11,7 @@ import { Person, Receipt, Search } from '@mui/icons-material';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
-export default function CreateTransaction() {
+export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [] }) {
     const [open, setOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
@@ -47,6 +47,9 @@ export default function CreateTransaction() {
         starting_quarter: 1,
         credit_card_type: '',
         receipt_file: null,
+        subscription_type_id: '',
+        subscription_category_id: '',
+        family_member_relation: 'SELF',
     });
 
     // Auto-update payment suggestions when member changes
@@ -432,6 +435,13 @@ export default function CreateTransaction() {
     const handleFeeTypeChange = (feeType) => {
         setData('fee_type', feeType);
 
+        // Reset fields when changing fee type
+        setData('amount', '');
+        setData('valid_from', '');
+        setData('valid_to', '');
+        setData('subscription_type_id', '');
+        setData('subscription_category_id', '');
+
         // Update amount based on fee type and selected member
         if (selectedMember && selectedMember.member_category) {
             if (feeType === 'membership_fee') {
@@ -445,6 +455,17 @@ export default function CreateTransaction() {
                 setData('amount', selectedMember.member_category.subscription_fee);
                 // Auto-suggest quarterly period based on member joining date
                 suggestMaintenancePeriod('quarterly');
+            } else if (feeType === 'subscription_fee') {
+                // For subscription fees, user will select type and category manually
+                // Set default start date to today
+                const today = new Date();
+                setData('valid_from', today.toISOString().split('T')[0]);
+            } else if (feeType === 'reinstating_fee') {
+                // For reinstating fees, set a standard amount (can be customized)
+                setData('amount', 25000); // Standard reinstating fee amount
+                // No validity period needed for reinstating fees
+                setData('valid_from', '');
+                setData('valid_to', '');
             }
         }
     };
@@ -1119,6 +1140,8 @@ export default function CreateTransaction() {
                                                                 💳 Membership Fee {membershipFeePaid && '(Already Paid)'}
                                                             </MenuItem>
                                                             <MenuItem value="maintenance_fee">🔧 Maintenance Fee</MenuItem>
+                                                            <MenuItem value="subscription_fee">🎯 Subscription Fee</MenuItem>
+                                                            <MenuItem value="reinstating_fee">🔄 Reinstating Fee</MenuItem>
                                                         </Select>
                                                         {errors.fee_type && (
                                                             <Typography variant="caption" color="error" sx={{ mt: 1 }}>
@@ -1292,6 +1315,168 @@ export default function CreateTransaction() {
                                                             </Box>
                                                         </Grid>
                                                     </>
+                                                )}
+
+                                                {/* Reinstating Fee Section */}
+                                                {selectedMember && data.fee_type === 'reinstating_fee' && (
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                            🔄 Member Reinstatement Information
+                                                        </Typography>
+                                                        <Box sx={{ p: 3, backgroundColor: '#fef3c7', borderRadius: 2, border: '1px solid #f59e0b' }}>
+                                                            <Grid container spacing={2}>
+                                                                <Grid item xs={12} md={6}>
+                                                                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
+                                                                        Current Status: 
+                                                                        <Chip 
+                                                                            label={selectedMember.status} 
+                                                                            size="small" 
+                                                                            sx={{ 
+                                                                                ml: 1,
+                                                                                backgroundColor: selectedMember.status === 'active' ? '#dcfce7' : '#fecaca',
+                                                                                color: selectedMember.status === 'active' ? '#166534' : '#dc2626'
+                                                                            }} 
+                                                                        />
+                                                                    </Typography>
+                                                                </Grid>
+                                                                <Grid item xs={12} md={6}>
+                                                                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
+                                                                        Member ID: {selectedMember.user_id}
+                                                                    </Typography>
+                                                                </Grid>
+                                                                <Grid item xs={12}>
+                                                                    <Typography variant="body2" sx={{ color: '#92400e' }}>
+                                                                        💡 <strong>Reinstating Fee:</strong> This fee is charged to reactivate members whose status is cancelled, expired, suspended, or terminated. Upon successful payment, the member status will be updated to "Active".
+                                                                    </Typography>
+                                                                </Grid>
+                                                                {!['cancelled', 'expired', 'suspended', 'terminated'].includes(selectedMember.status) && (
+                                                                    <Grid item xs={12}>
+                                                                        <Alert severity="warning">
+                                                                            ⚠️ This member's current status ({selectedMember.status}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.
+                                                                        </Alert>
+                                                                    </Grid>
+                                                                )}
+                                                            </Grid>
+                                                        </Box>
+                                                    </Grid>
+                                                )}
+
+                                                {/* Subscription Details Section - Show before Amount & Discount */}
+                                                {selectedMember && data.fee_type === 'subscription_fee' && (
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                            Subscription Details
+                                                        </Typography>
+                                                        <Box
+                                                            sx={{
+                                                                p: 3,
+                                                                bgcolor: 'grey.50',
+                                                                borderRadius: 2,
+                                                                border: '1px solid',
+                                                                borderColor: 'grey.200',
+                                                            }}
+                                                        >
+                                                            <Grid container spacing={3}>
+                                                                <Grid item xs={6}>
+                                                                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
+                                                                        Subscription Type
+                                                                    </Typography>
+                                                                    <FormControl fullWidth>
+                                                                        <Select
+                                                                            value={data.subscription_type_id}
+                                                                            onChange={(e) => {
+                                                                                setData('subscription_type_id', e.target.value);
+                                                                                setData('subscription_category_id', ''); // Reset category when type changes
+                                                                                setData('amount', ''); // Reset amount
+                                                                            }}
+                                                                            error={!!errors.subscription_type_id}
+                                                                            sx={{ borderRadius: 2 }}
+                                                                            displayEmpty
+                                                                        >
+                                                                            <MenuItem value="">Select Subscription Type</MenuItem>
+                                                                            {subscriptionTypes?.map((type) => (
+                                                                                <MenuItem key={type.id} value={type.id}>
+                                                                                    {type.name}
+                                                                                </MenuItem>
+                                                                            ))}
+                                                                        </Select>
+                                                                        {errors.subscription_type_id && (
+                                                                            <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                                                {errors.subscription_type_id}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </FormControl>
+                                                                </Grid>
+
+                                                                <Grid item xs={6}>
+                                                                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
+                                                                        Subscription Category
+                                                                    </Typography>
+                                                                    <FormControl fullWidth>
+                                                                        <Select
+                                                                            value={data.subscription_category_id}
+                                                                            onChange={(e) => {
+                                                                                const categoryId = e.target.value;
+                                                                                setData('subscription_category_id', categoryId);
+                                                                                
+                                                                                // Auto-populate amount from selected category
+                                                                                const selectedCategory = subscriptionCategories?.find(cat => cat.id == categoryId);
+                                                                                if (selectedCategory) {
+                                                                                    setData('amount', selectedCategory.fee);
+                                                                                }
+                                                                            }}
+                                                                            error={!!errors.subscription_category_id}
+                                                                            sx={{ borderRadius: 2 }}
+                                                                            displayEmpty
+                                                                            disabled={!data.subscription_type_id}
+                                                                        >
+                                                                            <MenuItem value="">Select Category</MenuItem>
+                                                                            {subscriptionCategories
+                                                                                ?.filter(cat => cat.subscription_type_id == data.subscription_type_id)
+                                                                                ?.map((category) => (
+                                                                                    <MenuItem key={category.id} value={category.id}>
+                                                                                        {category.name} - Rs. {category.fee}
+                                                                                    </MenuItem>
+                                                                                ))}
+                                                                        </Select>
+                                                                        {errors.subscription_category_id && (
+                                                                            <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                                                {errors.subscription_category_id}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </FormControl>
+                                                                </Grid>
+
+                                                                {/* Family Member Relation */}
+                                                                <Grid item xs={12}>
+                                                                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
+                                                                        Family Member Relation
+                                                                    </Typography>
+                                                                    <FormControl fullWidth>
+                                                                        <Select
+                                                                            value={data.family_member_relation}
+                                                                            onChange={(e) => setData('family_member_relation', e.target.value)}
+                                                                            error={!!errors.family_member_relation}
+                                                                            sx={{ borderRadius: 2 }}
+                                                                            displayEmpty
+                                                                        >
+                                                                            <MenuItem value="SELF">SELF</MenuItem>
+                                                                            {['Father', 'Son', 'Daughter', 'Wife', 'Mother', 'Grand Son', 'Grand Daughter', 'Second Wife', 'Husband', 'Sister', 'Brother', 'Nephew', 'Niece', 'Father in law', 'Mother in Law'].map((relation) => (
+                                                                                <MenuItem key={relation} value={relation}>
+                                                                                    {relation}
+                                                                                </MenuItem>
+                                                                            ))}
+                                                                        </Select>
+                                                                        {errors.family_member_relation && (
+                                                                            <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                                                {errors.family_member_relation}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </FormControl>
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Box>
+                                                    </Grid>
                                                 )}
 
                                                 {/* Amount and Discount Section */}
@@ -1511,6 +1696,68 @@ export default function CreateTransaction() {
                                                     </Grid>
                                                 )}
 
+                                                {/* Subscription Validity Period Section */}
+                                                {selectedMember && data.fee_type === 'subscription_fee' && (
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                            Validity Period
+                                                        </Typography>
+                                                        <Box
+                                                            sx={{
+                                                                p: 3,
+                                                                bgcolor: 'grey.50',
+                                                                borderRadius: 2,
+                                                                border: '1px solid',
+                                                                borderColor: 'grey.200',
+                                                            }}
+                                                        >
+                                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                                                                📅 Set Subscription Period
+                                                            </Typography>
+
+                                                            <Grid container spacing={3}>
+                                                                <Grid item xs={6}>
+                                                                    <TextField
+                                                                        fullWidth
+                                                                        label="Valid From"
+                                                                        type="date"
+                                                                        value={data.valid_from}
+                                                                        onChange={(e) => setData('valid_from', e.target.value)}
+                                                                        error={!!errors.valid_from}
+                                                                        helperText={errors.valid_from || 'Subscription start date'}
+                                                                        sx={{
+                                                                            '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                        }}
+                                                                        InputLabelProps={{ shrink: true }}
+                                                                    />
+                                                                </Grid>
+                                                                <Grid item xs={6}>
+                                                                    <TextField
+                                                                        fullWidth
+                                                                        label="Valid To"
+                                                                        type="date"
+                                                                        value={data.valid_to}
+                                                                        onChange={(e) => setData('valid_to', e.target.value)}
+                                                                        error={!!errors.valid_to}
+                                                                        helperText={errors.valid_to || 'Leave empty for unlimited validity'}
+                                                                        sx={{
+                                                                            '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                        }}
+                                                                        InputLabelProps={{ shrink: true }}
+                                                                    />
+                                                                </Grid>
+                                                            </Grid>
+
+                                                            {data.valid_from && (
+                                                                <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
+                                                                    <strong>Subscription Period:</strong> {formatDate(data.valid_from)} 
+                                                                    {data.valid_to ? ` to ${formatDate(data.valid_to)}` : ' (Unlimited)'}
+                                                                </Alert>
+                                                            )}
+                                                        </Box>
+                                                    </Grid>
+                                                )}
+
                                                 {/* Total Amount Summary */}
                                                 {data.amount && (
                                                     <Grid item xs={12}>
@@ -1542,7 +1789,13 @@ export default function CreateTransaction() {
                                                         variant="contained"
                                                         size="large"
                                                         fullWidth
-                                                        disabled={submitting || !data.fee_type || !data.amount || !data.valid_from || !data.valid_to || !dateValidation.isValid}
+                                                        disabled={
+                                                            submitting || 
+                                                            !data.fee_type || 
+                                                            !data.amount || 
+                                                            (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) ||
+                                                            (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))
+                                                        }
                                                         sx={{
                                                             mt: 3,
                                                             py: 2,
@@ -1644,6 +1897,7 @@ export default function CreateTransaction() {
                                                             <TableRow>
                                                                 <TableCell>Invoice No</TableCell>
                                                                 <TableCell>Fee Type</TableCell>
+                                                                <TableCell>Details</TableCell>
                                                                 <TableCell>Amount</TableCell>
                                                                 <TableCell>Payment Method</TableCell>
                                                                 <TableCell>Receipt</TableCell>
@@ -1658,7 +1912,40 @@ export default function CreateTransaction() {
                                                                     <TableRow key={transaction.id}>
                                                                         <TableCell>{transaction.invoice_no}</TableCell>
                                                                         <TableCell>
-                                                                            <Chip label={transaction.fee_type?.replace('_', ' ').toUpperCase()} color={transaction.fee_type === 'membership_fee' ? 'primary' : 'secondary'} size="small" />
+                                                                            <Chip 
+                                                                                label={transaction.fee_type?.replace('_', ' ').toUpperCase()} 
+                                                                                color={
+                                                                                    transaction.fee_type === 'membership_fee' ? 'primary' : 
+                                                                                    transaction.fee_type === 'subscription_fee' ? 'success' : 
+                                                                                    'secondary'
+                                                                                } 
+                                                                                size="small" 
+                                                                            />
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {transaction.fee_type === 'subscription_fee' ? (
+                                                                                <Box>
+                                                                                    <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                                                                                        {transaction.data?.subscription_type_name || 'Subscription'}
+                                                                                    </Typography>
+                                                                                    <Typography variant="caption" color="text.secondary">
+                                                                                        {transaction.data?.subscription_category_name || 'Category'}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            ) : transaction.fee_type === 'maintenance_fee' ? (
+                                                                                <Box>
+                                                                                    <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                                                                                        {transaction.payment_frequency?.toUpperCase() || 'QUARTERLY'}
+                                                                                    </Typography>
+                                                                                    <Typography variant="caption" color="text.secondary">
+                                                                                        Q{transaction.quarter_number || 1}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            ) : (
+                                                                                <Typography variant="caption" color="text.secondary">
+                                                                                    Lifetime Membership
+                                                                                </Typography>
+                                                                            )}
                                                                         </TableCell>
                                                                         <TableCell>{formatCurrency(transaction.total_price)}</TableCell>
                                                                         <TableCell>
@@ -1694,7 +1981,7 @@ export default function CreateTransaction() {
                                                                 ))
                                                             ) : (
                                                                 <TableRow>
-                                                                    <TableCell colSpan={8} align="center">
+                                                                    <TableCell colSpan={9} align="center">
                                                                         <Typography color="textSecondary">{searchInvoice ? `No transactions found matching "${searchInvoice}"` : 'No transactions found for this member'}</Typography>
                                                                     </TableCell>
                                                                 </TableRow>

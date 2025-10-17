@@ -298,7 +298,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('/admin/subscription/payment/store', [SubscriptionController::class, 'paymentStore'])->name('subscriptions.payment.store');
     Route::get('/admin/subscription/add', [SubscriptionController::class, 'create'])->name('subscriptions.create');
     Route::post('/admin/subscription/store', [SubscriptionController::class, 'store'])->name('subscriptions.store');
-    Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscription.management');
+    Route::get('/admin/manage/subscription', [SubscriptionController::class, 'management'])->name('subscriptions.management');
     // Subscription categories
     Route::resource('/admin/subscription/subscription-categories', SubscriptionCategoryController::class)->except('show');
     // Subscription types
@@ -322,8 +322,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/finance/add/transaction', [FinancialController::class, 'create'])->name('finance.transaction.create');
     Route::post('/finance/add/transaction', [FinancialController::class, 'store'])->name('finance.transaction.post');
-
-    Route::get('/admin/manage/monthly/fee', [SubscriptionController::class, 'monthlyFee'])->name('subscription.monthly');
 
     // Member Invoices
     Route::get('/api/member-invoices', [FinancialController::class, 'getMemberInvoices']);
@@ -362,8 +360,41 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('store', [MembershipController::class, 'store'])->name('membership.store');
         Route::post('update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
 
+        // Reports Index - Dashboard with all reports
+        Route::get('reports', [MemberFeeRevenueController::class, 'reportsIndex'])->name('membership.reports');
+        
         // Membership Maintanance Revenue
         Route::get('maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue');
+        
+        // Pending Maintenance Report
+        Route::get('pending-maintenance-report', [MemberFeeRevenueController::class, 'pendingMaintenanceReport'])->name('membership.pending-maintenance-report');
+        
+        // Supplementary Card Report
+        Route::get('supplementary-card-report', [MemberFeeRevenueController::class, 'supplementaryCardReport'])->name('membership.supplementary-card-report');
+        
+        // Sleeping Members Report
+        Route::get('sleeping-members-report', [MemberFeeRevenueController::class, 'sleepingMembersReport'])->name('membership.sleeping-members-report');
+        
+        // Member Card Detail Report
+        Route::get('member-card-detail-report', [MemberFeeRevenueController::class, 'memberCardDetailReport'])->name('membership.member-card-detail-report');
+        
+        // Monthly Maintenance Fee Report
+        Route::get('monthly-maintenance-fee-report', [MemberFeeRevenueController::class, 'monthlyMaintenanceFeeReport'])->name('membership.monthly-maintenance-fee-report');
+        
+        // New Year Eve Report
+        Route::get('new-year-eve-report', [MemberFeeRevenueController::class, 'newYearEveReport'])->name('membership.new-year-eve-report');
+        
+        // Reinstating Fee Report
+        Route::get('reinstating-fee-report', [MemberFeeRevenueController::class, 'reinstatingFeeReport'])->name('membership.reinstating-fee-report');
+        
+        // Sports Subscriptions Report
+        Route::get('sports-subscriptions-report', [MemberFeeRevenueController::class, 'sportsSubscriptionsReport'])->name('membership.sports-subscriptions-report');
+        
+        // Subscriptions & Maintenance Summary Report
+        Route::get('subscriptions-maintenance-summary', [MemberFeeRevenueController::class, 'subscriptionsMaintenanceSummary'])->name('membership.subscriptions-maintenance-summary');
+        
+        // Pending Maintenance Quarters Report
+        Route::get('pending-maintenance-quarters-report', [MemberFeeRevenueController::class, 'pendingMaintenanceQuartersReport'])->name('membership.pending-maintenance-quarters-report');
 
         // Family Members Archive route
         Route::get('family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('membership.family-members');

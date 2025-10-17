@@ -7,7 +7,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import UnpaidInvoiceViewer from './UnpaidInvoiceViewer';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -261,197 +260,300 @@ const AddSubscriptionInformation = ({ subscriberTypes, categories, invoice_no })
                             borderRadius: '4px',
                         }}
                     >
-                        <Tabs value={tabIndex} onChange={handleTabChange} sx={{ mb: 3 }}>
-                            <Tab label="New Subscription" />
-                            <Tab label="Unpaid Invoices" />
-                        </Tabs>
-                        {tabIndex === 0 && (
-                            <form onSubmit={handleSubmit}>
-                                <Box
-                                    mb={2}
+                        <form onSubmit={handleSubmit}>
+                            <Box
+                                mb={2}
+                                sx={{
+                                    bgcolor: '#F6F6F6',
+                                    border: '1px solid #E3E3E3',
+                                    display: 'flex',
+                                    justifyContent: 'flex-start',
+                                    alignItems: 'center',
+                                    px: 2,
+                                    py: 1,
+                                }}
+                            >
+                                <Typography
                                     sx={{
-                                        bgcolor: '#F6F6F6',
-                                        border: '1px solid #E3E3E3',
-                                        display: 'flex',
-                                        justifyContent: 'flex-start',
-                                        alignItems: 'center',
-                                        px: 2,
-                                        py: 1,
+                                        color: '#7F7F7F',
+                                        fontSize: '16px',
+                                        fontWeight: 400,
                                     }}
                                 >
+                                    Invoice Number :
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        color: '#063455',
+                                        fontSize: '16px',
+                                        fontWeight: 500,
+                                        ml: 1,
+                                    }}
+                                >
+                                    #{invoice_no}
+                                </Typography>
+                            </Box>
+                            {/* Guest Name */}
+                            <Box mb={2}>
+                                <Autocomplete
+                                    fullWidth
+                                    freeSolo
+                                    size="small"
+                                    options={members}
+                                    value={formData.customer}
+                                    name="customer"
+                                    loading={searchLoading}
+                                    getOptionLabel={(option) => [option?.first_name, option?.middle_name, option?.last_name].filter(Boolean).join(' ') || ''}
+                                    isOptionEqualToValue={(option, value) => option?.user_id === value?.user_id}
+                                    onInputChange={handleSearch}
+                                    onChange={handleSearchChange}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            fullWidth
+                                            placeholder="Search by name, ID, or email"
+                                            variant="outlined"
+                                            size="small"
+                                            name="customer"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <SearchIcon sx={{ fontSize: 20, color: '#999' }} />
+                                                    </InputAdornment>
+                                                ),
+                                                style: { fontSize: '14px' },
+                                            }}
+                                        />
+                                    )}
+                                    renderOption={(props, option) => (
+                                        <li {...props}>
+                                            <span>
+                                                {option.first_name} ({option.user_id})
+                                            </span>
+                                            <span style={{ color: 'gray', fontSize: '0.875rem', marginLeft: '8px' }}>{option.email}</span>
+                                        </li>
+                                    )}
+                                />
+                            </Box>
+
+                            {/* Phone */}
+                            <Box mb={2} className="d-flex gap-3">
+                                <div style={{ flex: 1 }}>
                                     <Typography
-                                        sx={{
-                                            color: '#7F7F7F',
-                                            fontSize: '16px',
-                                            fontWeight: 400,
-                                        }}
-                                    >
-                                        Invoice Number :
-                                    </Typography>
-                                    <Typography
-                                        sx={{
-                                            color: '#063455',
-                                            fontSize: '16px',
+                                        variant="body1"
+                                        style={{
+                                            marginBottom: '8px',
+                                            color: '#333',
+                                            fontSize: '14px',
                                             fontWeight: 500,
-                                            ml: 1,
                                         }}
                                     >
-                                        #{invoice_no}
+                                        Email
                                     </Typography>
-                                </Box>
-                                {/* Guest Name */}
-                                <Box mb={2}>
-                                    <Autocomplete
+                                    <TextField
                                         fullWidth
-                                        freeSolo
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="Enter Email"
+                                        variant="outlined"
                                         size="small"
-                                        options={members}
-                                        value={formData.customer}
-                                        name="customer"
-                                        loading={searchLoading}
-                                        getOptionLabel={(option) => [option?.first_name, option?.middle_name, option?.last_name].filter(Boolean).join(' ') || ''}
-                                        isOptionEqualToValue={(option, value) => option?.user_id === value?.user_id}
-                                        onInputChange={handleSearch}
-                                        onChange={handleSearchChange}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                fullWidth
-                                                placeholder="Search by name, ID, or email"
-                                                variant="outlined"
-                                                size="small"
-                                                name="customer"
-                                                InputProps={{
-                                                    ...params.InputProps,
-                                                    startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            <SearchIcon sx={{ fontSize: 20, color: '#999' }} />
-                                                        </InputAdornment>
-                                                    ),
-                                                    style: { fontSize: '14px' },
-                                                }}
-                                            />
-                                        )}
-                                        renderOption={(props, option) => (
-                                            <li {...props}>
-                                                <span>
-                                                    {option.first_name} ({option.user_id})
-                                                </span>
-                                                <span style={{ color: 'gray', fontSize: '0.875rem', marginLeft: '8px' }}>{option.email}</span>
-                                            </li>
-                                        )}
+                                        style={{ marginBottom: '8px' }}
+                                        error={!!errors.email}
+                                        helperText={errors.email}
+                                        disabled={true}
+                                        InputProps={{
+                                            readOnly: true,
+                                            style: { fontSize: '14px' },
+                                        }}
                                     />
-                                </Box>
-
-                                {/* Phone */}
-                                <Box mb={2} className="d-flex gap-3">
-                                    <div style={{ flex: 1 }}>
-                                        <Typography
-                                            variant="body1"
-                                            style={{
-                                                marginBottom: '8px',
-                                                color: '#333',
-                                                fontSize: '14px',
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            Email
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
-                                            name="email"
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            placeholder="Enter Email"
-                                            variant="outlined"
-                                            size="small"
-                                            style={{ marginBottom: '8px' }}
-                                            error={!!errors.email}
-                                            helperText={errors.email}
-                                            disabled={true}
-                                            InputProps={{
-                                                readOnly: true,
-                                                style: { fontSize: '14px' },
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <Typography
-                                            variant="body1"
-                                            style={{
-                                                marginBottom: '8px',
-                                                color: '#333',
-                                                fontSize: '14px',
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            Contact Number
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
-                                            name="phone"
-                                            value={formData.phone}
-                                            onChange={handleChange}
-                                            placeholder="Enter you contact number"
-                                            variant="outlined"
-                                            size="small"
-                                            style={{ marginBottom: '8px' }}
-                                            error={!!errors.phone}
-                                            helperText={errors.phone}
-                                            disabled={true}
-                                            InputProps={{
-                                                readOnly: true,
-                                                style: { fontSize: '14px' },
-                                            }}
-                                        />
-                                    </div>
-                                </Box>
-
-                                {/* Club Name */}
-                                <Box mb={2}>
-                                    <Typography variant="body1" style={{ marginBottom: '8px', color: '#333', fontSize: '14px', fontWeight: 500 }}>
-                                        Subscribers Type
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <Typography
+                                        variant="body1"
+                                        style={{
+                                            marginBottom: '8px',
+                                            color: '#333',
+                                            fontSize: '14px',
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        Contact Number
                                     </Typography>
-                                    <FormControl fullWidth size="small">
-                                        <TextField
-                                            select
-                                            fullWidth
-                                            name="subscriberType"
-                                            value={formData.subscriberType}
-                                            onChange={handleChange}
-                                            placeholder="Choose Subscriber Type"
-                                            variant="outlined"
-                                            size="small"
-                                            error={!!errors.subscriberType}
-                                            helperText={errors.subscriberType}
-                                            SelectProps={{
-                                                displayEmpty: true,
-                                                renderValue: (selected) => {
-                                                    if (!selected) {
-                                                        return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Subscriber Type</span>;
-                                                    }
-                                                    const item = subscriberTypes.find((item) => item.id == selected);
-                                                    return item ? item.name : '';
-                                                },
-                                                IconComponent: KeyboardArrowDownIcon,
-                                            }}
-                                            InputProps={{
-                                                style: { fontSize: '14px' },
-                                            }}
-                                        >
-                                            <MenuItem value="">
-                                                <em>None</em>
+                                    <TextField
+                                        fullWidth
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        placeholder="Enter you contact number"
+                                        variant="outlined"
+                                        size="small"
+                                        style={{ marginBottom: '8px' }}
+                                        error={!!errors.phone}
+                                        helperText={errors.phone}
+                                        disabled={true}
+                                        InputProps={{
+                                            readOnly: true,
+                                            style: { fontSize: '14px' },
+                                        }}
+                                    />
+                                </div>
+                            </Box>
+
+                            {/* Club Name */}
+                            <Box mb={2}>
+                                <Typography variant="body1" style={{ marginBottom: '8px', color: '#333', fontSize: '14px', fontWeight: 500 }}>
+                                    Subscribers Type
+                                </Typography>
+                                <FormControl fullWidth size="small">
+                                    <TextField
+                                        select
+                                        fullWidth
+                                        name="subscriberType"
+                                        value={formData.subscriberType}
+                                        onChange={handleChange}
+                                        placeholder="Choose Subscriber Type"
+                                        variant="outlined"
+                                        size="small"
+                                        error={!!errors.subscriberType}
+                                        helperText={errors.subscriberType}
+                                        SelectProps={{
+                                            displayEmpty: true,
+                                            renderValue: (selected) => {
+                                                if (!selected) {
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Subscriber Type</span>;
+                                                }
+                                                const item = subscriberTypes.find((item) => item.id == selected);
+                                                return item ? item.name : '';
+                                            },
+                                            IconComponent: KeyboardArrowDownIcon,
+                                        }}
+                                        InputProps={{
+                                            style: { fontSize: '14px' },
+                                        }}
+                                    >
+                                        <MenuItem value="">
+                                            <em>None</em>
+                                        </MenuItem>
+                                        {subscriberTypes.map((item) => (
+                                            <MenuItem key={item.id} value={item.id}>
+                                                {item.name}
                                             </MenuItem>
-                                            {subscriberTypes.map((item) => (
-                                                <MenuItem key={item.id} value={item.id}>
+                                        ))}
+                                    </TextField>
+                                </FormControl>
+                            </Box>
+
+                            <Box mb={2}>
+                                <Typography
+                                    variant="body1"
+                                    style={{
+                                        marginBottom: '8px',
+                                        color: '#333',
+                                        fontSize: '14px',
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    Subscribers Category
+                                </Typography>
+                                <FormControl fullWidth size="small">
+                                    <TextField
+                                        select
+                                        fullWidth
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleChange}
+                                        placeholder="Choose Category"
+                                        variant="outlined"
+                                        size="small"
+                                        style={{ marginBottom: '8px' }}
+                                        error={!!errors.category}
+                                        helperText={errors.category}
+                                        SelectProps={{
+                                            displayEmpty: true,
+                                            renderValue: (selected) => {
+                                                if (!selected) {
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
+                                                }
+                                                const item = categories.find((item) => item.id == Number(selected));
+                                                return item ? item.name : '';
+                                            },
+                                            IconComponent: KeyboardArrowDownIcon,
+                                        }}
+                                        InputProps={{
+                                            style: { fontSize: '14px' },
+                                        }}
+                                    >
+                                        <MenuItem value="">
+                                            <em>None</em>
+                                        </MenuItem>
+                                        {filteredCategories.length > 0 &&
+                                            filteredCategories.map((item, index) => (
+                                                <MenuItem key={index} value={item.id}>
                                                     {item.name}
                                                 </MenuItem>
                                             ))}
-                                        </TextField>
-                                    </FormControl>
-                                </Box>
+                                    </TextField>
+                                </FormControl>
+                            </Box>
 
-                                <Box mb={2}>
+                            {/* Authorized By */}
+                            <Box mb={2}>
+                                <Typography
+                                    variant="body1"
+                                    style={{
+                                        marginBottom: '8px',
+                                        color: '#333',
+                                        fontSize: '14px',
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    Selection Type
+                                </Typography>
+                                <FormControl fullWidth size="small">
+                                    <TextField
+                                        select
+                                        fullWidth
+                                        name="subscriptionType"
+                                        value={formData.subscriptionType}
+                                        onChange={handleChange}
+                                        placeholder="Choose type"
+                                        variant="outlined"
+                                        size="small"
+                                        style={{ marginBottom: '8px' }}
+                                        error={!!errors.subscriptionType}
+                                        helperText={errors.subscriptionType}
+                                        SelectProps={{
+                                            displayEmpty: true,
+                                            renderValue: (selected) => {
+                                                if (!selected) {
+                                                    return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Type</span>;
+                                                }
+                                                const item = subscriptionTypes.find((item) => item.value == selected);
+                                                return item ? item.label : '';
+                                            },
+                                            IconComponent: KeyboardArrowDownIcon,
+                                        }}
+                                        InputProps={{
+                                            style: { fontSize: '14px' },
+                                        }}
+                                    >
+                                        <MenuItem value="">
+                                            <em>None</em>
+                                        </MenuItem>
+                                        {subscriptionTypes.map((item, index) => (
+                                            <MenuItem key={index} value={item.value}>
+                                                {item.label}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                </FormControl>
+                            </Box>
+
+                            {/* Check-In Date and Time */}
+                            <Box mb={2} className="d-flex gap-3">
+                                <div style={{ flex: 1 }}>
                                     <Typography
                                         variant="body1"
                                         style={{
@@ -461,51 +563,28 @@ const AddSubscriptionInformation = ({ subscriberTypes, categories, invoice_no })
                                             fontWeight: 500,
                                         }}
                                     >
-                                        Subscribers Category
+                                        Start Date
                                     </Typography>
-                                    <FormControl fullWidth size="small">
-                                        <TextField
-                                            select
-                                            fullWidth
-                                            name="category"
-                                            value={formData.category}
-                                            onChange={handleChange}
-                                            placeholder="Choose Category"
-                                            variant="outlined"
-                                            size="small"
-                                            style={{ marginBottom: '8px' }}
-                                            error={!!errors.category}
-                                            helperText={errors.category}
-                                            SelectProps={{
-                                                displayEmpty: true,
-                                                renderValue: (selected) => {
-                                                    if (!selected) {
-                                                        return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
-                                                    }
-                                                    const item = categories.find((item) => item.id == Number(selected));
-                                                    return item ? item.name : '';
-                                                },
-                                                IconComponent: KeyboardArrowDownIcon,
-                                            }}
-                                            InputProps={{
-                                                style: { fontSize: '14px' },
-                                            }}
-                                        >
-                                            <MenuItem value="">
-                                                <em>None</em>
-                                            </MenuItem>
-                                            {filteredCategories.length > 0 &&
-                                                filteredCategories.map((item, index) => (
-                                                    <MenuItem key={index} value={item.id}>
-                                                        {item.name}
-                                                    </MenuItem>
-                                                ))}
-                                        </TextField>
-                                    </FormControl>
-                                </Box>
-
-                                {/* Authorized By */}
-                                <Box mb={2}>
+                                    <TextField
+                                        fullWidth
+                                        name="startDate"
+                                        type="date"
+                                        value={formData.startDate}
+                                        onChange={handleChange}
+                                        placeholder="Default"
+                                        variant="outlined"
+                                        size="small"
+                                        error={!!errors.startDate}
+                                        helperText={errors.startDate}
+                                        inputProps={{
+                                            min: new Date().toISOString().split('T')[0], // Disable past dates
+                                        }}
+                                        InputProps={{
+                                            style: { fontSize: '14px' },
+                                        }}
+                                    />
+                                </div>
+                                <div style={{ flex: 1 }}>
                                     <Typography
                                         variant="body1"
                                         style={{
@@ -515,158 +594,70 @@ const AddSubscriptionInformation = ({ subscriberTypes, categories, invoice_no })
                                             fontWeight: 500,
                                         }}
                                     >
-                                        Selection Type
+                                        Expire Date
                                     </Typography>
-                                    <FormControl fullWidth size="small">
-                                        <TextField
-                                            select
-                                            fullWidth
-                                            name="subscriptionType"
-                                            value={formData.subscriptionType}
-                                            onChange={handleChange}
-                                            placeholder="Choose type"
-                                            variant="outlined"
-                                            size="small"
-                                            style={{ marginBottom: '8px' }}
-                                            error={!!errors.subscriptionType}
-                                            helperText={errors.subscriptionType}
-                                            SelectProps={{
-                                                displayEmpty: true,
-                                                renderValue: (selected) => {
-                                                    if (!selected) {
-                                                        return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Type</span>;
-                                                    }
-                                                    const item = subscriptionTypes.find((item) => item.value == selected);
-                                                    return item ? item.label : '';
-                                                },
-                                                IconComponent: KeyboardArrowDownIcon,
-                                            }}
-                                            InputProps={{
-                                                style: { fontSize: '14px' },
-                                            }}
-                                        >
-                                            <MenuItem value="">
-                                                <em>None</em>
-                                            </MenuItem>
-                                            {subscriptionTypes.map((item, index) => (
-                                                <MenuItem key={index} value={item.value}>
-                                                    {item.label}
-                                                </MenuItem>
-                                            ))}
-                                        </TextField>
-                                    </FormControl>
+                                    <TextField
+                                        fullWidth
+                                        name="expiryDate"
+                                        type="date"
+                                        value={formData.expiryDate}
+                                        onChange={handleChange}
+                                        placeholder="Default"
+                                        variant="outlined"
+                                        size="small"
+                                        error={!!errors.expiryDate}
+                                        helperText={errors.expiryDate}
+                                        inputProps={{
+                                            min: formData.startDate || new Date().toISOString().split('T')[0], // Disable past dates
+                                        }}
+                                    />
+                                </div>
+                            </Box>
+                            {/* Action Buttons */}
+                            <Box className="d-flex justify-content-between">
+                                <Box
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        fontSize: '20px',
+                                        fontWeight: 500,
+                                        color: '#333',
+                                    }}
+                                >
+                                    Total Amount: &nbsp;
+                                    <span style={{ fontWeight: 'bold' }}>{formData.amount}</span>
                                 </Box>
-
-                                {/* Check-In Date and Time */}
-                                <Box mb={2} className="d-flex gap-3">
-                                    <div style={{ flex: 1 }}>
-                                        <Typography
-                                            variant="body1"
-                                            style={{
-                                                marginBottom: '8px',
-                                                color: '#333',
-                                                fontSize: '14px',
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            Start Date
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
-                                            name="startDate"
-                                            type="date"
-                                            value={formData.startDate}
-                                            onChange={handleChange}
-                                            placeholder="Default"
-                                            variant="outlined"
-                                            size="small"
-                                            error={!!errors.startDate}
-                                            helperText={errors.startDate}
-                                            inputProps={{
-                                                min: new Date().toISOString().split('T')[0], // Disable past dates
-                                            }}
-                                            InputProps={{
-                                                style: { fontSize: '14px' },
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <Typography
-                                            variant="body1"
-                                            style={{
-                                                marginBottom: '8px',
-                                                color: '#333',
-                                                fontSize: '14px',
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            Expire Date
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
-                                            name="expiryDate"
-                                            type="date"
-                                            value={formData.expiryDate}
-                                            onChange={handleChange}
-                                            placeholder="Default"
-                                            variant="outlined"
-                                            size="small"
-                                            error={!!errors.expiryDate}
-                                            helperText={errors.expiryDate}
-                                            inputProps={{
-                                                min: formData.startDate || new Date().toISOString().split('T')[0], // Disable past dates
-                                            }}
-                                        />
-                                    </div>
-                                </Box>
-                                {/* Action Buttons */}
-                                <Box className="d-flex justify-content-between">
-                                    <Box
+                                <Box className="d-flex justify-content-end">
+                                    <Button
+                                        variant="text"
                                         style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            fontSize: '20px',
-                                            fontWeight: 500,
+                                            marginRight: '10px',
                                             color: '#333',
+                                            textTransform: 'none',
+                                            fontSize: '14px',
                                         }}
                                     >
-                                        Total Amount: &nbsp;
-                                        <span style={{ fontWeight: 'bold' }}>{formData.amount}</span>
-                                    </Box>
-                                    <Box className="d-flex justify-content-end">
-                                        <Button
-                                            variant="text"
-                                            style={{
-                                                marginRight: '10px',
-                                                color: '#333',
-                                                textTransform: 'none',
-                                                fontSize: '14px',
-                                            }}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            type="submit"
-                                            variant="contained"
-                                            disabled={loading}
-                                            loading={loading}
-                                            loadingPosition="start"
-                                            style={{
-                                                backgroundColor: '#003366',
-                                                color: 'white',
-                                                textTransform: 'none',
-                                                fontSize: '14px',
-                                                padding: '6px 16px',
-                                            }}
-                                        >
-                                            Save & Next
-                                        </Button>
-                                    </Box>
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        disabled={loading}
+                                        loading={loading}
+                                        loadingPosition="start"
+                                        style={{
+                                            backgroundColor: '#003366',
+                                            color: 'white',
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                            padding: '6px 16px',
+                                        }}
+                                    >
+                                        Save & Next
+                                    </Button>
                                 </Box>
-                            </form>
-                        )}
-
-                        {tabIndex === 1 && <UnpaidInvoiceViewer userId={formData.customer?.id} />}
+                            </Box>
+                        </form>
                     </Paper>
                 </div>
             </div>
