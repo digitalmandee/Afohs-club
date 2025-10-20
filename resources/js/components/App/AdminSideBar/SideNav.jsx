@@ -30,6 +30,7 @@ import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -366,8 +367,37 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Reports',
-            icon: <HomeIcon />,
-            path: route('membership.reports'),
+            icon: <AssessmentIcon />,
+            children: [
+                {
+                    text: 'Membership Reports',
+                    path: route('membership.reports'),
+                },
+                {
+                    text: 'POS Reports (All Restaurants)',
+                    path: route('admin.reports.pos.all'),
+                },
+                {
+                    text: 'Restaurant-Wise POS Reports',
+                    path: route('admin.reports.pos.restaurant-wise'),
+                },
+                {
+                    text: 'Running Sales Orders',
+                    path: route('admin.reports.pos.running-sales-orders'),
+                },
+                {
+                    text: 'Sales Summary (With Items)',
+                    path: route('admin.reports.pos.sales-summary-with-items'),
+                },
+                {
+                    text: 'Daily Sales List (Cashier-Wise)',
+                    path: route('admin.reports.pos.daily-sales-list-cashier-wise'),
+                },
+                {
+                    text: 'Daily Dump Items Report',
+                    path: route('admin.reports.pos.daily-dump-items-report'),
+                },
+            ],
         },
         {
             text: 'Finance',
