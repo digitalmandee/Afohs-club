@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
 use App\Models\MemberCategory;
+use App\Models\SubscriptionType;
+use App\Models\SubscriptionCategory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,8 +21,8 @@ class MemberTransactionController extends Controller
     public function index()
     {
         // Get transaction statistics
-        $totalTransactions = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee'])->count();
-        $totalRevenue = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee'])
+        $totalTransactions = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee', 'reinstating_fee'])->count();
+        $totalRevenue = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee', 'reinstating_fee'])
             ->where('status', 'paid')
             ->sum('total_price');
         
@@ -32,8 +34,16 @@ class MemberTransactionController extends Controller
             ->where('status', 'paid')
             ->sum('total_price');
 
+        $subscriptionFeeRevenue = FinancialInvoice::where('fee_type', 'subscription_fee')
+            ->where('status', 'paid')
+            ->sum('total_price');
+
+        $reinstatingFeeRevenue = FinancialInvoice::where('fee_type', 'reinstating_fee')
+            ->where('status', 'paid')
+            ->sum('total_price');
+
         // Recent transactions
-        $recentTransactions = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee'])
+        $recentTransactions = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee', 'reinstating_fee'])
             ->with('member:user_id,full_name,membership_no')
             ->orderBy('created_at', 'desc')
             ->limit(10)
@@ -45,6 +55,8 @@ class MemberTransactionController extends Controller
                 'total_revenue' => $totalRevenue,
                 'membership_fee_revenue' => $membershipFeeRevenue,
                 'maintenance_fee_revenue' => $maintenanceFeeRevenue,
+                'subscription_fee_revenue' => $subscriptionFeeRevenue,
+                'reinstating_fee_revenue' => $reinstatingFeeRevenue,
             ],
             'recent_transactions' => $recentTransactions
         ]);
@@ -52,7 +64,16 @@ class MemberTransactionController extends Controller
 
     public function create()
     {
-        return Inertia::render('App/Admin/Membership/Transactions/Create');
+        // Get subscription types and categories for subscription fees
+        $subscriptionTypes = SubscriptionType::all(['id', 'name']);
+        $subscriptionCategories = SubscriptionCategory::where('status', 'active')
+            ->with('subscriptionType:id,name')
+            ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
+
+        return Inertia::render('App/Admin/Membership/Transactions/Create', [
+            'subscriptionTypes' => $subscriptionTypes,
+            'subscriptionCategories' => $subscriptionCategories,
+        ]);
     }
 
     public function searchMembers(Request $request)
@@ -67,7 +88,7 @@ class MemberTransactionController extends Controller
                   ->orWhere('mobile_number_a', 'like', "%{$query}%");
             })
             ->with(['memberCategory:id,name,fee,subscription_fee'])
-            ->select('id', 'user_id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id')
+            ->select('id', 'user_id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id','status')
             ->limit(10)
             ->get();
 
@@ -85,7 +106,7 @@ class MemberTransactionController extends Controller
         }
 
         $transactions = FinancialInvoice::where('member_id', $memberId)
-            ->whereIn('fee_type', ['membership_fee', 'maintenance_fee'])
+            ->whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -96,27 +117,31 @@ class MemberTransactionController extends Controller
         return response()->json([
             'member' => $member,
             'transactions' => $transactions,
+            'membership_fee_paid' => $membershipFeePaid,
         ]);
     }
 
     public function store(Request $request)
     {
         try {
-            Log::info('Transaction creation request received', $request->all());
 
             $validator = Validator::make($request->all(), [
                 'member_id' => 'required|exists:members,user_id',
-                'fee_type' => 'required|in:membership_fee,maintenance_fee',
+                'fee_type' => 'required|in:membership_fee,maintenance_fee,subscription_fee,reinstating_fee',
                 'payment_frequency' => 'required_if:fee_type,maintenance_fee|in:monthly,quarterly,half_yearly,three_quarters,annually',
                 'amount' => 'required|numeric|min:0',
-                'discount_type' => 'nullable|in:percent,fixed',
+                'discount_type' => 'nullable|in:percent,fixed,percentage',
                 'discount_value' => 'nullable|numeric|min:0',
                 'payment_method' => 'required|in:cash,credit_card',
-                'valid_from' => 'required|date',
-                'valid_to' => 'required|date|after:valid_from',
+                'valid_from' => 'required_if:fee_type,maintenance_fee,subscription_fee|date',
+                'valid_to' => 'nullable|date|after:valid_from',
                 'starting_quarter' => 'nullable|integer|min:1|max:4',
                 'credit_card_type' => 'required_if:payment_method,credit_card|in:mastercard,visa',
-                'receipt_file' => 'required_if:payment_method,credit_card|file|mimes:jpeg,png,jpg,gif,pdf|max:2048'
+                'receipt_file' => 'required_if:payment_method,credit_card|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+                // Subscription fee specific validation
+                'subscription_type_id' => 'required_if:fee_type,subscription_fee|exists:subscription_types,id',
+                'subscription_category_id' => 'required_if:fee_type,subscription_fee|exists:subscription_categories,id',
+                'family_member_relation' => 'required_if:fee_type,subscription_fee|in:SELF,Father,Son,Daughter,Wife,Mother,Grand Son,Grand Daughter,Second Wife,Husband,Sister,Brother,Nephew,Niece,Father in law,Mother in Law',
             ]);
 
             if ($validator->fails()) {
@@ -135,12 +160,35 @@ class MemberTransactionController extends Controller
                     ->exists();
 
                 if ($existingMembershipFee) {
-                    return response()->json(['error' => 'Membership fee already paid for this member'], 422);
+                    return response()->json([
+                        'errors' => [
+                            'fee_type' => ['Membership fee already paid for this member. Each member can only pay membership fee once.']
+                        ]
+                    ], 422);
+                }
+            }
+
+            // Handle reinstating fee - update member status to active
+            if ($request->fee_type === 'reinstating_fee') {
+                // Check if member status allows reinstatement
+                $allowedStatuses = ['cancelled', 'expired', 'suspended', 'terminated'];
+                if (!in_array($member->status, $allowedStatuses)) {
+                    return response()->json([
+                        'errors' => [
+                            'fee_type' => ['Member status does not require reinstatement. Current status: ' . $member->status . '. Only cancelled, expired, suspended, or terminated members can be reinstated.']
+                        ]
+                    ], 422);
                 }
             }
 
             $invoiceData = $this->prepareInvoiceData($request, $member);
             $invoice = FinancialInvoice::create($invoiceData);
+
+            // Update member status to active if reinstating fee is paid
+            if ($request->fee_type === 'reinstating_fee') {
+                $member->update(['status' => 'active']);
+                Log::info("Member {$member->user_id} status updated to active after reinstating fee payment");
+            }
 
             DB::commit();
 
@@ -181,6 +229,18 @@ class MemberTransactionController extends Controller
             'starting_quarter' => $request->starting_quarter
         ];
 
+        // Add subscription specific data
+        if ($request->fee_type === 'subscription_fee') {
+            $subscriptionType = SubscriptionType::find($request->subscription_type_id);
+            $subscriptionCategory = SubscriptionCategory::find($request->subscription_category_id);
+            
+            $data['subscription_type_id'] = $request->subscription_type_id;
+            $data['subscription_category_id'] = $request->subscription_category_id;
+            $data['subscription_type_name'] = $subscriptionType ? $subscriptionType->name : null;
+            $data['subscription_category_name'] = $subscriptionCategory ? $subscriptionCategory->name : null;
+            $data['family_member_relation'] = $request->family_member_relation;
+        }
+
         // Handle credit card specific data
         if ($request->payment_method === 'credit_card') {
             $data['credit_card_type'] = $request->credit_card_type;
@@ -196,7 +256,7 @@ class MemberTransactionController extends Controller
             'invoice_no' => $this->generateInvoiceNumber(),
             'member_id' => $request->member_id,
             'fee_type' => $request->fee_type,
-            'invoice_type' => $request->fee_type === 'membership_fee' ? 'membership' : 'maintenance',
+            'invoice_type' => $request->fee_type === 'membership_fee' ? 'membership' : ($request->fee_type === 'subscription_fee' ? 'subscription' : ($request->fee_type === 'reinstating_fee' ? 'reinstating' : 'maintenance')),
             'amount' => $amount,
             'discount_type' => $request->discount_type,
             'discount_value' => $request->discount_value,
@@ -211,9 +271,31 @@ class MemberTransactionController extends Controller
             'created_by' => Auth::id(),
         ];
 
-        // Use manual validity dates from request
-        $invoiceData['valid_from'] = $request->valid_from;
-        $invoiceData['valid_to'] = $request->valid_to;
+        // Add subscription foreign keys if subscription fee
+        if ($request->fee_type === 'subscription_fee') {
+            $invoiceData['subscription_type_id'] = $request->subscription_type_id;
+            $invoiceData['subscription_category_id'] = $request->subscription_category_id;
+        }
+
+        // Handle dates based on fee type
+        if ($request->fee_type === 'membership_fee') {
+            // Membership fee is lifetime - set to member's joining date and far future
+            $memberJoinDate = Carbon::parse($member->membership_date);
+            $invoiceData['valid_from'] = $memberJoinDate->format('Y-m-d');
+            $invoiceData['valid_to'] = $memberJoinDate->addYears(50)->format('Y-m-d'); // Lifetime validity
+        } elseif ($request->fee_type === 'subscription_fee') {
+            // Use manual validity dates from request for subscription fees
+            $invoiceData['valid_from'] = $request->valid_from;
+            $invoiceData['valid_to'] = $request->valid_to; // Can be null for unlimited
+        } elseif ($request->fee_type === 'reinstating_fee') {
+            // Reinstating fee is a one-time payment with no validity period
+            $invoiceData['valid_from'] = now()->format('Y-m-d');
+            $invoiceData['valid_to'] = null; // No expiration for reinstating fee
+        } else {
+            // Use manual validity dates from request for maintenance fees
+            $invoiceData['valid_from'] = $request->valid_from;
+            $invoiceData['valid_to'] = $request->valid_to;
+        }
 
         // Handle maintenance fee specific data
         if ($request->fee_type === 'maintenance_fee') {
@@ -356,8 +438,8 @@ class MemberTransactionController extends Controller
             'payments' => 'required|array|min:1',
             'payments.*.fee_type' => 'required|in:membership_fee,maintenance_fee',
             'payments.*.amount' => 'required|numeric|min:0',
-            'payments.*.valid_from' => 'required|date',
-            'payments.*.valid_to' => 'required|date|after:valid_from',
+            'payments.*.valid_from' => 'required_if:payments.*.fee_type,maintenance_fee|date',
+            'payments.*.valid_to' => 'required_if:payments.*.fee_type,maintenance_fee|date|after:payments.*.valid_from',
             'payments.*.invoice_no' => 'required|string|unique:financial_invoices,invoice_no',
             'payments.*.payment_date' => 'required|date',
             'payments.*.payment_method' => 'sometimes|in:cash,credit_card',
@@ -379,6 +461,8 @@ class MemberTransactionController extends Controller
         try {
             DB::beginTransaction();
 
+            // Load member data for date calculations
+            $member = Member::where('user_id', $request->member_id)->first();
             $createdTransactions = [];
 
             foreach ($request->payments as $index => $paymentData) {
@@ -408,6 +492,17 @@ class MemberTransactionController extends Controller
                     }
                 }
 
+                // Handle dates based on fee type
+                $validFrom = $paymentData['valid_from'] ?? null;
+                $validTo = $paymentData['valid_to'] ?? null;
+                
+                if ($paymentData['fee_type'] === 'membership_fee') {
+                    // Membership fee is lifetime - set to member's joining date and far future
+                    $memberJoinDate = Carbon::parse($member->membership_date);
+                    $validFrom = $memberJoinDate->format('Y-m-d');
+                    $validTo = $memberJoinDate->copy()->addYears(50)->format('Y-m-d'); // Lifetime validity
+                }
+
                 // Create financial invoice
                 $transaction = FinancialInvoice::create([
                     'member_id' => $request->member_id,
@@ -426,8 +521,8 @@ class MemberTransactionController extends Controller
                     'receipt' => $receiptPath,
                     'status' => 'paid', // Assuming migrated data is already paid
                     'payment_date' => $paymentData['payment_date'],
-                    'valid_from' => $paymentData['valid_from'],
-                    'valid_to' => $paymentData['valid_to'],
+                    'valid_from' => $validFrom,
+                    'valid_to' => $validTo,
                     'created_by' => Auth::id(),
                     'created_at' => now(),
                     'updated_at' => now(),
