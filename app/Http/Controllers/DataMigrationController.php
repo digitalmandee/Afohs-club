@@ -96,6 +96,8 @@ class DataMigrationController extends Controller
                 ->limit($batchSize)
                 ->get();
             
+            Log::info("Processing batch: offset={$offset}, found " . count($oldMembers) . " records");
+            
             $migrated = 0;
             $errors = [];
             
@@ -138,14 +140,26 @@ class DataMigrationController extends Controller
 
     private function migrateSingleMember($oldMember)
     {
-        // Check if member already exists
-        $existingMember = Member::where('application_no', $oldMember->application_no)
-            ->whereNull('parent_id')
-            ->first();
+        // Check if member already exists using multiple criteria
+        $query = Member::whereNull('parent_id');
+        
+        // Primary check: application_no if it exists
+        if (!empty($oldMember->application_no)) {
+            $query->where('application_no', $oldMember->application_no);
+        } else {
+            // Fallback: check by membership_no and name if application_no is empty
+            $query->where('membership_no', $oldMember->mem_no)
+                  ->where('full_name', $oldMember->applicant_name);
+        }
+        
+        $existingMember = $query->first();
             
         if ($existingMember) {
+            Log::info("Skipping member {$oldMember->id} - already exists (App No: {$oldMember->application_no})");
             return; // Skip if already migrated
         }
+        
+        Log::info("Migrating member {$oldMember->id} (App No: {$oldMember->application_no})");
 
         // Get member category ID
         $memberCategoryId = $this->getMemberCategoryId($oldMember->mem_category_id);
@@ -277,8 +291,8 @@ class DataMigrationController extends Controller
         }
 
         // Check if family member already exists
-        $existingFamily = Member::where('parent_id', $parentMember->user_id)
-            ->where('cnic_no', $oldFamily->cnic)
+        $existingFamily = Member::where('parent_id', $parentMember->id)
+            ->where('full_name', $oldFamily->name)
             ->first();
             
         if ($existingFamily) {
@@ -287,7 +301,7 @@ class DataMigrationController extends Controller
 
         // Prepare family member data
         $familyData = [
-            'parent_id' => $parentMember->user_id,
+            'parent_id' => $parentMember->id,
             'full_name' => $oldFamily->name,
             'date_of_birth' => $this->validateDate($oldFamily->date_of_birth),
             'relation' => $this->mapFamilyRelation($oldFamily->fam_relationship),
