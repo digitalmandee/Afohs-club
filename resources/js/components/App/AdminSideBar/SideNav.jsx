@@ -30,6 +30,7 @@ import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
+import StorageIcon from '@mui/icons-material/Storage';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -446,6 +447,11 @@ export default function SideNav({ open, setOpen }) {
                     path: route('locations.create'),
                 },
             ],
+        },
+        {
+            text: 'Data Migration',
+            icon: <StorageIcon />,
+            path: route('data-migration.index'),
         },
 
         {

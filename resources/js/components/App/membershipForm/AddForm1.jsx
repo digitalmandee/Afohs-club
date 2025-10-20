@@ -44,7 +44,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     const handleSubmit = () => {
         const errors = {};
 
-        // if (!data.coa_account) errors.coa_account = 'COA Account is required';
+        // if (!data.coa_category_id) errors.coa_category_id = 'COA Account is required';
         if (!data.first_name) errors.first_name = 'First Name is required';
         if (!data.last_name) errors.last_name = 'Last Name is required';
         if (!data.guardian_name) errors.guardian_name = 'This Name is required';
@@ -234,7 +234,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     COA Account*
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="coa_account" value={data.coa_account} error={!!formErrors.coa_account} helperText={formErrors.coa_account} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="coa_category_id" value={data.coa_category_id} error={!!formErrors.coa_category_id} helperText={formErrors.coa_category_id} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Title */}
