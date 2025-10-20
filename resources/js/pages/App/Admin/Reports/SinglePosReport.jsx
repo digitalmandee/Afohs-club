@@ -106,6 +106,7 @@ export default function SinglePosReport({ reportData, tenant, startDate, endDate
                                     <Typography variant="h6" color="text.secondary">
                                         POS Report - Dish Breakdown Summary
                                     </Typography>
+                                </Box>
                             </Box>
                         </Grid>
                         <Grid item>
