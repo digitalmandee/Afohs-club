@@ -311,10 +311,6 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Finance',
                     path: route('membership.finance'),
                 },
-                {
-                    text: 'Maintanance Fee Revenue',
-                    path: route('membership.maintanance-fee-revenue'),
-                },
             ],
         },
 
@@ -369,6 +365,11 @@ export default function SideNav({ open, setOpen }) {
             ],
         },
         {
+            text: 'Reports',
+            icon: <HomeIcon />,
+            path: route('membership.reports'),
+        },
+        {
             text: 'Finance',
             icon: <PaymentsIcon />,
             children: [
@@ -401,11 +402,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Management',
-                    path: route('subscription.management'),
-                },
-                {
-                    text: 'Monthly Fee',
-                    path: route('subscription.monthly'),
+                    path: route('subscriptions.management'),
                 },
                 {
                     text: 'Subscription Type',

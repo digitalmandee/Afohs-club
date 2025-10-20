@@ -46,7 +46,6 @@ class SubscriptionCategoryController extends Controller
             'subscription_type_id' => 'required|exists:subscription_types,id',
             'description' => 'nullable|string|max:1000',
             'fee' => 'nullable|integer',
-            'subscription_fee' => 'nullable|integer',
             'status' => 'required|in:active,inactive',
         ]);
 
@@ -82,7 +81,6 @@ class SubscriptionCategoryController extends Controller
             'subscription_type_id' => 'required|exists:subscription_types,id',
             'description' => 'nullable|string|max:1000',
             'fee' => 'nullable|integer',
-            'subscription_fee' => 'nullable|integer',
             'status' => 'required|in:active,inactive',
         ]);
 
