@@ -72,11 +72,11 @@ export default function DailySalesListCashierWise({
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', {
+        return 'Rs ' + new Intl.NumberFormat('en-PK', {
             style: 'decimal',
             minimumFractionDigits: 1,
-            maximumFractionDigits: 1
-        }).format(amount);
+            maximumFractionDigits: 2
+        }).format(amount).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     };
 
     return (

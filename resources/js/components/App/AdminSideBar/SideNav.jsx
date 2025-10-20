@@ -323,10 +323,6 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Dashboard',
                     path: route('employees.dashboard'),
                 },
-                // {
-                //     text: 'Employee List',
-                //     path: route('employee.employeeList'),
-                // },
                 {
                     text: 'Department',
                     path: route('employees.departments'),
@@ -335,34 +331,34 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Type',
                     path: route('employees.types'),
                 },
-                // {
-                //     text: 'Attendance',
-                //     path: route('employee.attendance'),
-                // },
-                // {
-                //     text: 'Leave Category',
-                //     path: route('employee.leavecategory'),
-                // },
-                // {
-                //     text: 'Leave Management',
-                //     path: route('employee.leavemanagement'),
-                // },
-                // {
-                //     text: 'Leave Report',
-                //     path: route('employee.leavereport'),
-                // },
-                // {
-                //     text: 'Attendance Report',
-                //     path: route('employee.attendancereport'),
-                // },
-                // {
-                //     text: 'Monthly Report',
-                //     path: route('employee.monthlyreport'),
-                // },
-                // {
-                //     text: 'Payroll',
-                //     path: route('employee.payroll'),
-                // },
+                {
+                    text: 'Leave Category',
+                    path: route('employees.leaves.category.index'),
+                },
+                {
+                    text: 'Leave Application',
+                    path: route('employees.leaves.application.index'),
+                },
+                {
+                    text: 'Leave Report',
+                    path: route('employees.leaves.application.report'),
+                },
+                {
+                    text: 'Attendance Management',
+                    path: route('employees.attendances.management'),
+                },
+                {
+                    text: 'Attendance Report',
+                    path: route('employees.attendances.report'),
+                },
+                {
+                    text: 'Attendance Monthly Report',
+                    path: route('employees.attendances.monthly.report'),
+                },
+                {
+                    text: 'Payroll',
+                    path: route('employee.payroll'),
+                },
             ],
         },
         {

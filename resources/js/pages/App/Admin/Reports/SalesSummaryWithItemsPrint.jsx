@@ -21,10 +21,10 @@ export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDa
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', {
+        return new Intl.NumberFormat('en-PK', {
             style: 'currency',
-            currency: 'USD'
-        }).format(amount);
+            currency: 'PKR'
+        }).format(amount).replace('PKR', 'Rs');
     };
 
     return (
