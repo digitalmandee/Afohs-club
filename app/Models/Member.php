@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Member extends Model
+class Member extends BaseModel
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'user_id',
         'application_no',
@@ -39,7 +41,7 @@ class Member extends Model
         'invoice_id',
         'is_document_missing',
         'missing_documents',
-        'coa_account',
+        'coa_category_id',
         'title',
         'state',
         'application_number',
@@ -53,7 +55,11 @@ class Member extends Model
         'ntn',
         'date_of_birth',
         'education',
-        'membership_reason',
+        'reason',
+        'blood_group',
+        'tel_number_a',
+        'tel_number_b',
+        'active_remarks',
         'mobile_number_a',
         'mobile_number_b',
         'mobile_number_c',
@@ -71,6 +77,10 @@ class Member extends Model
         'permanent_country',
         'country',
         'documents',
+        'classification_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     protected $casts = [
