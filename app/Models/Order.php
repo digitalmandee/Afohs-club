@@ -76,6 +76,11 @@ class Order extends Model
         return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
 
+    public function waiter()
+    {
+        return $this->belongsTo(Employee::class, 'waiter_id', 'id');
+    }
+
     // public function invoice()
     // {
     //     return $this->hasOne(FinancialInvoice::class)->whereJsonContains('data->order_id', $this->id);

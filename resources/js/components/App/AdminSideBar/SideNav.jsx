@@ -369,7 +369,36 @@ export default function SideNav({ open, setOpen }) {
         {
             text: 'Reports',
             icon: <AssessmentIcon />,
-            path: route('membership.reports'),
+            children: [
+                {
+                    text: 'Membership Reports',
+                    path: route('membership.reports'),
+                },
+                {
+                    text: 'POS Reports (All Restaurants)',
+                    path: route('admin.reports.pos.all'),
+                },
+                {
+                    text: 'Restaurant-Wise POS Reports',
+                    path: route('admin.reports.pos.restaurant-wise'),
+                },
+                {
+                    text: 'Running Sales Orders',
+                    path: route('admin.reports.pos.running-sales-orders'),
+                },
+                {
+                    text: 'Sales Summary (With Items)',
+                    path: route('admin.reports.pos.sales-summary-with-items'),
+                },
+                {
+                    text: 'Daily Sales List (Cashier-Wise)',
+                    path: route('admin.reports.pos.daily-sales-list-cashier-wise'),
+                },
+                {
+                    text: 'Daily Dump Items Report',
+                    path: route('admin.reports.pos.daily-dump-items-report'),
+                },
+            ],
         },
         {
             text: 'Finance',
