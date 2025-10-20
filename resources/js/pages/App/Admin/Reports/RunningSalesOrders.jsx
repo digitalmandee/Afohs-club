@@ -55,10 +55,10 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', {
+        return new Intl.NumberFormat('en-PK', {
             style: 'currency',
-            currency: 'USD'
-        }).format(amount);
+            currency: 'PKR'
+        }).format(amount).replace('PKR', 'Rs');
     };
 
     const getStatusColor = (status) => {

@@ -12,6 +12,9 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDepartmentController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\LeaveCategoryController;
+use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\EmployeeTypeController;
 use App\Http\Controllers\EventBookingController;
 use App\Http\Controllers\EventController;
@@ -101,6 +104,26 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
         Route::get('/types', [EmployeeTypeController::class, 'index'])->name('employees.types');
+        Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
+        
+        Route::prefix('leaves')->group(function () {
+            Route::get('category', [LeaveCategoryController::class, 'index'])->name('employees.leaves.category.index');
+            Route::get('category/create', [LeaveCategoryController::class, 'create'])->name('employees.leaves.category.create');
+            Route::get('category/edit/{id}', [LeaveCategoryController::class, 'edit'])->name('employees.leaves.category.edit');
+
+            Route::get('application', [LeaveApplicationController::class, 'index'])->name('employees.leaves.application.index');
+            Route::get('application/new', [LeaveApplicationController::class, 'create'])->name('employees.leaves.application.create');
+            Route::get('application/edit/{id}', [LeaveApplicationController::class, 'edit'])->name('employees.leaves.application.edit');
+            
+            Route::get('report', [LeaveApplicationController::class, 'leaveReportPage'])->name('employees.leaves.application.report');
+        });
+
+        Route::prefix('attendances')->group(function () {
+            // Inertia.js Pages
+            Route::get('management', [AttendanceController::class, 'managementPage'])->name('employees.attendances.management');
+            Route::get('report', [AttendanceController::class, 'reportPage'])->name('employees.attendances.report');
+            Route::get('monthly/report', [AttendanceController::class, 'monthlyReportPage'])->name('employees.attendances.monthly.report');
+        });
     });
 
     Route::prefix('api')->group(function () {
@@ -109,6 +132,38 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll');
         Route::resource('employee-types', EmployeeTypeController::class)->except(['create', 'index', 'show', 'edit']);
         Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store');
+        Route::put('employees/update/{employeeId}', [EmployeeController::class, 'update'])->name('api.employees.update');
+        
+        // Leave Category API routes
+        Route::prefix('leave-categories')->group(function () {
+            Route::get('/', [LeaveCategoryController::class, 'getAll'])->name('api.leave-categories.getAll');
+            Route::post('/', [LeaveCategoryController::class, 'store'])->name('api.leave-categories.store');
+            Route::get('/{id}', [LeaveCategoryController::class, 'show'])->name('api.leave-categories.show');
+            Route::put('/{id}', [LeaveCategoryController::class, 'update'])->name('api.leave-categories.update');
+            Route::delete('/{id}', [LeaveCategoryController::class, 'destroy'])->name('api.leave-categories.destroy');
+        });
+
+        // Leave Application API routes
+        Route::prefix('leave-applications')->group(function () {
+            Route::post('/', [LeaveApplicationController::class, 'store'])->name('api.leave-applications.store');
+            Route::get('/{id}', [LeaveApplicationController::class, 'show'])->name('api.leave-applications.show');
+            Route::put('/{id}', [LeaveApplicationController::class, 'update'])->name('api.leave-applications.update');
+            Route::delete('/{id}', [LeaveApplicationController::class, 'destroy'])->name('api.leave-applications.destroy');
+        });
+
+        // Leave Report API route
+        Route::get('employees/leaves/reports', [LeaveApplicationController::class, 'leaveReport'])->name('api.leave-reports');
+
+        // Attendance API routes
+        Route::prefix('attendances')->group(function () {
+            Route::get('/', [AttendanceController::class, 'index'])->name('api.attendances.index');
+            Route::get('reports', [AttendanceController::class, 'attendanceReport'])->name('api.attendances.reports');
+            Route::put('{attendanceId}', [AttendanceController::class, 'updateAttendance'])->name('api.attendances.update');
+            Route::get('profile/report/{employeeId}', [AttendanceController::class, 'profileReport'])->name('api.attendances.profile.report');
+            Route::post('all/report', [AttendanceController::class, 'allEmployeesReport'])->name('api.attendances.all.report');
+
+            Route::get('leaves/reports/monthly', [LeaveApplicationController::class, 'leaveReportMonthly']);
+        });
     });
 
     // Membership Booking Routes

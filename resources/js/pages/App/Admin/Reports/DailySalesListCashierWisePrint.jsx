@@ -33,16 +33,15 @@ export default function DailySalesListCashierWisePrint({
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', {
+        return 'Rs ' + new Intl.NumberFormat('en-PK', {
             style: 'decimal',
             minimumFractionDigits: 1,
-            maximumFractionDigits: 1
+            maximumFractionDigits: 2
         }).format(amount);
     };
 
     return (
         <>
-            <Head title="Daily Sales List (Cashier-Wise) - Print" />
             
             <style jsx global>{`
                 @media print {
