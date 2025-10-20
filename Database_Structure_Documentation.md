@@ -284,6 +284,7 @@
 | membership_date | membership_date |
 | applicant_name | full_name |
 | mem_category_id (From Table "mem_categories") | member_category_id |
+| mem_classification_id (From Table "mem_classifications") | member_classification_id |
 | status_remarks | status_remarks (Optional) |
 | card_status | card_status |
 | father_name | guardian_name |
