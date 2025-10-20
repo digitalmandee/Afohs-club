@@ -308,7 +308,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                                         style={{
                                             height: "35px",
                                             width: "35px",
-                                            marginBottom: "2px",
+                                            // marginBottom: "2px",
                                             fill: orderDetails.order_type === "delivery" ? "#063455" : "inherit",
                                         }} />
                                     <Typography variant="body2">Delivery</Typography>

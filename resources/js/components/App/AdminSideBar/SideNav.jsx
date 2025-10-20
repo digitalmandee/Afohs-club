@@ -20,6 +20,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
@@ -367,7 +368,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Reports',
-            icon: <HomeIcon />,
+            icon: <AssessmentIcon />,
             path: route('membership.reports'),
         },
         {
