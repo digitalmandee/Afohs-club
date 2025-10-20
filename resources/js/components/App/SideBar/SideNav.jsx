@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import HomeIcon from '@mui/icons-material/Home';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import { RiSofaLine } from "react-icons/ri";
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import PeopleIcon from '@mui/icons-material/People';
@@ -108,7 +109,7 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
         { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index'), permission: 'order' },
         { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category'), permission: 'order' },
-        { text: 'Reservations', icon: <PaymentsIcon />, path: route('reservations.index'), permission: 'order' },
+        { text: 'Reservations', icon: <RiSofaLine  style={{height:"25px", width:"25px"}}/>, path: route('reservations.index'), permission: 'order' },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index'), permission: 'order' },
         {
             text: 'Table Management',
