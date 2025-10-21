@@ -1071,7 +1071,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 </Grid>
                                                 <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        💳 Membership Fee
+                                                        Membership Fee
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
                                                         Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}
@@ -1079,7 +1079,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 </Grid>
                                                 <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        🔧 Maintenance Fee (Quarterly)
+                                                        Maintenance Fee (Quarterly)
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
                                                         Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
@@ -1087,7 +1087,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 </Grid>
                                                 <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        📅 Monthly Rate
+                                                        Monthly Rate
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
                                                         Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee / 3).toLocaleString() : 'N/A'}
@@ -1137,11 +1137,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     <FormControl fullWidth>
                                                         <Select value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
                                                             <MenuItem value="membership_fee" disabled={membershipFeePaid}>
-                                                                💳 Membership Fee {membershipFeePaid && '(Already Paid)'}
+                                                                Membership Fee {membershipFeePaid && '(Already Paid)'}
                                                             </MenuItem>
-                                                            <MenuItem value="maintenance_fee">🔧 Maintenance Fee</MenuItem>
-                                                            <MenuItem value="subscription_fee">🎯 Subscription Fee</MenuItem>
-                                                            <MenuItem value="reinstating_fee">🔄 Reinstating Fee</MenuItem>
+                                                            <MenuItem value="maintenance_fee">Maintenance Fee</MenuItem>
+                                                            <MenuItem value="subscription_fee">Subscription Fee</MenuItem>
+                                                            <MenuItem value="reinstating_fee">Reinstating Fee</MenuItem>
                                                         </Select>
                                                         {errors.fee_type && (
                                                             <Typography variant="caption" color="error" sx={{ mt: 1 }}>
@@ -1176,7 +1176,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     return (
                                                                         <>
                                                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                                                                                {isFirstYear ? '📅 First Year (Monthly Payment)' : '📊 Quarterly Payment System'}
+                                                                                {isFirstYear ? 'First Year (Monthly Payment)' : 'Quarterly Payment System'}
                                                                             </Typography>
                                                                             
                                                                             {isFirstYear ? (
@@ -1268,7 +1268,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                         <Grid item xs={12}>
                                                             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                💡 Payment Period Selection
+                                                                Payment Period Selection
                                                             </Typography>
                                                             <Alert severity="info" sx={{ mb: 2 }}>
                                                                 <Typography variant="body2">
@@ -1286,7 +1286,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     onClick={() => suggestMaintenancePeriod('monthly')}
                                                                     sx={{ borderRadius: 2 }}
                                                                 >
-                                                                    📅 1 Month
+                                                                    1 Month
                                                                 </Button>
                                                                 <Button 
                                                                     size="small" 
@@ -1294,7 +1294,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     onClick={() => suggestMaintenancePeriod('quarterly')}
                                                                     sx={{ borderRadius: 2 }}
                                                                 >
-                                                                    📅 1 Quarter (3 months)
+                                                                    1 Quarter (3 months)
                                                                 </Button>
                                                                 <Button 
                                                                     size="small" 
@@ -1302,7 +1302,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     onClick={() => suggestMaintenancePeriod('half_yearly')}
                                                                     sx={{ borderRadius: 2 }}
                                                                 >
-                                                                    📅 6 Months
+                                                                    6 Months
                                                                 </Button>
                                                                 <Button 
                                                                     size="small" 
@@ -1310,7 +1310,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     onClick={() => suggestMaintenancePeriod('annually')}
                                                                     sx={{ borderRadius: 2 }}
                                                                 >
-                                                                    📅 1 Year
+                                                                    1 Year
                                                                 </Button>
                                                             </Box>
                                                         </Grid>
@@ -1321,7 +1321,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 {selectedMember && data.fee_type === 'reinstating_fee' && (
                                                     <Grid item xs={12}>
                                                         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                            🔄 Member Reinstatement Information
+                                                            Member Reinstatement Information
                                                         </Typography>
                                                         <Box sx={{ p: 3, backgroundColor: '#fef3c7', borderRadius: 2, border: '1px solid #f59e0b' }}>
                                                             <Grid container spacing={2}>
@@ -1346,13 +1346,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 </Grid>
                                                                 <Grid item xs={12}>
                                                                     <Typography variant="body2" sx={{ color: '#92400e' }}>
-                                                                        💡 <strong>Reinstating Fee:</strong> This fee is charged to reactivate members whose status is cancelled, expired, suspended, or terminated. Upon successful payment, the member status will be updated to "Active".
+                                                                         <strong>Reinstating Fee:</strong> This fee is charged to reactivate members whose status is cancelled, expired, suspended, or terminated. Upon successful payment, the member status will be updated to "Active".
                                                                     </Typography>
                                                                 </Grid>
                                                                 {!['cancelled', 'expired', 'suspended', 'terminated'].includes(selectedMember.status) && (
                                                                     <Grid item xs={12}>
                                                                         <Alert severity="warning">
-                                                                            ⚠️ This member's current status ({selectedMember.status}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.
+                                                                            This member's current status ({selectedMember.status}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.
                                                                         </Alert>
                                                                     </Grid>
                                                                 )}
@@ -1505,9 +1505,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         <Grid item xs={6}>
                                                             <FormControl fullWidth>
                                                                 <Select value={data.discount_type} onChange={(e) => setData('discount_type', e.target.value)} displayEmpty sx={{ borderRadius: 2 }}>
-                                                                    <MenuItem value="">🚫 No Discount</MenuItem>
-                                                                    <MenuItem value="percent">📊 Percentage</MenuItem>
-                                                                    <MenuItem value="fixed">💰 Fixed Amount</MenuItem>
+                                                                    <MenuItem value="">No Discount</MenuItem>
+                                                                    <MenuItem value="percent">Percentage</MenuItem>
+                                                                    <MenuItem value="fixed">Fixed Amount</MenuItem>
                                                                 </Select>
                                                             </FormControl>
                                                         </Grid>
@@ -1536,8 +1536,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     </Typography>
                                                     <FormControl fullWidth>
                                                         <Select value={data.payment_method} onChange={(e) => setData('payment_method', e.target.value)} sx={{ borderRadius: 2 }}>
-                                                            <MenuItem value="cash">💵 Cash Payment</MenuItem>
-                                                            <MenuItem value="credit_card">💳 Credit Card</MenuItem>
+                                                            <MenuItem value="cash">Cash Payment</MenuItem>
+                                                            <MenuItem value="credit_card">Credit Card</MenuItem>
                                                         </Select>
                                                     </FormControl>
                                                 </Grid>
@@ -1712,7 +1712,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             }}
                                                         >
                                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                                                                📅 Set Subscription Period
+                                                                Set Subscription Period
                                                             </Typography>
 
                                                             <Grid container spacing={3}>
@@ -1771,7 +1771,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             }}
                                                         >
                                                             <Typography variant="h5" sx={{ fontWeight: 700, color: '#0a3d62' }}>
-                                                                💰 Total Amount: {formatCurrency(calculateTotal())}
+                                                                Total Amount: {formatCurrency(calculateTotal())}
                                                             </Typography>
                                                             {data.discount_value && (
                                                                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
