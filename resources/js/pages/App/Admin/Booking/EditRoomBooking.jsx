@@ -23,7 +23,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     const urlParams = new URLSearchParams(url.split('?')[1] || '');
     const isCheckout = urlParams.get('type') === 'checkout';
     // Main state for booking type
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);

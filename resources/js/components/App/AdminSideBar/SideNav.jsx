@@ -327,11 +327,11 @@ export default function SideNav({ open, setOpen }) {
                     path: route('employees.dashboard'),
                 },
                 {
-                    text: 'Employee Departments',
+                    text: 'Departments',
                     path: route('employees.departments'),
                 },
                 {
-                    text: 'Employee Types',
+                    text: 'Types',
                     path: route('employees.types'),
                 },
                 {
@@ -347,19 +347,19 @@ export default function SideNav({ open, setOpen }) {
                     path: route('employees.leaves.application.report'),
                 },
                 {
-                    text: 'Attendance Dashboard',
+                    text: 'Attendance',
                     path: route('employees.attendances.dashboard'),
                 },
                 {
-                    text: 'Attendance Management',
+                    text: 'Management',
                     path: route('employees.attendances.management'),
                 },
                 {
-                    text: 'Attendance Report',
+                    text: 'Report',
                     path: route('employees.attendances.report'),
                 },
                 {
-                    text: 'Attendance Monthly Report',
+                    text: 'Monthly Report',
                     path: route('employees.attendances.monthly.report'),
                 },
                 {
@@ -407,7 +407,7 @@ export default function SideNav({ open, setOpen }) {
             icon: <PaymentsIcon />,
             children: [
                 {
-                    text: 'Add Bulk Transaction',
+                    text: 'Bulk Transaction',
                     path: route('membership.transactions.bulk-migration'),
                 },
                 {

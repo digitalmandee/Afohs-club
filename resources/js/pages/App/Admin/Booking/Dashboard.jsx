@@ -116,7 +116,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
     });
 
     const [initialAdults] = useState(adults);
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const anchorRef = useRef(null);
     const popperRef = useRef(null);
 
