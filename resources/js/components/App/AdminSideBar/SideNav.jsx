@@ -32,7 +32,8 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
-import AssessmentIcon from '@mui/icons-material/Assessment';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -522,12 +523,12 @@ export default function SideNav({ open, setOpen }) {
             >
                 <Toolbar
                     style={{
-                        justifyContent: 'space-between',
+                        justifyContent: 'end',
                         zIndex: 1000,
                     }}
                 >
                     {/* Toggle Menu Icon */}
-                    <IconButton
+                    {/* <IconButton
                         color="inherit"
                         aria-label="toggle drawer"
                         onClick={() => setOpen(!open)} // Toggle sidebar
@@ -557,7 +558,7 @@ export default function SideNav({ open, setOpen }) {
                             />
                         )}{' '}
                         {/* Toggle between icons */}
-                    </IconButton>
+                    {/* </IconButton> */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {/* Notification Icon */}
                         <IconButton
@@ -647,6 +648,34 @@ export default function SideNav({ open, setOpen }) {
                             transition: 'width 0.3s ease-in-out',
                         }}
                     />
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            right: open ? -10 : -10, // slightly outside the sidebar for visibility
+                            transform: 'translateY(-50%)',
+                            backgroundColor: '#F0F5FF',
+                            borderRadius: '50%',
+                            width: 28,
+                            height: 28,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 5, // higher than DrawerHeader
+                            boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
+                            cursor: 'pointer',
+                            '&:hover': {
+                                backgroundColor: '#E0ECFF',
+                            },
+                        }}
+                        onClick={() => setOpen(!open)} // toggle sidebar
+                    >
+                        {open ? (
+                            <ChevronLeftIcon sx={{ color: '#063455', fontSize: 18 }} />
+                        ) : (
+                            <ChevronRightIcon sx={{ color: '#063455', fontSize: 18 }} />
+                        )}
+                    </Box>
                 </DrawerHeader>
 
                 {/* <Divider sx={{ backgroundColor: '#4A4A4A', mt: open ? 2 : 0 }} /> */}

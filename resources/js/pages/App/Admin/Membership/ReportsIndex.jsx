@@ -5,7 +5,7 @@ import { router, usePage } from '@inertiajs/react';
 import { 
     Box, 
     Typography, 
-    Grid, 
+    Grid,
     Card, 
     CardContent, 
     CardActions, 
