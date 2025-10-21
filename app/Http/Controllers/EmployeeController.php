@@ -29,9 +29,10 @@ class EmployeeController extends Controller
         // ")
         //     ->first();
 
+        $limit = $request->query('limit') ?? 10;
         // Employees with pagination
         $employees = Employee::with(['user', 'department', 'employeeType'])
-            ->paginate(10);
+            ->paginate($limit);
 
         return Inertia::render('App/Admin/Employee/Dashboard1', [
             'stats' => [
@@ -140,5 +141,80 @@ class EmployeeController extends Controller
             });
 
         return response()->json($logs);
+    }
+
+    public function details($employeeId)
+    {
+        $employee = Employee::where('employee_id', $employeeId)->with(['user:id,name,email', 'department:id,name'])->first();
+        if (!$employee)
+            return abort(404);
+
+        return Inertia::render('App/Admin/Employee/Detail', compact('employee'));
+    }
+
+    public function update(Request $request, $employeeId)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'employee_id' => 'required',
+            'email' => 'required|email',
+            'designation' => 'nullable|string',
+            'phone_no' => 'required',
+            'gender' => 'required|in:male,female',
+            'marital_status' => 'required|in:single,married,divorced,widowed',
+            'national_id' => 'nullable|string',
+            'account_no' => 'nullable|string',
+            'address' => 'nullable|string',
+            'emergency_no' => 'nullable|string',
+            'salary' => 'nullable|numeric',
+            'joining_date' => 'nullable|date',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $employee = Employee::where('employee_id', $employeeId)->first();
+            if (!$employee) {
+                return response()->json(['success' => false, 'message' => 'Employee not found'], 404);
+            }
+
+            // Check if employee_id is being changed and if it already exists
+            if ($request->employee_id !== $employee->employee_id) {
+                if (Employee::where('employee_id', $request->employee_id)->exists()) {
+                    return response()->json(['success' => false, 'message' => 'Employee ID already exists'], 400);
+                }
+            }
+
+            // Update employee data
+            $employee->update([
+                'employee_id' => $request->employee_id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'designation' => $request->designation,
+                'phone_no' => $request->phone_no,
+                'gender' => $request->gender,
+                'marital_status' => $request->marital_status,
+                'national_id' => $request->national_id,
+                'account_no' => $request->account_no,
+                'address' => $request->address,
+                'emergency_no' => $request->emergency_no,
+                'salary' => $request->salary,
+                'joining_date' => $request->joining_date,
+            ]);
+
+            // Update associated user if exists
+            if ($employee->user) {
+                $employee->user->update([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Employee updated successfully'], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+        }
     }
 }

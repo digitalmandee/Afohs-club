@@ -20,6 +20,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
@@ -31,6 +32,8 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const drawerWidthOpen = 240; // Set open width to 240px
 const drawerWidthClosed = 110; // Set closed width to 120px
@@ -204,15 +207,15 @@ export default function SideNav({ open, setOpen }) {
                             path: route('rooms.manage'),
                         },
                         {
-                            text: 'Room Check-In',
+                            text: 'Check-In',
                             path: route('rooms.checkin'),
                         },
                         {
-                            text: 'Room Check-Out',
+                            text: 'Check-Out',
                             path: route('rooms.checkout'),
                         },
                         {
-                            text: 'Room Request',
+                            text: 'Request',
                             path: route('rooms.request'),
                         },
                         {
@@ -224,23 +227,23 @@ export default function SideNav({ open, setOpen }) {
                             path: route('rooms.all'),
                         },
                         {
-                            text: 'Room Calendar',
+                            text: 'Calendar',
                             path: route('rooms.booking.calendar'),
                         },
                         {
-                            text: 'Room Types',
+                            text: 'Types',
                             path: route('room-types.index'),
                         },
                         {
-                            text: 'Room Categories',
+                            text: 'Categories',
                             path: route('room-categories.index'),
                         },
                         {
-                            text: 'Room Charges Type',
+                            text: 'Charges Type',
                             path: route('room-charges-type.index'),
                         },
                         {
-                            text: 'Room MiniBar',
+                            text: 'MiniBar',
                             path: route('room-minibar.index'),
                         },
                     ],
@@ -253,23 +256,23 @@ export default function SideNav({ open, setOpen }) {
                             path: route('events.dashboard'),
                         },
                         {
-                            text: 'Event Venues',
+                            text: 'Venues',
                             path: route('event-venues.index'),
                         },
                         {
-                            text: 'Event Menu',
+                            text: 'Menu',
                             path: route('event-menu.index'),
                         },
                         {
-                            text: 'Event Menu Rate Category',
+                            text: 'Menu Category',
                             path: route('event-menu-category.index'),
                         },
                         {
-                            text: 'Event Menu Type',
+                            text: 'Menu Type',
                             path: route('event-menu-type.index'),
                         },
                         {
-                            text: 'Event Menu AddOn',
+                            text: 'Menu AddOn',
                             path: route('event-menu-addon.index'),
                         },
                         // {
@@ -289,19 +292,19 @@ export default function SideNav({ open, setOpen }) {
                     path: route('membership.dashboard'),
                 },
                 {
-                    text: 'All Memberships',
+                    text: 'Memberships',
                     path: route('membership.members'),
                 },
                 {
-                    text: 'Membership Type',
+                    text: 'Type',
                     path: route('member-types.index'),
                 },
                 {
-                    text: 'Membership Category',
+                    text: 'Category',
                     path: route('member-categories.index'),
                 },
                 {
-                    text: 'Family Members Archive',
+                    text: 'Family Members',
                     path: route('membership.family-members'),
                 },
                 {
@@ -323,52 +326,81 @@ export default function SideNav({ open, setOpen }) {
                     text: 'Dashboard',
                     path: route('employees.dashboard'),
                 },
-                // {
-                //     text: 'Employee List',
-                //     path: route('employee.employeeList'),
-                // },
                 {
-                    text: 'Department',
+                    text: 'Employee Departments',
                     path: route('employees.departments'),
                 },
                 {
-                    text: 'Type',
+                    text: 'Employee Types',
                     path: route('employees.types'),
                 },
-                // {
-                //     text: 'Attendance',
-                //     path: route('employee.attendance'),
-                // },
-                // {
-                //     text: 'Leave Category',
-                //     path: route('employee.leavecategory'),
-                // },
-                // {
-                //     text: 'Leave Management',
-                //     path: route('employee.leavemanagement'),
-                // },
-                // {
-                //     text: 'Leave Report',
-                //     path: route('employee.leavereport'),
-                // },
-                // {
-                //     text: 'Attendance Report',
-                //     path: route('employee.attendancereport'),
-                // },
-                // {
-                //     text: 'Monthly Report',
-                //     path: route('employee.monthlyreport'),
-                // },
-                // {
-                //     text: 'Payroll',
-                //     path: route('employee.payroll'),
-                // },
+                {
+                    text: 'Leave Category',
+                    path: route('employees.leaves.category.index'),
+                },
+                {
+                    text: 'Leave Application',
+                    path: route('employees.leaves.application.index'),
+                },
+                {
+                    text: 'Leave Report',
+                    path: route('employees.leaves.application.report'),
+                },
+                {
+                    text: 'Attendance Dashboard',
+                    path: route('employees.attendances.dashboard'),
+                },
+                {
+                    text: 'Attendance Management',
+                    path: route('employees.attendances.management'),
+                },
+                {
+                    text: 'Attendance Report',
+                    path: route('employees.attendances.report'),
+                },
+                {
+                    text: 'Attendance Monthly Report',
+                    path: route('employees.attendances.monthly.report'),
+                },
+                {
+                    text: 'Payroll',
+                    path: route('employee.payroll'),
+                },
             ],
         },
         {
             text: 'Reports',
-            icon: <HomeIcon />,
-            path: route('membership.reports'),
+            icon: <AssessmentIcon />,
+            children: [
+                {
+                    text: 'Membership Reports',
+                    path: route('membership.reports'),
+                },
+                {
+                    text: 'POS Reports',
+                    path: route('admin.reports.pos.all'),
+                },
+                {
+                    text: 'POS Restaurant',
+                    path: route('admin.reports.pos.restaurant-wise'),
+                },
+                {
+                    text: 'Running Orders',
+                    path: route('admin.reports.pos.running-sales-orders'),
+                },
+                {
+                    text: 'Sales Summary',
+                    path: route('admin.reports.pos.sales-summary-with-items'),
+                },
+                {
+                    text: 'Cashier Sales List',
+                    path: route('admin.reports.pos.daily-sales-list-cashier-wise'),
+                },
+                {
+                    text: 'Dump Report',
+                    path: route('admin.reports.pos.daily-dump-items-report'),
+                },
+            ],
         },
         {
             text: 'Finance',
@@ -406,7 +438,7 @@ export default function SideNav({ open, setOpen }) {
                     path: route('subscriptions.management'),
                 },
                 {
-                    text: 'Subscription Type',
+                    text: 'Type',
                     path: route('subscription-types.index'),
                 },
                 {
@@ -495,12 +527,12 @@ export default function SideNav({ open, setOpen }) {
             >
                 <Toolbar
                     style={{
-                        justifyContent: 'space-between',
+                        justifyContent: 'end',
                         zIndex: 1000,
                     }}
                 >
                     {/* Toggle Menu Icon */}
-                    <IconButton
+                    {/* <IconButton
                         color="inherit"
                         aria-label="toggle drawer"
                         onClick={() => setOpen(!open)} // Toggle sidebar
@@ -530,7 +562,7 @@ export default function SideNav({ open, setOpen }) {
                             />
                         )}{' '}
                         {/* Toggle between icons */}
-                    </IconButton>
+                    {/* </IconButton> */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {/* Notification Icon */}
                         <IconButton
@@ -608,7 +640,7 @@ export default function SideNav({ open, setOpen }) {
                         alignItems: 'center',
                         p: 2,
                         position: 'sticky',
-                        top: 0,
+                        top: 10,
                         zIndex: 1000,
                     }}
                 >
@@ -620,6 +652,34 @@ export default function SideNav({ open, setOpen }) {
                             transition: 'width 0.3s ease-in-out',
                         }}
                     />
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: '80%',
+                            right: open ? -10 : -10, // slightly outside the sidebar for visibility
+                            transform: 'translateY(-50%)',
+                            backgroundColor: '#E6E6E6',
+                            borderRadius: '50%',
+                            width: 28,
+                            height: 28,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 3000, // higher than DrawerHeader
+                            boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
+                            cursor: 'pointer',
+                            '&:hover': {
+                                backgroundColor: '#E0ECFF',
+                            },
+                        }}
+                        onClick={() => setOpen(!open)} // toggle sidebar
+                    >
+                        {open ? (
+                            <ChevronLeftIcon sx={{ color: '#063455', fontSize: 25, mr: 1 }} />
+                        ) : (
+                            <ChevronRightIcon sx={{ color: '#063455', fontSize: 25, mr: 1 }} />
+                        )}
+                    </Box>
                 </DrawerHeader>
 
                 {/* <Divider sx={{ backgroundColor: '#4A4A4A', mt: open ? 2 : 0 }} /> */}
@@ -633,13 +693,13 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' },
                     }}
                 >
-                    <List sx={{ mt: 2 }}>
+                    <List sx={{ mt: 4 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
                             const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));
                             return (
                                 <Box key={text} sx={{ position: 'relative' }}>
-                                    <ListItem disablePadding sx={{ display: 'block', px: 1, py: 0.1 }}>
+                                    <ListItem disablePadding sx={{ display: 'block', px: 3, py: 0.1 }}>
                                         <Box
                                             sx={{
                                                 borderRadius: '12px',
@@ -665,7 +725,7 @@ export default function SideNav({ open, setOpen }) {
                                                 sx={{
                                                     minHeight: 50,
                                                     justifyContent: open ? 'initial' : 'center',
-                                                    mx: open ? 1 : 3,
+                                                    mx: open ? 1 : 1,
                                                     borderRadius: '12px',
                                                     backgroundColor: isSelected ? '#063455' : 'transparent',
                                                     '&:hover': {
@@ -689,7 +749,7 @@ export default function SideNav({ open, setOpen }) {
                                                         mr: open ? 0.8 : 'auto',
                                                         ml: open ? -2 : 0,
                                                         '& svg': {
-                                                            fill: isSelected ? '#FFFFFF' : '#242220', // For MUI/React icons
+                                                            fill: isSelected ? '#FFFFFF' : '#808080', // For MUI/React icons
                                                         },
                                                     }}
                                                 >
@@ -699,7 +759,7 @@ export default function SideNav({ open, setOpen }) {
                                                     primary={text}
                                                     primaryTypographyProps={{
                                                         fontSize: '0.9rem',
-                                                        color: isSelected ? '#FFFFFF' : '#242220',
+                                                        color: isSelected ? '#FFFFFF' : '#808080',
                                                     }}
                                                     sx={{
                                                         opacity: open ? 1 : 0,
@@ -711,8 +771,8 @@ export default function SideNav({ open, setOpen }) {
                                                         sx={{
                                                             transform: isDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
                                                             transition: 'transform 0.2s',
-                                                            fill: '#000000',
-                                                            ml: 19,
+                                                            fill: '#808080',
+                                                            ml: 15,
                                                         }}
                                                     />
                                                 )}
@@ -723,100 +783,166 @@ export default function SideNav({ open, setOpen }) {
                                     {/* Submenu Rendering (Expanded) */}
                                     {children && open && isDropdownOpen && (
                                         <Collapse in={isDropdownOpen} timeout="auto" unmountOnExit>
-                                            <List component="div" disablePadding>
-                                                {children.map((child) => {
-                                                    const isChildSelected = url === normalizePath(child.path);
-                                                    const hasNested = child.children && child.children.length > 0;
-                                                    const isNestedOpen = openDropdown[child.text];
+                                            <Box
+                                                sx={{
+                                                    position: 'relative',
+                                                    ml: 4,
+                                                    pl: 2,
+                                                    '&::before': {
+                                                        content: '""',
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        // left: '10px',
+                                                        width: '2px',
+                                                        height: '100%',
+                                                        backgroundColor: '#d3d3d3',
+                                                        borderRadius: '1px',
+                                                    },
+                                                    '& .connector': {
+                                                        position: 'relative',
+                                                        '&::before': {
+                                                            content: '""',
+                                                            position: 'absolute',
+                                                            top: '50%',
+                                                            left: '2px',
+                                                            width: '14px',
+                                                            height: '2px',
+                                                            backgroundColor: '#d3d3d3',
+                                                            borderTopLeftRadius: '4px',
+                                                            borderBottomLeftRadius: '4px',
+                                                            transform: 'translateY(-50%)',
+                                                        },
+                                                    },
+                                                }}
+                                            >
+                                                <List component="div" disablePadding>
+                                                    {children.map((child) => {
+                                                        const isChildSelected = url === normalizePath(child.path);
+                                                        // const hasSelectedSub = child.children?.some(sub => url === normalizePath(sub.path));
+                                                        const hasNested = child.children && child.children.length > 0;
+                                                        const isNestedOpen = openDropdown[child.text];
+                                                        // const isChildSelectedOrSubActive = isChildSelected || hasSelectedSub;
 
-                                                    return (
-                                                        <Box key={child.text} sx={{ my: 0.2 }}>
-                                                            <ListItem disablePadding sx={{ pl: 2, pr: 5 }}>
-                                                                <ListItemButton
-                                                                    onClick={() => {
-                                                                        if (hasNested) {
-                                                                            toggleDropdown(child.text);
-                                                                        } else {
-                                                                            router.visit(child.path);
-                                                                        }
-                                                                    }}
-                                                                    sx={{
-                                                                        minHeight: 40,
-                                                                        borderRadius: '12px',
-                                                                        backgroundColor: isChildSelected ? '#063455' : 'transparent',
-                                                                        '&:hover': {
-                                                                            backgroundColor: '#063455',
-                                                                        },
-                                                                        '&:hover .MuiTypography-root': {
-                                                                            color: '#FFFFFF', // text color on hover
-                                                                        },
-                                                                        '&:hover .dropdown-arrow': {
-                                                                            fill: '#FFFFFF', // ← change arrow color to white on hover
-                                                                        },
-                                                                    }}
-                                                                >
-                                                                    <ListItemText
-                                                                        primary={child.text}
-                                                                        primaryTypographyProps={{
-                                                                            fontSize: '0.85rem',
-                                                                            color: isChildSelected ? '#FFFFFF' : '#242220',
-                                                                        }}
-                                                                    />
-                                                                    {hasNested && (
-                                                                        <KeyboardArrowRightIcon
-                                                                            className="dropdown-arrow"
-                                                                            sx={{
-                                                                                transform: isNestedOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                                                                                transition: 'transform 0.2s',
-                                                                                fill: '#000',
-                                                                            }}
-                                                                        />
-                                                                    )}
-                                                                </ListItemButton>
-                                                            </ListItem>
+                                                        return (
+                                                            <Box key={child.text} sx={{ my: 0.2 }}className="connector">
+                                                                {(() => {
+                                                                    // Check if any sub-item is selected
+                                                                    const hasSelectedSub = child.children?.some(sub => url === normalizePath(sub.path));
 
-                                                            {/* Nested Submenu */}
-                                                            {hasNested && openDropdown[child.text] && (
-                                                                <Collapse in={openDropdown[child.text]} timeout="auto" unmountOnExit>
-                                                                    <List component="div" disablePadding>
-                                                                        {child.children.map((sub) => {
-                                                                            const isSubSelected = url === normalizePath(sub.path);
-                                                                            return (
-                                                                                <ListItem key={sub.text} disablePadding sx={{ py: 0.1, pl: 3, pr: 10 }}>
-                                                                                    <ListItemButton
-                                                                                        onClick={() => router.visit(sub.path)}
+                                                                    // True if current parent or any sub is active
+                                                                    const isChildSelectedOrSubActive = isChildSelected || hasSelectedSub;
+
+                                                                    return (
+                                                                        <>
+                                                                            <ListItem disablePadding sx={{ pl: 2, pr: 4 }}>
+                                                                                <ListItemButton
+                                                                                    onClick={() => {
+                                                                                        if (hasNested) {
+                                                                                            toggleDropdown(child.text);
+                                                                                        } else {
+                                                                                            router.visit(child.path);
+                                                                                        }
+                                                                                    }}
+                                                                                    sx={{
+                                                                                        minHeight: 40,
+                                                                                        borderRadius: '12px',
+                                                                                        backgroundColor: isChildSelectedOrSubActive ? '#063455' : 'transparent',
+                                                                                        '&:hover': {
+                                                                                            backgroundColor: '#063455',
+                                                                                        },
+                                                                                        '&:hover .MuiTypography-root': {
+                                                                                            color: '#FFFFFF', // text color on hover
+                                                                                        },
+                                                                                        '&:hover .dropdown-arrow': {
+                                                                                            fill: '#FFFFFF', // arrow color on hover
+                                                                                        },
+                                                                                    }}
+                                                                                >
+                                                                                    <ListItemText
+                                                                                        primary={child.text}
+                                                                                        primaryTypographyProps={{
+                                                                                            fontSize: '0.85rem',
+                                                                                            color: isChildSelectedOrSubActive ? '#FFFFFF' : '#808080',
+                                                                                        }}
+                                                                                    />
+                                                                                    {hasNested && (
+                                                                                        <KeyboardArrowRightIcon
+                                                                                            className="dropdown-arrow"
+                                                                                            sx={{
+                                                                                                transform: openDropdown[child.text] ? 'rotate(90deg)' : 'rotate(0deg)',
+                                                                                                transition: 'transform 0.2s',
+                                                                                                fill: isChildSelectedOrSubActive ? '#FFFFFF' : '#808080',
+                                                                                            }}
+                                                                                        />
+                                                                                    )}
+                                                                                </ListItemButton>
+                                                                            </ListItem>
+
+                                                                            {/* Nested Submenu */}
+                                                                            {hasNested && openDropdown[child.text] && (
+                                                                                <Collapse in={openDropdown[child.text]} timeout="auto" unmountOnExit>
+                                                                                    <Box
                                                                                         sx={{
-                                                                                            minHeight: 16,
-                                                                                            borderRadius: '12px',
-                                                                                            backgroundColor: isSubSelected ? '#063455' : 'transparent',
-                                                                                            '&:hover': {
-                                                                                                backgroundColor: '#063455',
-                                                                                            },
-                                                                                            '&:hover .MuiTypography-root': {
-                                                                                                color: '#FFFFFF',
+                                                                                            position: 'relative',
+                                                                                            ml: 5,
+                                                                                            pl: 2,
+                                                                                            '&::before': {
+                                                                                                content: '""',
+                                                                                                position: 'absolute',
+                                                                                                top: 0,
+                                                                                                left: '10px',
+                                                                                                width: '2px',
+                                                                                                height: '100%',
+                                                                                                backgroundColor: '#d3d3d3',
+                                                                                                borderRadius: '1px',
                                                                                             },
                                                                                         }}
                                                                                     >
-                                                                                        <ListItemText
-                                                                                            primary={sub.text}
-                                                                                            primaryTypographyProps={{
-                                                                                                fontSize: '0.8rem',
-                                                                                                color: isSubSelected ? '#FFFFFF' : '#242220',
-                                                                                            }}
-                                                                                        />
-                                                                                    </ListItemButton>
-                                                                                </ListItem>
-                                                                            );
-                                                                        })}
-                                                                    </List>
-                                                                </Collapse>
-                                                            )}
-                                                        </Box>
-                                                    );
-                                                })}
-                                            </List>
+                                                                                        <List component="div" disablePadding>
+                                                                                            {child.children.map((sub) => {
+                                                                                                const isSubSelected = url === normalizePath(sub.path);
+                                                                                                return (
+                                                                                                    <ListItem key={sub.text} disablePadding sx={{ py: 0.1, pl: 3, pr: 1 }}className="connector">
+                                                                                                        <ListItemButton
+                                                                                                            onClick={() => router.visit(sub.path)}
+                                                                                                            sx={{
+                                                                                                                minHeight: 16,
+                                                                                                                borderRadius: '12px',
+                                                                                                                backgroundColor: isSubSelected ? '#063455' : 'transparent',
+                                                                                                                '&:hover': {
+                                                                                                                    backgroundColor: '#063455',
+                                                                                                                },
+                                                                                                                '&:hover .MuiTypography-root': {
+                                                                                                                    color: '#FFFFFF',
+                                                                                                                },
+                                                                                                            }}
+                                                                                                        >
+                                                                                                            <ListItemText
+                                                                                                                primary={sub.text}
+                                                                                                                primaryTypographyProps={{
+                                                                                                                    fontSize: '0.8rem',
+                                                                                                                    color: isSubSelected ? '#FFFFFF' : '#808080',
+                                                                                                                }}
+                                                                                                            />
+                                                                                                        </ListItemButton>
+                                                                                                    </ListItem>
+                                                                                                );
+                                                                                            })}
+                                                                                        </List>
+                                                                                    </Box>
+                                                                                </Collapse>
+                                                                            )}
+                                                                        </>
+                                                                    );
+                                                                })()}
+                                                            </Box>
+                                                        );
+                                                    })}
+                                                </List>
+                                            </Box>
                                         </Collapse>
-                                    )}
+                                    )
+                                    }
 
                                     {/* Popup Submenu (Collapsed) */}
                                     {children && !open && hoveredDropdown === text && (
@@ -843,8 +969,8 @@ export default function SideNav({ open, setOpen }) {
                         })}
                     </List>
                 </Box>
-            </Drawer>
-        </Box>
+            </Drawer >
+        </Box >
     );
 }
 

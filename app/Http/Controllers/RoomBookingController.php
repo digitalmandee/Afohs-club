@@ -18,7 +18,7 @@ class RoomBookingController extends Controller
     public function store(Request $req)
     {
         $req->validate([
-            'bookingNo' => 'required|string|unique:room_bookings,booking_no',
+            // 'bookingNo' => 'required|string|unique:room_bookings,booking_no',
             'bookingDate' => 'nullable|date',
             'checkInDate' => 'nullable|date',
             'checkOutDate' => 'nullable|date',
@@ -385,7 +385,7 @@ class RoomBookingController extends Controller
 
     private function getBookingId()
     {
-        $booking_id = (int) RoomBooking::max('booking_no');
+        $booking_id = RoomBooking::max('id');
         return $booking_id + 1;
     }
 

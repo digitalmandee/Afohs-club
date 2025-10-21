@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Grid, Typography, Button, Divider, TextField, Snackbar, Alert } from "@mui/material";
-import axiosInstance from "@/utils/axiosInstance";
-import { useNavigate } from "react-router-dom";
-import colors from "@/assets/styles/color";
-const PersonalDetails = ({ employeeId }) => {
-	const navigate = useNavigate();
+import { router } from '@inertiajs/react';
+import axios from "axios";
+
+const PersonalDetails = ({ employee }) => {
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [errors, setErrors] = useState({});
@@ -19,39 +18,27 @@ const PersonalDetails = ({ employeeId }) => {
 		account_no: null,
 		salary: 0,
 		joining_date: "",
-		user: {
-			name: "",
-			email: "",
-			designation: "",
-			phone_no: "",
-		},
+		name: "",
+		email: "",
+		designation: "",
+		phone_no: "",
 		department: {
 			name: "",
 		},
 	});
 
-	const getEmployeeData = async () => {
-		try {
-			const res = await axiosInstance.get("employees/show/" + employeeId);
-
-			if (res.data.success) {
-				setPersonalDetails(res.data.employee);
-			}
-		} catch (error) {
-			console.log(error);
-		}
-	};
-
 	useEffect(() => {
-		getEmployeeData();
-	}, []);
+		if (employee) {
+			setPersonalDetails(employee);
+		}
+	}, [employee]);
 
 	const validate = () => {
 		let newErrors = {};
-		if (!personalDetails.user.name) newErrors.name = "Name is required";
+		if (!personalDetails.name) newErrors.name = "Name is required";
 		if (!personalDetails.employee_id) newErrors.employee_id = "Employee ID is required";
-		if (!personalDetails.user.email) newErrors.email = "Email is required";
-		if (!personalDetails.user.phone_no) newErrors.phone_no = "Phone number is required";
+		if (!personalDetails.email) newErrors.email = "Email is required";
+		if (!personalDetails.phone_no) newErrors.phone_no = "Phone number is required";
 		if (!personalDetails.salary) newErrors.salary = "Salary is required";
 		if (!personalDetails.joining_date) newErrors.joining_date = "Joining date is required";
 		if (!personalDetails.gender) newErrors.gender = "Gender is required";
@@ -67,9 +54,9 @@ const PersonalDetails = ({ employeeId }) => {
 			const payload = {
 				...personalDetails,
 			};
-			await axiosInstance.put("employees/update/" + employeeId, payload);
-			setSnackbar({ open: true, message: "Employee update successfully!", severity: "success" });
-			setTimeout(() => navigate(-1), 1500);
+			await axios.put(`/api/employees/update/${employee.employee_id}`, payload);
+			setSnackbar({ open: true, message: "Employee updated successfully!", severity: "success" });
+			setTimeout(() => router.visit(route('employees.dashboard')), 1500);
 		} catch (error) {
 			// console.log(error.response.data);
 			setSnackbar({ open: true, message: error.response.data.message, severity: "error" });
@@ -95,7 +82,7 @@ const PersonalDetails = ({ employeeId }) => {
 					<Typography variant="body2" fontWeight="bold">
 						Employee Name
 					</Typography>
-					<TextField fullWidth value={personalDetails.user.name || "N/A"} onChange={(e) => setPersonalDetails({ ...personalDetails, user: { ...personalDetails.user, name: e.target.value } })} margin="normal" variant="outlined" />
+					<TextField fullWidth value={personalDetails.name || "N/A"} onChange={(e) => setPersonalDetails({ ...personalDetails, name: e.target.value })} margin="normal" variant="outlined" />
 				</Grid>
 				<Grid item xs={12} md={6}>
 					<Typography variant="body2" fontWeight="bold">
@@ -157,7 +144,7 @@ const PersonalDetails = ({ employeeId }) => {
 					<Typography variant="body2" fontWeight="bold">
 						Email
 					</Typography>
-					<TextField fullWidth value={personalDetails.user.email || "N/A"} onChange={(e) => setPersonalDetails({ ...personalDetails, user: { ...personalDetails.user, email: e.target.value } })} margin="normal" variant="outlined" />
+					<TextField fullWidth value={personalDetails.email || "N/A"} onChange={(e) => setPersonalDetails({ ...personalDetails, email: e.target.value })} margin="normal" variant="outlined" />
 				</Grid>
 
 				{/* Contact Number */}
@@ -165,7 +152,7 @@ const PersonalDetails = ({ employeeId }) => {
 					<Typography variant="body2" fontWeight="bold">
 						Contact Number
 					</Typography>
-					<TextField fullWidth value={personalDetails.user.phone_no || "N/A"} onChange={(e) => setPersonalDetails({ ...personalDetails, user: { ...personalDetails.user, phone_no: e.target.value } })} margin="normal" variant="outlined" />
+					<TextField fullWidth value={personalDetails.phone_no || "N/A"} onChange={(e) => setPersonalDetails({ ...personalDetails, phone_no: e.target.value })} margin="normal" variant="outlined" />
 				</Grid>
 
 				{/* Emergency Contact */}
@@ -187,7 +174,7 @@ const PersonalDetails = ({ employeeId }) => {
 				</Grid>
 
 				<Grid item xs={12} style={{ display: "flex", justifyContent: "flex-end" }}>
-					<Button disabled={isLoading} onClick={handleSubmit} variant="contained" sx={{ backgroundColor: colors.primary, "&:hover": { backgroundColor: colors.primary } }}>
+					<Button disabled={isLoading} onClick={handleSubmit} variant="contained" sx={{ backgroundColor: '#063455', color: '#FFFFFF', "&:hover": { backgroundColor: '#063455' } }}>
 						Save
 					</Button>
 				</Grid>
