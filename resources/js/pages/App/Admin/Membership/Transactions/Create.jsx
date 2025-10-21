@@ -1555,15 +1555,15 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             }}
                                                         >
                                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#0a3d62' }}>
-                                                                💳 Credit Card Details
+                                                                Credit Card Details
                                                             </Typography>
                                                             <Grid container spacing={2}>
                                                                 <Grid item xs={12} sm={6}>
                                                                     <FormControl fullWidth>
                                                                         <Select value={data.credit_card_type} onChange={(e) => setData('credit_card_type', e.target.value)} error={!!formErrors.credit_card_type} displayEmpty sx={{ borderRadius: 2 }}>
                                                                             <MenuItem value="">Select Card Type</MenuItem>
-                                                                            <MenuItem value="mastercard">🔴 MasterCard</MenuItem>
-                                                                            <MenuItem value="visa">🔵 Visa</MenuItem>
+                                                                            <MenuItem value="mastercard">MasterCard</MenuItem>
+                                                                            <MenuItem value="visa">Visa</MenuItem>
                                                                         </Select>
                                                                         {formErrors.credit_card_type && (
                                                                             <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
@@ -1575,7 +1575,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 <Grid item xs={12} sm={6}>
                                                                     <Box>
                                                                         <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                                                                            📄 Upload Receipt
+                                                                            Upload Receipt
                                                                         </Typography>
                                                                         <input
                                                                             type="file"
@@ -1599,7 +1599,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         {data.receipt_file && (
                                                                             <Box sx={{ mt: 1, p: 1, bgcolor: 'success.50', borderRadius: 1, border: '1px solid', borderColor: 'success.200' }}>
                                                                                 <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
-                                                                                    ✅ {data.receipt_file.name}
+                                                                                    {data.receipt_file.name}
                                                                                 </Typography>
                                                                             </Box>
                                                                         )}
@@ -1627,7 +1627,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         >
                                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                                    📅 Set Payment Period
+                                                                    Set Payment Period
                                                                 </Typography>
                                                                 <Button size="small" variant="outlined" onClick={() => (data.fee_type === 'membership_fee' ? handleFeeTypeChange('membership_fee') : suggestMaintenancePeriod(data.payment_frequency))} sx={{ borderRadius: 2 }}>
                                                                     Auto-Suggest Dates
@@ -1681,7 +1681,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 <>
                                                                     {!dateValidation.isValid && (
                                                                         <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
-                                                                            <strong>⚠️ Date Conflict:</strong> {dateValidation.message}
+                                                                            <strong>Date Conflict:</strong> {dateValidation.message}
                                                                         </Alert>
                                                                     )}
 

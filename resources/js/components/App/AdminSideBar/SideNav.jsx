@@ -325,11 +325,11 @@ export default function SideNav({ open, setOpen }) {
                     path: route('employees.dashboard'),
                 },
                 {
-                    text: 'Department',
+                    text: 'Employee Departments',
                     path: route('employees.departments'),
                 },
                 {
-                    text: 'Type',
+                    text: 'Employee Types',
                     path: route('employees.types'),
                 },
                 {
@@ -343,6 +343,10 @@ export default function SideNav({ open, setOpen }) {
                 {
                     text: 'Leave Report',
                     path: route('employees.leaves.application.report'),
+                },
+                {
+                    text: 'Attendance Dashboard',
+                    path: route('employees.attendances.dashboard'),
                 },
                 {
                     text: 'Attendance Management',
