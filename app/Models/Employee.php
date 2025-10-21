@@ -27,13 +27,13 @@ class Employee extends BaseModel
         return $this->belongsTo(EmployeeType::class);
     }
 
-    // public function attendances()
-    // {
-    //     return $this->hasMany(Attendance::class);
-    // }
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
 
-    // public function leaveApplications()
-    // {
-    //     return $this->hasMany(LeaveApplication::class);
-    // }
+    public function leaveApplications()
+    {
+        return $this->hasMany(LeaveApplication::class);
+    }
 }

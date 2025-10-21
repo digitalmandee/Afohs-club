@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Grid, Typography, FormControlLabel, Radio, RadioGroup, Select, Chip, FormControl, CardContent, TableCell, TableHead, TableContainer, Table, TableBody, TableRow, Button, Divider, Paper, MenuItem } from "@mui/material";
 import { FileDownload } from "@mui/icons-material";
-import axiosInstance from "@/utils/axiosInstance";
-import colors from "@/assets/styles/color";
-const AttendanceReport = ({ employeeId }) => {
+import axios from "axios";
+const AttendanceReport = ({ employee }) => {
 	const currentDate = new Date();
 	const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
 	const [month, setMonth] = useState(currentMonth);
@@ -19,9 +18,11 @@ const AttendanceReport = ({ employeeId }) => {
 	};
 
 	const getAttendanceMonth = async () => {
+		if (!employee?.employee_id) return;
+		
 		setIsLoading(true);
 		try {
-			const res = await axiosInstance.get(`employees/attendances/profile/report/${employeeId}`, {
+			const res = await axios.get(`/admin/employees/admin/attendances/profile/report/${employee.employee_id}`, {
 				params: { month },
 			});
 
@@ -37,12 +38,20 @@ const AttendanceReport = ({ employeeId }) => {
 
 	useEffect(() => {
 		getAttendanceMonth();
-	}, [month]);
+	}, [month, employee]);
 
 	// Generate months dynamically
 	const months = Array.from({ length: 12 }, (_, i) => {
 		const monthValue = `${currentDate.getFullYear()}-${String(i + 1).padStart(2, "0")}`;
 		return { value: monthValue, label: new Date(currentDate.getFullYear(), i, 1).toLocaleString("en-US", { month: "long" }) };
+	});
+
+	// Filter attendance data based on selected filter
+	const filteredAttendance = attendance.filter(row => {
+		if (filter === "all") return true;
+		if (filter === "present") return row.status === "Present";
+		if (filter === "absent") return row.status === "Absent";
+		return true;
 	});
 
 	return (
@@ -95,8 +104,8 @@ const AttendanceReport = ({ employeeId }) => {
 									</TableRow>
 								</TableHead>
 								<TableBody>
-									{attendance.map((row, index) => (
-										<TableRow key={row.id + row.checkIn}>
+									{filteredAttendance.map((row, index) => (
+										<TableRow key={row.id || index}>
 											<TableCell>{index + 1}</TableCell>
 											<TableCell>{row.date}</TableCell>
 											<TableCell>{row.check_in}</TableCell>
@@ -124,9 +133,10 @@ const AttendanceReport = ({ employeeId }) => {
 								variant="contained"
 								startIcon={<FileDownload />}
 								sx={{
-									bgcolor: colors.primary,
+									bgcolor: "#063455",
+									color: "#FFFFFF",
 									"&:hover": {
-										bgcolor: colors.primary,
+										bgcolor: "#063455",
 									},
 									textTransform: "none",
 								}}>

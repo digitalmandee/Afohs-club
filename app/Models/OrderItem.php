@@ -12,4 +12,9 @@ class OrderItem extends Model
     protected $fillable = ['order_id', 'tenant_id', 'order_item', 'status', 'remark', 'instructions', 'cancelType'];
 
     protected $casts = ['order_item' => 'array'];
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }
