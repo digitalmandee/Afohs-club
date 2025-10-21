@@ -11,6 +11,7 @@ import ReservationDialog from './Reservation';
 import TakeAwayDialog from './Takeaway';
 import { usePage } from '@inertiajs/react';
 import axios from 'axios';
+import { CiDeliveryTruck } from "react-icons/ci";
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -297,12 +298,19 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                                         },
                                     }}
                                 >
-                                    <ShopIcon
+                                    {/* <ShopIcon
                                         sx={{
                                             mb: 0.5,
                                             fill: orderDetails.order_type === 'delivery' ? '#063455' : 'inherit',
                                         }}
-                                    />
+                                    /> */}
+                                    <CiDeliveryTruck
+                                        style={{
+                                            height: "35px",
+                                            width: "35px",
+                                            // marginBottom: "2px",
+                                            fill: orderDetails.order_type === "delivery" ? "#063455" : "inherit",
+                                        }} />
                                     <Typography variant="body2">Delivery</Typography>
                                 </ToggleButton>
 

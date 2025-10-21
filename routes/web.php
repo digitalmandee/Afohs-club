@@ -9,6 +9,7 @@ use App\Http\Controllers\AppliedMemberController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDepartmentController;
 use App\Http\Controllers\AttendanceController;
@@ -512,6 +513,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/admin/membership/full/detail', function () {
         return Inertia::render('App/Admin/Membership/CompleteDetail');
     })->name('membership.detail2');
+
+    // Data Migration Routes
+    Route::group(['prefix' => 'admin/data-migration'], function () {
+        Route::get('/', [DataMigrationController::class, 'index'])->name('data-migration.index');
+        Route::get('/stats', [DataMigrationController::class, 'getMigrationStats'])->name('data-migration.stats');
+        Route::post('/migrate-members', [DataMigrationController::class, 'migrateMembers'])->name('data-migration.migrate-members');
+        Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
+        Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
+        Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
+    });
 
     // tenant route
     Route::get('locations', [TenantController::class, 'index'])->name('locations.index');

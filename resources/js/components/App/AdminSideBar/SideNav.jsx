@@ -20,6 +20,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
@@ -30,6 +31,7 @@ import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
+import StorageIcon from '@mui/icons-material/Storage';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 
 const drawerWidthOpen = 240; // Set open width to 240px
@@ -472,6 +474,11 @@ export default function SideNav({ open, setOpen }) {
                     path: route('locations.create'),
                 },
             ],
+        },
+        {
+            text: 'Data Migration',
+            icon: <StorageIcon />,
+            path: route('data-migration.index'),
         },
 
         {

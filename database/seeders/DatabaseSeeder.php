@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             MemberCategorySeeder::class,
             BookingEventSeeder::class,
             EmployeeTypeSeeder::class,
+            MemberClassificationSeeder::class,
             // BookingSeeder::class,
             // OrderDatabaseSeeder::class
         ]);
