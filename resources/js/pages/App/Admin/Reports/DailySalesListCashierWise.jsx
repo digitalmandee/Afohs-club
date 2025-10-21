@@ -16,7 +16,11 @@ import {
     TableRow,
     Card,
     CardContent,
-    Stack
+    Stack,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem
 } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -26,6 +30,7 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 
 export default function DailySalesListCashierWise({ 
     cashierData, 
+    allCashiers = [],
     startDate, 
     endDate, 
     grandTotalSale, 
@@ -41,7 +46,8 @@ export default function DailySalesListCashierWise({
     const [open, setOpen] = useState(false);
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
-        end_date: filters?.end_date || endDate
+        end_date: filters?.end_date || endDate,
+        cashier_id: filters?.cashier_id || ''
     });
 
     const drawerWidthOpen = 280;
@@ -125,7 +131,7 @@ export default function DailySalesListCashierWise({
                     {/* Filters */}
                     <Card sx={{ mb: 3 }}>
                         <CardContent>
-                            <Stack direction="row" spacing={2} alignItems="center">
+                            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
                                 <FilterListIcon color="primary" />
                                 <Typography variant="h6">Filters</Typography>
                                 <TextField
@@ -144,6 +150,23 @@ export default function DailySalesListCashierWise({
                                     onChange={(e) => handleFilterChange('end_date', e.target.value)}
                                     InputLabelProps={{ shrink: true }}
                                 />
+                                <FormControl size="small" sx={{ minWidth: 200 }}>
+                                    <InputLabel>Cashier</InputLabel>
+                                    <Select
+                                        value={dateFilters.cashier_id}
+                                        onChange={(e) => handleFilterChange('cashier_id', e.target.value)}
+                                        label="Cashier"
+                                    >
+                                        <MenuItem value="">
+                                            <em>All Cashiers</em>
+                                        </MenuItem>
+                                        {allCashiers.map((cashier) => (
+                                            <MenuItem key={cashier.id} value={cashier.id}>
+                                                {cashier.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
                                 <Button
                                     variant="contained"
                                     onClick={applyFilters}
@@ -215,10 +238,6 @@ export default function DailySalesListCashierWise({
                     <Paper elevation={2} sx={{ p: 3 }}>
                         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', textAlign: 'center' }}>
                             AFOHS - DAILY SALES LIST (CASHIER-WISE)
-                        </Typography>
-                        
-                        <Typography variant="subtitle1" sx={{ mb: 2, textAlign: 'center', color: 'text.secondary' }}>
-                            Date = Between {formatDate(startDate)} To {formatDate(endDate)}, Name = , Restaurant = [], Table # = [], Waiter = [], Cashier = [], Discounted/Taxed = All, Order Type = []
                         </Typography>
 
                         <Divider sx={{ mb: 3 }} />

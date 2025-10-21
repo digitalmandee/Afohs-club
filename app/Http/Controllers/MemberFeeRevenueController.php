@@ -139,68 +139,92 @@ class MemberFeeRevenueController extends Controller
         }
 
         $members = $query->get()->map(function ($member) use ($dateFrom, $dateTo) {
-            // Get latest maintenance fee payment for this member
-            $latestPaymentQuery = FinancialInvoice::where('fee_type', 'maintenance_fee')
+            // Get membership start date
+            $membershipStartDate = $member->membership_date ? 
+                \Carbon\Carbon::parse($member->membership_date) : 
+                \Carbon\Carbon::parse($member->created_at);
+                // Get current date
+                $currentDate = \Carbon\Carbon::now();
+                
+                // Calculate total months since membership started
+                $totalMonthsSinceStart = $membershipStartDate->diffInMonths($currentDate);
+                
+            // Get all paid maintenance fee invoices for this member
+            $paidInvoices = FinancialInvoice::where('fee_type', 'maintenance_fee')
                 ->where('member_id', $member->user_id)
                 ->where('status', 'paid')
-                ->orderBy('valid_to', 'desc');
+                ->orderBy('valid_to', 'asc')
+                ->get();
 
-            if ($dateFrom) {
-                $latestPaymentQuery->whereDate('payment_date', '>=', $dateFrom);
-            }
-            if ($dateTo) {
-                $latestPaymentQuery->whereDate('payment_date', '<=', $dateTo);
-            }
-
-            $latestPayment = $latestPaymentQuery->first();
-
-            // Calculate pending amount (quarterly maintenance fee from member category)
-            $quarterlyFee = $member->memberCategory ? $member->memberCategory->subscription_fee : 0;
+                
+            // Calculate monthly maintenance fee
+            $monthlyFee = $member->memberCategory ? $member->memberCategory->subscription_fee : 0;
             
-            // Determine if member has pending maintenance
+            \Log::info("paidInvoices count: " . $paidInvoices->count());
+            // Initialize variables
             $hasPendingMaintenance = false;
+            $pendingMonths = 0;
             $pendingQuarters = 0;
             $totalPendingAmount = 0;
             $lastPaymentDate = null;
             $nextDueDate = null;
+            $paidUntilDate = null;
 
-            if ($latestPayment) {
-                $lastPaymentDate = $latestPayment->valid_to;
-                $nextDueDate = \Carbon\Carbon::parse($lastPaymentDate)->addMonths(3);
+            if ($paidInvoices->count() > 0) {
+                // Get the latest payment's valid_to date
+                $latestInvoice = $paidInvoices->last();
+                $lastPaymentDate = $latestInvoice->payment_date;
+                $paidUntilDate = \Carbon\Carbon::parse($latestInvoice->valid_to);
                 
-                // Calculate overdue quarters
-                $monthsOverdue = \Carbon\Carbon::now()->diffInMonths($nextDueDate, false);
-                if ($monthsOverdue > 0) {
-                    $pendingQuarters = ceil($monthsOverdue / 3);
-                    $totalPendingAmount = $pendingQuarters * $quarterlyFee;
+                // If current date is beyond paid until date, calculate pending
+                if ($currentDate->gt($paidUntilDate)) {
+                    $pendingMonths = $paidUntilDate->diffInMonths($currentDate);
+                    $pendingQuarters = ceil($pendingMonths / 3);
+                    $totalPendingAmount = $pendingMonths * $monthlyFee;
                     $hasPendingMaintenance = true;
+                    $nextDueDate = $paidUntilDate->copy()->addMonths(1);
                 }
             } else {
-                // No payment found, calculate from joining date
-                $joiningDate = \Carbon\Carbon::parse($member->created_at);
-                $monthsSinceJoining = \Carbon\Carbon::now()->diffInMonths($joiningDate);
-                $pendingQuarters = ceil($monthsSinceJoining / 3);
-                $totalPendingAmount = $pendingQuarters * $quarterlyFee;
-                $hasPendingMaintenance = $pendingQuarters > 0;
-                $nextDueDate = $joiningDate->addMonths(3);
+                // No payments made, calculate total owed from start
+                // Calculate from membership start to current date
+                $pendingMonths = $totalMonthsSinceStart;
+                
+                // Show pending for all members (no grace period)
+                if ($totalMonthsSinceStart > 0) {
+                    $pendingQuarters = ceil($pendingMonths / 3);
+                    $totalPendingAmount = $pendingMonths * $monthlyFee;
+                    $hasPendingMaintenance = true;
+                    $nextDueDate = $membershipStartDate->copy()->addMonths(1);
+                } else {
+                    // Member joined today (same day)
+                    $pendingMonths = 0;
+                    $pendingQuarters = 0;
+                    $totalPendingAmount = 0;
+                    $hasPendingMaintenance = false;
+                    $nextDueDate = $membershipStartDate->copy()->addMonths(1);
+                }
             }
 
             return [
                 'id' => $member->id,
                 'user_id' => $member->user_id,
                 'membership_no' => $member->membership_no,
-                'membership_date' => $member->created_at,
+                'membership_date' => $membershipStartDate->format('Y-m-d'),
                 'full_name' => $member->full_name,
                 'contact' => $member->mobile_number_a ?? $member->mobile_number_b ?? $member->mobile_number_c,
                 'cnic' => $member->cnic_no,
                 'address' => $member->current_address,
                 'category' => $member->memberCategory ? $member->memberCategory->name : 'N/A',
                 'category_code' => $member->memberCategory ? $member->memberCategory->description : 'N/A',
-                'quarterly_fee' => $quarterlyFee,
+                'monthly_fee' => $monthlyFee,
+                'pending_months' => $pendingMonths,
                 'pending_quarters' => $pendingQuarters,
                 'total_pending_amount' => $totalPendingAmount,
                 'last_payment_date' => $lastPaymentDate,
-                'next_due_date' => $nextDueDate,
+                'paid_until_date' => $paidUntilDate ? $paidUntilDate->format('Y-m-d') : null,
+                'next_due_date' => $nextDueDate ? $nextDueDate->format('Y-m-d') : null,
+                'total_months_since_start' => $totalMonthsSinceStart,
+                'total_invoices_paid' => $paidInvoices->count(),
                 'status' => $member->status,
                 'has_pending_maintenance' => $hasPendingMaintenance,
             ];
@@ -261,27 +285,48 @@ class MemberFeeRevenueController extends Controller
         $cardStatusFilter = $request->input('card_status');
 
         // Get all family members (supplementary members with parent_id)
-        $query = Member::with(['memberCategory:id,name,description'])
-            ->whereNotNull('parent_id')
-            ->select('members.*');
-
-        // Apply member category filter
-        if ($categoryFilter) {
-            $query->whereIn('member_category_id', (array) $categoryFilter);
-        }
-
+        // First get all supplementary members
+        $supplementaryQuery = Member::whereNotNull('parent_id');
+        
         // Apply card status filter
         if ($cardStatusFilter) {
-            $query->whereIn('card_status', (array) $cardStatusFilter);
+            $supplementaryQuery->whereIn('card_status', (array) $cardStatusFilter);
+        }
+        
+        $supplementaryMembers = $supplementaryQuery->get();
+        
+        // Now get parent categories for filtering
+        $parentIds = $supplementaryMembers->pluck('parent_id')->unique();
+        $parentCategories = Member::whereIn('user_id', $parentIds)
+            ->select('user_id', 'member_category_id')
+            ->get()
+            ->keyBy('user_id');
+        \Log::info("Parent Categories: ", $parentCategories->toArray());
+        // Add parent category to each supplementary member
+        $supplementaryMembers = $supplementaryMembers->map(function ($member) use ($parentCategories) {
+            $parent = $parentCategories->get($member->parent_id);
+            $member->parent_category_id = $parent ? $parent->member_category_id : null;
+            return $member;
+        });
+        
+        // Apply category filter if provided
+        if ($categoryFilter) {
+            $supplementaryMembers = $supplementaryMembers->filter(function ($member) use ($categoryFilter) {
+                return in_array($member->parent_category_id, (array) $categoryFilter);
+            });
         }
 
-        $supplementaryMembers = $query->get();
-
         // Calculate statistics by category
-        $categoryStats = MemberCategory::select('id', 'name', 'description')
-            ->get()
+        // Apply category filter if provided, otherwise show all categories
+        $categoryQuery = MemberCategory::select('id', 'name', 'description');
+        
+        if ($categoryFilter) {
+            $categoryQuery->whereIn('id', (array) $categoryFilter);
+        }
+        
+        $categoryStats = $categoryQuery->get()
             ->map(function ($category) use ($supplementaryMembers) {
-                $categoryMembers = $supplementaryMembers->where('member_category_id', $category->id);
+                $categoryMembers = $supplementaryMembers->where('parent_category_id', $category->id);
                 
                 return [
                     'id' => $category->id,
@@ -317,7 +362,6 @@ class MemberFeeRevenueController extends Controller
 
         return Inertia::render('App/Admin/Membership/SupplementaryCardReport', [
             'categories' => $categoryStats,
-            'supplementary_members' => $supplementaryMembers,
             'statistics' => $totalStats,
             'filters' => [
                 'categories' => $categoryFilter ?? [],
@@ -428,15 +472,18 @@ class MemberFeeRevenueController extends Controller
             $query->whereIn('card_status', (array) $cardStatusFilter);
         }
 
-        // Get paginated results
-        $primaryMembers = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
-
-        // Get all members for statistics (without pagination)
+        // Get all members for statistics (no pagination needed for category-based report)
         $allPrimaryMembers = $query->orderBy('created_at', 'desc')->get();
 
         // Calculate statistics by category and card status
-        $categoryStats = MemberCategory::select('id', 'name', 'description')
-            ->get()
+        // Apply category filter if provided, otherwise show all categories
+        $categoryQuery = MemberCategory::select('id', 'name', 'description');
+        
+        if ($categoryFilter) {
+            $categoryQuery->whereIn('id', (array) $categoryFilter);
+        }
+        
+        $categoryStats = $categoryQuery->get()
             ->map(function ($category) use ($allPrimaryMembers) {
                 $categoryMembers = $allPrimaryMembers->where('member_category_id', $category->id);
                 
@@ -477,7 +524,6 @@ class MemberFeeRevenueController extends Controller
 
         return Inertia::render('App/Admin/Membership/MemberCardDetailReport', [
             'categories' => $categoryStats,
-            'primary_members' => $primaryMembers,
             'statistics' => $totalStats,
             'filters' => [
                 'categories' => $categoryFilter ?? [],
@@ -929,7 +975,7 @@ class MemberFeeRevenueController extends Controller
 
         $transactions = $query->get();
 
-        // Group by category and payment method
+        // Initialize summary structure with ALL categories
         $summary = [];
         $grandTotals = [
             'cash' => 0,
@@ -938,19 +984,34 @@ class MemberFeeRevenueController extends Controller
             'total' => 0
         ];
 
+        // Get all categories and initialize them in summary
+        $allCategoriesQuery = MemberCategory::select('id', 'name');
+        
+        // Apply category filter to the categories we show
+        if ($categoryFilter) {
+            $allCategoriesQuery->where('id', $categoryFilter);
+        }
+        
+        $allCategories = $allCategoriesQuery->get();
+        
+        // Initialize all categories in summary (even if they have no transactions)
+        foreach ($allCategories as $category) {
+            $summary[$category->name] = [
+                'cash' => 0,
+                'credit_card' => 0,
+                'bank_online' => 0,
+                'total' => 0
+            ];
+        }
+
         foreach ($transactions as $transaction) {
             $categoryName = $transaction->member->memberCategory->name ?? 'Unknown';
             $paymentMethod = strtolower($transaction->payment_method);
             $amount = $transaction->total_price;
 
-            // Initialize category if not exists
+            // Skip if category doesn't exist in summary (shouldn't happen with our initialization)
             if (!isset($summary[$categoryName])) {
-                $summary[$categoryName] = [
-                    'cash' => 0,
-                    'credit_card' => 0,
-                    'bank_online' => 0,
-                    'total' => 0
-                ];
+                continue;
             }
 
             // Map payment methods
@@ -970,8 +1031,8 @@ class MemberFeeRevenueController extends Controller
             $grandTotals['total'] += $amount;
         }
 
-        // Get all categories for filter
-        $allCategories = MemberCategory::select('id', 'name')->get();
+        // Get all categories for filter dropdown (always show all categories in filter)
+        $allCategoriesForFilter = MemberCategory::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Membership/SubscriptionsMaintenanceSummary', [
             'summary' => $summary,
@@ -981,7 +1042,7 @@ class MemberFeeRevenueController extends Controller
                 'date_to' => $dateTo,
                 'category' => $categoryFilter,
             ],
-            'all_categories' => $allCategories,
+            'all_categories' => $allCategoriesForFilter,
         ]);
     }
 
@@ -1002,7 +1063,7 @@ class MemberFeeRevenueController extends Controller
 
         $members = $membersQuery->get();
 
-        // Initialize summary structure
+        // Initialize summary structure with ALL categories
         $summary = [];
         $grandTotals = [
             '1_quarter_pending' => 0,
@@ -1015,21 +1076,36 @@ class MemberFeeRevenueController extends Controller
             'total_values' => 0
         ];
 
+        // Get all categories and initialize them in summary
+        $allCategoriesQuery = MemberCategory::select('id', 'name', 'subscription_fee');
+        
+        // Apply category filter to the categories we show
+        if ($categoryFilter) {
+            $allCategoriesQuery->where('id', $categoryFilter);
+        }
+        
+        $allCategories = $allCategoriesQuery->get();
+        
+        // Initialize all categories in summary (even if they have no pending quarters)
+        foreach ($allCategories as $category) {
+            $summary[$category->name] = [
+                '1_quarter_pending' => 0,
+                '2_quarters_pending' => 0,
+                '3_quarters_pending' => 0,
+                '4_quarters_pending' => 0,
+                '5_quarters_pending' => 0,
+                'more_than_5_quarters_pending' => 0,
+                'maintenance_fee_quarterly' => $category->subscription_fee ?? 0,
+                'total_values' => 0
+            ];
+        }
+
         foreach ($members as $member) {
             $categoryName = $member->memberCategory->name ?? 'Unknown';
             
-            // Initialize category if not exists
+            // Skip if category doesn't exist in summary (shouldn't happen with our initialization)
             if (!isset($summary[$categoryName])) {
-                $summary[$categoryName] = [
-                    '1_quarter_pending' => 0,
-                    '2_quarters_pending' => 0,
-                    '3_quarters_pending' => 0,
-                    '4_quarters_pending' => 0,
-                    '5_quarters_pending' => 0,
-                    'more_than_5_quarters_pending' => 0,
-                    'maintenance_fee_quarterly' => $member->memberCategory->subscription_fee ?? 0,
-                    'total_values' => 0
-                ];
+                continue;
             }
 
             // Calculate pending quarters for this member
@@ -1070,8 +1146,8 @@ class MemberFeeRevenueController extends Controller
             $grandTotals['maintenance_fee_quarterly'] = array_sum($fees) / count($fees);
         }
 
-        // Get all categories for filter
-        $allCategories = MemberCategory::select('id', 'name')->get();
+        // Get all categories for filter dropdown (always show all categories in filter)
+        $allCategoriesForFilter = MemberCategory::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Membership/PendingMaintenanceQuartersReport', [
             'summary' => $summary,
@@ -1081,7 +1157,7 @@ class MemberFeeRevenueController extends Controller
                 'date_to' => $dateTo,
                 'category' => $categoryFilter,
             ],
-            'all_categories' => $allCategories,
+            'all_categories' => $allCategoriesForFilter,
         ]);
     }
 

@@ -202,10 +202,6 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', textAlign: 'center' }}>
                             AFOHS - SALES SUMMARY (WITH ITEMS)
                         </Typography>
-                        
-                        <Typography variant="subtitle1" sx={{ mb: 2, textAlign: 'center', color: 'text.secondary' }}>
-                            Date = Between {formatDate(startDate)} To {formatDate(endDate)}
-                        </Typography>
 
                         <Divider sx={{ mb: 3 }} />
 

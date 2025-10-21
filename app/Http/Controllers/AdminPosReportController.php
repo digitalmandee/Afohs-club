@@ -71,6 +71,27 @@ class AdminPosReportController extends Controller
         ]);
     }
     
+    public function printSingle(Request $request, $tenantId)
+    {
+        // Get date range - default to today
+        $startDate = $request->get('start_date', Carbon::today()->toDateString());
+        $endDate = $request->get('end_date', Carbon::today()->toDateString());
+        
+        // Get specific tenant
+        $tenant = Tenant::findOrFail($tenantId);
+        
+        // Get report data for this restaurant
+        $reportData = $this->generateReportDataForTenant($tenantId, $startDate, $endDate);
+        
+        return Inertia::render('App/Admin/Reports/SinglePosReportPrint', [
+            'reportData' => $reportData,
+            'tenant' => $tenant,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'filters' => $request->only(['start_date', 'end_date'])
+        ]);
+    }
+    
     public function printAll(Request $request)
     {
         // Get date range - default to today
@@ -481,18 +502,68 @@ class AdminPosReportController extends Controller
 
     public function dailySalesListCashierWise()
     {
-        $filters = request()->only(['start_date', 'end_date']);
+        $filters = request()->only(['start_date', 'end_date', 'cashier_id']);
         $startDate = $filters['start_date'] ?? now()->toDateString();
         $endDate = $filters['end_date'] ?? now()->toDateString();
+        $cashierFilter = $filters['cashier_id'] ?? null;
 
-        // Get financial invoices with food_order type within date range
-        $invoices = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
+        // Get all cashiers from Employee model (assuming cashier is an employee type)
+        $allCashiers = \App\Models\Employee::with(['employeeType'])
+            ->whereHas('employeeType', function($q) {
+                $q->where('name', 'LIKE', '%Cashier%')
+                  ->orWhere('slug', 'LIKE', '%cashier%');
+            })
+            ->select('id', 'name', 'employee_type_id')
             ->get();
+            Log::info('allCashiers: ' . $allCashiers);
+        // Get financial invoices with food_order type within date range
+        $invoicesQuery = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate);
 
-        // Process cashier-wise data
+        // Apply cashier filter if provided
+        // Apply cashier filter if provided
+if ($cashierFilter) {
+    // Since cashier info is in Order model accessed via data->order_id,
+    // we need to get order IDs for the selected cashier first
+    $orderIds = \App\Models\Order::where('cashier_id', $cashierFilter)
+        ->pluck('id')
+        ->toArray();
+    
+    if (!empty($orderIds)) {
+        $invoicesQuery->where(function($q) use ($orderIds) {
+            foreach ($orderIds as $orderId) {
+                $q->orWhereJsonContains('data->order_id', $orderId);
+            }
+        });
+    } else {
+        // If no orders found for this cashier, return empty result
+        $invoicesQuery->whereRaw('1 = 0');
+    }
+}
+
+        $invoices = $invoicesQuery->get();
+
+        // Initialize cashier data structure with all cashiers
         $cashierData = [];
+        
+        // Initialize all cashiers (even if they have no sales)
+        foreach ($allCashiers as $cashier) {
+            $cashierData[$cashier->name] = [
+                'id' => $cashier->id,
+                'name' => $cashier->name,
+                'sale' => 0,
+                'discount' => 0,
+                's_tax_amt' => 0,
+                'cash' => 0,
+                'credit' => 0,
+                'paid' => 0,
+                'unpaid' => 0,
+                'total' => 0
+            ];
+        }
+
+        // Initialize grand totals
         $grandTotalSale = 0;
         $grandTotalDiscount = 0;
         $grandTotalSTax = 0;
@@ -585,6 +656,7 @@ class AdminPosReportController extends Controller
 
         return Inertia::render('App/Admin/Reports/DailySalesListCashierWise', [
             'cashierData' => $cashierArray,
+            'allCashiers' => $allCashiers,  // ADD THIS LINE
             'startDate' => $startDate,
             'endDate' => $endDate,
             'grandTotalSale' => $grandTotalSale,
