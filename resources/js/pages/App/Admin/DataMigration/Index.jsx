@@ -1,37 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
-import { 
-    Card, 
-    CardContent, 
-    Typography, 
-    Button, 
-    LinearProgress, 
-    Box, 
-    Grid, 
-    Alert,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    List,
-    ListItem,
-    ListItemText,
-    Chip,
-    Divider,
-    CircularProgress
-} from '@mui/material';
-import { 
-    PlayArrow, 
-    Stop, 
-    Refresh, 
-    CheckCircle, 
-    Error, 
-    Warning,
-    Assessment,
-    Storage,
-    People,
-    FamilyRestroom
-} from '@mui/icons-material';
+import { Card, CardContent, Typography, Button, LinearProgress, Box, Grid, Alert, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Chip, Divider, CircularProgress } from '@mui/material';
+import { PlayArrow, Stop, Refresh, CheckCircle, Error, Warning, Assessment, Storage, People, FamilyRestroom } from '@mui/icons-material';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
 
@@ -39,11 +9,12 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [stats, setStats] = useState(initialStats);
     const [migrationStatus, setMigrationStatus] = useState({
         members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
-        families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }
+        families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
     });
     const [validationDialog, setValidationDialog] = useState(false);
     const [validationResults, setValidationResults] = useState(null);
     const [resetDialog, setResetDialog] = useState(false);
+    const migrationRunning = useRef({ members: false, families: false });
 
     useEffect(() => {
         refreshStats();
@@ -64,9 +35,10 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             return;
         }
 
-        setMigrationStatus(prev => ({
+        migrationRunning.current.members = true;
+        setMigrationStatus((prev) => ({
             ...prev,
-            members: { ...prev.members, running: true, progress: 0, migrated: 0, errors: [] }
+            members: { ...prev.members, running: true, progress: 0, migrated: 0, errors: [] },
         }));
 
         await processMigrationBatch('members', 0);
@@ -78,9 +50,10 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             return;
         }
 
-        setMigrationStatus(prev => ({
+        migrationRunning.current.families = true;
+        setMigrationStatus((prev) => ({
             ...prev,
-            families: { ...prev.families, running: true, progress: 0, migrated: 0, errors: [] }
+            families: { ...prev.families, running: true, progress: 0, migrated: 0, errors: [] },
         }));
 
         await processMigrationBatch('families', 0);
@@ -91,52 +64,54 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             const endpoint = type === 'members' ? '/admin/data-migration/migrate-members' : '/admin/data-migration/migrate-families';
             const response = await axios.post(endpoint, {
                 batch_size: 100,
-                offset: offset
+                offset: offset,
             });
 
             const { migrated, errors, has_more } = response.data;
-            
-            setMigrationStatus(prev => ({
+
+            setMigrationStatus((prev) => ({
                 ...prev,
                 [type]: {
                     ...prev[type],
                     migrated: prev[type].migrated + migrated,
                     errors: [...prev[type].errors, ...errors],
-                    progress: ((offset + migrated) / (type === 'members' ? stats.old_members_count : stats.old_families_count)) * 100
-                }
+                    progress: ((offset + migrated) / (type === 'members' ? stats.old_members_count : stats.old_families_count)) * 100,
+                },
             }));
 
-            if (has_more && migrationStatus[type].running) {
+            if (has_more && migrationRunning.current[type]) {
                 // Process next batch
                 setTimeout(() => {
                     processMigrationBatch(type, offset + 100);
                 }, 500); // Small delay to prevent overwhelming the server
             } else {
                 // Migration complete
-                setMigrationStatus(prev => ({
+                migrationRunning.current[type] = false;
+                setMigrationStatus((prev) => ({
                     ...prev,
-                    [type]: { ...prev[type], running: false }
+                    [type]: { ...prev[type], running: false },
                 }));
                 refreshStats();
             }
-
         } catch (error) {
             console.error(`Error in ${type} migration:`, error);
-            setMigrationStatus(prev => ({
+            migrationRunning.current[type] = false;
+            setMigrationStatus((prev) => ({
                 ...prev,
-                [type]: { 
-                    ...prev[type], 
+                [type]: {
+                    ...prev[type],
                     running: false,
-                    errors: [...prev[type].errors, { error: error.response?.data?.error || error.message }]
-                }
+                    errors: [...prev[type].errors, { error: error.response?.data?.error || error.message }],
+                },
             }));
         }
     };
 
     const stopMigration = (type) => {
-        setMigrationStatus(prev => ({
+        migrationRunning.current[type] = false;
+        setMigrationStatus((prev) => ({
             ...prev,
-            [type]: { ...prev[type], running: false }
+            [type]: { ...prev[type], running: false },
         }));
     };
 
@@ -158,7 +133,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             refreshStats();
             setMigrationStatus({
                 members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
-                families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }
+                families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
             });
             alert('Migration data reset successfully');
         } catch (error) {
@@ -175,9 +150,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                     <Typography variant="h4" gutterBottom>
                         Data Migration
                     </Typography>
-                    <Alert severity="error">
-                        {stats.error || 'Old tables (memberships, mem_families) not found in database'}
-                    </Alert>
+                    <Alert severity="error">{stats.error || 'Old tables (memberships, mem_families) not found in database'}</Alert>
                 </Box>
             </AdminLayout>
         );
@@ -188,30 +161,15 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             <Head title="Data Migration" />
             <Box sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h4">
-                        Data Migration Dashboard
-                    </Typography>
+                    <Typography variant="h4">Data Migration Dashboard</Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<Refresh />}
-                            onClick={refreshStats}
-                        >
+                        <Button variant="outlined" startIcon={<Refresh />} onClick={refreshStats}>
                             Refresh Stats
                         </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<Assessment />}
-                            onClick={validateMigration}
-                        >
+                        <Button variant="outlined" startIcon={<Assessment />} onClick={validateMigration}>
                             Validate Migration
                         </Button>
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            startIcon={<Warning />}
-                            onClick={() => setResetDialog(true)}
-                        >
+                        <Button variant="outlined" color="error" startIcon={<Warning />} onClick={() => setResetDialog(true)}>
                             Reset Migration
                         </Button>
                     </Box>
@@ -297,16 +255,12 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                 <Typography variant="h6" gutterBottom>
                                     Members Migration
                                 </Typography>
-                                
+
                                 <Box sx={{ mb: 2 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         Progress: {stats.members_migration_percentage || 0}%
                                     </Typography>
-                                    <LinearProgress 
-                                        variant="determinate" 
-                                        value={migrationStatus.members.running ? migrationStatus.members.progress : (stats.members_migration_percentage || 0)}
-                                        sx={{ mt: 1 }}
-                                    />
+                                    <LinearProgress variant="determinate" value={migrationStatus.members.running ? migrationStatus.members.progress : stats.members_migration_percentage || 0} sx={{ mt: 1 }} />
                                 </Box>
 
                                 <Typography variant="body2" sx={{ mb: 2 }}>
@@ -314,21 +268,12 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                 </Typography>
 
                                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={migrationStatus.members.running ? <CircularProgress size={20} /> : <PlayArrow />}
-                                        onClick={startMembersMigration}
-                                        disabled={migrationStatus.members.running}
-                                    >
+                                    <Button variant="contained" startIcon={migrationStatus.members.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startMembersMigration} disabled={migrationStatus.members.running}>
                                         {migrationStatus.members.running ? 'Migrating...' : 'Start Migration'}
                                     </Button>
-                                    
+
                                     {migrationStatus.members.running && (
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<Stop />}
-                                            onClick={() => stopMigration('members')}
-                                        >
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('members')}>
                                             Stop
                                         </Button>
                                     )}
@@ -343,10 +288,17 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                             {migrationStatus.members.errors.slice(0, 10).map((error, index) => (
                                                 <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
                                                     <Typography variant="caption" component="div">
-                                                        <strong>Member ID:</strong> {error.member_id} | <strong>App No:</strong> {error.application_no}<br/>
-                                                        <strong>Name:</strong> {error.name}<br/>
+                                                        <strong>Member ID:</strong> {error.member_id} | <strong>App No:</strong> {error.application_no}
+                                                        <br />
+                                                        <strong>Name:</strong> {error.name}
+                                                        <br />
                                                         <strong>Error:</strong> {error.error}
-                                                        {error.file && <><br/><strong>File:</strong> {error.file}:{error.line}</>}
+                                                        {error.file && (
+                                                            <>
+                                                                <br />
+                                                                <strong>File:</strong> {error.file}:{error.line}
+                                                            </>
+                                                        )}
                                                     </Typography>
                                                 </Alert>
                                             ))}
@@ -369,16 +321,12 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                 <Typography variant="h6" gutterBottom>
                                     Family Members Migration
                                 </Typography>
-                                
+
                                 <Box sx={{ mb: 2 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         Progress: {stats.families_migration_percentage || 0}%
                                     </Typography>
-                                    <LinearProgress 
-                                        variant="determinate" 
-                                        value={migrationStatus.families.running ? migrationStatus.families.progress : (stats.families_migration_percentage || 0)}
-                                        sx={{ mt: 1 }}
-                                    />
+                                    <LinearProgress variant="determinate" value={migrationStatus.families.running ? migrationStatus.families.progress : stats.families_migration_percentage || 0} sx={{ mt: 1 }} />
                                 </Box>
 
                                 <Typography variant="body2" sx={{ mb: 2 }}>
@@ -386,21 +334,12 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                 </Typography>
 
                                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={migrationStatus.families.running ? <CircularProgress size={20} /> : <PlayArrow />}
-                                        onClick={startFamiliesMigration}
-                                        disabled={migrationStatus.families.running}
-                                    >
+                                    <Button variant="contained" startIcon={migrationStatus.families.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startFamiliesMigration} disabled={migrationStatus.families.running}>
                                         {migrationStatus.families.running ? 'Migrating...' : 'Start Migration'}
                                     </Button>
-                                    
+
                                     {migrationStatus.families.running && (
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<Stop />}
-                                            onClick={() => stopMigration('families')}
-                                        >
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('families')}>
                                             Stop
                                         </Button>
                                     )}
@@ -415,10 +354,17 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                             {migrationStatus.families.errors.slice(0, 10).map((error, index) => (
                                                 <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
                                                     <Typography variant="caption" component="div">
-                                                        <strong>Family ID:</strong> {error.family_id} | <strong>Member ID:</strong> {error.member_id}<br/>
-                                                        <strong>Name:</strong> {error.name}<br/>
+                                                        <strong>Family ID:</strong> {error.family_id} | <strong>Member ID:</strong> {error.member_id}
+                                                        <br />
+                                                        <strong>Name:</strong> {error.name}
+                                                        <br />
                                                         <strong>Error:</strong> {error.error}
-                                                        {error.file && <><br/><strong>File:</strong> {error.file}:{error.line}</>}
+                                                        {error.file && (
+                                                            <>
+                                                                <br />
+                                                                <strong>File:</strong> {error.file}:{error.line}
+                                                            </>
+                                                        )}
                                                     </Typography>
                                                 </Alert>
                                             ))}
@@ -442,24 +388,20 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         {validationResults && (
                             <Box>
                                 <Box sx={{ mb: 3 }}>
-                                    <Typography variant="h6" gutterBottom>Count Validation</Typography>
+                                    <Typography variant="h6" gutterBottom>
+                                        Count Validation
+                                    </Typography>
                                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                                        <Chip 
-                                            icon={validationResults.members_count_match ? <CheckCircle /> : <Error />}
-                                            label={`Members: ${validationResults.members_count_match ? 'Match' : 'Mismatch'}`}
-                                            color={validationResults.members_count_match ? 'success' : 'error'}
-                                        />
-                                        <Chip 
-                                            icon={validationResults.families_count_match ? <CheckCircle /> : <Error />}
-                                            label={`Families: ${validationResults.families_count_match ? 'Match' : 'Mismatch'}`}
-                                            color={validationResults.families_count_match ? 'success' : 'error'}
-                                        />
+                                        <Chip icon={validationResults.members_count_match ? <CheckCircle /> : <Error />} label={`Members: ${validationResults.members_count_match ? 'Match' : 'Mismatch'}`} color={validationResults.members_count_match ? 'success' : 'error'} />
+                                        <Chip icon={validationResults.families_count_match ? <CheckCircle /> : <Error />} label={`Families: ${validationResults.families_count_match ? 'Match' : 'Mismatch'}`} color={validationResults.families_count_match ? 'success' : 'error'} />
                                     </Box>
                                 </Box>
 
                                 <Divider sx={{ my: 2 }} />
 
-                                <Typography variant="h6" gutterBottom>Sample Data Integrity</Typography>
+                                <Typography variant="h6" gutterBottom>
+                                    Sample Data Integrity
+                                </Typography>
                                 <List>
                                     {validationResults.sample_data_integrity.map((sample, index) => (
                                         <ListItem key={index}>
@@ -467,21 +409,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                                 primary={`Old ID: ${sample.old_id} → New ID: ${sample.new_id}`}
                                                 secondary={
                                                     <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                                                        <Chip 
-                                                            size="small"
-                                                            label="Name"
-                                                            color={sample.name_match ? 'success' : 'error'}
-                                                        />
-                                                        <Chip 
-                                                            size="small"
-                                                            label="Membership No"
-                                                            color={sample.membership_no_match ? 'success' : 'error'}
-                                                        />
-                                                        <Chip 
-                                                            size="small"
-                                                            label="CNIC"
-                                                            color={sample.cnic_match ? 'success' : 'error'}
-                                                        />
+                                                        <Chip size="small" label="Name" color={sample.name_match ? 'success' : 'error'} />
+                                                        <Chip size="small" label="Membership No" color={sample.membership_no_match ? 'success' : 'error'} />
+                                                        <Chip size="small" label="CNIC" color={sample.cnic_match ? 'success' : 'error'} />
                                                     </Box>
                                                 }
                                             />
@@ -491,7 +421,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
 
                                 {validationResults.errors.length > 0 && (
                                     <Box sx={{ mt: 2 }}>
-                                        <Typography variant="h6" color="error" gutterBottom>Errors</Typography>
+                                        <Typography variant="h6" color="error" gutterBottom>
+                                            Errors
+                                        </Typography>
                                         <List>
                                             {validationResults.errors.map((error, index) => (
                                                 <ListItem key={index}>
@@ -513,9 +445,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 <Dialog open={resetDialog} onClose={() => setResetDialog(false)}>
                     <DialogTitle>Reset Migration Data</DialogTitle>
                     <DialogContent>
-                        <Typography>
-                            Are you sure you want to reset all migration data? This will delete all records from the members table.
-                        </Typography>
+                        <Typography>Are you sure you want to reset all migration data? This will delete all records from the members table.</Typography>
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={() => setResetDialog(false)}>Cancel</Button>
