@@ -33,7 +33,7 @@ export default function DailyDumpItemsReport({
     totalFoodValue, 
     filters 
 }) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
         end_date: filters?.end_date || endDate

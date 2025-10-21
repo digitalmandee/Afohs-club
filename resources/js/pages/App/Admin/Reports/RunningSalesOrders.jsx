@@ -24,7 +24,7 @@ import { format } from 'date-fns';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 
 export default function RunningSalesOrders({ runningOrders, totalOrders, totalAmount, reportDate }) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     const drawerWidthOpen = 280;
     const drawerWidthClosed = 110;
