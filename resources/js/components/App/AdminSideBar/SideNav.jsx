@@ -327,35 +327,39 @@ export default function SideNav({ open, setOpen }) {
                     path: route('employees.dashboard'),
                 },
                 {
-                    text: 'Department',
+                    text: 'Employee Departments',
                     path: route('employees.departments'),
                 },
                 {
-                    text: 'Type',
+                    text: 'Employee Types',
                     path: route('employees.types'),
                 },
                 {
-                    text: 'Category',
+                    text: 'Leave Category',
                     path: route('employees.leaves.category.index'),
                 },
                 {
-                    text: 'Application',
+                    text: 'Leave Application',
                     path: route('employees.leaves.application.index'),
                 },
                 {
-                    text: 'Report',
+                    text: 'Leave Report',
                     path: route('employees.leaves.application.report'),
                 },
                 {
-                    text: 'Management',
+                    text: 'Attendance Dashboard',
+                    path: route('employees.attendances.dashboard'),
+                },
+                {
+                    text: 'Attendance Management',
                     path: route('employees.attendances.management'),
                 },
                 {
-                    text: 'Report',
+                    text: 'Attendance Report',
                     path: route('employees.attendances.report'),
                 },
                 {
-                    text: 'Monthly Report',
+                    text: 'Attendance Monthly Report',
                     path: route('employees.attendances.monthly.report'),
                 },
                 {

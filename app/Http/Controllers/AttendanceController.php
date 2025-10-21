@@ -29,6 +29,17 @@ class AttendanceController extends Controller
         return response()->json(['success' => true, 'attendance' => $attendance], 200);
     }
 
+    public function dashboard(Request $request)
+    {
+        $limit = $request->query('limit') ?? 10;
+
+        $employees = Employee::with(['department:id,name'])->paginate($limit);
+
+        return Inertia::render('App/Admin/Employee/Attendance/Dashboard', [
+            'employees' => $employees,
+        ]);
+    }
+
     public function attendanceReport(Request $request)
     {
         $limit = (int) $request->query('limit', 10);

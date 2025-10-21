@@ -29,9 +29,10 @@ class EmployeeController extends Controller
         // ")
         //     ->first();
 
+        $limit = $request->query('limit') ?? 10;
         // Employees with pagination
         $employees = Employee::with(['user', 'department', 'employeeType'])
-            ->paginate(10);
+            ->paginate($limit);
 
         return Inertia::render('App/Admin/Employee/Dashboard1', [
             'stats' => [

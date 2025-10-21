@@ -120,6 +120,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         Route::prefix('attendances')->group(function () {
             // Inertia.js Pages
+            Route::get('dashboard', [AttendanceController::class, 'dashboard'])->name('employees.attendances.dashboard');
             Route::get('management', [AttendanceController::class, 'managementPage'])->name('employees.attendances.management');
             Route::get('report', [AttendanceController::class, 'reportPage'])->name('employees.attendances.report');
             Route::get('monthly/report', [AttendanceController::class, 'monthlyReportPage'])->name('employees.attendances.monthly.report');
