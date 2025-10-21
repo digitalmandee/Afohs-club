@@ -4,11 +4,17 @@ import { Search } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 
 const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
-    const { all_statuses, all_categories } = usePage().props;
+    const { all_categories } = usePage().props;
+    
+    // Define status options locally
+    const all_statuses = ['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
+        const label = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return { value: status, label: label };
+    });
     
     const [filters, setFilters] = useState({
         status: initialFilters?.status || [],
-        categories: initialFilters?.categories || [],
+        categories: initialFilters?.categories ? initialFilters.categories.map(id => parseInt(id)) : [],
         date_from: initialFilters?.date_from || '',
         date_to: initialFilters?.date_to || '',
     });
@@ -86,15 +92,16 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                             onChange={(e) => handleFilterChange('status', e.target.value)}
                             renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
-                                        <Chip key={value} label={value} size="small" />
-                                    ))}
+                                    {selected.map((value) => {
+                                        const statusObj = all_statuses.find(s => s.value === value);
+                                        return <Chip key={value} label={statusObj?.label || value} size="small" />;
+                                    })}
                                 </Box>
                             )}
                         >
                             {all_statuses && all_statuses.map((status) => (
-                                <MenuItem key={status} value={status}>
-                                    {status}
+                                <MenuItem key={status.value} value={status.value}>
+                                    {status.label}
                                 </MenuItem>
                             ))}
                         </Select>
