@@ -199,10 +199,6 @@ export default function DailyDumpItemsReport({
                         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', textAlign: 'center' }}>
                             AFOHS - DAILY DUMP ITEMS REPORT
                         </Typography>
-                        
-                        <Typography variant="subtitle1" sx={{ mb: 2, textAlign: 'center', color: 'text.secondary' }}>
-                            Date = Between {formatDate(startDate)} To {formatDate(endDate)}, Name = , Category = [], Sub-Category = [], Item Code = , Restaurant = [], Table # = [], Waiter = [],Cashier = [], Cancelled By = [], Discounted/Taxed = All, Status = All
-                        </Typography>
 
                         <Divider sx={{ mb: 3 }} />
 

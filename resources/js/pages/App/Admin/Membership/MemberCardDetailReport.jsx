@@ -2,7 +2,7 @@ import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Chip, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
+import { TextField, Chip, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
 import { Search, Print } from '@mui/icons-material';
 
 const drawerWidthOpen = 240;
@@ -10,31 +10,30 @@ const drawerWidthClosed = 110;
 
 const MemberCardDetailReport = () => {
     // Get props first
-    const { categories, primary_members, statistics, filters, all_categories, all_card_statuses } = usePage().props;
+    const { categories, statistics, filters, all_categories, all_card_statuses } = usePage().props;
     
     // Modal state
     const [open, setOpen] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [allFilters, setAllFilters] = useState({
         categories: filters?.categories || [],
         card_status: filters?.card_status || []
     });
 
+    // Ensure categories is always an array
+    const safeCategories = Array.isArray(categories) ? categories : [];
+    const safeAllCategories = Array.isArray(all_categories) ? all_categories : [];
+    const safeAllCardStatuses = Array.isArray(all_card_statuses) ? all_card_statuses : [];
+
     const handleSearch = () => {
+        setLoading(true);
         router.get(route('membership.member-card-detail-report'), allFilters, {
             preserveState: true,
             preserveScroll: true,
+            onFinish: () => setLoading(false),
         });
     };
 
-    const handlePageChange = (event, page) => {
-        router.get(route('membership.member-card-detail-report'), { 
-            ...allFilters, 
-            page: page 
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
-    };
 
     const handleFilterChange = (field, value) => {
         setAllFilters(prev => ({
@@ -44,11 +43,14 @@ const MemberCardDetailReport = () => {
     };
 
     const handleReset = () => {
+        setLoading(true);
         setAllFilters({
             categories: [],
             card_status: []
         });
-        router.get(route('membership.member-card-detail-report'));
+        router.get(route('membership.member-card-detail-report'), {}, {
+            onFinish: () => setLoading(false),
+        });
     };
 
     const getCardStatusColor = (status) => {
@@ -129,7 +131,7 @@ const MemberCardDetailReport = () => {
                                         renderValue={(selected) => (
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                 {selected.map((value) => {
-                                                    const category = all_categories?.find(cat => cat.id === value);
+                                                    const category = safeAllCategories.find(cat => cat.id === value);
                                                     return (
                                                         <Chip key={value} label={category?.name || value} size="small" />
                                                     );
@@ -137,7 +139,7 @@ const MemberCardDetailReport = () => {
                                             </Box>
                                         )}
                                     >
-                                        {all_categories && all_categories.map((category) => (
+                                        {safeAllCategories.map((category) => (
                                             <MenuItem key={category.id} value={category.id}>
                                                 {category.name}
                                             </MenuItem>
@@ -168,7 +170,7 @@ const MemberCardDetailReport = () => {
                                             </Box>
                                         )}
                                     >
-                                        {all_card_statuses && all_card_statuses.map((status) => (
+                                        {safeAllCardStatuses.map((status) => (
                                             <MenuItem key={status} value={status}>
                                                 {status}
                                             </MenuItem>
@@ -181,6 +183,7 @@ const MemberCardDetailReport = () => {
                                     <Button
                                         variant="contained"
                                         onClick={handleSearch}
+                                        disabled={loading}
                                         sx={{
                                             backgroundColor: '#059669',
                                             textTransform: 'none',
@@ -189,7 +192,7 @@ const MemberCardDetailReport = () => {
                                             },
                                         }}
                                     >
-                                        Apply Filters
+                                        {loading ? <CircularProgress size={20} color="inherit" /> : 'Apply Filters'}
                                     </Button>
                                     <Button
                                         variant="outlined"
@@ -230,8 +233,8 @@ const MemberCardDetailReport = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {categories && categories.length > 0 ? (
-                                        categories.map((category) => (
+                                    {safeCategories.length > 0 ? (
+                                        safeCategories.map((category) => (
                                             <TableRow 
                                                 key={category.id} 
                                                 sx={{ 
@@ -267,14 +270,21 @@ const MemberCardDetailReport = () => {
                                         <TableRow>
                                             <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                                                 <Typography color="textSecondary">
-                                                    No member card data found
+                                                    {loading ? (
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                                                            <CircularProgress size={20} />
+                                                            Loading data...
+                                                        </Box>
+                                                    ) : (
+                                                        'No categories found'
+                                                    )}
                                                 </Typography>
                                             </TableCell>
                                         </TableRow>
                                     )}
 
                                     {/* Footer Row */}
-                                    {categories && categories.length > 0 && (
+                                    {safeCategories.length > 0 && (
                                         <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
                                             <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
                                                 GRAND TOTAL
@@ -302,35 +312,6 @@ const MemberCardDetailReport = () => {
                                 </TableBody>
                             </Table>
                         </TableContainer>
-
-                        {/* Pagination */}
-                        {primary_members?.data && primary_members.data.length > 0 && (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                                <Pagination
-                                    count={primary_members.last_page}
-                                    page={primary_members.current_page}
-                                    onChange={handlePageChange}
-                                    color="primary"
-                                    size="large"
-                                    showFirstButton
-                                    showLastButton
-                                    sx={{
-                                        '& .MuiPaginationItem-root': {
-                                            fontSize: '16px',
-                                        },
-                                    }}
-                                />
-                            </Box>
-                        )}
-
-                        {/* Pagination Info */}
-                        {primary_members?.data && primary_members.data.length > 0 && (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                                <Typography variant="body2" color="textSecondary">
-                                    Showing {primary_members.from} to {primary_members.to} of {primary_members.total} results
-                                </Typography>
-                            </Box>
-                        )}
                     </Box>
                 </div>
             </div>

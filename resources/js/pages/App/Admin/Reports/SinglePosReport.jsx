@@ -35,7 +35,7 @@ export default function SinglePosReport({ reportData, tenant, startDate, endDate
     });
 
     const drawerWidthOpen = 280;
-    const drawerWidthClosed = 70;
+    const drawerWidthClosed = 110;
 
     const handleFilterChange = (field, value) => {
         setDateFilters(prev => ({
