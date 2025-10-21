@@ -9,7 +9,7 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 export default function BulkMigration() {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
