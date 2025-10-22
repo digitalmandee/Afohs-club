@@ -108,7 +108,7 @@ class MemberCategorySeeder extends Seeder
         ];
 
         foreach ($memberCategories as $memberCategory) {
-            MemberCategory::create($memberCategory);
+            MemberCategory::updateOrCreate($memberCategory);
         }
     }
 }

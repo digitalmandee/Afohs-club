@@ -27,7 +27,7 @@ class RoomController extends Controller
         $query = RoomBooking::with([
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
-            'member:id,user_id,membership_no,full_name'
+            'member:id,membership_no,full_name'
         ])->latest();
 
         // ✅ Apply Room Type filter
@@ -139,7 +139,7 @@ class RoomController extends Controller
         // Step 1: Get the latest bookings
         $bookings = RoomBooking::with('room:id,name,room_type_id',
                 'customer:id,customer_no,email,name',
-                'member:id,user_id,membership_no,full_name')
+                'member:id,membership_no,full_name')
             ->latest()
             ->take(6)
             ->get();
@@ -370,7 +370,7 @@ class RoomController extends Controller
         $query = RoomBooking::with([
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
-            'member:id,user_id,membership_no,full_name'
+            'member:id,membership_no,full_name'
         ])
             ->where('status', 'confirmed')
             ->orderBy('booking_date', 'desc')
@@ -388,7 +388,7 @@ class RoomController extends Controller
         $query = RoomBooking::with([
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
-            'member:id,user_id,membership_no,full_name'
+            'member:id,membership_no,full_name'
         ])
             ->where('status', 'checked_in')
             ->orderBy('booking_date', 'desc')

@@ -234,7 +234,7 @@ const OrderDetails = ({ orderId, onClose }) => {
                                             Qty : {item.order_item?.quantity} x Rs {item.order_item?.price}
                                         </Typography>
                                         <Typography variant="body2" fontWeight="medium">
-                                            Rs. {item.order_item?.total_price?.toFixed(2)}
+                                            Rs. {item.order_item?.total_price}
                                         </Typography>
                                     </Box>
                                 </Box>

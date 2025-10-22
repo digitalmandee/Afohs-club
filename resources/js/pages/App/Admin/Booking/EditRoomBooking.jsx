@@ -253,6 +253,8 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
     useEffect(() => {
         if (formData.guest) {
+            console.log(formData.guest);
+            
             axios.get(route('admin.family-members', { id: formData.guest?.id })).then((res) => {
                 setFamilyMembers(res.data.results);
             });

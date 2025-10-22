@@ -385,11 +385,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     const handleMemberSelect = async (member) => {
         setSelectedMember(member);
-        setData('member_id', member.user_id);
+        setData('member_id', member.id);
         setLoadingTransactions(true);
 
         try {
-            const response = await axios.get(route('membership.transactions.member', member.user_id));
+            const response = await axios.get(route('membership.transactions.member', member.id));
             setMemberTransactions(response.data.transactions);
             setFilteredTransactions(response.data.transactions);
             setMembershipFeePaid(response.data.membership_fee_paid);
@@ -1341,7 +1341,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 </Grid>
                                                                 <Grid item xs={12} md={6}>
                                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
-                                                                        Member ID: {selectedMember.user_id}
+                                                                        Member ID: {selectedMember.id}
                                                                     </Typography>
                                                                 </Grid>
                                                                 <Grid item xs={12}>

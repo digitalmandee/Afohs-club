@@ -17,7 +17,7 @@ class TransactionController extends Controller
     {
         $query = Order::query()
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation'])
-            ->with(['member:id,user_id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no', 'orderItems:id,order_id']);
+            ->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no', 'orderItems:id,order_id']);
 
         // ===============================
         // FILTER: Search by member name or membership_no
@@ -113,7 +113,7 @@ class TransactionController extends Controller
 
     public function PaymentOrderData($invoiceId)
     {
-        $order = Order::where('id', $invoiceId)->with(['member:id,user_id,full_name,membership_no', 'customer:id,name,customer_no', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
+        $order = Order::where('id', $invoiceId)->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
         return $order;
     }
 

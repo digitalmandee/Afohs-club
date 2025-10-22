@@ -43,7 +43,7 @@ class MemberTypeSeeder extends Seeder
         ];
 
         foreach ($memberTypes as $memberType) {
-            MemberType::create($memberType);
+            MemberType::updateOrCreate($memberType);
         }
     }
 }

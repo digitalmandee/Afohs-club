@@ -96,6 +96,8 @@ class DataMigrationController extends Controller
                 ->limit($batchSize)
                 ->get();
             
+            Log::info("Processing batch: offset={$offset}, found " . count($oldMembers) . " records");
+            
             $migrated = 0;
             $errors = [];
             
@@ -138,14 +140,26 @@ class DataMigrationController extends Controller
 
     private function migrateSingleMember($oldMember)
     {
-        // Check if member already exists
-        $existingMember = Member::where('application_no', $oldMember->application_no)
-            ->whereNull('parent_id')
-            ->first();
+        // Check if member already exists using multiple criteria
+        $query = Member::whereNull('parent_id');
+        
+        // Primary check: application_no if it exists
+        if (!empty($oldMember->application_no)) {
+            $query->where('application_no', $oldMember->application_no);
+        } else {
+            // Fallback: check by membership_no and name if application_no is empty
+            $query->where('membership_no', $oldMember->mem_no)
+                  ->where('full_name', $oldMember->applicant_name);
+        }
+        
+        $existingMember = $query->first();
             
         if ($existingMember) {
+            Log::info("Skipping member {$oldMember->id} - already exists (App No: {$oldMember->application_no})");
             return; // Skip if already migrated
         }
+        
+        Log::info("Migrating member {$oldMember->id} (App No: {$oldMember->application_no})");
 
         // Get member category ID
         $memberCategoryId = $this->getMemberCategoryId($oldMember->mem_category_id);
@@ -155,56 +169,57 @@ class DataMigrationController extends Controller
             'application_no' => $oldMember->application_no,
             'membership_no' => $oldMember->mem_no,
             'membership_date' => $this->validateDate($oldMember->membership_date),
-            'full_name' => $oldMember->applicant_name,
+            'full_name' => trim(preg_replace('/\s+/', ' ', $oldMember->title . ' ' . $oldMember->first_name . ' ' . $oldMember->middle_name)),
             'member_category_id' => $memberCategoryId,
-            'classification_id' => $oldMember->mem_classification_id,
-            'card_status' => $this->mapCardStatus($oldMember->card_status),
-            'guardian_name' => $oldMember->father_name,
-            'guardian_membership' => $oldMember->father_mem_no,
-            'cnic_no' => $oldMember->cnic,
+            'member_type_id' => 4,
+            'classification_id' => $oldMember->mem_classification_id ?? null,
+            'card_status' => $this->mapCardStatus($oldMember->card_status ?? null),
+            'guardian_name' => $oldMember->father_name ?? null,
+            'guardian_membership' => $oldMember->father_mem_no ?? null,
+            'cnic_no' => $oldMember->cnic ?? null,
             'date_of_birth' => $this->validateDate($oldMember->date_of_birth),
-            'gender' => $oldMember->gender,
-            'education' => $oldMember->education,
-            'ntn' => $oldMember->ntn,
-            'reason' => $oldMember->reason,
-            'blood_group' => $oldMember->blood_group,
-            'mobile_number_a' => $oldMember->mob_a,
-            'mobile_number_b' => $oldMember->mob_b,
-            'tel_number_a' => $oldMember->tel_a,
-            'tel_number_b' => $oldMember->tel_b,
-            'personal_email' => $oldMember->personal_email,
-            'critical_email' => $oldMember->official_email,
+            'gender' => $oldMember->gender ?? null,
+            'education' => $oldMember->education ?? null,
+            'ntn' => $oldMember->ntn ?? null,
+            'reason' => $oldMember->reason ?? null,
+            'blood_group' => $oldMember->blood_group ?? null,
+            'mobile_number_a' => $oldMember->mob_a ?? null,
+            'mobile_number_b' => $oldMember->mob_b ?? null,
+            'tel_number_a' => $oldMember->tel_a ?? null,
+            'tel_number_b' => $oldMember->tel_b ?? null,
+            'personal_email' => $oldMember->personal_email ?? null,
+            'critical_email' => $oldMember->official_email ?? null,
             'card_issue_date' => $this->validateDate($oldMember->card_issue_date),
-            'barcode_no' => $oldMember->mem_barcode,
-            'profile_photo' => $this->migrateProfilePhoto($oldMember->mem_picture),
+            'barcode_no' => $oldMember->mem_barcode ?? null,
+            'profile_photo' => $this->migrateProfilePhoto($oldMember->mem_picture ?? null),
             'status' => $this->mapMemberStatus($oldMember->active),
-            'permanent_address' => $oldMember->per_address,
-            'permanent_city' => $oldMember->per_city,
-            'permanent_country' => $oldMember->per_country,
-            'current_address' => $oldMember->cur_address,
-            'current_city' => $oldMember->cur_city,
-            'current_country' => $oldMember->cur_country,
+            'permanent_address' => $oldMember->per_address ?? null,
+            'permanent_city' => $oldMember->per_city ?? null,
+            'permanent_country' => $oldMember->per_country ?? null,
+            'current_address' => $oldMember->cur_address ?? null,
+            'current_city' => $oldMember->cur_city ?? null,
+            'current_country' => $oldMember->cur_country ?? null,
             'card_expiry_date' => $this->validateDate($oldMember->card_exp),
-            'active_remarks' => $oldMember->active_remarks,
+            'active_remarks' => $oldMember->active_remarks ?? null,
             'from_date' => $this->validateDate($oldMember->from),
             'to_date' => $this->validateDate($oldMember->to),
-            'emergency_name' => $oldMember->emergency_name,
-            'emergency_relation' => $oldMember->emergency_relation,
-            'emergency_contact' => $oldMember->emergency_contact,
-            'passport_no' => $oldMember->passport_no,
-            'title' => $oldMember->title,
-            'first_name' => $oldMember->first_name,
-            'middle_name' => $oldMember->middle_name,
-            'name_comments' => $oldMember->name_comment,
-            'kinship' => $oldMember->kinship,
-            'coa_category_id' => $oldMember->coa_category_id,
-            'nationality' => $oldMember->nationality,
+            'emergency_name' => $oldMember->emergency_name ?? null,
+            'emergency_relation' => $oldMember->emergency_relation ?? null,
+            'emergency_contact' => $oldMember->emergency_contact ?? null,
+            'passport_no' => $oldMember->passport_no ?? null,
+            'title' => $oldMember->title ?? null,
+            'first_name' => $oldMember->first_name ?? null,
+            'middle_name' => $oldMember->middle_name ?? null,
+            'name_comments' => $oldMember->name_comment ?? null,
+            'kinship' => $oldMember->kinship ?? null,
+            'coa_category_id' => $oldMember->coa_category_id ?? null,
+            'nationality' => $oldMember->nationality ?? null,
             'created_at' => $this->validateDate($oldMember->created_at),
             'updated_at' => $this->validateDate($oldMember->updated_at),
             'deleted_at' => $this->validateDate($oldMember->deleted_at),
-            'created_by' => $oldMember->created_by,
-            'updated_by' => $oldMember->updated_by,
-            'deleted_by' => $oldMember->deleted_by,
+            'created_by' => $oldMember->created_by ?? null,
+            'updated_by' => $oldMember->updated_by ?? null,
+            'deleted_by' => $oldMember->deleted_by ?? null,
         ];
 
         // Create new member
@@ -276,27 +291,30 @@ class DataMigrationController extends Controller
             throw new \Exception("Parent member not found for family member ID: {$oldFamily->id}");
         }
 
-        // Check if family member already exists
-        $existingFamily = Member::where('parent_id', $parentMember->user_id)
-            ->where('cnic_no', $oldFamily->cnic)
+        // Check if family member already exists using old_family_id
+        $existingFamily = Member::where('old_family_id', $oldFamily->id)
             ->first();
             
         if ($existingFamily) {
             return; // Skip if already migrated
         }
 
+        // Generate unique membership number for family member
+        $familyMembershipNo = $oldFamily->sup_card_no;
+
         // Prepare family member data
         $familyData = [
-            'parent_id' => $parentMember->user_id,
-            'full_name' => $oldFamily->name,
+            'old_family_id' => $oldFamily->id,
+            'parent_id' => $parentMember->id,
+            'full_name' => trim(preg_replace('/\s+/', ' ', $oldFamily->title . ' ' . $oldFamily->first_name . ' ' . $oldFamily->middle_name)),
             'date_of_birth' => $this->validateDate($oldFamily->date_of_birth),
             'relation' => $this->mapFamilyRelation($oldFamily->fam_relationship),
             'nationality' => $oldFamily->nationality,
             'cnic_no' => $oldFamily->cnic,
             'mobile_number_a' => $oldFamily->contact,
-            'martial_status' => $oldFamily->marital_status,
+            'martial_status' => $oldFamily->maritial_status,
             'profile_photo' => $this->migrateFamilyPhoto($oldFamily->fam_picture),
-            'membership_no' => $oldFamily->sup_card_no,
+            'membership_no' => $familyMembershipNo,
             'card_status' => $this->mapCardStatus($oldFamily->card_status),
             'card_issue_date' => $this->validateDate($oldFamily->sup_card_issue),
             'card_expiry_date' => $this->validateDate($oldFamily->sup_card_exp),
@@ -398,29 +416,9 @@ class DataMigrationController extends Controller
             return null;
         }
 
-        try {
-            $oldPath = public_path('upload/' . $oldPhotoPath);
-            
-            if (file_exists($oldPath)) {
-                $newPath = 'tenants/default/membership/' . basename($oldPhotoPath);
-                $fullNewPath = storage_path('app/public/' . $newPath);
-                
-                // Create directory if it doesn't exist
-                $directory = dirname($fullNewPath);
-                if (!is_dir($directory)) {
-                    mkdir($directory, 0755, true);
-                }
-                
-                // Copy file
-                if (copy($oldPath, $fullNewPath)) {
-                    return $newPath;
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Error migrating profile photo: ' . $e->getMessage());
-        }
-
-        return null;
+        // Only change the path name, don't move or save files
+        // Convert: public/upload/xxxxx.png to tenants/default/membership/xxxxx.png
+        return 'tenants/default/membership/' . basename($oldPhotoPath);
     }
 
     private function migrateFamilyPhoto($oldPhotoPath)
@@ -429,29 +427,15 @@ class DataMigrationController extends Controller
             return null;
         }
 
-        try {
-            $oldPath = public_path('familymemberupload/' . $oldPhotoPath);
-            
-            if (file_exists($oldPath)) {
-                $newPath = 'tenants/default/familymembers/' . basename($oldPhotoPath);
-                $fullNewPath = storage_path('app/public/' . $newPath);
-                
-                // Create directory if it doesn't exist
-                $directory = dirname($fullNewPath);
-                if (!is_dir($directory)) {
-                    mkdir($directory, 0755, true);
-                }
-                
-                // Copy file
-                if (copy($oldPath, $fullNewPath)) {
-                    return $newPath;
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Error migrating family photo: ' . $e->getMessage());
-        }
+        // Only change the path name, don't move or save files
+        // Convert: public/familymemberupload/xxxxx.png to tenants/default/familymembers/xxxxx.png
+        return 'tenants/default/familymembers/' . basename($oldPhotoPath);
+    }
 
-        return null;
+    private function generateUniqueFamilyMembershipNo($originalMembershipNo, $familyId)
+    {
+        // For now, return original number - we'll handle duplicates differently
+        return $originalMembershipNo;
     }
 
     public function resetMigration(Request $request)

@@ -46,7 +46,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
         // if (!data.coa_category_id) errors.coa_category_id = 'COA Account is required';
         if (!data.first_name) errors.first_name = 'First Name is required';
-        if (!data.last_name) errors.last_name = 'Last Name is required';
+        // if (!data.last_name) errors.last_name = 'Last Name is required';
         if (!data.guardian_name) errors.guardian_name = 'This Name is required';
         if (!data.nationality) errors.nationality = 'Nationality is required';
         if (!data.gender) errors.gender = 'Gender is required';

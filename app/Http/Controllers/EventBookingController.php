@@ -7,6 +7,9 @@ use App\Models\Booking;
 use App\Models\BookingEvents;
 use App\Models\EventBooking;
 use App\Models\EventChargeType;
+use App\Models\EventMenu;
+use App\Models\EventMenuAddOn;
+use App\Models\EventMenuCategory;
 use App\Models\EventVenue;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
@@ -70,8 +73,24 @@ class EventBookingController extends Controller
         $bookingNo = $this->getBookingId();
         $eventVenues = EventVenue::select('id', 'name')->get();
         $chargesTypeItems = EventChargeType::where('status', 'active')->select('id', 'name', 'amount')->get();
+        
+        // Get event menus with their items
+        $eventMenus = EventMenu::where('status', 'active')
+            ->with('items:id,event_menu_id,menu_category_id,name,status')
+            ->select('id', 'name', 'amount', 'status')
+            ->get();
+            
+        // Get menu category items for selection
+        $menuCategoryItems = EventMenuCategory::where('status', 'active')
+            ->select('id', 'name')
+            ->get();
+            
+        // Get menu add-ons (similar to charges)
+        $menuAddOnItems = EventMenuAddOn::where('status', 'active')
+            ->select('id', 'name', 'amount')
+            ->get();
 
-        return Inertia::render('App/Admin/Events/CreateBooking', compact('bookingNo', 'eventVenues', 'chargesTypeItems'));
+        return Inertia::render('App/Admin/Events/CreateBooking', compact('bookingNo', 'eventVenues', 'chargesTypeItems', 'eventMenus', 'menuCategoryItems', 'menuAddOnItems'));
     }
 
     public function search(Request $request)

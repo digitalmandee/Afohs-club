@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('members', function (Blueprint $table) {
-            //
+        Schema::table('room_bookings', function (Blueprint $table) {
+            // Change booking_no from string to bigInteger
+            $table->bigInteger('booking_no')->change();
         });
     }
 
@@ -21,8 +22,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('members', function (Blueprint $table) {
-            //
+        Schema::table('room_bookings', function (Blueprint $table) {
+            // Revert booking_no back to string
+            $table->string('booking_no')->change();
         });
     }
 };

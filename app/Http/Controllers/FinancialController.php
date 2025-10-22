@@ -18,7 +18,7 @@ class FinancialController extends Controller
 {
     public function index()
     {
-        $FinancialInvoice = FinancialInvoice::with('member:id,user_id,full_name', 'customer:id,name,email', 'createdBy:id,name')->latest()->get();
+        $FinancialInvoice = FinancialInvoice::with('member:id,full_name', 'customer:id,name,email', 'createdBy:id,name')->latest()->get();
         return Inertia::render('App/Admin/Finance/Dashboard', [
             'FinancialInvoice' => $FinancialInvoice,
         ]);
@@ -61,7 +61,7 @@ class FinancialController extends Controller
 
     public function getTransaction()
     {
-        $FinancialData = FinancialInvoice::with('member:id,user_id,full_name', 'customer:id,name,email', 'createdBy:id,name')->latest()->get();
+        $FinancialData = FinancialInvoice::with('member:id,full_name', 'customer:id,name,email', 'createdBy:id,name')->latest()->get();
         return Inertia::render('App/Admin/Finance/Transaction', [
             'FinancialData' => $FinancialData,
         ]);
@@ -290,7 +290,7 @@ class FinancialController extends Controller
         $now = Carbon::now();
         $currentYear = $now->year;
 
-        $member = Member::where('user_id', $userId)->first();
+        $member = Member::where('id', $userId)->first();
         $memberPrice = null;
         if ($member && $member->member_category_id) {
             $category = MemberCategory::find($member->member_category_id);

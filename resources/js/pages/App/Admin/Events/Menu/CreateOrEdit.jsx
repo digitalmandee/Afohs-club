@@ -94,7 +94,7 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                                         <Grid item xs={11}>
                                             <FormControl fullWidth>
                                                 <InputLabel>Select Item</InputLabel>
-                                                <Select value={item.id || ''} onChange={(e) => handleItemChange(index, e.target.value)}>
+                                                <Select value={item.menu_category_id || ''} onChange={(e) => handleItemChange(index, e.target.value)}>
                                                     {allItems.map((opt) => (
                                                         <MenuItem key={opt.id} value={opt.id}>
                                                             {opt.name}

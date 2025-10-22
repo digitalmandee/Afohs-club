@@ -17,4 +17,12 @@ class EventMenuCategory extends BaseModel
         'updated_by',
         'deleted_by',
     ];
+
+    /**
+     * Get the menu items for the category.
+     */
+    public function menuItems()
+    {
+        return $this->hasMany(EventMenuItem::class, 'menu_category_id');
+    }
 }

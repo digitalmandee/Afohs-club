@@ -43,22 +43,6 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
     const [openDocumentModal, setOpenDocumentModal] = useState(false);
 
     // Extract unique status and member type values from members
-    const statusOptions = [
-        { label: 'All type', value: 'all', icon: null },
-        { label: 'Active', value: 'active', icon: null },
-        { label: 'Suspended', value: 'suspended', icon: null },
-        { label: 'Cancelled', value: 'cancelled', icon: null },
-        { label: 'Absent', value: 'absent', icon: null },
-    ];
-
-    const memberTypeOptions = [
-        { label: 'All types', value: 'all' },
-        ...[...new Set(members.map((member) => member.member?.member_type?.name).filter((name) => name))].map((name) => ({
-            label: name,
-            value: name,
-        })),
-    ];
-
     const handleCancelMembership = () => {
         setCancelModalOpen(false);
     };
