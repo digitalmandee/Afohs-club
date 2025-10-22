@@ -900,21 +900,38 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
     };
 
+    // Helper function to format currency
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
             style: 'currency',
             currency: 'PKR',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
-        }).format(Math.round(amount));
+        }).format(Math.round(amount)).replace('PKR', 'Rs ');
     };
 
+    // Helper function to format status
+    const formatStatus = (status) => {
+        if (!status) return '';
+        return status
+            .replace(/[_-]/g, ' ') // Remove underscores and hyphens
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    };
+
+    // Helper function to format date
     const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('en-PK', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
+        if (!date) return '';
+        try {
+            return new Date(date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+            });
+        } catch (error) {
+            return date;
+        }
     };
 
     const getStatusColor = (status) => {
@@ -1050,7 +1067,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         Full Name
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {selectedMember.full_name}
+                                                        {selectedMember.full_name} ({formatStatus(selectedMember.status)})
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={12} sm={6} lg={4}>
@@ -1329,7 +1346,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
                                                                         Current Status: 
                                                                         <Chip 
-                                                                            label={selectedMember.status} 
+                                                                            label={formatStatus(selectedMember.status)} 
                                                                             size="small" 
                                                                             sx={{ 
                                                                                 ml: 1,
@@ -1352,7 +1369,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 {!['cancelled', 'expired', 'suspended', 'terminated'].includes(selectedMember.status) && (
                                                                     <Grid item xs={12}>
                                                                         <Alert severity="warning">
-                                                                            This member's current status ({selectedMember.status}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.
+                                                                            This member's current status ({formatStatus(selectedMember.status)}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.
                                                                         </Alert>
                                                                     </Grid>
                                                                 )}

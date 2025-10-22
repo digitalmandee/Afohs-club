@@ -608,6 +608,30 @@ class MembershipController extends Controller
         return Inertia::render('App/Membership/Show', ['user' => $user]);
     }
 
+    // Show Admin Member Profile with Family Members
+    public function showMemberProfile($id)
+    {
+        $member = Member::with([
+            'memberType:id,name',
+            'memberCategory:id,name,description,subscription_fee',
+            'kinshipMember:id,full_name,membership_no'
+        ])->findOrFail($id);
+
+        return Inertia::render('App/Admin/Membership/ViewProfile', [
+            'member' => $member
+        ]);
+    }
+
+    // Get Member Family Members with Pagination
+    public function getMemberFamilyMembers(Request $request, $id)
+    {
+        $perPage = $request->get('per_page', 10);
+        
+        $familyMembers = Member::where('parent_id', $id)->paginate($perPage);
+
+        return response()->json($familyMembers);
+    }
+
     public function updateStatus(Request $request)
     {
         $request->validate([
