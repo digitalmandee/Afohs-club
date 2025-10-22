@@ -111,6 +111,7 @@ export default function SideNav({ open, setOpen }) {
     const [profileView, setProfileView] = React.useState('profile');
     // const [openDropdown, setOpenDropdown] = useState({});
     const [openDropdown, setOpenDropdown] = useRemember({}, 'sidebarDropdown');
+    
     useEffect(() => {
         const dropdownState = {};
 
@@ -804,12 +805,12 @@ export default function SideNav({ open, setOpen }) {
                                                             content: '""',
                                                             position: 'absolute',
                                                             top: '50%',
-                                                            left: '2px',
+                                                            left: '0px',
                                                             width: '14px',
-                                                            height: '2px',
-                                                            backgroundColor: '#d3d3d3',
-                                                            borderTopLeftRadius: '4px',
-                                                            borderBottomLeftRadius: '4px',
+                                                            height: '14px',
+                                                            borderLeft: '2px solid #d3d3d3',
+                                                            borderBottom: '2px solid #d3d3d3',
+                                                            borderBottomLeftRadius: '10px',
                                                             transform: 'translateY(-50%)',
                                                         },
                                                     },
@@ -885,12 +886,12 @@ export default function SideNav({ open, setOpen }) {
                                                                                         sx={{
                                                                                             position: 'relative',
                                                                                             ml: 5,
-                                                                                            pl: 2,
+                                                                                            pl: 0.6,
                                                                                             '&::before': {
                                                                                                 content: '""',
                                                                                                 position: 'absolute',
                                                                                                 top: 0,
-                                                                                                left: '10px',
+                                                                                                left: '5px',
                                                                                                 width: '2px',
                                                                                                 height: '100%',
                                                                                                 backgroundColor: '#d3d3d3',
@@ -902,7 +903,7 @@ export default function SideNav({ open, setOpen }) {
                                                                                             {child.children.map((sub) => {
                                                                                                 const isSubSelected = url === normalizePath(sub.path);
                                                                                                 return (
-                                                                                                    <ListItem key={sub.text} disablePadding sx={{ py: 0.1, pl: 3, pr: 1 }} className="connector">
+                                                                                                    <ListItem key={sub.text} disablePadding sx={{ py: 0.1, pl: 2, pr: 1 }} className="connector">
                                                                                                         <ListItemButton
                                                                                                             onClick={() => router.visit(sub.path)}
                                                                                                             sx={{
