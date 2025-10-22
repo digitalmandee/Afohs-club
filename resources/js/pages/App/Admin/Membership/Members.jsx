@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip, Drawer } from '@mui/material';
-import { Search, FilterAlt } from '@mui/icons-material';
+import { Search, FilterAlt, Visibility } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
@@ -131,7 +131,9 @@ const AllMembers = ({ members }) => {
                                 <TableBody>
                                     {members.data.map((user) => (
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.membership_no || 'N/A'}</TableCell>
+                                            <TableCell onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
+                                                {user.membership_no || 'N/A'}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
@@ -254,9 +256,18 @@ const AllMembers = ({ members }) => {
                                                 </Button>
                                             </TableCell>
                                             <TableCell>
-                                                <IconButton onClick={() => router.visit(route('membership.edit', user.id))}>
-                                                    <FaEdit size={18} />
-                                                </IconButton>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title="View Profile">
+                                                        <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
+                                                            <Visibility size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Edit Member">
+                                                        <IconButton onClick={() => router.visit(route('membership.edit', user.id))} sx={{ color: '#f57c00' }}>
+                                                            <FaEdit size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
                                             </TableCell>
                                         </TableRow>
                                     ))}
