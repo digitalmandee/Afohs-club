@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Employee;
+use App\Models\FinancialInvoice;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -20,14 +22,14 @@ class AdminPosReportController extends Controller
         // Get date range - default to today
         $startDate = $request->get('start_date', Carbon::today()->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
-        
+
         // Get all tenants (restaurants)
         $tenants = Tenant::select('id', 'name')->get();
-        
+
         // Get report data for all restaurants
         $allReportsData = [];
         $grandTotal = 0;
-        
+
         foreach ($tenants as $tenant) {
             $reportData = $this->generateReportDataForTenant($tenant->id, $startDate, $endDate);
             if ($reportData['total_quantity'] > 0) {
@@ -39,7 +41,7 @@ class AdminPosReportController extends Controller
                 $grandTotal += $reportData['total_quantity'];
             }
         }
-        
+
         return Inertia::render('App/Admin/Reports/AllPosReports', [
             'allReportsData' => $allReportsData,
             'tenants' => $tenants,
@@ -49,19 +51,19 @@ class AdminPosReportController extends Controller
             'filters' => $request->only(['start_date', 'end_date'])
         ]);
     }
-    
+
     public function singleRestaurant(Request $request, $tenantId)
     {
         // Get date range - default to today
         $startDate = $request->get('start_date', Carbon::today()->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
-        
+
         // Get specific tenant
         $tenant = Tenant::findOrFail($tenantId);
-        
+
         // Get report data for this restaurant
         $reportData = $this->generateReportDataForTenant($tenantId, $startDate, $endDate);
-        
+
         return Inertia::render('App/Admin/Reports/SinglePosReport', [
             'reportData' => $reportData,
             'tenant' => $tenant,
@@ -70,19 +72,19 @@ class AdminPosReportController extends Controller
             'filters' => $request->only(['start_date', 'end_date'])
         ]);
     }
-    
+
     public function printSingle(Request $request, $tenantId)
     {
         // Get date range - default to today
         $startDate = $request->get('start_date', Carbon::today()->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
-        
+
         // Get specific tenant
         $tenant = Tenant::findOrFail($tenantId);
-        
+
         // Get report data for this restaurant
         $reportData = $this->generateReportDataForTenant($tenantId, $startDate, $endDate);
-        
+
         return Inertia::render('App/Admin/Reports/SinglePosReportPrint', [
             'reportData' => $reportData,
             'tenant' => $tenant,
@@ -91,20 +93,20 @@ class AdminPosReportController extends Controller
             'filters' => $request->only(['start_date', 'end_date'])
         ]);
     }
-    
+
     public function printAll(Request $request)
     {
         // Get date range - default to today
         $startDate = $request->get('start_date', Carbon::today()->toDateString());
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
-        
+
         // Get all tenants (restaurants)
         $tenants = Tenant::select('id', 'name')->get();
-        
+
         // Get report data for all restaurants
         $allReportsData = [];
         $grandTotal = 0;
-        
+
         foreach ($tenants as $tenant) {
             $reportData = $this->generateReportDataForTenant($tenant->id, $startDate, $endDate);
             if ($reportData['total_quantity'] > 0) {
@@ -116,7 +118,7 @@ class AdminPosReportController extends Controller
                 $grandTotal += $reportData['total_quantity'];
             }
         }
-        
+
         return Inertia::render('App/Admin/Reports/AllPosReportsPrint', [
             'allReportsData' => $allReportsData,
             'startDate' => $startDate,
@@ -146,14 +148,14 @@ class AdminPosReportController extends Controller
 
         foreach ($tenants as $tenant) {
             $reportData = $this->generateFinancialReportDataForTenant($tenant->id, $startDate, $endDate);
-            
+
             if (!empty($reportData['categories'])) {
                 $allReportsData[] = [
                     'tenant_id' => $tenant->id,
                     'tenant_name' => $tenant->name,
                     'report_data' => $reportData
                 ];
-                
+
                 $grandTotal += $reportData['total_quantity'];
                 $grandSubTotal += $reportData['total_sub_total'];
                 $grandDiscount += $reportData['total_discount'];
@@ -189,14 +191,14 @@ class AdminPosReportController extends Controller
 
         foreach ($tenants as $tenant) {
             $reportData = $this->generateFinancialReportDataForTenant($tenant->id, $startDate, $endDate);
-            
+
             if (!empty($reportData['categories'])) {
                 $allReportsData[] = [
                     'tenant_id' => $tenant->id,
                     'tenant_name' => $tenant->name,
                     'report_data' => $reportData
                 ];
-                
+
                 $grandTotal += $reportData['total_quantity'];
                 $grandSubTotal += $reportData['total_sub_total'];
                 $grandDiscount += $reportData['total_discount'];
@@ -219,7 +221,7 @@ class AdminPosReportController extends Controller
     {
         // Get today's date
         $today = now()->toDateString();
-        
+
         // Get running orders (not completed) from Order table for today
         $runningOrders = Order::whereDate('created_at', $today)
             ->whereNotIn('status', ['completed', 'cancelled'])
@@ -228,11 +230,11 @@ class AdminPosReportController extends Controller
             ->get();
 
         // Filter orders that have food_order invoices using JSON contains and attach invoice data
-        $runningOrdersWithInvoices = $runningOrders->map(function($order) {
-            $invoice = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+        $runningOrdersWithInvoices = $runningOrders->map(function ($order) {
+            $invoice = FinancialInvoice::where('invoice_type', 'food_order')
                 ->whereJsonContains('data', ['order_id' => $order->id])
                 ->first();
-            
+
             if ($invoice) {
                 $order->invoice_no = $invoice->invoice_no;
                 return $order;
@@ -255,7 +257,7 @@ class AdminPosReportController extends Controller
     {
         // Get today's date
         $today = now()->toDateString();
-        
+
         // Get running orders (not completed) from Order table for today
         $runningOrders = Order::whereDate('created_at', $today)
             ->whereNotIn('status', ['completed', 'cancelled'])
@@ -264,11 +266,11 @@ class AdminPosReportController extends Controller
             ->get();
 
         // Filter orders that have food_order invoices using JSON contains and attach invoice data
-        $runningOrdersWithInvoices = $runningOrders->map(function($order) {
-            $invoice = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+        $runningOrdersWithInvoices = $runningOrders->map(function ($order) {
+            $invoice = FinancialInvoice::where('invoice_type', 'food_order')
                 ->whereJsonContains('data', ['order_id' => $order->id])
                 ->first();
-            
+
             if ($invoice) {
                 $order->invoice_no = $invoice->invoice_no;
                 return $order;
@@ -294,7 +296,7 @@ class AdminPosReportController extends Controller
         $endDate = $filters['end_date'] ?? now()->toDateString();
 
         // Get financial invoices with food_order type within date range
-        $invoices = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+        $invoices = FinancialInvoice::where('invoice_type', 'food_order')
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
             ->orderBy('created_at', 'desc')
@@ -310,11 +312,11 @@ class AdminPosReportController extends Controller
         foreach ($invoices as $invoice) {
             $orderData = $invoice->data;
             $orderId = $orderData['order_id'] ?? null;
-            
+
             if ($orderId) {
                 $order = Order::with(['member', 'tenant', 'table', 'waiter'])
                     ->find($orderId);
-                
+
                 if ($order) {
                     $orderItems = [];
                     $invoiceTotalQty = 0;
@@ -335,7 +337,7 @@ class AdminPosReportController extends Controller
                         $menuCode = 'N/A';
                         $productId = $item['id'] ?? null;
                         if ($productId) {
-                            $product = \App\Models\Product::find($productId);
+                            $product = Product::find($productId);
                             if ($product) {
                                 $menuCode = $product->menu_code ?? 'N/A';
                             }
@@ -401,7 +403,7 @@ class AdminPosReportController extends Controller
         $endDate = $filters['end_date'] ?? now()->toDateString();
 
         // Get financial invoices with food_order type within date range
-        $invoices = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+        $invoices = FinancialInvoice::where('invoice_type', 'food_order')
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
             ->orderBy('created_at', 'desc')
@@ -417,11 +419,11 @@ class AdminPosReportController extends Controller
         foreach ($invoices as $invoice) {
             $orderData = $invoice->data;
             $orderId = $orderData['order_id'] ?? null;
-            
+
             if ($orderId) {
                 $order = Order::with(['member', 'tenant', 'table', 'waiter'])
                     ->find($orderId);
-                
+
                 if ($order) {
                     $orderItems = [];
                     $invoiceTotalQty = 0;
@@ -442,7 +444,7 @@ class AdminPosReportController extends Controller
                         $menuCode = 'N/A';
                         $productId = $item['id'] ?? null;
                         if ($productId) {
-                            $product = \App\Models\Product::find($productId);
+                            $product = Product::find($productId);
                             if ($product) {
                                 $menuCode = $product->menu_code ?? 'N/A';
                             }
@@ -508,45 +510,45 @@ class AdminPosReportController extends Controller
         $cashierFilter = $filters['cashier_id'] ?? null;
 
         // Get all cashiers from Employee model (assuming cashier is an employee type)
-        $allCashiers = \App\Models\Employee::with(['employeeType'])
-            ->whereHas('employeeType', function($q) {
+        $allCashiers = Employee::with(['employeeType'])
+            ->whereHas('employeeType', function ($q) {
                 $q->where('name', 'LIKE', '%Cashier%')
-                  ->orWhere('slug', 'LIKE', '%cashier%');
+                    ->orWhere('slug', 'LIKE', '%cashier%');
             })
             ->select('id', 'name', 'employee_type_id')
             ->get();
-            Log::info('allCashiers: ' . $allCashiers);
+        Log::info('allCashiers: ' . $allCashiers);
         // Get financial invoices with food_order type within date range
-        $invoicesQuery = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+        $invoicesQuery = FinancialInvoice::where('invoice_type', 'food_order')
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate);
 
         // Apply cashier filter if provided
         // Apply cashier filter if provided
-if ($cashierFilter) {
-    // Since cashier info is in Order model accessed via data->order_id,
-    // we need to get order IDs for the selected cashier first
-    $orderIds = \App\Models\Order::where('cashier_id', $cashierFilter)
-        ->pluck('id')
-        ->toArray();
-    
-    if (!empty($orderIds)) {
-        $invoicesQuery->where(function($q) use ($orderIds) {
-            foreach ($orderIds as $orderId) {
-                $q->orWhereJsonContains('data->order_id', $orderId);
+        if ($cashierFilter) {
+            // Since cashier info is in Order model accessed via data->order_id,
+            // we need to get order IDs for the selected cashier first
+            $orderIds = Order::where('cashier_id', $cashierFilter)
+                ->pluck('id')
+                ->toArray();
+
+            if (!empty($orderIds)) {
+                $invoicesQuery->where(function ($q) use ($orderIds) {
+                    foreach ($orderIds as $orderId) {
+                        $q->orWhereJsonContains('data->order_id', $orderId);
+                    }
+                });
+            } else {
+                // If no orders found for this cashier, return empty result
+                $invoicesQuery->whereRaw('1 = 0');
             }
-        });
-    } else {
-        // If no orders found for this cashier, return empty result
-        $invoicesQuery->whereRaw('1 = 0');
-    }
-}
+        }
 
         $invoices = $invoicesQuery->get();
 
         // Initialize cashier data structure with all cashiers
         $cashierData = [];
-        
+
         // Initialize all cashiers (even if they have no sales)
         foreach ($allCashiers as $cashier) {
             $cashierData[$cashier->name] = [
@@ -576,14 +578,14 @@ if ($cashierFilter) {
         foreach ($invoices as $invoice) {
             $orderData = $invoice->data;
             $orderId = $orderData['order_id'] ?? null;
-            
+
             if ($orderId) {
                 $order = Order::with(['cashier'])
                     ->find($orderId);
-                
+
                 if ($order && $order->cashier) {
                     $cashierName = $order->cashier->name;
-                    
+
                     // Initialize cashier data if not exists
                     if (!isset($cashierData[$cashierName])) {
                         $cashierData[$cashierName] = [
@@ -603,17 +605,17 @@ if ($cashierFilter) {
                     $saleAmount = (float)($order->total_price ?? 0);
                     $discountAmount = (float)($order->discount ?? 0);
                     $taxAmount = (float)($order->tax ?? 0);
-                    
+
                     // Get payment info from FinancialInvoice
                     $invoiceAmount = (float)($invoice->amount ?? 0);
                     $paidAmount = (float)($invoice->paid_amount ?? 0);
                     $unpaidAmount = $invoiceAmount - $paidAmount;
-                    
+
                     // Get cash and credit based on payment_method
                     $paymentMethod = strtolower($invoice->payment_method ?? '');
                     $cashAmount = 0;
                     $creditAmount = 0;
-                    
+
                     if ($paymentMethod === 'cash') {
                         $cashAmount = $paidAmount;
                     } elseif (in_array($paymentMethod, ['credit', 'credit_card', 'card', 'debit_card'])) {
@@ -622,7 +624,7 @@ if ($cashierFilter) {
                         // If payment method is unknown or empty, default to cash
                         $cashAmount = $paidAmount;
                     }
-                    
+
                     $totalAmount = $invoiceAmount;
 
                     // Add to cashier totals
@@ -650,7 +652,7 @@ if ($cashierFilter) {
 
         // Convert to array and sort by cashier name
         $cashierArray = array_values($cashierData);
-        usort($cashierArray, function($a, $b) {
+        usort($cashierArray, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
 
@@ -678,7 +680,7 @@ if ($cashierFilter) {
         $endDate = $filters['end_date'] ?? now()->toDateString();
 
         // Get financial invoices with food_order type within date range
-        $invoices = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+        $invoices = FinancialInvoice::where('invoice_type', 'food_order')
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
             ->get();
@@ -697,14 +699,14 @@ if ($cashierFilter) {
         foreach ($invoices as $invoice) {
             $orderData = $invoice->data;
             $orderId = $orderData['order_id'] ?? null;
-            
+
             if ($orderId) {
                 $order = Order::with(['cashier'])
                     ->find($orderId);
-                
+
                 if ($order && $order->cashier) {
                     $cashierName = $order->cashier->name;
-                    
+
                     // Initialize cashier data if not exists
                     if (!isset($cashierData[$cashierName])) {
                         $cashierData[$cashierName] = [
@@ -724,17 +726,17 @@ if ($cashierFilter) {
                     $saleAmount = (float)($order->total_price ?? 0);
                     $discountAmount = (float)($order->discount ?? 0);
                     $taxAmount = (float)($order->tax ?? 0);
-                    
+
                     // Get payment info from FinancialInvoice
                     $invoiceAmount = (float)($invoice->amount ?? 0);
                     $paidAmount = (float)($invoice->paid_amount ?? 0);
                     $unpaidAmount = $invoiceAmount - $paidAmount;
-                    
+
                     // Get cash and credit based on payment_method
                     $paymentMethod = strtolower($invoice->payment_method ?? '');
                     $cashAmount = 0;
                     $creditAmount = 0;
-                    
+
                     if ($paymentMethod === 'cash') {
                         $cashAmount = $paidAmount;
                     } elseif (in_array($paymentMethod, ['credit', 'credit_card', 'card', 'debit_card'])) {
@@ -743,7 +745,7 @@ if ($cashierFilter) {
                         // If payment method is unknown or empty, default to cash
                         $cashAmount = $paidAmount;
                     }
-                    
+
                     $totalAmount = $invoiceAmount;
 
                     // Add to cashier totals
@@ -771,7 +773,7 @@ if ($cashierFilter) {
 
         // Convert to array and sort by cashier name
         $cashierArray = array_values($cashierData);
-        usort($cashierArray, function($a, $b) {
+        usort($cashierArray, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
 
@@ -800,7 +802,7 @@ if ($cashierFilter) {
         $cancelledItems = OrderItem::whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
             ->where('status', 'cancelled')
-            ->with(['order' => function($query) {
+            ->with(['order' => function ($query) {
                 $query->with(['table']);
             }])
             ->orderBy('created_at', 'desc')
@@ -819,10 +821,10 @@ if ($cashierFilter) {
 
             // Get invoice number from FinancialInvoice
             $invoiceNo = 'N/A';
-            $financialInvoice = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+            $financialInvoice = FinancialInvoice::where('invoice_type', 'food_order')
                 ->whereJsonContains('data', ['order_id' => $order->id])
                 ->first();
-            
+
             if ($financialInvoice) {
                 $invoiceNo = $financialInvoice->invoice_no;
             }
@@ -832,10 +834,10 @@ if ($cashierFilter) {
             if ($item && is_array($item)) {
                 $productId = $item['id'] ?? null;
                 $itemName = $item['name'] ?? 'Unknown Item';
-                
+
                 // Create unique key to avoid duplicates
                 $uniqueKey = $order->id . '_' . $productId . '_' . $itemName . '_' . $orderItem->id;
-                
+
                 // Skip if already processed
                 if (!isset($processedItems[$uniqueKey])) {
                     $processedItems[$uniqueKey] = true;
@@ -849,10 +851,9 @@ if ($cashierFilter) {
                     // Get menu_code and product name from Product table
                     $menuCode = 'N/A';
                     $productName = $itemName; // Default to order_item name
-                    
+
                     if ($productId) {
-                        $product = \App\Models\Product::find($productId);
-                        \Log::info('Product found for ID ' . $productId . ': ' . ($product ? $product->name : 'Not found'));
+                        $product = Product::find($productId);
                         if ($product) {
                             $menuCode = $product->menu_code ?? 'N/A';
                             $productName = $product->name ?? $itemName; // Use product name if available
@@ -903,7 +904,7 @@ if ($cashierFilter) {
         $cancelledItems = OrderItem::whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
             ->where('status', 'cancelled')
-            ->with(['order' => function($query) {
+            ->with(['order' => function ($query) {
                 $query->with(['table']);
             }])
             ->orderBy('created_at', 'desc')
@@ -922,10 +923,10 @@ if ($cashierFilter) {
 
             // Get invoice number from FinancialInvoice
             $invoiceNo = 'N/A';
-            $financialInvoice = \App\Models\FinancialInvoice::where('invoice_type', 'food_order')
+            $financialInvoice = FinancialInvoice::where('invoice_type', 'food_order')
                 ->whereJsonContains('data', ['order_id' => $order->id])
                 ->first();
-            
+
             if ($financialInvoice) {
                 $invoiceNo = $financialInvoice->invoice_no;
             }
@@ -935,10 +936,10 @@ if ($cashierFilter) {
             if ($item && is_array($item)) {
                 $productId = $item['id'] ?? null;
                 $itemName = $item['name'] ?? 'Unknown Item';
-                
+
                 // Create unique key to avoid duplicates
                 $uniqueKey = $order->id . '_' . $productId . '_' . $itemName . '_' . $orderItem->id;
-                
+
                 // Skip if already processed
                 if (!isset($processedItems[$uniqueKey])) {
                     $processedItems[$uniqueKey] = true;
@@ -952,9 +953,9 @@ if ($cashierFilter) {
                     // Get menu_code and product name from Product table
                     $menuCode = 'N/A';
                     $productName = $itemName; // Default to order_item name
-                    
+
                     if ($productId) {
-                        $product = \App\Models\Product::find($productId);
+                        $product = Product::find($productId);
                         if ($product) {
                             $menuCode = $product->menu_code ?? 'N/A';
                             $productName = $product->name ?? $itemName; // Use product name if available
@@ -1011,7 +1012,7 @@ if ($cashierFilter) {
                 return $cancelType ?: 'N/A';
         }
     }
-    
+
     private function generateReportDataForTenant($tenantId, $startDate, $endDate)
     {
         // Get all orders within date range from ALL tenants (not just specific tenant)
@@ -1019,11 +1020,11 @@ if ($cashierFilter) {
         $orders = Order::whereBetween('start_date', [$startDate, $endDate])
             ->whereIn('status', ['completed', 'paid'])
             ->get();
-            
+
         // Initialize report structure
         $reportData = [];
         $totalQuantity = 0;
-        
+
         // Group items by category - only include products that belong to this tenant
         foreach ($orders as $order) {
             foreach ($order->orderItems as $orderItem) {
@@ -1032,25 +1033,25 @@ if ($cashierFilter) {
                 $this->processItem($items, $reportData, $totalQuantity, $tenantId);
             }
         }
-        
+
         Log::info("Report data for tenant {$tenantId}:", $reportData);
-       
+
         // Convert to array and sort
         $reportArray = array_values($reportData);
-        
+
         // Sort categories by name
-        usort($reportArray, function($a, $b) {
+        usort($reportArray, function ($a, $b) {
             return strcmp($a['category_name'], $b['category_name']);
         });
-        
+
         // Sort items within each category by quantity (descending)
         foreach ($reportArray as &$category) {
             $category['items'] = array_values($category['items']);
-            usort($category['items'], function($a, $b) {
+            usort($category['items'], function ($a, $b) {
                 return $b['quantity'] - $a['quantity'];
             });
         }
-        
+
         return [
             'categories' => $reportArray,
             'total_quantity' => $totalQuantity,
@@ -1060,32 +1061,32 @@ if ($cashierFilter) {
             ]
         ];
     }
-    
+
     private function processItem($item, &$reportData, &$totalQuantity, $currentTenantId)
     {
         // Handle single item (not array)
         $productId = $item['id'] ?? null;
         $quantity = $item['quantity'] ?? 1;
         $categoryName = $item['category'] ?? 'Uncategorized';
-        
+
         if (!$productId) return;
-        
+
         // Get the product to check its tenant_id
         $product = Product::find($productId);
-        
+
         if (!$product) {
             Log::info("Product {$productId} not found");
             return;
         }
-        
+
         Log::info("Product {$product->tenant_id} vs {$currentTenantId} - checking ownership");
-        
+
         // Only include products that belong to this tenant
         if ($product->tenant_id != $currentTenantId) {
             Log::info("Skipping product {$productId} - belongs to tenant {$product->tenant_id}, not {$currentTenantId}");
             return; // Skip products from other restaurants
         }
-        
+
         // Initialize category if not exists
         if (!isset($reportData[$categoryName])) {
             $reportData[$categoryName] = [
@@ -1094,7 +1095,7 @@ if ($cashierFilter) {
                 'total_quantity' => 0
             ];
         }
-        
+
         // Initialize item if not exists
         $itemName = $item['name'] ?? 'Unknown Item';
         if (!isset($reportData[$categoryName]['items'][$itemName])) {
@@ -1105,12 +1106,12 @@ if ($cashierFilter) {
                 'menu_code' => $product->menu_code ?? 'N/A'
             ];
         }
-        
+
         // Add quantity
         $reportData[$categoryName]['items'][$itemName]['quantity'] += $quantity;
         $reportData[$categoryName]['total_quantity'] += $quantity;
         $totalQuantity += $quantity;
-        
+
         Log::info("Added product {$productId} ({$itemName}) to {$categoryName} - Qty: {$quantity}");
     }
 
@@ -1120,20 +1121,20 @@ if ($cashierFilter) {
         $orders = Order::whereBetween('start_date', [$startDate, $endDate])
             ->whereIn('status', ['completed', 'paid'])
             ->get();
-            
+
         // Initialize report structure
         $reportData = [];
         $totalQuantity = 0;
         $totalSubTotal = 0;
         $totalDiscount = 0;
         $totalSale = 0;
-        
+
         // Group items by category - only include products that belong to this tenant
         foreach ($orders as $order) {
             // Get order-level discount
             $orderDiscount = (float)($order->discount ?? 0);
             $orderSubTotal = 0;
-            
+
             // First pass: calculate order subtotal for proportional discount distribution
             foreach ($order->orderItems as $orderItem) {
                 $item = $orderItem->order_item;
@@ -1144,32 +1145,32 @@ if ($cashierFilter) {
                     $orderSubTotal += ($price * $quantity);
                 }
             }
-            
+
             // Second pass: process items with proportional discount
             foreach ($order->orderItems as $orderItem) {
                 $item = $orderItem->order_item;
                 $this->processFinancialItem($item, $reportData, $totalQuantity, $totalSubTotal, $totalDiscount, $totalSale, $tenantId, $orderDiscount, $orderSubTotal);
             }
         }
-        
+
         // Convert to array format and sort
         $categories = [];
         foreach ($reportData as $categoryData) {
             // Convert items object to array and sort by quantity (descending)
             $itemsArray = array_values($categoryData['items']);
-            usort($itemsArray, function($a, $b) {
+            usort($itemsArray, function ($a, $b) {
                 return $b['quantity'] <=> $a['quantity'];
             });
-            
+
             $categoryData['items'] = $itemsArray;
             $categories[] = $categoryData;
         }
-        
+
         // Sort categories alphabetically
-        usort($categories, function($a, $b) {
+        usort($categories, function ($a, $b) {
             return strcmp($a['category_name'], $b['category_name']);
         });
-        
+
         return [
             'categories' => $categories,
             'total_quantity' => $totalQuantity,
@@ -1178,7 +1179,7 @@ if ($cashierFilter) {
             'total_sale' => $totalSale
         ];
     }
-    
+
     private function processFinancialItem($item, &$reportData, &$totalQuantity, &$totalSubTotal, &$totalDiscount, &$totalSale, $currentTenantId, $orderDiscount = 0, $orderSubTotal = 0)
     {
         $itemId = $item['id'] ?? null;
@@ -1188,32 +1189,32 @@ if ($cashierFilter) {
         $itemTenantId = $item['tenant_id'] ?? null;
         $categoryName = $item['category'] ?? 'Unknown Category';
         $itemName = $item['name'] ?? 'Unknown Item';
-        
+
         // Only include items that belong to this tenant
         if ($itemTenantId != $currentTenantId) {
             return;
         }
-        
+
         // Calculate financial values
         $subTotal = $price * $quantity;
-        
+
         // Calculate proportional discount for this item
         $itemDiscount = 0;
         if ($orderSubTotal > 0 && $orderDiscount > 0) {
             $itemDiscount = ($subTotal / $orderSubTotal) * $orderDiscount;
         }
-        
+
         $totalItemSale = $subTotal - $itemDiscount;
-        
+
         // Get product to find menu_code (if exists)
         $menuCode = 'N/A';
         if ($itemId) {
-            $product = \App\Models\Product::find($itemId);
+            $product = Product::find($itemId);
             if ($product) {
                 $menuCode = $product->menu_code ?? 'N/A';
             }
         }
-        
+
         // Initialize category if not exists
         if (!isset($reportData[$categoryName])) {
             $reportData[$categoryName] = [
@@ -1225,7 +1226,7 @@ if ($cashierFilter) {
                 'total_sale' => 0
             ];
         }
-        
+
         // Initialize item if not exists
         if (!isset($reportData[$categoryName]['items'][$itemName])) {
             $reportData[$categoryName]['items'][$itemName] = [
@@ -1238,19 +1239,19 @@ if ($cashierFilter) {
                 'menu_code' => $menuCode
             ];
         }
-        
+
         // Add values
         $reportData[$categoryName]['items'][$itemName]['quantity'] += $quantity;
         $reportData[$categoryName]['items'][$itemName]['sub_total'] += $subTotal;
         $reportData[$categoryName]['items'][$itemName]['discount'] += $itemDiscount;
         $reportData[$categoryName]['items'][$itemName]['total_sale'] += $totalItemSale;
-        
+
         // Update category totals
         $reportData[$categoryName]['total_quantity'] += $quantity;
         $reportData[$categoryName]['total_sub_total'] += $subTotal;
         $reportData[$categoryName]['total_discount'] += $itemDiscount;
         $reportData[$categoryName]['total_sale'] += $totalItemSale;
-        
+
         // Update grand totals
         $totalQuantity += $quantity;
         $totalSubTotal += $subTotal;

@@ -11,7 +11,10 @@ class SettingController extends Controller
 {
     public function index()
     {
-        $setting = Setting::firstOrCreate([], ['tax' => 12]); // Default tax to 12 if no record exists
+        $setting = Setting::firstOrCreate([
+            'type' => 'tax',
+            'value' => 12
+        ]); // Default tax to 12 if no record exists
 
         return Inertia::render('App/Settings/EditTax', [
             'taxx' => $setting->tax,
@@ -29,8 +32,8 @@ class SettingController extends Controller
             ], 422);
         }
 
-        $setting = Setting::firstOrCreate([], ['tax' => 12]);
-        $setting->tax = $request->tax;
+        $setting = Setting::where('type', 'tax')->first();
+        $setting->value = $request->tax;
         $setting->save();
 
         return response()->json([
@@ -40,7 +43,7 @@ class SettingController extends Controller
     }
     public function showTax()
     {
-        $setting = Setting::first();
+        $setting = Setting::where('type', 'tax')->first();
 
         return response()->json($setting);
     }

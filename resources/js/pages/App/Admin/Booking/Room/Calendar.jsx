@@ -106,6 +106,11 @@ const RoomCalendar = () => {
         events,
         eventHoverHandling: 'Bubble',
         bubble: new DayPilot.Bubble(),
+        // Disable drag and drop functionality
+        eventMoveHandling: 'Disabled',
+        eventResizeHandling: 'Disabled',
+        eventDeleteHandling: 'Disabled',
+        eventClickHandling: 'Enabled',
         onEventClick: (args) => {
             const booking = args.e.data.booking;
             setSelectedBooking(booking);

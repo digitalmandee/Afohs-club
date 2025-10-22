@@ -171,6 +171,7 @@ class DataMigrationController extends Controller
             'membership_date' => $this->validateDate($oldMember->membership_date),
             'full_name' => trim(preg_replace('/\s+/', ' ', $oldMember->title . ' ' . $oldMember->first_name . ' ' . $oldMember->middle_name)),
             'member_category_id' => $memberCategoryId,
+            'member_type_id' => 4,
             'classification_id' => $oldMember->mem_classification_id ?? null,
             'card_status' => $this->mapCardStatus($oldMember->card_status ?? null),
             'guardian_name' => $oldMember->father_name ?? null,
@@ -290,27 +291,30 @@ class DataMigrationController extends Controller
             throw new \Exception("Parent member not found for family member ID: {$oldFamily->id}");
         }
 
-        // Check if family member already exists
-        $existingFamily = Member::where('parent_id', $parentMember->id)
-            ->where('full_name', $oldFamily->name)
+        // Check if family member already exists using old_family_id
+        $existingFamily = Member::where('old_family_id', $oldFamily->id)
             ->first();
             
         if ($existingFamily) {
             return; // Skip if already migrated
         }
 
+        // Generate unique membership number for family member
+        $familyMembershipNo = $oldFamily->sup_card_no;
+
         // Prepare family member data
         $familyData = [
+            'old_family_id' => $oldFamily->id,
             'parent_id' => $parentMember->id,
-            'full_name' => $oldFamily->name,
+            'full_name' => trim(preg_replace('/\s+/', ' ', $oldFamily->title . ' ' . $oldFamily->first_name . ' ' . $oldFamily->middle_name)),
             'date_of_birth' => $this->validateDate($oldFamily->date_of_birth),
             'relation' => $this->mapFamilyRelation($oldFamily->fam_relationship),
             'nationality' => $oldFamily->nationality,
             'cnic_no' => $oldFamily->cnic,
             'mobile_number_a' => $oldFamily->contact,
-            'martial_status' => $oldFamily->marital_status,
+            'martial_status' => $oldFamily->maritial_status,
             'profile_photo' => $this->migrateFamilyPhoto($oldFamily->fam_picture),
-            'membership_no' => $oldFamily->sup_card_no,
+            'membership_no' => $familyMembershipNo,
             'card_status' => $this->mapCardStatus($oldFamily->card_status),
             'card_issue_date' => $this->validateDate($oldFamily->sup_card_issue),
             'card_expiry_date' => $this->validateDate($oldFamily->sup_card_exp),
@@ -412,29 +416,9 @@ class DataMigrationController extends Controller
             return null;
         }
 
-        try {
-            $oldPath = public_path('upload/' . $oldPhotoPath);
-            
-            if (file_exists($oldPath)) {
-                $newPath = 'tenants/default/membership/' . basename($oldPhotoPath);
-                $fullNewPath = storage_path('app/public/' . $newPath);
-                
-                // Create directory if it doesn't exist
-                $directory = dirname($fullNewPath);
-                if (!is_dir($directory)) {
-                    mkdir($directory, 0755, true);
-                }
-                
-                // Copy file
-                if (copy($oldPath, $fullNewPath)) {
-                    return $newPath;
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Error migrating profile photo: ' . $e->getMessage());
-        }
-
-        return null;
+        // Only change the path name, don't move or save files
+        // Convert: public/upload/xxxxx.png to tenants/default/membership/xxxxx.png
+        return 'tenants/default/membership/' . basename($oldPhotoPath);
     }
 
     private function migrateFamilyPhoto($oldPhotoPath)
@@ -443,29 +427,15 @@ class DataMigrationController extends Controller
             return null;
         }
 
-        try {
-            $oldPath = public_path('familymemberupload/' . $oldPhotoPath);
-            
-            if (file_exists($oldPath)) {
-                $newPath = 'tenants/default/familymembers/' . basename($oldPhotoPath);
-                $fullNewPath = storage_path('app/public/' . $newPath);
-                
-                // Create directory if it doesn't exist
-                $directory = dirname($fullNewPath);
-                if (!is_dir($directory)) {
-                    mkdir($directory, 0755, true);
-                }
-                
-                // Copy file
-                if (copy($oldPath, $fullNewPath)) {
-                    return $newPath;
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Error migrating family photo: ' . $e->getMessage());
-        }
+        // Only change the path name, don't move or save files
+        // Convert: public/familymemberupload/xxxxx.png to tenants/default/familymembers/xxxxx.png
+        return 'tenants/default/familymembers/' . basename($oldPhotoPath);
+    }
 
-        return null;
+    private function generateUniqueFamilyMembershipNo($originalMembershipNo, $familyId)
+    {
+        // For now, return original number - we'll handle duplicates differently
+        return $originalMembershipNo;
     }
 
     public function resetMigration(Request $request)

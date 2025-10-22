@@ -24,16 +24,15 @@ class UserController extends Controller
         if ($memberType == 1) {
             $members = Member::select(
                 'members.id',
-                'members.user_id',
-                'members.first_name',
-                'members.last_name',
+                'members.full_name',
                 'members.membership_no',
                 'members.cnic_no',
                 'members.current_address',
-                'member_categories.name as category_name'
+                'members.personal_email',
+                'members.mobile_number_a',
+                'member_categories.name as category_name',
             )
                 ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
-                ->leftJoin('users', 'members.user_id', '=', 'users.id')
                 ->whereNull('members.parent_id')
                 ->where(function ($q) use ($query) {
                     $q
@@ -44,12 +43,11 @@ class UserController extends Controller
             $members = $members->limit(10)->get();
 
             $results = $members->map(function ($user) {
-                $fullName = trim("{$user->first_name} {$user->last_name}");
                 return [
-                    'id' => $user->user_id,
-                    'name' => $fullName,
+                    'id' => $user->id,
+                    'name' => $user->full_name,
                     'booking_type' => 'member',
-                    'label' => "{$fullName} ({$user->membership_no})",
+                    'label' => "{$user->full_name} ({$user->membership_no})",
                     'membership_no' => $user->membership_no,
                     'email' => $user->personal_email,
                     'cnic' => $user->cnic_no,
@@ -124,43 +122,42 @@ class UserController extends Controller
 
         // Case 1: bookingType = 0 => Search in Users table (members)
         if ($bookingType === '0' || $bookingType === '2') {
-            $members = User::role('user', 'web')
-                ->select(
-                    'users.id',
-                    'users.email',
-                    'users.phone_number',
-                    'members.full_name',
-                    'members.membership_no',
-                    'members.cnic_no',
-                    'members.current_address',
-                    'member_categories.name as category_name',
-                    DB::raw('(SELECT COUNT(*) FROM members AS fm WHERE fm.kinship = users.id) as total_kinships')
-                )
-                ->leftJoin('members', 'users.id', '=', 'members.user_id')
+            $members = Member::select(
+                'members.id',
+                'members.full_name',
+                'members.membership_no',
+                'members.cnic_no',
+                'members.current_address',
+                'members.personal_email',
+                'members.mobile_number_a',
+                'member_categories.name as category_name',
+                DB::raw('(SELECT COUNT(*) FROM members AS fm WHERE fm.kinship = members.id) as total_kinships')
+            )
                 ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
                 ->whereNull('members.parent_id')
                 ->where(function ($q) use ($query) {
                     $q
                         ->where('members.full_name', 'like', "%{$query}%")
                         ->orWhere('members.membership_no', 'like', "%{$query}%");
-                })
-                ->limit(10)
-                ->get();
+                });
+
+            $members = $members->limit(10)->get();
 
             $results = $members->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'booking_type' => 'member',
-                    'total_kinships' => $user->total_kinships,
                     'name' => $user->full_name,
+                    'total_kinships' => $user->total_kinships,
                     'label' => "{$user->full_name} ({$user->membership_no})",
                     'membership_no' => $user->membership_no,
-                    'email' => $user->email,
+                    'email' => $user->personal_email,
                     'cnic' => $user->cnic_no,
-                    'phone' => $user->phone_number,
+                    'phone' => $user->mobile_number_a,
                     'address' => $user->current_address,
                 ];
             });
+
 
             // Case 2: bookingType = 1 => Search in customers
         } elseif ($bookingType === '1') {

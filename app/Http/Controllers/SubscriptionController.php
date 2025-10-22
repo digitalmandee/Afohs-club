@@ -43,7 +43,7 @@ class SubscriptionController extends Controller
         // Recent subscription transactions (latest 10)
         $recentSubscriptions = FinancialInvoice::where('fee_type', 'subscription_fee')
             ->with([
-                'member:user_id,full_name,membership_no',
+                'member:id,full_name,membership_no',
                 'subscriptionType:id,name',
                 'subscriptionCategory:id,name,fee'
             ])
@@ -87,7 +87,7 @@ class SubscriptionController extends Controller
         // Get paginated subscription transactions with search
         $query = FinancialInvoice::where('fee_type', 'subscription_fee')
             ->with([
-                'member:user_id,full_name,membership_no',
+                'member:id,full_name,membership_no',
                 'subscriptionType:id,name',
                 'subscriptionCategory:id,name,fee'
             ]);
@@ -351,7 +351,7 @@ class SubscriptionController extends Controller
             }
 
             // ✅ Check paused status for current period
-            $member = Member::with('pausedHistories')->where('user_id', $request->customer_id)->first();
+            $member = Member::with('pausedHistories')->where('id', $request->customer_id)->first();
             $billingStart = $now->copy()->startOfMonth();
             $billingEnd = $now->copy()->endOfMonth();
             $wasPaused = false;

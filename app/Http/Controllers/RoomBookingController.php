@@ -324,7 +324,7 @@ class RoomBookingController extends Controller
                         ->where('check_out_date', '>', $monthEnd);
                 });
         })
-            ->with('room', 'customer', 'member:id,user_id,membership_no,full_name,personal_email')
+            ->with('room', 'customer', 'member:id,membership_no,full_name,personal_email')
             ->get()
             ->map(fn($b) => [
                 'id' => $b->id,
@@ -344,7 +344,7 @@ class RoomBookingController extends Controller
     // Show Room Booking
     public function showRoomBooking($id)
     {
-        $booking = RoomBooking::with('room', 'customer', 'member:id,user_id,membership_no,full_name,personal_email', 'room', 'room.roomType')->findOrFail($id);
+        $booking = RoomBooking::with('room', 'customer', 'member:id,membership_no,full_name,personal_email', 'room', 'room.roomType')->findOrFail($id);
         $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
             ->select('id', 'customer_id', 'data', 'status')
             ->where('customer_id', $booking->customer_id)
@@ -385,7 +385,7 @@ class RoomBookingController extends Controller
 
     private function getBookingId()
     {
-        $booking_id = RoomBooking::max('id');
+        $booking_id = RoomBooking::max('booking_no');
         return $booking_id + 1;
     }
 

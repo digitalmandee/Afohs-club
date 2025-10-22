@@ -29,7 +29,7 @@ class MemberFeeRevenueController extends Controller
         }
 
         $categories = $query->get()->map(function ($category) use ($dateFrom, $dateTo) {
-            $memberUserIds = $category->members->pluck('user_id');
+            $memberUserIds = $category->members->pluck('id');
 
             // Calculate maintenance fee revenue from new transaction system
             $maintenanceQuery = FinancialInvoice::where('fee_type', 'maintenance_fee')
@@ -112,7 +112,7 @@ class MemberFeeRevenueController extends Controller
         }
 
         $categories = $query->get()->map(function ($category) use ($dateFrom, $dateTo) {
-            $memberUserIds = $category->members->pluck('user_id');
+            $memberUserIds = $category->members->pluck('id');
 
             // Calculate maintenance fee revenue from new transaction system
             $maintenanceQuery = FinancialInvoice::where('fee_type', 'maintenance_fee')
@@ -233,7 +233,7 @@ class MemberFeeRevenueController extends Controller
 
             // Get all paid maintenance fee invoices for this member
             $paidInvoices = FinancialInvoice::where('fee_type', 'maintenance_fee')
-                ->where('member_id', $member->user_id)
+                ->where('member_id', $member->id)
                 ->where('status', 'paid')
                 ->orderBy('valid_to', 'asc')
                 ->get();
@@ -294,7 +294,6 @@ class MemberFeeRevenueController extends Controller
 
             return [
                 'id' => $member->id,
-                'user_id' => $member->user_id,
                 'membership_no' => $member->membership_no,
                 'membership_date' => $membershipStartDate->format('Y-m-d'),
                 'full_name' => $member->full_name,
@@ -431,7 +430,7 @@ class MemberFeeRevenueController extends Controller
 
             // Get all paid maintenance fee invoices for this member
             $paidInvoices = FinancialInvoice::where('fee_type', 'maintenance_fee')
-                ->where('member_id', $member->user_id)
+                ->where('member_id', $member->id)
                 ->where('status', 'paid')
                 ->orderBy('valid_to', 'asc')
                 ->get();
@@ -486,7 +485,6 @@ class MemberFeeRevenueController extends Controller
 
             return [
                 'id' => $member->id,
-                'user_id' => $member->user_id,
                 'membership_no' => $member->membership_no,
                 'membership_date' => $membershipStartDate->format('Y-m-d'),
                 'full_name' => $member->full_name,
@@ -557,10 +555,10 @@ class MemberFeeRevenueController extends Controller
 
         // Now get parent categories for filtering
         $parentIds = $supplementaryMembers->pluck('parent_id')->unique();
-        $parentCategories = Member::whereIn('user_id', $parentIds)
-            ->select('user_id', 'member_category_id')
+        $parentCategories = Member::whereIn('id', $parentIds)
+            ->select('member_category_id')
             ->get()
-            ->keyBy('user_id');
+            ->keyBy('id');
 
         // Add parent category to each supplementary member
         $supplementaryMembers = $supplementaryMembers->map(function ($member) use ($parentCategories) {
@@ -1446,7 +1444,7 @@ class MemberFeeRevenueController extends Controller
     private function calculatePendingQuarters($member, $dateFrom = null, $dateTo = null)
     {
         // Get member's maintenance fee transactions
-        $query = FinancialInvoice::where('member_id', $member->user_id)
+        $query = FinancialInvoice::where('member_id', $member->id)
             ->where('fee_type', 'maintenance_fee')
             ->where('status', 'paid');
 

@@ -174,12 +174,12 @@ class FloorController extends Controller
                         'reservations' => function ($resQuery) use ($parsedDate) {
                             $resQuery
                                 ->whereDate('date', $parsedDate)
-                                ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'member_id','customer_id')
+                                ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'member_id', 'customer_id')
                                 ->with([
                                     'order' => function ($orderQuery) {
                                         $orderQuery->select('id', 'reservation_id', 'table_id', 'status', 'order_type', 'start_date', 'member_id');
                                     },
-                                    'member:id,user_id,full_name',
+                                    'member:id,full_name',
                                     'customer:id,name',
                                 ]);
                         },
@@ -190,15 +190,14 @@ class FloorController extends Controller
                                 ->whereNull('reservation_id')
                                 ->whereIn('order_type', ['dinein', 'takeaway'])
                                 ->whereIn('status', ['pending', 'in_progress'])
-                                ->select('id', 'table_id', 'order_type', 'status', 'start_date', 'member_id','customer_id')
+                                ->select('id', 'table_id', 'order_type', 'status', 'start_date', 'member_id', 'customer_id')
                                 ->with([
-                                    'member:id,user_id,full_name',
+                                    'member:id,full_name',
                                     'customer:id,name',
                                 ]);
                         }
                     ]);
-            }])
-            ->first();
+            }])->first();
 
         $totalCapacity = 0;
         $availableCapacity = 0;
@@ -262,7 +261,7 @@ class FloorController extends Controller
                         } elseif ($reservation->member) {
                             $bookedBy = [
                                 'reservation_id' => $reservation->id,
-                                'id' => $reservation->member->user_id,
+                                'id' => $reservation->member->id,
                                 'name' => $reservation->member->full_name,
                                 'time_slot' => $reservation->start_time . ' - ' . $reservation->end_time,
                                 'type' => 'member',
@@ -298,7 +297,7 @@ class FloorController extends Controller
                         } elseif ($order->member) {
                             $bookedBy = [
                                 'order_id' => $order->id,
-                                'id' => $order->member->user_id,
+                                'id' => $order->member->id,
                                 'name' => $order->member->full_name,
                                 'order_type' => $order->order_type,
                                 'type' => 'member',
@@ -331,7 +330,7 @@ class FloorController extends Controller
     {
         // Check if ID is an order
         $order = Order::with([
-            'member:id,user_id,full_name',
+            'member:id,full_name',
             'customer:id,name,customer_no',
             'table:id,table_no',
             'orderItems:id,order_id,order_item,status',
@@ -349,7 +348,7 @@ class FloorController extends Controller
 
         // Otherwise, check if ID is a reservation
         $reservation = Reservation::with([
-            'member:id,user_id,full_name',
+            'member:id,full_name',
             'table:id,table_no',
             'order.orderItems:id,order_id,order_item,status',
         ])->find($id);

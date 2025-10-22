@@ -10,6 +10,7 @@ class Member extends BaseModel
 
     protected $fillable = [
         'application_no',
+        'old_family_id',
         'barcode_no',
         'membership_no',
         'member_type_id',
@@ -127,7 +128,7 @@ class Member extends BaseModel
 
     public function kinshipMember()
     {
-        return $this->belongsTo(Member::class, 'kinship', 'user_id');
+        return $this->belongsTo(Member::class, 'kinship', 'id');
     }
 
     public function memberCategory()
@@ -152,7 +153,7 @@ class Member extends BaseModel
 
     public function parent()
     {
-        return $this->belongsTo(Member::class, 'parent_id', 'user_id');
+        return $this->belongsTo(Member::class, 'parent_id', 'id');
     }
 
     public function familyMembers()
@@ -160,10 +161,15 @@ class Member extends BaseModel
         return $this->hasMany(Member::class, 'parent_id', 'id');
     }
 
+    public function statusHistories()
+    {
+        return $this->hasMany(MemberStatusHistory::class, 'member_id', 'id');
+    }
+
     public function pausedHistories()
     {
         return $this
-            ->hasMany(MemberStatusHistory::class, 'user_id', 'id')
+            ->hasMany(MemberStatusHistory::class, 'member_id', 'id')
             ->where('status', 'pause')
             ->whereNull('used_up_to');
     }

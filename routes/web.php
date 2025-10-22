@@ -410,7 +410,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::group(['prefix' => 'admin/membership'], function () {
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard');
         Route::get('create', [MembershipController::class, 'create'])->name('membership.add');
-        Route::get('filter', [MembershipController::class, 'filterMember'])->name('membership.filter');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members');
         Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
         Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
@@ -481,7 +480,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('dashboard', [MemberTransactionController::class, 'index'])->name('membership.transactions.dashboard');
             Route::get('create', [MemberTransactionController::class, 'create'])->name('membership.transactions.create');
             Route::get('all', [MemberTransactionController::class, 'getAllTransactions'])->name('membership.transactions.index');
-            Route::get('search-members', [MemberTransactionController::class, 'searchMembers'])->name('membership.transactions.search-members');
             Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('membership.transactions.search');
             Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('membership.transactions.member');
             Route::post('store', [MemberTransactionController::class, 'store'])->name('membership.transactions.store');

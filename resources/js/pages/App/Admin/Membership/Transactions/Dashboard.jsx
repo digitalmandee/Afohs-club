@@ -198,9 +198,9 @@ export default function TransactionDashboard({ statistics, recent_transactions }
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Button component={Link} href={route('membership.transactions.show', transaction.id)} size="small" variant="outlined">
+                                                        {/* <Button component={Link} href={route('membership.transactions.show', transaction.id)} size="small" variant="outlined">
                                                             View
-                                                        </Button>
+                                                        </Button> */}
                                                     </TableCell>
                                                 </TableRow>
                                             ))
