@@ -414,6 +414,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('create', [MembershipController::class, 'create'])->name('membership.add');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members');
         Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit');
+        Route::get('profile/{id}', [MembershipController::class, 'showMemberProfile'])->name('membership.profile');
+        Route::get('profile/{id}/family-members', [MembershipController::class, 'getMemberFamilyMembers'])->name('membership.profile.family-members');
         Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update');
         Route::post('store', [MembershipController::class, 'store'])->name('membership.store');
         Route::post('update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status');
