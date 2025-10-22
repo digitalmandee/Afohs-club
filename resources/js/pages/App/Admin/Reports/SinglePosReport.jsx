@@ -28,7 +28,7 @@ import { format } from 'date-fns';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 
 export default function SinglePosReport({ reportData, tenant, startDate, endDate, filters }) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
         end_date: filters?.end_date || endDate

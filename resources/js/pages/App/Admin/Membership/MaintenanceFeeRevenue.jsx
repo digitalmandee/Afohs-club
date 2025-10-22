@@ -42,6 +42,11 @@ const MaintenanceFeeRevenue = () => {
                         <Button
                             variant="contained"
                             startIcon={<Print />}
+                            onClick={() => {
+                                const currentUrl = new URL(window.location.href);
+                                const printUrl = currentUrl.pathname + '/print' + currentUrl.search;
+                                window.open(printUrl, '_blank');
+                            }}
                             sx={{
                                 backgroundColor: '#063455',
                                 color: 'white',

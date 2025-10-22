@@ -19,7 +19,7 @@ const steps = ['Booking Details', 'Charges', 'Upload'];
 
 const EventBooking = ({ bookingNo }) => {
     // Main state for booking type
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);

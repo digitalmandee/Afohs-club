@@ -12,7 +12,7 @@ import { Person, Receipt, Search } from '@mui/icons-material';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [] }) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
     const [membershipFeePaid, setMembershipFeePaid] = useState(false);
