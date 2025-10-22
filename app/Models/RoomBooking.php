@@ -86,6 +86,6 @@ class RoomBooking extends BaseModel
 
     public function member()
     {
-        return $this->belongsTo(Member::class, 'member_id', 'user_id');
+        return $this->belongsTo(Member::class, 'member_id', 'id');
     }
 }

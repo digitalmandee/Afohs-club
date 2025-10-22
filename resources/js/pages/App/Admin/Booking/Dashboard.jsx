@@ -6,14 +6,10 @@ import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, S
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import DatePicker from 'react-multi-date-picker';
-import { DateObject } from 'react-multi-date-picker';
 import AvailableRooms from './Rooms';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { DateRange, DateRangePicker } from 'react-date-range';
-
-import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
+import { DateRange } from 'react-date-range';
 
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
@@ -116,7 +112,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
     });
 
     const [initialAdults] = useState(adults);
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(false);
     const anchorRef = useRef(null);
     const popperRef = useRef(null);
 

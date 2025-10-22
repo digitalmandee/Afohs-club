@@ -6,49 +6,50 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import AddEventModal from '@/components/App/Events/Charges/AddModal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const EventMenuManage = ({ eventMenusData }) => {
+const EventChargesType = ({ eventChargesData }) => {
     const [open, setOpen] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
-    const [editingMenu, setEditingMenu] = useState(null);
-    const [eventMenus, setEventMenus] = useState(eventMenusData || []);
+    const [editingRoom, setEditingRoom] = useState(null);
+    const [roomCharges, setRoomCharges] = useState(eventChargesData || []);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [menuCategoryToDelete, setMenuCategoryToDelete] = useState(null);
+    const [roomToDelete, setRoomToDelete] = useState(null);
     const { props } = usePage();
     const csrfToken = props._token;
 
     const handleAdd = () => {
-        setEditingMenu(null);
+        setEditingRoom(null);
         setModalOpen(true);
     };
 
-    const handleEdit = (menuCategory) => {
-        setEditingMenu(menuCategory);
+    const handleEdit = (event) => {
+        setEditingRoom(event);
         setModalOpen(true);
     };
 
-    const confirmDelete = (menuCategory) => {
-        setMenuCategoryToDelete(menuCategory);
+    const confirmDelete = (event) => {
+        setRoomToDelete(event);
         setDeleteDialogOpen(true);
     };
 
     const cancelDelete = () => {
-        setMenuCategoryToDelete(null);
+        setRoomToDelete(null);
         setDeleteDialogOpen(false);
     };
 
     const handleDelete = async () => {
-        if (!menuCategoryToDelete) return;
+        if (!roomToDelete) return;
 
         try {
-            await axios.delete(route('event-menu-category.destroy', menuCategoryToDelete.id), {
+            await axios.delete(route('event-charges-type.destroy', roomToDelete.id), {
                 headers: { 'X-CSRF-TOKEN': csrfToken },
             });
-            setEventMenus((prev) => prev.filter((menuCategory) => menuCategory.id !== menuCategoryToDelete.id));
-            enqueueSnackbar('Event Menu Category deleted successfully.', { variant: 'success' });
+            setRoomCharges((prev) => prev.filter((type) => type.id !== roomToDelete.id));
+            enqueueSnackbar('Event Charge Type deleted successfully.', { variant: 'success' });
         } catch (error) {
             enqueueSnackbar('Failed to delete: ' + (error.response?.data?.message || error.message), {
                 variant: 'error',
@@ -59,12 +60,12 @@ const EventMenuManage = ({ eventMenusData }) => {
     };
 
     const handleSuccess = (data) => {
-        setEventMenus((prev) => {
+        setRoomCharges((prev) => {
             const exists = prev.find((p) => p.id === data.id);
             return exists ? prev.map((p) => (p.id === data.id ? data : p)) : [...prev, data];
         });
         setModalOpen(false);
-        setEditingMenu(null);
+        setEditingRoom(null);
     };
 
     return (
@@ -81,17 +82,16 @@ const EventMenuManage = ({ eventMenusData }) => {
                 }}
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('events.dashboard'))}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('rooms.manage'))}>
                         <IconButton>
                             <ArrowBackIcon sx={{ color: '#555' }} />
                         </IconButton>
                         <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
-                            Event Menus
+                            Event Charges
                         </Typography>
                     </Box>
-
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={() => router.visit(route('event-menu.create'))}>
-                        Add Menu
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
+                        Add Charge
                     </Button>
                 </Box>
 
@@ -100,7 +100,7 @@ const EventMenuManage = ({ eventMenusData }) => {
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>#</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Menu Name</TableCell>
+                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Event Charge Type</TableCell>
                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Amount</TableCell>
                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
                                 <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
@@ -108,18 +108,18 @@ const EventMenuManage = ({ eventMenusData }) => {
                         </TableHead>
 
                         <TableBody>
-                            {eventMenus.length > 0 ? (
-                                eventMenus.map((menuCategory, index) => (
-                                    <TableRow key={menuCategory.id} style={{ borderBottom: '1px solid #eee' }}>
+                            {roomCharges.length > 0 ? (
+                                roomCharges.map((type, index) => (
+                                    <TableRow key={type.id} style={{ borderBottom: '1px solid #eee' }}>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{index + 1}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{menuCategory.name}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{menuCategory.amount}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{menuCategory.status}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{type.name}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{type.amount}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{type.status}</TableCell>
                                         <TableCell>
-                                            <IconButton onClick={() => router.visit(route('event-menu.edit', menuCategory.id))} size="small" title="Edit">
+                                            <IconButton onClick={() => handleEdit(type)} size="small" title="Edit">
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
-                                            <IconButton onClick={() => confirmDelete(menuCategory)} size="small" title="Delete">
+                                            <IconButton onClick={() => confirmDelete(type)} size="small" title="Delete">
                                                 <DeleteIcon fontSize="small" />
                                             </IconButton>
                                         </TableCell>
@@ -127,8 +127,8 @@ const EventMenuManage = ({ eventMenusData }) => {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} align="center" sx={{ py: 3, color: '#999' }}>
-                                        No Event Menus found.
+                                    <TableCell colSpan={5} align="center" sx={{ py: 3, color: '#999' }}>
+                                        No Event Charges found.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -137,12 +137,14 @@ const EventMenuManage = ({ eventMenusData }) => {
                 </TableContainer>
             </Box>
 
+            <AddEventModal open={modalOpen} handleClose={() => setModalOpen(false)} eventChargesType={editingRoom} onSuccess={handleSuccess} />
+
             {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onClose={cancelDelete} aria-labelledby="delete-dialog-title">
-                <DialogTitle id="delete-dialog-title">Delete Event Menu Category</DialogTitle>
+                <DialogTitle id="delete-dialog-title">Delete Event Charge Type</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Are you sure you want to delete <strong>{menuCategoryToDelete?.name}</strong>?
+                        Are you sure you want to delete <strong>{roomToDelete?.name}</strong>?
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
@@ -156,4 +158,4 @@ const EventMenuManage = ({ eventMenusData }) => {
     );
 };
 
-export default EventMenuManage;
+export default EventChargesType;

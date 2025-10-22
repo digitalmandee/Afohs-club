@@ -10,7 +10,7 @@ class MemberStatusHistory extends BaseModel
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'member_id',
         'status',
         'reason',
         'start_date',
@@ -20,4 +20,9 @@ class MemberStatusHistory extends BaseModel
         'deleted_by',
         'used_up_to'
     ];
+
+    public function member()
+    {
+        return $this->belongsTo(Member::class);
+    }
 }

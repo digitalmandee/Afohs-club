@@ -159,7 +159,7 @@ class BookingController extends Controller
             'departureDetails' => $booking->departure_details,
             'bookingType' => $booking->booking_type,
             'guest' => [
-                'id' => $booking->customer ? $booking->customer->id : ($booking->member ? $booking->member->user_id : null),
+                'id' => $booking->customer ? $booking->customer->id : ($booking->member ? $booking->member->id : null),
                 'booking_type' => $booking->customer ? 'customer' : ($booking->member ? 'member' : null),
                 'name' => $fullName,
                 'label' => $fullName,
@@ -208,7 +208,7 @@ class BookingController extends Controller
     {
         $invoice_no = $request->query('invoice_no');
 
-        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,user_id,membership_no,full_name,personal_email', 'member.memberType')->first();
+        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,membership_no,full_name,personal_email', 'member.memberType')->first();
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);
@@ -221,35 +221,32 @@ class BookingController extends Controller
 
     public function familyMembers($id)
     {
-        $members = User::role('user', 'web')
-            ->select(
-                'users.id',
-                'users.first_name',
-                'users.last_name',
-                'users.email',
-                'users.phone_number',
-                'members.family_suffix',
-                'user_details.cnic_no',
-                'user_details.current_address',
+        // Get family members (members with parent_id = main member id)
+        $familyMembers = Member::select(
+                'id',
+                'full_name',
+                'membership_no',
+                'personal_email',
+                'mobile_number_a',
+                'family_suffix',
+                'cnic_no',
+                'current_address'
             )
-            ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
-            ->leftJoin('members', 'users.id', '=', 'members.user_id')
-            ->where('users.parent_user_id', $id)
+            ->where('parent_id', $id)
             ->limit(10)
             ->get();
 
         // Format for frontend
-        $results = $members->map(function ($user) use ($id) {
-            $fullName = trim("{$user->first_name} {$user->last_name}");
-            $parentUser = Member::where('user_id', $id)->first();
+        $results = $familyMembers->map(function ($member){
             return [
-                'id' => $user->id,
-                'label' => "{$fullName} ({$parentUser->membership_no}-{$user->family_suffix}) ({$user->email})",
-                'membership_no' => "{$parentUser->membership_no}-{$user->family_suffix}",
-                'email' => $user->email,
-                'cnic' => $user->cnic_no,
-                'phone' => $user->phone_number,
-                'address' => $user->current_address,
+                'id' => $member->id,
+                'label' => "{$member->full_name} ({$member->membership_no})",
+                'membership_no' => $member->membership_no,
+                'email' => $member->personal_email,
+                'cnic' => $member->cnic_no,
+                'phone' => $member->mobile_number_a,
+                'address' => $member->current_address,
+                'family_suffix' => $member->family_suffix,
             ];
         });
 
@@ -349,7 +346,7 @@ class BookingController extends Controller
         $invoice->paid_amount = $invoice->paid_amount + $request->amount;  // ✅ accumulate payments
         $invoice->customer_charges = $request->customer_charges ?? $invoice->customer_charges;
         $invoice->payment_method = $request->payment_method;
-        $invoice->reciept = $recieptPath;
+        $invoice->receipt = $recieptPath;
         $invoice->status = $invoice->paid_amount >= $invoice->total_price ? 'paid' : 'partial';
         $invoice->save();
 

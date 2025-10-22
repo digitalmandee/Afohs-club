@@ -115,6 +115,11 @@ const PendingMaintenanceReport = () => {
                         <Button
                             variant="contained"
                             startIcon={<Print />}
+                            onClick={() => {
+                                const currentUrl = new URL(window.location.href);
+                                const printUrl = currentUrl.pathname + '/print' + currentUrl.search;
+                                window.open(printUrl, '_blank');
+                            }}
                             sx={{
                                 backgroundColor: '#063455',
                                 color: 'white',
@@ -330,7 +335,7 @@ const PendingMaintenanceReport = () => {
                                         <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Contact</TableCell>
                                         <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Address</TableCell>
                                         <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Maintenance Per Quarter</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Discount Amount</TableCell>
+                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Debit</TableCell>
                                         <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Credit</TableCell>
                                         <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Balance</TableCell>
                                         <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Status</TableCell>
@@ -350,15 +355,15 @@ const PendingMaintenanceReport = () => {
                                                 }}
                                             >
                                                 <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{index + 1}</TableCell>
-                                                <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{member.user_id}</TableCell>
+                                                <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{member.id}</TableCell>
                                                 <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(member.membership_date)}</TableCell>
                                                 <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{member.membership_no}</TableCell>
                                                 <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{member.full_name}</TableCell>
                                                 <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{member.contact}</TableCell>
                                                 <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '12px' }}>{member.address || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.quarterly_fee).replace('PKR', 'Rs.')}</TableCell>
-                                                <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>Rs. 0</TableCell>
-                                                <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>Rs. 0</TableCell>
+                                                <TableCell sx={{ color: '#dc2626', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.total_debit_amount || 0).replace('PKR', 'Rs.')}</TableCell>
+                                                <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.total_paid_amount || 0).replace('PKR', 'Rs.')}</TableCell>
                                                 <TableCell
                                                     sx={{
                                                         color: getPendingQuartersColor(member.pending_quarters),

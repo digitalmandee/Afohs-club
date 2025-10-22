@@ -286,9 +286,9 @@ export default function TransactionIndex({ transactions, filters }) {
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Button component={Link} href={route('membership.transactions.show', transaction.id)} size="small" variant="outlined" startIcon={<Visibility />}>
+                                                        {/* <Button component={Link} href={route('membership.transactions.show', transaction.id)} size="small" variant="outlined" startIcon={<Visibility />}>
                                                             View
-                                                        </Button>
+                                                        </Button> */}
                                                     </TableCell>
                                                 </TableRow>
                                             ))

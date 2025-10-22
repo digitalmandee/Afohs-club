@@ -178,7 +178,7 @@ class OrderController extends Controller
         $query = Order::with([
             'table:id,table_no',
             'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
-            'member:id,user_id,member_type_id,full_name,membership_no',
+            'member:id,member_type_id,full_name,membership_no',
             'customer:id,name,customer_no',
             'member.memberType:id,name'
         ]);
@@ -248,7 +248,7 @@ class OrderController extends Controller
     {
         $today = Carbon::today()->toDateString();
         $orders = Reservation::whereDate('date', $today)
-            ->with('member:user_id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no')
+            ->with('member:idfull_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no')
             ->get();
 
         return response()->json([
@@ -269,7 +269,7 @@ class OrderController extends Controller
         if ($request->has('reservation_id')) {
             $reservation = Reservation::where('id', $request->reservation_id)
                 ->with([
-                    'member:user_id,full_name,membership_no',
+                    'member:id,full_name,membership_no',
                     'customer:id,name,customer_no',
                     'table:id,table_no,floor_id',
                 ])
@@ -293,11 +293,11 @@ class OrderController extends Controller
             // Member
             if ($request->filled('member_id') && $request->filled('member_type')) {
                 if ($request->member_type == 1) {
-                    $member = Member::select('user_id', 'full_name', 'membership_no', 'personal_email', 'current_address')
-                        ->where('user_id', $request->member_id)
+                    $member = Member::select('id', 'full_name', 'membership_no', 'personal_email', 'current_address')
+                        ->where('id', $request->member_id)
                         ->first();
                     $orderContext['member'] = [
-                        'id' => $member->user_id,
+                        'id' => $member->id,
                         'booking_type' => 'member',
                         'name' => $member->full_name,
                         'membership_no' => $member->membership_no,
@@ -439,8 +439,6 @@ class OrderController extends Controller
                 ['id' => $request->id],
                 $orderData
             );
-
-            Log::info('Order created/updated successfully');
 
             // Mark reservation completed
             if ($request->order_type === 'reservation' && $request->filled('reservation_id')) {

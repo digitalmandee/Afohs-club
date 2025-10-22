@@ -109,7 +109,7 @@ class MemberClassificationSeeder extends Seeder
         ];
 
         foreach ($memberClassifications as $memberClassification) {
-            MemberClassification::create($memberClassification);
+            MemberClassification::updateOrCreate($memberClassification);
         }
     }
 }

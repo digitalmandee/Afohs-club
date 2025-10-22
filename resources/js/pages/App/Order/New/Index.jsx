@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react';
 import DineDialog from './Dine';
 import ReservationDialog from './Reservation';
 import TakeAwayDialog from './Takeaway';
-import { usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { CiDeliveryTruck } from "react-icons/ci";
 

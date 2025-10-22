@@ -48,9 +48,11 @@ const AddSubscriptionInformation = ({ subscriberTypes, categories, invoice_no })
         if (!query) return []; // Don't make a request if the query is empty.
         setSearchLoading(true);
         try {
-            const response = await axios.get(route('membership.filter'), {
-                params: { query },
-            });
+            const response = {
+                data: {
+                    results: []
+                }
+            };
             setMembers(response.data.results);
         } catch (error) {
             console.error('Error fetching search results:', error);

@@ -44,7 +44,7 @@ class MemberTransactionController extends Controller
 
         // Recent transactions
         $recentTransactions = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee', 'reinstating_fee'])
-            ->with('member:user_id,full_name,membership_no')
+            ->with('member:id,full_name,membership_no')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -88,7 +88,7 @@ class MemberTransactionController extends Controller
                   ->orWhere('mobile_number_a', 'like', "%{$query}%");
             })
             ->with(['memberCategory:id,name,fee,subscription_fee'])
-            ->select('id', 'user_id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id','status')
+            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id','status')
             ->limit(10)
             ->get();
 
@@ -97,7 +97,7 @@ class MemberTransactionController extends Controller
 
     public function getMemberTransactions($memberId)
     {
-        $member = Member::where('user_id', $memberId)
+        $member = Member::where('id', $memberId)
             ->with(['memberCategory:id,name,fee,subscription_fee'])
             ->first();
 
@@ -126,7 +126,7 @@ class MemberTransactionController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'member_id' => 'required|exists:members,user_id',
+                'member_id' => 'required|exists:members,id',
                 'fee_type' => 'required|in:membership_fee,maintenance_fee,subscription_fee,reinstating_fee',
                 'payment_frequency' => 'required_if:fee_type,maintenance_fee|in:monthly,quarterly,half_yearly,three_quarters,annually',
                 'amount' => 'required|numeric|min:0',
@@ -150,7 +150,7 @@ class MemberTransactionController extends Controller
             }
             DB::beginTransaction();
 
-            $member = Member::where('user_id', $request->member_id)->first();
+            $member = Member::where('id', $request->member_id)->first();
             
             // Check if membership fee already paid for membership fee type
             if ($request->fee_type === 'membership_fee') {
@@ -187,7 +187,6 @@ class MemberTransactionController extends Controller
             // Update member status to active if reinstating fee is paid
             if ($request->fee_type === 'reinstating_fee') {
                 $member->update(['status' => 'active']);
-                Log::info("Member {$member->user_id} status updated to active after reinstating fee payment");
             }
 
             DB::commit();
@@ -195,7 +194,7 @@ class MemberTransactionController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Transaction created successfully!',
-                'transaction' => $invoice->load('member:user_id,full_name,membership_no')
+                'transaction' => $invoice->load('member:id,full_name,membership_no')
             ], 201);
 
         } catch (\Exception $e) {
@@ -369,7 +368,7 @@ class MemberTransactionController extends Controller
 
     public function show($id)
     {
-        $transaction = FinancialInvoice::with('member:user_id,full_name,membership_no')
+        $transaction = FinancialInvoice::with('member:id,full_name,membership_no')
             ->findOrFail($id);
 
         return Inertia::render('App/Admin/Membership/Transactions/Show', [
@@ -380,7 +379,7 @@ class MemberTransactionController extends Controller
     public function getAllTransactions(Request $request)
     {
         $query = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee'])
-            ->with('member:user_id,full_name,membership_no');
+            ->with('member:id,full_name,membership_no');
 
         // Filter by member name or membership number
         if ($request->filled('search')) {
@@ -434,7 +433,7 @@ class MemberTransactionController extends Controller
     public function bulkStore(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'member_id' => 'required|exists:members,user_id',
+            'member_id' => 'required|exists:members,id',
             'payments' => 'required|array|min:1',
             'payments.*.fee_type' => 'required|in:membership_fee,maintenance_fee',
             'payments.*.amount' => 'required|numeric|min:0',
@@ -462,7 +461,7 @@ class MemberTransactionController extends Controller
             DB::beginTransaction();
 
             // Load member data for date calculations
-            $member = Member::where('user_id', $request->member_id)->first();
+            $member = Member::where('id', $request->member_id)->first();
             $createdTransactions = [];
 
             foreach ($request->payments as $index => $paymentData) {
