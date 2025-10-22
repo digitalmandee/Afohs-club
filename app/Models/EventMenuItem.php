@@ -11,8 +11,24 @@ class EventMenuItem extends Model
 
     protected $fillable = [
         'event_menu_id',
-        'name',
+        'menu_category_id',
         'amount',
         'status',
     ];
+
+    /**
+     * Get the event menu that owns the menu item.
+     */
+    public function eventMenu()
+    {
+        return $this->belongsTo(EventMenu::class, 'event_menu_id');
+    }
+
+    /**
+     * Get the menu category that owns the menu item.
+     */
+    public function menuCategory()
+    {
+        return $this->belongsTo(EventMenuCategory::class, 'menu_category_id');
+    }
 }

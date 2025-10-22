@@ -19,6 +19,7 @@ use App\Http\Controllers\EmployeeTypeController;
 use App\Http\Controllers\EventBookingController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMenuAddOnsController;
+use App\Http\Controllers\EventChargesTypeController;
 use App\Http\Controllers\EventMenuCategoryController;
 use App\Http\Controllers\EventMenuController;
 use App\Http\Controllers\EventMenuTypeController;
@@ -223,6 +224,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('event-menu-category', EventMenuCategoryController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-type', EventMenuTypeController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu-addon', EventMenuAddOnsController::class)->except(['create', 'edit', 'show']);
+        Route::resource('event-charges-type', EventChargesTypeController::class)->except(['create', 'edit', 'show']);
     });
 
     // Admin Events Booking Routes

@@ -272,6 +272,10 @@ export default function SideNav({ open, setOpen }) {
                             path: route('event-menu-type.index'),
                         },
                         {
+                            text: 'Charges Type',
+                            path: route('event-charges-type.index'),
+                        },
+                        {
                             text: 'Menu AddOn',
                             path: route('event-menu-addon.index'),
                         },
@@ -674,11 +678,7 @@ export default function SideNav({ open, setOpen }) {
                         }}
                         onClick={() => setOpen(!open)} // toggle sidebar
                     >
-                        {open ? (
-                            <ChevronLeftIcon sx={{ color: '#063455', fontSize: 25, mr: 1 }} />
-                        ) : (
-                            <ChevronRightIcon sx={{ color: '#063455', fontSize: 25, mr: 1 }} />
-                        )}
+                        {open ? <ChevronLeftIcon sx={{ color: '#063455', fontSize: 25, mr: 1 }} /> : <ChevronRightIcon sx={{ color: '#063455', fontSize: 25, mr: 1 }} />}
                     </Box>
                 </DrawerHeader>
 
@@ -824,10 +824,10 @@ export default function SideNav({ open, setOpen }) {
                                                         // const isChildSelectedOrSubActive = isChildSelected || hasSelectedSub;
 
                                                         return (
-                                                            <Box key={child.text} sx={{ my: 0.2 }}className="connector">
+                                                            <Box key={child.text} sx={{ my: 0.2 }} className="connector">
                                                                 {(() => {
                                                                     // Check if any sub-item is selected
-                                                                    const hasSelectedSub = child.children?.some(sub => url === normalizePath(sub.path));
+                                                                    const hasSelectedSub = child.children?.some((sub) => url === normalizePath(sub.path));
 
                                                                     // True if current parent or any sub is active
                                                                     const isChildSelectedOrSubActive = isChildSelected || hasSelectedSub;
@@ -902,7 +902,7 @@ export default function SideNav({ open, setOpen }) {
                                                                                             {child.children.map((sub) => {
                                                                                                 const isSubSelected = url === normalizePath(sub.path);
                                                                                                 return (
-                                                                                                    <ListItem key={sub.text} disablePadding sx={{ py: 0.1, pl: 3, pr: 1 }}className="connector">
+                                                                                                    <ListItem key={sub.text} disablePadding sx={{ py: 0.1, pl: 3, pr: 1 }} className="connector">
                                                                                                         <ListItemButton
                                                                                                             onClick={() => router.visit(sub.path)}
                                                                                                             sx={{
@@ -941,8 +941,7 @@ export default function SideNav({ open, setOpen }) {
                                                 </List>
                                             </Box>
                                         </Collapse>
-                                    )
-                                    }
+                                    )}
 
                                     {/* Popup Submenu (Collapsed) */}
                                     {children && !open && hoveredDropdown === text && (
@@ -969,8 +968,8 @@ export default function SideNav({ open, setOpen }) {
                         })}
                     </List>
                 </Box>
-            </Drawer >
-        </Box >
+            </Drawer>
+        </Box>
     );
 }
 
