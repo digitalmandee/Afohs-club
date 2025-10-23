@@ -11,6 +11,8 @@ use App\Http\Controllers\CardController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\RoleManagementController;
+use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\EmployeeDepartmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\LeaveCategoryController;
@@ -491,6 +493,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             // Bulk Migration Routes (Temporary for data migration)
             Route::get('bulk-migration', [MemberTransactionController::class, 'bulkMigration'])->name('membership.transactions.bulk-migration');
         });
+
+        // Family Member Expiry Management (integrated with Family Members Archive)
+        Route::group(['prefix' => 'family-members-archive'], function () {
+            Route::get('member/{member}/extend', [FamilyMembersArchiveConroller::class, 'show'])->name('membership.family-expiry.show')->middleware('role:super-admin');
+            Route::post('member/{member}/extend', [FamilyMembersArchiveConroller::class, 'extendExpiry'])->name('membership.family-expiry.extend')->middleware('role:super-admin');
+            Route::post('bulk-expire', [FamilyMembersArchiveConroller::class, 'bulkExpire'])->name('membership.family-expiry.bulk-expire')->middleware('role:super-admin');
+        });
     });
 
     // get member invoice
@@ -527,6 +536,31 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
         Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
+    });
+
+    // Role Management Routes (Super Admin only - Web Guard)
+    Route::group(['prefix' => 'admin/roles', 'middleware' => ['auth:web', 'super.admin:roles.view']], function () {
+        Route::get('/', [RoleManagementController::class, 'index'])->name('admin.roles.index');
+        Route::get('/create', [RoleManagementController::class, 'create'])->name('admin.roles.create')->middleware('super.admin:roles.create');
+        Route::post('/', [RoleManagementController::class, 'store'])->name('admin.roles.store')->middleware('super.admin:roles.create');
+        Route::get('/{role}', [RoleManagementController::class, 'show'])->name('admin.roles.show');
+        Route::get('/{role}/edit', [RoleManagementController::class, 'edit'])->name('admin.roles.edit')->middleware('super.admin:roles.edit');
+        Route::put('/{role}', [RoleManagementController::class, 'update'])->name('admin.roles.update')->middleware('super.admin:roles.edit');
+        Route::delete('/{role}', [RoleManagementController::class, 'destroy'])->name('admin.roles.destroy')->middleware('super.admin:roles.delete');
+        
+        // API Routes for role management
+        Route::get('/api/permissions', [RoleManagementController::class, 'getPermissions'])->name('admin.roles.permissions');
+        Route::post('/api/assign-role', [RoleManagementController::class, 'assignRole'])->name('admin.roles.assign')->middleware('super.admin:roles.edit');
+        Route::post('/api/remove-role', [RoleManagementController::class, 'removeRole'])->name('admin.roles.remove')->middleware('super.admin:roles.edit');
+    });
+
+    // User Management Routes (Super Admin only - Web Guard)
+    Route::group(['prefix' => 'admin/users', 'middleware' => ['auth:web', 'super.admin:users.view']], function () {
+        Route::get('/', [UserManagementController::class, 'index'])->name('admin.users.index');
+        Route::post('/create-super-admin', [UserManagementController::class, 'createSuperAdminUser'])->name('admin.users.create-super-admin')->middleware('super.admin:users.create');
+        Route::post('/create-employee-user', [UserManagementController::class, 'createEmployeeUser'])->name('admin.users.create-employee');
+        Route::post('/assign-role', [UserManagementController::class, 'assignRole'])->name('admin.users.assign-role')->middleware('super.admin:users.edit');
+        Route::post('/remove-role', [UserManagementController::class, 'removeRole'])->name('admin.users.remove-role')->middleware('super.admin:users.edit');
     });
 
     // tenant route

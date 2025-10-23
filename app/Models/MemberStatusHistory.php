@@ -18,7 +18,9 @@ class MemberStatusHistory extends BaseModel
         'created_by',
         'updated_by',
         'deleted_by',
-        'used_up_to'
+        'used_up_to',
+        'changed_by',
+        'changed_at'
     ];
 
     public function member()

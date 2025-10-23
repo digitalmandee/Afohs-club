@@ -496,6 +496,14 @@ export default function SideNav({ open, setOpen }) {
             icon: <SettingsIcon />,
             children: [
                 {
+                    text: 'Role Management',
+                    path: route('admin.roles.index'),
+                },
+                {
+                    text: 'User Management',
+                    path: route('admin.users.index'),
+                },
+                {
                     text: 'Billing',
                     path: route('admin.billing-settings.edit'),
                 },

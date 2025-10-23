@@ -12,11 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('members', function (Blueprint $table) {
-            // Add old_family_id column to track original family member IDs from old system
-            $table->bigInteger('old_family_id')->nullable()->after('id')->comment('Original family member ID from mem_families table');
+            if (!Schema::hasColumn('members', 'old_family_id')) {
+                $table->bigInteger('old_family_id')->nullable()->after('id')->comment('Original family member ID from mem_families table');
+            }
             
-            // Add index for faster lookups during migration
-            $table->index('old_family_id');
+            if (!Schema::hasIndex('members', 'old_family_id')) {
+                $table->index('old_family_id');
+            }
         });
     }
 
@@ -26,9 +28,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('members', function (Blueprint $table) {
-            // Drop index and column
-            $table->dropIndex(['old_family_id']);
-            $table->dropColumn('old_family_id');
+            if (Schema::hasColumn('members', 'old_family_id')) {
+                $table->dropColumn('old_family_id');
+            }
+            
+            if (Schema::hasIndex('members', 'old_family_id')) {
+                $table->dropIndex('old_family_id');
+            }
         });
     }
 };

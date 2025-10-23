@@ -39,6 +39,11 @@ class DatabaseSeeder extends Seeder
             BookingEventSeeder::class,
             EmployeeTypeSeeder::class,
             MemberClassificationSeeder::class,
+            
+            // Role and Permission System
+            PermissionsSeeder::class,
+            RolesSeeder::class,
+            
             // BookingSeeder::class,
             // OrderDatabaseSeeder::class
         ]);
