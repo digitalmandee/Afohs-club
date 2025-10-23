@@ -108,7 +108,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
         Route::get('/types', [EmployeeTypeController::class, 'index'])->name('employees.types');
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
-        
+
         Route::prefix('leaves')->group(function () {
             Route::get('category', [LeaveCategoryController::class, 'index'])->name('employees.leaves.category.index');
             Route::get('category/create', [LeaveCategoryController::class, 'create'])->name('employees.leaves.category.create');
@@ -117,7 +117,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('application', [LeaveApplicationController::class, 'index'])->name('employees.leaves.application.index');
             Route::get('application/new', [LeaveApplicationController::class, 'create'])->name('employees.leaves.application.create');
             Route::get('application/edit/{id}', [LeaveApplicationController::class, 'edit'])->name('employees.leaves.application.edit');
-            
+
             Route::get('report', [LeaveApplicationController::class, 'leaveReportPage'])->name('employees.leaves.application.report');
         });
 
@@ -137,7 +137,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('employee-types', EmployeeTypeController::class)->except(['create', 'index', 'show', 'edit']);
         Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store');
         Route::put('employees/update/{employeeId}', [EmployeeController::class, 'update'])->name('api.employees.update');
-        
+
         // Leave Category API routes
         Route::prefix('leave-categories')->group(function () {
             Route::get('/', [LeaveCategoryController::class, 'getAll'])->name('api.leave-categories.getAll');
@@ -220,6 +220,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::group(['prefix' => 'events'], function () {
             Route::get('dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
             Route::get('create', [EventBookingController::class, 'create'])->name('events.create');
+            Route::post('booking', [EventBookingController::class, 'store'])->name('events.booking.store');
         });
         Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu', EventMenuController::class)->except(['show']);
@@ -424,39 +425,39 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Reports Index - Dashboard with all reports
         Route::get('reports', [MemberFeeRevenueController::class, 'reportsIndex'])->name('membership.reports');
-        
+
         // Membership Maintanance Revenue
         Route::get('maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue');
         Route::get('maintanance-fee-revenue/print', [MemberFeeRevenueController::class, 'maintenanceFeeRevenuePrint'])->name('membership.maintanance-fee-revenue.print');
-        
+
         // Pending Maintenance Report
         Route::get('pending-maintenance-report', [MemberFeeRevenueController::class, 'pendingMaintenanceReport'])->name('membership.pending-maintenance-report');
         Route::get('pending-maintenance-report/print', [MemberFeeRevenueController::class, 'pendingMaintenanceReportPrint'])->name('membership.pending-maintenance-report.print');
-        
+
         // Supplementary Card Report
         Route::get('supplementary-card-report', [MemberFeeRevenueController::class, 'supplementaryCardReport'])->name('membership.supplementary-card-report');
-        
+
         // Sleeping Members Report
         Route::get('sleeping-members-report', [MemberFeeRevenueController::class, 'sleepingMembersReport'])->name('membership.sleeping-members-report');
-        
+
         // Member Card Detail Report
         Route::get('member-card-detail-report', [MemberFeeRevenueController::class, 'memberCardDetailReport'])->name('membership.member-card-detail-report');
-        
+
         // Monthly Maintenance Fee Report
         Route::get('monthly-maintenance-fee-report', [MemberFeeRevenueController::class, 'monthlyMaintenanceFeeReport'])->name('membership.monthly-maintenance-fee-report');
-        
+
         // New Year Eve Report
         Route::get('new-year-eve-report', [MemberFeeRevenueController::class, 'newYearEveReport'])->name('membership.new-year-eve-report');
-        
+
         // Reinstating Fee Report
         Route::get('reinstating-fee-report', [MemberFeeRevenueController::class, 'reinstatingFeeReport'])->name('membership.reinstating-fee-report');
-        
+
         // Sports Subscriptions Report
         Route::get('sports-subscriptions-report', [MemberFeeRevenueController::class, 'sportsSubscriptionsReport'])->name('membership.sports-subscriptions-report');
-        
+
         // Subscriptions & Maintenance Summary Report
         Route::get('subscriptions-maintenance-summary', [MemberFeeRevenueController::class, 'subscriptionsMaintenanceSummary'])->name('membership.subscriptions-maintenance-summary');
-        
+
         // Pending Maintenance Quarters Report
         Route::get('pending-maintenance-quarters-report', [MemberFeeRevenueController::class, 'pendingMaintenanceQuartersReport'])->name('membership.pending-maintenance-quarters-report');
 
@@ -489,7 +490,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('membership.transactions.search');
             Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('membership.transactions.member');
             Route::post('store', [MemberTransactionController::class, 'store'])->name('membership.transactions.store');
-            
+
             // Bulk Migration Routes (Temporary for data migration)
             Route::get('bulk-migration', [MemberTransactionController::class, 'bulkMigration'])->name('membership.transactions.bulk-migration');
         });
@@ -547,7 +548,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/{role}/edit', [RoleManagementController::class, 'edit'])->name('admin.roles.edit')->middleware('super.admin:roles.edit');
         Route::put('/{role}', [RoleManagementController::class, 'update'])->name('admin.roles.update')->middleware('super.admin:roles.edit');
         Route::delete('/{role}', [RoleManagementController::class, 'destroy'])->name('admin.roles.destroy')->middleware('super.admin:roles.delete');
-        
+
         // API Routes for role management
         Route::get('/api/permissions', [RoleManagementController::class, 'getPermissions'])->name('admin.roles.permissions');
         Route::post('/api/assign-role', [RoleManagementController::class, 'assignRole'])->name('admin.roles.assign')->middleware('super.admin:roles.edit');
@@ -569,7 +570,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('locations/store', [TenantController::class, 'store'])->name('locations.store');
     Route::get('locations/{tenant}/edit', [TenantController::class, 'edit'])->name('locations.edit');
     Route::put('locations/{tenant}', [TenantController::class, 'update'])->name('locations.update');
-    
+
     // Admin POS Reports Routes
     Route::prefix('admin/reports')->group(function () {
         Route::get('pos/all', [AdminPosReportController::class, 'index'])->name('admin.reports.pos.all');

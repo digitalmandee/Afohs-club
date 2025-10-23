@@ -6,6 +6,9 @@ use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\BookingEvents;
 use App\Models\EventBooking;
+use App\Models\EventBookingMenu;
+use App\Models\EventBookingMenuAddOn;
+use App\Models\EventBookingOtherCharges;
 use App\Models\EventChargeType;
 use App\Models\EventMenu;
 use App\Models\EventMenuAddOn;
@@ -235,64 +238,149 @@ class EventBookingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer' => 'required',
-            'bookingType' => 'required|in:room,event',
-            // 'bookingFor' => 'required|in:main_guest,other',
-            // 'personCount' => 'nullable|integer|min:0',
-            // 'roomCount' => 'nullable|integer|min:0',
-            // 'totalPayment' => 'required|numeric|min:0',
-            // 'eventName' => 'nullable|string',
-            // 'eventDate' => 'nullable|date',
-            // 'eventTime' => 'nullable|date_format:H:i',
-            // 'checkin' => 'required_if:bookingType,room|date|nullable',
-            // 'checkout' => 'nullable|date|after:checkin',
+            'guest' => 'required',
+            'bookedBy' => 'required|string',
+            'guestFirstName' => 'required|string', // nature_of_event
+            'guestLastName' => 'required|date', // event_date
+            'company' => 'required|date_format:H:i', // event_time_from
+            'address' => 'required|date_format:H:i', // event_time_to
+            'venue' => 'required|exists:event_venues,id',
+            'selectedMenu' => 'nullable|exists:event_menus,id',
+            'numberOfGuests' => 'required|integer|min:1',
+            'menu_addons' => 'nullable|array',
+            'other_charges' => 'nullable|array',
+            'discountType' => 'required|in:fixed,percentage',
+            'discount' => 'nullable|numeric|min:0',
+            'grandTotal' => 'required|numeric|min:0',
         ]);
 
         $member_id = Auth::user()->id;
-
-        $bookingId = $this->getBookingId();
-        $bookingType = $request->bookingType;
+        $bookingNo = $this->getBookingId();
 
         DB::beginTransaction();
 
-        $booking = Booking::create([
-            'booking_id' => $bookingId,
-            'user_id' => $request->customer['id'],
-            'booking_type' => $request->bookingType,
-            'booking_For' => $request->bookingFor,
-            'type_id' => $request->bookingTypeId,
-            'persons' => $request->personCount,
-            // 'total_rooms' => $validated['roomCount'],
-            'checkin' => $bookingType === 'room' ? $request->checkin : ($bookingType === 'event' ? $request->eventDate : now()),
-            'checkout' => $bookingType === 'room' ? $request->checkout : null,
-            'event_name' => $bookingType === 'event' ? $request->eventName : null,
-            'start_time' => $bookingType === 'event' ? $request->eventTime : null,
-            'end_time' => null,
-            'total_payment' => $request->totalPayment,
-            'status' => 'pending',
-        ]);
+        try {
+            // Prepare booking data
+            $bookingData = [
+                'booking_no' => $bookingNo,
+                'event_venue_id' => $request->venue,
+                'family_id' => $request->familyMember['id'] ?? null,
+                'booking_date' => now()->toDateString(),
+                'booking_type' => 'event',
+                'booked_by' => $request->bookedBy,
+                'nature_of_event' => $request->guestFirstName,
+                'event_date' => $request->guestLastName,
+                'event_time_from' => $request->company,
+                'event_time_to' => $request->address,
+                'menu_charges' => $request->menuAmount ?? 0,
+                'addons_charges' => $this->calculateMenuAddOnsTotal($request->menu_addons ?? []),
+                'total_per_person_charges' => ($request->menuAmount ?? 0) + $this->calculateMenuAddOnsTotal($request->menu_addons ?? []),
+                'no_of_guests' => $request->numberOfGuests,
+                'guest_charges' => (($request->menuAmount ?? 0) + $this->calculateMenuAddOnsTotal($request->menu_addons ?? [])) * $request->numberOfGuests,
+                'total_food_charges' => (($request->menuAmount ?? 0) + $this->calculateMenuAddOnsTotal($request->menu_addons ?? [])) * $request->numberOfGuests,
+                'total_other_charges' => $this->calculateOtherChargesTotal($request->other_charges ?? []),
+                'total_charges' => $request->grandTotal,
+                'reduction_type' => $request->discountType,
+                'reduction_amount' => $request->discount ?? 0,
+                'total_price' => $request->grandTotal,
+                'additional_notes' => $request->notes ?? '',
+                'status' => 'confirmed',
+                'created_by' => $member_id,
+            ];
 
-        $data = $booking->toArray();  // Convert Eloquent model to array
-        $data['invoice_type'] = $bookingType === 'room' ? 'room_booking' : 'event_booking';
-        $data['amount'] = $request->totalPayment;
-        $invoice_no = $this->getInvoiceNo();
-        $member_id = Auth::user()->id;
+            // ✅ Assign IDs based on booking_type (same as RoomBookingController)
+            if (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
+                $bookingData['member_id'] = (int) $request->guest['id'];
+            } else {
+                $bookingData['customer_id'] = (int) $request->guest['id'];
+            }
 
-        FinancialInvoice::create([
-            'invoice_no' => $invoice_no,
-            'customer_id' => $request->customer['id'],
-            'member_id' => $member_id,
-            'invoice_type' => $bookingType === 'room' ? 'room_booking' : 'event_booking',
-            'amount' => $request->totalPayment,
-            'total_price' => $request->totalPayment,
-            'issue_date' => now(),
-            'status' => 'unpaid',
-            'data' => [$data]
-        ]);
+            // Create main event booking
+            $eventBooking = EventBooking::create($bookingData);
 
-        DB::commit();
+            // Store selected menu
+            if ($request->selectedMenu) {
+                $selectedMenu = EventMenu::find($request->selectedMenu);
+                EventBookingMenu::create([
+                    'event_booking_id' => $eventBooking->id,
+                    'event_menu_id' => $request->selectedMenu,
+                    'name' => $selectedMenu->name,
+                    'amount' => $selectedMenu->amount,
+                    'items' => $request->menuItems ?? [],
+                ]);
+            }
 
-        return response()->json(['message' => 'Booking saved successfully', 'invoice_no' => $invoice_no], 200);
+            // Store menu add-ons
+            if ($request->menu_addons) {
+                foreach ($request->menu_addons as $addon) {
+                    if (!empty($addon['type'])) {
+                        EventBookingMenuAddOn::create([
+                            'event_booking_id' => $eventBooking->id,
+                            'type' => $addon['type'],
+                            'details' => $addon['details'] ?? '',
+                            'amount' => $addon['amount'] ?? 0,
+                            'is_complementary' => $addon['is_complementary'] ?? false,
+                        ]);
+                    }
+                }
+            }
+
+            // Store other charges
+            if ($request->other_charges) {
+                foreach ($request->other_charges as $charge) {
+                    if (!empty($charge['type'])) {
+                        EventBookingOtherCharges::create([
+                            'event_booking_id' => $eventBooking->id,
+                            'type' => $charge['type'],
+                            'details' => $charge['details'] ?? '',
+                            'amount' => $charge['amount'] ?? 0,
+                            'is_complementary' => $charge['is_complementary'] ?? false,
+                        ]);
+                    }
+                }
+            }
+
+            // Create financial invoice
+            $invoice_no = $this->getInvoiceNo();
+            $invoiceData = [
+                'invoice_no' => $invoice_no,
+                'invoice_type' => 'event_booking',
+                'discount_type' => $request->discountType ?? null,
+                'discount_value' => $request->discount ?? 0,
+                'amount' => $request->grandTotal,
+                'total_price' => $request->grandTotal,
+                'issue_date' => now(),
+                'status' => 'unpaid',
+                'data' => [$eventBooking->toArray()]
+            ];
+
+            // ✅ Assign IDs based on guest type (same as RoomBookingController)
+            if (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
+                $invoiceData['member_id'] = (int) $request->guest['id'];
+            } else {
+                $invoiceData['customer_id'] = (int) $request->guest['id'];
+            }
+
+            $invoice = FinancialInvoice::create($invoiceData);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Event booking created successfully',
+                'booking_no' => $bookingNo,
+                'invoice_no' => $invoice->id,
+                'booking_id' => $eventBooking->id
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Event booking creation failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'message' => 'Failed to create event booking',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function paymentStore(Request $request)
@@ -344,5 +432,33 @@ class EventBookingController extends Controller
         $invoiceNo = FinancialInvoice::max('invoice_no');
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
+    }
+
+    /**
+     * Calculate total amount for menu add-ons (excluding complementary)
+     */
+    private function calculateMenuAddOnsTotal($menuAddOns)
+    {
+        $total = 0;
+        foreach ($menuAddOns as $addon) {
+            if (!($addon['is_complementary'] ?? false)) {
+                $total += floatval($addon['amount'] ?? 0);
+            }
+        }
+        return $total;
+    }
+
+    /**
+     * Calculate total amount for other charges (excluding complementary)
+     */
+    private function calculateOtherChargesTotal($otherCharges)
+    {
+        $total = 0;
+        foreach ($otherCharges as $charge) {
+            if (!($charge['is_complementary'] ?? false)) {
+                $total += floatval($charge['amount'] ?? 0);
+            }
+        }
+        return $total;
     }
 }

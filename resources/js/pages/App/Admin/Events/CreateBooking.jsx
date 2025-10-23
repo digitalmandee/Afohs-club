@@ -140,11 +140,13 @@ const EventBooking = ({ bookingNo }) => {
 
         setIsSubmitting(true);
         axios
-            .post(route('rooms.booking.store'), payload)
+            .post(route('events.booking.store'), payload)
             .then((res) => {
+                console.log(res);
+                
                 enqueueSnackbar('Booking submitted successfully', { variant: 'success' });
                 // Redirect or show success
-                router.visit(route('booking.payment', { invoice_no: res.data.invoice_id }));
+                router.visit(route('booking.payment', { invoice_no: res.data.invoice_no }));
             })
             .catch((err) => {
                 console.error('Submit error:', err);

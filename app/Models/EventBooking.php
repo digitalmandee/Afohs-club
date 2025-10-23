@@ -50,4 +50,44 @@ class EventBooking extends BaseModel
     ];
 
     protected $casts = ['additional_data' => 'array'];
+
+    /**
+     * Get the menu for the booking.
+     */
+    public function menu()
+    {
+        return $this->hasOne(EventBookingMenu::class, 'event_booking_id');
+    }
+
+    /**
+     * Get the menu add-ons for the booking.
+     */
+    public function menuAddOns()
+    {
+        return $this->hasMany(EventBookingMenuAddOn::class, 'event_booking_id');
+    }
+
+    /**
+     * Get the other charges for the booking.
+     */
+    public function otherCharges()
+    {
+        return $this->hasMany(EventBookingOtherCharges::class, 'event_booking_id');
+    }
+
+    /**
+     * Get the event venue.
+     */
+    public function eventVenue()
+    {
+        return $this->belongsTo(EventVenue::class, 'event_venue_id');
+    }
+
+    /**
+     * Get the customer (member).
+     */
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id');
+    }
 }
