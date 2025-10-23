@@ -11,6 +11,7 @@ class Member extends BaseModel
     protected $fillable = [
         'application_no',
         'old_family_id',
+        'old_member_id',
         'barcode_no',
         'membership_no',
         'member_type_id',

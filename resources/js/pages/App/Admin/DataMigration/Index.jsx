@@ -159,7 +159,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     return (
         <AdminLayout>
             <Head title="Data Migration" />
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ p: 3, pt:10 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography variant="h4">Data Migration Dashboard</Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>
@@ -284,11 +284,11 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                         <Alert severity="error" sx={{ mb: 2 }}>
                                             {migrationStatus.members.errors.length} errors occurred during migration
                                         </Alert>
-                                        <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
-                                            {migrationStatus.members.errors.slice(0, 10).map((error, index) => (
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.members.errors.map((error, index) => (
                                                 <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
                                                     <Typography variant="caption" component="div">
-                                                        <strong>Member ID:</strong> {error.member_id} | <strong>App No:</strong> {error.application_no}
+                                                        <strong>Member ID:</strong> {error.member_id} | <strong>App No:</strong> {error.application_no} | <strong>Membership No:</strong> {error.membership_no}
                                                         <br />
                                                         <strong>Name:</strong> {error.name}
                                                         <br />
@@ -302,11 +302,6 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                                     </Typography>
                                                 </Alert>
                                             ))}
-                                            {migrationStatus.members.errors.length > 10 && (
-                                                <Typography variant="caption" color="text.secondary">
-                                                    ... and {migrationStatus.members.errors.length - 10} more errors
-                                                </Typography>
-                                            )}
                                         </Box>
                                     </Box>
                                 )}
@@ -350,11 +345,13 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                         <Alert severity="error" sx={{ mb: 2 }}>
                                             {migrationStatus.families.errors.length} errors occurred during migration
                                         </Alert>
-                                        <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
-                                            {migrationStatus.families.errors.slice(0, 10).map((error, index) => (
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.families.errors.map((error, index) => (
                                                 <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
                                                     <Typography variant="caption" component="div">
-                                                        <strong>Family ID:</strong> {error.family_id} | <strong>Member ID:</strong> {error.member_id}
+                                                        <strong>Family ID:</strong> {error.family_id} | <strong>Parent Member ID:</strong> {error.member_id}
+                                                        <br />
+                                                        <strong>Parent Membership No:</strong> {error.parent_membership_no} | <strong>Family Membership No:</strong> {error.family_membership_no}
                                                         <br />
                                                         <strong>Name:</strong> {error.name}
                                                         <br />
@@ -368,11 +365,6 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                                     </Typography>
                                                 </Alert>
                                             ))}
-                                            {migrationStatus.families.errors.length > 10 && (
-                                                <Typography variant="caption" color="text.secondary">
-                                                    ... and {migrationStatus.families.errors.length - 10} more errors
-                                                </Typography>
-                                            )}
                                         </Box>
                                     </Box>
                                 )}
