@@ -6,6 +6,9 @@ use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
 use App\Models\Room;
 use App\Models\RoomBooking;
+use App\Models\RoomCategory;
+use App\Models\RoomChargesType;
+use App\Models\RoomMiniBar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +18,81 @@ use Inertia\Inertia;
 
 class RoomBookingController extends Controller
 {
+    public function booking(Request $request)
+    {
+        $roomId = $request->query('room_id');
+
+        $room = Room::with('roomType', 'categoryCharges')->find($roomId);
+        $bookingNo = $this->getBookingId();
+
+        $roomCategories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
+        $chargesTypeItems = RoomChargesType::where('status', 'active')->select('id', 'name', 'amount')->get();
+        $miniBarItems = RoomMiniBar::where('status', 'active')->select('id', 'name', 'amount')->get();
+
+        return Inertia::render('App/Admin/Booking/RoomBooking', compact('room', 'bookingNo', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
+    }
+
+    public function editbooking(Request $request, $id)
+    {
+        $booking = RoomBooking::with(['customer', 'member', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
+        $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : null));
+        $booking = [
+            'id' => $booking->id,
+            'bookingNo' => $booking->booking_no,
+            'bookingDate' => $booking->booking_date,
+            'checkInDate' => $booking->check_in_date,
+            'checkInTime' => $booking->check_in_time,
+            'checkOutDate' => $booking->check_out_date,
+            'checkOutTime' => $booking->check_out_time ?? now()->format('H:i'),
+            'arrivalDetails' => $booking->arrival_details,
+            'departureDetails' => $booking->departure_details,
+            'bookingType' => $booking->booking_type,
+            'guest' => [
+                'id' => $booking->customer ? $booking->customer->id : ($booking->member ? $booking->member->id : null),
+                'booking_type' => $booking->customer ? 'customer' : ($booking->member ? 'member' : null),
+                'name' => $fullName,
+                'label' => $fullName,
+                'email' => $booking->customer ? $booking->customer->email : ($booking->member ? $booking->member->personal_email : null),
+                'phone' => $booking->customer ? $booking->customer->contact : ($booking->member ? $booking->member->mobile_number_a : null),
+                'membership_no' => $booking->customer ? $booking->customer->customer_no : ($booking->member ? $booking->member->membership_no : null),
+            ],
+            'guestFirstName' => $booking->guest_first_name,
+            'guestLastName' => $booking->guest_last_name,
+            'company' => $booking->guest_company,
+            'address' => $booking->guest_address,
+            'country' => $booking->guest_country,
+            'city' => $booking->guest_city,
+            'mobile' => $booking->guest_mob,
+            'email' => $booking->guest_email,
+            'cnic' => $booking->guest_cnic,
+            'accompaniedGuest' => $booking->accompanied_guest,
+            'guestRelation' => $booking->acc_relationship,
+            'bookedBy' => $booking->booked_by,
+            'room' => $booking->room,
+            'persons' => $booking->persons,
+            'bookingCategory' => $booking->category,
+            'nights' => $booking->nights,
+            'perDayCharge' => $booking->per_day_charge,
+            'roomCharge' => $booking->room_charge,
+            'securityDeposit' => $booking->security_deposit,
+            'discountType' => $booking->discount_type,
+            'discount' => $booking->discount_value,
+            'totalOtherCharges' => $booking->total_other_charges,
+            'totalMiniBar' => $booking->total_mini_bar,
+            'grandTotal' => $booking->grand_total,
+            'notes' => $booking->additional_notes,
+            'documents' => json_decode($booking->booking_docs, true),
+            'mini_bar_items' => $booking->miniBarItems,
+            'other_charges' => $booking->otherCharges,
+        ];
+
+        $roomCategories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
+        $chargesTypeItems = RoomChargesType::where('status', 'active')->select('id', 'name', 'amount')->get();
+        $miniBarItems = RoomMiniBar::where('status', 'active')->select('id', 'name', 'amount')->get();
+
+        return Inertia::render('App/Admin/Booking/EditRoomBooking', compact('booking', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
+    }
+    
     public function store(Request $req)
     {
         $req->validate([

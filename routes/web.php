@@ -19,7 +19,6 @@ use App\Http\Controllers\LeaveCategoryController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\EmployeeTypeController;
 use App\Http\Controllers\EventBookingController;
-use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMenuAddOnsController;
 use App\Http\Controllers\EventChargesTypeController;
 use App\Http\Controllers\EventMenuCategoryController;
@@ -185,10 +184,16 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         Route::group(['prefix' => 'rooms'], function () {
             Route::get('/', [RoomController::class, 'allRooms'])->name('rooms.all');
+
+            Route::get('/create-booking', [RoomBookingController::class, 'booking'])->name('rooms.create.booking');
+            Route::get('/edit-booking/{id}', [RoomBookingController::class, 'editbooking'])->name('rooms.edit.booking');
+            Route::post('/update-booking/{id}', [RoomBookingController::class, 'update'])->name('rooms.update.booking');
+            Route::post('/create-booking', [RoomBookingController::class, 'store'])->name('rooms.store.booking');
+
             Route::get('dashboard', [RoomController::class, 'dashboard'])->name('rooms.dashboard');
             Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice');
-            Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage');
             Route::get('add', [RoomController::class, 'create'])->name('rooms.add');
+            Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage');
             Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin');
             Route::get('check-out', [RoomController::class, 'checkOutIndex'])->name('rooms.checkout');
             Route::post('store', [RoomController::class, 'store'])->name('rooms.store');
@@ -219,8 +224,18 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         // Event Routes
         Route::group(['prefix' => 'events'], function () {
             Route::get('dashboard', [EventBookingController::class, 'index'])->name('events.dashboard');
-            Route::get('create', [EventBookingController::class, 'create'])->name('events.create');
+            Route::get('calendar', function () {
+                return inertia('App/Admin/Events/Calendar');
+            })->name('events.calendar');
+            Route::get('manage', [EventBookingController::class, 'manage'])->name('events.manage');
+            Route::get('completed', [EventBookingController::class, 'completed'])->name('events.completed');
+            Route::get('cancelled', [EventBookingController::class, 'cancelled'])->name('events.cancelled');
+            Route::get('create', [EventBookingController::class, 'create'])->name('events.booking.create');
             Route::post('booking', [EventBookingController::class, 'store'])->name('events.booking.store');
+            Route::get('booking/{id}/invoice', [EventBookingController::class, 'showInvoice'])->name('events.booking.invoice');
+            Route::put('booking/{id}/status', [EventBookingController::class, 'updateStatus'])->name('events.booking.update.status');
+            Route::get('booking/{id}/edit', [EventBookingController::class, 'edit'])->name('events.booking.edit');
+            Route::post('booking/{id}', [EventBookingController::class, 'update'])->name('events.booking.update');
         });
         Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu', EventMenuController::class)->except(['show']);
@@ -230,31 +245,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('event-charges-type', EventChargesTypeController::class)->except(['create', 'edit', 'show']);
     });
 
-    // Admin Events Booking Routes
-    Route::get('/events/dashboard', [EventController::class, 'index'])->name('events.manage');
-    Route::get('/events/manage', [EventController::class, 'allEvents'])->name('events.all');
-    Route::get('/events/add', [EventController::class, 'create'])->name('events.add');
-    Route::post('/events', [EventController::class, 'store'])->name('events.store');
-    // Add routes for edit and delete
-    Route::get('/events/edit/{id}', [EventController::class, 'edit'])->name('events.edit');
-    Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
-    Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
-
-    // location
-    Route::get('/events/locations', [EventController::class, 'locations'])->name('events.locations');
-    Route::post('/events/locations', [EventController::class, 'storeLocation'])->name('events.locations.store');
-    Route::put('/events/locations/{id}', [EventController::class, 'updateLocation'])->name('events.locations.update');
-    Route::delete('/events/locations/{id}', [EventController::class, 'deleteLocation'])->name('events.locations.delete');
-
     // Admin Booking Routes
-    Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
-    Route::get('/booking/new', [BookingController::class, 'booking'])->name('rooms.booking');
-    Route::get('/booking/edit/{id}', [BookingController::class, 'editbooking'])->name('rooms.booking.edit');
-    Route::post('/booking/update/{id}', [RoomBookingController::class, 'update'])->name('rooms.booking.update');
-    Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
-    Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
-    Route::post('/room/booking', [RoomBookingController::class, 'store'])->name('rooms.booking.store');
     Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar');
+    Route::get('/api/events/calendar', [EventBookingController::class, 'calendarData'])->name('api.events.calendar');
+    Route::get('/api/events/venues', [EventBookingController::class, 'getVenues'])->name('api.events.venues');
+    Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
+    Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
+
+    // 
+    Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
 
     // Search
     Route::get('/admin/api/search-users', [UserController::class, 'searchUsers'])->name('admin.api.search-users');

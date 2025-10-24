@@ -144,7 +144,7 @@ const BookingPayment = ({ invoice }) => {
             if (response.status === 200) {
                 setError('');
                 enqueueSnackbar('Payment successful', { variant: 'success' });
-                router.visit(route('rooms.dashboard'));
+                router.visit(route(invoice.invoice_type === 'event_booking' ? 'events.dashboard' : 'rooms.dashboard'));
             } else {
                 setError('Payment failed: ' + (response.data?.message || 'Please check the form data.'));
             }
@@ -169,7 +169,7 @@ const BookingPayment = ({ invoice }) => {
         enqueueSnackbar('Skipped payment for now', { variant: 'info' });
 
         // Example: go back to dashboard
-        router.visit(route('rooms.dashboard'));
+        router.visit(route(invoice.invoice_type === 'event_booking' ? 'events.dashboard' : 'rooms.dashboard'));
 
         // Or optionally emit to backend that it's skipped
         // axios.post(route('booking.payment.skip'), { invoice_id: invoice.id })
@@ -378,7 +378,12 @@ const BookingPayment = ({ invoice }) => {
                                 <Box>
                                     <Select fullWidth name="bookingStatus" value={invoiceForm.bookingStatus} onChange={handleInputChange} displayEmpty sx={{ backgroundColor: '#fff', borderRadius: '4px' }}>
                                         <MenuItem value="">Select Status</MenuItem>
-                                        <MenuItem value="checked_out">Check Out</MenuItem>
+                                        {invoice.invoice_type === 'room_booking' && (
+                                            <MenuItem value="checked_out">Check Out</MenuItem>
+                                        )}
+                                        {invoice.invoice_type === 'event_booking' && (
+                                            <MenuItem value="completed">Completed</MenuItem>
+                                        )}
                                     </Select>
                                 </Box>
                             </Form.Group>

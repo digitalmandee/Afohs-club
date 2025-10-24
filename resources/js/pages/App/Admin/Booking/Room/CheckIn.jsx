@@ -82,7 +82,7 @@ const RoomCheckIn = () => {
                                             <TableCell>{booking.per_day_charge}</TableCell>
                                             <TableCell>{booking.status}</TableCell>
                                             <TableCell>
-                                                <Button variant="outlined" size="small" style={{ marginRight: '8px' }} onClick={() => router.visit(route('rooms.booking.edit', { id: booking.id }))}>
+                                                <Button variant="outlined" size="small" style={{ marginRight: '8px' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))}>
                                                     Edit
                                                 </Button>
                                                 <Button variant="contained" size="small" style={{ marginRight: '8px', backgroundColor: '#063455', color: '#fff' }} onClick={() => handleOpenCheckInModal(booking)}>

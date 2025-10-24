@@ -42,7 +42,7 @@ const RoomCalendar = () => {
                     <strong>${b.guest_name}</strong><br/>
                     Status: ${b.status.replace('_', ' ')}<br/>
                     <a href="#" onclick="window.checkIn(${b.id}); return false;">Check-in</a><br/>
-                    <a href="/booking/edit/${b.id}?type=checkout" target="_blank">Check-out</a>
+                    <a href="/booking-management/rooms/edit-booking/${b.id}?type=checkout" target="_blank">Check-out</a>
                 `,
             }));
 

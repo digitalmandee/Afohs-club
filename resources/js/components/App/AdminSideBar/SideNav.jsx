@@ -257,6 +257,22 @@ export default function SideNav({ open, setOpen }) {
                             path: route('events.dashboard'),
                         },
                         {
+                            text: 'Manage',
+                            path: route('events.manage'),
+                        },
+                        {
+                            text: 'Completed',
+                            path: route('events.completed'),
+                        },
+                        {
+                            text: 'Cancelled',
+                            path: route('events.cancelled'),
+                        },
+                        {
+                            text: 'Calendar',
+                            path: route('events.calendar'),
+                        },
+                        {
                             text: 'Venues',
                             path: route('event-venues.index'),
                         },

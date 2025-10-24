@@ -296,7 +296,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
     );
 };
 
-const BookingDashboard = ({ data, roomTypes }) => {
+const RoomBookingDashboard = ({ data, roomTypes }) => {
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
@@ -649,4 +649,4 @@ const BookingDashboard = ({ data, roomTypes }) => {
     );
 };
 
-export default BookingDashboard;
+export default RoomBookingDashboard;

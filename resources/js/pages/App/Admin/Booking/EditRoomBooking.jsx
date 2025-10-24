@@ -151,7 +151,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
 
         setIsSubmitting(true);
         axios
-            .post(route('rooms.booking.update', { id: booking.id }), payload)
+            .post(route('rooms.update.booking', { id: booking.id }), payload)
             .then((res) => {
                 enqueueSnackbar('Booking Updated successfully', { variant: 'success' });
                 // Redirect or show success

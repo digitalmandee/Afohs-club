@@ -17,8 +17,14 @@ class EventBooking extends BaseModel
         'family_id',
         'booking_date',
         'booking_type',
+        'name',
+        'address',
+        'cnic',
+        'mobile',
+        'email',
+        'ledger_amount',
         'booked_by',
-        'event_name',
+        'nature_of_event',
         'event_date',
         'event_time_from',
         'event_time_to',
@@ -80,7 +86,7 @@ class EventBooking extends BaseModel
      */
     public function eventVenue()
     {
-        return $this->belongsTo(EventVenue::class, 'event_venue_id');
+        return $this->belongsTo(EventVenue::class, 'event_venue_id', 'id');
     }
 
     /**
@@ -88,6 +94,40 @@ class EventBooking extends BaseModel
      */
     public function customer()
     {
-        return $this->belongsTo(User::class, 'customer_id');
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
+    
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id', 'id');
+    }
+    
+    /**
+     * Get the family member.
+     */
+    public function familyMember()
+    {
+        return $this->belongsTo(Member::class, 'family_id', 'id');
+    }
+
+    /**
+     * Get the invoice for this event booking.
+     */
+    public function invoice()
+    {
+        return $this->hasOne(FinancialInvoice::class)
+            ->where('invoice_type', 'event_booking')
+            ->whereJsonContains('data', [['booking_id' => $this->id]]);
+    }
+
+    /**
+     * Get invoice attribute (alternative approach using accessor)
+     */
+    public function getInvoiceAttribute()
+    {
+        return FinancialInvoice::where('invoice_type', 'event_booking')
+            ->whereJsonContains('data', [['booking_id' => $this->id]])
+            ->select('id', 'status', 'total_price', 'paid_amount')
+            ->first();
     }
 }

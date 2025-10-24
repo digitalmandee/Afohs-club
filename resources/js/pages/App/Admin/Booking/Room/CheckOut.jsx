@@ -86,7 +86,7 @@ const RoomCheckOut = () => {
                                             <TableCell>{booking.per_day_charge}</TableCell>
                                             <TableCell>{booking.status.replace(/_/g, ' ')}</TableCell>
                                             <TableCell>
-                                                <Button variant="outlined" size="small" style={{ marginRight: '8px' }} onClick={() => router.visit(route('rooms.booking.edit', { id: booking.id, type: 'checkout' }))}>
+                                                <Button variant="outlined" size="small" style={{ marginRight: '8px' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
                                                     Check Out
                                                 </Button>
                                                 <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>

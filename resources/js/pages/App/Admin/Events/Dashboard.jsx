@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Button, Form, Badge, Card, Col, Modal } from 'react-bootstrap'; // Added Modal import for popup
-import { Search, FilterAlt, Add } from '@mui/icons-material';
+import { Search, FilterAlt, Add, CalendarMonth } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem, Popper } from '@mui/material';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { router } from '@inertiajs/react';
@@ -326,7 +326,7 @@ const numberToWords = (num) => {
     return word.trim();
 };
 
-const BookingDashboard = ({ data, roomTypes }) => {
+const EventBookingDashboard = ({ data, roomTypes }) => {
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
@@ -396,22 +396,40 @@ const BookingDashboard = ({ data, roomTypes }) => {
                     <Container fluid className="p-4 bg-light">
                         <Box className="mb-4 d-flex justify-content-between align-items-center">
                             <Typography style={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>Dashboard</Typography>
-                            <Button
-                                variant="outlined"
-                                startIcon={<Add />}
-                                style={{
-                                    border: '1px solid #063455',
-                                    color: '#333',
-                                    bgcolor: 'white',
-                                    '&:hover': {
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<CalendarMonth />}
+                                    style={{
                                         border: '1px solid #063455',
-                                        bgcolor: '#FFFFFF',
-                                    },
-                                }}
-                                onClick={() => router.visit(route('events.create'))}
-                            >
-                                Add Event
-                            </Button>
+                                        color: '#333',
+                                        bgcolor: 'white',
+                                        '&:hover': {
+                                            border: '1px solid #063455',
+                                            bgcolor: '#FFFFFF',
+                                        },
+                                    }}
+                                    onClick={() => router.visit(route('events.calendar'))}
+                                >
+                                    Event Calendar
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<Add />}
+                                    style={{
+                                        border: '1px solid #063455',
+                                        color: '#333',
+                                        bgcolor: 'white',
+                                        '&:hover': {
+                                            border: '1px solid #063455',
+                                            bgcolor: '#FFFFFF',
+                                        },
+                                    }}
+                                    onClick={() => router.visit(route('events.booking.create'))}
+                                >
+                                    Create Booking
+                                </Button>
+                            </Box>
                         </Box>
 
                         <Row className="mb-4">
@@ -722,4 +740,4 @@ const BookingDashboard = ({ data, roomTypes }) => {
     );
 };
 
-export default BookingDashboard;
+export default EventBookingDashboard;
