@@ -9,6 +9,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
 import EventCompletionModal from '@/components/App/Events/EventCompletionModal';
+import { enqueueSnackbar } from 'notistack';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -36,8 +37,6 @@ const EventCalendar = () => {
                 params: { month, year },
             });
 
-            console.log('Event Calendar Data:', data);
-
             // Transform venues into resources
             const venueResources = data.venues.map((venue) => ({
                 id: venue.id,
@@ -46,47 +45,77 @@ const EventCalendar = () => {
             }));
 
             // Transform bookings into events
-            const bookingEvents = data.bookings.map((booking) => ({
-                id: booking.id,
-                booking: booking,
-                text: `${booking.booked_by}`,
-                start: `${booking.event_date}T${booking.event_time_from}`,
-                end: `${booking.event_date}T${booking.event_time_to}`,
-                resource: booking.event_venue_id,
-                backColor: getStatusColor(booking.status),
-                borderColor: getStatusBorderColor(booking.status),
-                fontColor: '#fff',
-                bubbleHtml: `
-                    <div style="padding: 10px; font-family: Arial, sans-serif; line-height: 1.4;">
-                        <strong style="color: #333;">Booked By: ${booking.booked_by || 'N/A'}</strong><br/>
-                        <span style="color: #666;">Contact: ${booking.mobile || 'n/a'}</span><br/>
-                        <span style="color: #666;">Status: <span style="color: ${getStatusColor(booking.status)}; font-weight: bold;">${booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}</span></span><br/>
-                        
-                        <div style="margin: 8px 0; padding: 6px; background: #f0f8ff; border-radius: 4px;">
-                            <a href="#" onclick="window.updateEventBooking('${booking.id}'); return false;" 
-                               style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Update booking</a>
-                            ${
-                                booking.status === 'confirmed'
-                                    ? `
-                            <a href="#" onclick="window.completeEventBooking('${booking.id}'); return false;" 
-                               style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Complete Booking</a>
-                            `
-                                    : ''
-                            }
+            const bookingEvents = data.bookings.map((booking) => {
+                // Determine booking type and display info
+                const isCustomerBooking = booking.customer && !booking.member;
+                const isMemberBooking = booking.member && !booking.customer;
+                
+                let displayText = booking.booked_by || 'N/A';
+                let bookingTypeInfo = '';
+                let contactInfo = booking.mobile || 'N/A';
+                
+                if (isCustomerBooking) {
+                    bookingTypeInfo = `Customer: ${booking.customer.name}`;
+                } else if (isMemberBooking) {
+                    bookingTypeInfo = `Member: ${booking.member.full_name} (${booking.membership_no})`;
+                } else {
+                    bookingTypeInfo = 'General Booking';
+                }
+                
+                // Handle overnight events (when end time is earlier than start time)
+                let endDateTime = `${booking.event_date}T${booking.event_time_to}`;
+                if (booking.event_time_to < booking.event_time_from) {
+                    // Event goes to next day
+                    const nextDay = moment(booking.event_date).add(1, 'day').format('YYYY-MM-DD');
+                    endDateTime = `${nextDay}T${booking.event_time_to}`;
+                }
+
+                return {
+                    id: booking.id,
+                    booking: booking,
+                    text: displayText,
+                    start: `${booking.event_date}T${booking.event_time_from}`,
+                    end: endDateTime,
+                    resource: booking.event_venue_id,
+                    backColor: getStatusColor(booking.status),
+                    borderColor: getStatusBorderColor(booking.status),
+                    fontColor: '#fff',
+                    bubbleHtml: `
+                        <div style="padding: 10px; font-family: Arial, sans-serif; line-height: 1.4;">
+                            <strong style="color: #333;">Booked By: ${displayText}</strong><br/>
+                            <span style="color: #666;">${bookingTypeInfo}</span><br/>
+                            <span style="color: #666;">Contact: ${contactInfo}</span><br/>
+                            <span style="color: #666;">Guests: ${booking.no_of_guests || 0}</span><br/>
+                            <span style="color: #666;">Status: <span style="color: ${getStatusColor(booking.status)}; font-weight: bold;">${booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}</span></span><br/>
+                            ${booking.nature_of_event ? `<span style="color: #666;">Event: ${booking.nature_of_event}</span><br/>` : ''}
+                            
+                            <div style="margin: 8px 0; padding: 6px; background: #f0f8ff; border-radius: 4px;">
+                                <a href="#" onclick="window.updateEventBooking('${booking.id}'); return false;" 
+                                   style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Update booking</a>
+                                ${
+                                    booking.status === 'confirmed'
+                                        ? `
+                                <a href="#" onclick="window.completeEventBooking('${booking.id}'); return false;" 
+                                   style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Complete Booking</a>
+                                `
+                                        : ''
+                                }
+                            </div>
+                            
+                            <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
+                                <strong style="color: #1976d2; font-style: italic; font-size: 12px;">Timings</strong><br/>
+                                <span style="font-size: 11px;">From: ${booking.event_time_from}</span><br/>
+                                <span style="font-size: 11px;">To: ${booking.event_time_to}</span>
+                            </div>
                         </div>
-                        
-                        <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
-                            <strong style="color: #1976d2; font-style: italic; font-size: 12px;">Timings</strong><br/>
-                            <span style="font-size: 11px;">From: ${booking.event_time_from}</span><br/>
-                            <span style="font-size: 11px;">To: ${booking.event_time_to}</span>
-                        </div>
-                    </div>
-                `,
-            }));
+                    `,
+                };
+            });
 
             setResources(venueResources);
             setEvents(bookingEvents);
         } catch (error) {
+            enqueueSnackbar('Error fetching event calendar data. Please try again.', { variant: 'error' });
             console.error('Error fetching event calendar data:', error);
         }
     };
@@ -125,6 +154,16 @@ const EventCalendar = () => {
         fetchData();
     }, [month, year]);
 
+    // Update calendar when events or resources change
+    useEffect(() => {
+        if (schedulerRef.current && events.length > 0) {
+            schedulerRef.current.control.update({
+                resources: resources,
+                events: events
+            });
+        }
+    }, [events, resources]);
+
     // Set up global functions for tooltip buttons
     useEffect(() => {
         window.updateEventBooking = (bookingId) => {
@@ -149,12 +188,15 @@ const EventCalendar = () => {
         };
     }, []);
 
+    const startDate = moment(`${year}-${month}-01`, 'YYYY-MM-DD').format('YYYY-MM-DD');
+    const days = moment(`${year}-${month}`, 'YYYY-MM').daysInMonth();
+    
     const config = {
         locale: 'en-us',
         timeHeaders: [{ groupBy: 'Month' }, { groupBy: 'Day', format: 'd' }],
         scale: 'Day',
-        days: moment(`${year}-${month}`, 'YYYY-MM').daysInMonth(),
-        startDate: moment(`${year}-${month}-01`, 'YYYY-MM-DD').format('YYYY-MM-DD'),
+        days: days,
+        startDate: startDate,
         cellWidth: 50,
         cellHeight: 40,
         eventHeight: 35,
@@ -274,7 +316,8 @@ const EventCalendar = () => {
             handleCancelModalClose();
         } catch (error) {
             console.error('Error cancelling booking:', error);
-            alert('Error cancelling booking. Please try again.');
+            enqueueSnackbar('Error cancelling booking. Please try again.', { variant: 'error' });
+            // alert('Error cancelling booking. Please try again.');
         }
     };
 
@@ -324,10 +367,10 @@ const EventCalendar = () => {
 
                     {/* Legend */}
                     <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box sx={{ width: 16, height: 16, backgroundColor: '#ffc107', borderRadius: 1 }}></Box>
                             <span style={{ fontSize: '12px' }}>Pending</span>
-                        </Box>
+                        </Box> */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box sx={{ width: 16, height: 16, backgroundColor: '#28a745', borderRadius: 1 }}></Box>
                             <span style={{ fontSize: '12px' }}>Confirmed</span>

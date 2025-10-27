@@ -87,7 +87,7 @@ class EventBookingController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'guest' => 'required',
             'bookedBy' => 'required|string',
             'natureOfEvent' => 'required|string',
@@ -140,10 +140,10 @@ class EventBookingController extends Controller
                 'guest_charges' => (($request->menuAmount ?? 0) + $this->calculateMenuAddOnsTotal($request->menu_addons ?? [])) * $request->numberOfGuests,
                 'total_food_charges' => (($request->menuAmount ?? 0) + $this->calculateMenuAddOnsTotal($request->menu_addons ?? [])) * $request->numberOfGuests,
                 'total_other_charges' => $this->calculateOtherChargesTotal($request->other_charges ?? []),
-                'total_charges' => $request->grandTotal,
+                'total_charges' => round(floatval($request->grandTotal)),
                 'reduction_type' => $request->discountType,
                 'reduction_amount' => $request->discount ?? 0,
-                'total_price' => $request->grandTotal,
+                'total_price' => round(floatval($request->grandTotal)),
                 'booking_docs' => json_encode($documentPaths),
                 'additional_notes' => $request->notes ?? '',
                 'status' => 'confirmed',
@@ -205,13 +205,18 @@ class EventBookingController extends Controller
 
             // Create financial invoice
             $invoice_no = $this->getInvoiceNo();
+            
+            // Calculate original amount (before discount) and final amount (after discount)
+            $originalAmount = round($this->calculateOriginalAmount($request));
+            $finalAmount = round(floatval($request->grandTotal));
+            
             $invoiceData = [
                 'invoice_no' => $invoice_no,
                 'invoice_type' => 'event_booking',
                 'discount_type' => $request->discountType ?? null,
                 'discount_value' => $request->discount ?? 0,
-                'amount' => $request->grandTotal,
-                'total_price' => $request->grandTotal,
+                'amount' => $originalAmount, // Original amount before discount
+                'total_price' => $finalAmount, // Final amount after discount
                 'issue_date' => now(),
                 'status' => 'unpaid',
                 'data' => [
@@ -222,7 +227,7 @@ class EventBookingController extends Controller
                 ]
             ];
 
-            // ✅ Assign IDs based on guest type (same as RoomBookingController)
+            // ✅ Assign IDs based on guest type
             if (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
                 $invoiceData['member_id'] = (int) $request->guest['id'];
             } else {
@@ -406,7 +411,6 @@ class EventBookingController extends Controller
 
             // Update booking data (don't change member/customer info)
             $booking->update([
-                'family_id' => $request->familyMember ?? null,
                 'booked_by' => $request->bookedBy,
                 'nature_of_event' => $request->natureOfEvent,
                 'event_date' => $request->eventDate,
@@ -416,7 +420,7 @@ class EventBookingController extends Controller
                 'no_of_guests' => $request->numberOfGuests,
                 'reduction_type' => $request->discountType,
                 'reduction_amount' => $request->discount ?? 0,
-                'total_price' => $request->grandTotal,
+                'total_price' => round(floatval($request->grandTotal)),
                 'booking_docs' => json_encode($documentPaths),
                 'additional_notes' => $request->notes ?? '',
             ]);
@@ -482,11 +486,15 @@ class EventBookingController extends Controller
                 ->first();
 
             if ($invoice) {
+                // Calculate original amount (before discount) and final amount (after discount)
+                $originalAmount = round($this->calculateOriginalAmount($request));
+                $finalAmount = round(floatval($request->grandTotal));
+                
                 $invoice->update([
                     'discount_type' => $request->discountType ?? null,
                     'discount_value' => $request->discount ?? 0,
-                    'amount' => $request->grandTotal,
-                    'total_price' => $request->grandTotal,
+                    'amount' => $originalAmount, // Original amount before discount
+                    'total_price' => $finalAmount, // Final amount after discount
                     'data' => [
                         'booking_id' => $booking->id,
                         'booking_no' => $booking->booking_no,
@@ -614,7 +622,7 @@ class EventBookingController extends Controller
                 'booked_by' => $booking->booked_by,
                 'name' => $booking->name,
                 'mobile' => $booking->mobile,
-                'membership_no' => $booking->member->membership_no,
+                'membership_no' => $booking->member ? $booking->member->membership_no : ($booking->customer ? $booking->customer->customer_no : null),
                 'no_of_guests' => $booking->no_of_guests,
                 'status' => $booking->status,
                 'total_price' => $booking->total_price,
@@ -637,7 +645,7 @@ class EventBookingController extends Controller
     public function manage(Request $request)
     {
         $query = EventBooking::with([
-            'customer:id,name,email,phone_number',
+            'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ]);
@@ -743,7 +751,7 @@ class EventBookingController extends Controller
     public function completed(Request $request)
     {
         $query = EventBooking::with([
-            'customer:id,name,email,phone_number',
+            'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ])->where('status', 'completed');
@@ -800,7 +808,7 @@ class EventBookingController extends Controller
     public function cancelled(Request $request)
     {
         $query = EventBooking::with([
-            'customer:id,name,email,phone_number',
+            'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ])->where('status', 'cancelled');
@@ -867,5 +875,42 @@ class EventBookingController extends Controller
             });
 
         return response()->json($venues);
+    }
+
+    /**
+     * Calculate original amount before discount
+     */
+    private function calculateOriginalAmount($request)
+    {
+        // Calculate total other charges (excluding complementary items)
+        $totalOtherCharges = 0;
+        if (!empty($request->other_charges)) {
+            foreach ($request->other_charges as $charge) {
+                if (!filter_var($charge['is_complementary'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    $totalOtherCharges += floatval($charge['amount'] ?? 0);
+                }
+            }
+        }
+
+        // Calculate total menu add-ons (excluding complementary items)
+        $totalMenuAddOns = 0;
+        if (!empty($request->menu_addons)) {
+            foreach ($request->menu_addons as $addon) {
+                if (!filter_var($addon['is_complementary'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    $totalMenuAddOns += floatval($addon['amount'] ?? 0);
+                }
+            }
+        }
+
+        // Calculate menu charges
+        $menuAmount = floatval($request->menuAmount ?? 0);
+        $numberOfGuests = intval($request->numberOfGuests ?? 1);
+        $perPersonMenuCharges = $menuAmount + $totalMenuAddOns;
+        $totalMenuCharges = $perPersonMenuCharges * $numberOfGuests;
+
+        // Base total (before discount)
+        $baseTotal = $totalOtherCharges + $totalMenuCharges;
+
+        return $baseTotal;
     }
 }

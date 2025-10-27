@@ -93,6 +93,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
             } else if (bookingData.customer) {
                 guestObject = {
                     id: bookingData.customer.id,
+                    customer_no: bookingData.customer.customer_no,
                     name: bookingData.name,
                     email: bookingData.email,
                     cnic: bookingData.cnic,
@@ -612,8 +613,8 @@ const ChargesInfo = ({ formData, handleChange }) => {
     useEffect(() => {
         const { totalOther, totalMenuAddOns, grandTotal } = calculateTotals();
 
-        handleChange({ target: { name: 'totalOtherCharges', value: totalOther } });
-        handleChange({ target: { name: 'grandTotal', value: grandTotal.toFixed(2) } });
+        handleChange({ target: { name: 'totalOtherCharges', value: Math.round(totalOther) } });
+        handleChange({ target: { name: 'grandTotal', value: Math.round(grandTotal) } });
     }, [formData.other_charges, formData.menu_addons, formData.discount, formData.discountType, formData.menuAmount, formData.numberOfGuests]);
 
     const { totalOther, totalMenuAddOns, menuAmount, perPersonMenuCharges, totalMenuCharges, numberOfGuests, grandTotal } = calculateTotals();
@@ -793,16 +794,16 @@ const ChargesInfo = ({ formData, handleChange }) => {
                 <TextField label="Number of Guests" value={numberOfGuests} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Menu Add-Ons (Per Person)" value={totalMenuAddOns.toFixed(2)} fullWidth disabled />
+                <TextField label="Menu Add-Ons (Per Person)" value={Math.round(totalMenuAddOns)} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Per Person Menu" value={perPersonMenuCharges.toFixed(2)} fullWidth disabled />
+                <TextField label="Per Person Menu" value={Math.round(perPersonMenuCharges)} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Total Menu Charges" value={totalMenuCharges.toFixed(2)} fullWidth disabled />
+                <TextField label="Total Menu Charges" value={Math.round(totalMenuCharges)} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Other Charges" value={totalOther.toFixed(2)} fullWidth disabled />
+                <TextField label="Other Charges" value={Math.round(totalOther)} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
                 <FormControl fullWidth>
@@ -817,7 +818,7 @@ const ChargesInfo = ({ formData, handleChange }) => {
                 <TextField label="Discount" type="number" name="discount" value={formData.discount} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Grand Total" value={grandTotal.toFixed(2)} fullWidth disabled />
+                <TextField label="Grand Total" value={Math.round(grandTotal)} fullWidth disabled />
             </Grid>
         </Grid>
     );
