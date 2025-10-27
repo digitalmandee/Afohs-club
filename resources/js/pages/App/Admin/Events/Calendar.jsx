@@ -35,18 +35,18 @@ const EventCalendar = () => {
             const { data } = await axios.get(route('api.events.calendar'), {
                 params: { month, year },
             });
-            
+
             console.log('Event Calendar Data:', data);
-            
+
             // Transform venues into resources
-            const venueResources = data.venues.map(venue => ({
+            const venueResources = data.venues.map((venue) => ({
                 id: venue.id,
                 name: venue.name,
                 expanded: true,
             }));
 
             // Transform bookings into events
-            const bookingEvents = data.bookings.map(booking => ({
+            const bookingEvents = data.bookings.map((booking) => ({
                 id: booking.id,
                 booking: booking,
                 text: `${booking.booked_by}`,
@@ -65,10 +65,14 @@ const EventCalendar = () => {
                         <div style="margin: 8px 0; padding: 6px; background: #f0f8ff; border-radius: 4px;">
                             <a href="#" onclick="window.updateEventBooking('${booking.id}'); return false;" 
                                style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Update booking</a>
-                            ${booking.status === 'confirmed' ? `
+                            ${
+                                booking.status === 'confirmed'
+                                    ? `
                             <a href="#" onclick="window.completeEventBooking('${booking.id}'); return false;" 
                                style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Complete Booking</a>
-                            ` : ''}
+                            `
+                                    : ''
+                            }
                         </div>
                         
                         <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
@@ -77,7 +81,7 @@ const EventCalendar = () => {
                             <span style="font-size: 11px;">To: ${booking.event_time_to}</span>
                         </div>
                     </div>
-                `
+                `,
             }));
 
             setResources(venueResources);
@@ -147,10 +151,7 @@ const EventCalendar = () => {
 
     const config = {
         locale: 'en-us',
-        timeHeaders: [
-            { groupBy: 'Month' },
-            { groupBy: 'Day', format: 'd' }
-        ],
+        timeHeaders: [{ groupBy: 'Month' }, { groupBy: 'Day', format: 'd' }],
         scale: 'Day',
         days: moment(`${year}-${month}`, 'YYYY-MM').daysInMonth(),
         startDate: moment(`${year}-${month}-01`, 'YYYY-MM-DD').format('YYYY-MM-DD'),
@@ -167,7 +168,7 @@ const EventCalendar = () => {
         },
         onTimeRangeSelected: (args) => {
             // Handle new booking creation
-            const selectedVenue = resources.find(r => r.id === args.resource);
+            const selectedVenue = resources.find((r) => r.id === args.resource);
             if (selectedVenue) {
                 // Navigate to create booking with pre-filled data
                 router.visit(route('events.booking.create'), {
@@ -175,8 +176,8 @@ const EventCalendar = () => {
                         venue: args.resource,
                         date: moment(args.start).format('YYYY-MM-DD'),
                         time_from: moment(args.start).format('HH:mm'),
-                        time_to: moment(args.end).format('HH:mm')
-                    }
+                        time_to: moment(args.end).format('HH:mm'),
+                    },
                 });
             }
         },
@@ -187,13 +188,13 @@ const EventCalendar = () => {
                     onClick: (args) => {
                         setSelectedBookingId(args.source.data.booking.id);
                         setInvoiceModalOpen(true);
-                    }
+                    },
                 },
                 {
                     text: 'Edit Booking',
                     onClick: (args) => {
                         router.visit(route('events.booking.edit', args.source.data.booking.id));
-                    }
+                    },
                 },
                 { text: '-' },
                 {
@@ -202,17 +203,17 @@ const EventCalendar = () => {
                         setCompletionBookingId(args.source.data.booking.id);
                         setCompletionModalOpen(true);
                     },
-                    visible: (args) => args.source.data.booking.status === 'confirmed'
+                    visible: (args) => args.source.data.booking.status === 'confirmed',
                 },
                 {
                     text: 'Cancel Booking',
                     onClick: (args) => {
                         setCancelBookingId(args.source.data.booking.id);
                         setCancelModalOpen(true);
-                    }
-                }
-            ]
-        })
+                    },
+                },
+            ],
+        }),
     };
 
     const handleMonthChange = (event) => {
@@ -266,7 +267,7 @@ const EventCalendar = () => {
         try {
             await axios.put(route('events.booking.update.status', cancelBookingId), {
                 status: 'cancelled',
-                cancellation_reason: cancelReason
+                cancellation_reason: cancelReason,
             });
 
             fetchData(); // Refresh calendar
@@ -280,214 +281,176 @@ const EventCalendar = () => {
     return (
         <>
             <SideNav open={open} toggleDrawer={toggleDrawer} />
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    p: 3,
-                    transition: 'margin 0.3s',
+            <div
+                style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    transition: 'margin-left 0.3s ease-in-out',
+                    marginTop: '5rem',
                 }}
             >
-                {/* Header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ mr: 2 }}>
-                        <ArrowBack />
-                    </IconButton>
-                    <h2 style={{ margin: 0, color: '#003366' }}>EVENT CALENDAR</h2>
-                </Box>
-
-                {/* Month and Year Selectors */}
-                <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                    <FormControl sx={{ minWidth: 150 }}>
-                        <InputLabel>Select Month</InputLabel>
-                        <Select value={month} onChange={handleMonthChange} label="Select Month">
-                            {moment.months().map((monthName, index) => (
-                                <MenuItem key={index} value={String(index + 1).padStart(2, '0')}>
-                                    {monthName}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    <FormControl sx={{ minWidth: 150 }}>
-                        <InputLabel>Select Year</InputLabel>
-                        <Select value={year} onChange={handleYearChange} label="Select Year">
-                            {Array.from({ length: 10 }, (_, i) => moment().year() - 5 + i).map(yearOption => (
-                                <MenuItem key={yearOption} value={String(yearOption)}>
-                                    {yearOption}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Box>
-
-                {/* Legend */}
-                <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ width: 16, height: 16, backgroundColor: '#ffc107', borderRadius: 1 }}></Box>
-                        <span style={{ fontSize: '12px' }}>Pending</span>
+                <Box sx={{ p: 2 }}>
+                    {/* Header */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ mr: 2 }}>
+                            <ArrowBack />
+                        </IconButton>
+                        <h2 style={{ margin: 0, color: '#003366' }}>EVENT CALENDAR</h2>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ width: 16, height: 16, backgroundColor: '#28a745', borderRadius: 1 }}></Box>
-                        <span style={{ fontSize: '12px' }}>Confirmed</span>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ width: 16, height: 16, backgroundColor: '#17a2b8', borderRadius: 1 }}></Box>
-                        <span style={{ fontSize: '12px' }}>Completed</span>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ width: 16, height: 16, backgroundColor: '#dc3545', borderRadius: 1 }}></Box>
-                        <span style={{ fontSize: '12px' }}>Cancelled</span>
-                    </Box>
-                </Box>
 
-                {/* Calendar */}
-                <Box sx={{ 
-                    border: '1px solid #ddd', 
-                    borderRadius: 1,
-                    overflow: 'hidden',
-                    backgroundColor: '#fff'
-                }}>
-                    <DayPilotScheduler
-                        {...config}
-                        ref={schedulerRef}
-                    />
-                </Box>
+                    {/* Month and Year Selectors */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                        <FormControl sx={{ minWidth: 150 }}>
+                            <InputLabel>Select Month</InputLabel>
+                            <Select value={month} onChange={handleMonthChange} label="Select Month">
+                                {moment.months().map((monthName, index) => (
+                                    <MenuItem key={index} value={String(index + 1).padStart(2, '0')}>
+                                        {monthName}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                {/* Booking Details Dialog */}
-                <Dialog 
-                    open={bookingDialogOpen} 
-                    onClose={handleBookingDialogClose}
-                    maxWidth="md"
-                    fullWidth
-                >
-                    <DialogTitle>
-                        Event Booking Details
-                    </DialogTitle>
-                    <DialogContent>
-                        {selectedBooking && (
-                            <Box sx={{ pt: 1 }}>
-                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                                    <Box>
-                                        <strong>Booking Number:</strong> {selectedBooking.booking_no}
-                                    </Box>
-                                    <Box>
-                                        <strong>Status:</strong> 
-                                        <span style={{ 
-                                            color: getStatusColor(selectedBooking.status),
-                                            fontWeight: 'bold',
-                                            marginLeft: '8px'
-                                        }}>
-                                            {selectedBooking.status?.toUpperCase()}
-                                        </span>
-                                    </Box>
-                                    <Box>
-                                        <strong>Nature of Event:</strong> {selectedBooking.nature_of_event}
-                                    </Box>
-                                    <Box>
-                                        <strong>Booked By:</strong> {selectedBooking.booked_by}
-                                    </Box>
-                                    <Box>
-                                        <strong>Guest Name:</strong> {selectedBooking.name || 'N/A'}
-                                    </Box>
-                                    <Box>
-                                        <strong>Number of Guests:</strong> {selectedBooking.no_of_guests}
-                                    </Box>
-                                    <Box>
-                                        <strong>Event Date:</strong> {moment(selectedBooking.event_date).format('MMMM D, YYYY')}
-                                    </Box>
-                                    <Box>
-                                        <strong>Event Time:</strong> {selectedBooking.event_time_from} - {selectedBooking.event_time_to}
-                                    </Box>
-                                    <Box>
-                                        <strong>Venue:</strong> {selectedBooking.event_venue?.name || 'N/A'}
-                                    </Box>
-                                    <Box>
-                                        <strong>Total Amount:</strong> Rs {selectedBooking.total_price}
-                                    </Box>
-                                </Box>
-                                {selectedBooking.additional_notes && (
-                                    <Box sx={{ mt: 2 }}>
-                                        <strong>Additional Notes:</strong>
-                                        <Box sx={{ mt: 1, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                                            {selectedBooking.additional_notes}
+                        <FormControl sx={{ minWidth: 150 }}>
+                            <InputLabel>Select Year</InputLabel>
+                            <Select value={year} onChange={handleYearChange} label="Select Year">
+                                {Array.from({ length: 10 }, (_, i) => moment().year() - 5 + i).map((yearOption) => (
+                                    <MenuItem key={yearOption} value={String(yearOption)}>
+                                        {yearOption}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Box>
+
+                    {/* Legend */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ width: 16, height: 16, backgroundColor: '#ffc107', borderRadius: 1 }}></Box>
+                            <span style={{ fontSize: '12px' }}>Pending</span>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ width: 16, height: 16, backgroundColor: '#28a745', borderRadius: 1 }}></Box>
+                            <span style={{ fontSize: '12px' }}>Confirmed</span>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ width: 16, height: 16, backgroundColor: '#17a2b8', borderRadius: 1 }}></Box>
+                            <span style={{ fontSize: '12px' }}>Completed</span>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ width: 16, height: 16, backgroundColor: '#dc3545', borderRadius: 1 }}></Box>
+                            <span style={{ fontSize: '12px' }}>Cancelled</span>
+                        </Box>
+                    </Box>
+
+                    {/* Calendar */}
+                    <Box
+                        sx={{
+                            border: '1px solid #ddd',
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                            backgroundColor: '#fff',
+                        }}
+                    >
+                        <DayPilotScheduler {...config} ref={schedulerRef} />
+                    </Box>
+
+                    {/* Booking Details Dialog */}
+                    <Dialog open={bookingDialogOpen} onClose={handleBookingDialogClose} maxWidth="md" fullWidth>
+                        <DialogTitle>Event Booking Details</DialogTitle>
+                        <DialogContent>
+                            {selectedBooking && (
+                                <Box sx={{ pt: 1 }}>
+                                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                                        <Box>
+                                            <strong>Booking Number:</strong> {selectedBooking.booking_no}
+                                        </Box>
+                                        <Box>
+                                            <strong>Status:</strong>
+                                            <span
+                                                style={{
+                                                    color: getStatusColor(selectedBooking.status),
+                                                    fontWeight: 'bold',
+                                                    marginLeft: '8px',
+                                                }}
+                                            >
+                                                {selectedBooking.status?.toUpperCase()}
+                                            </span>
+                                        </Box>
+                                        <Box>
+                                            <strong>Nature of Event:</strong> {selectedBooking.nature_of_event}
+                                        </Box>
+                                        <Box>
+                                            <strong>Booked By:</strong> {selectedBooking.booked_by}
+                                        </Box>
+                                        <Box>
+                                            <strong>Guest Name:</strong> {selectedBooking.name || 'N/A'}
+                                        </Box>
+                                        <Box>
+                                            <strong>Number of Guests:</strong> {selectedBooking.no_of_guests}
+                                        </Box>
+                                        <Box>
+                                            <strong>Event Date:</strong> {moment(selectedBooking.event_date).format('MMMM D, YYYY')}
+                                        </Box>
+                                        <Box>
+                                            <strong>Event Time:</strong> {selectedBooking.event_time_from} - {selectedBooking.event_time_to}
+                                        </Box>
+                                        <Box>
+                                            <strong>Venue:</strong> {selectedBooking.event_venue?.name || 'N/A'}
+                                        </Box>
+                                        <Box>
+                                            <strong>Total Amount:</strong> Rs {selectedBooking.total_price}
                                         </Box>
                                     </Box>
-                                )}
-                            </Box>
-                        )}
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleBookingDialogClose}>Close</Button>
-                        {selectedBooking && (
-                            <>
-                                <Button 
-                                    onClick={() => router.visit(route('events.booking.edit', selectedBooking.id))}
-                                    variant="outlined"
-                                >
-                                    Edit Booking
-                                </Button>
-                                <Button 
-                                    onClick={() => router.visit(route('events.booking.invoice', selectedBooking.id))}
-                                    variant="contained"
-                                    sx={{ backgroundColor: '#003366' }}
-                                >
-                                    View Invoice
-                                </Button>
-                            </>
-                        )}
-                    </DialogActions>
-                </Dialog>
+                                    {selectedBooking.additional_notes && (
+                                        <Box sx={{ mt: 2 }}>
+                                            <strong>Additional Notes:</strong>
+                                            <Box sx={{ mt: 1, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>{selectedBooking.additional_notes}</Box>
+                                        </Box>
+                                    )}
+                                </Box>
+                            )}
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleBookingDialogClose}>Close</Button>
+                            {selectedBooking && (
+                                <>
+                                    <Button onClick={() => router.visit(route('events.booking.edit', selectedBooking.id))} variant="outlined">
+                                        Edit Booking
+                                    </Button>
+                                    <Button onClick={() => router.visit(route('events.booking.invoice', selectedBooking.id))} variant="contained" sx={{ backgroundColor: '#003366' }}>
+                                        View Invoice
+                                    </Button>
+                                </>
+                            )}
+                        </DialogActions>
+                    </Dialog>
 
-                {/* Event Booking Invoice Modal */}
-                <EventBookingInvoiceModal
-                    open={invoiceModalOpen}
-                    onClose={handleInvoiceModalClose}
-                    bookingId={selectedBookingId}
-                    setBookings={handleBookingUpdate}
-                />
+                    {/* Event Booking Invoice Modal */}
+                    <EventBookingInvoiceModal open={invoiceModalOpen} onClose={handleInvoiceModalClose} bookingId={selectedBookingId} setBookings={handleBookingUpdate} />
 
-                {/* Event Completion Modal */}
-                <EventCompletionModal
-                    open={completionModalOpen}
-                    onClose={handleCompletionModalClose}
-                    bookingId={completionBookingId}
-                    onSuccess={handleCompletionSuccess}
-                />
+                    {/* Event Completion Modal */}
+                    <EventCompletionModal open={completionModalOpen} onClose={handleCompletionModalClose} bookingId={completionBookingId} onSuccess={handleCompletionSuccess} />
 
-                {/* Cancel Event Booking Modal */}
-                <Modal show={cancelModalOpen} onHide={handleCancelModalClose} centered>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Cancel Event Booking</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <p>Please provide a reason for cancelling this booking:</p>
-                        <TextField
-                            label="Cancellation Reason"
-                            multiline
-                            rows={3}
-                            value={cancelReason}
-                            onChange={(e) => setCancelReason(e.target.value)}
-                            fullWidth
-                            required
-                            sx={{ mt: 2 }}
-                        />
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="outlined" onClick={handleCancelModalClose}>
-                            Close
-                        </Button>
-                        <Button 
-                            variant="contained" 
-                            onClick={handleCancelBooking}
-                            sx={{ backgroundColor: '#dc3545', '&:hover': { backgroundColor: '#bd2130' } }}
-                        >
-                            Cancel Booking
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            </Box>
+                    {/* Cancel Event Booking Modal */}
+                    <Modal show={cancelModalOpen} onHide={handleCancelModalClose} centered>
+                        <Modal.Header closeButton>
+                            <Modal.Title>Cancel Event Booking</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <p>Please provide a reason for cancelling this booking:</p>
+                            <TextField label="Cancellation Reason" multiline rows={3} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} fullWidth required sx={{ mt: 2 }} />
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="outlined" onClick={handleCancelModalClose}>
+                                Close
+                            </Button>
+                            <Button variant="contained" onClick={handleCancelBooking} sx={{ backgroundColor: '#dc3545', '&:hover': { backgroundColor: '#bd2130' } }}>
+                                Cancel Booking
+                            </Button>
+                        </Modal.Footer>
+                    </Modal>
+                </Box>
+            </div>
         </>
     );
 };

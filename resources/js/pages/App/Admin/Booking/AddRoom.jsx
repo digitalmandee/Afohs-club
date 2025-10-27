@@ -4,7 +4,6 @@ import { Box, Typography, Paper, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import CreateEvent from '@/components/App/Events/Create';
 import CreateRoom from '@/components/App/Rooms/Create';
 
 const drawerWidthOpen = 240;
