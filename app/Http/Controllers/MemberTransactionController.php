@@ -18,6 +18,12 @@ use Inertia\Inertia;
 
 class MemberTransactionController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:financial.create')->only('create', 'store');
+        $this->middleware('permission:financial.view')->only('searchMembers', 'getMemberTransactions', 'getAllTransactions');
+    }
+
     public function index()
     {
         // Get transaction statistics

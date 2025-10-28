@@ -43,7 +43,7 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                             <Button
                                 variant="contained"
                                 sx={{backgroundColor: '#063455', color: 'white'}}
-                                onClick={() => router.visit(route('membership.transactions.create'))}
+                                onClick={() => router.visit(route('finance.transaction.create'))}
                             >
                                 Add Subscription
                             </Button>

@@ -9,6 +9,13 @@ use Inertia\Inertia;
 
 class EventMenuController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:events.menu.view')->only('index');
+        $this->middleware('super.admin:events.menu.create')->only('create', 'store');
+        $this->middleware('super.admin:events.menu.edit')->only('edit', 'update');
+        $this->middleware('permission:events.menu.delete')->only('destroy');
+    }
     public function index()
     {
         $eventMenusData = EventMenu::orderBy('created_at', 'desc')->get();

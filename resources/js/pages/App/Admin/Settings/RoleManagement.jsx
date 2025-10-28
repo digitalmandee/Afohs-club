@@ -11,7 +11,7 @@ const drawerWidthClosed = 110; // Set closed width to 120px
 const RoleManagement = () => {
     const { roles, allPermissions, filters, can } = usePage().props;
     const { enqueueSnackbar } = useSnackbar();
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [createRoleOpen, setCreateRoleOpen] = useState(false);
     const [editRoleOpen, setEditRoleOpen] = useState(false);

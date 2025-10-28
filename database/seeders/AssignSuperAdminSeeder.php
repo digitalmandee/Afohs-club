@@ -21,7 +21,7 @@ class AssignSuperAdminSeeder extends Seeder
             $user = User::create([
                 'name' => 'Super Admin',
                 'email' => 'admin@afohs.com',
-                'password' => bcrypt('password'),
+                'password' => bcrypt(12345678),
             ]);
         }
 
@@ -38,7 +38,7 @@ class AssignSuperAdminSeeder extends Seeder
             $testUser = User::create([
                 'name' => 'Test User',
                 'email' => 'user@afohs.com',
-                'password' => bcrypt('password'),
+                'password' => bcrypt(12345678),
             ]);
             
             $userRole = Role::where('name', 'user')->first();

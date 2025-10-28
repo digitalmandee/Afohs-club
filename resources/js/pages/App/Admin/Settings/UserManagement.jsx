@@ -11,7 +11,7 @@ const drawerWidthClosed = 110;
 const UserManagement = () => {
     const { users, roles, filters, can } = usePage().props;
     const { enqueueSnackbar } = useSnackbar();
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [createUserOpen, setCreateUserOpen] = useState(false);
     const [createEmployeeUserOpen, setCreateEmployeeUserOpen] = useState(false);

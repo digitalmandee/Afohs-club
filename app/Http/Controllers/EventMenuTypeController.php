@@ -8,6 +8,13 @@ use Inertia\Inertia;
 
 class EventMenuTypeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:events.menuType.view')->only('index');
+        $this->middleware('super.admin:events.menuType.create')->only('create', 'store');
+        $this->middleware('super.admin:events.menuType.edit')->only('edit', 'update');
+        $this->middleware('permission:events.menuType.delete')->only('destroy');
+    }
     public function index()
     {
         $eventMenuTypesData = EventMenuType::orderBy('created_at', 'desc')->get();

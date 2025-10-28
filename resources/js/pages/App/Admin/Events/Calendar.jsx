@@ -204,6 +204,10 @@ const EventCalendar = () => {
         rowHeaderWidth: 150,
         resources: resources,
         events: events,
+        eventMoveHandling: 'Disabled',
+        eventResizeHandling: 'Disabled',
+        eventDeleteHandling: 'Disabled',
+        eventClickHandling: 'Enabled',
         onEventClick: (args) => {
             setSelectedBookingId(args.e.data.booking.id);
             setInvoiceModalOpen(true);

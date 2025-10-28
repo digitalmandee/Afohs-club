@@ -8,6 +8,13 @@ use Inertia\Inertia;
 
 class EventChargesTypeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:events.chargesType.view')->only('index');
+        $this->middleware('super.admin:events.chargesType.create')->only('create', 'store');
+        $this->middleware('super.admin:events.chargesType.edit')->only('edit', 'update');
+        $this->middleware('permission:events.chargesType.delete')->only('destroy');
+    }
     // List all Event charges types
     public function index()
     {

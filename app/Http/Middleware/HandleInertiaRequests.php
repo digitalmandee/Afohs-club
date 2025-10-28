@@ -48,6 +48,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user()?->load('employee:id,user_id,employee_id,phone_no,designation,address'),
                 'role' => $request->user()?->roles->first()?->name ?? null,
                 'permissions' => $request->user()?->getAllPermissions()->pluck('name'),
+                'roles' => $request->user()?->roles->pluck('name') ?? collect(),
             ],
             'tenantAssetBase' => '',
             'ziggy' => fn(): array => [

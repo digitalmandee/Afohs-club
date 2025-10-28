@@ -8,6 +8,13 @@ use Inertia\Inertia;
 
 class RoomMiniBarController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:rooms.miniBar.view')->only('index');
+        $this->middleware('super.admin:rooms.miniBar.create')->only('create', 'store');
+        $this->middleware('super.admin:rooms.miniBar.edit')->only('edit', 'update');
+        $this->middleware('permission:rooms.miniBar.delete')->only('destroy');
+    }
     // List all room mini bar types
     public function index()
     {

@@ -9,6 +9,13 @@ use Inertia\Inertia;
 
 class SubscriptionTypeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:subscriptions.types.view')->only('index');
+        $this->middleware('permission:subscriptions.types.create')->only('create', 'store');
+        $this->middleware('permission:subscriptions.types.edit')->only('edit', 'update');
+        $this->middleware('permission:subscriptions.types.delete')->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      */

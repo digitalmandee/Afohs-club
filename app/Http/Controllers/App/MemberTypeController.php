@@ -9,6 +9,13 @@ use Inertia\Inertia;
 
 class MemberTypeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:member-types.view')->only('index');
+        $this->middleware('permission:member-types.create')->only('create', 'store');
+        $this->middleware('permission:member-types.edit')->only('edit', 'update');
+        $this->middleware('permission:member-types.delete')->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      */

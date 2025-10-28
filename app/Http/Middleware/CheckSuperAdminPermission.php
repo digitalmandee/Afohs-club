@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 use Inertia\Response as InertiaResponse;
@@ -31,7 +32,7 @@ class CheckSuperAdminPermission
             $hasPermission = false;
 
             foreach ($permissionsArray as $permission) {
-                if ($user->hasPermissionTo($permission, 'web')) {
+                if ($user->can($permission, 'web')) {
                     $hasPermission = true;
                     break;
                 }

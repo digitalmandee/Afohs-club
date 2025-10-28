@@ -21,14 +21,13 @@ class PermissionsSeeder extends Seeder
         $permissions = [
             // Dashboard
             'dashboard.view',
+            'dashboard.stats.view',
 
             // Members Management
             'members.view',
             'members.create',
             'members.edit',
             'members.delete',
-            'members.export',
-            'members.import',
 
             // Family Members
             'family-members.view',
@@ -51,52 +50,111 @@ class PermissionsSeeder extends Seeder
             'member-types.delete',
 
             // Financial Management
+            'financial.dashboard.view',
             'financial.view',
             'financial.create',
             'financial.edit',
             'financial.delete',
-            'financial.invoices.view',
-            'financial.invoices.create',
-            'financial.invoices.edit',
-            'financial.invoices.delete',
-            'financial.payments.view',
-            'financial.payments.create',
-            'financial.payments.edit',
-            'financial.payments.delete',
 
-            // Reports
-            'reports.view',
-            'reports.members',
-            'reports.financial',
-            'reports.maintenance',
-            'reports.export',
+            // Sports Subscription
+            'subscriptions.dashboard.view',
+            'subscriptions.view',
+            'subscriptions.create',
+            'subscriptions.edit',
+            'subscriptions.delete',
+            'subscriptions.types.view',
+            'subscriptions.types.create',
+            'subscriptions.types.edit',
+            'subscriptions.types.delete',
+            'subscriptions.categories.view',
+            'subscriptions.categories.create',
+            'subscriptions.categories.edit',
+            'subscriptions.categories.delete',
+
+            'kitchen.dashboard.view',
+            'kitchen.view',
+            'kitchen.create',
+            'kitchen.edit',
+            'kitchen.delete',
 
             // Events Management
-            'events.view',
-            'events.create',
-            'events.edit',
-            'events.delete',
+            'events.bookings.create',
+            'events.bookings.edit',
+            'events.bookings.delete',
+            'events.bookings.view',
+            'events.bookings.completed',
+            'events.bookings.cancelled',
+            'events.bookings.calendar',
+            
+            'events.venue.view',
+            'events.venue.create',
+            'events.venue.edit',
+            'events.venue.delete',
+
+            'events.menu.view',
+            'events.menu.create',
+            'events.menu.edit',
+            'events.menu.delete',
+            
+            'events.menuCategories.view',
+            'events.menuCategories.create',
+            'events.menuCategories.edit',
+            'events.menuCategories.delete',
+            
+            'events.menuTypes.view',
+            'events.menuTypes.create',
+            'events.menuTypes.edit',
+            'events.menuTypes.delete',
+
+            'events.menuAdons.view',
+            'events.menuAdons.create',
+            'events.menuAdons.edit',
+            'events.menuAdons.delete',
+            
+            'events.chargesTypes.view',
+            'events.chargesTypes.create',
+            'events.chargesTypes.edit',
+            'events.chargesTypes.delete',
             'events.bookings.view',
             'events.bookings.create',
             'events.bookings.edit',
             'events.bookings.delete',
 
             // Room Bookings
-            'room-bookings.view',
-            'room-bookings.create',
-            'room-bookings.edit',
-            'room-bookings.delete',
+            'rooms.bookings.view',
+            'rooms.bookings.create',
+            'rooms.bookings.edit',
+            'rooms.bookings.delete',
+            'rooms.bookings.calendar',
+            'rooms.bookings.checkin',
+            'rooms.bookings.checkout',
+            'rooms.bookings.requests',
 
-            // POS System
-            'pos.view',
-            'pos.orders.create',
-            'pos.orders.edit',
-            'pos.orders.delete',
-            'pos.menu.view',
-            'pos.menu.create',
-            'pos.menu.edit',
-            'pos.menu.delete',
-
+            'rooms.view',
+            'rooms.create',
+            'rooms.edit',
+            'rooms.delete',
+            
+            'rooms.types.view',
+            'rooms.types.create',
+            'rooms.types.edit',
+            'rooms.types.delete',
+            
+            'rooms.categories.view',
+            'rooms.categories.create',
+            'rooms.categories.edit',
+            'rooms.categories.delete',
+            
+            'rooms.chargesTypes.view',
+            'rooms.chargesTypes.create',
+            'rooms.chargesTypes.edit',
+            'rooms.chargesTypes.delete',
+            
+            'rooms.miniBar.view',
+            'rooms.miniBar.create',
+            'rooms.miniBar.edit',
+            'rooms.miniBar.delete',
+            
             // Employee Management
             'employees.view',
             'employees.create',
@@ -107,6 +165,23 @@ class PermissionsSeeder extends Seeder
             'employees.attendance.edit',
             'employees.leaves.view',
             'employees.leaves.approve',
+
+            'finance.dashboard.view',
+            'finance.view',
+            'finance.create',
+            
+            // Reports
+            'reports.view',
+
+            // // POS System
+            // 'pos.view',
+            // 'pos.orders.create',
+            // 'pos.orders.edit',
+            // 'pos.orders.delete',
+            // 'pos.product.view',
+            // 'pos.product.create',
+            // 'pos.product.edit',
+            // 'pos.product.delete',
 
             // User Management (Super Admin only)
             'users.view',

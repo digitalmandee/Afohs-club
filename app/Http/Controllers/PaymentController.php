@@ -26,7 +26,7 @@ class PaymentController extends Controller
         $invoice = null;
 
         if ($invoiceId) {
-            $invoice = FinancialInvoice::where('invoice_no', $invoiceId)->with('member:id,user_id,membership_no,first_name,last_name,personal_email,membership_date')->first();
+            $invoice = FinancialInvoice::where('invoice_no', $invoiceId)->with('member:id,membership_no,first_name,last_name,personal_email,membership_date')->first();
         }
 
         return Inertia::render('App/Admin/Membership/Payment', compact('invoice'));

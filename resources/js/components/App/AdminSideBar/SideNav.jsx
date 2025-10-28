@@ -429,11 +429,11 @@ export default function SideNav({ open, setOpen }) {
             children: [
                 {
                     text: 'Bulk Transaction',
-                    path: route('membership.transactions.bulk-migration'),
+                    path: route('finance.transaction.bulk-migration'),
                 },
                 {
                     text: 'Add Transaction',
-                    path: route('membership.transactions.create'),
+                    path: route('finance.transaction.create'),
                 },
                 {
                     text: 'Dashboard',
