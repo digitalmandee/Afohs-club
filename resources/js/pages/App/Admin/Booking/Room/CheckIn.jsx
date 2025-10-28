@@ -1,39 +1,62 @@
 import React, { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Modal as MuiModal } from '@mui/material';
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment } from '@mui/material';
+import { Search } from '@mui/icons-material';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
-import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Modal } from 'react-bootstrap'; // Using react-bootstrap for invoice modal
+
 import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const RoomCheckIn = () => {
-    const { bookings } = usePage().props;
+const RoomCheckIn = ({ bookings, filters }) => {
     const [open, setOpen] = useState(true);
 
-    // ✅ Modal states
-    const [showCheckInModal, setShowCheckInModal] = useState(false);
+    // ✅ State for Invoice Modal
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
-    const [filteredBookings, setFilteredBookings] = useState(bookings.data || []);
 
-    const handleOpenInvoiceModal = (booking) => {
+    // ✅ Filter States
+    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [startDate, setStartDate] = useState(filters?.start_date || '');
+    const [endDate, setEndDate] = useState(filters?.end_date || '');
+
+    // ✅ Open Invoice Modal
+    const handleOpenInvoice = (booking) => {
         setSelectedBooking(booking);
         setShowInvoiceModal(true);
     };
 
+    // ✅ Close Invoice Modal
     const handleCloseInvoice = () => {
         setShowInvoiceModal(false);
         setSelectedBooking(null);
     };
 
-    const handleOpenCheckInModal = (booking) => {
-        setSelectedBooking(booking);
-        setShowCheckInModal(true);
+    // ✅ Handle Filter/Search - Send to backend
+    const handleSearch = () => {
+        router.get(
+            route('rooms.checkin'),
+            {
+                search: searchQuery,
+                start_date: startDate,
+                end_date: endDate,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            }
+        );
+    };
+
+    // ✅ Reset Filters
+    const handleReset = () => {
+        setSearchQuery('');
+        setStartDate('');
+        setEndDate('');
+        router.get(route('rooms.checkin'), {}, { preserveState: true, preserveScroll: true });
     };
 
     return (
@@ -48,13 +71,105 @@ const RoomCheckIn = () => {
                 }}
             >
                 <Box sx={{ p: 3 }}>
-                    <Box display="flex" justifyContent="space-between">
-                        <div className="d-flex align-items-center">
-                            <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Room CheckIn</Typography>
-                        </div>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography
+                            sx={{
+                                marginLeft: '10px',
+                                fontWeight: 500,
+                                color: '#063455',
+                                fontSize: '30px',
+                            }}
+                        >
+                            Room CheckIn
+                        </Typography>
                     </Box>
 
-                    {/* ✅ Table */}
+                    {/* Filter Section */}
+                    <Box sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+                        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                            {/* Search Input */}
+                            <TextField
+                                placeholder="Search by ID, Member, Guest, Room..."
+                                variant="outlined"
+                                size="small"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                sx={{ minWidth: '300px', backgroundColor: 'white' }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+
+                            {/* Start Date */}
+                            <TextField
+                                label="Start Date"
+                                type="date"
+                                size="small"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                sx={{ minWidth: '180px', backgroundColor: 'white' }}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+
+                            {/* End Date */}
+                            <TextField
+                                label="End Date"
+                                type="date"
+                                size="small"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                sx={{ minWidth: '180px', backgroundColor: 'white' }}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+
+                            {/* Search Button */}
+                            <Button
+                                variant="contained"
+                                onClick={handleSearch}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    color: 'white',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        backgroundColor: '#052a44',
+                                    },
+                                }}
+                            >
+                                Search
+                            </Button>
+
+                            {/* Reset Button */}
+                            <Button
+                                variant="outlined"
+                                onClick={handleReset}
+                                sx={{
+                                    borderColor: '#063455',
+                                    color: '#063455',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        borderColor: '#052a44',
+                                        backgroundColor: '#f5f5f5',
+                                    },
+                                }}
+                            >
+                                Reset
+                            </Button>
+
+                            {/* Results Count */}
+                            <Typography sx={{ ml: 'auto', color: '#7F7F7F', fontSize: '14px' }}>
+                                Showing {bookings.from || 0} to {bookings.to || 0} of {bookings.total || 0} results
+                            </Typography>
+                        </Box>
+                    </Box>
+
                     <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none' }}>
                         <Table>
                             <TableHead>
@@ -70,9 +185,8 @@ const RoomCheckIn = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredBookings
-                                    .filter((booking) => booking.status === 'confirmed') // ✅ Only confirmed bookings
-                                    .map((booking) => (
+                                {bookings.data && bookings.data.length > 0 ? (
+                                    bookings.data.map((booking) => (
                                         <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell>{booking.id}</TableCell>
                                             <TableCell>{booking.booking_date}</TableCell>
@@ -80,20 +194,24 @@ const RoomCheckIn = () => {
                                             <TableCell>{booking.room?.name}</TableCell>
                                             <TableCell>{booking.persons}</TableCell>
                                             <TableCell>{booking.per_day_charge}</TableCell>
-                                            <TableCell>{booking.status}</TableCell>
+                                            <TableCell>{booking.status.replace(/_/g, ' ')}</TableCell>
                                             <TableCell>
-                                                <Button variant="outlined" size="small" style={{ marginRight: '8px' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))}>
-                                                    Edit
+                                                <Button variant="outlined" size="small" style={{ marginRight: '8px' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
+                                                    Check Out
                                                 </Button>
-                                                <Button variant="contained" size="small" style={{ marginRight: '8px', backgroundColor: '#063455', color: '#fff' }} onClick={() => handleOpenCheckInModal(booking)}>
-                                                    Check-In
-                                                </Button>
-                                                <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoiceModal(booking)}>
+                                                <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>
                                                     View
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={8} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                            No bookings found
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </TableContainer>
@@ -121,24 +239,7 @@ const RoomCheckIn = () => {
                 </Box>
             </div>
 
-            {/* ✅ Invoice Modal */}
-            <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} setBookings={setFilteredBookings} />
-
-            {/* ✅ Check-In Modal */}
-            {showCheckInModal && (
-                <RoomCheckInModal
-                    open={showCheckInModal}
-                    onClose={(status) => {
-                        setShowCheckInModal(false);
-
-                        // ✅ If success, update the booking status in local state (better to use state copy)
-                        if (status === 'success' && selectedBooking) {
-                            bookings.find((b) => b.id === selectedBooking.id).status = 'checked-in';
-                        }
-                    }}
-                    bookingId={selectedBooking?.id} // ✅ Pass booking ID to modal
-                />
-            )}
+            <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
         </>
     );
 };
