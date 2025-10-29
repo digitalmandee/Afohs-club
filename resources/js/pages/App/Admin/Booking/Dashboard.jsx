@@ -190,107 +190,119 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
     const displayText = startDate && endDate ? `${format(startDate, 'dd MMM yyyy')} — ${format(endDate, 'dd MMM yyyy')}` : 'Check-in date — Check-out date';
 
     return (
-        <div style={{ padding: '10px', borderRadius: '4px' }}>
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 120px 60px',
-                    gap: '6px',
-                    alignItems: 'center',
-                    marginBottom: '10px',
-                }}
-            >
-                {/* Calendar Range */}
-                <Box
+        <div
+            style={{
+                display: 'flex',
+                justifyContent: 'center',   // ✅ centers horizontally
+                alignItems: 'center',       // ✅ centers vertically
+                // height: '100vh',
+                backgroundColor: '#f9f9f9', // optional nice background
+            }}
+        >
+            <div style={{ padding: '10px', borderRadius: '4px', width: '90%' }}>
+                <div
                     style={{
-                        flex: '1',
-                        backgroundColor: '#fff',
-                        padding: '5px',
-                        borderRadius: '4px',
-                        marginRight: '10px',
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr 160px 60px',
+                        gap: '6px',
+                        alignItems: 'center',
+                        marginBottom: '10px',
                     }}
                 >
+                    {/* Calendar Range */}
                     <Box
                         style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
+                            flex: '1',
+                            backgroundColor: '#fff',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            marginRight: '10px',
+                            border: '2px solid #063455',
                         }}
                     >
-                        <span>📅</span>
-                        <div className="date-range" style={{ width: '100%' }}>
-                            <Box>
-                                <Box>
-                                    <Button ref={anchorRef} onClick={handleClick} variant="outlined">
-                                        {displayText}
-                                    </Button>
-                                </Box>
-
-                                <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
-                                    <Box ref={popperRef} sx={{ bgcolor: 'background.paper', p: 2, zIndex: 1300 }}>
-                                        <DateRange editableDateInputs={true} onChange={(item) => setRange([item.selection])} moveRangeOnFirstSelection={false} ranges={range} months={2} showSelectionPreview={false} showDateDisplay={false} direction="horizontal" />
-                                    </Box>
-                                </Popper>
-                            </Box>
-                        </div>
-                    </Box>
-                    {errors.date && (
-                        <Typography color="error" variant="caption" sx={{ ml: 1, display: 'block' }}>
-                            {errors.date}
-                        </Typography>
-                    )}
-                </Box>
-
-                {/* Persons Input */}
-                <div style={{ flex: '1', backgroundColor: '#fff', padding: '5px 10px', borderRadius: '4px' }}>
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                        }}
-                    >
-                        <span>👤</span>
-                        <span style={{ whiteSpace: 'nowrap' }}>Total Person:</span>
-                        <input
-                            type="number"
-                            min="0"
-                            value={adults}
-                            onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
+                        <Box
                             style={{
-                                width: '100%',
-                                padding: '5px 8px',
-                                border: '1px solid #ccc',
-                                borderRadius: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                justifyContent: 'center'
                             }}
-                            placeholder="0"
-                        />
+                        >
+                            <span>📅</span>
+                            <div className="date-range" style={{ width: '100%' }}>
+                                <Box>
+                                    <Box>
+                                        <Button ref={anchorRef} onClick={handleClick} variant="outlined">
+                                            {displayText}
+                                        </Button>
+                                    </Box>
+
+                                    <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
+                                        <Box ref={popperRef} sx={{ bgcolor: 'background.paper', p: 2, zIndex: 1300 }}>
+                                            <DateRange editableDateInputs={true} onChange={(item) => setRange([item.selection])} moveRangeOnFirstSelection={false} ranges={range} months={2} showSelectionPreview={false} showDateDisplay={false} direction="horizontal" />
+                                        </Box>
+                                    </Popper>
+                                </Box>
+                            </div>
+                        </Box>
+                        {errors.date && (
+                            <Typography color="error" variant="caption" sx={{ ml: 1, display: 'block' }}>
+                                {errors.date}
+                            </Typography>
+                        )}
+                    </Box>
+
+                    {/* Persons Input */}
+                    <div style={{ flex: '1', backgroundColor: '#fff', padding: '5px 15px', borderRadius: '4px', border: '2px solid #063455', }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                            }}
+                        >
+                            <span>👤</span>
+                            <span style={{ whiteSpace: 'nowrap' }}>Total Person:</span>
+                            <input
+                                type="number"
+                                min="0"
+                                value={adults}
+                                onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
+                                style={{
+                                    width: '100%',
+                                    padding: '5px 8px',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px',
+                                }}
+                                placeholder="0"
+                            />
+                        </div>
+                        {errors.persons && (
+                            <Typography color="error" variant="caption" sx={{ ml: 1 }}>
+                                {errors.persons}
+                            </Typography>
+                        )}
                     </div>
-                    {errors.persons && (
-                        <Typography color="error" variant="caption" sx={{ ml: 1 }}>
-                            {errors.persons}
-                        </Typography>
-                    )}
+
+                    {/* Search Button */}
+                    <Button
+                        style={{
+                            backgroundColor: '#063455',
+                            color: '#fff',
+                            padding: '10px 15px',
+                            borderRadius: '4px',
+                            marginLeft: '30px',
+                        }}
+                        onClick={handleSearch}
+                    >
+                        Search
+                    </Button>
+
+                    {/* Clear Filter */}
+                    <Button variant="danger" style={{ padding: '10px', borderRadius: '4px' }} onClick={handleClear}>
+                        <HighlightOffIcon />
+                    </Button>
                 </div>
-
-                {/* Search Button */}
-                <Button
-                    style={{
-                        backgroundColor: '#063455',
-                        color: '#fff',
-                        padding: '10px 15px',
-                        borderRadius: '4px',
-                        marginLeft: '10px',
-                    }}
-                    onClick={handleSearch}
-                >
-                    Search
-                </Button>
-
-                {/* Clear Filter */}
-                <Button variant="danger" style={{ padding: '10px', borderRadius: '4px' }} onClick={handleClear}>
-                    <HighlightOffIcon />
-                </Button>
             </div>
         </div>
     );
