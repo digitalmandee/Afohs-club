@@ -552,7 +552,7 @@ class MembershipController extends Controller
                 foreach ($idsToDelete as $familyId) {
                     $family = Member::find($familyId);
 
-                    if ($family && $family->parent_id == $member->user_id) {
+                    if ($family && $family->parent_id == $member->id) {
                         // Optionally also delete related User
                         if ($family->user) {
                             $family->user->delete();

@@ -151,7 +151,7 @@ const Transaction = ({ transactions, filters }) => {
                                     <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
                                         <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice No</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Fee Type</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Type</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Amount</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Payment Method</TableCell>
@@ -163,15 +163,18 @@ const Transaction = ({ transactions, filters }) => {
                                 <TableBody>
                                     {transactions.data && transactions.data.length > 0 ? (
                                         transactions.data.map((transaction) => {
-                                            // Format fee type for display
-                                            const formatFeeType = (feeType) => {
-                                                if (!feeType) return 'N/A';
-                                                return feeType
+                                            // Format fee type or invoice type for display
+                                            const formatType = (type) => {
+                                                if (!type) return 'N/A';
+                                                return type
                                                     .replace(/_/g, ' ')
                                                     .split(' ')
                                                     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                                                     .join(' ');
                                             };
+                                            
+                                            // Use fee_type if available, otherwise use invoice_type
+                                            const displayType = transaction.fee_type || transaction.invoice_type;
 
                                             // Format payment method
                                             const formatPaymentMethod = (method) => {
@@ -236,7 +239,7 @@ const Transaction = ({ transactions, filters }) => {
                                                             fontSize: '12px',
                                                             fontWeight: 500
                                                         }}>
-                                                            {formatFeeType(transaction.fee_type) || transaction.invoice_type || 'N/A'}
+                                                            {formatType(displayType)}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>

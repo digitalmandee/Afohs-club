@@ -203,7 +203,7 @@ class EventBookingController extends Controller
                 }
             }
 
-            // Create financial invoice
+            // ✅ Create financial invoice using polymorphic relationship
             $invoice_no = $this->getInvoiceNo();
             
             // Calculate original amount (before discount) and final amount (after discount)
@@ -219,22 +219,22 @@ class EventBookingController extends Controller
                 'total_price' => $finalAmount, // Final amount after discount
                 'issue_date' => now(),
                 'status' => 'unpaid',
+                // Keep data for backward compatibility
                 'data' => [
-                    'booking_id' => $eventBooking->id,
                     'booking_no' => $eventBooking->booking_no,
-                    'booking_type' => 'event_booking',
-                    'booking_data' => $eventBooking->toArray()
+                    'booking_type' => 'event_booking'
                 ]
             ];
 
-            // ✅ Assign IDs based on guest type
+            // ✅ Assign member/customer ID based on guest type
             if (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
                 $invoiceData['member_id'] = (int) $request->guest['id'];
             } else {
                 $invoiceData['customer_id'] = (int) $request->guest['id'];
             }
 
-            $invoice = FinancialInvoice::create($invoiceData);
+            // ✅ Use relationship to create invoice (automatically sets invoiceable_id and invoiceable_type)
+            $invoice = $eventBooking->invoice()->create($invoiceData);
 
             DB::commit();
 
@@ -473,17 +473,8 @@ class EventBookingController extends Controller
                 }
             }
 
-            // Update associated invoice
-            $invoice = FinancialInvoice::where('invoice_type', 'event_booking')
-                ->where(function ($query) use ($booking) {
-                    if ($booking->customer_id) {
-                        $query->where('customer_id', $booking->customer_id);
-                    } else {
-                        $query->where('member_id', $booking->member_id);
-                    }
-                })
-                ->whereJsonContains('data->booking_id', $booking->id)
-                ->first();
+            // ✅ Update associated invoice using polymorphic relationship
+            $invoice = $booking->invoice;
 
             if ($invoice) {
                 // Calculate original amount (before discount) and final amount (after discount)
@@ -495,12 +486,6 @@ class EventBookingController extends Controller
                     'discount_value' => $request->discount ?? 0,
                     'amount' => $originalAmount, // Original amount before discount
                     'total_price' => $finalAmount, // Final amount after discount
-                    'data' => [
-                        'booking_id' => $booking->id,
-                        'booking_no' => $booking->booking_no,
-                        'booking_type' => 'event_booking',
-                        'booking_data' => $booking->fresh()->toArray()
-                    ]
                 ]);
             }
 
@@ -530,22 +515,10 @@ class EventBookingController extends Controller
             'eventVenue:id,name',
             'menu',
             'menuAddOns',
-            'otherCharges'
+            'otherCharges',
+            'invoice' // ✅ Eager load invoice using polymorphic relationship
         ])->findOrFail($id);
 
-        // Get associated invoice
-        $invoice = FinancialInvoice::where('invoice_type', 'event_booking')
-            ->where(function ($query) use ($booking) {
-                if ($booking->customer_id) {
-                    $query->where('customer_id', $booking->customer_id);
-                } else {
-                    $query->where('member_id', $booking->member_id);
-                }
-            })
-            ->whereJsonContains('data->booking_id', $booking->id)
-            ->first();
-
-        $booking->invoice = $invoice;
         return response()->json(['booking' => $booking]);
     }
 

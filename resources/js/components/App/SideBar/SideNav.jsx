@@ -1,7 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import HomeIcon from '@mui/icons-material/Home';
 import InventoryIcon from '@mui/icons-material/Inventory';
-import { RiSofaLine } from "react-icons/ri";
+import { RiSofaLine } from 'react-icons/ri';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import PeopleIcon from '@mui/icons-material/People';
@@ -105,41 +105,37 @@ export default function SideNav({ open, setOpen }) {
     const [showProfile, setShowProfile] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard'), permission: 'order' },
+        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard') },
         { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
-        { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index'), permission: 'order' },
-        { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category'), permission: 'order' },
-        { text: 'Reservations', icon: <RiSofaLine  style={{height:"25px", width:"25px"}}/>, path: route('reservations.index'), permission: 'order' },
-        { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index'), permission: 'order' },
+        { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index') },
+        { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category') },
+        { text: 'Reservations', icon: <RiSofaLine style={{ height: '25px', width: '25px' }} />, path: route('reservations.index') },
+        { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index') },
         {
             text: 'Table Management',
             icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" />,
             path: route('table.management'),
-            permission: 'order',
         },
         {
             text: 'Order Management',
             icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
             path: route('order.management'),
-            permission: 'order',
         },
         // {
         //     text: 'Members',
         //     icon: <IoPeople style={{ height: 20, width: 20 }} />,
         //     path: route('members.index'),
-        //     permission: 'order',
+        //
         // },
         {
             text: 'Guests',
             icon: <IoPeople style={{ height: 20, width: 20 }} />,
             path: route('customers.index'),
-            permission: 'order',
         },
         {
             text: 'Settings',
             icon: <SettingsIcon />,
             path: route('setting.index'),
-            permission: 'order',
         },
     ];
 
@@ -413,7 +409,7 @@ export default function SideNav({ open, setOpen }) {
 
                     <List>
                         {menuItems
-                            .filter((item) => auth.permissions.includes(item.permission))
+                            .filter((item) => !item.permission || auth.permissions.includes(item.permission))
                             .map(({ text, icon, path }) => {
                                 const pathOnly = new URL(path, window.location.origin).pathname;
                                 const isSelected = url.startsWith(pathOnly);

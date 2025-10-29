@@ -8,7 +8,7 @@ import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import RoomCheckInModal from './CheckInModal';
 import { router } from '@inertiajs/react';
 
-const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings }) => {
+const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeView = false }) => {
     const [loading, setLoading] = useState(false);
     const [showCheckInModal, setShowCheckInModal] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
@@ -113,22 +113,26 @@ const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings }) => {
                     <Button variant="secondary" onClick={onClose}>
                         Close
                     </Button>
-                    {selectedBooking?.status === 'confirmed' && (
-                        <Button variant="secondary" onClick={() => setShowCheckInModal(true)}>
-                            Check In
-                        </Button>
-                    )}
-                    {selectedBooking?.status === 'checked_in' && (
-                        <Button variant="secondary" onClick={() => router.visit(route('rooms.edit.booking', { id: selectedBooking.id, type: 'checkout' }))}>
-                            Check Out
-                        </Button>
-                    )}
-                    {!['checked_out', 'cancelled', 'no_show', 'refunded'].includes(selectedBooking?.status) ? (
-                        <Button variant="secondary" onClick={() => router.visit(route('rooms.edit.booking', { id: selectedBooking?.id }))}>
-                            Edit
-                        </Button>
-                    ) : (
-                        ''
+                    {!financeView && (
+                        <>
+                            {selectedBooking?.status === 'confirmed' && (
+                                <Button variant="secondary" onClick={() => setShowCheckInModal(true)}>
+                                    Check In
+                                </Button>
+                            )}
+                            {selectedBooking?.status === 'checked_in' && (
+                                <Button variant="secondary" onClick={() => router.visit(route('rooms.edit.booking', { id: selectedBooking.id, type: 'checkout' }))}>
+                                    Check Out
+                                </Button>
+                            )}
+                            {!['checked_out', 'cancelled', 'no_show', 'refunded'].includes(selectedBooking?.status) ? (
+                                <Button variant="secondary" onClick={() => router.visit(route('rooms.edit.booking', { id: selectedBooking?.id }))}>
+                                    Edit
+                                </Button>
+                            ) : (
+                                ''
+                            )}
+                        </>
                     )}
                     {selectedBooking?.invoice?.status === 'unpaid' ? (
                         <Button variant="success" onClick={() => router.visit(route('booking.payment', { invoice_no: selectedBooking?.invoice?.id }))}>

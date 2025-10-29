@@ -76,12 +76,16 @@ class FinancialController extends Controller
         // Total Expenses (placeholder - you can implement expense tracking later)
         $totalExpenses = 0; // TODO: Implement expense tracking
 
-        // Recent transactions (all types)
+        // Recent transactions (all types) with polymorphic booking data
         $recentTransactions = FinancialInvoice::with([
                 'member:id,full_name,membership_no,mobile_number_a',
                 'customer:id,name,email',
                 'createdBy:id,name'
             ])
+            ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type', 
+                     'member_id', 'customer_id', 'fee_type', 'amount', 'total_price', 
+                     'paid_amount', 'status', 'payment_method', 'payment_date', 
+                     'valid_to', 'created_at', 'created_by')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()

@@ -41,7 +41,10 @@ class FinancialInvoice extends BaseModel
         'credit_card_type',
         // Subscription fields
         'subscription_type_id',
-        'subscription_category_id'
+        'subscription_category_id',
+        // Polymorphic relationship fields
+        'invoiceable_id',
+        'invoiceable_type'
     ];
 
     protected $casts = [
@@ -76,5 +79,13 @@ class FinancialInvoice extends BaseModel
     public function subscriptionCategory()
     {
         return $this->belongsTo(SubscriptionCategory::class, 'subscription_category_id', 'id');
+    }
+
+    /**
+     * Get the parent invoiceable model (RoomBooking, EventBooking, FoodOrder, etc.).
+     */
+    public function invoiceable()
+    {
+        return $this->morphTo();
     }
 }

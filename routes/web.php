@@ -145,7 +145,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('/create-booking', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.booking.create');
 
             Route::get('dashboard', [RoomController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
-            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('super.admin:rooms.bookings.view');
+            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
             Route::get('add', [RoomController::class, 'create'])->name('rooms.add')->middleware('super.admin:rooms.create');
             Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
             Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
