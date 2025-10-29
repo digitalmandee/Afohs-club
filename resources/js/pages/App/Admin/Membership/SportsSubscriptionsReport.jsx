@@ -2,8 +2,8 @@ import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Chip, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
-import { Search, Print } from '@mui/icons-material';
+import { TextField, Chip, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
+import { Search, Print, ArrowBack } from '@mui/icons-material';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -11,7 +11,7 @@ const drawerWidthClosed = 110;
 const SportsSubscriptionsReport = () => {
     // Get props first
     const { transactions, statistics, filters, all_cities, all_payment_methods, all_categories, all_genders, all_family_members } = usePage().props;
-    
+
     // Modal state
     const [open, setOpen] = useState(true);
     const [allFilters, setAllFilters] = useState({
@@ -47,9 +47,9 @@ const SportsSubscriptionsReport = () => {
     };
 
     const handlePageChange = (event, page) => {
-        router.get(route('membership.sports-subscriptions-report'), { 
-            ...allFilters, 
-            page: page 
+        router.get(route('membership.sports-subscriptions-report'), {
+            ...allFilters,
+            page: page
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -114,48 +114,48 @@ const SportsSubscriptionsReport = () => {
     const handlePrint = () => {
         // Build query string with current filters and page
         const params = new URLSearchParams();
-        
+
         if (allFilters.member_search) {
             params.append('member_search', allFilters.member_search);
         }
-        
+
         if (allFilters.invoice_search) {
             params.append('invoice_search', allFilters.invoice_search);
         }
-        
+
         if (allFilters.date_from) {
             params.append('date_from', allFilters.date_from);
         }
-        
+
         if (allFilters.date_to) {
             params.append('date_to', allFilters.date_to);
         }
-        
+
         if (allFilters.city) {
             params.append('city', allFilters.city);
         }
-        
+
         if (allFilters.payment_method) {
             params.append('payment_method', allFilters.payment_method);
         }
-        
+
         if (allFilters.gender) {
             params.append('gender', allFilters.gender);
         }
-        
+
         if (allFilters.family_member) {
             params.append('family_member', allFilters.family_member);
         }
-        
+
         if (allFilters.categories && allFilters.categories.length > 0) {
             allFilters.categories.forEach(cat => params.append('categories[]', cat));
         }
-        
+
         // Add current page number
         if (transactions?.current_page) {
             params.append('page', transactions.current_page);
         }
-        
+
         // Open print page in new window
         const printUrl = route('membership.sports-subscriptions-report.print') + (params.toString() ? '?' + params.toString() : '');
         window.open(printUrl, '_blank');
@@ -175,7 +175,12 @@ const SportsSubscriptionsReport = () => {
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Sports Subscriptions Report</Typography>
+                        <div className="d-flex align-items-center">
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBack />
+                            </IconButton>
+                            <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Sports Subscriptions Report</Typography>
+                        </div>
                         <Button
                             variant="contained"
                             startIcon={<Print />}
@@ -417,8 +422,8 @@ const SportsSubscriptionsReport = () => {
                                                     {transaction.data?.subscription_type_name || 'N/A'}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Chip 
-                                                        label={transaction.data?.family_member_relation || 'SELF'} 
+                                                    <Chip
+                                                        label={transaction.data?.family_member_relation || 'SELF'}
                                                         size="small"
                                                         sx={{
                                                             backgroundColor: `${getFamilyMemberColor(transaction.data?.family_member_relation)}20`,
@@ -432,8 +437,8 @@ const SportsSubscriptionsReport = () => {
                                                 <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total_price).replace('PKR', 'Rs.')}</TableCell>
                                                 <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.membership_no}</TableCell>
                                                 <TableCell>
-                                                    <Chip 
-                                                        label={transaction.payment_method} 
+                                                    <Chip
+                                                        label={transaction.payment_method}
                                                         size="small"
                                                         sx={{
                                                             backgroundColor: `${getPaymentMethodColor(transaction.payment_method)}20`,

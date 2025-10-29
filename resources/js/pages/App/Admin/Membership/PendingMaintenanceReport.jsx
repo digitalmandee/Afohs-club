@@ -2,8 +2,8 @@ import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Chip, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
-import { Search, Print } from '@mui/icons-material';
+import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
+import { Search, Print, ArrowBack } from '@mui/icons-material';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -111,7 +111,12 @@ const PendingMaintenanceReport = () => {
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Pending Maintenance Report</Typography>
+                        <div className="d-flex align-items-center">
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBack />
+                            </IconButton>
+                            <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Pending Maintenance Report</Typography>
+                        </div>
                         <Button
                             variant="contained"
                             startIcon={<Print />}

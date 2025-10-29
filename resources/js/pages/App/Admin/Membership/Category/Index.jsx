@@ -64,7 +64,7 @@ const MemberCategories = ({ memberCategories }) => {
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton>
+                        <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon />
                         </IconButton>
                         <Typography variant="h5">Member Categories</Typography>

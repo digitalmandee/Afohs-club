@@ -23,7 +23,7 @@ import Toolbar from '@mui/material/Toolbar';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FaRegAddressCard } from 'react-icons/fa';
 import { FaKitchenSet } from 'react-icons/fa6';
 import MemberIcon from '@/components/App/Icons/Member';
@@ -111,78 +111,7 @@ export default function SideNav({ open, setOpen }) {
     const [profileView, setProfileView] = React.useState('profile');
     // const [openDropdown, setOpenDropdown] = useState({});
     const [openDropdown, setOpenDropdown] = useRemember({}, 'sidebarDropdown');
-    
-    useEffect(() => {
-        const dropdownState = {};
-
-        menuItems.forEach((item) => {
-            if (item.children) {
-                // Match direct children
-                const matchChild = item.children.some((child) => normalizePath(child.path) === url || (child.children && child.children.some((sub) => normalizePath(sub.path) === url)));
-
-                if (matchChild) {
-                    dropdownState[item.text] = true;
-
-                    // Match nested children if present
-                    item.children.forEach((child) => {
-                        if (child.children) {
-                            const matchSub = child.children.some((sub) => normalizePath(sub.path) === url);
-                            if (matchSub) {
-                                dropdownState[child.text] = true;
-                            }
-                        }
-                    });
-                }
-            }
-        });
-
-        setOpenDropdown((prev) => ({
-            ...prev,
-            ...dropdownState,
-        }));
-    }, [url]);
-    const [hoveredDropdown, setHoveredDropdown] = useState(null); // Track hovered dropdown for popup
-    const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
-    const hidePopupTimer = React.useRef(null);
-
-    const toggleDropdown = (text) => {
-        if (!open) return; // Prevent toggling if drawer is closed
-        setOpenDropdown((prev) => ({ ...prev, [text]: !prev[text] }));
-    };
-
-    // Helper to show popup
-    const handleDropdownMouseEnter = (text, e) => {
-        if (hidePopupTimer.current) {
-            clearTimeout(hidePopupTimer.current);
-            hidePopupTimer.current = null;
-        }
-        const rect = e.currentTarget.getBoundingClientRect();
-        setHoveredDropdown(text);
-        setPopupPosition({
-            top: rect.top + window.scrollY,
-            left: rect.right + 8,
-        });
-    };
-    // Helper to hide popup with delay
-    const handleDropdownMouseLeave = (text) => {
-        hidePopupTimer.current = setTimeout(() => {
-            setHoveredDropdown((curr) => (curr === text ? null : curr));
-        }, 120);
-    };
-    const handlePopupMouseEnter = (text) => {
-        if (hidePopupTimer.current) {
-            clearTimeout(hidePopupTimer.current);
-            hidePopupTimer.current = null;
-        }
-        setHoveredDropdown(text);
-    };
-    const handlePopupMouseLeave = (text) => {
-        hidePopupTimer.current = setTimeout(() => {
-            setHoveredDropdown((curr) => (curr === text ? null : curr));
-        }, 120);
-    };
-
-    const menuItems = [
+    const menuItems = useMemo(() => [
         {
             text: 'Dashboard',
             icon: <HomeIcon />,
@@ -538,7 +467,106 @@ export default function SideNav({ open, setOpen }) {
             icon: <LogoutIcon />,
             path: route('logout'),
         },
-    ];
+    ], [])
+
+    // useEffect(() => {
+    //     const dropdownState = {};
+
+    //     menuItems.forEach((item) => {
+    //         if (item.children) {
+    //             // Match direct children
+    //             const matchChild = item.children.some((child) => normalizePath(child.path) === url || (child.children && child.children.some((sub) => normalizePath(sub.path) === url)));
+
+    //             if (matchChild) {
+    //                 dropdownState[item.text] = true;
+
+    //                 // Match nested children if present
+    //                 item.children.forEach((child) => {
+    //                     if (child.children) {
+    //                         const matchSub = child.children.some((sub) => normalizePath(sub.path) === url);
+    //                         if (matchSub) {
+    //                             dropdownState[child.text] = true;
+    //                         }
+    //                     }
+    //                 });
+    //             }
+    //         }
+    //     });
+
+    //     setOpenDropdown((prev) => ({
+    //         ...prev,
+    //         ...dropdownState,
+    //     }));
+    // }, [url]);
+    const firstLoad = React.useRef(true);
+
+    useEffect(() => {
+        if (firstLoad.current) {
+            const dropdownState = {};
+            menuItems.forEach((item) => {
+                if (item.children) {
+                    const matchChild = item.children.some((child) => normalizePath(child.path) === url || (child.children && child.children.some((sub) => normalizePath(sub.path) === url)));
+                    if (matchChild) {
+                        dropdownState[item.text] = true;
+                        item.children.forEach((child) => {
+                            if (child.children) {
+                                const matchSub = child.children.some((sub) => normalizePath(sub.path) === url);
+                                if (matchSub) {
+                                    dropdownState[child.text] = true;
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+            setOpenDropdown((prev) => ({
+                ...prev,
+                ...dropdownState,
+            }));
+            firstLoad.current = false;
+        }
+        // else do nothing on subsequent navigations
+    }, [url]);
+    const [hoveredDropdown, setHoveredDropdown] = useState(null); // Track hovered dropdown for popup
+    const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
+    const hidePopupTimer = React.useRef(null);
+
+    const toggleDropdown = (text) => {
+        if (!open) return; // Prevent toggling if drawer is closed
+        setOpenDropdown((prev) => ({ ...prev, [text]: !prev[text] }));
+    };
+
+    // Helper to show popup
+    const handleDropdownMouseEnter = (text, e) => {
+        if (hidePopupTimer.current) {
+            clearTimeout(hidePopupTimer.current);
+            hidePopupTimer.current = null;
+        }
+        const rect = e.currentTarget.getBoundingClientRect();
+        setHoveredDropdown(text);
+        setPopupPosition({
+            top: rect.top + window.scrollY,
+            left: rect.right + 8,
+        });
+    };
+    // Helper to hide popup with delay
+    const handleDropdownMouseLeave = (text) => {
+        hidePopupTimer.current = setTimeout(() => {
+            setHoveredDropdown((curr) => (curr === text ? null : curr));
+        }, 120);
+    };
+    const handlePopupMouseEnter = (text) => {
+        if (hidePopupTimer.current) {
+            clearTimeout(hidePopupTimer.current);
+            hidePopupTimer.current = null;
+        }
+        setHoveredDropdown(text);
+    };
+    const handlePopupMouseLeave = (text) => {
+        hidePopupTimer.current = setTimeout(() => {
+            setHoveredDropdown((curr) => (curr === text ? null : curr));
+        }, 120);
+    };
 
     return (
         <Box sx={{ display: 'flex' }}>
@@ -721,7 +749,15 @@ export default function SideNav({ open, setOpen }) {
                     <List sx={{ mt: 4 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
-                            const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));
+                            // const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));
+                            const isSelected =
+                                (path && url === normalizePath(path)) ||
+                                (children &&
+                                    children.some(
+                                        (child) =>
+                                            url === normalizePath(child.path) ||
+                                            (child.children && child.children.some((sub) => url === normalizePath(sub.path)))
+                                    ))
                             return (
                                 <Box key={text} sx={{ position: 'relative' }}>
                                     <ListItem disablePadding sx={{ display: 'block', px: 3, py: 0.1 }}>

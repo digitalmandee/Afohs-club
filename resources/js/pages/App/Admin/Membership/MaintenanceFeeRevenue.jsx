@@ -5,7 +5,7 @@ import { router, usePage } from '@inertiajs/react';
 import { Autocomplete, TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid } from '@mui/material';
 import { toWords } from 'number-to-words';
 import MaintenanceFeeFilter from './MaintenanceFeeFilter';
-import { Print } from '@mui/icons-material';
+import { Print, ArrowBack } from '@mui/icons-material';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -38,7 +38,24 @@ const MaintenanceFeeRevenue = () => {
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Maintenance Fee Revenue</Typography>
+                        {/* Left section (Arrow + Title) */}
+                        <div className="d-flex align-items-center">
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBack />
+                            </IconButton>
+                            <Typography
+                                sx={{
+                                    fontWeight: 500,
+                                    fontSize: '30px',
+                                    color: '#063455',
+                                    ml: 1, // adds left margin for spacing between icon and text
+                                }}
+                            >
+                                Maintenance Fee Revenue
+                            </Typography>
+                        </div>
+
+                        {/* Right section (Print button) */}
                         <Button
                             variant="contained"
                             startIcon={<Print />}
@@ -85,14 +102,14 @@ const MaintenanceFeeRevenue = () => {
                                 </TableHead>
                                 <TableBody>
                                     {categories.map((categoryFee, index) => {
-                                        const paymentRate = categoryFee.total_members > 0 
+                                        const paymentRate = categoryFee.total_members > 0
                                             ? ((categoryFee.members_with_maintenance / categoryFee.total_members) * 100).toFixed(1)
                                             : 0;
-                                        
+
                                         return (
-                                            <TableRow 
-                                                key={categoryFee.id} 
-                                                sx={{ 
+                                            <TableRow
+                                                key={categoryFee.id}
+                                                sx={{
                                                     '&:nth-of-type(odd)': { backgroundColor: '#f9fafb' },
                                                     '&:hover': { backgroundColor: '#f3f4f6' },
                                                     borderBottom: '1px solid #e5e7eb'
@@ -114,7 +131,7 @@ const MaintenanceFeeRevenue = () => {
                                                     {categoryFee.members_with_maintenance}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '14px' }}>
-                                                    <Chip 
+                                                    <Chip
                                                         label={`${paymentRate}%`}
                                                         size="small"
                                                         sx={{
@@ -149,7 +166,7 @@ const MaintenanceFeeRevenue = () => {
                                             {statistics?.total_members_with_maintenance || 0}
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
-                                            {statistics?.total_members > 0 
+                                            {statistics?.total_members > 0
                                                 ? `${((statistics.total_members_with_maintenance / statistics.total_members) * 100).toFixed(1)}%`
                                                 : '0%'
                                             }
@@ -169,7 +186,7 @@ const MaintenanceFeeRevenue = () => {
                         </TableContainer>
                     </Box>
 
-                    
+
                     {/* Statistics Cards */}
                     <Box sx={{ mb: 3 }}>
                         <Grid container spacing={3}>
@@ -196,7 +213,7 @@ const MaintenanceFeeRevenue = () => {
                             <Grid item xs={12} md={3}>
                                 <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fef3c7', borderRadius: 2 }}>
                                     <Typography variant="h4" sx={{ fontWeight: 700, color: '#f59e0b' }}>
-                                        {statistics?.total_members > 0 
+                                        {statistics?.total_members > 0
                                             ? `${((statistics.total_members_with_maintenance / statistics.total_members) * 100).toFixed(1)}%`
                                             : '0%'
                                         }
