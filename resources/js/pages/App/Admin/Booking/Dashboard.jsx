@@ -311,9 +311,6 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
 const RoomBookingDashboard = ({ data, roomTypes }) => {
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
-    const [showCheckInModal, setShowCheckInModal] = useState(false);
-    const [showFilter, setShowFilter] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchResultsFilter, setSearchResultsFilter] = useState(false);
     const [adults, setAdults] = useState(2);
@@ -333,24 +330,10 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
         return (booking.customer?.name || '').toLowerCase().includes(term) || (booking.member?.full_name || '').toLowerCase().includes(term) || (booking.room?.name || '').toLowerCase().includes(term) || booking.booking_no?.toString().includes(term);
     });
 
-    // const filteredBookings = data.bookingsData.filter((booking) => (booking.room?.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const handleOpenBookingModal = () => {
-        setShowAvailabilityModal(true);
-    };
-
-    const handleFilterShow = () => setShowFilter(true);
-
     // TODO: Remove invoice modal handler when reverting to original print functionality
     const handleShowInvoice = (booking) => {
         setSelectedBooking(booking);
         setShowInvoiceModal(true);
-    };
-
-    // TODO: Remove invoice modal close handler when reverting to original print functionality
-    const handleCloseInvoice = () => {
-        setShowInvoiceModal(false);
-        setSelectedBooking(null);
     };
 
     const handleSearch = async (searchParams) => {

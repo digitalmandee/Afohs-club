@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import PeopleIcon from '@mui/icons-material/People';
 import PrintIcon from '@mui/icons-material/Print';
 import SearchIcon from '@mui/icons-material/Search';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Avatar, Box, InputAdornment, Pagination } from '@mui/material';
 import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard, Warning } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import SubscriptionFilter from './Filter';
+import MembershipInvoiceSlip from '../Membership/Invoice';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -16,7 +18,10 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
     // Modal state
     const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const [selectedMemberUserId, setSelectedMemberUserId] = useState(null);
+    const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
 
     const handleOpenModal = (member, event, type = 'actions') => {
         const rect = event.currentTarget.getBoundingClientRect();
@@ -208,6 +213,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                         <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Valid To</TableCell>
                                         <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Status</TableCell>
                                         <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Payment Date</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Invoice</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -260,11 +266,31 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     {subscription.payment_date ? new Date(subscription.payment_date).toLocaleDateString() : '-'}
                                                 </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        size="small"
+                                                        startIcon={<ReceiptIcon />}
+                                                        sx={{
+                                                            color: '#063455',
+                                                            textTransform: 'none',
+                                                            '&:hover': {
+                                                                backgroundColor: '#f0f0f0'
+                                                            }
+                                                        }}
+                                                        onClick={() => {
+                                                            setSelectedMemberUserId(subscription.member?.id);
+                                                            setSelectedInvoiceId(subscription.id);
+                                                            setOpenInvoiceModal(true);
+                                                        }}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     {(!subscriptions?.data || subscriptions.data.length === 0) && (
                                         <TableRow>
-                                            <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                                                 <Typography color="textSecondary">
                                                     {filters?.search ? `No subscriptions found matching "${filters.search}"` : 'No subscription transactions found'}
                                                 </Typography>
@@ -305,6 +331,18 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                         )}
                     </Box>
                     <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    
+                    {/* Membership Invoice Modal - Used for Subscription Fees */}
+                    <MembershipInvoiceSlip 
+                        open={openInvoiceModal} 
+                        onClose={() => {
+                            setOpenInvoiceModal(false);
+                            setSelectedMemberUserId(null);
+                            setSelectedInvoiceId(null);
+                        }} 
+                        invoiceNo={selectedMemberUserId}
+                        invoiceId={selectedInvoiceId}
+                    />
                 </div>
             </div>
         </>

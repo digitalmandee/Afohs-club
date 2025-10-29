@@ -176,6 +176,13 @@ class Member extends BaseModel
         return $this->hasMany(MemberStatusHistory::class, 'member_id', 'id');
     }
 
+    public function membershipInvoice()
+    {
+        return $this->hasOne(FinancialInvoice::class, 'member_id', 'id')
+            ->where('fee_type', 'membership_fee')
+            ->orderBy('id', 'desc');
+    }
+
     public function pausedHistories()
     {
         return $this

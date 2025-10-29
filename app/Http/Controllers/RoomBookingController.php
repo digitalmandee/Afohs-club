@@ -92,7 +92,7 @@ class RoomBookingController extends Controller
 
         return Inertia::render('App/Admin/Booking/EditRoomBooking', compact('booking', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
     }
-    
+
     public function store(Request $req)
     {
         $req->validate([
@@ -200,6 +200,7 @@ class RoomBookingController extends Controller
                 }
             }
 
+            // ✅ Create invoice using polymorphic relationship (cleaner approach)
             $invoiceData = [
                 'invoice_no' => $this->getInvoiceNo(),
                 'invoice_type' => 'room_booking',
@@ -210,23 +211,22 @@ class RoomBookingController extends Controller
                 'advance_payment' => $data['securityDeposit'] ?? 0,
                 'paid_amount' => 0,
                 'status' => 'unpaid',
+                // Keep data for backward compatibility
                 'data' => [
-                    [
-                        'booking_id' => $booking->id,
-                        'booking_no' => $booking->booking_no,
-                        'amount' => $booking->grand_total
-                    ]
+                    'booking_no' => $booking->booking_no,
+                    'amount' => $booking->grand_total
                 ],
             ];
 
-            // ✅ Assign IDs based on guest type
+            // ✅ Assign member/customer ID based on guest type
             if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
                 $invoiceData['member_id'] = (int) $data['guest']['id'];
             } else {
                 $invoiceData['customer_id'] = (int) $data['guest']['id'];
             }
 
-            $invoice = FinancialInvoice::create($invoiceData);
+            // ✅ Use relationship to create invoice (automatically sets invoiceable_id and invoiceable_type)
+            $invoice = $booking->invoice()->create($invoiceData);
 
             DB::commit();
 
@@ -338,36 +338,27 @@ class RoomBookingController extends Controller
                 }
             }
 
-            // 🔄 Update Invoice
-            $invoiceData = [];
-            if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
-                $invoiceData['member_id'] = (int) $data['guest']['id'];
-            } else {
-                $invoiceData['customer_id'] = (int) $data['guest']['id'];
-            }
-            $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
-                ->where(function ($query) use ($invoiceData) {
-                    foreach ($invoiceData as $key => $value) {
-                        $query->where($key, $value);
-                    }
-                })
-                ->whereJsonContains('data', [['booking_id' => $booking->id]])
-                ->first();
+            // 🔄 Update Invoice using polymorphic relationship
+            $invoice = $booking->invoice;
 
             if ($invoice) {
-                $invoice->update([
+                $updateData = [
                     'discount_type' => $data['discountType'] ?? null,
                     'discount_value' => $data['discount'] ?? 0,
                     'amount' => $booking->grand_total,
                     'total_price' => $booking->grand_total,
-                    'data' => [
-                        [
-                            'booking_id' => $booking->id,
-                            'booking_no' => $booking->booking_no,
-                            'amount' => $booking->grand_total
-                        ]
-                    ],
-                ]);
+                ];
+
+                // Update member/customer ID if guest changed
+                if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
+                    $updateData['member_id'] = (int) $data['guest']['id'];
+                    $updateData['customer_id'] = null;
+                } else {
+                    $updateData['customer_id'] = (int) $data['guest']['id'];
+                    $updateData['member_id'] = null;
+                }
+
+                $invoice->update($updateData);
             }
 
             DB::commit();

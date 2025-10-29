@@ -119,7 +119,7 @@ class BookingController extends Controller
     {
         $invoice_no = $request->query('invoice_no');
 
-        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,membership_no,full_name,personal_email', 'member.memberType')->first();
+        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,membership_no,full_name,personal_email', 'member.memberType', 'invoiceable:id,booking_no')->first();
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);
@@ -134,21 +134,21 @@ class BookingController extends Controller
     {
         // Get family members (members with parent_id = main member id)
         $familyMembers = Member::select(
-                'id',
-                'full_name',
-                'membership_no',
-                'personal_email',
-                'mobile_number_a',
-                'family_suffix',
-                'cnic_no',
-                'current_address'
-            )
+            'id',
+            'full_name',
+            'membership_no',
+            'personal_email',
+            'mobile_number_a',
+            'family_suffix',
+            'cnic_no',
+            'current_address'
+        )
             ->where('parent_id', $id)
             ->limit(10)
             ->get();
 
         // Format for frontend
-        $results = $familyMembers->map(function ($member){
+        $results = $familyMembers->map(function ($member) {
             return [
                 'id' => $member->id,
                 'label' => "{$member->full_name} ({$member->membership_no})",
@@ -198,17 +198,10 @@ class BookingController extends Controller
         $invoice->status = $invoice->paid_amount >= $invoice->total_price ? 'paid' : 'partial';
         $invoice->save();
 
-        if ($invoice->invoice_type == 'room_booking') {
-            $booking = RoomBooking::find($invoice->data[0]['booking_id']);
-            if ($request->booking_status) {
-                $booking->status = $request->booking_status;
-            }
-            $booking->save();
-        }else if ($invoice->invoice_type == 'event_booking') {
-            $booking = EventBooking::find($invoice->data['booking_id']);
-            if ($request->booking_status) {
-                $booking->status = $request->booking_status;
-            }
+        // ✅ Update booking status using polymorphic relationship
+        if ($request->booking_status && $invoice->invoiceable) {
+            $booking = $invoice->invoiceable;
+            $booking->status = $request->booking_status;
             $booking->save();
         }
 

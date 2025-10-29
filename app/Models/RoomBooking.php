@@ -58,10 +58,18 @@ class RoomBooking extends BaseModel
 
     public function getInvoiceAttribute()
     {
-        return FinancialInvoice::where('invoice_type', 'room_booking')
-            ->whereJsonContains('data', [['booking_id' => $this->id]])
-            ->select('id', 'status')
-            ->first();
+        // Try polymorphic relationship first, fallback to JSON data
+        $invoice = $this->invoice()->select('id', 'status')->first();
+        
+        return $invoice;
+    }
+
+    /**
+     * Get the invoice for this room booking (polymorphic).
+     */
+    public function invoice()
+    {
+        return $this->morphOne(FinancialInvoice::class, 'invoiceable');
     }
 
     public function miniBarItems()

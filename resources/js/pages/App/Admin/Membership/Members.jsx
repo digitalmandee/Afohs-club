@@ -304,7 +304,15 @@ const AllMembers = ({ members }) => {
                     <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
 
                     <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectMember?.user_id} />
+                    <InvoiceSlip
+                        open={openInvoiceModal}
+                        onClose={() => {
+                            setOpenInvoiceModal(false);
+                            setSelectMember(null); // ✅ Clear selected member when closing
+                        }}
+                        invoiceNo={selectMember?.membership_invoice?.id ? null : selectMember?.id}
+                        invoiceId={selectMember?.membership_invoice?.id || null}
+                    />
 
                     <Drawer
                         anchor="top"

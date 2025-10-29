@@ -111,6 +111,56 @@ const SportsSubscriptionsReport = () => {
         }
     };
 
+    const handlePrint = () => {
+        // Build query string with current filters and page
+        const params = new URLSearchParams();
+        
+        if (allFilters.member_search) {
+            params.append('member_search', allFilters.member_search);
+        }
+        
+        if (allFilters.invoice_search) {
+            params.append('invoice_search', allFilters.invoice_search);
+        }
+        
+        if (allFilters.date_from) {
+            params.append('date_from', allFilters.date_from);
+        }
+        
+        if (allFilters.date_to) {
+            params.append('date_to', allFilters.date_to);
+        }
+        
+        if (allFilters.city) {
+            params.append('city', allFilters.city);
+        }
+        
+        if (allFilters.payment_method) {
+            params.append('payment_method', allFilters.payment_method);
+        }
+        
+        if (allFilters.gender) {
+            params.append('gender', allFilters.gender);
+        }
+        
+        if (allFilters.family_member) {
+            params.append('family_member', allFilters.family_member);
+        }
+        
+        if (allFilters.categories && allFilters.categories.length > 0) {
+            allFilters.categories.forEach(cat => params.append('categories[]', cat));
+        }
+        
+        // Add current page number
+        if (transactions?.current_page) {
+            params.append('page', transactions.current_page);
+        }
+        
+        // Open print page in new window
+        const printUrl = route('membership.sports-subscriptions-report.print') + (params.toString() ? '?' + params.toString() : '');
+        window.open(printUrl, '_blank');
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -129,6 +179,7 @@ const SportsSubscriptionsReport = () => {
                         <Button
                             variant="contained"
                             startIcon={<Print />}
+                            onClick={handlePrint}
                             sx={{
                                 backgroundColor: '#063455',
                                 color: 'white',

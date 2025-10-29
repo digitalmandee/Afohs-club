@@ -9,13 +9,11 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper,
     Grid,
-    Divider
 } from '@mui/material';
 import { format } from 'date-fns';
 
-export default function PendingMaintenanceReportPrint({ members, statistics, filters, all_categories }) {
+export default function NewYearEveReportPrint({ transactions, statistics, filters, all_categories }) {
     useEffect(() => {
         // Auto-print when page loads
         const timer = setTimeout(() => {
@@ -52,11 +50,24 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
             filterText.push(`Until: ${formatDate(filters.date_to)}`);
         }
         
-        if (filters.status && filters.status.length > 0) {
-            const statusLabels = filters.status.map(status => 
-                status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-            );
-            filterText.push(`Status: ${statusLabels.join(', ')}`);
+        if (filters.member_search) {
+            filterText.push(`Member: ${filters.member_search}`);
+        }
+        
+        if (filters.invoice_search) {
+            filterText.push(`Invoice: ${filters.invoice_search}`);
+        }
+        
+        if (filters.city) {
+            filterText.push(`City: ${filters.city}`);
+        }
+        
+        if (filters.payment_method) {
+            filterText.push(`Payment: ${filters.payment_method}`);
+        }
+        
+        if (filters.gender) {
+            filterText.push(`Gender: ${filters.gender}`);
         }
         
         if (filters.categories && filters.categories.length > 0) {
@@ -66,25 +77,13 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
             });
             filterText.push(`Categories: ${categoryNames.join(', ')}`);
         }
-
-        if (filters.member_search) {
-            filterText.push(`Member: ${filters.member_search}`);
-        }
-
-        if (filters.cnic_search) {
-            filterText.push(`CNIC: ${filters.cnic_search}`);
-        }
-
-        if (filters.contact_search) {
-            filterText.push(`Contact: ${filters.contact_search}`);
-        }
         
         return filterText.length > 0 ? filterText.join(' | ') : 'All Records';
     };
 
     return (
         <>
-            <Head title="Pending Maintenance Report - Print" />
+            <Head title="New Year Eve Report - Print" />
             
             <style jsx global>{`
                 @media print {
@@ -92,7 +91,7 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                         margin: 0; 
                         padding: 15px;
                         font-family: Arial, sans-serif;
-                        font-size: 10px;
+                        font-size: 11px;
                         line-height: 1.2;
                     }
                     .no-print { display: none !important; }
@@ -119,7 +118,7 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                     }
                     
                     .report-info {
-                        font-size: 9px;
+                        font-size: 10px;
                         margin: 2px 0;
                         color: #666;
                     }
@@ -133,7 +132,7 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                     
                     .summary-grid {
                         display: grid;
-                        grid-template-columns: repeat(4, 1fr);
+                        grid-template-columns: repeat(3, 1fr);
                         gap: 15px;
                         margin: 10px 0;
                     }
@@ -146,13 +145,13 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                     }
                     
                     .summary-value {
-                        font-size: 12px;
+                        font-size: 14px;
                         font-weight: bold;
                         margin-bottom: 3px;
                     }
                     
                     .summary-label {
-                        font-size: 8px;
+                        font-size: 9px;
                         color: #666;
                     }
                     
@@ -160,14 +159,13 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                         width: 100%;
                         border-collapse: collapse;
                         margin: 20px 0;
-                        font-size: 8px;
                     }
                     
                     th, td {
                         border: 1px solid #000;
-                        padding: 4px 2px;
+                        padding: 6px 4px;
                         text-align: left;
-                        vertical-align: top;
+                        font-size: 9px;
                     }
                     
                     th {
@@ -175,7 +173,6 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                         color: #fff;
                         font-weight: bold;
                         text-align: center;
-                        font-size: 8px;
                     }
                     
                     .total-row {
@@ -185,20 +182,12 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                     }
                     
                     .total-row td {
-                        font-size: 9px;
+                        font-size: 10px;
                     }
                     
                     .text-center { text-align: center; }
                     .text-right { text-align: right; }
                     .font-bold { font-weight: bold; }
-                    
-                    .member-row:nth-child(even) {
-                        background-color: #f9f9f9;
-                    }
-                    
-                    .status-active { color: #059669; font-weight: bold; }
-                    .status-inactive { color: #dc2626; font-weight: bold; }
-                    .status-suspended { color: #f59e0b; font-weight: bold; }
                 }
                 
                 @media screen {
@@ -213,9 +202,15 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                 {/* Header */}
                 <div className="report-header">
                     <div className="report-title">AFOHS CLUB</div>
-                    <div className="report-subtitle">Pending Maintenance Report</div>
+                    <div className="report-subtitle">New Year Eve Subscription Report</div>
                     <div className="report-info">Generated on: {format(new Date(), 'MM/dd/yyyy HH:mm:ss')}</div>
                     <div className="report-info">Filters: {getFilterText()}</div>
+                    {transactions?.current_page && (
+                        <div className="report-info">
+                            Page {transactions.current_page} of {transactions.last_page} 
+                            (Showing {transactions.from} to {transactions.to} of {transactions.total} records)
+                        </div>
+                    )}
                 </div>
 
                 {/* Summary Statistics */}
@@ -225,82 +220,78 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                     </Typography>
                     <div className="summary-grid">
                         <div className="summary-item">
-                            <div className="summary-value">{statistics?.total_members || 0}</div>
-                            <div className="summary-label">Members with Pending</div>
+                            <div className="summary-value">{statistics?.total_transactions || 0}</div>
+                            <div className="summary-label">Total Subscriptions</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{statistics?.total_pending_quarters || 0}</div>
-                            <div className="summary-label">Total Pending Quarters</div>
+                            <div className="summary-value">{formatCurrency(statistics?.total_amount || 0)}</div>
+                            <div className="summary-label">Total Amount Collected</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{formatCurrency(statistics?.total_pending_amount || 0)}</div>
-                            <div className="summary-label">Total Pending Amount</div>
-                        </div>
-                        <div className="summary-item">
-                            <div className="summary-value">{formatCurrency(statistics?.average_pending_per_member || 0)}</div>
-                            <div className="summary-label">Average per Member</div>
+                            <div className="summary-value">{formatCurrency(statistics?.average_amount || 0)}</div>
+                            <div className="summary-label">Average per Subscription</div>
                         </div>
                     </div>
                 </div>
 
-                {/* Detailed Table */}
+                {/* Detailed Transaction Table */}
                 <table>
                     <thead>
                         <tr>
-                            <th style={{ width: '3%' }}>SR #</th>
-                            <th style={{ width: '5%' }}>ID</th>
-                            <th style={{ width: '7%' }}>Membership Date</th>
-                            <th style={{ width: '8%' }}>Member #</th>
-                            <th style={{ width: '12%' }}>Name</th>
-                            <th style={{ width: '8%' }}>Contact</th>
-                            <th style={{ width: '12%' }}>Address</th>
-                            <th style={{ width: '8%' }}>Maintenance Per Quarter</th>
-                            <th style={{ width: '7%' }}>Total Debit</th>
-                            <th style={{ width: '7%' }}>Total Credit</th>
-                            <th style={{ width: '8%' }}>Total Balance</th>
-                            <th style={{ width: '6%' }}>Status</th>
-                            <th style={{ width: '6%' }}>Print</th>
+                            <th style={{ width: '8%' }}>Invoice #</th>
+                            <th style={{ width: '10%' }}>City</th>
+                            <th style={{ width: '15%' }}>Member Name</th>
+                            <th style={{ width: '10%' }}>Amount</th>
+                            <th style={{ width: '10%' }}>Payment Method</th>
+                            <th style={{ width: '12%' }}>Category</th>
+                            <th style={{ width: '8%' }}>Dated</th>
+                            <th style={{ width: '17%' }}>Duration</th>
+                            <th style={{ width: '10%' }}>Membership #</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {members.map((member, index) => (
-                            <tr key={member.id} className="member-row">
-                                <td className="text-center">{index + 1}</td>
-                                <td className="font-bold">{member.id}</td>
-                                <td className="text-center">{formatDate(member.membership_date)}</td>
-                                <td className="font-bold">{member.membership_no}</td>
-                                <td className="font-bold">{member.full_name}</td>
-                                <td>{member.contact || '-'}</td>
-                                <td>{member.address || 'N/A'}</td>
-                                <td className="text-right" style={{ color: '#059669', fontWeight: 'bold' }}>
-                                    {formatCurrency(member.quarterly_fee)}
-                                </td>
-                                <td className="text-right" style={{ color: '#dc2626', fontWeight: 'bold' }}>
-                                    {formatCurrency(member.total_debit_amount || 0)}
-                                </td>
-                                <td className="text-right" style={{ color: '#059669', fontWeight: 'bold' }}>
-                                    {formatCurrency(member.total_paid_amount || 0)}
-                                </td>
-                                <td className="text-right font-bold" style={{ color: '#dc2626' }}>
-                                    {formatCurrency(member.total_pending_amount)}
-                                </td>
-                                <td className={`text-center status-${member.status}`}>
-                                    {member.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                </td>
-                                <td className="text-center">Unpaid</td>
+                        {transactions?.data && transactions.data.length > 0 ? (
+                            transactions.data.map((transaction, index) => (
+                                <tr key={transaction.id}>
+                                    <td className="text-center font-bold">{transaction.invoice_no}</td>
+                                    <td className="text-center">{transaction.member?.current_city || 'N/A'}</td>
+                                    <td className="font-bold">{transaction.member?.full_name}</td>
+                                    <td className="text-right font-bold">{formatCurrency(transaction.total_price)}</td>
+                                    <td className="text-center">{transaction.payment_method}</td>
+                                    <td>{transaction.member?.member_category?.name || 'N/A'}</td>
+                                    <td className="text-center">{formatDate(transaction.created_at)}</td>
+                                    <td className="text-center">
+                                        {transaction.quarter_start_date && transaction.quarter_end_date 
+                                            ? `${formatDate(transaction.quarter_start_date)} - ${formatDate(transaction.quarter_end_date)}`
+                                            : 'N/A'
+                                        }
+                                    </td>
+                                    <td className="text-center">{transaction.member?.membership_no}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="9" className="text-center">No New Year Eve subscription records found</td>
                             </tr>
-                        ))}
+                        )}
                         
                         {/* Total Row */}
-                        <tr className="total-row">
-                            <td colSpan="7" className="text-center font-bold">TOTAL ({statistics?.total_members || 0} Members)</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.average_pending_per_member || 0)}</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.total_debit_amount || 0)}</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.total_paid_amount || 0)}</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.total_pending_amount || 0)}</td>
-                            <td className="text-center font-bold">-</td>
-                            <td className="text-center font-bold">-</td>
-                        </tr>
+                        {transactions?.data && transactions.data.length > 0 && (
+                            <tr className="total-row">
+                                <td colSpan="3" className="text-center font-bold">
+                                    TOTAL ({statistics?.total_transactions || 0} Subscriptions)
+                                </td>
+                                <td className="text-right font-bold">
+                                    {formatCurrency(statistics?.total_amount || 0)}
+                                </td>
+                                <td colSpan="2" className="text-center font-bold">
+                                    Avg: {formatCurrency(statistics?.average_amount || 0)}
+                                </td>
+                                <td colSpan="3" className="text-center font-bold">
+                                    New Year Eve Subscription Collection Report
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
 
@@ -314,7 +305,10 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                         </Grid>
                         <Grid item xs={6} sx={{ textAlign: 'right' }}>
                             <Typography variant="caption">
-                                Total Records: {members.length} | Page 1 of 1
+                                {transactions?.current_page 
+                                    ? `Page ${transactions.current_page} of ${transactions.last_page} | Records: ${transactions.from}-${transactions.to} of ${transactions.total}`
+                                    : `Total Records: ${transactions?.data?.length || 0}`
+                                }
                             </Typography>
                         </Grid>
                     </Grid>

@@ -18,7 +18,7 @@ const theme = createTheme({
     },
 });
 
-const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings }) => {
+const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeView = false }) => {
     const [loading, setLoading] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [showStatusModal, setShowStatusModal] = useState(false);
@@ -205,23 +205,27 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings }) => 
                         Close
                     </Button>
                     
-                    {/* Status Action Buttons */}
-                    {getAvailableActions(selectedBooking?.status).map((action) => (
-                        <Button
-                            key={action}
-                            variant="contained"
-                            color={action === 'cancelled' ? 'error' : 'success'}
-                            onClick={() => handleStatusUpdate(action)}
-                        >
-                            {action === 'confirmed' ? 'Confirm' : action === 'completed' ? 'Complete' : 'Cancel'}
-                        </Button>
-                    ))}
+                    {!financeView && (
+                        <>
+                            {/* Status Action Buttons */}
+                            {getAvailableActions(selectedBooking?.status).map((action) => (
+                                <Button
+                                    key={action}
+                                    variant="contained"
+                                    color={action === 'cancelled' ? 'error' : 'success'}
+                                    onClick={() => handleStatusUpdate(action)}
+                                >
+                                    {action === 'confirmed' ? 'Confirm' : action === 'completed' ? 'Complete' : 'Cancel'}
+                                </Button>
+                            ))}
 
-                    {/* Edit Button - only for non-completed/cancelled bookings */}
-                    {!['completed', 'cancelled'].includes(selectedBooking?.status) && (
-                        <Button variant="contained" color="secondary" onClick={() => router.visit(route('events.booking.edit', { id: selectedBooking?.id }))}>
-                            Edit
-                        </Button>
+                            {/* Edit Button - only for non-completed/cancelled bookings */}
+                            {!['completed', 'cancelled'].includes(selectedBooking?.status) && (
+                                <Button variant="contained" color="secondary" onClick={() => router.visit(route('events.booking.edit', { id: selectedBooking?.id }))}>
+                                    Edit
+                                </Button>
+                            )}
+                        </>
                     )}
 
                     {/* Payment Button */}

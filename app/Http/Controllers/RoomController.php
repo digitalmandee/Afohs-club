@@ -70,36 +70,18 @@ class RoomController extends Controller
             });
         }
 
+        // ✅ Eager load invoice with polymorphic relationship
+        $query->with('invoice:id,invoiceable_id,invoiceable_type,status');
+
         // ✅ Paginate results and keep query string
         $bookings = $query->paginate(10)->withQueryString();
 
-        // ✅ Get booking IDs for current page
-        $bookingIds = $bookings->pluck('id');
-
-        // ✅ Fetch invoices linked to these bookings
-        $invoiceData = FinancialInvoice::where('invoice_type', 'room_booking')
-            ->where(function ($q) use ($bookingIds) {
-                $q->whereJsonContains('data->*.booking_id', $bookingIds);
-            })
-            ->select('id', 'status', 'data')
-            ->get();
-
-        // ✅ Map invoices by booking_id
-        $invoiceMap = [];
-        foreach ($invoiceData as $invoice) {
-            foreach ($invoice->data as $entry) {
-                if (!empty($entry['booking_id'])) {
-                    $invoiceMap[$entry['booking_id']] = [
-                        'id' => $invoice->id,
-                        'status' => $invoice->status,
-                    ];
-                }
-            }
-        }
-
-        // ✅ Attach invoices to bookings
-        $bookings->getCollection()->transform(function ($booking) use ($invoiceMap) {
-            $booking->invoice = $invoiceMap[$booking->id] ?? null;
+        // ✅ Transform invoice data for frontend
+        $bookings->getCollection()->transform(function ($booking) {
+            $booking->invoice = $booking->invoice ? [
+                'id' => $booking->invoice->id,
+                'status' => $booking->invoice->status,
+            ] : null;
             return $booking;
         });
 
@@ -117,14 +99,12 @@ class RoomController extends Controller
         $booking = RoomBooking::with([
             'room',
             'customer',
-            'member'
+            'member',
+            'invoice:id,invoiceable_id,invoiceable_type,status'
         ])->findOrFail($id);
 
-        // ✅ Find invoice linked to this booking
-        $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
-            ->whereJsonContains('data->*.booking_id', $id)
-            ->select('id', 'status', 'data')
-            ->first();
+        // ✅ Get invoice using polymorphic relationship
+        $invoice = $booking->invoice;
 
         $booking->invoice = $invoice ? [
             'id' => $invoice->id,
@@ -136,44 +116,23 @@ class RoomController extends Controller
 
     public function dashboard()
     {
-        // Step 1: Get the latest bookings
-        $bookings = RoomBooking::with('room:id,name,room_type_id',
+        // ✅ Get the latest bookings with invoice using polymorphic relationship
+        $bookings = RoomBooking::with([
+                'room:id,name,room_type_id',
                 'customer:id,customer_no,email,name',
-                'member:id,membership_no,full_name')
+                'member:id,membership_no,full_name',
+                'invoice:id,invoiceable_id,invoiceable_type,status' // ✅ Eager load invoice
+            ])
             ->latest()
             ->take(5)
             ->get();
 
-        // Extract booking IDs
-        $bookingIds = $bookings->pluck('id')->toArray();
-
-        // Step 2: Fetch only invoices linked to these bookings
-        $invoices = FinancialInvoice::where('invoice_type', 'room_booking')
-            ->where(function ($q) use ($bookingIds) {
-                foreach ($bookingIds as $id) {
-                    // Check if JSON column contains booking_id
-                    $q->orWhereJsonContains('data->*.booking_id', $id);
-                }
-            })
-            ->get();
-
-        // Step 3: Build bookingId => invoice mapping
-        $bookingInvoiceMap = [];
-
-        foreach ($invoices as $invoice) {
-            foreach ($invoice->data as $entry) {
-                if (!empty($entry['booking_id']) && in_array($entry['booking_id'], $bookingIds)) {
-                    $bookingInvoiceMap[$entry['booking_id']] = [
-                        'id' => $invoice->id,
-                        'status' => $invoice->status,
-                    ];
-                }
-            }
-        }
-
-        // Step 4: Attach invoice data to bookings
-        $bookings->transform(function ($booking) use ($bookingInvoiceMap) {
-            $booking->invoice = $bookingInvoiceMap[$booking->id] ?? null;
+        // ✅ Transform invoice data for frontend
+        $bookings->transform(function ($booking) {
+            $booking->invoice = $booking->invoice ? [
+                'id' => $booking->invoice->id,
+                'status' => $booking->invoice->status,
+            ] : null;
             return $booking;
         });
 

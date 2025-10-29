@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\FileHelper;
+use App\Models\Subscription;
 use Inertia\Inertia;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MemberTransactionController extends Controller
 {
@@ -188,6 +190,32 @@ class MemberTransactionController extends Controller
             }
 
             $invoiceData = $this->prepareInvoiceData($request, $member);
+            
+            // Create subscription first if fee_type is subscription_fee
+            $subscription = null;
+            if ($request->fee_type === 'subscription_fee') {
+                $subscription = Subscription::create([
+                    'member_id' => $request->member_id,
+                    'subscription_category_id' => $request->subscription_category_id,
+                    'subscription_type_id' => $request->subscription_type_id,
+                    'valid_from' => $request->valid_from,
+                    'valid_to' => $request->valid_to,
+                    'status' => 'active',
+                    'qr_code' => null, // Will be generated after creation
+                ]);
+                
+                // Generate QR code for subscription
+                $qrCodeData = route('subscription.details', ['id' => $subscription->id]);
+                $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
+                $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'subscription_qr_codes');
+                $subscription->qr_code = $qrImagePath;
+                $subscription->save();
+                
+                // Set polymorphic relationship
+                $invoiceData['invoiceable_id'] = $subscription->id;
+                $invoiceData['invoiceable_type'] = Subscription::class;
+            }
+            
             $invoice = FinancialInvoice::create($invoiceData);
 
             // Update member status to active if reinstating fee is paid

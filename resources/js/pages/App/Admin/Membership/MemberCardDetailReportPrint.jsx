@@ -9,14 +9,11 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper,
     Grid,
-    Divider
 } from '@mui/material';
 import { format } from 'date-fns';
-import { toWords } from 'number-to-words';
 
-export default function MaintenanceFeeRevenuePrint({ categories, statistics, filters, all_categories }) {
+export default function MemberCardDetailReportPrint({ categories, statistics, filters, all_categories }) {
     useEffect(() => {
         // Auto-print when page loads
         const timer = setTimeout(() => {
@@ -26,38 +23,11 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
         return () => clearTimeout(timer);
     }, []);
 
-    const formatDate = (dateString) => {
-        try {
-            return format(new Date(dateString), 'MM/dd/yyyy');
-        } catch (error) {
-            return dateString;
-        }
-    };
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-PK', {
-            style: 'currency',
-            currency: 'PKR',
-            minimumFractionDigits: 0,
-        }).format(amount || 0).replace('PKR', 'Rs');
-    };
-
     const getFilterText = () => {
         let filterText = [];
         
-        if (filters.date_from && filters.date_to) {
-            filterText.push(`Period: ${formatDate(filters.date_from)} to ${formatDate(filters.date_to)}`);
-        } else if (filters.date_from) {
-            filterText.push(`From: ${formatDate(filters.date_from)}`);
-        } else if (filters.date_to) {
-            filterText.push(`Until: ${formatDate(filters.date_to)}`);
-        }
-        
-        if (filters.status && filters.status.length > 0) {
-            const statusLabels = filters.status.map(status => 
-                status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-            );
-            filterText.push(`Status: ${statusLabels.join(', ')}`);
+        if (filters.card_status && filters.card_status.length > 0) {
+            filterText.push(`Card Status: ${filters.card_status.join(', ')}`);
         }
         
         if (filters.categories && filters.categories.length > 0) {
@@ -71,9 +41,12 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
         return filterText.length > 0 ? filterText.join(' | ') : 'All Records';
     };
 
+    // Ensure categories is always an array
+    const safeCategories = Array.isArray(categories) ? categories : [];
+
     return (
         <>
-            <Head title="Maintenance Fee Revenue Report - Print" />
+            <Head title="Member Card Detail Report - Print" />
             
             <style jsx global>{`
                 @media print {
@@ -122,8 +95,8 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                     
                     .summary-grid {
                         display: grid;
-                        grid-template-columns: repeat(4, 1fr);
-                        gap: 15px;
+                        grid-template-columns: repeat(6, 1fr);
+                        gap: 10px;
                         margin: 10px 0;
                     }
                     
@@ -141,7 +114,7 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                     }
                     
                     .summary-label {
-                        font-size: 9px;
+                        font-size: 8px;
                         color: #666;
                     }
                     
@@ -192,7 +165,7 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                 {/* Header */}
                 <div className="report-header">
                     <div className="report-title">AFOHS CLUB</div>
-                    <div className="report-subtitle">Maintenance Fee Revenue Report</div>
+                    <div className="report-subtitle">Member Card Detail Report</div>
                     <div className="report-info">Generated on: {format(new Date(), 'MM/dd/yyyy HH:mm:ss')}</div>
                     <div className="report-info">Filters: {getFilterText()}</div>
                 </div>
@@ -204,84 +177,76 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                     </Typography>
                     <div className="summary-grid">
                         <div className="summary-item">
-                            <div className="summary-value">{statistics?.total_members || 0}</div>
-                            <div className="summary-label">Total Members</div>
+                            <div className="summary-value">{statistics?.total_cards_applied || 0}</div>
+                            <div className="summary-label">Total Cards</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{statistics?.total_members_with_maintenance || 0}</div>
-                            <div className="summary-label">Paying Members</div>
+                            <div className="summary-value">{statistics?.issued_primary_members || 0}</div>
+                            <div className="summary-label">Issued</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">
-                                {statistics?.total_members > 0 
-                                    ? `${((statistics.total_members_with_maintenance / statistics.total_members) * 100).toFixed(1)}%`
-                                    : '0%'
-                                }
-                            </div>
-                            <div className="summary-label">Payment Rate</div>
+                            <div className="summary-value">{statistics?.printed_primary_members || 0}</div>
+                            <div className="summary-label">Printed</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{formatCurrency(statistics?.total_maintenance_revenue || 0)}</div>
-                            <div className="summary-label">Total Revenue</div>
+                            <div className="summary-value">{statistics?.re_printed_primary_members || 0}</div>
+                            <div className="summary-label">Re-Printed</div>
+                        </div>
+                        <div className="summary-item">
+                            <div className="summary-value">{statistics?.e_card_issued_primary_members || 0}</div>
+                            <div className="summary-label">E-Card Issued</div>
+                        </div>
+                        <div className="summary-item">
+                            <div className="summary-value">{statistics?.pending_cards || 0}</div>
+                            <div className="summary-label">Pending</div>
                         </div>
                     </div>
                 </div>
 
-                {/* Detailed Table */}
+                {/* Detailed Category Table */}
                 <table>
                     <thead>
                         <tr>
-                            <th style={{ width: '5%' }}>SR #</th>
                             <th style={{ width: '20%' }}>Category</th>
-                            <th style={{ width: '10%' }}>Code</th>
-                            <th style={{ width: '10%' }}>Total Members</th>
-                            <th style={{ width: '10%' }}>Paying Members</th>
-                            <th style={{ width: '10%' }}>Payment Rate</th>
-                            <th style={{ width: '15%' }}>Total Revenue</th>
-                            <th style={{ width: '10%' }}>Avg per Member</th>
-                            <th style={{ width: '10%' }}>Amount In Words</th>
+                            <th style={{ width: '13%' }}>Total Cards</th>
+                            <th style={{ width: '13%' }}>Issued</th>
+                            <th style={{ width: '13%' }}>Printed</th>
+                            <th style={{ width: '13%' }}>Re-Printed</th>
+                            <th style={{ width: '14%' }}>E-Card Issued</th>
+                            <th style={{ width: '14%' }}>Pending</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {categories.map((categoryFee, index) => {
-                            const paymentRate = categoryFee.total_members > 0 
-                                ? ((categoryFee.members_with_maintenance / categoryFee.total_members) * 100).toFixed(1)
-                                : 0;
-                            
-                            return (
-                                <tr key={categoryFee.id}>
-                                    <td className="text-center">{index + 1}</td>
-                                    <td className="font-bold">{categoryFee.name}</td>
-                                    <td className="text-center">{categoryFee.code}</td>
-                                    <td className="text-center">{categoryFee.total_members}</td>
-                                    <td className="text-center">{categoryFee.members_with_maintenance}</td>
-                                    <td className="text-center">{paymentRate}%</td>
-                                    <td className="text-right font-bold">{formatCurrency(categoryFee.total_maintenance_fee)}</td>
-                                    <td className="text-right">{formatCurrency(categoryFee.average_fee_per_member)}</td>
-                                    <td style={{ fontSize: '8px', fontStyle: 'italic' }}>
-                                        {categoryFee.total_maintenance_fee > 0 ? toWords(categoryFee.total_maintenance_fee) : 'Zero'}
-                                    </td>
+                        {safeCategories.length > 0 ? (
+                            safeCategories.map((category, index) => (
+                                <tr key={category.id}>
+                                    <td className="font-bold">{category.name}</td>
+                                    <td className="text-center">{category.total_cards_applied}</td>
+                                    <td className="text-center">{category.issued_primary_members}</td>
+                                    <td className="text-center">{category.printed_primary_members}</td>
+                                    <td className="text-center">{category.re_printed_primary_members}</td>
+                                    <td className="text-center">{category.e_card_issued_primary_members}</td>
+                                    <td className="text-center">{category.pending_cards}</td>
                                 </tr>
-                            );
-                        })}
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="7" className="text-center">No member card data found</td>
+                            </tr>
+                        )}
                         
                         {/* Total Row */}
-                        <tr className="total-row">
-                            <td colSpan="3" className="text-center font-bold">TOTAL</td>
-                            <td className="text-center font-bold">{statistics?.total_members || 0}</td>
-                            <td className="text-center font-bold">{statistics?.total_members_with_maintenance || 0}</td>
-                            <td className="text-center font-bold">
-                                {statistics?.total_members > 0 
-                                    ? `${((statistics.total_members_with_maintenance / statistics.total_members) * 100).toFixed(1)}%`
-                                    : '0%'
-                                }
-                            </td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.total_maintenance_revenue || 0)}</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.average_revenue_per_member || 0)}</td>
-                            <td style={{ fontSize: '8px', fontStyle: 'italic' }}>
-                                {statistics?.total_maintenance_revenue > 0 ? toWords(statistics.total_maintenance_revenue) : 'Zero'}
-                            </td>
-                        </tr>
+                        {safeCategories.length > 0 && (
+                            <tr className="total-row">
+                                <td className="text-center font-bold">GRAND TOTAL</td>
+                                <td className="text-center font-bold">{statistics?.total_cards_applied || 0}</td>
+                                <td className="text-center font-bold">{statistics?.issued_primary_members || 0}</td>
+                                <td className="text-center font-bold">{statistics?.printed_primary_members || 0}</td>
+                                <td className="text-center font-bold">{statistics?.re_printed_primary_members || 0}</td>
+                                <td className="text-center font-bold">{statistics?.e_card_issued_primary_members || 0}</td>
+                                <td className="text-center font-bold">{statistics?.pending_cards || 0}</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
 
@@ -295,7 +260,7 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                         </Grid>
                         <Grid item xs={6} sx={{ textAlign: 'right' }}>
                             <Typography variant="caption">
-                                Page 1 of 1
+                                Total Categories: {safeCategories.length}
                             </Typography>
                         </Grid>
                     </Grid>

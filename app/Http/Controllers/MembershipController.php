@@ -23,7 +23,16 @@ class MembershipController extends Controller
 {
     public function index()
     {
-        $members = Member::whereNull('parent_id')->with('memberType:id,name', 'memberCategory:id,name,description')->withCount('familyMembers')->latest()->limit(6)->get();
+        $members = Member::whereNull('parent_id')
+            ->with([
+                'memberType:id,name', 
+                'memberCategory:id,name,description',
+                'membershipInvoice:id,member_id,invoice_no,status,total_price' // ✅ Include membership invoice
+            ])
+            ->withCount('familyMembers')
+            ->latest()
+            ->limit(6)
+            ->get();
 
         $total_members = Member::whereNull('parent_id')->count();
         $total_payment = FinancialInvoice::where('invoice_type', 'membership')->where('status', 'paid')->sum('total_price');
@@ -99,7 +108,11 @@ class MembershipController extends Controller
     public function allMembers(Request $request)
     {
         $query = Member::whereNull('parent_id')
-            ->with('memberType:id,name', 'memberCategory:id,name,description')
+            ->with([
+                'memberType:id,name', 
+                'memberCategory:id,name,description',
+                'membershipInvoice:id,member_id,invoice_no,status,total_price' // ✅ Include membership invoice
+            ])
             ->withCount('familyMembers');
 
         // Filter: Membership Number
@@ -552,7 +565,7 @@ class MembershipController extends Controller
                 foreach ($idsToDelete as $familyId) {
                     $family = Member::find($familyId);
 
-                    if ($family && $family->parent_id == $member->user_id) {
+                    if ($family && $family->parent_id == $member->id) {
                         // Optionally also delete related User
                         if ($family->user) {
                             $family->user->delete();

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment } from '@mui/material';
 import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import SubscriptionFilter from './Filter';
 import SubscriptionCardComponent from './UserCard';
-import InvoiceSlip from '../Membership/Invoice';
+import MembershipInvoiceSlip from '../Membership/Invoice';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -18,6 +19,8 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [selectedSubscription, setSelectedSubscription] = useState(null);
+    const [selectedMemberUserId, setSelectedMemberUserId] = useState(null);
+    const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
 
     return (
         <>
@@ -143,6 +146,7 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                                         <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Valid To</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Payment Date</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -195,11 +199,31 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     {subscription.payment_date ? new Date(subscription.payment_date).toLocaleDateString() : '-'}
                                                 </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        size="small"
+                                                        startIcon={<ReceiptIcon />}
+                                                        sx={{
+                                                            color: '#063455',
+                                                            textTransform: 'none',
+                                                            '&:hover': {
+                                                                backgroundColor: '#f0f0f0'
+                                                            }
+                                                        }}
+                                                        onClick={() => {
+                                                            setSelectedMemberUserId(subscription.member?.id);
+                                                            setSelectedInvoiceId(subscription.id);
+                                                            setOpenInvoiceModal(true);
+                                                        }}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     {(!recent_subscriptions || recent_subscriptions.length === 0) && (
                                         <TableRow>
-                                            <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                                                 <Typography color="textSecondary">No subscription transactions found</Typography>
                                             </TableCell>
                                         </TableRow>
@@ -212,7 +236,17 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
 
                     <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
 
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoiceNo={selectedSubscription?.invoice_id} />
+                    {/* Membership Invoice Modal - Used for Subscription Fees */}
+                    <MembershipInvoiceSlip 
+                        open={openInvoiceModal} 
+                        onClose={() => {
+                            setOpenInvoiceModal(false);
+                            setSelectedMemberUserId(null);
+                            setSelectedInvoiceId(null);
+                        }} 
+                        invoiceNo={selectedMemberUserId}
+                        invoiceId={selectedInvoiceId}
+                    />
                 </div>
             </div>
         </>

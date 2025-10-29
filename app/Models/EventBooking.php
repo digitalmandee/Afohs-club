@@ -111,13 +111,11 @@ class EventBooking extends BaseModel
     }
 
     /**
-     * Get the invoice for this event booking.
+     * Get the invoice for this event booking (polymorphic).
      */
     public function invoice()
     {
-        return $this->hasOne(FinancialInvoice::class)
-            ->where('invoice_type', 'event_booking')
-            ->whereJsonContains('data', [['booking_id' => $this->id]]);
+        return $this->morphOne(FinancialInvoice::class, 'invoiceable');
     }
 
     /**
@@ -125,9 +123,6 @@ class EventBooking extends BaseModel
      */
     public function getInvoiceAttribute()
     {
-        return FinancialInvoice::where('invoice_type', 'event_booking')
-            ->whereJsonContains('data', [['booking_id' => $this->id]])
-            ->select('id', 'status', 'total_price', 'paid_amount')
-            ->first();
+        return $this->invoice()->select('id', 'status', 'total_price', 'paid_amount')->first();
     }
 }

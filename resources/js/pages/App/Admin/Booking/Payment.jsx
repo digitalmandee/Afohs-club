@@ -216,7 +216,7 @@ const BookingPayment = ({ invoice }) => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <p className="mb-1">
-                                    <strong>Booking No:</strong> #{invoice?.data?.[0]?.booking_no}
+                                    <strong>Booking No:</strong> #{invoice?.invoiceable?.booking_no}
                                 </p>
                                 <p className="mb-1">
                                     <strong>Status:</strong> {invoice.status}

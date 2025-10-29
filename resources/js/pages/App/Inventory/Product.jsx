@@ -272,7 +272,6 @@ const AddProduct = ({ product, id }) => {
             discount: data.discountValue || null,
             discountType: data.discountType || null,
             deleted_images: deletedImages, // Include deleted images for backend processing
-            ...(id && { _method: 'PUT' }), // Add _method field for updates
         }));
         submit('post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
             onSuccess: () => {

@@ -76,12 +76,16 @@ class FinancialController extends Controller
         // Total Expenses (placeholder - you can implement expense tracking later)
         $totalExpenses = 0; // TODO: Implement expense tracking
 
-        // Recent transactions (all types)
+        // Recent transactions (all types) with polymorphic booking data
         $recentTransactions = FinancialInvoice::with([
                 'member:id,full_name,membership_no,mobile_number_a',
                 'customer:id,name,email',
                 'createdBy:id,name'
             ])
+            ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type', 
+                     'member_id', 'customer_id', 'fee_type', 'amount', 'total_price', 
+                     'paid_amount', 'status', 'payment_method', 'payment_date', 
+                     'valid_to', 'created_at', 'created_by')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
@@ -169,7 +173,11 @@ class FinancialController extends Controller
             'member:id,full_name,membership_no,mobile_number_a',
             'customer:id,name,email',
             'createdBy:id,name'
-        ]);
+        ])
+        ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type', 
+                 'member_id', 'customer_id', 'fee_type', 'amount', 'total_price', 
+                 'paid_amount', 'status', 'payment_method', 'payment_date', 
+                 'valid_to', 'created_at', 'created_by');
 
         // Apply search filter
         if ($search) {
@@ -199,16 +207,39 @@ class FinancialController extends Controller
         ]);
     }
 
-    // Get Member Invoices
+    // Get Member Invoices - Accepts either member_id or invoice_id
     public function getFinancialInvoices($id)
     {
-        $invoice = FinancialInvoice::where('member_id', $id)->where('invoice_type', 'membership')->with('member', 'member.memberType')->latest()->first();
+        // First, try to find by invoice ID directly
+        $invoice = FinancialInvoice::with([
+            'member', 
+            'member.memberType',
+            'subscriptionType',
+            'subscriptionCategory'
+        ])->find($id);
+        
+        // If not found by invoice ID, try to find by member ID (latest membership invoice)
+        if (!$invoice) {
+            $invoice = FinancialInvoice::where('member_id', $id)
+                ->where('invoice_type', 'membership')
+                ->with([
+                    'member', 
+                    'member.memberType',
+                    'subscriptionType',
+                    'subscriptionCategory'
+                ])
+                ->latest()
+                ->first();
+        }
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);
         }
 
-        $invoice->member->loadCount('familyMembers');
+        // Load family members count if member exists
+        if ($invoice->member) {
+            $invoice->member->loadCount('familyMembers');
+        }
 
         return response()->json(['invoice' => $invoice]);
     }

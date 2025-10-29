@@ -9,21 +9,39 @@ class Subscription extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'invoice_id', 'category', 'subscription_type', 'start_date', 'expiry_date', 'status', 'qr_code'];
+    protected $fillable = [
+        'member_id',
+        'subscription_category_id',
+        'subscription_type_id',
+        'valid_from',
+        'valid_to',
+        'status',
+        'qr_code'
+    ];
 
-    protected $casts = ['category' => 'array'];
+    protected $casts = [
+        'valid_from' => 'date',
+        'valid_to' => 'date',
+    ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-    public function userDetail()
-    {
-        return $this->belongsTo(UserDetail::class);
-    }
-
+    // Polymorphic relationship to invoice
     public function invoice()
     {
-        return $this->hasOne(FinancialInvoice::class, 'id', 'invoice_id');
+        return $this->morphOne(FinancialInvoice::class, 'invoiceable');
+    }
+
+    public function member()
+    {
+        return $this->belongsTo(Member::class);
+    }
+
+    public function subscriptionCategory()
+    {
+        return $this->belongsTo(SubscriptionCategory::class);
+    }
+
+    public function subscriptionType()
+    {
+        return $this->belongsTo(SubscriptionType::class);
     }
 }

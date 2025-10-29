@@ -372,7 +372,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
         setSearchLoading(true);
         try {
-            const response = await axios.get(route('membership.transactions.search'), {
+            const response = await axios.get(route('finance.transaction.search'), {
                 params: { query }
             });
             setSearchResults(response.data.members || []);
@@ -389,7 +389,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         setLoadingTransactions(true);
 
         try {
-            const response = await axios.get(route('membership.transactions.member', member.id));
+            const response = await axios.get(route('finance.transaction.member', member.id));
             setMemberTransactions(response.data.transactions);
             setFilteredTransactions(response.data.transactions);
             setMembershipFeePaid(response.data.membership_fee_paid);
@@ -844,7 +844,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 }
             });
 
-            const response = await axios.post(route('membership.transactions.store'), formData, {
+            const response = await axios.post(route('finance.transaction.store'), formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

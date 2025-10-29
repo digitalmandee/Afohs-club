@@ -22,6 +22,8 @@ const handlePrintReceipt = (invoice) => {
             invoiceNumber: invoice.invoice_no || 'N/A',
             issueDate: invoice.member?.card_expiry_date,
             paymentMethod: invoice.payment_method,
+            validFrom: (invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') ? invoice.valid_from : null,
+            validTo: (invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') ? invoice.valid_to : null,
         },
         items: [
             {
@@ -129,6 +131,17 @@ const handlePrintReceipt = (invoice) => {
                       <div class="typography-body2" style="margin-bottom: 4px;">
                         <span style="font-weight: bold;">Payment Method: </span>${invoiceData.details.paymentMethod}
                       </div>
+                      ${invoiceData.details.validFrom ? `
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Valid From: </span>${new Date(invoiceData.details.validFrom).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </div>` : ''}
+                      ${invoiceData.details.validTo ? `
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Valid To: </span>
+                        <span style="color: ${new Date(invoiceData.details.validTo) > new Date() ? '#28a745' : '#dc3545'}; font-weight: 500;">
+                          ${new Date(invoiceData.details.validTo).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </span>
+                      </div>` : ''}
                     </div>
                   </div>
                 </div>
@@ -140,6 +153,10 @@ const handlePrintReceipt = (invoice) => {
                       <tr>
                         <th class="table-cell">SR #</th>
                         <th class="table-cell">Description</th>
+                        ${invoice.fee_type === 'subscription_fee' ? `
+                        <th class="table-cell">Subscription Type</th>
+                        <th class="table-cell">Subscription Category</th>
+                        ` : ''}
                         <th class="table-cell">Invoice Amount</th>
                         <th class="table-cell">Remaining Amount</th>
                         <th class="table-cell">Paid Amount</th>
@@ -149,6 +166,10 @@ const handlePrintReceipt = (invoice) => {
                         <tr>
                           <td class="table-body-cell">1</td>
                           <td class="table-body-cell">${invoice.invoice_type}</td>
+                          ${invoice.fee_type === 'subscription_fee' ? `
+                          <td class="table-body-cell">${invoice.subscription_type?.name || 'N/A'}</td>
+                          <td class="table-body-cell">${invoice.subscription_category?.name || 'N/A'}</td>
+                          ` : ''}
                           <td class="table-body-cell">${invoice.total_price}</td>
                           <td class="table-body-cell">${invoice.customer_charges}</td>
                           <td class="table-body-cell">${invoice.paid_amount}</td>
@@ -204,16 +225,20 @@ const handlePrintReceipt = (invoice) => {
     }, 250);
 };
 
-const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
+const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
     const [invoice, setInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Debug member prop
+    // Fetch invoice data
     useEffect(() => {
-        if (open && invoiceNo) {
+        if (open && (invoiceNo || invoiceId)) {
             setLoading(true);
+            
+            // If invoiceId is provided, use it directly; otherwise use member ID (invoiceNo)
+            const idToUse = invoiceId || invoiceNo;
+            
             axios
-                .get(route('financial-invoice', invoiceNo))
+                .get(route('financial-invoice', idToUse))
                 .then((response) => {
                     setInvoice(response.data.invoice);
                     console.log('InvoiceSlip response:', response.data.invoice);
@@ -224,9 +249,8 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                 .finally(() => {
                     setLoading(false);
                 });
-            // console.log('InvoiceSlip member:', JSON.stringify(member, null, 2));
         }
-    }, [open, invoiceNo]);
+    }, [open, invoiceNo, invoiceId]);
 
     return (
         <Drawer
@@ -326,6 +350,37 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                             <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
                                             {invoice.payment_method?.replace('_', ' ') || 'Cash'}
                                         </Typography>
+                                        
+                                        {/* Show validity dates for subscription and maintenance fees */}
+                                        {(invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') && (
+                                            <>
+                                                {invoice.valid_from && (
+                                                    <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                                        <span style={{ fontWeight: 'bold' }}>Valid From: </span>
+                                                        {new Date(invoice.valid_from).toLocaleDateString('en-US', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                        })}
+                                                    </Typography>
+                                                )}
+                                                {invoice.valid_to && (
+                                                    <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                                        <span style={{ fontWeight: 'bold' }}>Valid To: </span>
+                                                        <span style={{ 
+                                                            color: new Date(invoice.valid_to) > new Date() ? '#28a745' : '#dc3545',
+                                                            fontWeight: 500 
+                                                        }}>
+                                                            {new Date(invoice.valid_to).toLocaleDateString('en-US', {
+                                                                year: 'numeric',
+                                                                month: 'long',
+                                                                day: 'numeric',
+                                                            })}
+                                                        </span>
+                                                    </Typography>
+                                                )}
+                                            </>
+                                        )}
                                     </Box>
                                 </Grid>
                             </Grid>
@@ -337,6 +392,12 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                         <TableRow sx={{ backgroundColor: '#f9f9f9' }}>
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>SR #</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Description</TableCell>
+                                            {invoice.fee_type === 'subscription_fee' && (
+                                                <>
+                                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Subscription Type</TableCell>
+                                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Subscription Category</TableCell>
+                                                </>
+                                            )}
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Invoice Amount</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Remaining Amount</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Paid Amount</TableCell>
@@ -346,6 +407,16 @@ const InvoiceSlip = ({ open, onClose, invoiceNo }) => {
                                         <TableRow>
                                             <TableCell sx={{ fontSize: '13px', py: 1.5 }}>1</TableCell>
                                             <TableCell sx={{ fontSize: '13px', py: 1.5, textTransform: 'capitalize' }}>{invoice.invoice_type}</TableCell>
+                                            {invoice.fee_type === 'subscription_fee' && (
+                                                <>
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>
+                                                        {invoice.subscription_type?.name || 'N/A'}
+                                                    </TableCell>
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>
+                                                        {invoice.subscription_category?.name || 'N/A'}
+                                                    </TableCell>
+                                                </>
+                                            )}
                                             <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.amount}</TableCell>
                                             <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.customer_charges}</TableCell>
                                             <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.status === 'paid' || invoice.status === 'overdue' ? invoice.paid_amount : 0}</TableCell>
