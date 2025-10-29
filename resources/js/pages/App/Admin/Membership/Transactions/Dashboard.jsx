@@ -69,7 +69,7 @@ export default function TransactionDashboard({ statistics, recent_transactions }
                             Transaction Dashboard
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Button component={Link} href={route('membership.transactions.create')} variant="contained" color="primary">
+                            <Button component={Link} href={route('finance.transaction.create')} variant="contained" color="primary">
                                 Add New Transaction
                             </Button>
                             <Button component={Link} href={route('membership.transactions.index')} variant="outlined">

@@ -8,6 +8,13 @@ use Inertia\Inertia;
 
 class RoomTypeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:rooms.types.view')->only('index');
+        $this->middleware('super.admin:rooms.types.create')->only('create', 'store');
+        $this->middleware('super.admin:rooms.types.edit')->only('edit', 'update');
+        $this->middleware('permission:rooms.types.delete')->only('destroy');
+    }
     // List all room types
     public function index()
     {

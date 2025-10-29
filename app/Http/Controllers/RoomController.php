@@ -141,7 +141,7 @@ class RoomController extends Controller
                 'customer:id,customer_no,email,name',
                 'member:id,membership_no,full_name')
             ->latest()
-            ->take(6)
+            ->take(5)
             ->get();
 
         // Extract booking IDs
@@ -365,39 +365,130 @@ class RoomController extends Controller
     }
 
     // CheckIn Rooms
-    public function checkInIndex()
+    public function checkInIndex(Request $request)
     {
+        $search = $request->input('search', '');
+        $startDate = $request->input('start_date', '');
+        $endDate = $request->input('end_date', '');
+
         $query = RoomBooking::with([
-            'room:id,name,room_type_id',
+            'room:id,name',
             'customer:id,customer_no,email,name',
             'member:id,membership_no,full_name'
         ])
-            ->where('status', 'confirmed')
-            ->orderBy('booking_date', 'desc')
-            ->latest();
-        $bookings = $query->paginate(10)->withQueryString();
+            ->where('status', 'checked_in');
+
+        // Apply search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhereHas('member', function ($q) use ($search) {
+                      $q->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('membership_no', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('customer', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('customer_no', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('room', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply date range filter (check_in_date and check_out_date)
+        if ($startDate && $endDate) {
+            $query->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('check_in_date', [$startDate, $endDate])
+                  ->orWhereBetween('check_out_date', [$startDate, $endDate])
+                  ->orWhere(function ($q) use ($startDate, $endDate) {
+                      // Bookings that span the date range
+                      $q->where('check_in_date', '<=', $startDate)
+                        ->where('check_out_date', '>=', $endDate);
+                  });
+            });
+        } elseif ($startDate) {
+            $query->where('check_out_date', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->where('check_in_date', '<=', $endDate);
+        }
+
+        $bookings = $query->orderBy('check_in_date', 'desc')
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('App/Admin/Booking/Room/CheckIn', [
             'bookings' => $bookings,
+            'filters' => [
+                'search' => $search,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
         ]);
     }
 
     // CheckOut Rooms
-    public function checkOutIndex()
+    public function checkOutIndex(Request $request)
     {
+        $search = $request->input('search', '');
+        $startDate = $request->input('start_date', '');
+        $endDate = $request->input('end_date', '');
+        
         $query = RoomBooking::with([
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
             'member:id,membership_no,full_name'
         ])
-            ->where('status', 'checked_in')
-            ->orderBy('booking_date', 'desc')
-            ->latest();
+            ->where('status', 'checked_out');
 
-        $bookings = $query->paginate(10)->withQueryString();
+        // Apply search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhereHas('member', function ($q) use ($search) {
+                      $q->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('membership_no', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('customer', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('customer_no', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('room', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply date range filter (check_in_date and check_out_date)
+        if ($startDate && $endDate) {
+            $query->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('check_in_date', [$startDate, $endDate])
+                  ->orWhereBetween('check_out_date', [$startDate, $endDate])
+                  ->orWhere(function ($q) use ($startDate, $endDate) {
+                      // Bookings that span the date range
+                      $q->where('check_in_date', '<=', $startDate)
+                        ->where('check_out_date', '>=', $endDate);
+                  });
+            });
+        } elseif ($startDate) {
+            $query->where('check_out_date', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->where('check_in_date', '<=', $endDate);
+        }
+
+        $bookings = $query->orderBy('check_out_date', 'desc')
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('App/Admin/Booking/Room/CheckOut', [
             'bookings' => $bookings,
+            'filters' => [
+                'search' => $search,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
         ]);
     }
 }

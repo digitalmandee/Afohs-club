@@ -16,11 +16,112 @@ use Inertia\Inertia;
 
 class FinancialController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:financial.dashboard.view')->only('index');
+        $this->middleware('permission:financial.view')->only('getAllTransactions', 'fetchRevenue', 'getMemberInvoices');
+        $this->middleware('permission:financial.create')->only('createAndPay');
+    }
+
     public function index()
     {
-        $FinancialInvoice = FinancialInvoice::with('member:id,full_name', 'customer:id,name,email', 'createdBy:id,name')->latest()->get();
+        // Member Statistics
+        $totalMembers = Member::whereNull('parent_id')->count();
+        $activeMembers = Member::whereNull('parent_id')->where('status', 'active')->count();
+        $expiredMembers = Member::whereNull('parent_id')->where('status', 'expired')->count();
+        $canceledMembers = Member::whereNull('parent_id')->whereIn('status', ['cancelled', 'suspended', 'terminated'])->count();
+
+        // Transaction Statistics (Membership Fees)
+        $totalTransactions = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee', 'reinstating_fee'])->count();
+        
+        // Membership Fee Revenue
+        $membershipFeeRevenue = FinancialInvoice::where('fee_type', 'membership_fee')
+            ->where('status', 'paid')
+            ->sum('total_price');
+        
+        $maintenanceFeeRevenue = FinancialInvoice::where('fee_type', 'maintenance_fee')
+            ->where('status', 'paid')
+            ->sum('total_price');
+
+        $subscriptionFeeRevenue = FinancialInvoice::where('fee_type', 'subscription_fee')
+            ->where('status', 'paid')
+            ->sum('total_price');
+
+        $reinstatingFeeRevenue = FinancialInvoice::where('fee_type', 'reinstating_fee')
+            ->where('status', 'paid')
+            ->sum('total_price');
+
+        // Total Membership Revenue (membership + maintenance + subscription + reinstating)
+        $totalMembershipRevenue = $membershipFeeRevenue + $maintenanceFeeRevenue + $subscriptionFeeRevenue + $reinstatingFeeRevenue;
+
+        // Booking Revenue
+        $roomRevenue = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'room_booking')
+            ->sum('total_price');
+
+        $eventRevenue = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'event_booking')
+            ->sum('total_price');
+
+        $totalBookingRevenue = $roomRevenue + $eventRevenue;
+
+        // Food Revenue
+        $foodRevenue = FinancialInvoice::where('status', 'paid')
+            ->where('invoice_type', 'food')
+            ->sum('total_price');
+
+        // Total Revenue (All Sources)
+        $totalRevenue = FinancialInvoice::where('status', 'paid')->sum('total_price');
+
+        // Total Expenses (placeholder - you can implement expense tracking later)
+        $totalExpenses = 0; // TODO: Implement expense tracking
+
+        // Recent transactions (all types)
+        $recentTransactions = FinancialInvoice::with([
+                'member:id,full_name,membership_no,mobile_number_a',
+                'customer:id,name,email',
+                'createdBy:id,name'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($invoice) {
+                // Add formatted fee type for frontend
+                $invoice->fee_type_formatted = $invoice->fee_type 
+                    ? ucwords(str_replace('_', ' ', $invoice->fee_type))
+                    : null;
+                return $invoice;
+            });
+
         return Inertia::render('App/Admin/Finance/Dashboard', [
-            'FinancialInvoice' => $FinancialInvoice,
+            'statistics' => [
+                // Member Statistics
+                'total_members' => $totalMembers,
+                'active_members' => $activeMembers,
+                'expired_members' => $expiredMembers,
+                'canceled_members' => $canceledMembers,
+                
+                // Revenue Statistics
+                'total_revenue' => $totalRevenue,
+                'total_expenses' => $totalExpenses,
+                'total_transactions' => $totalTransactions,
+                
+                // Membership Revenue Breakdown
+                'membership_fee_revenue' => $membershipFeeRevenue,
+                'maintenance_fee_revenue' => $maintenanceFeeRevenue,
+                'subscription_fee_revenue' => $subscriptionFeeRevenue,
+                'reinstating_fee_revenue' => $reinstatingFeeRevenue,
+                'total_membership_revenue' => $totalMembershipRevenue,
+                
+                // Booking Revenue Breakdown
+                'room_revenue' => $roomRevenue,
+                'event_revenue' => $eventRevenue,
+                'total_booking_revenue' => $totalBookingRevenue,
+                
+                // Other Revenue
+                'food_revenue' => $foodRevenue,
+            ],
+            'recent_transactions' => $recentTransactions
         ]);
     }
 
@@ -59,74 +160,43 @@ class FinancialController extends Controller
         ]);
     }
 
-    public function getTransaction()
+    public function getAllTransactions(Request $request)
     {
-        $FinancialData = FinancialInvoice::with('member:id,full_name', 'customer:id,name,email', 'createdBy:id,name')->latest()->get();
-        return Inertia::render('App/Admin/Finance/Transaction', [
-            'FinancialData' => $FinancialData,
-        ]);
-    }
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search', '');
 
-    public function create()
-    {
-        $categories = MemberCategory::select(['id', 'name', 'fee', 'subscription_fee', 'status'])
-            ->where('status', 'active')
-            ->get();
-
-        return Inertia::render('App/Admin/Finance/AddTransaction', [
-            'categories2' => $categories,
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        // Validate the incoming request
-        $validator = Validator::make($request->all(), [
-            'guestName' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'category' => 'nullable|exists:member_categories,id',
-            'subscriptionType' => 'required|in:one_time,monthly,annual',
-            'paymentType' => 'required|in:cash,credit_card,bank,split_payment',
-            'startDate' => 'required|date',
-            'expiryDate' => 'nullable|date|after_or_equal:startDate',
-            'amount' => 'required|integer|min:0',
+        $query = FinancialInvoice::with([
+            'member:id,full_name,membership_no,mobile_number_a',
+            'customer:id,name,email',
+            'createdBy:id,name'
         ]);
 
-        if ($validator->fails()) {
+        // Apply search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                  ->orWhere('fee_type', 'like', "%{$search}%")
+                  ->orWhere('invoice_type', 'like', "%{$search}%")
+                  ->orWhere('payment_method', 'like', "%{$search}%")
+                  ->orWhereHas('member', function ($q) use ($search) {
+                      $q->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('membership_no', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('customer', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
         }
 
-        // Find category for subscription_type
-        $category = MemberCategory::find($request->category);
-        $subscription_type = $category ? $category->name : null;
-        $member_id = Auth::user()->id;
+        $transactions = $query->latest()->paginate($perPage)->withQueryString();
 
-        // Create the invoice without invoice_no and customer_id initially
-        $invoice = FinancialInvoice::create([
-            'invoice_no' => null,
-            'customer_id' => $request->customer['id'] ?? null,
-            'member_id' => $member_id,
-            'guest_name' => $request->guestName,
-            'subscription_type' => $subscription_type,
-            'invoice_type' => 'subscription',
-            'amount' => $request->amount,
-            'total_price' => $request->amount,
-            'customer_charges' => 0,
-            'issue_date' => $request->startDate,
-            'due_date' => $request->expiryDate ?? now()->addDays(30),
-            'payment_date' => $request->startDate,
-            'payment_method' => $request->paymentType,
-            'status' => 'unpaid',
-            'data' => json_encode([
-                'subscriptionType' => $request->subscriptionType,
-                'phone' => $request->phone,
-            ]),
+        return Inertia::render('App/Admin/Finance/Transaction', [
+            'transactions' => $transactions,
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+            ],
         ]);
-
-        $invoice->update([
-            'invoice_no' => $invoice->id,
-        ]);
-
-        return redirect()->route('finance.dashboard')->with('success', 'Transaction added successfully');
     }
 
     // Get Member Invoices

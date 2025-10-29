@@ -8,6 +8,13 @@ use Inertia\Inertia;
 
 class RoomCategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:rooms.categories.view')->only('index');
+        $this->middleware('super.admin:rooms.categories.create')->only('create', 'store');
+        $this->middleware('super.admin:rooms.categories.edit')->only('edit', 'update');
+        $this->middleware('permission:rooms.categories.delete')->only('destroy');
+    }
     public function index()
     {
         $roomCategoriesData = RoomCategory::orderBy('created_at', 'desc')->get();

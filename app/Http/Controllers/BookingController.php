@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\BookingEvents;
+use App\Models\EventBooking;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
 use App\Models\Room;
@@ -114,96 +115,6 @@ class BookingController extends Controller
         return response()->json($available);
     }
 
-    //     public function roomsAndEvents()
-    // {
-    //     $rooms = Room::latest()->get()->toArray();
-    //     $events = BookingEvents::latest()->get()->toArray();
-
-    //     $roomsEvents = [
-    //         'rooms' => $rooms,
-    //         'events' => $events,
-    //     ];
-
-    //     return Inertia::render('App/Admin/Booking/Dashboard', [
-    //         'roomsEvent' => $roomsEvents,
-    //     ]);
-    // }
-
-    public function booking(Request $request)
-    {
-        $roomId = $request->query('room_id');
-
-        $room = Room::with('roomType', 'categoryCharges')->find($roomId);
-        $bookingNo = $this->getBookingId();
-
-        $roomCategories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
-        $chargesTypeItems = RoomChargesType::where('status', 'active')->select('id', 'name', 'amount')->get();
-        $miniBarItems = RoomMiniBar::where('status', 'active')->select('id', 'name', 'amount')->get();
-
-        return Inertia::render('App/Admin/Booking/RoomBooking', compact('room', 'bookingNo', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
-    }
-
-    public function editbooking(Request $request, $id)
-    {
-        $booking = RoomBooking::with(['customer', 'member', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
-        $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : null));
-        $booking = [
-            'id' => $booking->id,
-            'bookingNo' => $booking->booking_no,
-            'bookingDate' => $booking->booking_date,
-            'checkInDate' => $booking->check_in_date,
-            'checkInTime' => $booking->check_in_time,
-            'checkOutDate' => $booking->check_out_date,
-            'checkOutTime' => $booking->check_out_time ?? now()->format('H:i'),
-            'arrivalDetails' => $booking->arrival_details,
-            'departureDetails' => $booking->departure_details,
-            'bookingType' => $booking->booking_type,
-            'guest' => [
-                'id' => $booking->customer ? $booking->customer->id : ($booking->member ? $booking->member->id : null),
-                'booking_type' => $booking->customer ? 'customer' : ($booking->member ? 'member' : null),
-                'name' => $fullName,
-                'label' => $fullName,
-                'email' => $booking->customer ? $booking->customer->email : ($booking->member ? $booking->member->personal_email : null),
-                'phone' => $booking->customer ? $booking->customer->contact : ($booking->member ? $booking->member->mobile_number_a : null),
-                'membership_no' => $booking->customer ? $booking->customer->customer_no : ($booking->member ? $booking->member->membership_no : null),
-            ],
-            'guestFirstName' => $booking->guest_first_name,
-            'guestLastName' => $booking->guest_last_name,
-            'company' => $booking->guest_company,
-            'address' => $booking->guest_address,
-            'country' => $booking->guest_country,
-            'city' => $booking->guest_city,
-            'mobile' => $booking->guest_mob,
-            'email' => $booking->guest_email,
-            'cnic' => $booking->guest_cnic,
-            'accompaniedGuest' => $booking->accompanied_guest,
-            'guestRelation' => $booking->acc_relationship,
-            'bookedBy' => $booking->booked_by,
-            'room' => $booking->room,
-            'persons' => $booking->persons,
-            'bookingCategory' => $booking->category,
-            'nights' => $booking->nights,
-            'perDayCharge' => $booking->per_day_charge,
-            'roomCharge' => $booking->room_charge,
-            'securityDeposit' => $booking->security_deposit,
-            'discountType' => $booking->discount_type,
-            'discount' => $booking->discount_value,
-            'totalOtherCharges' => $booking->total_other_charges,
-            'totalMiniBar' => $booking->total_mini_bar,
-            'grandTotal' => $booking->grand_total,
-            'notes' => $booking->additional_notes,
-            'documents' => json_decode($booking->booking_docs, true),
-            'mini_bar_items' => $booking->miniBarItems,
-            'other_charges' => $booking->otherCharges,
-        ];
-
-        $roomCategories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
-        $chargesTypeItems = RoomChargesType::where('status', 'active')->select('id', 'name', 'amount')->get();
-        $miniBarItems = RoomMiniBar::where('status', 'active')->select('id', 'name', 'amount')->get();
-
-        return Inertia::render('App/Admin/Booking/EditRoomBooking', compact('booking', 'roomCategories', 'chargesTypeItems', 'miniBarItems'));
-    }
-
     public function payNow(Request $request)
     {
         $invoice_no = $request->query('invoice_no');
@@ -253,69 +164,6 @@ class BookingController extends Controller
         return response()->json(['success' => true, 'results' => $results], 200);
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'customer' => 'required',
-            'bookingType' => 'required|in:room,event',
-            // 'bookingFor' => 'required|in:main_guest,other',
-            // 'personCount' => 'nullable|integer|min:0',
-            // 'roomCount' => 'nullable|integer|min:0',
-            // 'totalPayment' => 'required|numeric|min:0',
-            // 'eventName' => 'nullable|string',
-            // 'eventDate' => 'nullable|date',
-            // 'eventTime' => 'nullable|date_format:H:i',
-            // 'checkin' => 'required_if:bookingType,room|date|nullable',
-            // 'checkout' => 'nullable|date|after:checkin',
-        ]);
-
-        $member_id = Auth::user()->id;
-
-        $bookingId = $this->getBookingId();
-        $bookingType = $request->bookingType;
-
-        DB::beginTransaction();
-
-        $booking = Booking::create([
-            'booking_id' => $bookingId,
-            'user_id' => $request->customer['id'],
-            'booking_type' => $request->bookingType,
-            'booking_For' => $request->bookingFor,
-            'type_id' => $request->bookingTypeId,
-            'persons' => $request->personCount,
-            // 'total_rooms' => $validated['roomCount'],
-            'checkin' => $bookingType === 'room' ? $request->checkin : ($bookingType === 'event' ? $request->eventDate : now()),
-            'checkout' => $bookingType === 'room' ? $request->checkout : null,
-            'event_name' => $bookingType === 'event' ? $request->eventName : null,
-            'start_time' => $bookingType === 'event' ? $request->eventTime : null,
-            'end_time' => null,
-            'total_payment' => $request->totalPayment,
-            'status' => 'pending',
-        ]);
-
-        $data = $booking->toArray();  // Convert Eloquent model to array
-        $data['invoice_type'] = $bookingType === 'room' ? 'room_booking' : 'event_booking';
-        $data['amount'] = $request->totalPayment;
-        $invoice_no = $this->getInvoiceNo();
-        $member_id = Auth::user()->id;
-
-        FinancialInvoice::create([
-            'invoice_no' => $invoice_no,
-            'customer_id' => $request->customer['id'],
-            'member_id' => $member_id,
-            'invoice_type' => $bookingType === 'room' ? 'room_booking' : 'event_booking',
-            'amount' => $request->totalPayment,
-            'total_price' => $request->totalPayment,
-            'issue_date' => now(),
-            'status' => 'unpaid',
-            'data' => [$data]
-        ]);
-
-        DB::commit();
-
-        return response()->json(['message' => 'Booking saved successfully', 'invoice_no' => $invoice_no], 200);
-    }
-
     public function paymentStore(Request $request)
     {
         $request->validate([
@@ -350,33 +198,22 @@ class BookingController extends Controller
         $invoice->status = $invoice->paid_amount >= $invoice->total_price ? 'paid' : 'partial';
         $invoice->save();
 
-        $booking = RoomBooking::find($invoice->data[0]['booking_id']);
-        if ($request->booking_status) {
-            $booking->status = $request->booking_status;
+        if ($invoice->invoice_type == 'room_booking') {
+            $booking = RoomBooking::find($invoice->data[0]['booking_id']);
+            if ($request->booking_status) {
+                $booking->status = $request->booking_status;
+            }
+            $booking->save();
+        }else if ($invoice->invoice_type == 'event_booking') {
+            $booking = EventBooking::find($invoice->data['booking_id']);
+            if ($request->booking_status) {
+                $booking->status = $request->booking_status;
+            }
+            $booking->save();
         }
-        $booking->save();
 
         DB::commit();
 
         return response()->json(['success' => true, 'message' => 'Payment successful']);
-    }
-
-    // ✅ Get next booking ID
-    // public function nextBookingId()
-    // {
-    //     return response()->json(['booking_id' => $this->getBookingId()]);
-    // }
-
-    private function getBookingId()
-    {
-        $booking_id = (int) RoomBooking::max('booking_no');
-        return $booking_id + 1;
-    }
-
-    private function getInvoiceNo()
-    {
-        $invoiceNo = FinancialInvoice::max('invoice_no');
-        $invoiceNo = $invoiceNo + 1;
-        return $invoiceNo;
     }
 }

@@ -257,6 +257,22 @@ export default function SideNav({ open, setOpen }) {
                             path: route('events.dashboard'),
                         },
                         {
+                            text: 'Manage',
+                            path: route('events.manage'),
+                        },
+                        {
+                            text: 'Completed',
+                            path: route('events.completed'),
+                        },
+                        {
+                            text: 'Cancelled',
+                            path: route('events.cancelled'),
+                        },
+                        {
+                            text: 'Calendar',
+                            path: route('events.calendar'),
+                        },
+                        {
                             text: 'Venues',
                             path: route('event-venues.index'),
                         },
@@ -413,11 +429,11 @@ export default function SideNav({ open, setOpen }) {
             children: [
                 {
                     text: 'Bulk Transaction',
-                    path: route('membership.transactions.bulk-migration'),
+                    path: route('finance.transaction.bulk-migration'),
                 },
                 {
                     text: 'Add Transaction',
-                    path: route('membership.transactions.create'),
+                    path: route('finance.transaction.create'),
                 },
                 {
                     text: 'Dashboard',
@@ -495,6 +511,14 @@ export default function SideNav({ open, setOpen }) {
             text: 'Settings',
             icon: <SettingsIcon />,
             children: [
+                {
+                    text: 'Role Management',
+                    path: route('admin.roles.index'),
+                },
+                {
+                    text: 'User Management',
+                    path: route('admin.users.index'),
+                },
                 {
                     text: 'Billing',
                     path: route('admin.billing-settings.edit'),

@@ -3,11 +3,14 @@ import React, { useState } from 'react';
 import { Box, Typography, Card, CardContent, Grid, Button, TextField, InputAdornment, MenuItem, List, ListItem, ListItemText, Divider } from '@mui/material';
 import { CalendarToday as CalendarIcon, Print as PrintIcon, People as PeopleIcon, ShoppingBag as ShoppingBagIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import usePermission from '@/hooks/usePermission';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const Dashboard = () => {
+    const { hasPermission } = usePermission();
+
     const [open, setOpen] = useState(true);
     const currentMonth = new Date().toLocaleString('default', {
         month: 'short',
@@ -111,112 +114,162 @@ const Dashboard = () => {
 
                     <Grid container spacing={1}>
                         {/* Left side content - 8/12 width */}
-                        <Grid item xs={12} md={9}>
-                            <Grid container spacing={2}>
-                                {/* Revenue and Profit */}
-                                <Grid item xs={7}>
-                                    <Card
-                                        sx={{
-                                            bgcolor: '#063455',
-                                            color: 'white',
-                                            borderRadius: '4px',
-                                            height: '166px',
-                                        }}
-                                    >
-                                        <CardContent
+                        {hasPermission('dashboard.stats.view') ? (
+                            <Grid item xs={12} md={9}>
+                                <Grid container spacing={2}>
+                                    {/* Revenue and Profit */}
+                                    <Grid item xs={7}>
+                                        <Card
                                             sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                px: 1,
-                                                py: 3,
+                                                bgcolor: '#063455',
+                                                color: 'white',
+                                                borderRadius: '4px',
+                                                height: '166px',
                                             }}
                                         >
-                                            {/* Total Revenue */}
-                                            <Box sx={{ flex: 1, textAlign: 'flex-start' }}>
-                                                <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Revenue</Typography>
-                                                <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 0</Typography>
-                                            </Box>
+                                            <CardContent
+                                                sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    px: 1,
+                                                    py: 3,
+                                                }}
+                                            >
+                                                {/* Total Revenue */}
+                                                <Box sx={{ flex: 1, textAlign: 'flex-start' }}>
+                                                    <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Revenue</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 0</Typography>
+                                                </Box>
 
-                                            {/* Divider */}
-                                            <Divider orientation="vertical" flexItem sx={{ bgcolor: '#7F7F7F', mx: 1 }} />
+                                                {/* Divider */}
+                                                <Divider orientation="vertical" flexItem sx={{ bgcolor: '#7F7F7F', mx: 1 }} />
 
-                                            {/* Total Profit */}
-                                            <Box sx={{ flex: 1, textAlign: 'right' }}>
-                                                <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Profit</Typography>
-                                                <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 0</Typography>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
+                                                {/* Total Profit */}
+                                                <Box sx={{ flex: 1, textAlign: 'right' }}>
+                                                    <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Profit</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 0</Typography>
+                                                </Box>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
 
-                                {/* Bookings */}
-                                <Grid item xs={5}>
-                                    <Card
-                                        sx={{
-                                            bgcolor: '#063455',
-                                            color: 'white',
-                                            borderRadius: '4px',
-                                            height: '166px',
-                                        }}
-                                    >
-                                        <CardContent sx={{ px: 2 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                <Box
-                                                    sx={{
-                                                        bgcolor: 'transparent',
-                                                        width: 46,
-                                                        height: 46,
-                                                        borderRadius: '50%',
-                                                        p: 2,
-                                                        mr: 2,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                    }}
-                                                >
-                                                    <img
-                                                        src="/assets/calendar.png"
-                                                        alt=""
-                                                        style={{
-                                                            width: 20,
-                                                            height: 20,
+                                    {/* Bookings */}
+                                    <Grid item xs={5}>
+                                        <Card
+                                            sx={{
+                                                bgcolor: '#063455',
+                                                color: 'white',
+                                                borderRadius: '4px',
+                                                height: '166px',
+                                            }}
+                                        >
+                                            <CardContent sx={{ px: 2 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                    <Box
+                                                        sx={{
+                                                            bgcolor: 'transparent',
+                                                            width: 46,
+                                                            height: 46,
+                                                            borderRadius: '50%',
+                                                            p: 2,
+                                                            mr: 2,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
                                                         }}
-                                                    />
+                                                    >
+                                                        <img
+                                                            src="/assets/calendar.png"
+                                                            alt=""
+                                                            style={{
+                                                                width: 20,
+                                                                height: 20,
+                                                            }}
+                                                        />
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography sx={{ fontSize: '14px', fontWeight: 400, color: '#C6C6C6' }}>Total Booking</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>0</Typography>
+                                                    </Box>
                                                 </Box>
-                                                <Box>
-                                                    <Typography sx={{ fontSize: '14px', fontWeight: 400, color: '#C6C6C6' }}>Total Booking</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>0</Typography>
+                                                <Divider orientation="horizontal" flexItem sx={{ bgcolor: '#7F7F7F', height: '2px' }} />
+                                                <Box sx={{ display: 'flex', mt: 2 }}>
+                                                    <Box sx={{ flex: 1 }}>
+                                                        <Typography sx={{ fontWeight: 400, fontSize: '12px', color: '#C6C6C6' }}>Room Booking</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
+                                                    </Box>
+                                                    <Box sx={{ flex: 1 }}>
+                                                        <Typography sx={{ fontWeight: 400, fontSize: '12px', color: '#C6C6C6' }}>Event Booking</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
+                                                    </Box>
                                                 </Box>
-                                            </Box>
-                                            <Divider orientation="horizontal" flexItem sx={{ bgcolor: '#7F7F7F', height: '2px' }} />
-                                            <Box sx={{ display: 'flex', mt: 2 }}>
-                                                <Box sx={{ flex: 1 }}>
-                                                    <Typography sx={{ fontWeight: 400, fontSize: '12px', color: '#C6C6C6' }}>Room Booking</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
-                                                </Box>
-                                                <Box sx={{ flex: 1 }}>
-                                                    <Typography sx={{ fontWeight: 400, fontSize: '12px', color: '#C6C6C6' }}>Event Booking</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
-                                                </Box>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
 
-                                {/* Middle row with 3 cards */}
-                                <Grid item xs={12} sm={7}>
-                                    <Card
-                                        sx={{
-                                            bgcolor: '#063455',
-                                            color: 'white',
-                                            height: '100%',
-                                            borderRadius: '4px',
-                                            height: '166px',
-                                        }}
-                                    >
-                                        <CardContent sx={{ px: 2 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    {/* Middle row with 3 cards */}
+                                    <Grid item xs={12} sm={7}>
+                                        <Card
+                                            sx={{
+                                                bgcolor: '#063455',
+                                                color: 'white',
+                                                height: '100%',
+                                                borderRadius: '4px',
+                                                height: '166px',
+                                            }}
+                                        >
+                                            <CardContent sx={{ px: 2 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                    <Box
+                                                        sx={{
+                                                            bgcolor: 'transparent',
+                                                            height: 46,
+                                                            width: 46,
+                                                            borderRadius: '50%',
+                                                            p: 1,
+                                                            mr: 2,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                        }}
+                                                    >
+                                                        <PeopleIcon />
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography sx={{ color: '#C6C6C6', fontSize: '14px', fontWeight: 400 }}>Total Members</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>0</Typography>
+                                                    </Box>
+                                                </Box>
+                                                <Divider orientation="horizontal" flexItem sx={{ bgcolor: '#7F7F7F', height: '2px' }} />
+                                                <Box sx={{ display: 'flex', mt: 2 }}>
+                                                    <Box sx={{ flex: 1 }}>
+                                                        <Typography sx={{ color: '#C6C6C6', fontSize: '12px', fontWeight: 400 }}>Total Customer</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
+                                                    </Box>
+                                                    <Box sx={{ flex: 1 }}>
+                                                        <Typography sx={{ color: '#C6C6C6', fontSize: '12px', fontWeight: 400 }}>Total Employee</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
+                                                    </Box>
+                                                </Box>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
+
+                                    <Grid item xs={12} sm={2.5}>
+                                        <Card
+                                            sx={{
+                                                bgcolor: '#063455',
+                                                color: 'white',
+                                                borderRadius: '4px',
+                                                height: '166px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'flex-start',
+                                            }}
+                                        >
+                                            <CardContent sx={{ p: 2, textAlign: 'left' }}>
+                                                {/* Icon Circle */}
                                                 <Box
                                                     sx={{
                                                         bgcolor: 'transparent',
@@ -224,211 +277,163 @@ const Dashboard = () => {
                                                         width: 46,
                                                         borderRadius: '50%',
                                                         p: 1,
-                                                        mr: 2,
+                                                        mb: 2,
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
                                                     }}
                                                 >
-                                                    <PeopleIcon />
+                                                    <img
+                                                        src="/assets/box.png"
+                                                        alt=""
+                                                        style={{
+                                                            height: 20,
+                                                            width: 20,
+                                                        }}
+                                                    />
                                                 </Box>
-                                                <Box>
-                                                    <Typography sx={{ color: '#C6C6C6', fontSize: '14px', fontWeight: 400 }}>Total Members</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>0</Typography>
-                                                </Box>
-                                            </Box>
-                                            <Divider orientation="horizontal" flexItem sx={{ bgcolor: '#7F7F7F', height: '2px' }} />
-                                            <Box sx={{ display: 'flex', mt: 2 }}>
-                                                <Box sx={{ flex: 1 }}>
-                                                    <Typography sx={{ color: '#C6C6C6', fontSize: '12px', fontWeight: 400 }}>Total Customer</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
-                                                </Box>
-                                                <Box sx={{ flex: 1 }}>
-                                                    <Typography sx={{ color: '#C6C6C6', fontSize: '12px', fontWeight: 400 }}>Total Employee</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
-                                                </Box>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
 
-                                <Grid item xs={12} sm={2.5}>
-                                    <Card
-                                        sx={{
-                                            bgcolor: '#063455',
-                                            color: 'white',
-                                            borderRadius: '4px',
-                                            height: '166px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'flex-start',
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: 2, textAlign: 'left' }}>
-                                            {/* Icon Circle */}
-                                            <Box
-                                                sx={{
-                                                    bgcolor: 'transparent',
-                                                    height: 46,
-                                                    width: 46,
-                                                    borderRadius: '50%',
-                                                    p: 1,
-                                                    mb: 2,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                }}
-                                            >
-                                                <img
-                                                    src="/assets/box.png"
-                                                    alt=""
-                                                    style={{
-                                                        height: 20,
-                                                        width: 20,
+                                                {/* Text Content */}
+                                                <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', mb: 1 }}>Total Product Order</Typography>
+                                                <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>0</Typography>
+                                                <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', display: 'inline', ml: 1 }}>Items</Typography>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
+
+                                    <Grid item xs={12} sm={2.5}>
+                                        <Card
+                                            sx={{
+                                                bgcolor: '#063455',
+                                                color: 'white',
+                                                borderRadius: '4px',
+                                                height: '166px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'flex-start',
+                                            }}
+                                        >
+                                            <CardContent sx={{ p: 2, textAlign: 'left' }}>
+                                                {/* Icon Circle */}
+                                                <Box
+                                                    sx={{
+                                                        bgcolor: 'transparent',
+                                                        height: 46,
+                                                        width: 46,
+                                                        borderRadius: '50%',
+                                                        p: 1,
+                                                        mb: 2,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
                                                     }}
-                                                />
-                                            </Box>
-
-                                            {/* Text Content */}
-                                            <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', mb: 1 }}>Total Product Order</Typography>
-                                            <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>0</Typography>
-                                            <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', display: 'inline', ml: 1 }}>Items</Typography>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-
-                                <Grid item xs={12} sm={2.5}>
-                                    <Card
-                                        sx={{
-                                            bgcolor: '#063455',
-                                            color: 'white',
-                                            borderRadius: '4px',
-                                            height: '166px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'flex-start',
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: 2, textAlign: 'left' }}>
-                                            {/* Icon Circle */}
-                                            <Box
-                                                sx={{
-                                                    bgcolor: 'transparent',
-                                                    height: 46,
-                                                    width: 46,
-                                                    borderRadius: '50%',
-                                                    p: 1,
-                                                    mb: 2,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                }}
-                                            >
-                                                <CreditCardIcon />
-                                            </Box>
-
-                                            {/* Text Content */}
-                                            <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', mb: 1 }}>Total Subscription Order</Typography>
-                                            <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>0</Typography>
-                                            <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', display: 'inline', ml: 1 }}>Order</Typography>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-
-                                {/* Chart */}
-                                <Grid item xs={12}>
-                                    <Card sx={{ borderRadius: '4px' }}>
-                                        <CardContent sx={{ p: 3 }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Box>
-                                                    <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#1D1F2C' }}>Revenue</Typography>
-                                                    <Typography sx={{ color: '#777980', fontWeight: 500, fontSize: '14px' }}>Your Revenue 2025 Year</Typography>
+                                                >
+                                                    <CreditCardIcon />
                                                 </Box>
-                                                <Box sx={{ display: 'flex', gap: 2 }}>
-                                                    <TextField select size="small" value={revenueType} onChange={(e) => setRevenueType(e.target.value)} sx={{ width: '160px' }}>
-                                                        <MenuItem value="Revenue">Revenue</MenuItem>
-                                                        <MenuItem value="Profit">Profit</MenuItem>
-                                                        <MenuItem value="Expenses">Expenses</MenuItem>
-                                                    </TextField>
-                                                    <TextField
-                                                        size="small"
-                                                        value={chartYear}
-                                                        onChange={(e) => setChartYear(e.target.value)}
-                                                        InputProps={{
-                                                            endAdornment: (
-                                                                <InputAdornment position="end">
-                                                                    <CalendarIcon fontSize="small" />
-                                                                </InputAdornment>
-                                                            ),
-                                                        }}
-                                                        sx={{ width: '160px' }}
-                                                    />
-                                                </Box>
-                                            </Box>
 
-                                            <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Box
-                                                        sx={{
-                                                            width: 12,
-                                                            height: 12,
-                                                            borderRadius: '50%',
-                                                            bgcolor: '#0d3c61',
-                                                            mr: 1,
-                                                        }}
-                                                    />
-                                                    <Typography sx={{ color: '#667085', fontWeight: 400, fontSize: '14px' }}>Income</Typography>
-                                                    <Typography sx={{ ml: 1, fontWeight: 500, fontSize: '16px', color: '#1D1F2C' }}>Rs.26,000</Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Box
-                                                        sx={{
-                                                            width: 12,
-                                                            height: 12,
-                                                            borderRadius: '50%',
-                                                            bgcolor: '#e74c3c',
-                                                            mr: 1,
-                                                        }}
-                                                    />
-                                                    <Typography sx={{ color: '#667085', fontWeight: 400, fontSize: '14px' }}>Expenses</Typography>
-                                                    <Typography sx={{ ml: 1, fontWeight: 500, fontSize: '16px', color: '#1D1F2C' }}>Rs.18,000</Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Box
-                                                        sx={{
-                                                            width: 12,
-                                                            height: 12,
-                                                            borderRadius: '50%',
-                                                            bgcolor: '#2ecc71',
-                                                            mr: 1,
-                                                        }}
-                                                    />
-                                                    <Typography sx={{ color: '#667085', fontWeight: 400, fontSize: '14px' }}>Profit</Typography>
-                                                    <Typography sx={{ ml: 1, fontWeight: 500, fontSize: '16px', color: '#1D1F2C' }}>Rs.8,000</Typography>
-                                                </Box>
-                                            </Box>
+                                                {/* Text Content */}
+                                                <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', mb: 1 }}>Total Subscription Order</Typography>
+                                                <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>0</Typography>
+                                                <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', display: 'inline', ml: 1 }}>Order</Typography>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
 
-                                            <Box sx={{ height: 300 }}>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                        <XAxis dataKey="name" />
-                                                        <YAxis tickFormatter={(value) => `Rs ${value}`} ticks={[0, 200, 400, 600, 800, 1000, 1200, 1400]} />
-                                                        <Tooltip formatter={(value) => [`Rs ${value}`, '']} />
-                                                        <Bar dataKey="income" fill="#0d3c61" barSize={10} />
-                                                        <Bar dataKey="expenses" fill="#e74c3c" barSize={10} />
-                                                        <Bar dataKey="profit" fill="#2ecc71" barSize={10} />
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
+                                    {/* Chart */}
+                                    <Grid item xs={12}>
+                                        <Card sx={{ borderRadius: '4px' }}>
+                                            <CardContent sx={{ p: 3 }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                    <Box>
+                                                        <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#1D1F2C' }}>Revenue</Typography>
+                                                        <Typography sx={{ color: '#777980', fontWeight: 500, fontSize: '14px' }}>Your Revenue 2025 Year</Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                                        <TextField select size="small" value={revenueType} onChange={(e) => setRevenueType(e.target.value)} sx={{ width: '160px' }}>
+                                                            <MenuItem value="Revenue">Revenue</MenuItem>
+                                                            <MenuItem value="Profit">Profit</MenuItem>
+                                                            <MenuItem value="Expenses">Expenses</MenuItem>
+                                                        </TextField>
+                                                        <TextField
+                                                            size="small"
+                                                            value={chartYear}
+                                                            onChange={(e) => setChartYear(e.target.value)}
+                                                            InputProps={{
+                                                                endAdornment: (
+                                                                    <InputAdornment position="end">
+                                                                        <CalendarIcon fontSize="small" />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                            sx={{ width: '160px' }}
+                                                        />
+                                                    </Box>
+                                                </Box>
+
+                                                <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 12,
+                                                                height: 12,
+                                                                borderRadius: '50%',
+                                                                bgcolor: '#0d3c61',
+                                                                mr: 1,
+                                                            }}
+                                                        />
+                                                        <Typography sx={{ color: '#667085', fontWeight: 400, fontSize: '14px' }}>Income</Typography>
+                                                        <Typography sx={{ ml: 1, fontWeight: 500, fontSize: '16px', color: '#1D1F2C' }}>Rs.26,000</Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 12,
+                                                                height: 12,
+                                                                borderRadius: '50%',
+                                                                bgcolor: '#e74c3c',
+                                                                mr: 1,
+                                                            }}
+                                                        />
+                                                        <Typography sx={{ color: '#667085', fontWeight: 400, fontSize: '14px' }}>Expenses</Typography>
+                                                        <Typography sx={{ ml: 1, fontWeight: 500, fontSize: '16px', color: '#1D1F2C' }}>Rs.18,000</Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 12,
+                                                                height: 12,
+                                                                borderRadius: '50%',
+                                                                bgcolor: '#2ecc71',
+                                                                mr: 1,
+                                                            }}
+                                                        />
+                                                        <Typography sx={{ color: '#667085', fontWeight: 400, fontSize: '14px' }}>Profit</Typography>
+                                                        <Typography sx={{ ml: 1, fontWeight: 500, fontSize: '16px', color: '#1D1F2C' }}>Rs.8,000</Typography>
+                                                    </Box>
+                                                </Box>
+
+                                                <Box sx={{ height: 300 }}>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                            <XAxis dataKey="name" />
+                                                            <YAxis tickFormatter={(value) => `Rs ${value}`} ticks={[0, 200, 400, 600, 800, 1000, 1200, 1400]} />
+                                                            <Tooltip formatter={(value) => [`Rs ${value}`, '']} />
+                                                            <Bar dataKey="income" fill="#0d3c61" barSize={10} />
+                                                            <Bar dataKey="expenses" fill="#e74c3c" barSize={10} />
+                                                            <Bar dataKey="profit" fill="#2ecc71" barSize={10} />
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </Box>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
                                 </Grid>
                             </Grid>
-                        </Grid>
+                        ) : null}
 
                         {/* Right side - Recent Activity - 4/12 width */}
-                        <Grid item xs={12} md={3}>
+                        <Grid item xs={12} md={hasPermission('dashboard.stats.view') ? 3 : 12}>
                             <Card sx={{ borderRadius: '4px', height: '100%' }}>
                                 <CardContent sx={{ p: 0 }}>
                                     <Typography variant="h6" sx={{ p: 2, fontWeight: 'bold', borderBottom: '1px solid #eee' }}>

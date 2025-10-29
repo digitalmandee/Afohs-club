@@ -20,11 +20,46 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [familyMemberErrors, setFamilyMemberErrors] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
 
+    const calculateAge = (dateOfBirth) => {
+        if (!dateOfBirth) return 0;
+        const today = new Date();
+        const birthDate = new Date(dateOfBirth);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    };
+
+    const calculateExpiryDate = (dateOfBirth) => {
+        if (!dateOfBirth) return '';
+        const birthDate = new Date(dateOfBirth);
+        const expiryDate = new Date(birthDate);
+        expiryDate.setFullYear(birthDate.getFullYear() + 25);
+        return expiryDate.toISOString().split('T')[0];
+    };
+
     const handleFamilyMemberChange = (field, value) => {
-        setCurrentFamilyMember({
+        let updatedMember = {
             ...currentFamilyMember,
             [field]: value,
-        });
+        };
+
+        // Auto-calculate expiry date when date of birth changes
+        if (field === 'date_of_birth' && value) {
+            const age = calculateAge(value);
+            const autoExpiryDate = calculateExpiryDate(value);
+            
+            // Only set auto expiry if member is under 25
+            if (age < 25) {
+                updatedMember.card_expiry_date = autoExpiryDate;
+                updatedMember.auto_expiry_calculated = true;
+            }
+        }
+
+        setCurrentFamilyMember(updatedMember);
     };
 
     const handleFamilyPictureDelete = () => {
@@ -1126,7 +1161,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     variant="outlined"
                                                                     name="date_of_birth"
                                                                     error={!!familyMemberErrors.date_of_birth}
-                                                                    helperText={familyMemberErrors.date_of_birth}
+                                                                    helperText={familyMemberErrors.date_of_birth || (currentFamilyMember.date_of_birth ? `Age: ${calculateAge(currentFamilyMember.date_of_birth)} years` : '')}
                                                                     value={currentFamilyMember.date_of_birth}
                                                                     onChange={(e) => handleFamilyMemberChange('date_of_birth', e.target.value)}
                                                                     sx={{
@@ -1135,6 +1170,11 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                         },
                                                                     }}
                                                                 />
+                                                                {currentFamilyMember.date_of_birth && calculateAge(currentFamilyMember.date_of_birth) >= 25 && (
+                                                                    <Typography variant="caption" sx={{ color: '#ff9800', mt: 1, display: 'block' }}>
+                                                                        ⚠️ Member is 25+ years old. Membership will expire automatically unless extended by Super Admin.
+                                                                    </Typography>
+                                                                )}
                                                             </Box>
                                                         </Grid>
                                                         <Grid item xs={6}>
@@ -1173,6 +1213,11 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                         },
                                                                     }}
                                                                 />
+                                                                {currentFamilyMember.auto_expiry_calculated && (
+                                                                    <Typography variant="caption" sx={{ color: '#2196f3', mt: 1, display: 'block' }}>
+                                                                        📅 Auto-calculated based on 25th birthday
+                                                                    </Typography>
+                                                                )}
                                                             </Box>
                                                         </Grid>
                                                         <Grid item xs={6}>

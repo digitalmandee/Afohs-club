@@ -18,7 +18,7 @@ class DataMigrationController extends Controller
     {
         // Get statistics for migration dashboard
         $stats = $this->getMigrationStats();
-        
+
         return Inertia::render('App/Admin/DataMigration/Index', [
             'stats' => $stats
         ]);
@@ -29,7 +29,7 @@ class DataMigrationController extends Controller
         try {
             // Check if old tables exist
             $oldTablesExist = $this->checkOldTablesExist();
-            
+
             if (!$oldTablesExist) {
                 return [
                     'old_tables_exist' => false,
@@ -41,12 +41,12 @@ class DataMigrationController extends Controller
             $oldFamiliesCount = DB::table('mem_families')->count();
             $newMembersCount = Member::whereNull('parent_id')->count();
             $newFamiliesCount = Member::whereNotNull('parent_id')->count();
-            
+
             // Check migration status
             $migratedMembersCount = Member::whereNull('parent_id')
                 ->whereNotNull('application_no')
                 ->count();
-            
+
             $migratedFamiliesCount = Member::whereNotNull('parent_id')
                 ->whereNotNull('cnic_no')
                 ->count();
@@ -86,21 +86,21 @@ class DataMigrationController extends Controller
     {
         $batchSize = $request->get('batch_size', 100);
         $offset = $request->get('offset', 0);
-        
+
         try {
             DB::beginTransaction();
-            
+
             // Get batch of old members
             $oldMembers = DB::table('memberships')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
-            
+
             Log::info("Processing batch: offset={$offset}, found " . count($oldMembers) . " records");
-            
+
             $migrated = 0;
             $errors = [];
-            
+
             foreach ($oldMembers as $oldMember) {
                 try {
                     $this->migrateSingleMember($oldMember);
@@ -109,6 +109,7 @@ class DataMigrationController extends Controller
                     $errors[] = [
                         'member_id' => $oldMember->id,
                         'application_no' => $oldMember->application_no ?? 'N/A',
+                        'membership_no' => $oldMember->mem_no ?? 'N/A',
                         'name' => $oldMember->applicant_name ?? 'N/A',
                         'error' => $e->getMessage(),
                         'line' => $e->getLine(),
@@ -117,20 +118,19 @@ class DataMigrationController extends Controller
                     Log::error("Error migrating member {$oldMember->id} ({$oldMember->applicant_name}): " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
                 }
             }
-            
+
             DB::commit();
-            
+
             return response()->json([
                 'success' => true,
                 'migrated' => $migrated,
                 'errors' => $errors,
                 'has_more' => count($oldMembers) == $batchSize
             ]);
-            
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Migration batch error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
@@ -140,32 +140,40 @@ class DataMigrationController extends Controller
 
     private function migrateSingleMember($oldMember)
     {
-        // Check if member already exists using multiple criteria
-        $query = Member::whereNull('parent_id');
-        
-        // Primary check: application_no if it exists
-        if (!empty($oldMember->application_no)) {
-            $query->where('application_no', $oldMember->application_no);
-        } else {
-            // Fallback: check by membership_no and name if application_no is empty
-            $query->where('membership_no', $oldMember->mem_no)
-                  ->where('full_name', $oldMember->applicant_name);
+        // Check if member already exists using old_member_id first, then other criteria
+        $existingMember = Member::where('old_member_id', $oldMember->id)
+            ->whereNull('parent_id')
+            ->first();
+
+        // If not found by old_member_id, check by other criteria
+        if (!$existingMember) {
+            $query = Member::whereNull('parent_id');
+
+            // Primary check: application_no if it exists
+            if (!empty($oldMember->application_no)) {
+                $query->where('application_no', $oldMember->application_no);
+            } else {
+                // Fallback: check by membership_no and name if application_no is empty
+                $query->where('membership_no', $oldMember->mem_no)
+                    ->where('full_name', $oldMember->applicant_name);
+            }
+
+            $existingMember = $query->first();
         }
-        
-        $existingMember = $query->first();
-            
+
         if ($existingMember) {
             Log::info("Skipping member {$oldMember->id} - already exists (App No: {$oldMember->application_no})");
             return; // Skip if already migrated
         }
-        
+
         Log::info("Migrating member {$oldMember->id} (App No: {$oldMember->application_no})");
 
         // Get member category ID
         $memberCategoryId = $this->getMemberCategoryId($oldMember->mem_category_id);
-        
+
         // Prepare member data
         $memberData = [
+            'old_member_id' => $oldMember->id,
             'application_no' => $oldMember->application_no,
             'membership_no' => $oldMember->mem_no,
             'membership_date' => $this->validateDate($oldMember->membership_date),
@@ -230,28 +238,33 @@ class DataMigrationController extends Controller
     {
         $batchSize = $request->get('batch_size', 100);
         $offset = $request->get('offset', 0);
-        
+
         try {
             DB::beginTransaction();
-            
+
             // Get batch of old family members
             $oldFamilies = DB::table('mem_families')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
-            
+
             $migrated = 0;
             $errors = [];
-            
+
             foreach ($oldFamilies as $oldFamily) {
                 try {
                     $this->migrateSingleFamily($oldFamily);
                     $migrated++;
                 } catch (\Exception $e) {
+                    // Get parent membership number for better error tracking
+                    $parentMembershipNo = $oldFamily->membership_number;
+
                     $errors[] = [
                         'family_id' => $oldFamily->id,
                         'member_id' => $oldFamily->member_id ?? 'N/A',
-                        'name' => $oldFamily->name ?? 'N/A',
+                        'parent_membership_no' => $parentMembershipNo,
+                        'family_membership_no' => $oldFamily->sup_card_no ?? 'N/A',
+                        'name' => ($oldFamily->title ?? '') . ' ' . ($oldFamily->first_name ?? '') . ' ' . ($oldFamily->middle_name ?? ''),
                         'error' => $e->getMessage(),
                         'line' => $e->getLine(),
                         'file' => basename($e->getFile())
@@ -259,20 +272,19 @@ class DataMigrationController extends Controller
                     Log::error("Error migrating family member {$oldFamily->id} ({$oldFamily->name}): " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
                 }
             }
-            
+
             DB::commit();
-            
+
             return response()->json([
                 'success' => true,
                 'migrated' => $migrated,
                 'errors' => $errors,
                 'has_more' => count($oldFamilies) == $batchSize
             ]);
-            
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Family migration batch error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
@@ -282,11 +294,11 @@ class DataMigrationController extends Controller
 
     private function migrateSingleFamily($oldFamily)
     {
-        // Find parent member by member_id
-        $parentMember = Member::where('application_no', $oldFamily->member_id)
+        // Find parent member by old_member_id instead of application_no
+        $parentMember = Member::where('old_member_id', $oldFamily->member_id)
             ->whereNull('parent_id')
             ->first();
-            
+
         if (!$parentMember) {
             throw new \Exception("Parent member not found for family member ID: {$oldFamily->id}");
         }
@@ -294,7 +306,7 @@ class DataMigrationController extends Controller
         // Check if family member already exists using old_family_id
         $existingFamily = Member::where('old_family_id', $oldFamily->id)
             ->first();
-            
+
         if ($existingFamily) {
             return; // Skip if already migrated
         }
@@ -334,21 +346,43 @@ class DataMigrationController extends Controller
 
     private function getMemberCategoryId($oldCategoryId)
     {
-        // Get old category data
-        $oldCategory = DB::table('mem_categories')->where('id', $oldCategoryId)->first();
-        
-        if (!$oldCategory) {
+        // Check if oldCategoryId has valid data before querying
+        if (empty($oldCategoryId) || is_null($oldCategoryId)) {
+            Log::info("getMemberCategoryId: oldCategoryId is empty or null");
             return null;
         }
 
-        // Find matching new category by name
-        $newCategory = MemberCategory::where('name', $oldCategory->unique_code)->first();
-        
-        return $newCategory ? $newCategory->id : null;
+        // Check if it's a valid numeric ID
+        if (!is_numeric($oldCategoryId)) {
+            Log::info("getMemberCategoryId: oldCategoryId is not numeric: {$oldCategoryId}");
+            return null;
+        }
+
+        try {
+            // Get old category data
+            $oldCategory = DB::table('mem_categories')->where('id', $oldCategoryId)->first();
+
+            if (!$oldCategory) {
+                return null;
+            }
+
+            // Find matching new category by name
+            $newCategory = MemberCategory::where('name', $oldCategory->unique_code)->first();
+
+            return $newCategory ? $newCategory->id : null;
+        } catch (\Exception $e) {
+            Log::error("getMemberCategoryId: Database error - " . $e->getMessage());
+            return null;
+        }
     }
 
     private function mapCardStatus($oldStatus)
     {
+        // Check if oldStatus has valid data before mapping
+        if (empty($oldStatus) || is_null($oldStatus)) {
+            return 'Not Applicable';
+        }
+
         $statusMap = [
             'issued' => 'Issued',
             'not_applicable' => 'Not Applicable',
@@ -364,9 +398,20 @@ class DataMigrationController extends Controller
 
     private function mapMemberStatus($oldStatus)
     {
-        // Get status from mem_statuses table if needed
+        // Check if oldStatus has valid data before querying
+        if (empty($oldStatus) || is_null($oldStatus)) {
+            return 'active'; // Default status
+        }
+
+        // Check if it's a valid numeric ID
+        if (!is_numeric($oldStatus)) {
+            return 'active'; // Default status for non-numeric values
+        }
+
+        // Get status from mem_statuses table
         try {
             $status = DB::table('mem_statuses')->where('id', $oldStatus)->first();
+            
             if ($status) {
                 // Map status name to new enum values
                 $statusMap = [
@@ -382,15 +427,17 @@ class DataMigrationController extends Controller
                     'transferred' => 'terminated',
                     'in suspension process' => 'in_suspension_process',
                 ];
-                
+
                 $mappedStatus = $statusMap[strtolower($status->desc)] ?? null;
-                
+
                 if ($mappedStatus === null) {
+                    Log::error("mapMemberStatus: Status '{$status->desc}' (ID: {$oldStatus}) not found in mapping");
                     throw new \Exception("Status '{$status->desc}' (ID: {$oldStatus}) not found in mapping. Please add mapping for this status.");
                 }
-                
+
                 return $mappedStatus;
             } else {
+                Log::error("mapMemberStatus: Status ID {$oldStatus} not found in mem_statuses table");
                 throw new \Exception("Status ID {$oldStatus} not found in mem_statuses table.");
             }
         } catch (\Exception $e) {
@@ -401,11 +448,30 @@ class DataMigrationController extends Controller
 
     private function mapFamilyRelation($oldRelation)
     {
-        // Get relation from mem_relations table if needed
+        // Check if oldRelation has valid data before querying
+        if (empty($oldRelation) || is_null($oldRelation)) {
+            Log::info("mapFamilyRelation: oldRelation is empty or null");
+            return null;
+        }
+
+        // Check if it's a valid numeric ID
+        if (!is_numeric($oldRelation)) {
+            Log::info("mapFamilyRelation: oldRelation is not numeric: {$oldRelation}");
+            return $oldRelation; // Return as-is if it's already a string relation
+        }
+
+        // Get relation from mem_relations table
         try {
             $relation = DB::table('mem_relations')->where('id', $oldRelation)->first();
-            return $relation ? $relation->name : $oldRelation;
+            
+            if ($relation) {
+                return $relation->desc;
+            } else {
+                Log::info("mapFamilyRelation: No relation found for ID: {$oldRelation}");
+                return $oldRelation;
+            }
         } catch (\Exception $e) {
+            Log::error("mapFamilyRelation: Database error - " . $e->getMessage());
             return $oldRelation;
         }
     }
@@ -431,32 +497,56 @@ class DataMigrationController extends Controller
         // Convert: public/familymemberupload/xxxxx.png to tenants/default/familymembers/xxxxx.png
         return 'tenants/default/familymembers/' . basename($oldPhotoPath);
     }
-
-    private function generateUniqueFamilyMembershipNo($originalMembershipNo, $familyId)
-    {
-        // For now, return original number - we'll handle duplicates differently
-        return $originalMembershipNo;
-    }
-
+    
     public function resetMigration(Request $request)
     {
         try {
             DB::beginTransaction();
-            
-            // Delete all migrated data
-            Member::truncate();
-            
+
+            // Disable foreign key checks temporarily
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            // Force delete all migrated data (bypass soft delete) - first delete family members (children), then primary members
+            // Get all family members including soft deleted ones and force delete them
+            $familyMembers = Member::withTrashed()->whereNotNull('parent_id')->get();
+            foreach ($familyMembers as $familyMember) {
+                $familyMember->forceDelete();
+            }
+
+            // Get all primary members including soft deleted ones and force delete them
+            $primaryMembers = Member::withTrashed()->whereNull('parent_id')->get();
+            foreach ($primaryMembers as $primaryMember) {
+                $primaryMember->forceDelete();
+            }
+
+            // Reset auto-increment counter to start from 1
+            DB::statement('ALTER TABLE members AUTO_INCREMENT = 1;');
+
+            // DB::truncate('members');
+
+            // Re-enable foreign key checks
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
             DB::commit();
-            
+
+            Log::info('Migration data reset completed - all records permanently deleted');
+
             return response()->json([
                 'success' => true,
-                'message' => 'Migration data reset successfully'
+                'message' => 'Migration data reset successfully - all records permanently deleted'
             ]);
-            
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // Make sure to re-enable foreign key checks even on error
+            try {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            } catch (\Exception $fkError) {
+                Log::error('Error re-enabling foreign key checks: ' . $fkError->getMessage());
+            }
+
             Log::error('Reset migration error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
@@ -487,7 +577,7 @@ class DataMigrationController extends Controller
             $sampleOldMembers = DB::table('memberships')->limit(5)->get();
             foreach ($sampleOldMembers as $oldMember) {
                 $newMember = Member::where('application_no', $oldMember->application_no)->first();
-                
+
                 if ($newMember) {
                     $validation['sample_data_integrity'][] = [
                         'old_id' => $oldMember->id,
@@ -502,10 +592,9 @@ class DataMigrationController extends Controller
             }
 
             return response()->json($validation);
-
         } catch (\Exception $e) {
             Log::error('Validation error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
@@ -528,12 +617,12 @@ class DataMigrationController extends Controller
         // Handle other invalid date formats
         try {
             $carbonDate = Carbon::parse($date);
-            
+
             // Check if the date is valid (not year 0 or before 1900)
             if ($carbonDate->year < 1900) {
                 return null;
             }
-            
+
             return $date;
         } catch (\Exception $e) {
             // If Carbon can't parse it, return null

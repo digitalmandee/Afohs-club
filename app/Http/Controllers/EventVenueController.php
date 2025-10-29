@@ -8,6 +8,13 @@ use Inertia\Inertia;
 
 class EventVenueController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:events.venue.view')->only('index');
+        $this->middleware('super.admin:events.venue.create')->only('create', 'store');
+        $this->middleware('super.admin:events.venue.edit')->only('edit', 'update');
+        $this->middleware('permission:events.venue.delete')->only('destroy');
+    }
     public function index()
     {
         $eventVenuesData = EventVenue::orderBy('created_at', 'desc')->get();

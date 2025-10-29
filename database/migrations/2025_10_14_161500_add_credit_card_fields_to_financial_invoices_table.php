@@ -12,11 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('financial_invoices', function (Blueprint $table) {
-            // Add credit card type field
-            $table->string('credit_card_type')->nullable()->after('payment_method');
+            if (!Schema::hasColumn('financial_invoices', 'credit_card_type')) {
+                // Add credit card type field
+                $table->string('credit_card_type')->nullable()->after('payment_method');
+            }
             
-            // Rename misspelled 'reciept' to 'receipt'
-            $table->renameColumn('reciept', 'receipt');
+            if (Schema::hasColumn('financial_invoices', 'reciept')) {
+                // Rename misspelled 'reciept' to 'receipt'
+                $table->renameColumn('reciept', 'receipt');
+            } else if (!Schema::hasColumn('financial_invoices', 'receipt')) {
+                // Rename back to original misspelled name
+                $table->renameColumn('receipt', 'reciept');
+            }
         });
     }
 
@@ -26,11 +33,18 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('financial_invoices', function (Blueprint $table) {
-            // Drop credit card type field
-            $table->dropColumn('credit_card_type');
+            if (Schema::hasColumn('financial_invoices', 'credit_card_type')) {
+                // Drop credit card type field
+                $table->dropColumn('credit_card_type');
+            }
             
-            // Rename back to original misspelled name
-            $table->renameColumn('receipt', 'reciept');
+            if (Schema::hasColumn('financial_invoices', 'receipt')) {
+                // Rename back to original misspelled name
+                $table->renameColumn('receipt', 'reciept');
+            } else if (!Schema::hasColumn('financial_invoices', 'reciept')) {
+                // Rename misspelled 'reciept' to 'receipt'
+                $table->renameColumn('reciept', 'receipt');
+            }
         });
     }
 };

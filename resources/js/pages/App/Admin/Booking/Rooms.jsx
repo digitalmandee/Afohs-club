@@ -74,7 +74,7 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
                     <Box sx={{ p: 1, mt: 3, maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
                         {filteredRooms && filteredRooms.length > 0 ? (
                             filteredRooms.map((item, index) => (
-                                <div key={index} className="border mb-3 p-2" style={{ height: 88, border: '1px solid #E3E3E3' }} onClick={() => router.visit(route('rooms.booking', { room_id: item.id, checkin, checkout, persons }))}>
+                                <div key={index} className="border mb-3 p-2" style={{ height: 88, border: '1px solid #E3E3E3' }} onClick={() => router.visit(route('rooms.create.booking', { room_id: item.id, checkin, checkout, persons }))}>
                                     <Row style={{ cursor: 'pointer' }}>
                                         <Col xs={2}>
                                             <img src={item.image ? '/' + item.image : '/placeholder.svg'} alt={type === 'room' ? item.type : item.name} style={{ width: 100, height: 67, borderRadius: '4px' }} />

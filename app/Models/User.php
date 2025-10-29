@@ -12,7 +12,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
-    protected $guard_name = 'web';
+    protected $guard_name = 'web'; // Default guard for super admin
 
     /**
      * The attributes that are mass assignable.

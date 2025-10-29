@@ -8,6 +8,13 @@ use Inertia\Inertia;
 
 class EventMenuCategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:events.menuCategory.view')->only('index');
+        $this->middleware('super.admin:events.menuCategory.create')->only('create', 'store');
+        $this->middleware('super.admin:events.menuCategory.edit')->only('edit', 'update');
+        $this->middleware('permission:events.menuCategory.delete')->only('destroy');
+    }
     public function index()
     {
         $eventMenuCategoriesData = EventMenuCategory::orderBy('created_at', 'desc')->get();

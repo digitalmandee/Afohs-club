@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class Member extends BaseModel
 {
@@ -11,6 +13,7 @@ class Member extends BaseModel
     protected $fillable = [
         'application_no',
         'old_family_id',
+        'old_member_id',
         'barcode_no',
         'membership_no',
         'member_type_id',
@@ -78,6 +81,10 @@ class Member extends BaseModel
         'country',
         'documents',
         'classification_id',
+        'expiry_extended_by',
+        'expiry_extension_date',
+        'expiry_extension_reason',
+        'auto_expiry_calculated',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -88,6 +95,9 @@ class Member extends BaseModel
         'is_document_missing' => 'boolean',
         'documents' => 'array',
         'date_of_birth' => 'date',
+        'card_expiry_date' => 'date',
+        'expiry_extension_date' => 'datetime',
+        'auto_expiry_calculated' => 'boolean',
     ];
 
     public static function generateNextMembershipNumber(): string
@@ -172,5 +182,135 @@ class Member extends BaseModel
             ->hasMany(MemberStatusHistory::class, 'member_id', 'id')
             ->where('status', 'pause')
             ->whereNull('used_up_to');
+    }
+
+    /**
+     * Calculate the current age of the member
+     */
+    public function getAgeAttribute()
+    {
+        if (!$this->date_of_birth) {
+            return null;
+        }
+
+        return $this->date_of_birth->diffInYears(now());
+    }
+
+    /**
+     * Check if member is a family member (has parent_id)
+     */
+    public function isFamilyMember()
+    {
+        return !is_null($this->parent_id);
+    }
+
+    /**
+     * Check if family member should be expired based on age
+     */
+    public function shouldExpireByAge()
+    {
+        return $this->isFamilyMember() && 
+               $this->age >= 25 && 
+               $this->status !== 'expired' &&
+               !$this->hasValidExtension();
+    }
+
+    /**
+     * Check if member has a valid expiry extension
+     */
+    public function hasValidExtension()
+    {
+        if (is_null($this->expiry_extension_date)) {
+            return false;
+        }
+        
+        // Convert to Carbon if it's a string
+        $extensionDate = $this->expiry_extension_date instanceof \Carbon\Carbon 
+            ? $this->expiry_extension_date 
+            : \Carbon\Carbon::parse($this->expiry_extension_date);
+            
+        return $extensionDate->isFuture();
+    }
+
+    /**
+     * Calculate automatic expiry date based on 25th birthday
+     */
+    public function calculateAutoExpiryDate()
+    {
+        if (!$this->date_of_birth) {
+            return null;
+        }
+
+        return $this->date_of_birth->copy()->addYears(25);
+    }
+
+    /**
+     * Expire family member due to age
+     */
+    public function expireByAge($reason = 'Automatic expiry - Member reached 25 years of age')
+    {
+        $this->update([
+            'status' => 'expired',
+            'card_status' => 'Expired',
+            'updated_by' => Auth::id() ?? 1, // System user
+        ]);
+
+        // Log the status change
+        $this->statusHistories()->create([
+            'status' => 'expired',
+            'reason' => $reason,
+            'start_date' => now()->toDateString(),
+            'end_date' => null, // No end date for expired status
+            'created_by' => Auth::id() ?? 1,
+        ]);
+    }
+
+    /**
+     * Extend expiry date for family member (Super Admin only)
+     */
+    public function extendExpiry($extensionDate, $reason, $extendedBy)
+    {
+        // Convert string date to Carbon object if needed
+        $carbonDate = is_string($extensionDate) ? Carbon::parse($extensionDate) : $extensionDate;
+        
+        $this->update([
+            'expiry_extension_date' => $carbonDate,
+            'expiry_extension_reason' => $reason,
+            'expiry_extended_by' => $extendedBy,
+            'status' => 'active', // Reactivate if expired
+            'updated_by' => $extendedBy,
+        ]);
+
+        // Log the extension
+        $this->statusHistories()->create([
+            'status' => 'extended',
+            'reason' => "Expiry extended until {$carbonDate->format('Y-m-d')}: {$reason}",
+            'start_date' => now()->toDateString(),
+            'end_date' => $carbonDate->toDateString(),
+            'created_by' => $extendedBy,
+        ]);
+    }
+
+    /**
+     * Scope to get family members who should be expired by age
+     */
+    public function scopeFamilyMembersToExpire($query)
+    {
+        return $query->whereNotNull('parent_id')
+                    ->whereNotNull('date_of_birth')
+                    ->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 25')
+                    ->where('status', '!=', 'expired')
+                    ->where(function($q) {
+                        $q->whereNull('expiry_extension_date')
+                          ->orWhere('expiry_extension_date', '<', now());
+                    });
+    }
+
+    /**
+     * Relationship to the user who extended the expiry
+     */
+    public function expiryExtendedBy()
+    {
+        return $this->belongsTo(User::class, 'expiry_extended_by');
     }
 }

@@ -147,7 +147,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
 
         setIsSubmitting(true);
         axios
-            .post(route('rooms.booking.store'), payload)
+            .post(route('rooms.store.booking'), payload)
             .then((res) => {
                 enqueueSnackbar('Booking submitted successfully', { variant: 'success' });
                 // Redirect or show success

@@ -119,12 +119,12 @@ const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings }) => {
                         </Button>
                     )}
                     {selectedBooking?.status === 'checked_in' && (
-                        <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking.id, type: 'checkout' }))}>
+                        <Button variant="secondary" onClick={() => router.visit(route('rooms.edit.booking', { id: selectedBooking.id, type: 'checkout' }))}>
                             Check Out
                         </Button>
                     )}
                     {!['checked_out', 'cancelled', 'no_show', 'refunded'].includes(selectedBooking?.status) ? (
-                        <Button variant="secondary" onClick={() => router.visit(route('rooms.booking.edit', { id: selectedBooking?.id }))}>
+                        <Button variant="secondary" onClick={() => router.visit(route('rooms.edit.booking', { id: selectedBooking?.id }))}>
                             Edit
                         </Button>
                     ) : (

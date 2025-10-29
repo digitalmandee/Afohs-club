@@ -1,8 +1,8 @@
-import SideNav from '@/components/App/SideBar/SideNav';
 import React from 'react';
 import { Head } from '@inertiajs/react';
 import { Box, Button, Typography, Paper, Divider } from '@mui/material';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import SideNav from '@/components/App/AdminSideBar/SideNav';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 

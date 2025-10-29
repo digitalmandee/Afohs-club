@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, Button, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -16,7 +16,7 @@ const drawerWidthClosed = 110;
 
 const steps = ['Booking Details', 'Charges', 'Upload'];
 
-const EventBooking = ({ bookingNo }) => {
+const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
     // Main state for booking type
     const [open, setOpen] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
@@ -37,6 +37,7 @@ const EventBooking = ({ bookingNo }) => {
         eventDate: '',
         eventTimeFrom: '',
         eventTimeTo: '',
+        venue: '',
         discountType: 'fixed',
         discount: '',
         totalOtherCharges: '',
@@ -54,6 +55,107 @@ const EventBooking = ({ bookingNo }) => {
         notes: '',
     });
 
+    // Auto-populate form from URL parameters (from calendar)
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const date = urlParams.get('date');
+        const timeFrom = urlParams.get('time_from');
+        const timeTo = urlParams.get('time_to');
+        const venue = urlParams.get('venue');
+
+        if (date || timeFrom || timeTo || venue) {
+            setFormData(prev => ({
+                ...prev,
+                ...(date && { eventDate: date }),
+                // ...(timeFrom && { eventTimeFrom: decodeURIComponent(timeFrom) }),
+                // ...(timeTo && { eventTimeTo: decodeURIComponent(timeTo) }),
+                ...(venue && { venue: parseInt(venue) })
+            }));
+        }
+    }, []);
+
+    // Populate form data when in edit mode
+    useEffect(() => {
+        if (editMode && bookingData) {
+            // Prepare guest object for member/customer
+            let guestObject = null;
+            if (bookingData.member) {
+                guestObject = {
+                    id: bookingData.member.id,
+                    membership_no: bookingData.member.membership_no,
+                    name: bookingData.name,
+                    email: bookingData.email,
+                    cnic: bookingData.cnic,
+                    address: bookingData.address,
+                    phone: bookingData.mobile,
+                    booking_type: 'member'
+                };
+            } else if (bookingData.customer) {
+                guestObject = {
+                    id: bookingData.customer.id,
+                    customer_no: bookingData.customer.customer_no,
+                    name: bookingData.name,
+                    email: bookingData.email,
+                    cnic: bookingData.cnic,
+                    address: bookingData.address,
+                    phone: bookingData.mobile,
+                    booking_type: 'customer'
+                };
+            }
+
+            setFormData({
+                bookingNo: bookingData.booking_no || '',
+                bookingDate: bookingData.booking_date || new Date().toISOString().split('T')[0],
+                bookingType: bookingData.booking_type || 0,
+                guest: guestObject,
+                familyMember: bookingData.family_id || '',
+                bookedBy: bookingData.booked_by || '',
+                natureOfEvent: bookingData.nature_of_event || '',
+                eventDate: bookingData.event_date || '',
+                eventTimeFrom: bookingData.event_time_from || '',
+                eventTimeTo: bookingData.event_time_to || '',
+                venue: bookingData.event_venue_id || '',
+                numberOfGuests: bookingData.no_of_guests || 1,
+                selectedMenu: bookingData.menu?.event_menu_id || '',
+                menuAmount: bookingData.menu?.amount || 0,
+                menuItems: bookingData.menu?.items || [],
+                menu_addons: (Array.isArray(bookingData.menuAddOns) && bookingData.menuAddOns.length > 0) ? bookingData.menuAddOns.map(addon => ({
+                    type: addon.type || '',
+                    details: addon.details || '',
+                    amount: addon.amount || '',
+                    is_complementary: Boolean(addon.is_complementary)
+                })) : [{ type: '', details: '', amount: '', is_complementary: false }],
+                other_charges: (Array.isArray(bookingData.otherCharges) && bookingData.otherCharges.length > 0) ? bookingData.otherCharges.map(charge => ({
+                    type: charge.type || '',
+                    details: charge.details || '',
+                    amount: charge.amount || '',
+                    is_complementary: Boolean(charge.is_complementary)
+                })) : [{ type: '', details: '', amount: '', is_complementary: false }],
+                discountType: bookingData.reduction_type || 'fixed',
+                discount: bookingData.reduction_amount || '',
+                grandTotal: bookingData.total_price || '',
+                notes: bookingData.additional_notes || '',
+                documents: [],
+                previewFiles: (() => {
+                    try {
+                        return bookingData.booking_docs ? JSON.parse(bookingData.booking_docs) : [];
+                    } catch (e) {
+                        console.error('Error parsing booking_docs:', e);
+                        return [];
+                    }
+                })(),
+                // Keep other fields with defaults
+                persons: 0,
+                perDayCharge: '',
+                nights: '',
+                roomCharge: '',
+                totalOtherCharges: '',
+                totalMiniBar: '',
+                mini_bar_items: [{ item: '', amount: '', qty: '', total: '' }],
+            });
+        }
+    }, [editMode, bookingData]);
+
     const handleNext = () => {
         const newErrors = {};
 
@@ -68,17 +170,17 @@ const EventBooking = ({ bookingNo }) => {
             if (!formData.bookedBy) {
                 newErrors.bookedBy = 'Booked By is required';
             }
-            if (!formData.guestFirstName) {
-                newErrors.guestFirstName = 'Nature of Event is required';
+            if (!formData.natureOfEvent) {
+                newErrors.natureOfEvent = 'Nature of Event is required';
             }
-            if (!formData.guestLastName) {
-                newErrors.guestLastName = 'Event Date is required';
+            if (!formData.eventDate) {
+                newErrors.eventDate = 'Event Date is required';
             }
-            if (!formData.company) {
-                newErrors.company = 'Timing (From) is required';
+            if (!formData.eventTimeFrom) {
+                newErrors.eventTimeFrom = 'Timing (From) is required';
             }
-            if (!formData.address) {
-                newErrors.address = 'Timing (To) is required';
+            if (!formData.eventTimeTo) {
+                newErrors.eventTimeTo = 'Timing (To) is required';
             }
             if (!formData.venue) {
                 newErrors.venue = 'Venue is required';
@@ -112,12 +214,19 @@ const EventBooking = ({ bookingNo }) => {
 
     const handleFileRemove = (index) => {
         setFormData((prev) => {
-            const updatedFiles = [...(prev.previewFiles || [])];
-            updatedFiles.splice(index, 1);
+            const updatedPreviewFiles = [...(prev.previewFiles || [])];
+            const removedFile = updatedPreviewFiles[index];
+            
+            // Remove from preview files
+            updatedPreviewFiles.splice(index, 1);
+            
+            // Update documents array (only keep File objects, not string paths)
+            const updatedDocuments = (prev.documents || []).filter(doc => doc instanceof File);
+            
             return {
                 ...prev,
-                previewFiles: updatedFiles,
-                documents: updatedFiles,
+                previewFiles: updatedPreviewFiles,
+                documents: updatedDocuments,
             };
         });
     };
@@ -136,19 +245,52 @@ const EventBooking = ({ bookingNo }) => {
         }
 
         // Proceed with actual submission
-        const payload = objectToFormData(formData);
+        const formDataToSubmit = { ...formData };
+        
+        // Separate new files from existing document paths
+        const newFiles = formDataToSubmit.documents || [];
+        const existingDocs = [];
+        
+        // Process previewFiles to separate new files from existing paths
+        if (formDataToSubmit.previewFiles) {
+            formDataToSubmit.previewFiles.forEach(file => {
+                if (typeof file === 'string') {
+                    // It's an existing document path
+                    existingDocs.push(file);
+                }
+                // New File objects are already in formDataToSubmit.documents
+            });
+        }
+        
+        // Add existing documents to form data
+        formDataToSubmit.existingDocuments = existingDocs;
+        
+        // Remove previewFiles as it's not needed on backend
+        delete formDataToSubmit.previewFiles;
+        
+        const payload = objectToFormData(formDataToSubmit);
 
         setIsSubmitting(true);
-        axios
-            .post(route('rooms.booking.store'), payload)
+        
+        const url = editMode ? route('events.booking.update', { id: bookingData.id }) : route('events.booking.store');
+        const method = editMode ? 'put' : 'post';
+        
+        axios.post(url, payload)
             .then((res) => {
-                enqueueSnackbar('Booking submitted successfully', { variant: 'success' });
-                // Redirect or show success
-                router.visit(route('booking.payment', { invoice_no: res.data.invoice_id }));
+                
+                enqueueSnackbar(editMode ? 'Booking updated successfully' : 'Booking submitted successfully', { variant: 'success' });
+                
+                if (editMode) {
+                    // Redirect back to events dashboard after edit
+                    router.visit(route('events.dashboard'));
+                } else {
+                    // Redirect to payment for new bookings
+                    router.visit(route('booking.payment', { invoice_no: res.data.invoice_no }));
+                }
             })
             .catch((err) => {
                 console.error('Submit error:', err);
-                // Optionally show backend validation errors
+                enqueueSnackbar('Failed to ' + (editMode ? 'update' : 'create') + ' booking', { variant: 'error' });
             })
             .finally(() => {
                 setIsSubmitting(false);
@@ -158,7 +300,7 @@ const EventBooking = ({ bookingNo }) => {
     const renderStepContent = (step) => {
         switch (step) {
             case 0:
-                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} />;
+                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} editMode={editMode} />;
             case 1:
                 return <ChargesInfo formData={formData} handleChange={handleChange} />;
             case 2:
@@ -236,7 +378,7 @@ const EventBooking = ({ bookingNo }) => {
 };
 export default EventBooking;
 
-const BookingDetails = ({ formData, handleChange, errors }) => {
+const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
     const { props } = usePage();
 
     const [familyMembers, setFamilyMembers] = useState([]);
@@ -271,13 +413,22 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 <Grid item xs={12}>
                     <FormLabel>Booking Type</FormLabel>
                     <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
-                        <FormControlLabel value="0" control={<Radio />} label="Member" />
-                        <FormControlLabel value="1" control={<Radio />} label="Guest / Non-Member" />
+                        <FormControlLabel value="0" control={<Radio disabled={editMode} />} label="Member" />
+                        <FormControlLabel value="1" control={<Radio disabled={editMode} />} label="Guest / Non-Member" />
                     </RadioGroup>
                 </Grid>
 
                 <Grid item xs={12}>
-                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: formData.bookingType }} placeholder="Search members..." />
+                    <AsyncSearchTextField 
+                        label="Member / Guest Name" 
+                        name="guest" 
+                        value={formData.guest} 
+                        onChange={handleChange} 
+                        endpoint="admin.api.search-users" 
+                        params={{ type: formData.bookingType }} 
+                        placeholder="Search members..." 
+                        disabled={editMode}
+                    />
 
                     {errors.guest && (
                         <Typography variant="body2" color="error">
@@ -290,6 +441,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                             <Typography variant="h5" sx={{ mb: 1 }}>
                                 Member Information
                             </Typography>
+                            {formData.guest?.name}
                             <Typography variant="body1">{formData.guest?.booking_type == 'member' ? `Member # ${formData.guest?.membership_no}` : `Guest # ${formData.guest?.customer_no}`}</Typography>
                             <Typography variant="body1">Email: {formData.guest?.email}</Typography>
                             <Typography variant="body1">Phone: {formData.guest?.phone}</Typography>
@@ -322,21 +474,21 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                     <TextField label="Booked By*" name="bookedBy" value={formData.bookedBy} onChange={handleChange} fullWidth error={!!errors.bookedBy} helperText={errors.bookedBy} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Nature of Event*" name="guestFirstName" value={formData.guestFirstName} onChange={handleChange} fullWidth error={!!errors.guestFirstName} helperText={errors.guestFirstName} />
+                    <TextField label="Nature of Event*" name="natureOfEvent" value={formData.natureOfEvent} onChange={handleChange} fullWidth error={!!errors.natureOfEvent} helperText={errors.natureOfEvent} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Event Date*" type="date" name="guestLastName" value={formData.guestLastName} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.guestLastName} helperText={errors.guestLastName} />
+                    <TextField label="Event Date*" type="date" name="eventDate" value={formData.eventDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventDate} helperText={errors.eventDate} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Timing (From)*" type="time" name="company" value={formData.company} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.company} helperText={errors.company} />
+                    <TextField label="Timing (From)*" type="time" name="eventTimeFrom" value={formData.eventTimeFrom} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeFrom} helperText={errors.eventTimeFrom} />
                 </Grid>
                 <Grid item xs={6}>
-                    <TextField label="Timing (To)*" type="time" name="address" value={formData.address} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.address} helperText={errors.address} />
+                    <TextField label="Timing (To)*" type="time" name="eventTimeTo" value={formData.eventTimeTo} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeTo} helperText={errors.eventTimeTo} />
                 </Grid>
                 <Grid item xs={12}>
                     <FormControl fullWidth sx={{ mt: 2 }} error={!!errors.venue}>
                         <InputLabel>Venue*</InputLabel>
-                        <Select value={formData.venue} onChange={handleChange} name="venue" label="Venue*">
+                        <Select value={Number(formData.venue)} onChange={handleChange} name="venue" label="Venue*">
                             <MenuItem value="">Choose Venue</MenuItem>
                             {props.eventVenues?.map((venue) => (
                                 <MenuItem key={venue.id} value={venue.id}>
@@ -461,8 +613,8 @@ const ChargesInfo = ({ formData, handleChange }) => {
     useEffect(() => {
         const { totalOther, totalMenuAddOns, grandTotal } = calculateTotals();
 
-        handleChange({ target: { name: 'totalOtherCharges', value: totalOther } });
-        handleChange({ target: { name: 'grandTotal', value: grandTotal.toFixed(2) } });
+        handleChange({ target: { name: 'totalOtherCharges', value: Math.round(totalOther) } });
+        handleChange({ target: { name: 'grandTotal', value: Math.round(grandTotal) } });
     }, [formData.other_charges, formData.menu_addons, formData.discount, formData.discountType, formData.menuAmount, formData.numberOfGuests]);
 
     const { totalOther, totalMenuAddOns, menuAmount, perPersonMenuCharges, totalMenuCharges, numberOfGuests, grandTotal } = calculateTotals();
@@ -642,16 +794,16 @@ const ChargesInfo = ({ formData, handleChange }) => {
                 <TextField label="Number of Guests" value={numberOfGuests} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Menu Add-Ons (Per Person)" value={totalMenuAddOns.toFixed(2)} fullWidth disabled />
+                <TextField label="Menu Add-Ons (Per Person)" value={Math.round(totalMenuAddOns)} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Per Person Menu" value={perPersonMenuCharges.toFixed(2)} fullWidth disabled />
+                <TextField label="Per Person Menu" value={Math.round(perPersonMenuCharges)} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Total Menu Charges" value={totalMenuCharges.toFixed(2)} fullWidth disabled />
+                <TextField label="Total Menu Charges" value={Math.round(totalMenuCharges)} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Other Charges" value={totalOther.toFixed(2)} fullWidth disabled />
+                <TextField label="Other Charges" value={Math.round(totalOther)} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>
                 <FormControl fullWidth>
@@ -666,48 +818,269 @@ const ChargesInfo = ({ formData, handleChange }) => {
                 <TextField label="Discount" type="number" name="discount" value={formData.discount} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={2}>
-                <TextField label="Grand Total" value={grandTotal.toFixed(2)} fullWidth disabled />
+                <TextField label="Grand Total" value={Math.round(grandTotal)} fullWidth disabled />
             </Grid>
         </Grid>
     );
 };
 
-const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove }) => (
-    <Grid container spacing={2}>
-        <Grid item xs={12}>
-            <InputLabel>Upload Documents (PDF or Images)</InputLabel>
-            <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8 }} />
-        </Grid>
+const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove }) => {
+    const [isDragOver, setIsDragOver] = useState(false);
+    const fileInputRef = useRef(null);
 
-        <Grid item xs={12}>
-            <Grid container spacing={1}>
-                {[...(formData.previewFiles || [])].map((file, idx) => (
-                    <Grid item key={idx}>
-                        <Box
-                            sx={{
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            // Create a synthetic event to match the existing handleFileChange function
+            const syntheticEvent = {
+                target: {
+                    name: 'documents',
+                    files: files
+                }
+            };
+            handleFileChange(syntheticEvent);
+        }
+    };
+
+    const handleBoxClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const getFilePreview = (file, index) => {
+        const isFileObject = file instanceof File;
+        const fileName = isFileObject ? file.name : file.split('/').pop();
+        const ext = fileName.split('.').pop().toLowerCase();
+        
+        // Create preview URL for File objects
+        const previewUrl = isFileObject ? URL.createObjectURL(file) : file;
+        
+        return (
+            <div key={index} style={{ 
+                position: 'relative', 
+                width: '100px', 
+                textAlign: 'center',
+                marginBottom: '10px'
+            }}>
+                {/* Delete Icon */}
+                <IconButton
+                    size="small"
+                    onClick={() => handleFileRemove(index)}
+                    sx={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        width: 24,
+                        height: 24,
+                        '&:hover': {
+                            backgroundColor: '#d32f2f'
+                        },
+                        zIndex: 1
+                    }}
+                >
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+
+                {/* Preview Content */}
+                {['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext) ? (
+                    // Image Preview
+                    <div>
+                        <img 
+                            src={previewUrl} 
+                            alt={`Document ${index + 1}`} 
+                            style={{ 
+                                width: '60px', 
+                                height: '60px', 
+                                objectFit: 'cover', 
+                                borderRadius: '6px', 
+                                cursor: 'pointer',
+                                border: '2px solid #ddd'
+                            }} 
+                            onClick={() => window.open(previewUrl, '_blank')} 
+                        />
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Image</p>
+                    </div>
+                ) : ext === 'pdf' ? (
+                    // PDF Preview
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#f44336',
+                                borderRadius: '6px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                border: '1px solid #ccc',
-                                borderRadius: 1,
-                                px: 1,
-                                py: 0.5,
-                                backgroundColor: '#f9f9f9',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
                             }}
+                            onClick={() => window.open(previewUrl, '_blank')}
                         >
-                            <Typography variant="body2" sx={{ mr: 1 }}>
-                                {file.name}
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '10px' }}>
+                                PDF
                             </Typography>
-                            <IconButton size="small" onClick={() => handleFileRemove(idx)}>
-                                <CloseIcon fontSize="small" />
-                            </IconButton>
-                        </Box>
-                    </Grid>
-                ))}
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>PDF</p>
+                    </div>
+                ) : ['docx', 'doc'].includes(ext) ? (
+                    // Word Document Preview
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#2196f3',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
+                        >
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '10px' }}>
+                                DOC
+                            </Typography>
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Word</p>
+                    </div>
+                ) : (
+                    // Generic File Preview
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#757575',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
+                        >
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '8px' }}>
+                                FILE
+                            </Typography>
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
+                            {ext.toUpperCase()}
+                        </p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <Grid container spacing={2}>
+            <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                    Upload Documents
+                </Typography>
+                <Box
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={handleBoxClick}
+                    sx={{
+                        border: isDragOver ? '2px dashed #0a3d62' : '2px dashed #ccc',
+                        borderRadius: 2,
+                        p: 2,
+                        textAlign: 'center',
+                        backgroundColor: isDragOver ? '#e3f2fd' : '#fafafa',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                            borderColor: '#0a3d62',
+                            backgroundColor: '#f5f5f5',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }
+                    }}
+                >
+                    {/* Hidden file input */}
+                    <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        multiple 
+                        accept=".pdf,.doc,.docx,image/*" 
+                        name="documents" 
+                        onChange={handleFileChange} 
+                        style={{ display: 'none' }} 
+                    />
+                    
+                    {/* Upload Icon */}
+                    <Box sx={{ mb: 2 }}>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3"/>
+                            <path d="M14 2L20 8H14V2Z" fill="#2196f3"/>
+                            <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3"/>
+                        </svg>
+                    </Box>
+                    
+                    <Typography variant="h6" sx={{ mb: 1, color: isDragOver ? '#2196f3' : '#666' }}>
+                        {isDragOver ? 'Drop files here' : 'Upload Documents'}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                        Drag and drop files here or click to browse
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                        Supported formats: PDF, DOC, DOCX, Images (JPG, PNG, etc.)
+                    </Typography>
+                </Box>
+            </Grid>
+
+            {/* Document Previews */}
+            {formData.previewFiles && formData.previewFiles.length > 0 && (
+                <Grid item xs={12}>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Uploaded Documents ({formData.previewFiles.length})
+                    </Typography>
+                    <div style={{ 
+                        display: 'flex', 
+                        flexWrap: 'wrap', 
+                        gap: '15px',
+                        padding: '15px',
+                        backgroundColor: '#f9f9f9',
+                        borderRadius: '8px',
+                        border: '1px solid #e0e0e0'
+                    }}>
+                        {formData.previewFiles.map((file, index) => getFilePreview(file, index))}
+                    </div>
+                </Grid>
+            )}
+
+            <Grid item xs={12}>
+                <TextField 
+                    label="Additional Notes" 
+                    name="notes" 
+                    value={formData.notes} 
+                    onChange={handleChange} 
+                    fullWidth 
+                    multiline 
+                    rows={3}
+                    placeholder="Enter any additional notes or instructions..."
+                />
             </Grid>
         </Grid>
-
-        <Grid item xs={12}>
-            <TextField label="Additional Notes" name="notes" value={formData.notes || ''} onChange={handleChange} multiline rows={4} fullWidth />
-        </Grid>
-    </Grid>
-);
+    );
+};

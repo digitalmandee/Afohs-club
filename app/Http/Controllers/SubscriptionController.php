@@ -220,46 +220,6 @@ class SubscriptionController extends Controller
         return response()->json(['success' => true, 'message' => 'Subscription created successfully', 'invoice_no' => $invoice_no]);
     }
 
-    public function payment(Request $request)
-    {
-        $request->query('invoice_no');
-
-        $invoice = FinancialInvoice::where('invoice_no', $request->invoice_no)->with('customer:id,first_name,last_name,email', 'customer.member.memberType')->first();
-        return Inertia::render('App/Admin/Subscription/Payment', compact('invoice'));
-    }
-
-    public function paymentStore(Request $request)
-    {
-        $request->validate([
-            'invoice_no' => 'required|exists:financial_invoices,invoice_no',
-            'amount' => 'required|numeric',
-        ]);
-
-        DB::beginTransaction();
-
-        $recieptPath = null;
-        if ($request->payment_method == 'credit_card' && $request->has('reciept')) {
-            $recieptPath = FileHelper::saveImage($request->file('reciept'), 'reciepts');
-        }
-
-        $invoice = FinancialInvoice::where('invoice_no', $request->invoice_no)->first();
-        $invoice->payment_date = now();
-        $invoice->paid_amount = $request->total_amount;
-        $invoice->customer_charges = $request->customer_charges;
-        $invoice->payment_method = $request->payment_method;
-        $invoice->reciept = $recieptPath;
-        $invoice->status = 'paid';
-        $invoice->save();
-
-        $subscription = Subscription::find($request->subscription_id);
-        $subscription->status = 'active';
-        $subscription->save();
-
-        DB::commit();
-
-        return response()->json(['success' => true, 'message' => 'Payment successful']);
-    }
-
     public function customerInvoices($userId)
     {
         $invoices = FinancialInvoice::with('customer')

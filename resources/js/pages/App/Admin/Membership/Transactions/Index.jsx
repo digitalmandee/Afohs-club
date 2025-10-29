@@ -123,7 +123,7 @@ export default function TransactionIndex({ transactions, filters }) {
                         <Typography variant="h4" component="h1">
                             All Transactions
                         </Typography>
-                        <Button component={Link} href={route('membership.transactions.create')} variant="contained" startIcon={<Add />}>
+                        <Button component={Link} href={route('finance.transaction.create')} variant="contained" startIcon={<Add />}>
                             Add New Transaction
                         </Button>
                     </Box>

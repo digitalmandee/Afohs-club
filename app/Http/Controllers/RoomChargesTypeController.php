@@ -8,6 +8,13 @@ use Inertia\Inertia;
 
 class RoomChargesTypeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('super.admin:rooms.chargesTypes.view')->only('index');
+        $this->middleware('super.admin:rooms.chargesTypes.create')->only('create', 'store');
+        $this->middleware('super.admin:rooms.chargesTypes.edit')->only('edit', 'update');
+        $this->middleware('permission:rooms.chargesTypes.delete')->only('destroy');
+    }
     // List all room charges types
     public function index()
     {

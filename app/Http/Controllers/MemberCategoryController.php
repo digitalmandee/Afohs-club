@@ -9,6 +9,13 @@ use Inertia\Inertia;
 
 class MemberCategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:member-categories.view')->only('index');
+        $this->middleware('permission:member-categories.create')->only('create', 'store');
+        $this->middleware('permission:member-categories.edit')->only('edit', 'update');
+        $this->middleware('permission:member-categories.delete')->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      *
