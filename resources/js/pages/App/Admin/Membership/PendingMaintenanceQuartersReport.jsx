@@ -51,6 +51,27 @@ const PendingMaintenanceQuartersReport = () => {
         router.get(route('membership.pending-maintenance-quarters-report'));
     };
 
+    const handlePrint = () => {
+        // Build query string with current filters
+        const params = new URLSearchParams();
+        
+        if (allFilters.date_from) {
+            params.append('date_from', allFilters.date_from);
+        }
+        
+        if (allFilters.date_to) {
+            params.append('date_to', allFilters.date_to);
+        }
+        
+        if (allFilters.category) {
+            params.append('category', allFilters.category);
+        }
+        
+        // Open print page in new window
+        const printUrl = route('membership.pending-maintenance-quarters-report.print') + (params.toString() ? '?' + params.toString() : '');
+        window.open(printUrl, '_blank');
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -71,6 +92,7 @@ const PendingMaintenanceQuartersReport = () => {
                         <Button
                             variant="contained"
                             startIcon={<Print />}
+                            onClick={handlePrint}
                             sx={{
                                 backgroundColor: '#063455',
                                 color: 'white',

@@ -398,6 +398,22 @@ class SubscriptionController extends Controller
         return response()->json($subscriptions);
     }
 
+    public function showDetails($id)
+    {
+        $subscription = Subscription::with([
+            'member:id,full_name,membership_no,personal_email,mobile_number_a,profile_photo',
+            'subscriptionCategory:id,name,fee,description',
+            'subscriptionType:id,name',
+            'invoice' => function($query) {
+                $query->select('id', 'invoiceable_id', 'invoiceable_type', 'invoice_no', 'total_price', 'status', 'payment_method', 'payment_date', 'created_at');
+            }
+        ])->findOrFail($id);
+
+        return Inertia::render('App/Admin/Subscription/Details', [
+            'subscription' => $subscription
+        ]);
+    }
+
     private function getInvoiceNo()
     {
         $invoiceNo = FinancialInvoice::max('invoice_no');

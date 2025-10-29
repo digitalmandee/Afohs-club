@@ -27,6 +27,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
     const [openMembershipInvoiceModal, setOpenMembershipInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [selectedMemberUserId, setSelectedMemberUserId] = useState(null);
+    const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
     const [showRoomInvoiceModal, setShowRoomInvoiceModal] = useState(false);
     const [showEventInvoiceModal, setShowEventInvoiceModal] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState(null);
@@ -519,11 +520,19 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                                             setSelectedBookingId(transaction.invoiceable_id);
                                                                             setShowEventInvoiceModal(true);
                                                                         } else if (transaction.member && transaction.member.id) {
-                                                                            // Membership invoices - use user_id
-                                                                            setSelectedMemberUserId(transaction.member.id);
+                                                                            // Member-related invoices
+                                                                            if (transaction.fee_type === 'membership_fee') {
+                                                                                // Membership fee: use member ID only
+                                                                                setSelectedMemberUserId(transaction.member.id);
+                                                                                setSelectedInvoiceId(null);
+                                                                            } else {
+                                                                                // Subscription/Maintenance fees: use invoice ID
+                                                                                setSelectedMemberUserId(null);
+                                                                                setSelectedInvoiceId(transaction.id);
+                                                                            }
                                                                             setOpenMembershipInvoiceModal(true);
                                                                         } else {
-                                                                            // Default: subscription invoices
+                                                                            // Fallback: use subscription invoice modal
                                                                             setSelectedInvoice(transaction);
                                                                             setOpenInvoiceModal(true);
                                                                         }
@@ -548,17 +557,19 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                             </Col>
                         </Row>
                     </Container>
-                    {/* Default Invoice Modal for Subscription */}
+                    {/* Fallback Invoice Modal (for non-member transactions) */}
                     <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />
                     
-                    {/* Membership Invoice Modal */}
+                    {/* Membership Invoice Modal - Used for Membership, Subscription & Maintenance Fees */}
                     <MembershipInvoiceSlip 
                         open={openMembershipInvoiceModal} 
                         onClose={() => {
                             setOpenMembershipInvoiceModal(false);
                             setSelectedMemberUserId(null);
+                            setSelectedInvoiceId(null);
                         }} 
                         invoiceNo={selectedMemberUserId}
+                        invoiceId={selectedInvoiceId}
                     />
                     
                     {/* Room Booking Invoice Modal */}

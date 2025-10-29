@@ -79,6 +79,28 @@ const SleepingMembersReport = () => {
         return new Date(date).toLocaleDateString('en-GB');
     };
 
+    const handlePrint = () => {
+        // Build query string with current filters and page
+        const params = new URLSearchParams();
+        
+        if (allFilters.categories && allFilters.categories.length > 0) {
+            allFilters.categories.forEach(cat => params.append('categories[]', cat));
+        }
+        
+        if (allFilters.status && allFilters.status.length > 0) {
+            allFilters.status.forEach(status => params.append('status[]', status));
+        }
+        
+        // Add current page number
+        if (primary_members?.current_page) {
+            params.append('page', primary_members.current_page);
+        }
+        
+        // Open print page in new window
+        const printUrl = route('membership.sleeping-members-report.print') + (params.toString() ? '?' + params.toString() : '');
+        window.open(printUrl, '_blank');
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -99,6 +121,7 @@ const SleepingMembersReport = () => {
                         <Button
                             variant="contained"
                             startIcon={<Print />}
+                            onClick={handlePrint}
                             sx={{
                                 backgroundColor: '#063455',
                                 color: 'white',
@@ -247,7 +270,7 @@ const SleepingMembersReport = () => {
                                                     {index + 1}
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>
-                                                    {member.user_id}
+                                                    {member.id}
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>
                                                     {member.membership_no}

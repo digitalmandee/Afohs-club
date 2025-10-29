@@ -638,6 +638,83 @@ class MemberFeeRevenueController extends Controller
         ]);
     }
 
+    public function supplementaryCardReportPrint(Request $request)
+    {
+        $categoryFilter = $request->input('categories');
+        $cardStatusFilter = $request->input('card_status');
+
+        // Get all family members (supplementary members with parent_id)
+        $supplementaryQuery = Member::whereNotNull('parent_id');
+
+        // Apply card status filter
+        if ($cardStatusFilter) {
+            $supplementaryQuery->whereIn('card_status', (array) $cardStatusFilter);
+        }
+
+        $supplementaryMembers = $supplementaryQuery->get();
+
+        // Now get parent categories for filtering
+        $parentIds = $supplementaryMembers->pluck('parent_id')->unique();
+        $parentCategories = Member::whereIn('id', $parentIds)
+            ->select('member_category_id')
+            ->get()
+            ->keyBy('id');
+
+        // Add parent category to each supplementary member
+        $supplementaryMembers = $supplementaryMembers->map(function ($member) use ($parentCategories) {
+            $parent = $parentCategories->get($member->parent_id);
+            $member->parent_category_id = $parent ? $parent->member_category_id : null;
+            return $member;
+        });
+
+        // Apply category filter if provided
+        if ($categoryFilter) {
+            $supplementaryMembers = $supplementaryMembers->filter(function ($member) use ($categoryFilter) {
+                return in_array($member->parent_category_id, (array) $categoryFilter);
+            });
+        }
+
+        // Calculate statistics by category
+        $categoryQuery = MemberCategory::select('id', 'name', 'description');
+
+        if ($categoryFilter) {
+            $categoryQuery->whereIn('id', (array) $categoryFilter);
+        }
+
+        $categoryStats = $categoryQuery->get()
+            ->map(function ($category) use ($supplementaryMembers) {
+                $categoryMembers = $supplementaryMembers->where('parent_category_id', $category->id);
+
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'code' => $category->description,
+                    'total_cards_applied' => $categoryMembers->count(),
+                    'issued_supplementary_members' => $categoryMembers->where('card_status', 'Issued')->count(),
+                    'printed_supplementary_members' => $categoryMembers->where('card_status', 'Printed')->count(),
+                    're_printed_supplementary_members' => $categoryMembers->where('card_status', 'Re-Printed')->count(),
+                ];
+            });
+
+        // Calculate overall statistics
+        $totalStats = [
+            'total_cards_applied' => $supplementaryMembers->count(),
+            'issued_supplementary_members' => $supplementaryMembers->where('card_status', 'Issued')->count(),
+            'printed_supplementary_members' => $supplementaryMembers->where('card_status', 'Printed')->count(),
+            're_printed_supplementary_members' => $supplementaryMembers->where('card_status', 'Re-Printed')->count(),
+        ];
+
+        return Inertia::render('App/Admin/Membership/SupplementaryCardReportPrint', [
+            'categories' => $categoryStats,
+            'statistics' => $totalStats,
+            'filters' => [
+                'categories' => $categoryFilter ?? [],
+                'card_status' => $cardStatusFilter ?? [],
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
+        ]);
+    }
+
     public function sleepingMembersReport(Request $request)
     {
         $categoryFilter = $request->input('categories');
@@ -721,6 +798,92 @@ class MemberFeeRevenueController extends Controller
             ],
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_member_statuses' => $allMemberStatuses,
+        ]);
+    }
+
+    public function sleepingMembersReportPrint(Request $request)
+    {
+        $categoryFilter = $request->input('categories');
+        $statusFilter = $request->input('status');
+        $page = $request->input('page', 1);
+
+        // Get primary members with pagination (same as main report)
+        $query = Member::with(['memberCategory:id,name,description'])
+            ->whereNull('parent_id')
+            ->select('members.*');
+
+        // Apply member category filter
+        if ($categoryFilter) {
+            $query->whereIn('member_category_id', (array) $categoryFilter);
+        }
+
+        // Apply status filter
+        if ($statusFilter) {
+            $query->whereIn('status', (array) $statusFilter);
+        }
+
+        // Get paginated results (same 15 per page as main report)
+        $primaryMembers = $query->orderBy('created_at', 'desc')->paginate(15, ['*'], 'page', $page);
+
+        // Get all members for statistics calculation (without pagination)
+        $allMembersQuery = Member::with(['memberCategory:id,name,description'])
+            ->whereNull('parent_id')
+            ->select('members.*');
+
+        if ($categoryFilter) {
+            $allMembersQuery->whereIn('member_category_id', (array) $categoryFilter);
+        }
+
+        if ($statusFilter) {
+            $allMembersQuery->whereIn('status', (array) $statusFilter);
+        }
+
+        $allPrimaryMembers = $allMembersQuery->orderBy('created_at', 'desc')->get();
+
+        // Calculate statistics by category and status using all members
+        $categoryStats = MemberCategory::select('id', 'name', 'description')
+            ->get()
+            ->map(function ($category) use ($allPrimaryMembers) {
+                $categoryMembers = $allPrimaryMembers->where('member_category_id', $category->id);
+
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'code' => $category->description,
+                    'total_members' => $categoryMembers->count(),
+                    'active' => $categoryMembers->where('status', 'active')->count(),
+                    'suspended' => $categoryMembers->where('status', 'suspended')->count(),
+                    'cancelled' => $categoryMembers->where('status', 'cancelled')->count(),
+                    'absent' => $categoryMembers->where('status', 'absent')->count(),
+                    'expired' => $categoryMembers->where('status', 'expired')->count(),
+                    'terminated' => $categoryMembers->where('status', 'terminated')->count(),
+                    'not_assign' => $categoryMembers->where('status', 'not_assign')->count(),
+                    'in_suspension_process' => $categoryMembers->where('status', 'in_suspension_process')->count(),
+                ];
+            });
+
+        // Calculate overall statistics using all members
+        $totalStats = [
+            'total_members' => $allPrimaryMembers->count(),
+            'active' => $allPrimaryMembers->where('status', 'active')->count(),
+            'suspended' => $allPrimaryMembers->where('status', 'suspended')->count(),
+            'cancelled' => $allPrimaryMembers->where('status', 'cancelled')->count(),
+            'absent' => $allPrimaryMembers->where('status', 'absent')->count(),
+            'expired' => $allPrimaryMembers->where('status', 'expired')->count(),
+            'terminated' => $allPrimaryMembers->where('status', 'terminated')->count(),
+            'not_assign' => $allPrimaryMembers->where('status', 'not_assign')->count(),
+            'in_suspension_process' => $allPrimaryMembers->where('status', 'in_suspension_process')->count(),
+        ];
+
+        return Inertia::render('App/Admin/Membership/SleepingMembersReportPrint', [
+            'categories' => $categoryStats,
+            'primary_members' => $primaryMembers,
+            'statistics' => $totalStats,
+            'filters' => [
+                'categories' => $categoryFilter ?? [],
+                'status' => $statusFilter ?? [],
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
         ]);
     }
 
@@ -811,6 +974,74 @@ class MemberFeeRevenueController extends Controller
             ],
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_card_statuses' => $allCardStatuses,
+        ]);
+    }
+
+    public function memberCardDetailReportPrint(Request $request)
+    {
+        $categoryFilter = $request->input('categories');
+        $cardStatusFilter = $request->input('card_status');
+
+        // Get all primary members (members with parent_id = null)
+        $query = Member::with(['memberCategory:id,name,description'])
+            ->whereNull('parent_id')
+            ->select('members.*');
+
+        // Apply member category filter
+        if ($categoryFilter) {
+            $query->whereIn('member_category_id', (array) $categoryFilter);
+        }
+
+        // Apply card status filter
+        if ($cardStatusFilter) {
+            $query->whereIn('card_status', (array) $cardStatusFilter);
+        }
+
+        // Get all members for statistics
+        $allPrimaryMembers = $query->orderBy('created_at', 'desc')->get();
+
+        // Calculate statistics by category
+        $categoryQuery = MemberCategory::select('id', 'name', 'description');
+
+        if ($categoryFilter) {
+            $categoryQuery->whereIn('id', (array) $categoryFilter);
+        }
+
+        $categoryStats = $categoryQuery->get()
+            ->map(function ($category) use ($allPrimaryMembers) {
+                $categoryMembers = $allPrimaryMembers->where('member_category_id', $category->id);
+
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'code' => $category->description,
+                    'total_cards_applied' => $categoryMembers->count(),
+                    'issued_primary_members' => $categoryMembers->where('card_status', 'Issued')->count(),
+                    'printed_primary_members' => $categoryMembers->where('card_status', 'Printed')->count(),
+                    're_printed_primary_members' => $categoryMembers->where('card_status', 'Re-Printed')->count(),
+                    'e_card_issued_primary_members' => $categoryMembers->where('card_status', 'E-Card Issued')->count(),
+                    'pending_cards' => $categoryMembers->whereIn('card_status', ['In-Process', 'Applied', 'Not Applied'])->count(),
+                ];
+            });
+
+        // Calculate overall statistics
+        $totalStats = [
+            'total_cards_applied' => $allPrimaryMembers->count(),
+            'issued_primary_members' => $allPrimaryMembers->where('card_status', 'Issued')->count(),
+            'printed_primary_members' => $allPrimaryMembers->where('card_status', 'Printed')->count(),
+            're_printed_primary_members' => $allPrimaryMembers->where('card_status', 'Re-Printed')->count(),
+            'e_card_issued_primary_members' => $allPrimaryMembers->where('card_status', 'E-Card Issued')->count(),
+            'pending_cards' => $allPrimaryMembers->whereIn('card_status', ['In-Process', 'Applied', 'Not Applied'])->count(),
+        ];
+
+        return Inertia::render('App/Admin/Membership/MemberCardDetailReportPrint', [
+            'categories' => $categoryStats,
+            'statistics' => $totalStats,
+            'filters' => [
+                'categories' => $categoryFilter ?? [],
+                'card_status' => $cardStatusFilter ?? [],
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
         ]);
     }
 
@@ -915,6 +1146,100 @@ class MemberFeeRevenueController extends Controller
         ]);
     }
 
+    public function monthlyMaintenanceFeeReportPrint(Request $request)
+    {
+        $memberSearch = $request->input('member_search');
+        $invoiceSearch = $request->input('invoice_search');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $cityFilter = $request->input('city');
+        $paymentMethodFilter = $request->input('payment_method');
+        $categoryFilter = $request->input('categories');
+        $genderFilter = $request->input('gender');
+        $page = $request->input('page', 1);
+
+        // Get maintenance fee transactions with pagination
+        $query = FinancialInvoice::with(['member.memberCategory'])
+            ->where('fee_type', 'maintenance_fee')
+            ->select('financial_invoices.*');
+
+        // Apply member search filter
+        if ($memberSearch) {
+            $query->whereHas('member', function ($q) use ($memberSearch) {
+                $q->where('full_name', 'like', "%{$memberSearch}%")
+                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+            });
+        }
+
+        // Apply invoice search filter
+        if ($invoiceSearch) {
+            $query->where('invoice_no', 'like', "%{$invoiceSearch}%");
+        }
+
+        // Apply date range filter
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        // Apply city filter
+        if ($cityFilter) {
+            $query->whereHas('member', function ($q) use ($cityFilter) {
+                $q->where('current_city', $cityFilter);
+            });
+        }
+
+        // Apply payment method filter
+        if ($paymentMethodFilter) {
+            $query->where('payment_method', $paymentMethodFilter);
+        }
+
+        // Apply category filter
+        if ($categoryFilter) {
+            $query->whereHas('member', function ($q) use ($categoryFilter) {
+                $q->whereIn('member_category_id', (array) $categoryFilter);
+            });
+        }
+
+        // Apply gender filter
+        if ($genderFilter) {
+            $query->whereHas('member', function ($q) use ($genderFilter) {
+                $q->where('gender', $genderFilter);
+            });
+        }
+
+        // Get paginated results (same 15 per page)
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(15, ['*'], 'page', $page);
+
+        // Calculate statistics from all filtered transactions
+        $allTransactions = $query->get();
+        $totalAmount = $allTransactions->sum('total_price');
+        $totalTransactions = $allTransactions->count();
+        $averageAmount = $totalTransactions > 0 ? round($totalAmount / $totalTransactions, 2) : 0;
+
+        return Inertia::render('App/Admin/Membership/MonthlyMaintenanceFeeReportPrint', [
+            'transactions' => $transactions,
+            'statistics' => [
+                'total_amount' => $totalAmount,
+                'total_transactions' => $totalTransactions,
+                'average_amount' => $averageAmount,
+            ],
+            'filters' => [
+                'member_search' => $memberSearch,
+                'invoice_search' => $invoiceSearch,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'city' => $cityFilter,
+                'payment_method' => $paymentMethodFilter,
+                'categories' => $categoryFilter ?? [],
+                'gender' => $genderFilter,
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
+        ]);
+    }
+
     public function newYearEveReport(Request $request)
     {
         $memberSearch = $request->input('member_search');
@@ -1016,6 +1341,100 @@ class MemberFeeRevenueController extends Controller
         ]);
     }
 
+    public function newYearEveReportPrint(Request $request)
+    {
+        $memberSearch = $request->input('member_search');
+        $invoiceSearch = $request->input('invoice_search');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $cityFilter = $request->input('city');
+        $paymentMethodFilter = $request->input('payment_method');
+        $categoryFilter = $request->input('categories');
+        $genderFilter = $request->input('gender');
+        $page = $request->input('page', 1);
+
+        // Get all fee transactions with pagination
+        $query = FinancialInvoice::with(['member.memberCategory'])
+            ->whereIn('fee_type', ['maintenance_fee', 'membership_fee', 'reinstating_fee'])
+            ->select('financial_invoices.*');
+
+        // Apply member search filter
+        if ($memberSearch) {
+            $query->whereHas('member', function ($q) use ($memberSearch) {
+                $q->where('full_name', 'like', "%{$memberSearch}%")
+                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+            });
+        }
+
+        // Apply invoice search filter
+        if ($invoiceSearch) {
+            $query->where('invoice_no', 'like', "%{$invoiceSearch}%");
+        }
+
+        // Apply date range filter
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        // Apply city filter
+        if ($cityFilter) {
+            $query->whereHas('member', function ($q) use ($cityFilter) {
+                $q->where('current_city', $cityFilter);
+            });
+        }
+
+        // Apply payment method filter
+        if ($paymentMethodFilter) {
+            $query->where('payment_method', $paymentMethodFilter);
+        }
+
+        // Apply category filter
+        if ($categoryFilter) {
+            $query->whereHas('member', function ($q) use ($categoryFilter) {
+                $q->whereIn('member_category_id', (array) $categoryFilter);
+            });
+        }
+
+        // Apply gender filter
+        if ($genderFilter) {
+            $query->whereHas('member', function ($q) use ($genderFilter) {
+                $q->where('gender', $genderFilter);
+            });
+        }
+
+        // Get paginated results (same 15 per page)
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(15, ['*'], 'page', $page);
+
+        // Calculate statistics from all filtered transactions
+        $allTransactions = $query->get();
+        $totalAmount = $allTransactions->sum('total_price');
+        $totalTransactions = $allTransactions->count();
+        $averageAmount = $totalTransactions > 0 ? round($totalAmount / $totalTransactions, 2) : 0;
+
+        return Inertia::render('App/Admin/Membership/NewYearEveReportPrint', [
+            'transactions' => $transactions,
+            'statistics' => [
+                'total_amount' => $totalAmount,
+                'total_transactions' => $totalTransactions,
+                'average_amount' => $averageAmount,
+            ],
+            'filters' => [
+                'member_search' => $memberSearch,
+                'invoice_search' => $invoiceSearch,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'city' => $cityFilter,
+                'payment_method' => $paymentMethodFilter,
+                'categories' => $categoryFilter ?? [],
+                'gender' => $genderFilter,
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
+        ]);
+    }
+
     public function reinstatingFeeReport(Request $request)
     {
         $memberSearch = $request->input('member_search');
@@ -1114,6 +1533,100 @@ class MemberFeeRevenueController extends Controller
             'all_payment_methods' => $allPaymentMethods,
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_genders' => $allGenders,
+        ]);
+    }
+
+    public function reinstatingFeeReportPrint(Request $request)
+    {
+        $memberSearch = $request->input('member_search');
+        $invoiceSearch = $request->input('invoice_search');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $cityFilter = $request->input('city');
+        $paymentMethodFilter = $request->input('payment_method');
+        $categoryFilter = $request->input('categories');
+        $genderFilter = $request->input('gender');
+        $page = $request->input('page', 1);
+
+        // Get reinstating fee transactions with pagination
+        $query = FinancialInvoice::with(['member.memberCategory'])
+            ->where('fee_type', 'reinstating_fee')
+            ->select('financial_invoices.*');
+
+        // Apply member search filter
+        if ($memberSearch) {
+            $query->whereHas('member', function ($q) use ($memberSearch) {
+                $q->where('full_name', 'like', "%{$memberSearch}%")
+                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+            });
+        }
+
+        // Apply invoice search filter
+        if ($invoiceSearch) {
+            $query->where('invoice_no', 'like', "%{$invoiceSearch}%");
+        }
+
+        // Apply date range filter
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        // Apply city filter
+        if ($cityFilter) {
+            $query->whereHas('member', function ($q) use ($cityFilter) {
+                $q->where('current_city', $cityFilter);
+            });
+        }
+
+        // Apply payment method filter
+        if ($paymentMethodFilter) {
+            $query->where('payment_method', $paymentMethodFilter);
+        }
+
+        // Apply category filter
+        if ($categoryFilter) {
+            $query->whereHas('member', function ($q) use ($categoryFilter) {
+                $q->whereIn('member_category_id', (array) $categoryFilter);
+            });
+        }
+
+        // Apply gender filter
+        if ($genderFilter) {
+            $query->whereHas('member', function ($q) use ($genderFilter) {
+                $q->where('gender', $genderFilter);
+            });
+        }
+
+        // Get paginated results (same 15 per page)
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(15, ['*'], 'page', $page);
+
+        // Calculate statistics from all filtered transactions
+        $allTransactions = $query->get();
+        $totalAmount = $allTransactions->sum('total_price');
+        $totalTransactions = $allTransactions->count();
+        $averageAmount = $totalTransactions > 0 ? round($totalAmount / $totalTransactions, 2) : 0;
+
+        return Inertia::render('App/Admin/Membership/ReinstatingFeeReportPrint', [
+            'transactions' => $transactions,
+            'statistics' => [
+                'total_amount' => $totalAmount,
+                'total_transactions' => $totalTransactions,
+                'average_amount' => $averageAmount,
+            ],
+            'filters' => [
+                'member_search' => $memberSearch,
+                'invoice_search' => $invoiceSearch,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'city' => $cityFilter,
+                'payment_method' => $paymentMethodFilter,
+                'categories' => $categoryFilter ?? [],
+                'gender' => $genderFilter,
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
         ]);
     }
 
@@ -1227,6 +1740,107 @@ class MemberFeeRevenueController extends Controller
         ]);
     }
 
+    public function sportsSubscriptionsReportPrint(Request $request)
+    {
+        $memberSearch = $request->input('member_search');
+        $invoiceSearch = $request->input('invoice_search');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $cityFilter = $request->input('city');
+        $paymentMethodFilter = $request->input('payment_method');
+        $categoryFilter = $request->input('categories');
+        $genderFilter = $request->input('gender');
+        $familyMemberFilter = $request->input('family_member');
+        $page = $request->input('page', 1);
+
+        // Get subscription fee transactions with pagination
+        $query = FinancialInvoice::with(['member.memberCategory'])
+            ->where('fee_type', 'subscription_fee')
+            ->select('financial_invoices.*');
+
+        // Apply member search filter
+        if ($memberSearch) {
+            $query->whereHas('member', function ($q) use ($memberSearch) {
+                $q->where('full_name', 'like', "%{$memberSearch}%")
+                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+            });
+        }
+
+        // Apply invoice search filter
+        if ($invoiceSearch) {
+            $query->where('invoice_no', 'like', "%{$invoiceSearch}%");
+        }
+
+        // Apply date range filter
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        // Apply city filter
+        if ($cityFilter) {
+            $query->whereHas('member', function ($q) use ($cityFilter) {
+                $q->where('current_city', $cityFilter);
+            });
+        }
+
+        // Apply payment method filter
+        if ($paymentMethodFilter) {
+            $query->where('payment_method', $paymentMethodFilter);
+        }
+
+        // Apply category filter
+        if ($categoryFilter) {
+            $query->whereHas('member', function ($q) use ($categoryFilter) {
+                $q->whereIn('member_category_id', (array) $categoryFilter);
+            });
+        }
+
+        // Apply gender filter
+        if ($genderFilter) {
+            $query->whereHas('member', function ($q) use ($genderFilter) {
+                $q->where('gender', $genderFilter);
+            });
+        }
+
+        // Apply family member filter
+        if ($familyMemberFilter) {
+            $query->whereJsonContains('data->family_member_relation', $familyMemberFilter);
+        }
+
+        // Get paginated results (same 15 per page)
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(15, ['*'], 'page', $page);
+
+        // Calculate statistics from all filtered transactions
+        $allTransactions = $query->get();
+        $totalAmount = $allTransactions->sum('total_price');
+        $totalTransactions = $allTransactions->count();
+        $averageAmount = $totalTransactions > 0 ? round($totalAmount / $totalTransactions, 2) : 0;
+
+        return Inertia::render('App/Admin/Membership/SportsSubscriptionsReportPrint', [
+            'transactions' => $transactions,
+            'statistics' => [
+                'total_amount' => $totalAmount,
+                'total_transactions' => $totalTransactions,
+                'average_amount' => $averageAmount,
+            ],
+            'filters' => [
+                'member_search' => $memberSearch,
+                'invoice_search' => $invoiceSearch,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'city' => $cityFilter,
+                'payment_method' => $paymentMethodFilter,
+                'categories' => $categoryFilter ?? [],
+                'gender' => $genderFilter,
+                'family_member' => $familyMemberFilter,
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
+        ]);
+    }
+
     public function subscriptionsMaintenanceSummary(Request $request)
     {
         $dateFrom = $request->input('date_from');
@@ -1315,6 +1929,105 @@ class MemberFeeRevenueController extends Controller
         $allCategoriesForFilter = MemberCategory::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Membership/SubscriptionsMaintenanceSummary', [
+            'summary' => $summary,
+            'grand_totals' => $grandTotals,
+            'filters' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'category' => $categoryFilter,
+            ],
+            'all_categories' => $allCategoriesForFilter,
+        ]);
+    }
+
+    public function subscriptionsMaintenanceSummaryPrint(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $categoryFilter = $request->input('category');
+
+        // Base query for subscription and maintenance fees
+        $query = FinancialInvoice::with(['member.memberCategory'])
+            ->whereIn('fee_type', ['subscription_fee', 'maintenance_fee'])
+            ->where('status', 'paid');
+
+        // Apply date range filter
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        // Apply category filter
+        if ($categoryFilter) {
+            $query->whereHas('member', function ($q) use ($categoryFilter) {
+                $q->where('member_category_id', $categoryFilter);
+            });
+        }
+
+        $transactions = $query->get();
+
+        // Initialize summary structure
+        $summary = [];
+        $grandTotals = [
+            'cash' => 0,
+            'credit_card' => 0,
+            'bank_online' => 0,
+            'total' => 0
+        ];
+
+        // Get all categories and initialize them in summary
+        $allCategoriesQuery = MemberCategory::select('id', 'name');
+
+        // Apply category filter to the categories we show
+        if ($categoryFilter) {
+            $allCategoriesQuery->where('id', $categoryFilter);
+        }
+
+        $allCategories = $allCategoriesQuery->get();
+
+        // Initialize all categories in summary
+        foreach ($allCategories as $category) {
+            $summary[$category->name] = [
+                'cash' => 0,
+                'credit_card' => 0,
+                'bank_online' => 0,
+                'total' => 0
+            ];
+        }
+
+        foreach ($transactions as $transaction) {
+            $categoryName = $transaction->member->memberCategory->name ?? 'Unknown';
+            $paymentMethod = strtolower($transaction->payment_method);
+            $amount = $transaction->total_price;
+
+            // Skip if category doesn't exist in summary
+            if (!isset($summary[$categoryName])) {
+                continue;
+            }
+
+            // Map payment methods
+            if ($paymentMethod === 'cash') {
+                $summary[$categoryName]['cash'] += $amount;
+                $grandTotals['cash'] += $amount;
+            } elseif ($paymentMethod === 'credit card') {
+                $summary[$categoryName]['credit_card'] += $amount;
+                $grandTotals['credit_card'] += $amount;
+            } else {
+                // Bank Transfer, Online, etc.
+                $summary[$categoryName]['bank_online'] += $amount;
+                $grandTotals['bank_online'] += $amount;
+            }
+
+            $summary[$categoryName]['total'] += $amount;
+            $grandTotals['total'] += $amount;
+        }
+
+        // Get all categories for filter dropdown
+        $allCategoriesForFilter = MemberCategory::select('id', 'name')->get();
+
+        return Inertia::render('App/Admin/Membership/SubscriptionsMaintenanceSummaryPrint', [
             'summary' => $summary,
             'grand_totals' => $grandTotals,
             'filters' => [
@@ -1430,6 +2143,121 @@ class MemberFeeRevenueController extends Controller
         $allCategoriesForFilter = MemberCategory::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Membership/PendingMaintenanceQuartersReport', [
+            'summary' => $summary,
+            'grand_totals' => $grandTotals,
+            'filters' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'category' => $categoryFilter,
+            ],
+            'all_categories' => $allCategoriesForFilter,
+        ]);
+    }
+
+    public function pendingMaintenanceQuartersReportPrint(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $categoryFilter = $request->input('category');
+
+        // Get all members with their categories
+        $membersQuery = Member::with(['memberCategory'])
+            ->where('status', 'active'); // Only active members
+
+        // Apply category filter
+        if ($categoryFilter) {
+            $membersQuery->where('member_category_id', $categoryFilter);
+        }
+
+        $members = $membersQuery->get();
+
+        // Initialize summary structure with ALL categories
+        $summary = [];
+        $grandTotals = [
+            '1_quarter_pending' => 0,
+            '2_quarters_pending' => 0,
+            '3_quarters_pending' => 0,
+            '4_quarters_pending' => 0,
+            '5_quarters_pending' => 0,
+            'more_than_5_quarters_pending' => 0,
+            'maintenance_fee_quarterly' => 0,
+            'total_values' => 0
+        ];
+
+        // Get all categories and initialize them in summary
+        $allCategoriesQuery = MemberCategory::select('id', 'name', 'subscription_fee');
+
+        // Apply category filter to the categories we show
+        if ($categoryFilter) {
+            $allCategoriesQuery->where('id', $categoryFilter);
+        }
+
+        $allCategories = $allCategoriesQuery->get();
+
+        // Initialize all categories in summary
+        foreach ($allCategories as $category) {
+            $summary[$category->name] = [
+                '1_quarter_pending' => 0,
+                '2_quarters_pending' => 0,
+                '3_quarters_pending' => 0,
+                '4_quarters_pending' => 0,
+                '5_quarters_pending' => 0,
+                'more_than_5_quarters_pending' => 0,
+                'maintenance_fee_quarterly' => $category->subscription_fee ?? 0,
+                'total_values' => 0
+            ];
+        }
+
+        foreach ($members as $member) {
+            $categoryName = $member->memberCategory->name ?? 'Unknown';
+
+            // Skip if category doesn't exist in summary
+            if (!isset($summary[$categoryName])) {
+                continue;
+            }
+
+            // Calculate pending quarters for this member
+            $pendingQuarters = $this->calculatePendingQuarters($member, $dateFrom, $dateTo);
+
+            if ($pendingQuarters > 0) {
+                if ($pendingQuarters == 1) {
+                    $summary[$categoryName]['1_quarter_pending']++;
+                    $grandTotals['1_quarter_pending']++;
+                } elseif ($pendingQuarters == 2) {
+                    $summary[$categoryName]['2_quarters_pending']++;
+                    $grandTotals['2_quarters_pending']++;
+                } elseif ($pendingQuarters == 3) {
+                    $summary[$categoryName]['3_quarters_pending']++;
+                    $grandTotals['3_quarters_pending']++;
+                } elseif ($pendingQuarters == 4) {
+                    $summary[$categoryName]['4_quarters_pending']++;
+                    $grandTotals['4_quarters_pending']++;
+                } elseif ($pendingQuarters == 5) {
+                    $summary[$categoryName]['5_quarters_pending']++;
+                    $grandTotals['5_quarters_pending']++;
+                } else {
+                    $summary[$categoryName]['more_than_5_quarters_pending']++;
+                    $grandTotals['more_than_5_quarters_pending']++;
+                }
+
+                // Calculate total pending amount for this member
+                $quarterlyFee = $member->memberCategory->subscription_fee ?? 0;
+                $totalPendingAmount = $pendingQuarters * $quarterlyFee;
+                $summary[$categoryName]['total_values'] += $totalPendingAmount;
+                $grandTotals['total_values'] += $totalPendingAmount;
+            }
+        }
+
+        // Set maintenance fee quarterly for grand totals
+        if (!empty($summary)) {
+            $fees = array_column($summary, 'maintenance_fee_quarterly');
+            $grandTotals['maintenance_fee_quarterly'] = array_sum($fees) / count($fees);
+        }
+
+        // Get all categories for filter dropdown
+        $allCategoriesForFilter = MemberCategory::select('id', 'name')->get();
+
+        return Inertia::render('App/Admin/Membership/PendingMaintenanceQuartersReportPrint', [
             'summary' => $summary,
             'grand_totals' => $grandTotals,
             'filters' => [

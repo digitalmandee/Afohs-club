@@ -7,7 +7,10 @@ import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
 import TransactionFilter from './Filter';
-import InvoiceSlip from '../Membership/Invoice';
+import InvoiceSlip from '../Subscription/Invoice';
+import MembershipInvoiceSlip from '../Membership/Invoice';
+import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
+import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -17,7 +20,14 @@ const Transaction = ({ transactions, filters }) => {
     const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
+    const [openMembershipInvoiceModal, setOpenMembershipInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [selectedMemberUserId, setSelectedMemberUserId] = useState(null);
+    const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
+    const [showRoomInvoiceModal, setShowRoomInvoiceModal] = useState(false);
+    const [showEventInvoiceModal, setShowEventInvoiceModal] = useState(false);
+    const [selectedBookingId, setSelectedBookingId] = useState(null);
+    const [transactionList, setTransactionList] = useState(transactions);
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
     const [perPage, setPerPage] = useState(filters?.per_page || 10);
 
@@ -284,8 +294,30 @@ const Transaction = ({ transactions, filters }) => {
                                                                 fontWeight: 500
                                                             }}
                                                             onClick={() => {
-                                                                setSelectedInvoice(transaction);
-                                                                setOpenInvoiceModal(true);
+                                                                // Check invoice type and open appropriate modal
+                                                                if (transaction.invoice_type === 'room_booking' && transaction.invoiceable_id) {
+                                                                    setSelectedBookingId(transaction.invoiceable_id);
+                                                                    setShowRoomInvoiceModal(true);
+                                                                } else if (transaction.invoice_type === 'event_booking' && transaction.invoiceable_id) {
+                                                                    setSelectedBookingId(transaction.invoiceable_id);
+                                                                    setShowEventInvoiceModal(true);
+                                                                } else if (transaction.member && transaction.member.id) {
+                                                                    // Member-related invoices
+                                                                    if (transaction.fee_type === 'membership_fee') {
+                                                                        // Membership fee: use member ID only
+                                                                        setSelectedMemberUserId(transaction.member.id);
+                                                                        setSelectedInvoiceId(null);
+                                                                    } else {
+                                                                        // Subscription/Maintenance fees: use invoice ID
+                                                                        setSelectedMemberUserId(null);
+                                                                        setSelectedInvoiceId(transaction.id);
+                                                                    }
+                                                                    setOpenMembershipInvoiceModal(true);
+                                                                } else {
+                                                                    // Fallback: use subscription invoice modal
+                                                                    setSelectedInvoice(transaction);
+                                                                    setOpenInvoiceModal(true);
+                                                                }
                                                             }}
                                                         >
                                                             View
@@ -323,7 +355,45 @@ const Transaction = ({ transactions, filters }) => {
                         )}
                     </div>
                     <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                    
+                    {/* Fallback Invoice Modal (for non-member transactions) */}
                     <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />
+                    
+                    {/* Membership Invoice Modal - Used for Membership, Subscription & Maintenance Fees */}
+                    <MembershipInvoiceSlip 
+                        open={openMembershipInvoiceModal} 
+                        onClose={() => {
+                            setOpenMembershipInvoiceModal(false);
+                            setSelectedMemberUserId(null);
+                            setSelectedInvoiceId(null);
+                        }} 
+                        invoiceNo={selectedMemberUserId}
+                        invoiceId={selectedInvoiceId}
+                    />
+                    
+                    {/* Room Booking Invoice Modal */}
+                    <BookingInvoiceModal 
+                        open={showRoomInvoiceModal} 
+                        onClose={() => {
+                            setShowRoomInvoiceModal(false);
+                            setSelectedBookingId(null);
+                        }} 
+                        bookingId={selectedBookingId}
+                        setBookings={setTransactionList}
+                        financeView={true}
+                    />
+                    
+                    {/* Event Booking Invoice Modal */}
+                    <EventBookingInvoiceModal 
+                        open={showEventInvoiceModal} 
+                        onClose={() => {
+                            setShowEventInvoiceModal(false);
+                            setSelectedBookingId(null);
+                        }} 
+                        bookingId={selectedBookingId}
+                        setBookings={setTransactionList}
+                        financeView={true}
+                    />
                 </div>
             </div>
         </>

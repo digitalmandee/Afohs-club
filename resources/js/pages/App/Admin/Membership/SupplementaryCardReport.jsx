@@ -79,6 +79,22 @@ const SupplementaryCardReport = () => {
         }
     };
 
+    const handlePrint = () => {
+        // Build query string with current filters
+        const params = new URLSearchParams();
+        
+        if (allFilters.categories && allFilters.categories.length > 0) {
+            allFilters.categories.forEach(cat => params.append('categories[]', cat));
+        }
+        
+        if (allFilters.card_status && allFilters.card_status.length > 0) {
+            allFilters.card_status.forEach(status => params.append('card_status[]', status));
+        }
+        
+        // Open print page in new window
+        const printUrl = route('membership.supplementary-card-report.print') + (params.toString() ? '?' + params.toString() : '');
+        window.open(printUrl, '_blank');
+    };
 
     return (
         <>
@@ -100,6 +116,7 @@ const SupplementaryCardReport = () => {
                         <Button
                             variant="contained"
                             startIcon={<Print />}
+                            onClick={handlePrint}
                             sx={{
                                 backgroundColor: '#063455',
                                 color: 'white',
