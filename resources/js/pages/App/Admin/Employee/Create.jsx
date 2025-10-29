@@ -69,7 +69,7 @@ const EmployeeCreate = () => {
             await axios.post(route('api.employees.store'), payload);
 
             enqueueSnackbar('Employee added successfully!', { variant: 'success' });
-            setTimeout(() => router.visit(document.referrer || '/'), 1500);
+            setTimeout(() => router.visit(route('employees.dashboard')), 1500);
         } catch (error) {
             // console.log(error.response.data);
             enqueueSnackbar(error.response.data.message || 'Failed to add employee.', { variant: 'error' });
