@@ -43,7 +43,7 @@ return new class extends Migration
             // Indexes for performance
             $table->index(['mediable_type', 'mediable_id'], 'media_mediable_index');
             $table->index('type');
-            $table->index('uploaded_by');
+            $table->index('created_by');
         });
     }
 
