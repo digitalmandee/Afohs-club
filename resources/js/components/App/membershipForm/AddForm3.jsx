@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { useState, useRef } from 'react';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
@@ -15,10 +15,13 @@ import { enqueueSnackbar } from 'notistack';
 const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
     const [openFamilyMember, setOpenFamilyMember] = useState(false);
+    const [openDocumentsDialog, setOpenDocumentsDialog] = useState(false);
     const [selectedKinshipUser, setSelectedKinshipUser] = useState(null);
     const [submitError, setSubmitError] = useState('');
     const [familyMemberErrors, setFamilyMemberErrors] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
+    const [isDragOver, setIsDragOver] = useState(false);
+    const fileInputRef = useRef(null);
 
     const calculateAge = (dateOfBirth) => {
         if (!dateOfBirth) return 0;
@@ -293,15 +296,194 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     // Upload documents
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
-        handleChangeData('documents', [...(data.documents || []), ...files]);
-        handleChangeData('previewFiles', [...(data.previewFiles || []), ...files]);
+        
+        // documents: array of media IDs (numbers) and new File objects
+        // previewFiles: array of media objects {id, file_name, ...} and new File objects
+        const existingDocs = data.documents || [];
+        const existingPreviews = data.previewFiles || [];
+        
+        // Add new files to both arrays
+        handleChangeData('documents', [...existingDocs, ...files]);
+        handleChangeData('previewFiles', [...existingPreviews, ...files]);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            const existingDocs = data.documents || [];
+            const existingPreviews = data.previewFiles || [];
+            
+            handleChangeData('documents', [...existingDocs, ...files]);
+            handleChangeData('previewFiles', [...existingPreviews, ...files]);
+        }
+    };
+
+    const handleBoxClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const getFilePreview = (file, index) => {
+        const isFileObject = file instanceof File;
+        let fileName = '';
+        let previewUrl = '';
+        
+        if (isFileObject) {
+            fileName = file.name;
+            previewUrl = URL.createObjectURL(file);
+        } else if (typeof file === 'object' && file?.file_name) {
+            fileName = file.file_name;
+            previewUrl = file.file_path || '';
+        } else if (typeof file === 'string') {
+            fileName = file.split('/').pop();
+            previewUrl = file;
+        }
+        
+        const ext = fileName.split('.').pop().toLowerCase();
+        
+        return (
+            <div key={index} style={{ 
+                position: 'relative', 
+                width: '100px', 
+                textAlign: 'center',
+                marginBottom: '10px'
+            }}>
+                <IconButton
+                    size="small"
+                    onClick={() => handleFileRemove(index)}
+                    sx={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        width: 24,
+                        height: 24,
+                        '&:hover': {
+                            backgroundColor: '#d32f2f'
+                        },
+                        zIndex: 1
+                    }}
+                >
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+
+                {['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext) ? (
+                    <div>
+                        <img 
+                            src={previewUrl} 
+                            alt={`Document ${index + 1}`} 
+                            style={{ 
+                                width: '60px', 
+                                height: '60px', 
+                                objectFit: 'cover', 
+                                borderRadius: '6px', 
+                                cursor: 'pointer',
+                                border: '2px solid #ddd'
+                            }} 
+                            onClick={() => window.open(previewUrl, '_blank')} 
+                        />
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Image</p>
+                    </div>
+                ) : ext === 'pdf' ? (
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#f44336',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
+                        >
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '10px' }}>
+                                PDF
+                            </Typography>
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>PDF</p>
+                    </div>
+                ) : ['docx', 'doc'].includes(ext) ? (
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#2196f3',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
+                        >
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '10px' }}>
+                                DOC
+                            </Typography>
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Word</p>
+                    </div>
+                ) : (
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#757575',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
+                        >
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '8px' }}>
+                                FILE
+                            </Typography>
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
+                            {ext.toUpperCase()}
+                        </p>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     const handleFileRemove = (index) => {
-        const updatedFiles = [...(data.previewFiles || [])];
-        updatedFiles.splice(index, 1);
-        handleChangeData('previewFiles', updatedFiles);
-        handleChangeData('documents', updatedFiles);
+        // Clone both arrays
+        const updatedPreviewFiles = [...(data.previewFiles || [])];
+        const updatedDocuments = [...(data.documents || [])];
+        
+        // Remove from both arrays at the same index
+        // This works because both arrays are kept in sync:
+        // - previewFiles[i] is the display object (media object or File)
+        // - documents[i] is the value to send (media ID or File)
+        updatedPreviewFiles.splice(index, 1);
+        updatedDocuments.splice(index, 1);
+        
+        handleChangeData('previewFiles', updatedPreviewFiles);
+        handleChangeData('documents', updatedDocuments);
     };
 
     const handleSubmit = async () => {
@@ -443,6 +625,21 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         Membership Information
                                     </Typography>
                                     <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<AddIcon />}
+                                        sx={{
+                                            bgcolor: '#0c4b6e',
+                                            '&:hover': {
+                                                bgcolor: '#083854',
+                                            },
+                                            textTransform: 'none',
+                                            ml: 2,
+                                        }}
+                                        onClick={() => setOpenDocumentsDialog(true)}
+                                    >
+                                        Add Documents
+                                    </Button>
                                     <Button
                                         variant="contained"
                                         startIcon={<AddIcon />}
@@ -740,7 +937,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             />
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={12}>
                                         <Box>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Status</Typography>
                                             <FormControl fullWidth variant="outlined">
@@ -772,42 +969,29 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             </FormControl>
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
-                                        <InputLabel>Upload Documents (PDF or Images)</InputLabel>
-                                        <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8, marginBottom: 8 }} />
-                                        <Grid container spacing={1}>
-                                            {[...(data.previewFiles || [])].map((file, idx) => {
-                                                // If it's a string (path from DB), extract filename
-                                                const fileName = typeof file === 'string' ? file.split('/').pop() : (file?.name ?? '');
-
-                                                return (
-                                                    <Grid item key={idx}>
-                                                        <Box
-                                                            sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                border: '1px solid #ccc',
-                                                                borderRadius: 1,
-                                                                px: 1,
-                                                                py: 0.5,
-                                                                backgroundColor: '#f9f9f9',
-                                                            }}
-                                                        >
-                                                            <Typography variant="body2" sx={{ mr: 1 }}>
-                                                                {fileName}
-                                                            </Typography>
-                                                            <IconButton size="small" onClick={() => handleFileRemove(idx)}>
-                                                                <CloseIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Box>
-                                                    </Grid>
-                                                );
-                                            })}
-                                        </Grid>
+                                    <Grid item xs={12}>
+                                        {data.previewFiles && data.previewFiles.length > 0 && (
+                                            <Box>
+                                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                                                    Uploaded Documents ({data.previewFiles.length})
+                                                </Typography>
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    flexWrap: 'wrap', 
+                                                    gap: '15px',
+                                                    padding: '15px',
+                                                    backgroundColor: '#f9f9f9',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #e0e0e0'
+                                                }}>
+                                                    {data.previewFiles.map((file, index) => getFilePreview(file, index))}
+                                                </div>
+                                            </Box>
+                                        )}
                                     </Grid>
 
                                     {/* Document Missing */}
-                                    <Grid item xs={6}>
+                                    <Grid item xs={12}>
                                         <Box sx={{ mb: 2 }}>
                                             <FormControlLabel
                                                 control={
@@ -855,6 +1039,116 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                     </Grid>
                                 </Grid>
                             </Grid>
+
+                            {/* Documents Upload Dialog */}
+                            <Dialog open={openDocumentsDialog} onClose={() => setOpenDocumentsDialog(false)} fullWidth maxWidth="md">
+                                <DialogTitle
+                                    sx={{
+                                        fontWeight: 600,
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        pr: 2,
+                                    }}
+                                >
+                                    Upload Documents
+                                    <IconButton
+                                        onClick={() => setOpenDocumentsDialog(false)}
+                                        sx={{
+                                            color: '#666',
+                                            '&:hover': { color: '#000' },
+                                        }}
+                                    >
+                                        <CloseIcon />
+                                    </IconButton>
+                                </DialogTitle>
+                                <DialogContent>
+                                    <Grid container spacing={2} sx={{ mt: 1 }}>
+                                        <Grid item xs={12}>
+                                            <Box
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onDrop={handleDrop}
+                                                onClick={handleBoxClick}
+                                                sx={{
+                                                    border: isDragOver ? '2px dashed #0a3d62' : '2px dashed #ccc',
+                                                    borderRadius: 2,
+                                                    p: 4,
+                                                    textAlign: 'center',
+                                                    backgroundColor: isDragOver ? '#e3f2fd' : '#fafafa',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s ease',
+                                                    '&:hover': {
+                                                        borderColor: '#0a3d62',
+                                                        backgroundColor: '#f5f5f5',
+                                                        transform: 'translateY(-2px)',
+                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                                    }
+                                                }}
+                                            >
+                                                <input 
+                                                    ref={fileInputRef}
+                                                    type="file" 
+                                                    multiple 
+                                                    accept=".pdf,.doc,.docx,image/*" 
+                                                    name="documents" 
+                                                    onChange={handleFileChange} 
+                                                    style={{ display: 'none' }} 
+                                                />
+                                                
+                                                <Box sx={{ mb: 2 }}>
+                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3"/>
+                                                        <path d="M14 2L20 8H14V2Z" fill="#2196f3"/>
+                                                        <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3"/>
+                                                    </svg>
+                                                </Box>
+                                                
+                                                <Typography variant="h6" sx={{ mb: 1, color: isDragOver ? '#2196f3' : '#666' }}>
+                                                    {isDragOver ? 'Drop files here' : 'Upload Documents'}
+                                                </Typography>
+                                                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                                                    Drag and drop files here or click to browse
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    Supported formats: PDF, DOC, DOCX, Images (JPG, PNG, etc.)
+                                                </Typography>
+                                            </Box>
+                                        </Grid>
+
+                                        {data.previewFiles && data.previewFiles.length > 0 && (
+                                            <Grid item xs={12}>
+                                                <Typography variant="h6" sx={{ mb: 2 }}>
+                                                    Uploaded Documents ({data.previewFiles.length})
+                                                </Typography>
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    flexWrap: 'wrap', 
+                                                    gap: '15px',
+                                                    padding: '15px',
+                                                    backgroundColor: '#f9f9f9',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #e0e0e0'
+                                                }}>
+                                                    {data.previewFiles.map((file, index) => getFilePreview(file, index))}
+                                                </div>
+                                            </Grid>
+                                        )}
+                                    </Grid>
+                                </DialogContent>
+                                <DialogActions sx={{ p: 2 }}>
+                                    <Button
+                                        onClick={() => setOpenDocumentsDialog(false)}
+                                        sx={{
+                                            textTransform: 'none',
+                                            color: '#666',
+                                            '&:hover': { backgroundColor: '#f5f5f5' }
+                                        }}
+                                    >
+                                        Close
+                                    </Button>
+                                </DialogActions>
+                            </Dialog>
 
                             {/* FamilyMember Popup */}
 

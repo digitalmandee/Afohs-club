@@ -341,7 +341,7 @@ class RoomBookingController extends Controller
             // 🔄 Update Invoice using polymorphic relationship
             $invoice = $booking->invoice;
 
-            if ($invoice) {
+            if ($invoice && $invoice->status === 'unpaid') {
                 $updateData = [
                     'discount_type' => $data['discountType'] ?? null,
                     'discount_value' => $data['discount'] ?? 0,
@@ -363,7 +363,7 @@ class RoomBookingController extends Controller
 
             DB::commit();
 
-            return response()->json(['message' => 'Booking updated successfully.'], 200);
+            return response()->json(['message' => 'Booking updated successfully.', 'invoice' => ['id' => $invoice->id, 'status' => $invoice->status]], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);

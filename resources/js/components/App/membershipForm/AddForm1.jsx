@@ -8,8 +8,11 @@ import dayjs from 'dayjs';
 import { router } from '@inertiajs/react';
 
 const AddForm1 = ({ data, handleChange, onNext }) => {
-    const [memberImage, setMemberImage] = useState(data?.profile_photo || null);
-    const [showImageButtons, setShowImageButtons] = useState(data?.profile_photo ? true : false);
+    // Handle profile_photo object {id, file_path}
+    const initialImage = data?.profile_photo?.file_path || null;
+
+    const [memberImage, setMemberImage] = useState(initialImage);
+    const [showImageButtons, setShowImageButtons] = useState(!!initialImage);
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});

@@ -9,7 +9,7 @@ class BaseModel extends Model
     protected static function booted()
     {
         static::creating(function ($model) {
-            if (auth()->check()) {
+            if (auth()->check() && !$model->created_by) {
                 $model->created_by = auth()->id();
             }
         });
@@ -23,7 +23,6 @@ class BaseModel extends Model
         static::deleting(function ($model) {
             if (auth()->check()) {
                 $model->deleted_by = auth()->id();
-                $model->save();
             }
         });
     }

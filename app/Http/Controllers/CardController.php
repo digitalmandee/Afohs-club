@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Member;
 use App\Models\MemberCategory;
-use App\Models\MembershipInvoice;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,6 +16,7 @@ class CardController extends Controller
                 'memberType:id,name',
                 'memberCategory:id,name,description',
                 'membershipInvoice:id,member_id,invoice_no,status,total_price',
+                'profilePhoto:id,mediable_id,mediable_type,file_path',
                 'parent:id,full_name,membership_no' // For family members to show parent info
             ])
             ->withCount('familyMembers');
@@ -55,6 +54,8 @@ class CardController extends Controller
                 $query->whereNotNull('parent_id');
             }
             // 'all' shows both
+        }else{
+            $query->whereNull('parent_id');
         }
 
         // Sorting

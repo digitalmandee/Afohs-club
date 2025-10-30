@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class Media extends BaseModel
@@ -30,7 +31,7 @@ class Media extends BaseModel
         'custom_properties',
         'description',
         'expires_at',
-        'uploaded_by',
+        'created_by',
         'updated_by',
         'deleted_by',
     ];
@@ -87,7 +88,8 @@ class Media extends BaseModel
      */
     public function exists(): bool
     {
-        return Storage::disk($this->disk)->exists($this->file_path);
+        $absolutePath = public_path(ltrim($this->file_path, '/'));
+        return file_exists($absolutePath);
     }
 
     /**
@@ -98,7 +100,9 @@ class Media extends BaseModel
     public function deleteFile(): bool
     {
         if ($this->exists()) {
-            return Storage::disk($this->disk)->delete($this->file_path);
+            $absolutePath = public_path(ltrim($this->file_path, '/'));
+            @unlink($absolutePath);
+            return true;
         }
         return false;
     }

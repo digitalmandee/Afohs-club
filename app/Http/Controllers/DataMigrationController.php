@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\MemberClassification;
+use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class DataMigrationController extends Controller
 {
@@ -39,8 +41,10 @@ class DataMigrationController extends Controller
 
             $oldMembersCount = DB::table('memberships')->count();
             $oldFamiliesCount = DB::table('mem_families')->count();
+            $oldMediaCount = DB::table('old_media')->count();
             $newMembersCount = Member::whereNull('parent_id')->count();
             $newFamiliesCount = Member::whereNotNull('parent_id')->count();
+            $newMediaCount = Media::count();
 
             // Check migration status
             $migratedMembersCount = Member::whereNull('parent_id')
@@ -51,16 +55,22 @@ class DataMigrationController extends Controller
                 ->whereNotNull('cnic_no')
                 ->count();
 
+            $migratedMediaCount = Media::whereNotNull('mediable_id')->count();
+
             return [
                 'old_tables_exist' => true,
                 'old_members_count' => $oldMembersCount,
                 'old_families_count' => $oldFamiliesCount,
+                'old_media_count' => $oldMediaCount,
                 'new_members_count' => $newMembersCount,
                 'new_families_count' => $newFamiliesCount,
+                'new_media_count' => $newMediaCount,
                 'migrated_members_count' => $migratedMembersCount,
                 'migrated_families_count' => $migratedFamiliesCount,
+                'migrated_media_count' => $migratedMediaCount,
                 'members_migration_percentage' => $oldMembersCount > 0 ? round(($migratedMembersCount / $oldMembersCount) * 100, 2) : 0,
                 'families_migration_percentage' => $oldFamiliesCount > 0 ? round(($migratedFamiliesCount / $oldFamiliesCount) * 100, 2) : 0,
+                'media_migration_percentage' => $oldMediaCount > 0 ? round(($migratedMediaCount / $oldMediaCount) * 100, 2) : 0,
             ];
         } catch (\Exception $e) {
             Log::error('Error getting migration stats: ' . $e->getMessage());
@@ -628,5 +638,172 @@ class DataMigrationController extends Controller
             // If Carbon can't parse it, return null
             return null;
         }
+    }
+
+    public function migrateMedia(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 100);
+        $offset = $request->get('offset', 0);
+
+        try {
+            DB::beginTransaction();
+
+            // Get batch of old media records
+            $oldMediaRecords = DB::table('old_media')
+                ->offset($offset)
+                ->limit($batchSize)
+                ->get();
+
+            Log::info("Processing media batch: offset={$offset}, found " . count($oldMediaRecords) . " records");
+
+            if ($oldMediaRecords->isEmpty()) {
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'processed' => 0,
+                    'message' => 'No more media records to migrate'
+                ]);
+            }
+
+            $processed = 0;
+            $errors = [];
+
+            foreach ($oldMediaRecords as $oldMedia) {
+                try {
+                    // Map trans_type to new type
+                    $typeMapping = [
+                        3 => 'profile_photo',    // Member profile photos
+                        90 => 'member_docs',     // Member documents
+                        100 => 'profile_photo',  // Family member profile photos
+                    ];
+
+                    $newType = $typeMapping[$oldMedia->trans_type] ?? null;
+
+                    if (!$newType) {
+                        Log::warning("Unknown trans_type: {$oldMedia->trans_type} for media ID: {$oldMedia->id}");
+                        continue;
+                    }
+
+                    // Find the new member ID based on trans_type and old ID
+                    $newMemberId = null;
+                    
+                    if ($oldMedia->trans_type == 3 || $oldMedia->trans_type == 90) {
+                        // For member photos and documents, check old_member_id
+                        $member = Member::where('old_member_id', $oldMedia->trans_type_id)->first();
+                        $newMemberId = $member ? $member->id : null;
+                    } elseif ($oldMedia->trans_type == 100) {
+                        // For family member photos, check old_family_id
+                        $member = Member::where('old_family_id', $oldMedia->trans_type_id)->first();
+                        $newMemberId = $member ? $member->id : null;
+                    }
+
+                    // Skip if member not found
+                    if (!$newMemberId) {
+                        Log::warning("Member not found for media ID: {$oldMedia->id}, trans_type: {$oldMedia->trans_type}, trans_type_id: {$oldMedia->trans_type_id}");
+                        $errors[] = [
+                            'media_id' => $oldMedia->id,
+                            'error' => "Member not found (trans_type: {$oldMedia->trans_type}, old_id: {$oldMedia->trans_type_id})"
+                        ];
+                        continue;
+                    }
+
+                    // Transform file path based on trans_type
+                    $newFilePath = $this->transformMediaPath($oldMedia->url, $oldMedia->trans_type);
+                    $fileName = basename($newFilePath);
+
+                    // Determine mediable_type based on trans_type
+                    $mediableType = 'App\\Models\\Member';
+
+                    // Get MIME type from file extension
+                    $mimeType = $this->getMimeTypeFromPath($newFilePath);
+
+                    // Create new media record
+                    Media::create([
+                        'mediable_type' => $mediableType,
+                        'mediable_id' => $newMemberId, // Use the mapped new member ID
+                        'type' => $newType,
+                        'file_name' => $fileName,
+                        'file_path' => $newFilePath,
+                        'mime_type' => $mimeType,
+                        'disk' => 'public',
+                        'created_at' => $this->validateDate($oldMedia->created_at),
+                        'updated_at' => $this->validateDate($oldMedia->updated_at),
+                        'deleted_at' => $this->validateDate($oldMedia->deleted_at),
+                        'created_by' => $oldMedia->created_by,
+                        'updated_by' => $oldMedia->updated_by,
+                        'deleted_by' => $oldMedia->deleted_by,
+                    ]);
+
+                    $processed++;
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'media_id' => $oldMedia->id,
+                        'error' => $e->getMessage()
+                    ];
+                    Log::error("Error migrating media ID {$oldMedia->id}: " . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'errors' => $errors,
+                'has_more' => count($oldMediaRecords) === $batchSize
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Media migration error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function transformMediaPath($oldUrl, $transType)
+    {
+        // Remove 'public/' prefix if exists
+        $cleanUrl = str_replace('public/', '', $oldUrl);
+
+        // Extract original filename
+        $originalFileName = basename($cleanUrl);
+        
+        // Generate new unique filename with timestamp
+        $timestamp = time();
+        $extension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+        $newFileName = $timestamp . '_' . Str::slug(pathinfo($originalFileName, PATHINFO_FILENAME)) . '.' . $extension;
+
+        // Map trans_type to new directory structure
+        switch ($transType) {
+            case 3: // Member profile photos
+                return '/tenants/default/membership/' . $newFileName;
+            case 90: // Member documents
+                return '/tenants/default/member_documents/' . $newFileName;
+            case 100: // Family member profile photos
+                return '/tenants/default/familymembers/' . $newFileName;
+            default:
+                return '/tenants/default/media/' . $newFileName;
+        }
+    }
+
+    private function getMimeTypeFromPath($path)
+    {
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        
+        $mimeTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ];
+
+        return $mimeTypes[$extension] ?? 'application/octet-stream';
     }
 }

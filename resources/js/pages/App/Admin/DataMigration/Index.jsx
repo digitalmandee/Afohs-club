@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, Typography, Button, LinearProgress, Box, Grid, Alert, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Chip, Divider, CircularProgress } from '@mui/material';
-import { PlayArrow, Stop, Refresh, CheckCircle, Error, Warning, Assessment, Storage, People, FamilyRestroom } from '@mui/icons-material';
+import { PlayArrow, Stop, Refresh, CheckCircle, Error, Warning, Assessment, Storage, People, FamilyRestroom, Image } from '@mui/icons-material';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
 
@@ -10,11 +10,12 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [migrationStatus, setMigrationStatus] = useState({
         members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        media: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
     });
     const [validationDialog, setValidationDialog] = useState(false);
     const [validationResults, setValidationResults] = useState(null);
     const [resetDialog, setResetDialog] = useState(false);
-    const migrationRunning = useRef({ members: false, families: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false });
 
     useEffect(() => {
         refreshStats();
@@ -59,23 +60,50 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         await processMigrationBatch('families', 0);
     };
 
+    const startMediaMigration = async () => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        migrationRunning.current.media = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            media: { ...prev.media, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('media', 0);
+    };
+
     const processMigrationBatch = async (type, offset) => {
         try {
-            const endpoint = type === 'members' ? '/admin/data-migration/migrate-members' : '/admin/data-migration/migrate-families';
+            const endpointMap = {
+                members: '/admin/data-migration/migrate-members',
+                families: '/admin/data-migration/migrate-families',
+                media: '/admin/data-migration/migrate-media'
+            };
+            const endpoint = endpointMap[type];
             const response = await axios.post(endpoint, {
                 batch_size: 100,
                 offset: offset,
             });
 
-            const { migrated, errors, has_more } = response.data;
+            const { migrated, processed, errors, has_more } = response.data;
+            const recordsProcessed = migrated || processed || 0;
+
+            const totalCountMap = {
+                members: stats.old_members_count,
+                families: stats.old_families_count,
+                media: stats.old_media_count
+            };
 
             setMigrationStatus((prev) => ({
                 ...prev,
                 [type]: {
                     ...prev[type],
-                    migrated: prev[type].migrated + migrated,
-                    errors: [...prev[type].errors, ...errors],
-                    progress: ((offset + migrated) / (type === 'members' ? stats.old_members_count : stats.old_families_count)) * 100,
+                    migrated: prev[type].migrated + recordsProcessed,
+                    errors: [...prev[type].errors, ...(errors || [])],
+                    progress: ((offset + recordsProcessed) / totalCountMap[type]) * 100,
                 },
             }));
 
@@ -134,6 +162,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             setMigrationStatus({
                 members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
                 families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+                media: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
             });
             alert('Migration data reset successfully');
         } catch (error) {
@@ -240,6 +269,40 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
                                     Migrated family members
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Image sx={{ mr: 1, color: 'warning.main' }} />
+                                    <Typography variant="h6">Old Media</Typography>
+                                </Box>
+                                <Typography variant="h4" color="warning.main">
+                                    {stats.old_media_count?.toLocaleString() || 0}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    From old_media table
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Image sx={{ mr: 1, color: 'success.main' }} />
+                                    <Typography variant="h6">New Media</Typography>
+                                </Box>
+                                <Typography variant="h4" color="success.main">
+                                    {stats.new_media_count?.toLocaleString() || 0}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Migrated to media table
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -362,6 +425,59 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                                                 <strong>File:</strong> {error.file}:{error.line}
                                                             </>
                                                         )}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Media Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Media Migration
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {stats.media_migration_percentage || 0}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.media.running ? migrationStatus.media.progress : stats.media_migration_percentage || 0} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Migrated: {migrationStatus.media.migrated || stats.migrated_media_count || 0} / {stats.old_media_count || 0}
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" startIcon={migrationStatus.media.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startMediaMigration} disabled={migrationStatus.media.running}>
+                                        {migrationStatus.media.running ? 'Migrating...' : 'Start Migration'}
+                                    </Button>
+
+                                    {migrationStatus.media.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('media')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.media.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.media.errors.length} errors occurred during migration
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.media.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
+                                                        <strong>Media ID:</strong> {error.media_id}
+                                                        <br />
+                                                        <strong>Error:</strong> {error.error}
                                                     </Typography>
                                                 </Alert>
                                             ))}

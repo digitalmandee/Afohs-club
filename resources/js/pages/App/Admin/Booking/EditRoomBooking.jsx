@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from 'react-bootstrap';
 import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
@@ -64,6 +64,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
         grandTotal: booking.grandTotal,
         notes: booking.notes,
         documents: booking.documents ?? [],
+        previewFiles: booking.documents ?? [],
         mini_bar_items: booking.mini_bar_items ?? [],
         other_charges: booking.other_charges ?? [],
     });
@@ -155,7 +156,11 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             .then((res) => {
                 enqueueSnackbar('Booking Updated successfully', { variant: 'success' });
                 // Redirect or show success
-                router.visit(route('rooms.dashboard'));
+                if (isCheckout && res.data.invoice.status === 'unpaid') {
+                    router.visit(route('booking.payment', { invoice_no: res.data.invoice.id }));
+                } else {
+                    router.visit(route('rooms.dashboard'));
+                }
             })
             .catch((err) => {
                 console.error('Submit error:', err);
@@ -236,7 +241,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
                                 <Button variant="outlined" disabled={activeStep === 0} onClick={handleBack}>
                                     Back
                                 </Button>
-                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}>
+                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition='start'>
                                     {activeStep === steps.length - 1 ? (isCheckout ? 'Checkout' : 'Finish') : 'Next'}
                                 </Button>
                             </Box>
@@ -616,42 +621,243 @@ const ChargesInfo = ({ formData, handleChange, isCheckout }) => {
     );
 };
 
-const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove, isCheckout }) => (
-    <Grid container spacing={2}>
-        <Grid item xs={12}>
-            <InputLabel>Upload Documents (PDF or Images)</InputLabel>
-            <input type="file" multiple accept=".pdf,image/*" name="documents" onChange={handleFileChange} style={{ marginTop: 8 }} />
-        </Grid>
+const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove, isCheckout }) => {
+    const [isDragOver, setIsDragOver] = useState(false);
+    const fileInputRef = useRef(null);
 
-        <Grid item xs={12}>
-            <Grid container spacing={1}>
-                {[...(formData.previewFiles || [])].map((file, idx) => (
-                    <Grid item key={idx}>
-                        <Box
-                            sx={{
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            const syntheticEvent = {
+                target: {
+                    name: 'documents',
+                    files: files
+                }
+            };
+            handleFileChange(syntheticEvent);
+        }
+    };
+
+    const handleBoxClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const getFilePreview = (file, index) => {
+        const isFileObject = file instanceof File;
+        const fileName = isFileObject ? file.name : file.split('/').pop();
+        const ext = fileName.split('.').pop().toLowerCase();
+        
+        const previewUrl = isFileObject ? URL.createObjectURL(file) : file;
+        
+        return (
+            <div key={index} style={{ 
+                position: 'relative', 
+                width: '100px', 
+                textAlign: 'center',
+                marginBottom: '10px'
+            }}>
+                <IconButton
+                    size="small"
+                    onClick={() => handleFileRemove(index)}
+                    sx={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        width: 24,
+                        height: 24,
+                        '&:hover': {
+                            backgroundColor: '#d32f2f'
+                        },
+                        zIndex: 1
+                    }}
+                >
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+
+                {['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext) ? (
+                    <div>
+                        <img 
+                            src={previewUrl} 
+                            alt={`Document ${index + 1}`} 
+                            style={{ 
+                                width: '60px', 
+                                height: '60px', 
+                                objectFit: 'cover', 
+                                borderRadius: '6px', 
+                                cursor: 'pointer',
+                                border: '2px solid #ddd'
+                            }} 
+                            onClick={() => window.open(previewUrl, '_blank')} 
+                        />
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Image</p>
+                    </div>
+                ) : ext === 'pdf' ? (
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#f44336',
+                                borderRadius: '6px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                border: '1px solid #ccc',
-                                borderRadius: 1,
-                                px: 1,
-                                py: 0.5,
-                                backgroundColor: '#f9f9f9',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
                             }}
+                            onClick={() => window.open(previewUrl, '_blank')}
                         >
-                            <Typography variant="body2" sx={{ mr: 1 }}>
-                                {file.name}
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '10px' }}>
+                                PDF
                             </Typography>
-                            <IconButton size="small" onClick={() => handleFileRemove(idx)}>
-                                <CloseIcon fontSize="small" />
-                            </IconButton>
-                        </Box>
-                    </Grid>
-                ))}
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>PDF</p>
+                    </div>
+                ) : ['docx', 'doc'].includes(ext) ? (
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#2196f3',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
+                        >
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '10px' }}>
+                                DOC
+                            </Typography>
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Word</p>
+                    </div>
+                ) : (
+                    <div>
+                        <div
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                backgroundColor: '#757575',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                margin: '0 auto'
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
+                        >
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold', fontSize: '8px' }}>
+                                FILE
+                            </Typography>
+                        </div>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
+                            {ext.toUpperCase()}
+                        </p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <Grid container spacing={2}>
+            <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                    Upload Documents
+                </Typography>
+                <Box
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={handleBoxClick}
+                    sx={{
+                        border: isDragOver ? '2px dashed #0a3d62' : '2px dashed #ccc',
+                        borderRadius: 2,
+                        p: 4,
+                        textAlign: 'center',
+                        backgroundColor: isDragOver ? '#e3f2fd' : '#fafafa',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                            borderColor: '#0a3d62',
+                            backgroundColor: '#f5f5f5',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }
+                    }}
+                >
+                    <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        multiple 
+                        accept=".pdf,.doc,.docx,image/*" 
+                        name="documents" 
+                        onChange={handleFileChange} 
+                        style={{ display: 'none' }} 
+                    />
+                    
+                    <Box sx={{ mb: 2 }}>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3"/>
+                            <path d="M14 2L20 8H14V2Z" fill="#2196f3"/>
+                            <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3"/>
+                        </svg>
+                    </Box>
+                    
+                    <Typography variant="h6" sx={{ mb: 1, color: isDragOver ? '#2196f3' : '#666' }}>
+                        {isDragOver ? 'Drop files here' : 'Upload Documents'}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                        Drag and drop files here or click to browse
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                        Supported formats: PDF, DOC, DOCX, Images (JPG, PNG, etc.)
+                    </Typography>
+                </Box>
+            </Grid>
+
+            {formData.previewFiles && formData.previewFiles.length > 0 && (
+                <Grid item xs={12}>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Uploaded Documents ({formData.previewFiles.length})
+                    </Typography>
+                    <div style={{ 
+                        display: 'flex', 
+                        flexWrap: 'wrap', 
+                        gap: '15px',
+                        padding: '15px',
+                        backgroundColor: '#f9f9f9',
+                        borderRadius: '8px',
+                        border: '1px solid #e0e0e0'
+                    }}>
+                        {formData.previewFiles.map((file, index) => getFilePreview(file, index))}
+                    </div>
+                </Grid>
+            )}
+
+            <Grid item xs={12}>
+                <TextField label="Additional Notes" name="notes" value={formData.notes || ''} onChange={handleChange} multiline rows={4} fullWidth />
             </Grid>
         </Grid>
-
-        <Grid item xs={12}>
-            <TextField label="Additional Notes" name="notes" value={formData.notes || ''} onChange={handleChange} multiline rows={4} fullWidth />
-        </Grid>
-    </Grid>
-);
+    );
+};

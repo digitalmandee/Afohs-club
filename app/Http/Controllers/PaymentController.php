@@ -6,7 +6,6 @@ use App\Helpers\FileHelper;
 use App\Models\CardPayment;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
-use App\Models\MembershipInvoice;
 use App\Models\MemberType;
 use App\Models\Subscription;
 use App\Models\User;
