@@ -166,7 +166,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                             <TableCell onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.membership_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
-                                                    <Avatar src={user.profile_photo || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
+                                                    <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
                                                             {user.full_name}
@@ -351,13 +351,13 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                         <div style={{ marginTop: '20px' }}>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                 {selectMember?.documents.map((doc, index) => {
-                                    const ext = doc.split('.').pop().toLowerCase();
+                                    const ext = doc.file_path.split('.').pop().toLowerCase();
 
                                     // ✅ For images
                                     if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
                                         return (
                                             <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                <img src={doc} alt={`Document ${index + 1}`} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} onClick={() => window.open(doc, '_blank')} />
+                                                <img src={doc.file_path} alt={`Document ${index + 1}`} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} onClick={() => window.open(doc.file_path, '_blank')} />
                                                 <p style={{ fontSize: '12px', marginTop: '5px' }}>Image</p>
                                             </div>
                                         );
@@ -371,7 +371,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                     src="/assets/pdf-icon.png" // You can use a static icon
                                                     alt="PDF"
                                                     style={{ width: '60px', cursor: 'pointer' }}
-                                                    onClick={() => window.open(doc, '_blank')}
+                                                    onClick={() => window.open(doc.file_path, '_blank')}
                                                 />
                                                 <p style={{ fontSize: '12px', marginTop: '5px' }}>PDF</p>
                                             </div>
@@ -386,7 +386,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                                     src="/assets/word-icon.png" // Use a static Word icon
                                                     alt="DOCX"
                                                     style={{ width: '60px', cursor: 'pointer' }}
-                                                    onClick={() => window.open(doc, '_blank')}
+                                                    onClick={() => window.open(doc.file_path, '_blank')}
                                                 />
                                                 <p style={{ fontSize: '12px', marginTop: '5px' }}>Word</p>
                                             </div>

@@ -109,7 +109,7 @@ const handlePrintMembershipCard = (member) => {
                     <img src="/assets/Logo.png" alt="AFOHS CLUB" class="logo" />
                     <div class="info-grid">
                         <div class="avatar-section">
-                            <img src="${member?.profile_photo || '/placeholder.svg'}" alt="Member Photo" class="avatar" />
+                            <img src="${member?.profile_photo?.file_path || '/placeholder.svg'}" alt="Member Photo" class="avatar" />
                         </div>
                         <div>
                             <div class="label">Name</div>
@@ -163,7 +163,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
 
                         <Grid container spacing={2}>
                             <Grid item xs={4}>
-                                <Avatar src={member?.profile_photo} alt="Member Photo" sx={{ width: 100, height: 120, borderRadius: 1, border: '1px solid #eee' }} variant="square" />
+                                <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{ width: 100, height: 120, borderRadius: 1, border: '1px solid #eee' }} variant="square" />
                             </Grid>
                             <Grid item xs={4}>
                                 <Box>

@@ -125,6 +125,20 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
         return 'Active';
     };
 
+    const getMemberStatusConfig = (status) => {
+        const statusMap = {
+            'active': { color: '#27ae60', label: 'Active', bgColor: '#d4edda' },
+            'suspended': { color: '#e67e22', label: 'Suspended', bgColor: '#fff3cd' },
+            'cancelled': { color: '#e74c3c', label: 'Cancelled', bgColor: '#f8d7da' },
+            'absent': { color: '#95a5a6', label: 'Absent', bgColor: '#e2e3e5' },
+            'expired': { color: '#c0392b', label: 'Expired', bgColor: '#f8d7da' },
+            'terminated': { color: '#8e44ad', label: 'Terminated', bgColor: '#e7d6f0' },
+            'not_assign': { color: '#7f8c8d', label: 'Not Assigned', bgColor: '#d6d8db' },
+            'in_suspension_process': { color: '#f39c12', label: 'In Suspension', bgColor: '#fff3cd' }
+        };
+        return statusMap[status] || { color: '#063455', label: status || 'N/A', bgColor: '#cfe2ff' };
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -368,7 +382,19 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.date_of_birth ? new Date(user.date_of_birth).toLocaleDateString() : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.status || 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={getMemberStatusConfig(user.status).label}
+                                                            size="small"
+                                                            sx={{
+                                                                backgroundColor: getMemberStatusConfig(user.status).bgColor,
+                                                                color: getMemberStatusConfig(user.status).color,
+                                                                fontWeight: 'bold',
+                                                                fontSize: '12px',
+                                                                border: `1px solid ${getMemberStatusConfig(user.status).color}`
+                                                            }}
+                                                        />
+                                                    </TableCell>
                                                     <TableCell>
                                                             <Button
                                                                 size="small"

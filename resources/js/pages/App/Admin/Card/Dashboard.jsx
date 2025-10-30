@@ -345,7 +345,7 @@ const CardsDashboard = ({ members, total_active_members, total_active_family_mem
                                             </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
-                                                    <Avatar src={member.profile_photo || '/placeholder.svg?height=40&width=40'} alt={member.full_name} style={{ marginRight: '10px' }} />
+                                                    <Avatar src={member.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={member.full_name} style={{ marginRight: '10px' }} />
                                                     <div>
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
                                                             {member.full_name}

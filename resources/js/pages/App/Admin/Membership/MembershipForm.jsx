@@ -77,8 +77,9 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             permanent_city: user.permanent_city || '',
             permanent_country: user.permanent_country || '',
             country: user.country || '',
-            documents: user.documents || [],
-            previewFiles: user.documents || [],
+            documents: Array.isArray(user.documents) ? user.documents.map(doc => doc.id) : [],
+            // previewFiles is for display: keep full objects for showing file names
+            previewFiles: Array.isArray(user.documents) ? user.documents : [],
             family_members: familyMembers || [],
             deleted_family_members: [],
         };

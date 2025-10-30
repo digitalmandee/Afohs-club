@@ -16,7 +16,7 @@ class FamilyMembersArchiveConroller extends Controller
     {
         $query = Member::whereNotNull('parent_id')
             ->select('id', 'full_name', 'membership_no', 'parent_id', 'family_suffix', 'personal_email', 'mobile_number_a', 'cnic_no', 'date_of_birth', 'card_issue_date', 'card_status', 'relation', 'status', 'expiry_extension_date', 'expiry_extension_reason', 'expiry_extended_by')
-            ->with(['parent:id,member_type_id,full_name,membership_no']);
+            ->with(['parent:id,member_type_id,full_name,membership_no', 'profilePhoto:id,mediable_id,mediable_type,file_path']);
 
         // Membership No
         if ($request->filled('membership_no')) {

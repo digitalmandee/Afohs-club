@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\CardPayment;
 use App\Models\FinancialInvoice;
+use App\Models\Media;
 use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\MemberStatusHistory;
@@ -25,8 +26,10 @@ class MembershipController extends Controller
     {
         $members = Member::whereNull('parent_id')
             ->with([
-                'memberType:id,name', 
+                'memberType:id,name',
                 'memberCategory:id,name,description',
+                'profilePhoto:id,mediable_id,mediable_type,file_path',
+                'documents:id,mediable_id,mediable_type,file_path',
                 'membershipInvoice:id,member_id,invoice_no,status,total_price' // ✅ Include membership invoice
             ])
             ->withCount('familyMembers')
@@ -60,7 +63,26 @@ class MembershipController extends Controller
 
     public function edit(Request $request)
     {
-        $user = Member::where('id', $request->id)->with('memberType', 'kinshipMember')->first();
+        $user = Member::where('id', $request->id)
+            ->with(['memberType', 'kinshipMember', 'documents', 'profilePhoto'])
+            ->first();
+
+        $user->profile_photo = $user->profilePhoto
+            ? ['id' => $user->profilePhoto->id, 'file_path' => $user->profilePhoto->file_path]
+            : null;
+
+        unset($user->profilePhoto);
+
+        // Load documents media
+        $documentsMedia = $user->documents;
+        $user->documents = $documentsMedia->map(function ($media) {
+            return [
+                'id' => $media->id,
+                'file_name' => $media->file_name,
+                'file_path' => $media->file_path,
+                'mime_type' => $media->mime_type,
+            ];
+        });
 
         // Replace kinship with only selected fields
         if ($user->kinshipMember) {
@@ -77,7 +99,17 @@ class MembershipController extends Controller
             ];
         }
 
-        $familyMembers = $user->familyMembers->map(function ($member) use ($user) {
+        $familyMembers = $user->familyMembers()->with('profilePhoto')->get()->map(function ($member) use ($user) {
+            // Get profile photo media for family member
+            $profilePhotoMedia = $member->profilePhoto;
+            $pictureUrl = null;
+            $pictureId = null;
+
+            if ($profilePhotoMedia) {
+                $pictureUrl = $profilePhotoMedia->file_path;
+                $pictureId = $profilePhotoMedia->id;
+            }
+
             return [
                 'id' => $member->id,
                 'membership_no' => $member->membership_no,
@@ -97,9 +129,11 @@ class MembershipController extends Controller
                 'card_issue_date' => $member->card_issue_date,
                 'card_expiry_date' => $member->card_expiry_date,
                 'status' => $member->status,
-                'picture' => $member->profile_photo,
+                'picture' => $pictureUrl, // Full URL from file_path
+                'picture_id' => $pictureId, // Media ID for tracking
             ];
         });
+
         $memberTypesData = MemberType::all();
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')->where('status', 'active')->get();
         return Inertia::render('App/Admin/Membership/MembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories'));
@@ -109,7 +143,9 @@ class MembershipController extends Controller
     {
         $query = Member::whereNull('parent_id')
             ->with([
-                'memberType:id,name', 
+                'memberType:id,name',
+                'profilePhoto:id,mediable_id,mediable_type,file_path',
+                'documents:id,mediable_id,mediable_type,file_path',
                 'memberCategory:id,name,description',
                 'membershipInvoice:id,member_id,invoice_no,status,total_price' // ✅ Include membership invoice
             ])
@@ -171,8 +207,14 @@ class MembershipController extends Controller
             'members' => $members,
             'memberTypes' => MemberType::all(['id', 'name']),
             'filters' => $request->only([
-                'membership_no', 'name', 'cnic', 'contact',
-                'status', 'member_type', 'sort', 'sortBy'
+                'membership_no',
+                'name',
+                'cnic',
+                'contact',
+                'status',
+                'member_type',
+                'sort',
+                'sortBy'
             ]),
         ]);
     }
@@ -222,19 +264,6 @@ class MembershipController extends Controller
 
             DB::beginTransaction();
 
-            $memberImagePath = null;
-
-            if ($request->hasFile('profile_photo')) {
-                $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'membership');
-            }
-
-            $documentPaths = [];
-            if ($request->hasFile('documents')) {
-                foreach ($request->file('documents') as $file) {
-                    $documentPaths[] = FileHelper::saveImage($file, 'member_documents');
-                }
-            }
-
             $fullName = trim(preg_replace('/\s+/', ' ', $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name));
 
             $membershipNo = Member::generateNextMembershipNumber();
@@ -248,7 +277,6 @@ class MembershipController extends Controller
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
                 'full_name' => $fullName,
-                'profile_photo' => $memberImagePath,
                 'martial_status' => $request->martial_status,
                 'kinship' => $request->kinship['id'] ?? null,
                 'membership_no' => $request->membership_no ?? $membershipNo,
@@ -288,8 +316,51 @@ class MembershipController extends Controller
                 'permanent_city' => $request->permanent_city,
                 'permanent_country' => $request->permanent_country,
                 'country' => $request->country,
-                'documents' => $documentPaths,
             ]);
+
+            // Handle profile photo using Media model
+            if ($request->hasFile('profile_photo')) {
+                $file = $request->file('profile_photo');
+
+                // Get file metadata BEFORE moving the file
+                $fileName = $file->getClientOriginalName();
+                $mimeType = $file->getMimeType();
+                $fileSize = $file->getSize();
+
+                // Now save the file
+                $filePath = FileHelper::saveImage($file, 'membership');
+
+                $mainMember->media()->create([
+                    'type' => 'profile_photo',
+                    'file_name' => $fileName,
+                    'file_path' => $filePath,
+                    'mime_type' => $mimeType,
+                    'file_size' => $fileSize,
+                    'disk' => 'public',
+                ]);
+            }
+
+            // Handle documents using Media model
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    // Get file metadata BEFORE moving the file
+                    $fileName = $file->getClientOriginalName();
+                    $mimeType = $file->getMimeType();
+                    $fileSize = $file->getSize();
+
+                    // Now save the file
+                    $filePath = FileHelper::saveImage($file, 'member_documents');
+
+                    $mainMember->media()->create([
+                        'type' => 'member_docs',
+                        'file_name' => $fileName,
+                        'file_path' => $filePath,
+                        'mime_type' => $mimeType,
+                        'file_size' => $fileSize,
+                        'disk' => 'public',
+                    ]);
+                }
+            }
 
             $qrCodeData = route('member.profile', ['id' => $mainMember->id]);
 
@@ -302,16 +373,9 @@ class MembershipController extends Controller
             // Handle family members
             if (!empty($request->family_members)) {
                 foreach ($request->family_members as $familyMemberData) {
-                    // Handle family member image
-                    $familyMemberImagePath = null;
-                    if (!empty($familyMemberData['picture'])) {
-                        $familyMemberImagePath = FileHelper::saveImage($familyMemberData['picture'], 'familymembers');
-                    }
-
                     $familyMember = Member::create([
                         'barcode_no' => $familyMemberData['barcode_no'] ?? null,
                         'parent_id' => $mainMember->id,
-                        'profile_photo' => $familyMemberImagePath,
                         'membership_no' => $mainMember->membership_no . '-' . $familyMemberData['family_suffix'],
                         'family_suffix' => $familyMemberData['family_suffix'],
                         'full_name' => $familyMemberData['full_name'],
@@ -326,6 +390,28 @@ class MembershipController extends Controller
                         'cnic_no' => $familyMemberData['cnic'],
                         'mobile_number_a' => $familyMemberData['phone_number'],
                     ]);
+
+                    // Handle family member profile photo using Media model
+                    if (!empty($familyMemberData['picture'])) {
+                        $file = $familyMemberData['picture'];
+
+                        // Get file metadata BEFORE moving the file
+                        $fileName = $file->getClientOriginalName();
+                        $mimeType = $file->getMimeType();
+                        $fileSize = $file->getSize();
+
+                        // Now save the file
+                        $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                        $familyMember->media()->create([
+                            'type' => 'profile_photo',
+                            'file_name' => $fileName,
+                            'file_path' => $filePath,
+                            'mime_type' => $mimeType,
+                            'file_size' => $fileSize,
+                            'disk' => 'public',
+                        ]);
+                    }
 
                     $familyqrCodeData = route('member.profile', ['id' => $familyMember->id]);
 
@@ -393,43 +479,86 @@ class MembershipController extends Controller
             DB::beginTransaction();
 
             $member = Member::findOrFail($request->member_id);
-            
+
             // Store original status to check if it changed
             $originalStatus = $member->status;
 
-            $memberImagePath = $member->profile_photo;
-            // Save new profile photo if uploaded
+            // Handle profile photo update using Media model
             if ($request->hasFile('profile_photo')) {
-                $memberImagePath = FileHelper::saveImage($request->file('profile_photo'), 'membership');
-                $member->profile_photo = $memberImagePath;
-            }
+                $file = $request->file('profile_photo');
 
-            $oldDocs = $member->documents ?? [];
-            $documentPaths = [];
+                // Get file metadata BEFORE moving the file
+                $fileName = $file->getClientOriginalName();
+                $mimeType = $file->getMimeType();
+                $fileSize = $file->getSize();
 
-            // ✅ Always cast request documents to array
-            $requestDocs = (array) ($request->documents ?? []);
+                // Now save the file
+                $filePath = FileHelper::saveImage($file, 'membership');
 
-            // Step 1: Loop through request documents
-            foreach ($requestDocs as $doc) {
-                if ($doc instanceof \Illuminate\Http\UploadedFile) {
-                    // It's a new file, save it
-                    $documentPaths[] = FileHelper::saveImage($doc, 'member_documents');
-                } elseif (!empty($doc)) {
-                    // It's an existing path, keep it (skip empties)
-                    $documentPaths[] = $doc;
+                // Delete old profile photo media if exists
+                $oldProfilePhoto = $member->profilePhoto;
+                if ($oldProfilePhoto) {
+                    $oldProfilePhoto->deleteFile(); // Delete physical file
+                    $oldProfilePhoto->delete(); // Delete media record
                 }
+
+                // Create new profile photo media
+                $member->media()->create([
+                    'type' => 'profile_photo',
+                    'file_name' => $fileName,
+                    'file_path' => $filePath,
+                    'mime_type' => $mimeType,
+                    'file_size' => $fileSize,
+                    'disk' => 'public',
+                ]);
             }
 
-            // Step 2: Find deleted docs
-            $deleted = array_diff($oldDocs, $documentPaths);
+            // Handle documents update using Media model
+            if ($request->has('documents')) {
+                $requestDocs = (array) ($request->documents ?? []);
+                $existingMediaIds = [];
+                
+                // FIRST: Get current media IDs BEFORE creating new ones
+                $currentMediaIds = $member->media()->where('type', 'member_docs')->pluck('id')->toArray();
 
-            // Step 3: Delete them from filesystem
-            foreach ($deleted as $docPath) {
-                $absolutePath = public_path(ltrim($docPath, '/'));
+                // SECOND: Process the request - upload new files and collect IDs to keep
+                foreach ($requestDocs as $doc) {
+                    if ($doc instanceof \Illuminate\Http\UploadedFile) {
+                        // Get file metadata BEFORE moving the file
+                        $fileName = $doc->getClientOriginalName();
+                        $mimeType = $doc->getMimeType();
+                        $fileSize = $doc->getSize();
 
-                if (file_exists($absolutePath)) {
-                    @unlink($absolutePath);
+                        // Now save the file
+                        $filePath = FileHelper::saveImage($doc, 'member_documents');
+
+                        // Create new media record (this will NOT be deleted)
+                        $member->media()->create([
+                            'type' => 'member_docs',
+                            'file_name' => $fileName,
+                            'file_path' => $filePath,
+                            'mime_type' => $mimeType,
+                            'file_size' => $fileSize,
+                            'disk' => 'public',
+                        ]);
+                    } elseif (is_numeric($doc)) {
+                        // Existing media ID to keep
+                        $existingMediaIds[] = $doc;
+                    }
+                }
+
+                // THIRD: Delete old media that are not in the keep list
+                // Only compare against the ORIGINAL media IDs (before we added new ones)
+                $mediaIdsToDelete = array_diff($currentMediaIds, $existingMediaIds);
+                
+                // Delete the media records and their files
+                if (!empty($mediaIdsToDelete)) {
+                    $member->media()
+                        ->whereIn('id', $mediaIdsToDelete)
+                        ->each(function ($media) {
+                            $media->deleteFile(); // Delete physical file
+                            $media->delete(); // Delete media record
+                        });
                 }
             }
 
@@ -443,7 +572,6 @@ class MembershipController extends Controller
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
                 'full_name' => $fullName,
-                'profile_photo' => $memberImagePath,
                 'martial_status' => $request->martial_status,
                 'kinship' => $request->kinship['id'] ?? null,
                 'member_type_id' => $request->member_type_id,
@@ -482,7 +610,6 @@ class MembershipController extends Controller
                 'permanent_city' => $request->permanent_city,
                 'permanent_country' => $request->permanent_country,
                 'country' => $request->country,
-                'documents' => $documentPaths,
             ]);
 
             // Update Family Members
@@ -491,16 +618,9 @@ class MembershipController extends Controller
                     // Check if family member is new
 
                     if (str_starts_with($newMemberData['id'], 'new-')) {
-                        // Handle family member image
-                        $familyMemberImagePath = null;
-                        if (!empty($newMemberData['picture'])) {
-                            $familyMemberImagePath = FileHelper::saveImage($newMemberData['picture'], 'familymembers');
-                        }
-
                         $familyMember = Member::create([
                             'barcode_no' => $newMemberData['barcode_no'] ?? null,
                             'parent_id' => $member->id,
-                            'profile_photo' => $familyMemberImagePath,
                             'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
                             'family_suffix' => $newMemberData['family_suffix'],
                             'full_name' => $newMemberData['full_name'],
@@ -516,7 +636,28 @@ class MembershipController extends Controller
                             'mobile_number_a' => $newMemberData['phone_number'] ?? null,
                         ]);
 
-                        
+                        // Handle family member profile photo using Media model
+                        if (!empty($newMemberData['picture'])) {
+                            $file = $newMemberData['picture'];
+
+                            // Get file metadata BEFORE moving the file
+                            $fileName = $file->getClientOriginalName();
+                            $mimeType = $file->getMimeType();
+                            $fileSize = $file->getSize();
+
+                            // Now save the file
+                            $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                            $familyMember->media()->create([
+                                'type' => 'profile_photo',
+                                'file_name' => $fileName,
+                                'file_path' => $filePath,
+                                'mime_type' => $mimeType,
+                                'file_size' => $fileSize,
+                                'disk' => 'public',
+                            ]);
+                        }
+
                         $familyqrCodeData = route('member.profile', ['id' => $familyMember->id]);
 
                         // Create QR code image and save it
@@ -530,10 +671,34 @@ class MembershipController extends Controller
 
                         $updateFamily = Member::find($newMemberData['id']);
                         if ($updateFamily) {
-                            // Update family member image if changed
-                            $familyMemberImagePath = $updateFamily->profile_photo;
-                            if (!empty($newMemberData['picture']) && $newMemberData['picture'] !== $updateFamily->profile_photo) {
-                                $familyMemberImagePath = FileHelper::saveImage($newMemberData['picture'], 'familymembers');
+                            // Handle family member profile photo update using Media model
+                            if (!empty($newMemberData['picture']) && $newMemberData['picture'] instanceof \Illuminate\Http\UploadedFile) {
+                                $file = $newMemberData['picture'];
+
+                                // Get file metadata BEFORE moving the file
+                                $fileName = $file->getClientOriginalName();
+                                $mimeType = $file->getMimeType();
+                                $fileSize = $file->getSize();
+
+                                // Now save the file
+                                $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                                // Delete old profile photo media if exists
+                                $oldProfilePhoto = $updateFamily->profilePhoto;
+                                if ($oldProfilePhoto) {
+                                    $oldProfilePhoto->deleteFile();
+                                    $oldProfilePhoto->delete();
+                                }
+
+                                // Create new profile photo media
+                                $updateFamily->media()->create([
+                                    'type' => 'profile_photo',
+                                    'file_name' => $fileName,
+                                    'file_path' => $filePath,
+                                    'mime_type' => $mimeType,
+                                    'file_size' => $fileSize,
+                                    'disk' => 'public',
+                                ]);
                             }
 
                             // Update member fields
@@ -541,7 +706,6 @@ class MembershipController extends Controller
                                 'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
                                 'full_name' => $newMemberData['full_name'],
                                 'barcode_no' => $newMemberData['barcode_no'] ?? null,
-                                'profile_photo' => $familyMemberImagePath,
                                 'personal_email' => $newMemberData['email'] ?? null,
                                 'relation' => $newMemberData['relation'],
                                 'date_of_birth' => $newMemberData['date_of_birth'],
@@ -580,7 +744,7 @@ class MembershipController extends Controller
             if ($originalStatus !== $request->status) {
                 // Close any existing open status history records
                 $member->statusHistories()->whereNull('end_date')->update(['end_date' => now()]);
-                
+
                 // Create new status history record
                 MemberStatusHistory::create([
                     'member_id' => $member->id,
@@ -601,18 +765,6 @@ class MembershipController extends Controller
         }
     }
 
-    // Get Member Invoices
-    public function getMemberInvoices($id)
-    {
-        $invoice = CardPayment::where('user_id', $id)->first();
-
-        if (!$invoice) {
-            return response()->json(['message' => 'Invoice not found'], 404);
-        }
-
-        return response()->json(['invoice' => $invoice]);
-    }
-
     // Show Public Profile
     public function viewProfile($id)
     {
@@ -626,6 +778,7 @@ class MembershipController extends Controller
     {
         $member = Member::with([
             'memberType:id,name',
+            'profilePhoto:id,mediable_id,mediable_type,file_path',
             'memberCategory:id,name,description,subscription_fee',
             'kinshipMember:id,full_name,membership_no'
         ])->findOrFail($id);
@@ -639,8 +792,8 @@ class MembershipController extends Controller
     public function getMemberFamilyMembers(Request $request, $id)
     {
         $perPage = $request->get('per_page', 10);
-        
-        $familyMembers = Member::where('parent_id', $id)->paginate($perPage);
+
+        $familyMembers = Member::where('parent_id', $id)->with(['profilePhoto:id,mediable_id,mediable_type,file_path'])->paginate($perPage);
 
         return response()->json($familyMembers);
     }
@@ -702,7 +855,7 @@ class MembershipController extends Controller
             return response()->json(['error' => 'Failed to update status'], 500);
         }
     }
-    
+
     private function getInvoiceNo()
     {
         $invoiceNo = FinancialInvoice::max('invoice_no');

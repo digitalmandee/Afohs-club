@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\App\AddressTypeController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\SubscriptionTypeController;
@@ -92,46 +91,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         });
     });
 
-    Route::prefix('api')->group(function () {
-        Route::resource('departments', EmployeeDepartmentController::class)->except(['create', 'show', 'edit']);
-        // Replace index with your own custom function
-        Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll');
-        Route::resource('employee-types', EmployeeTypeController::class)->except(['create', 'index', 'show', 'edit']);
-        Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store');
-        Route::put('employees/update/{employeeId}', [EmployeeController::class, 'update'])->name('api.employees.update');
-
-        // Leave Category API routes
-        Route::prefix('leave-categories')->group(function () {
-            Route::get('/', [LeaveCategoryController::class, 'getAll'])->name('api.leave-categories.getAll');
-            Route::post('/', [LeaveCategoryController::class, 'store'])->name('api.leave-categories.store');
-            Route::get('/{id}', [LeaveCategoryController::class, 'show'])->name('api.leave-categories.show');
-            Route::put('/{id}', [LeaveCategoryController::class, 'update'])->name('api.leave-categories.update');
-            Route::delete('/{id}', [LeaveCategoryController::class, 'destroy'])->name('api.leave-categories.destroy');
-        });
-
-        // Leave Application API routes
-        Route::prefix('leave-applications')->group(function () {
-            Route::post('/', [LeaveApplicationController::class, 'store'])->name('api.leave-applications.store');
-            Route::get('/{id}', [LeaveApplicationController::class, 'show'])->name('api.leave-applications.show');
-            Route::put('/{id}', [LeaveApplicationController::class, 'update'])->name('api.leave-applications.update');
-            Route::delete('/{id}', [LeaveApplicationController::class, 'destroy'])->name('api.leave-applications.destroy');
-        });
-
-        // Leave Report API route
-        Route::get('employees/leaves/reports', [LeaveApplicationController::class, 'leaveReport'])->name('api.leave-reports');
-
-        // Attendance API routes
-        Route::prefix('attendances')->group(function () {
-            Route::get('/', [AttendanceController::class, 'index'])->name('api.attendances.index');
-            Route::get('reports', [AttendanceController::class, 'attendanceReport'])->name('api.attendances.reports');
-            Route::put('{attendanceId}', [AttendanceController::class, 'updateAttendance'])->name('api.attendances.update');
-            Route::get('profile/report/{employeeId}', [AttendanceController::class, 'profileReport'])->name('api.attendances.profile.report');
-            Route::post('all/report', [AttendanceController::class, 'allEmployeesReport'])->name('api.attendances.all.report');
-
-            Route::get('leaves/reports/monthly', [LeaveApplicationController::class, 'leaveReportMonthly']);
-        });
-    });
-
     // Admin Room Booking Routes
     Route::group(['prefix' => 'booking-management'], function () {
         Route::resource('guests', CustomerController::class)->except(['show']);
@@ -146,6 +105,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
             Route::get('dashboard', [RoomController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
             Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
+            Route::put('booking/update-status/{id}', [RoomController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
             Route::get('add', [RoomController::class, 'create'])->name('rooms.add')->middleware('super.admin:rooms.create');
             Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
             Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
@@ -352,10 +312,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
 
-    // Member Invoices
-    Route::get('/api/member-invoices', [FinancialController::class, 'getMemberInvoices']);
-    Route::post('/api/pay-invoices', [FinancialController::class, 'payInvoices']);
-
     // Route::get('/admin/subscription/sports/category', function () {
     //     return Inertia::render('App/Admin/Subscription/Sports');
     // })->name('subscription.sports');
@@ -377,8 +333,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Kitchen/History');
     })->name('kitchen.history');
 
-    Route::get('/card/dashboard', [CardController::class, 'index'])->name('cards.dashboard');
-
+    
     Route::group(['prefix' => 'admin/membership'], function () {
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
         Route::get('create', [MembershipController::class, 'create'])->name('membership.add')->middleware('permission:members.create');
@@ -389,7 +344,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update')->middleware('permission:members.edit');
         Route::post('store', [MembershipController::class, 'store'])->name('membership.store')->middleware('permission:members.create');
         Route::post('update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status')->middleware('permission:members.edit');
-
+        // Card Routes
+        Route::get('/cards', [CardController::class, 'index'])->name('cards.dashboard');
+        
         // Reports Index - Dashboard with all reports
         Route::get('reports', [MemberFeeRevenueController::class, 'reportsIndex'])->name('membership.reports')->middleware('permission:reports.view');
 
@@ -503,6 +460,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/stats', [DataMigrationController::class, 'getMigrationStats'])->name('data-migration.stats');
         Route::post('/migrate-members', [DataMigrationController::class, 'migrateMembers'])->name('data-migration.migrate-members');
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
+        Route::post('/migrate-media', [DataMigrationController::class, 'migrateMedia'])->name('data-migration.migrate-media');
         Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
     });
@@ -557,6 +515,47 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('pos/daily-sales-list-cashier-wise/print', [AdminPosReportController::class, 'dailySalesListCashierWisePrint'])->name('admin.reports.pos.daily-sales-list-cashier-wise.print');
         Route::get('pos/daily-dump-items-report', [AdminPosReportController::class, 'dailyDumpItemsReport'])->name('admin.reports.pos.daily-dump-items-report');
         Route::get('pos/daily-dump-items-report/print', [AdminPosReportController::class, 'dailyDumpItemsReportPrint'])->name('admin.reports.pos.daily-dump-items-report.print');
+    });
+
+    
+    Route::prefix('api')->group(function () {
+        Route::resource('departments', EmployeeDepartmentController::class)->except(['create', 'show', 'edit']);
+        // Replace index with your own custom function
+        Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll');
+        Route::resource('employee-types', EmployeeTypeController::class)->except(['create', 'index', 'show', 'edit']);
+        Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store');
+        Route::put('employees/update/{employeeId}', [EmployeeController::class, 'update'])->name('api.employees.update');
+
+        // Leave Category API routes
+        Route::prefix('leave-categories')->group(function () {
+            Route::get('/', [LeaveCategoryController::class, 'getAll'])->name('api.leave-categories.getAll');
+            Route::post('/', [LeaveCategoryController::class, 'store'])->name('api.leave-categories.store');
+            Route::get('/{id}', [LeaveCategoryController::class, 'show'])->name('api.leave-categories.show');
+            Route::put('/{id}', [LeaveCategoryController::class, 'update'])->name('api.leave-categories.update');
+            Route::delete('/{id}', [LeaveCategoryController::class, 'destroy'])->name('api.leave-categories.destroy');
+        });
+
+        // Leave Application API routes
+        Route::prefix('leave-applications')->group(function () {
+            Route::post('/', [LeaveApplicationController::class, 'store'])->name('api.leave-applications.store');
+            Route::get('/{id}', [LeaveApplicationController::class, 'show'])->name('api.leave-applications.show');
+            Route::put('/{id}', [LeaveApplicationController::class, 'update'])->name('api.leave-applications.update');
+            Route::delete('/{id}', [LeaveApplicationController::class, 'destroy'])->name('api.leave-applications.destroy');
+        });
+
+        // Leave Report API route
+        Route::get('employees/leaves/reports', [LeaveApplicationController::class, 'leaveReport'])->name('api.leave-reports');
+
+        // Attendance API routes
+        Route::prefix('attendances')->group(function () {
+            Route::get('/', [AttendanceController::class, 'index'])->name('api.attendances.index');
+            Route::get('reports', [AttendanceController::class, 'attendanceReport'])->name('api.attendances.reports');
+            Route::put('{attendanceId}', [AttendanceController::class, 'updateAttendance'])->name('api.attendances.update');
+            Route::get('profile/report/{employeeId}', [AttendanceController::class, 'profileReport'])->name('api.attendances.profile.report');
+            Route::post('all/report', [AttendanceController::class, 'allEmployeesReport'])->name('api.attendances.all.report');
+
+            Route::get('leaves/reports/monthly', [LeaveApplicationController::class, 'leaveReportMonthly']);
+        });
     });
 });
 

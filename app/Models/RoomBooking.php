@@ -48,6 +48,7 @@ class RoomBooking extends BaseModel
         'booking_docs',
         'additional_notes',
         'status',
+        'cancellation_reason',
         'created_by',
         'updated_by',
     ];

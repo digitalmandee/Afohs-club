@@ -18,7 +18,6 @@ class Member extends BaseModel
         'membership_no',
         'member_type_id',
         'member_category_id',
-        'profile_photo',
         'kinship',
         'parent_id',
         'family_suffix',
@@ -79,7 +78,6 @@ class Member extends BaseModel
         'permanent_city',
         'permanent_country',
         'country',
-        'documents',
         'classification_id',
         'expiry_extended_by',
         'expiry_extension_date',
@@ -93,7 +91,6 @@ class Member extends BaseModel
     protected $casts = [
         'category_ids' => 'array',
         'is_document_missing' => 'boolean',
-        'documents' => 'array',
         'date_of_birth' => 'date',
         'card_expiry_date' => 'date',
         'expiry_extension_date' => 'datetime',
@@ -181,6 +178,33 @@ class Member extends BaseModel
         return $this->hasOne(FinancialInvoice::class, 'member_id', 'id')
             ->where('fee_type', 'membership_fee')
             ->orderBy('id', 'desc');
+    }
+
+    /**
+     * Get all media for the member (polymorphic relationship)
+     */
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable');
+    }
+
+    /**
+     * Get the profile photo media
+     */
+    public function profilePhoto()
+    {
+        return $this->morphOne(Media::class, 'mediable')
+            ->where('type', 'profile_photo')
+            ->latest();
+    }
+
+    /**
+     * Get all document media (excluding profile photo)
+     */
+    public function documents()
+    {
+        return $this->morphMany(Media::class, 'mediable')
+            ->where('type', 'member_docs');
     }
 
     public function pausedHistories()

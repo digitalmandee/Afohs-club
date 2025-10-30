@@ -222,6 +222,7 @@ export const generateInvoiceContent = (booking) => {
                         <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
+                        ${booking.cancellation_reason ? `<div class="typography-body2"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason}</div>` : ''}
                     </div>
                 </div>
 
@@ -254,7 +255,7 @@ export const generateInvoiceContent = (booking) => {
             <div class="notes-item">
                 <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.grand_total || 0)} RUPEES ONLY</div>
             </div>
-            </div>
+        </div>
         </div>
     </body>
 </html>

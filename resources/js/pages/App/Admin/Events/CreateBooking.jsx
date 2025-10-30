@@ -365,7 +365,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                                 <Button variant="outlined" disabled={activeStep === 0} onClick={handleBack}>
                                     Back
                                 </Button>
-                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}>
+                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition='start'>
                                     {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
                                 </Button>
                             </Box>

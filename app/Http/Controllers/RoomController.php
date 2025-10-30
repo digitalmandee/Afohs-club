@@ -121,7 +121,7 @@ class RoomController extends Controller
                 'room:id,name,room_type_id',
                 'customer:id,customer_no,email,name',
                 'member:id,membership_no,full_name',
-                'invoice:id,invoiceable_id,invoiceable_type,status' // ✅ Eager load invoice
+                'invoice:id,invoiceable_id,invoiceable_type,status'
             ])
             ->latest()
             ->take(5)
@@ -448,6 +448,32 @@ class RoomController extends Controller
                 'start_date' => $startDate,
                 'end_date' => $endDate,
             ],
+        ]);
+    }
+
+    /**
+     * Update room booking status
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string',
+            'cancellation_reason' => 'nullable|string',
+        ]);
+
+        $booking = RoomBooking::findOrFail($id);
+        
+        $booking->status = $request->status;
+        
+        if ($request->has('cancellation_reason')) {
+            $booking->cancellation_reason = $request->cancellation_reason;
+        }
+        
+        $booking->save();
+
+        return response()->json([
+            'message' => 'Booking status updated successfully',
+            'booking' => $booking
         ]);
     }
 }
