@@ -588,38 +588,6 @@ export default function SideNav({ open, setOpen }) {
                         zIndex: 1000,
                     }}
                 >
-                    {/* Toggle Menu Icon */}
-                    {/* <IconButton
-                        color="inherit"
-                        aria-label="toggle drawer"
-                        onClick={() => setOpen(!open)} // Toggle sidebar
-                        edge="start"
-                        sx={{
-                            marginRight: 5,
-                            backgroundColor: '#F0F5FF',
-                            border: 'none',
-                            borderRadius: '2px',
-                        }}
-                    >
-                        {open ? (
-                            <MenuOpenIcon
-                                sx={{
-                                    color: '#063455',
-                                    width: '20px',
-                                    height: '20',
-                                }}
-                            />
-                        ) : (
-                            <MenuIcon
-                                sx={{
-                                    color: '#063455',
-                                    width: '20px',
-                                    height: '20',
-                                }}
-                            />
-                        )}{' '}
-                        {/* Toggle between icons */}
-                    {/* </IconButton> */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {/* Notification Icon */}
                         <IconButton
@@ -699,6 +667,7 @@ export default function SideNav({ open, setOpen }) {
                         position: 'sticky',
                         top: 10,
                         zIndex: 1000,
+                        height: open ? 180 : 80,
                     }}
                 >
                     <img
@@ -746,7 +715,7 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' },
                     }}
                 >
-                    <List sx={{ mt: 4 }}>
+                    <List sx={{ mt: 2 }}>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
                             // const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));
