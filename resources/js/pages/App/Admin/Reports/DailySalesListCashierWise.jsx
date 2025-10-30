@@ -26,7 +26,6 @@ import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonIcon from '@mui/icons-material/Person';
 import { format } from 'date-fns';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
 export default function DailySalesListCashierWise({ 
     cashierData, 
@@ -43,15 +42,12 @@ export default function DailySalesListCashierWise({
     grandTotal, 
     filters 
 }) {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
         end_date: filters?.end_date || endDate,
         cashier_id: filters?.cashier_id || ''
     });
-
-    const drawerWidthOpen = 280;
-    const drawerWidthClosed = 110;
 
     const handleFilterChange = (field, value) => {
         setDateFilters(prev => ({
@@ -88,14 +84,10 @@ export default function DailySalesListCashierWise({
     return (
         <>
             <Head title="Daily Sales List (Cashier-Wise)" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#f8fafc',
                     minHeight: '100vh',
                 }}
             >

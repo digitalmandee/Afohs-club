@@ -292,3 +292,4 @@ export default function CustomerInformationForm() {
         </>
     );
 }
+CustomerInformationForm.layout = (page) => page;

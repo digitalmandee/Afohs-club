@@ -335,3 +335,4 @@ export default function PaymentModal() {
         </>
     );
 }
+PaymentModal.layout = (page) => page;

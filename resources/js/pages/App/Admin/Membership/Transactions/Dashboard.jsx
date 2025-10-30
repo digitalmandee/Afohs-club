@@ -3,13 +3,9 @@ import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, Typography, Grid, Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip } from '@mui/material';
 import { AttachMoney, Receipt, TrendingUp, AccountBalance } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
-
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 export default function TransactionDashboard({ statistics, recent_transactions }) {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
@@ -53,7 +49,7 @@ export default function TransactionDashboard({ statistics, recent_transactions }
     return (
         <>
             <Head title="Transaction Dashboard" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
 
             <div
                 style={{
@@ -62,7 +58,7 @@ export default function TransactionDashboard({ statistics, recent_transactions }
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'center', mb: 3 }}>
                         <Typography variant="h4" component="h1" gutterBottom>
@@ -217,7 +213,7 @@ export default function TransactionDashboard({ statistics, recent_transactions }
                         </CardContent>
                     </Card>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 }

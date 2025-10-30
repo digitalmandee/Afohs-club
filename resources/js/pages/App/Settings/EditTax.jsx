@@ -173,3 +173,4 @@ export default function AddressType() {
         </>
     );
 }
+AddressType.layout = (page) => page;

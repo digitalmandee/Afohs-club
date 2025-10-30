@@ -2,14 +2,11 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Card, CardContent, Typography, IconButton, Box, Menu, MenuItem, Grid } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Add as AddIcon, MoreVert as MoreVertIcon, Check as CheckIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const SportsCategory = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const categories = [
         {
@@ -37,13 +34,9 @@ const SportsCategory = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     padding: '20px',
                 }}

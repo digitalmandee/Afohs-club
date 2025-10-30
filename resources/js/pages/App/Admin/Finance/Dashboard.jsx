@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
@@ -17,11 +16,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const Dashboard = ({ statistics, recent_transactions }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [date, setDate] = useState('Apr-2025');
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openMembershipInvoiceModal, setOpenMembershipInvoiceModal] = useState(false);
@@ -54,14 +51,14 @@ const Dashboard = ({ statistics, recent_transactions }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                     <Container fluid>
                         {/* Header */}
@@ -596,7 +593,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                         financeView={true}
                     />
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

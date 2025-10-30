@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import AddIcon from '@mui/icons-material/Add';
 import PeopleIcon from '@mui/icons-material/People';
@@ -26,11 +25,11 @@ import { useState } from 'react';
 import EmployeeDetail from './Detail';
 import AttendanceFilter from './Filter';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const AttendanceDashboard = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openFilter, setOpenFilter] = useState(false);
 
     const employeeData = [
@@ -64,7 +63,7 @@ const AttendanceDashboard = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -72,7 +71,7 @@ const AttendanceDashboard = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box
                     sx={{
                         px: 4,
@@ -295,7 +294,7 @@ const AttendanceDashboard = () => {
                         </div>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

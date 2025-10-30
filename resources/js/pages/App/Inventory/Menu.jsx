@@ -479,5 +479,5 @@ const MenuFilter = ({ handleFilterClose }) => {
         </>
     );
 };
-
+MenuFilter.layout = (page) => page;
 export default MenuFilter;

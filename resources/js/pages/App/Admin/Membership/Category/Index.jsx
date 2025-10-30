@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { Box, Button, Card, CardContent, Grid, IconButton, Menu, MenuItem, Typography } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Add as AddIcon, MoreVert as MoreVertIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const MemberCategories = ({ memberCategories }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [categories, setCategories] = useState(memberCategories || []);
@@ -51,13 +48,13 @@ const MemberCategories = ({ memberCategories }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
+                    // marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    // transition: 'margin-left 0.3s ease-in-out',
+                    // marginTop: '5rem',
+                    // backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     padding: '20px',
                 }}

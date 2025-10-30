@@ -490,5 +490,5 @@ const CashScreen = () => {
         </>
     );
 };
-
+CashScreen.layout = (page) => page;
 export default CashScreen;

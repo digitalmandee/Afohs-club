@@ -6,19 +6,18 @@ import PeopleIcon from '@mui/icons-material/People';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import PrintIcon from '@mui/icons-material/Print';
 import { Box } from '@mui/system';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const EmployeeDashboard = () => {
     const { props } = usePage();
     const { employees, stats } = props; // coming from Laravel
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -26,7 +25,7 @@ const EmployeeDashboard = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
                         {/* Header */}
@@ -111,7 +110,7 @@ const EmployeeDashboard = () => {
                         </Box>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

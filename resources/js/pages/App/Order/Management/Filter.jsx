@@ -304,5 +304,5 @@ const OrderFilter = ({ onClose }) => {
         </>
     );
 };
-
+OrderFilter.layout = (page) => page;
 export default OrderFilter;

@@ -100,5 +100,5 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
         </>
     );
 };
-
+CustomerForm.layout = (page) => page;
 export default CustomerForm;

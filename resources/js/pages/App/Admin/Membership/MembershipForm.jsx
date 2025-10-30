@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Typography, Button, IconButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import AddForm1 from '@/components/App/membershipForm/AddForm1';
 import AddForm2 from '@/components/App/membershipForm/AddForm2';
@@ -12,13 +11,10 @@ import Payment from './Payment';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
-
 const LOCAL_STORAGE_KEY = 'membershipFormData';
 
 const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
@@ -280,7 +276,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -288,13 +284,13 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div>
                     {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}
                     {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
                     {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

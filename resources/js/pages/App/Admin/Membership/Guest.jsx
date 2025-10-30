@@ -30,14 +30,11 @@ import {
     KeyboardArrowDown as KeyboardArrowDownIcon,
     CalendarMonth as CalendarMonthIcon
 } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const GuestHistory = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // State for search input
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -113,7 +110,7 @@ const GuestHistory = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -121,7 +118,7 @@ const GuestHistory = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Container maxWidth="lg" sx={{ py: 4 }}>
                     <Box
                         sx={{
@@ -443,7 +440,7 @@ const GuestHistory = () => {
                         </Box>
                     </Modal>
                 </Container>
-            </div>
+            {/* </div> */}
         </>
     );
 };

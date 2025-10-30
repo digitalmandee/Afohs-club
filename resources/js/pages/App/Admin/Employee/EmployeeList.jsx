@@ -15,13 +15,12 @@ import {
     IconButton
 } from "@mui/material"
 import { Add, CalendarToday, ArrowBack } from "@mui/icons-material"
-import SideNav from '@/components/App/AdminSideBar/SideNav'
 import SearchIcon from '@mui/icons-material/Search';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 const EmployeeList = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const employeeData = [
         {
             employee_id: "EMP001",
@@ -71,7 +70,7 @@ const EmployeeList = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -79,7 +78,7 @@ const EmployeeList = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6'
                 }}
-            >
+            > */}
                 <Box sx={{
                     px: 3
                 }}>
@@ -168,7 +167,7 @@ const EmployeeList = () => {
                         </Box> */}
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     )
 }

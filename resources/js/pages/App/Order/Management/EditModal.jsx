@@ -497,5 +497,5 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         </>
     );
 }
-
+EditOrderModal.layout = (page) => page;
 export default EditOrderModal;

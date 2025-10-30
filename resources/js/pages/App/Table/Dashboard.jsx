@@ -648,5 +648,5 @@ const TableManagement = ({ floorsdata, tablesData }) => {
         </>
     );
 };
-
+TableManagement.layout = (page) => page;
 export default TableManagement;

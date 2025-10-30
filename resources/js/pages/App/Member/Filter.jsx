@@ -453,5 +453,5 @@ const CustomerFilter = () => {
         </div>
     );
 };
-
+CustomerFilter.layout = (page) => page;
 export default CustomerFilter;

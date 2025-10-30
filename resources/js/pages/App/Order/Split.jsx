@@ -329,5 +329,5 @@ const SplitBill = () => {
         </Box>
     );
 };
-
+SplitBill.layout = (page) => page;
 export default SplitBill;

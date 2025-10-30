@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem, Tooltip, Drawer, Box } from '@mui/material';
 import { Search, FilterAlt, People, CreditCard, LocalDining as DiningIcon, TakeoutDining as TakeoutIcon, TwoWheeler as DeliveryIcon, Visibility } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import MembershipSuspensionDialog from './Modal';
 import MembershipCancellationDialog from './CancelModal';
@@ -15,8 +14,6 @@ import { FaEdit } from 'react-icons/fa';
 import MembershipPauseDialog from './MembershipPauseDialog';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const styles = {
     root: {
@@ -28,7 +25,7 @@ const styles = {
 
 const MembershipDashboard = ({ members = [], total_members, total_payment }) => {
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [activateModalOpen, setActivateModalOpen] = useState(false);
@@ -61,15 +58,15 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
-            <div
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
+            {/* <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
@@ -312,7 +309,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                         </TableContainer>
                     </div>
                 </div>
-            </div>
+            {/* </div> */}
 
             <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
             <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />

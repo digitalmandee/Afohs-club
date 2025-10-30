@@ -16,7 +16,6 @@ import {
     TextField
 } from "@mui/material"
 import { Add, CalendarToday, FilterAlt, ArrowBack } from "@mui/icons-material"
-import SideNav from '@/components/App/AdminSideBar/SideNav'
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import AddIcon from '@mui/icons-material/Add';
@@ -24,10 +23,8 @@ import { router } from '@inertiajs/react';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import HoledEmployeeFilter from './HoledFilter';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 const HoledSalary = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openEmployeeEditModal, setOpenEmployeeEditModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [formData, setFormData] = useState({
@@ -75,7 +72,7 @@ const HoledSalary = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -83,7 +80,7 @@ const HoledSalary = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6'
                 }}
-            >
+            > */}
                 <Box sx={{
                     px: 3,
                     pt: 2
@@ -393,7 +390,7 @@ const HoledSalary = () => {
                 <HoledEmployeeFilter
                     open={openFilterModal}
                     onClose={() => setOpenFilterModal(false)} />
-            </div>
+            {/* </div> */}
         </>
     )
 }

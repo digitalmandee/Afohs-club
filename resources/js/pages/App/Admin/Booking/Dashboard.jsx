@@ -5,7 +5,6 @@ import { Search, FilterAlt } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem, Popper } from '@mui/material';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { router } from '@inertiajs/react';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import AvailableRooms from './Rooms';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -17,8 +16,8 @@ import { addDays, format } from 'date-fns';
 import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const theme = createTheme({
     palette: {
@@ -309,7 +308,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
 };
 
 const RoomBookingDashboard = ({ data, roomTypes }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const [searchResultsFilter, setSearchResultsFilter] = useState(false);
@@ -358,14 +357,14 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <ThemeProvider theme={theme}>
                     <style>{dialogStyles}</style>
                     <Container fluid className="p-4 bg-light">
@@ -639,7 +638,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                         {!loading && searchResultsFilter && <AvailableRooms data={searchResults} type={bookingType} checkin={checkin} checkout={checkout} persons={adults} />}
                     </Container>
                 </ThemeProvider>
-            </div>
+            {/* </div> */}
         </>
     );
 };

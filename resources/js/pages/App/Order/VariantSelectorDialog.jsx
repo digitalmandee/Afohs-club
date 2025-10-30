@@ -133,5 +133,5 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
         </Dialog>
     );
 };
-
+VariantSelectorDialog.layout = (page) => page;
 export default VariantSelectorDialog;

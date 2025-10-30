@@ -1,19 +1,16 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Print, Search, ArrowBack } from '@mui/icons-material';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const SubscriptionsMaintenanceSummary = () => {
     // Get props first
     const { summary, grand_totals, filters, all_categories } = usePage().props;
 
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [allFilters, setAllFilters] = useState({
         date_from: filters?.date_from || '',
         date_to: filters?.date_to || '',
@@ -74,7 +71,7 @@ const SubscriptionsMaintenanceSummary = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -82,7 +79,7 @@ const SubscriptionsMaintenanceSummary = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -349,7 +346,7 @@ const SubscriptionsMaintenanceSummary = () => {
                         </Box>
                     )}
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

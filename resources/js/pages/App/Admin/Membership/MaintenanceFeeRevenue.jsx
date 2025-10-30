@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import { Autocomplete, TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid } from '@mui/material';
 import { toWords } from 'number-to-words';
 import MaintenanceFeeFilter from './MaintenanceFeeFilter';
 import { Print, ArrowBack } from '@mui/icons-material';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
-
 const MaintenanceFeeRevenue = () => {
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const { categories, statistics, filters } = usePage().props;
 
@@ -26,7 +22,7 @@ const MaintenanceFeeRevenue = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -34,7 +30,7 @@ const MaintenanceFeeRevenue = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -236,7 +232,7 @@ const MaintenanceFeeRevenue = () => {
                         </Grid>
                     </Box>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -1,15 +1,12 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
 import { Alert, Box, Button, TextField, Typography } from '@mui/material'; // MUI components
 import { Col, Container, Row } from 'react-bootstrap'; // Bootstrap Grid System
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const Password = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const passwordInput = useRef(null);
     const currentPasswordInput = useRef(null);
 
@@ -40,12 +37,9 @@ const Password = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    marginTop: '5rem',
-                    transition: 'all 0.3s ease',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',

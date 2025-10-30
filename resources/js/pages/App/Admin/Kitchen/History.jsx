@@ -16,7 +16,6 @@ import {
     TextField
 } from "@mui/material"
 import { Add, CalendarToday, FilterAlt, ArrowBack } from "@mui/icons-material"
-import SideNav from '@/components/App/AdminSideBar/SideNav'
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import AddIcon from '@mui/icons-material/Add';
@@ -24,10 +23,8 @@ import { router } from '@inertiajs/react';
 import CustomerDetail from './Detail';
 import OrderHistory from './Order';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 const CustomerHistory = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openProfile, setOpenProfile] = useState(false);
     const [profileView, setProfileView] = useState('customer');
 
@@ -106,7 +103,7 @@ const CustomerHistory = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -114,7 +111,7 @@ const CustomerHistory = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6'
                 }}
-            >
+            > */}
                 <Box sx={{
                     px: 3,
                     pt: 2
@@ -285,7 +282,7 @@ const CustomerHistory = () => {
                         <OrderHistory handleBackToProfile={() => setProfileView('customer')} />
                     )}
                 </Drawer>
-            </div>
+            {/* </div> */}
         </>
     )
 }

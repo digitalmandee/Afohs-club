@@ -15,14 +15,13 @@ import {
     ArrowBack as ArrowBackIcon,
     KeyboardArrowDown as KeyboardArrowDownIcon
 } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const AddLeaveApplication = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // State for form fields
     const [formData, setFormData] = useState({
         guestName: '',
@@ -51,7 +50,7 @@ const AddLeaveApplication = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -59,7 +58,7 @@ const AddLeaveApplication = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div style={{
                     fontFamily: 'Arial, sans-serif',
                     padding: '20px',
@@ -272,7 +271,7 @@ const AddLeaveApplication = () => {
                         </form>
                     </Paper>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -520,5 +520,5 @@ const OrderSaved = ({ setActiveView }) => {
         </Box>
     );
 };
-
+OrderSaved.layout = (page) => page;
 export default OrderSaved;

@@ -3,13 +3,10 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Card, CardContent, Typography, Grid, Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Pagination, InputAdornment } from '@mui/material';
 import { Search, FilterList, Add, Visibility } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 export default function TransactionIndex({ transactions, filters }) {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const [localFilters, setLocalFilters] = useState({
         search: filters.search || '',
@@ -108,7 +105,7 @@ export default function TransactionIndex({ transactions, filters }) {
     return (
         <>
             <Head title="All Transactions" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
 
             <div
                 style={{
@@ -117,7 +114,7 @@ export default function TransactionIndex({ transactions, filters }) {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Typography variant="h4" component="h1">
@@ -321,7 +318,7 @@ export default function TransactionIndex({ transactions, filters }) {
                         </CardContent>
                     </Card>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 }

@@ -1,17 +1,14 @@
 'use client';
 
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, IconButton, InputAdornment, Snackbar, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useCallback, useEffect, useState } from 'react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 export default function MemberType({ memberTypesList }) {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openAddMenu, setOpenAddMenu] = useState(false);
     const [editingMemberTypeId, setEditingMemberTypeId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -163,14 +160,14 @@ export default function MemberType({ memberTypesList }) {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <div className="container-fluid bg-light py-4">
                     <div style={{ background: '#ffff', padding: '20px', borderRadius: '10px' }}>
                         <div className="d-flex align-items-center mb-4">
@@ -249,7 +246,7 @@ export default function MemberType({ memberTypesList }) {
                         )}
                     </div>
                 </div>
-            </div>
+            {/* </div> */}
 
             {/* Add/Edit Modal */}
             <Dialog

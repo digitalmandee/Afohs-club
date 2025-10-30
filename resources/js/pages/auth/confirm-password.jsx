@@ -62,3 +62,4 @@ export default function ConfirmPassword() {
         </AuthLayout>
     );
 }
+ConfirmPassword.layout = (page) => page;

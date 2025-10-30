@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import PeopleIcon from '@mui/icons-material/People';
 import {
@@ -21,11 +20,9 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { useState } from 'react';
 // import AttendanceFilter from './Filter';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const PayrollDashboard = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const employeeData = [
         {
@@ -55,7 +52,7 @@ const PayrollDashboard = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -63,7 +60,7 @@ const PayrollDashboard = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box
                     sx={{
                         px: 4,
@@ -302,7 +299,7 @@ const PayrollDashboard = () => {
                         </div>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

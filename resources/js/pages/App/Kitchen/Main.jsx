@@ -238,5 +238,5 @@ const MainDashboard = ({ kitchens }) => {
         </>
     );
 };
-
+MainDashboard.layout = (page) => page;
 export default MainDashboard;

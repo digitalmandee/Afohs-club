@@ -554,5 +554,5 @@ const CustomerProfile = ({ handleGoToHistory }) => {
         </Box>
     );
 };
-
+CustomerProfile.layout = (page) => page;
 export default CustomerProfile;

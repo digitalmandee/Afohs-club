@@ -2,14 +2,11 @@ import React, { useState } from "react";
 import { router } from '@inertiajs/react';
 import { Alert, Button, Snackbar, Typography } from "@mui/material";
 import { Box } from '@mui/system';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import axios from 'axios';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const CreateCategory = () => {
-	const [open, setOpen] = useState(true);
+	// const [open, setOpen] = useState(true);
 	const [formData, setFormData] = useState({
 		name: "",
 		color: "#000000",
@@ -62,7 +59,7 @@ const CreateCategory = () => {
 
 	return (
 		<>
-			<SideNav open={open} setOpen={setOpen} />
+			{/* <SideNav open={open} setOpen={setOpen} />
 			<div
 				style={{
 					marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -70,7 +67,7 @@ const CreateCategory = () => {
 					marginTop: '5rem',
 					backgroundColor: '#F6F6F6',
 				}}
-			>
+			> */}
 				<Box sx={{ px: 2, py: 2 }}>
 					<div style={{ paddingTop: '1rem' }}>
 						{/* Header */}
@@ -201,7 +198,7 @@ const CreateCategory = () => {
 					</form>
 					</div>
 				</Box>
-			</div>
+			{/* </div> */}
 			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
 				<Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
 					{snackbar.message}

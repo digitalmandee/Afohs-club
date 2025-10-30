@@ -270,3 +270,4 @@ export default function AddKitchen({ userNo, customer = null }) {
         </>
     );
 }
+AddKitchen.layout = (page) => page;

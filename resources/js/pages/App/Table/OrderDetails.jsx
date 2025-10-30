@@ -303,5 +303,5 @@ const OrderDetails = ({ orderId, onClose }) => {
         </Box>
     );
 };
-
+OrderDetails.layout = (page) => page;
 export default OrderDetails;

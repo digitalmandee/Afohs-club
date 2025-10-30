@@ -4,13 +4,10 @@ import { Box, Grid, TextField, Select, MenuItem, FormControl, InputLabel, Typogr
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const [allItems, setAllItems] = useState(menuItems || []);
 
@@ -47,13 +44,9 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     padding: '20px',
                 }}

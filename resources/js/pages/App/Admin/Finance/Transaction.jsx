@@ -3,7 +3,6 @@ import { Typography, Button, Card, CardContent, TextField, Table, TableBody, Tab
 import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
 import TransactionFilter from './Filter';
@@ -12,12 +11,12 @@ import MembershipInvoiceSlip from '../Membership/Invoice';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const Transaction = ({ transactions, filters }) => {
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openMembershipInvoiceModal, setOpenMembershipInvoiceModal] = useState(false);
@@ -76,7 +75,7 @@ const Transaction = ({ transactions, filters }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -84,7 +83,7 @@ const Transaction = ({ transactions, filters }) => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: 'auto' }}>
                     {/* Recently Joined Section */}
                     <div className="mx-0">
@@ -395,7 +394,7 @@ const Transaction = ({ transactions, filters }) => {
                         financeView={true}
                     />
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

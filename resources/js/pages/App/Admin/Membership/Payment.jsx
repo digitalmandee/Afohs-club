@@ -2,16 +2,13 @@ import { useEffect, useState } from 'react';
 import { TextField, Button, Typography, Box, IconButton, Radio, RadioGroup, FormControlLabel, Paper, Grid } from '@mui/material';
 import { ArrowBack, ArrowForward, Check } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const Payment = ({ invoice, onBack }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const [availableQuarters, setAvailableQuarters] = useState([]);
     const [selectedQuarters, setSelectedQuarters] = useState([]);
@@ -259,13 +256,13 @@ const Payment = ({ invoice, onBack }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
+                    // marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    // transition: 'margin-left 0.3s ease-in-out',
+                    // marginTop: '5rem',
+                    // backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     padding: '2rem',
                 }}

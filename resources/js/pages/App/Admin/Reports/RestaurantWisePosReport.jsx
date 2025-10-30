@@ -22,17 +22,13 @@ import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import { format } from 'date-fns';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
 export default function RestaurantWisePosReport({ allReportsData, tenants, startDate, endDate, grandTotal, grandSubTotal, grandDiscount, grandTotalSale, filters }) {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
         end_date: filters?.end_date || endDate
     });
-
-    const drawerWidthOpen = 280;
-    const drawerWidthClosed = 110;
 
     const handleFilterChange = (field, value) => {
         setDateFilters(prev => ({
@@ -68,14 +64,10 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
     return (
         <>
             <Head title="Restaurant-Wise POS Reports" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#f8fafc',
                     minHeight: '100vh',
                 }}
             >

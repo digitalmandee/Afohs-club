@@ -362,5 +362,5 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
         </>
     );
 };
-
+Dashboard.layout = (page) => page;
 export default Dashboard;

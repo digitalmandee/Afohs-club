@@ -2,27 +2,24 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 import { Box, Button, Typography, Paper, Divider } from '@mui/material';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const AccessDenied = ({ message }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     return (
         <>
             <Head title="Access Denied" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5.5rem',
                 }}
-            >
+            > */}
                 <Box
                     className="d-flex align-items-center justify-content-center"
                     sx={{
@@ -79,7 +76,7 @@ const AccessDenied = ({ message }) => {
                        `}
                     </style>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

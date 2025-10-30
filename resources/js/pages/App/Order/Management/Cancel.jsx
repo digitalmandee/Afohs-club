@@ -137,5 +137,5 @@ const CancelOrder = ({ onClose, onConfirm, order }) => {
         </Box>
     );
 };
-
+CancelOrder.layout = (page) => page;
 export default CancelOrder;

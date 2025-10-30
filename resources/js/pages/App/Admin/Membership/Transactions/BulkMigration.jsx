@@ -4,12 +4,8 @@ import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormContro
 import { Add, Delete, Save, Person, Search, Receipt } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
-
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 export default function BulkMigration() {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
@@ -879,14 +875,14 @@ export default function BulkMigration() {
     return (
         <>
             <Head title="Bulk Payment Migration" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#f8fafc',
+                    // marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    // transition: 'margin-left 0.3s ease-in-out',
+                    // marginTop: '5rem',
+                    // backgroundColor: '#f8fafc',
                     minHeight: '100vh',
                 }}
             >

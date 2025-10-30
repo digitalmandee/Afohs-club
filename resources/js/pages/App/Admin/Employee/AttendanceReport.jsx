@@ -18,14 +18,13 @@ import {
 } from '@mui/icons-material';
 import { FilterAlt, ArrowBack } from "@mui/icons-material"
 import SearchIcon from '@mui/icons-material/Search';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const AttendanceReport = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const employees = [
         {
@@ -80,7 +79,7 @@ const AttendanceReport = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -88,7 +87,7 @@ const AttendanceReport = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box sx={{
                     px: 8,
                     py: 2
@@ -279,7 +278,7 @@ const AttendanceReport = () => {
                         ))}
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

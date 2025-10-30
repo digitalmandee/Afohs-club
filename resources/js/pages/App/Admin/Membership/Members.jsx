@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip, Drawer } from '@mui/material';
 import { Search, FilterAlt, Visibility } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import MembershipSuspensionDialog from './Modal';
 import MembershipCancellationDialog from './CancelModal';
@@ -18,14 +17,12 @@ import MembershipPauseDialog from './MembershipPauseDialog';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { JSONParse } from '@/helpers/generateTemplate';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const AllMembers = ({ members }) => {
     const props = usePage().props;
 
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [activateModalOpen, setActivateModalOpen] = useState(false);
@@ -88,7 +85,7 @@ const AllMembers = ({ members }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -96,7 +93,7 @@ const AllMembers = ({ members }) => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Recently Joined Section */}
                     <div className="mx-3">
@@ -389,7 +386,7 @@ const AllMembers = ({ members }) => {
                         </Box>
                     </Drawer>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -2,18 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Grid, IconButton, Button, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { enqueueSnackbar } from 'notistack';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
-
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const RoomBookingRequestForm = ({ mode }) => {
     const { props } = usePage();
     const { rooms, roomCategories, errors, request } = props;
 
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [familyMembers, setFamilyMembers] = useState([]);
 
     const [formData, setFormData] = useState({
@@ -93,14 +89,14 @@ const RoomBookingRequestForm = ({ mode }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box sx={{ backgroundColor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
@@ -192,7 +188,7 @@ const RoomBookingRequestForm = ({ mode }) => {
                         </form>
                     </Paper>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

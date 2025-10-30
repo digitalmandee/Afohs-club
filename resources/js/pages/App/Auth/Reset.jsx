@@ -346,5 +346,5 @@ const ResetPin = () => {
         </>
     );
 };
-
+ResetPin.layout = (page) => page;
 export default ResetPin;

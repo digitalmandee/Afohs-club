@@ -736,5 +736,5 @@ const ReservationDialog = () => {
         </>
     );
 };
-
+ReservationDialog.layout = (page) => page;
 export default ReservationDialog;

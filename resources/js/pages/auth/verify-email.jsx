@@ -53,3 +53,4 @@ export default function VerifyEmail({ status }) {
         </AuthLayout>
     );
 }
+VerifyEmail.layout = (page) => page;

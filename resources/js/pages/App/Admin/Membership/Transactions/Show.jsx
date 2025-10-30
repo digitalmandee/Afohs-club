@@ -3,7 +3,6 @@ import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, Typography, Grid, Box, Button, Chip, Divider, Table, TableBody, TableCell, TableContainer, TableRow, Paper } from '@mui/material';
 import { ArrowBack, Receipt, Person, Payment, CalendarToday } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
 export default function ShowTransaction({ transaction }) {
     const formatCurrency = (amount) => {
@@ -58,7 +57,7 @@ export default function ShowTransaction({ transaction }) {
     return (
         <>
             <Head title={`Transaction ${transaction.invoice_no}`} />
-            <SideNav />
+            {/* <SideNav /> */}
             
             <Box sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>

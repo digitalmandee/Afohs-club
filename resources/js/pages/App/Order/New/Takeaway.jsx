@@ -160,5 +160,5 @@ const TakeAwayDialog = () => {
         </Box>
     );
 };
-
+TakeAwayDialog.layout = (page) => page;
 export default TakeAwayDialog;

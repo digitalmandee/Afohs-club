@@ -2,17 +2,16 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { IconButton, Button, Typography, Box, TextField, MenuItem } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage, useForm } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 
 const genderOptions = ['male', 'female', 'other'];
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = false }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const { data, setData, post, put, processing, errors } = useForm({
         customer_no: customer.customer_no || customerNo || '',
         name: customer.name || '',
@@ -40,13 +39,9 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     padding: '20px',
                 }}

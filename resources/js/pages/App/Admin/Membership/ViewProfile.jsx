@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert } from '@mui/material';
 import { ArrowBack, Person, Groups, Edit, Phone, Email, LocationOn, CalendarToday, CreditCard, Badge, Warning } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 function TabPanel({ children, value, index, ...other }) {
     return (
@@ -17,7 +13,7 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 const ViewProfile = ({ member }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [tabValue, setTabValue] = useState(0);
     const [familyMembers, setFamilyMembers] = useState([]);
     const [familyLoading, setFamilyLoading] = useState(false);
@@ -126,9 +122,9 @@ const ViewProfile = ({ member }) => {
                 sx={{
                     flexGrow: 1,
                     p: 3,
-                    width: { sm: `calc(100% - ${open ? drawerWidthOpen : drawerWidthClosed}px)` },
-                    ml: { sm: `${open ? drawerWidthOpen : drawerWidthClosed}px` },
-                    transition: 'margin 0.3s, width 0.3s',
+                    // width: { sm: `calc(100% - ${open ? drawerWidthOpen : drawerWidthClosed}px)` },
+                    // ml: { sm: `${open ? drawerWidthOpen : drawerWidthClosed}px` },
+                    // transition: 'margin 0.3s, width 0.3s',
                 }}
             >
                 {/* Header */}

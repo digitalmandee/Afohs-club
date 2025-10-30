@@ -131,5 +131,5 @@ const BankScreen = () => {
         </Paper>
     );
 };
-
+BankScreen.layout = (page) => page;
 export default BankScreen;

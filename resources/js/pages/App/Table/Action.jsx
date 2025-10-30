@@ -205,5 +205,5 @@ const ActiveTable = ({ table = {}, tableName = 'Table', onClose }) => {
         </Paper>
     );
 };
-
+ActiveTable.layout = (page) => page;
 export default ActiveTable;

@@ -3,16 +3,15 @@ import { Container, Button, Form, InputGroup, Modal, Card, Row, Col } from 'reac
 import { ArrowBack, CheckCircle, Add, Remove, Print, CreditCard, EventNote, AccountBalance, KeyboardArrowRight, Check } from '@mui/icons-material';
 import { IconButton, Divider, Box, Autocomplete, TextField, Typography, Select, MenuItem, Grid } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const BookingPayment = ({ invoice }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
 
     const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -177,7 +176,7 @@ const BookingPayment = ({ invoice }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -185,7 +184,10 @@ const BookingPayment = ({ invoice }) => {
                     marginTop: '5rem',
                     paddingBottom: '2rem',
                 }}
-            >
+            > */}
+            <div style={{
+                paddingBottom: "2rem"
+            }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
                     <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>

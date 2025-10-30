@@ -728,5 +728,5 @@ const OrderQueue = ({ orders2 }) => {
         </>
     );
 };
-
+OrderQueue.layout = (page) => page;
 export default OrderQueue;

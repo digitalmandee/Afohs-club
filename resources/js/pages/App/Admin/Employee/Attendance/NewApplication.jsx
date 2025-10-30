@@ -2,17 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import { Autocomplete, TextField, Button, Alert, Select, MenuItem, FormHelperText, FormControl, InputLabel, Snackbar, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import axios from 'axios';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const LeaveApplication = () => {
 	const { props } = usePage();
 	const { leaveApplication, employees, leaveCategories } = props;
 
-	const [open, setOpen] = useState(true);
+	// const [open, setOpen] = useState(true);
 	const [formData, setFormData] = useState({
 		employee: null,
 		leave_category_id: '',
@@ -84,7 +81,7 @@ const LeaveApplication = () => {
 
 	return (
 		<>
-			<SideNav open={open} setOpen={setOpen} />
+			{/* <SideNav open={open} setOpen={setOpen} />
 			<div
 				style={{
 					marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -92,7 +89,7 @@ const LeaveApplication = () => {
 					marginTop: '5rem',
 					backgroundColor: '#F6F6F6',
 				}}
-			>
+			> */}
 				<Box sx={{ px: 2, py: 2 }}>
 					<div style={{ paddingTop: '1rem' }}>
 						<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
@@ -192,7 +189,7 @@ const LeaveApplication = () => {
 						</form>
 					</div>
 				</Box>
-			</div>
+			{/* </div> */}
 
 			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
 				<Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">

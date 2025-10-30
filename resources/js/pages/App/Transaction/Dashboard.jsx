@@ -1367,4 +1367,5 @@ function TransactionDashboard({ Invoices, totalOrders }) {
         </>
     );
 }
+TransactionDashboard.layout = (page) => page;
 export default TransactionDashboard;

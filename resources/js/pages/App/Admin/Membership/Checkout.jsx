@@ -16,14 +16,10 @@ import {
     ArrowBack as ArrowBackIcon,
     Print as PrintIcon
 } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
-
 const CheckOut = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // Guest details
     const guestDetails = {
         name: 'Zahid Ullah',
@@ -84,7 +80,7 @@ const CheckOut = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -92,7 +88,7 @@ const CheckOut = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
                     {/* Header with back button, title, and print button */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -320,7 +316,7 @@ const CheckOut = () => {
                         </Button>
                     </div>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

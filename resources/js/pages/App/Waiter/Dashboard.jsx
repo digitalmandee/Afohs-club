@@ -258,5 +258,5 @@ const WaiterDashboard = ({ userDetail, users }) => {
         </>
     );
 };
-
+WaiterDashboard.layout = (page) => page;
 export default WaiterDashboard;

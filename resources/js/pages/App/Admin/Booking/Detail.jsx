@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -6,11 +5,11 @@ import { Box, Button, Container, Dialog, Divider, Grid, IconButton, InputAdornme
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const BookingDetail = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openPrice, setOpenPrice] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -30,7 +29,7 @@ const BookingDetail = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -38,7 +37,7 @@ const BookingDetail = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Container sx={{ px: 4, py: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 4 }}>
                         <IconButton edge="start" sx={{ mr: 1 }} onClick={() => router.visit(route('rooms.dashboard'))}>
@@ -433,7 +432,7 @@ const BookingDetail = () => {
                         </Dialog>
                     </Box>
                 </Container>
-            </div>
+            {/* </div> */}
         </>
     );
 };

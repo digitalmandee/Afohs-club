@@ -383,5 +383,5 @@ const QRScreen = () => {
         </Container>
     );
 };
-
+QRScreen.layout = (page) => page;
 export default QRScreen;

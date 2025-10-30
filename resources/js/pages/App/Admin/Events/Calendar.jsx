@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { DayPilot, DayPilotScheduler } from 'daypilot-pro-react';
 import axios from 'axios';
 import moment from 'moment';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import { Modal } from 'react-bootstrap';
 import { ArrowBack } from '@mui/icons-material';
@@ -11,12 +10,10 @@ import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoic
 import EventCompletionModal from '@/components/App/Events/EventCompletionModal';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const EventCalendar = () => {
     const schedulerRef = useRef();
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [month, setMonth] = useState(moment().format('MM'));
     const [year, setYear] = useState(moment().format('YYYY'));
     const [resources, setResources] = useState([]);
@@ -327,14 +324,14 @@ const EventCalendar = () => {
 
     return (
         <>
-            <SideNav open={open} toggleDrawer={toggleDrawer} />
+            {/* <SideNav open={open} toggleDrawer={toggleDrawer} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box sx={{ p: 2 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -497,7 +494,7 @@ const EventCalendar = () => {
                         </Modal.Footer>
                     </Modal>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

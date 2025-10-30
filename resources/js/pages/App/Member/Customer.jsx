@@ -386,4 +386,5 @@ const CustomerDashboard = () => {
         </>
     );
 };
+CustomerDashboard.layout = (page) => page;
 export default CustomerDashboard;

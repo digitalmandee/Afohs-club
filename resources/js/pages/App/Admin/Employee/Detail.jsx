@@ -3,19 +3,18 @@ import { usePage, router } from '@inertiajs/react';
 import { Grid, Typography, Card, IconButton, FormControlLabel, Radio, RadioGroup, Select, Chip, FormControl, CardContent, TableCell, TableHead, Link, TableContainer, Table, TableBody, TableRow, Avatar, Button, Divider, List, ListItem, ListItemText, Paper, TextField, MenuItem, Snackbar, Alert } from "@mui/material";
 import { FileDownload } from "@mui/icons-material";
 import { Box } from '@mui/system';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import PersonalDetails from "@/components/App/Employee/PersonalDetails";
 import AttendanceReport from "@/components/App/Employee/AttendanceReport";
 import axios from 'axios';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const EmployeeDetails = () => {
 	const { props } = usePage();
 	const { employee } = props; // Get employee data from Laravel controller
 
-	const [open, setOpen] = useState(true);
+	// const [open, setOpen] = useState(true);
 	const [selectedTab, setSelectedTab] = useState("personal");
 	const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
@@ -25,7 +24,7 @@ const EmployeeDetails = () => {
 
 	return (
 		<>
-			<SideNav open={open} setOpen={setOpen} />
+			{/* <SideNav open={open} setOpen={setOpen} />
 			<div
 				style={{
 					marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -33,7 +32,7 @@ const EmployeeDetails = () => {
 					marginTop: '5rem',
 					backgroundColor: '#F6F6F6',
 				}}
-			>
+			> */}
 				<Box sx={{ px: 2, py: 2 }}>
 					<div style={{ paddingTop: '1rem' }}>
 						{/* Header */}
@@ -263,7 +262,7 @@ const EmployeeDetails = () => {
 					</Grid>
 					</div>
 				</Box>
-			</div>
+			{/* </div> */}
 
 			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
 				<Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">

@@ -16,20 +16,19 @@ import {
     IconButton
 } from "@mui/material"
 import { Add, ArrowBack } from "@mui/icons-material"
-import SideNav from '@/components/App/AdminSideBar/SideNav'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { router } from "@inertiajs/react"
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const EmployeeInformationForm = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [employeeType, setEmployeeType] = useState("fullTime")
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -37,7 +36,7 @@ const EmployeeInformationForm = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6'
                 }}
-            >
+            > */}
                 <Box sx={{ display: "flex", alignItems: "center", ml: 5, pt: 5 }}>
                     <IconButton style={{ color: "#063455" }}
                         onClick={() => window.history.back()}
@@ -423,7 +422,7 @@ const EmployeeInformationForm = () => {
                         </Grid>
                     {/* </Paper> */}
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     )
 }

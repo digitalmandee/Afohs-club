@@ -1,17 +1,16 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import React, { useState } from 'react';
 import { Box, Typography, Card, CardContent, Grid, Button, TextField, InputAdornment, MenuItem, List, ListItem, ListItemText, Divider } from '@mui/material';
 import { CalendarToday as CalendarIcon, Print as PrintIcon, People as PeopleIcon, ShoppingBag as ShoppingBagIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import usePermission from '@/hooks/usePermission';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const Dashboard = () => {
     const { hasPermission } = usePermission();
 
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const currentMonth = new Date().toLocaleString('default', {
         month: 'short',
     });
@@ -52,14 +51,14 @@ const Dashboard = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
-            <div
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
+            {/* <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box sx={{ p: 2, bgcolor: '#f5f5f5' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Typography sx={{ fontSize: '30px', fontWeight: 500, color: '#063455' }}>Dashboard</Typography>
@@ -465,7 +464,7 @@ const Dashboard = () => {
                         </Grid>
                     </Grid>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

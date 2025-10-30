@@ -1518,5 +1518,5 @@ const Dashboard = () => {
         </>
     );
 };
-
+Dashboard.layout = (page) => page;
 export default Dashboard;

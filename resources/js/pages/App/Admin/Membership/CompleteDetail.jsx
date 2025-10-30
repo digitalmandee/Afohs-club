@@ -18,14 +18,11 @@ import {
     Print as PrintIcon,
     Email as EmailIcon
 } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const ViewFullDetails = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // Member details
     const memberDetails = {
         name: 'Zahid Ullah',
@@ -72,7 +69,7 @@ const ViewFullDetails = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -80,7 +77,7 @@ const ViewFullDetails = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
                     {/* Header with back button and title */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -293,7 +290,7 @@ const ViewFullDetails = () => {
                         </Table>
                     </TableContainer>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

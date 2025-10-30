@@ -4,20 +4,19 @@ import { Alert, CircularProgress, InputAdornment, Snackbar, Button } from '@mui/
 import { Search, Add } from '@mui/icons-material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, IconButton, TextField, Box, Typography } from '@mui/material';
 import { Edit as EditIcon } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const LeaveApplication = () => {
 	const { props } = usePage();
 	const { leaveApplications } = props;
 
-	const [open, setOpen] = useState(true);
+	// const [open, setOpen] = useState(true);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [date, setDate] = useState(dayjs());
 	const [applications, setApplications] = useState(leaveApplications?.data || []);
@@ -40,7 +39,7 @@ const LeaveApplication = () => {
 
 	return (
 		<>
-			<SideNav open={open} setOpen={setOpen} />
+			{/* <SideNav open={open} setOpen={setOpen} />
 			<div
 				style={{
 					marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -48,7 +47,7 @@ const LeaveApplication = () => {
 					marginTop: '5rem',
 					backgroundColor: '#F6F6F6',
 				}}
-			>
+			> */}
 				<Box sx={{ px: 2, py: 2 }}>
 					<div style={{ paddingTop: '1rem' }}>
 						{/* Header */}
@@ -161,7 +160,7 @@ const LeaveApplication = () => {
 					</div>
 					</div>
 				</Box>
-			</div>
+			{/* </div> */}
 
 			{/* Snackbar */}
 			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>

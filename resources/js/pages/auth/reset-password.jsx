@@ -87,3 +87,4 @@ export default function ResetPassword({ token, email }) {
         </AuthLayout>
     );
 }
+ResetPassword.layout = (page) => page;

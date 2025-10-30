@@ -2,17 +2,16 @@ import React, { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment } from '@mui/material';
 import { Search } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const RoomCheckIn = ({ bookings, filters }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     // ✅ State for Invoice Modal
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -61,7 +60,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
 
             <div
                 style={{
@@ -69,7 +68,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Typography
@@ -237,7 +236,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                         ))}
                     </Box>
                 </Box>
-            </div>
+            {/* </div> */}
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
         </>
