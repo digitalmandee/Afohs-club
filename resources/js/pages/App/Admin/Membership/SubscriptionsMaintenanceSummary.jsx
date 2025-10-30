@@ -2,8 +2,8 @@ import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { Print, Search } from '@mui/icons-material';
+import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Print, Search, ArrowBack } from '@mui/icons-material';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -11,7 +11,7 @@ const drawerWidthClosed = 110;
 const SubscriptionsMaintenanceSummary = () => {
     // Get props first
     const { summary, grand_totals, filters, all_categories } = usePage().props;
-    
+
     // Modal state
     const [open, setOpen] = useState(true);
     const [allFilters, setAllFilters] = useState({
@@ -54,19 +54,19 @@ const SubscriptionsMaintenanceSummary = () => {
     const handlePrint = () => {
         // Build query string with current filters
         const params = new URLSearchParams();
-        
+
         if (allFilters.date_from) {
             params.append('date_from', allFilters.date_from);
         }
-        
+
         if (allFilters.date_to) {
             params.append('date_to', allFilters.date_to);
         }
-        
+
         if (allFilters.category) {
             params.append('category', allFilters.category);
         }
-        
+
         // Open print page in new window
         const printUrl = route('membership.subscriptions-maintenance-summary.print') + (params.toString() ? '?' + params.toString() : '');
         window.open(printUrl, '_blank');
@@ -86,9 +86,14 @@ const SubscriptionsMaintenanceSummary = () => {
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
-                            Subscriptions & Maintenance Summary (Category-wise)
-                        </Typography>
+                        <div className="d-flex align-items-center">
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBack />
+                            </IconButton>
+                            <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
+                                Subscriptions & Maintenance Summary (Category-wise)
+                            </Typography>
+                        </div>
                         <Button
                             variant="contained"
                             startIcon={<Print />}
@@ -269,7 +274,7 @@ const SubscriptionsMaintenanceSummary = () => {
                                     {summary && Object.keys(summary).length > 0 && (
                                         <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
                                             <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                
+
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
                                                 GRAND TOTAL

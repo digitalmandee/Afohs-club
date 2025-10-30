@@ -2,8 +2,8 @@ import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Chip, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
-import { Search, Print } from '@mui/icons-material';
+import { TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
+import { Search, Print, ArrowBack } from '@mui/icons-material';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -11,7 +11,7 @@ const drawerWidthClosed = 110;
 const SleepingMembersReport = () => {
     // Get props first
     const { categories, primary_members, statistics, filters, all_categories, all_member_statuses } = usePage().props;
-    
+
     // Modal state
     const [open, setOpen] = useState(true);
     const [allFilters, setAllFilters] = useState({
@@ -27,9 +27,9 @@ const SleepingMembersReport = () => {
     };
 
     const handlePageChange = (event, page) => {
-        router.get(route('membership.sleeping-members-report'), { 
-            ...allFilters, 
-            page: page 
+        router.get(route('membership.sleeping-members-report'), {
+            ...allFilters,
+            page: page
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -82,20 +82,20 @@ const SleepingMembersReport = () => {
     const handlePrint = () => {
         // Build query string with current filters and page
         const params = new URLSearchParams();
-        
+
         if (allFilters.categories && allFilters.categories.length > 0) {
             allFilters.categories.forEach(cat => params.append('categories[]', cat));
         }
-        
+
         if (allFilters.status && allFilters.status.length > 0) {
             allFilters.status.forEach(status => params.append('status[]', status));
         }
-        
+
         // Add current page number
         if (primary_members?.current_page) {
             params.append('page', primary_members.current_page);
         }
-        
+
         // Open print page in new window
         const printUrl = route('membership.sleeping-members-report.print') + (params.toString() ? '?' + params.toString() : '');
         window.open(printUrl, '_blank');
@@ -115,9 +115,14 @@ const SleepingMembersReport = () => {
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
-                            Sleeping Members Report
-                        </Typography>
+                        <div className="d-flex align-items-center">
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBack />
+                            </IconButton>
+                            <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
+                                Sleeping Members Report
+                            </Typography>
+                        </div>
                         <Button
                             variant="contained"
                             startIcon={<Print />}
@@ -140,7 +145,7 @@ const SleepingMembersReport = () => {
                         <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>
                             Filter Options
                         </Typography>
-                        
+
                         {/* Filter Fields */}
                         <Grid container spacing={3} alignItems="center">
                             <Grid item xs={12} md={4}>
@@ -179,9 +184,9 @@ const SleepingMembersReport = () => {
                                         renderValue={(selected) => (
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                 {selected.map((value) => (
-                                                    <Chip 
-                                                        key={value} 
-                                                        label={value.replace('_', ' ').toUpperCase()} 
+                                                    <Chip
+                                                        key={value}
+                                                        label={value.replace('_', ' ').toUpperCase()}
                                                         size="small"
                                                         sx={{
                                                             backgroundColor: `${getStatusColor(value)}20`,
@@ -258,9 +263,9 @@ const SleepingMembersReport = () => {
                                 <TableBody>
                                     {primary_members?.data && primary_members.data.length > 0 ? (
                                         primary_members.data.map((member, index) => (
-                                            <TableRow 
-                                                key={member.id} 
-                                                sx={{ 
+                                            <TableRow
+                                                key={member.id}
+                                                sx={{
                                                     '&:nth-of-type(odd)': { backgroundColor: '#f9fafb' },
                                                     '&:hover': { backgroundColor: '#f3f4f6' },
                                                     borderBottom: '1px solid #e5e7eb'
@@ -288,7 +293,7 @@ const SleepingMembersReport = () => {
                                                     Provisional
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Chip 
+                                                    <Chip
                                                         label={member.status?.replace('_', ' ').toUpperCase()}
                                                         size="small"
                                                         sx={{

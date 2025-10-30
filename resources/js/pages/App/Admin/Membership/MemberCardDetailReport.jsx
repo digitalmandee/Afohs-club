@@ -2,8 +2,8 @@ import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Chip, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
-import { Search, Print } from '@mui/icons-material';
+import { TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
+import { Search, Print, ArrowBack } from '@mui/icons-material';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -11,7 +11,7 @@ const drawerWidthClosed = 110;
 const MemberCardDetailReport = () => {
     // Get props first
     const { categories, statistics, filters, all_categories, all_card_statuses } = usePage().props;
-    
+
     // Modal state
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -83,15 +83,15 @@ const MemberCardDetailReport = () => {
     const handlePrint = () => {
         // Build query string with current filters
         const params = new URLSearchParams();
-        
+
         if (allFilters.categories && allFilters.categories.length > 0) {
             allFilters.categories.forEach(cat => params.append('categories[]', cat));
         }
-        
+
         if (allFilters.card_status && allFilters.card_status.length > 0) {
             allFilters.card_status.forEach(status => params.append('card_status[]', status));
         }
-        
+
         // Open print page in new window
         const printUrl = route('membership.member-card-detail-report.print') + (params.toString() ? '?' + params.toString() : '');
         window.open(printUrl, '_blank');
@@ -111,9 +111,14 @@ const MemberCardDetailReport = () => {
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
-                            Member Card Detail Report
-                        </Typography>
+                        <div className="d-flex align-items-center">
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBack />
+                            </IconButton>
+                            <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
+                                Member Card Detail Report
+                            </Typography>
+                        </div>
                         <Button
                             variant="contained"
                             startIcon={<Print />}
@@ -136,7 +141,7 @@ const MemberCardDetailReport = () => {
                         <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>
                             Filter Options
                         </Typography>
-                        
+
                         {/* Filter Fields */}
                         <Grid container spacing={3} alignItems="center">
                             <Grid item xs={12} md={4}>
@@ -175,9 +180,9 @@ const MemberCardDetailReport = () => {
                                         renderValue={(selected) => (
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                 {selected.map((value) => (
-                                                    <Chip 
-                                                        key={value} 
-                                                        label={value} 
+                                                    <Chip
+                                                        key={value}
+                                                        label={value}
                                                         size="small"
                                                         sx={{
                                                             backgroundColor: `${getCardStatusColor(value)}20`,
@@ -253,9 +258,9 @@ const MemberCardDetailReport = () => {
                                 <TableBody>
                                     {safeCategories.length > 0 ? (
                                         safeCategories.map((category) => (
-                                            <TableRow 
-                                                key={category.id} 
-                                                sx={{ 
+                                            <TableRow
+                                                key={category.id}
+                                                sx={{
                                                     '&:nth-of-type(odd)': { backgroundColor: '#f9fafb' },
                                                     '&:hover': { backgroundColor: '#f3f4f6' },
                                                     borderBottom: '1px solid #e5e7eb'
