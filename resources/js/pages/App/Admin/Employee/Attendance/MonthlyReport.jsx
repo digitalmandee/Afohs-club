@@ -114,7 +114,7 @@ const MonthlyReport = () => {
                                             >
                                                 {employee.profile_image ? (
                                                     <img
-                                                        src={import.meta.env.VITE_ASSET_API + profile_image || '/placeholder.svg'}
+                                                        src={import.meta.env.VITE_ASSET_API + employee.profile_image || '/placeholder.svg'}
                                                         alt={employee.employee_name}
                                                         style={{
                                                             width: '50px',

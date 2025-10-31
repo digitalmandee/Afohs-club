@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { usePage, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { Alert, CircularProgress, InputAdornment, Snackbar, Button } from '@mui/material';
 import { Search, Add } from '@mui/icons-material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, IconButton, TextField, Box, Typography } from '@mui/material';
@@ -9,33 +9,98 @@ import dayjs from 'dayjs';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
-// const drawerWidthOpen = 240;
-// const drawerWidthClosed = 110;
-
 const LeaveApplication = () => {
-	const { props } = usePage();
-	const { leaveApplications } = props;
-
 	// const [open, setOpen] = useState(true);
 	const [searchTerm, setSearchTerm] = useState('');
-	const [date, setDate] = useState(dayjs());
-	const [applications, setApplications] = useState(leaveApplications?.data || []);
-	const [isLoading, setIsLoading] = useState(false);
-	const [currentPage, setCurrentPage] = useState(leaveApplications?.current_page || 1);
-	const [totalPages, setTotalPages] = useState(leaveApplications?.last_page || 1);
+	const [date, setDate] = useState(null);
+	const [applications, setApplications] = useState([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
 	const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+	// Fetch applications on component mount
 	useEffect(() => {
-		if (leaveApplications?.data) {
-			setApplications(leaveApplications.data);
-			setCurrentPage(leaveApplications.current_page);
-			setTotalPages(leaveApplications.last_page);
-		}
-	}, [leaveApplications]);
+		fetchApplications(1);
+	}, []);
 
-	const handleCloseSnackbar = () => {
-		setSnackbar({ ...snackbar, open: false });
+	const fetchApplications = async (page = 1, customSearch = null, customDate = null) => {
+		setIsLoading(true);
+		try {
+			const params = {
+				page,
+			};
+			
+			// Use custom values if provided, otherwise use state
+			const searchValue = customSearch !== null ? customSearch : searchTerm;
+			const dateValue = customDate !== null ? customDate : date;
+			
+			// Only add search if it's not empty
+			if (searchValue && searchValue.trim() !== '') {
+				params.search = searchValue;
+			}
+			
+			// Only add date if it's not null
+			if (dateValue) {
+				params.date = dateValue.format('YYYY-MM-DD');
+			}
+			
+			console.log('Fetching with params:', params); // Debug log
+			
+			const res = await axios.get('/api/employees/leaves/applications', { params });
+			
+			if (res.data.success) {
+				setApplications(res.data.applications.data);
+				setCurrentPage(res.data.applications.current_page);
+				setTotalPages(res.data.applications.last_page);
+			}
+		} catch (error) {
+			console.error('Error fetching applications:', error);
+		} finally {
+			setIsLoading(false);
+		}
 	};
+
+	const handleSearch = () => {
+		setCurrentPage(1);
+		fetchApplications(1);
+	};
+
+	const handleClearSearch = () => {
+		setSearchTerm('');
+		setCurrentPage(1);
+		// Pass empty search explicitly
+		fetchApplications(1, '', date);
+	};
+
+	const handleClearAllFilters = () => {
+		setSearchTerm('');
+		setDate(null);
+		setCurrentPage(1);
+		// Pass cleared values explicitly to avoid state delay
+		fetchApplications(1, '', null);
+	};
+
+	const handleKeyPress = (e) => {
+		if (e.key === 'Enter') {
+			handleSearch();
+		}
+	};
+
+	useEffect(() => {
+		if (currentPage > 1) {
+			fetchApplications(currentPage);
+		}
+	}, [currentPage]);
+
+	// Fetch when date changes (but not on initial mount or when clearing all filters)
+	useEffect(() => {
+		// Only fetch if date is set (not null) and we have already loaded data
+		if (date !== null && applications.length >= 0) {
+			fetchApplications(1);
+			setCurrentPage(1);
+		}
+	}, [date]);
 
 	return (
 		<>
@@ -68,44 +133,109 @@ const LeaveApplication = () => {
 								New Application
 							</Button>
 						</div>
-						<Box style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<TextField
-							variant="outlined"
-							placeholder="Search..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							size="small"
-							sx={{ width: "20%" }}
-							InputProps={{
-								startAdornment: (
-									<InputAdornment position="start">
-										<Search color="action" />
-									</InputAdornment>
-								),
-							}}
-						/>
+						<Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+								<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+									<TextField
+										variant="outlined"
+										placeholder="Search by employee name or ID..."
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+										onKeyPress={handleKeyPress}
+										size="small"
+										sx={{ width: 350 }}
+										InputProps={{
+											startAdornment: (
+												<InputAdornment position="start">
+													<Search color="action" />
+												</InputAdornment>
+											),
+										}}
+									/>
+									<Button
+										variant="contained"
+										onClick={handleSearch}
+										sx={{
+											backgroundColor: '#063455',
+											color: 'white',
+											textTransform: 'none',
+											'&:hover': {
+												backgroundColor: '#052d45',
+											},
+										}}
+									>
+										Search
+									</Button>
+									{searchTerm && (
+										<Button
+											variant="outlined"
+											onClick={handleClearSearch}
+											sx={{
+												color: '#063455',
+												borderColor: '#063455',
+												textTransform: 'none',
+												'&:hover': {
+													borderColor: '#052d45',
+													backgroundColor: 'rgba(6, 52, 85, 0.04)',
+												},
+											}}
+										>
+											Clear
+										</Button>
+									)}
+								</Box>
 
-						{/* Date Picker on the Right */}
-						<LocalizationProvider dateAdapter={AdapterDayjs}>
-							<DatePicker label="Select Date" value={date} onChange={(newValue) => setDate(newValue)} renderInput={(params) => <TextField {...params} size="small" />} />
-						</LocalizationProvider>
-					</Box>
+								<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+									{/* Date Picker */}
+									<LocalizationProvider dateAdapter={AdapterDayjs}>
+										<DatePicker 
+											label="Select Date" 
+											value={date} 
+											onChange={(newValue) => setDate(newValue)} 
+											renderInput={(params) => <TextField {...params} size="small" />}
+											slotProps={{
+												field: { clearable: true },
+											}}
+										/>
+									</LocalizationProvider>
 
-					<TableContainer component={Paper}>
-						<Table>
-							<TableHead>
-								<TableRow style={{ backgroundColor: "#063455" }}>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>#</TableCell>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>Employ Name</TableCell>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>Start date</TableCell>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>End Date</TableCell>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>Leaves Days</TableCell>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>Leave Category</TableCell>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>Created At</TableCell>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>Active</TableCell>
-									<TableCell sx={{ fontWeight: "bold", color: "white" }}>Action</TableCell>
-								</TableRow>
-							</TableHead>
+									{/* Clear All Filters Button */}
+									{(searchTerm || date) && (
+										<Button
+											variant="outlined"
+											onClick={handleClearAllFilters}
+											sx={{
+												color: '#d32f2f',
+												borderColor: '#d32f2f',
+												textTransform: 'none',
+												'&:hover': {
+													borderColor: '#b71c1c',
+													backgroundColor: 'rgba(211, 47, 47, 0.04)',
+												},
+											}}
+										>
+											Clear All Filters
+										</Button>
+									)}
+								</Box>
+							</Box>
+						</Box>
+
+						<TableContainer component={Paper}>
+							<Table>
+								<TableHead>
+									<TableRow style={{ backgroundColor: "#063455" }}>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>#</TableCell>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>Employee Name</TableCell>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>Start Date</TableCell>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>End Date</TableCell>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>Leave Days</TableCell>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>Leave Category</TableCell>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>Created At</TableCell>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>Status</TableCell>
+										<TableCell sx={{ fontWeight: "bold", color: "white" }}>Action</TableCell>
+									</TableRow>
+								</TableHead>
 							<TableBody>
 								{isLoading ? (
 									<TableRow>
@@ -117,7 +247,7 @@ const LeaveApplication = () => {
 									applications.map((application) => (
 										<TableRow key={application.id}>
 											<TableCell>{application.id}</TableCell>
-											<TableCell>{application.employee?.user?.name}</TableCell>
+											<TableCell>{application.employee?.name}</TableCell>
 											<TableCell>{application.start_date}</TableCell>
 											<TableCell>{application.end_date}</TableCell>
 											<TableCell>{application.number_of_days}</TableCell>
@@ -162,12 +292,6 @@ const LeaveApplication = () => {
 				</Box>
 			{/* </div> */}
 
-			{/* Snackbar */}
-			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-				<Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
-					{snackbar.message}
-				</Alert>
-			</Snackbar>
 		</>
 	);
 };

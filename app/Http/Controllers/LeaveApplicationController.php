@@ -21,13 +21,8 @@ class LeaveApplicationController extends Controller
      */
     public function index(Request $request)
     {
-        $leaveApplications = LeaveApplication::with(['employee.user:id,name', 'leaveCategory:id,name,color'])
-            ->orderByDesc('created_at')
-            ->paginate(10);
-
-        return Inertia::render('App/Admin/Employee/Attendance/LeaveApplication', [
-            'leaveApplications' => $leaveApplications
-        ]);
+        // Just render the page, data will be fetched via API
+        return Inertia::render('App/Admin/Employee/Attendance/LeaveApplication');
     }
 
     public function create()
@@ -45,7 +40,7 @@ class LeaveApplicationController extends Controller
     {
         $leaveApplication = LeaveApplication::with(['employee.user:id,name', 'leaveCategory'])
             ->findOrFail($id);
-        
+
         $employees = Employee::with('user:id,name')->get();
         $leaveCategories = LeaveCategory::where('status', 'published')->get();
 
@@ -53,6 +48,49 @@ class LeaveApplicationController extends Controller
             'leaveApplication' => $leaveApplication,
             'employees' => $employees,
             'leaveCategories' => $leaveCategories
+        ]);
+    }
+
+    /**
+     * API endpoint for fetching leave applications with search
+     */
+    public function getApplications(Request $request)
+    {
+        $search = $request->query('search', '');
+        $date = $request->query('date', '');
+        $page = $request->query('page', 1);
+
+        $query = LeaveApplication::with(['employee:id,employee_id,name', 'leaveCategory:id,name,color'])
+            ->orderByDesc('created_at');
+
+        // Apply search filter
+        if (!empty($search)) {
+            $query->whereHas('employee', function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('employee_id', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Apply date filter only if date is provided and not empty
+        if (!empty($date) && $date !== 'null' && $date !== 'undefined') {
+            $query->where(function($q) use ($date) {
+                $q->where(function($subQ) use ($date) {
+                    // Leave that starts on or before the date and ends on or after the date
+                    $subQ->whereDate('start_date', '<=', $date)
+                         ->whereDate('end_date', '>=', $date);
+                })
+                ->orWhere(function($subQ) use ($date) {
+                    // Or leave that was created on this date
+                    $subQ->whereDate('created_at', $date);
+                });
+            });
+        }
+
+        $applications = $query->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'applications' => $applications
         ]);
     }
 
@@ -70,12 +108,23 @@ class LeaveApplicationController extends Controller
     {
         $monthly = $request->query('month', now()->format('Y-m'));  // Default to current month
         $limit = (int) $request->query('limit', 10);  // Ensure limit is integer
+        $search = $request->query('search', '');  // Search parameter
 
-        $monthStart = Carbon::createFromFormat('Y-m', $monthly)->startOfMonth();
-        $monthEnd = Carbon::createFromFormat('Y-m', $monthly)->endOfMonth();
+        // Create month start and end dates properly
+        $monthStart = Carbon::createFromFormat('Y-m-d', $monthly . '-01')->startOfDay();
+        $monthEnd = Carbon::createFromFormat('Y-m-d', $monthly . '-01')->endOfMonth()->endOfDay();
 
-        // Fetch employees directly (no need for user relationship)
-        $employees = Employee::paginate($limit);
+        // Fetch employees with search filter
+        $employeesQuery = Employee::query();
+        
+        if (!empty($search)) {
+            $employeesQuery->where(function($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('employee_id', 'like', '%' . $search . '%');
+            });
+        }
+        
+        $employees = $employeesQuery->paginate($limit);
 
         $employeeIds = $employees->pluck('id')->toArray();
 
@@ -87,13 +136,39 @@ class LeaveApplicationController extends Controller
             }
         }
 
-        $totalWorkingDays = ($monthEnd->diffInDays($monthStart) + 1) - count($sundays);
+        // Calculate total working days correctly based on current date
+        $today = Carbon::now();
+        $totalDaysInMonth = $monthEnd->day; // Get actual number of days in month
+        
+        // For current month, only count days up to today
+        // For past months, count all days
+        // For future months, count 0 (no absence for days that haven't happened)
+        if ($monthEnd->isFuture() && $monthStart->isFuture()) {
+            // Future month - no working days to count yet
+            $totalWorkingDays = 0;
+        } elseif ($monthStart->isPast() && $monthEnd->isFuture()) {
+            // Current month - count only up to today
+            $daysToCount = $today->day;
+            $sundaysUpToToday = collect($sundays)->filter(function($sunday) use ($today) {
+                return Carbon::parse($sunday)->lte($today);
+            })->count();
+            $totalWorkingDays = $daysToCount - $sundaysUpToToday;
+        } else {
+            // Past month - count all days
+            $totalWorkingDays = $totalDaysInMonth - count($sundays);
+        }
 
-        // Fetch leave applications with leave category names, excluding Sundays
+        // Fetch leave applications with leave category names that overlap with the selected month
         $leaveCounts = LeaveApplication::whereIn('employee_id', $employeeIds)
-            ->whereBetween('start_date', [$monthStart, $monthEnd])
             ->where('leave_applications.status', 'approved')
-            ->whereNotIn(DB::raw('DATE(start_date)'), $sundays)
+            ->where(function ($query) use ($monthStart, $monthEnd) {
+                $query->whereBetween('start_date', [$monthStart->format('Y-m-d'), $monthEnd->format('Y-m-d')])
+                    ->orWhereBetween('end_date', [$monthStart->format('Y-m-d'), $monthEnd->format('Y-m-d')])
+                    ->orWhere(function ($q) use ($monthStart, $monthEnd) {
+                        $q->where('start_date', '<=', $monthStart->format('Y-m-d'))
+                            ->where('end_date', '>=', $monthEnd->format('Y-m-d'));
+                    });
+            })
             ->join('leave_categories', 'leave_applications.leave_category_id', '=', 'leave_categories.id')
             ->selectRaw('employee_id, leave_categories.name as leave_category, SUM(number_of_days) as total_leave')
             ->groupBy('employee_id', 'leave_categories.name')
@@ -150,8 +225,8 @@ class LeaveApplicationController extends Controller
                 $totalSummary['leave_categories'][str_replace(' ', '_', $leave->leave_category)] += $leaveSummary[str_replace(' ', '_', $leave->leave_category)];
             }
 
-            // Calculate total absence correctly
-            $totalAbsence = $totalWorkingDays - ($totalLeave + $attendanceData->total_attendance);
+            // Calculate total absence correctly (ensure it's never negative)
+            $totalAbsence = max(0, $totalWorkingDays - ($totalLeave + $attendanceData->total_attendance));
 
             // Update totals
             $totalSummary['total_attendance'] += $attendanceData->total_attendance;
@@ -188,8 +263,40 @@ class LeaveApplicationController extends Controller
         $monthly = $request->query('month', now()->format('Y-m'));  // Default to current month
         $limit = $request->query('limit', 10);  // Get per page limit from request (default: 10)
 
-        $monthStart = Carbon::createFromFormat('Y-m', $monthly)->startOfMonth();
-        $monthEnd = Carbon::createFromFormat('Y-m', $monthly)->endOfMonth();
+        // Create month start and end dates properly
+        $monthStart = Carbon::createFromFormat('Y-m-d', $monthly . '-01')->startOfDay();
+        $monthEnd = Carbon::createFromFormat('Y-m-d', $monthly . '-01')->endOfMonth()->endOfDay();
+
+        // Get all Sundays in the month
+        $sundays = [];
+        for ($date = $monthStart->copy(); $date->lte($monthEnd); $date->addDay()) {
+            if ($date->isSunday()) {
+                $sundays[] = $date->format('Y-m-d');
+            }
+        }
+
+        // Calculate total working days based on current date (for absence calculation)
+        $today = Carbon::now();
+        
+        // Determine the cutoff date for counting working days
+        if ($monthEnd->isFuture() && $monthStart->isFuture()) {
+            // Future month - no working days to count yet
+            $cutoffDate = null;
+            $totalWorkingDays = 0;
+        } elseif ($monthStart->isPast() && $monthEnd->isFuture()) {
+            // Current month - count only up to today
+            $cutoffDate = $today;
+            $daysToCount = $today->day;
+            $sundaysUpToToday = collect($sundays)->filter(function($sunday) use ($today) {
+                return Carbon::parse($sunday)->lte($today);
+            })->count();
+            $totalWorkingDays = $daysToCount - $sundaysUpToToday;
+        } else {
+            // Past month - count all days
+            $cutoffDate = $monthEnd;
+            $totalDaysInMonth = $monthEnd->day;
+            $totalWorkingDays = $totalDaysInMonth - count($sundays);
+        }
 
         $employees = Employee::paginate($limit);  // Pagination applied
 
@@ -198,32 +305,71 @@ class LeaveApplicationController extends Controller
         $totalAttendance = 0;
         $totalTimePresent = 0;
         $totalTimeLate = 0;
+        $totalAbsence = 0;
 
         foreach ($employees as $employee) {
-            $leaveApplications = $employee->leaveApplications()->whereBetween('start_date', [$monthStart, $monthEnd])->where('status', 'approved')->get();
+            // Get approved leave applications that overlap with the selected month
+            $leaveApplications = $employee->leaveApplications()
+                ->where('status', 'approved')
+                ->where(function ($query) use ($monthStart, $monthEnd) {
+                    $query->whereBetween('start_date', [$monthStart->format('Y-m-d'), $monthEnd->format('Y-m-d')])
+                        ->orWhereBetween('end_date', [$monthStart->format('Y-m-d'), $monthEnd->format('Y-m-d')])
+                        ->orWhere(function ($q) use ($monthStart, $monthEnd) {
+                            $q->where('start_date', '<=', $monthStart->format('Y-m-d'))
+                                ->where('end_date', '>=', $monthEnd->format('Y-m-d'));
+                        });
+                })
+                ->get();
 
-            $attendance = $employee->attendances()->whereBetween('date', [$monthStart, $monthEnd])->get();
+            // Get attendance records, excluding Sundays (only up to cutoff date)
+            $attendanceQuery = $employee->attendances()
+                ->whereBetween('date', [$monthStart, $cutoffDate ?? $monthEnd])
+                ->whereNotIn('date', $sundays);
+            
+            $attendance = $attendanceQuery->get();
 
-            $leaveCount = $leaveApplications->sum('number_of_days');
+            // Calculate leave days that fall within the selected month only (up to cutoff date)
+            $leaveCount = 0;
+            foreach ($leaveApplications as $leave) {
+                $leaveStart = Carbon::parse($leave->start_date);
+                $leaveEnd = Carbon::parse($leave->end_date);
+
+                // Get the overlap period within the selected month (up to cutoff date)
+                $overlapStart = $leaveStart->lt($monthStart) ? $monthStart : $leaveStart;
+                $overlapEnd = $leaveEnd->gt($cutoffDate ?? $monthEnd) ? ($cutoffDate ?? $monthEnd) : $leaveEnd;
+
+                // Count days in the overlap period, excluding Sundays
+                for ($date = $overlapStart->copy(); $date->lte($overlapEnd); $date->addDay()) {
+                    if (!$date->isSunday()) {
+                        $leaveCount++;
+                    }
+                }
+            }
             $attendanceCount = $attendance->whereIn('status', ['present', 'late'])->count();
             $timePresent = $attendance->where('status', 'present')->whereNotNull('check_in')->count();
             $timeLate = $attendance->where('status', 'late')->whereNotNull('check_in')->count();
+
+            // Calculate absence (only for past and current months up to today)
+            $employeeAbsence = max(0, $totalWorkingDays - ($leaveCount + $attendanceCount));
 
             // Update totals
             $totalLeave += $leaveCount;
             $totalAttendance += $attendanceCount;
             $totalTimePresent += $timePresent;
             $totalTimeLate += $timeLate;
+            $totalAbsence += $employeeAbsence;
 
             // Add employee data to report
             $reportData[] = [
                 'employee_id' => $employee->employee_id,
                 'profile_image' => $employee->profile_image,
                 'employee_name' => $employee->name,
+                'designation' => $employee->designation,
                 'total_leave' => $leaveCount,
                 'total_attendance' => $attendanceCount,
                 'time_present' => $timePresent,
                 'time_late' => $timeLate,
+                'total_absence' => $employeeAbsence,
             ];
         }
 
@@ -235,6 +381,7 @@ class LeaveApplicationController extends Controller
             'total_attendance' => $totalAttendance,
             'time_present' => $totalTimePresent,
             'time_late' => $totalTimeLate,
+            'total_absence' => $totalAbsence,
         ];
 
         return response()->json([
@@ -271,15 +418,16 @@ class LeaveApplicationController extends Controller
 
             // Check if the employee already has a leave application in this range
             if (LeaveApplication::where('employee_id', $request->employee_id)
-                    ->where(function($query) use ($startDate, $endDate) {
-                        $query->whereBetween('start_date', [$startDate, $endDate])
-                              ->orWhereBetween('end_date', [$startDate, $endDate])
-                              ->orWhere(function($q) use ($startDate, $endDate) {
-                                  $q->where('start_date', '<=', $startDate)
-                                    ->where('end_date', '>=', $endDate);
-                              });
-                    })
-                    ->exists()) {
+                ->where(function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('start_date', [$startDate, $endDate])
+                        ->orWhereBetween('end_date', [$startDate, $endDate])
+                        ->orWhere(function ($q) use ($startDate, $endDate) {
+                            $q->where('start_date', '<=', $startDate)
+                                ->where('end_date', '>=', $endDate);
+                        });
+                })
+                ->exists()
+            ) {
                 return response()->json(['success' => false, 'message' => 'Employee already has a leave application in this date range'], 422);
             }
 
@@ -342,13 +490,13 @@ class LeaveApplicationController extends Controller
             // Check for overlapping leave applications (excluding current one)
             $existingLeave = LeaveApplication::where('employee_id', $request->employee_id)
                 ->where('id', '!=', $id)
-                ->where(function($query) use ($startDate, $endDate) {
+                ->where(function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('start_date', [$startDate, $endDate])
-                          ->orWhereBetween('end_date', [$startDate, $endDate])
-                          ->orWhere(function($q) use ($startDate, $endDate) {
-                              $q->where('start_date', '<=', $startDate)
+                        ->orWhereBetween('end_date', [$startDate, $endDate])
+                        ->orWhere(function ($q) use ($startDate, $endDate) {
+                            $q->where('start_date', '<=', $startDate)
                                 ->where('end_date', '>=', $endDate);
-                          });
+                        });
                 })
                 ->exists();
 

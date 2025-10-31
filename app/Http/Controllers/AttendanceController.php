@@ -17,14 +17,24 @@ class AttendanceController extends Controller
     {
         $limit = $request->query('limit') ?? 10;
         $date = $request->query('date', now()->format('Y-m-d'));
+        $search = $request->query('search', '');
 
-        // Load Employee with User
-        $attendance = Attendance::with([
-            'employee:id,name,designation',
+        // Load Employee with User and apply search filter
+        $attendanceQuery = Attendance::with([
+            'employee:id,employee_id,name,designation',
             'leaveCategory:id,name',
         ])
-            ->where('date', $date)
-            ->paginate($limit);
+            ->where('date', $date);
+
+        // Apply search filter if provided
+        if (!empty($search)) {
+            $attendanceQuery->whereHas('employee', function($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('employee_id', 'like', '%' . $search . '%');
+            });
+        }
+
+        $attendance = $attendanceQuery->paginate($limit);
 
         return response()->json(['success' => true, 'attendance' => $attendance], 200);
     }
@@ -50,8 +60,8 @@ class AttendanceController extends Controller
         $endDate = date('Y-m-t', strtotime($startDate));  // Last date of the month
 
         // Get employees with user details
-        $employees = Employee::join('users', 'users.id', '=', 'employees.user_id')
-            ->select('employees.id', 'employees.employee_id', 'users.name as employee_name')
+        $employees = Employee::with(['department:id,name'])
+            ->select('employees.id', 'employees.employee_id', 'employees.name as employee_name')
             ->paginate($limit);
 
         // Fetch all employee IDs for attendance and leave lookup

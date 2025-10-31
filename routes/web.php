@@ -543,6 +543,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::delete('/{id}', [LeaveApplicationController::class, 'destroy'])->name('api.leave-applications.destroy');
         });
 
+        // Leave Applications List API route (with search)
+        Route::get('employees/leaves/applications', [LeaveApplicationController::class, 'getApplications'])->name('api.leave-applications.list');
+
         // Leave Report API route
         Route::get('employees/leaves/reports', [LeaveApplicationController::class, 'leaveReport'])->name('api.leave-reports');
 

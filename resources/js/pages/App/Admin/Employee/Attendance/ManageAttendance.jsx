@@ -33,7 +33,7 @@ const ManageAttendance = () => {
         setIsLoading(true);
         try {
             const res = await axios.get('/api/attendances', {
-                params: { page, limit, date: date.format('YYYY-MM-DD') },
+                params: { page, limit, date: date.format('YYYY-MM-DD'), search: searchQuery },
             });
 
             if (res.data.success) {
@@ -68,7 +68,22 @@ const ManageAttendance = () => {
     }, []);
 
     const handleSearch = () => {
-        console.log('Searching:', searchQuery);
+        setCurrentPage(1);
+        getAttendances(1);
+    };
+
+    const handleClearSearch = () => {
+        setSearchQuery('');
+        setCurrentPage(1);
+        setTimeout(() => {
+            getAttendances(1);
+        }, 100);
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
     };
 
     // Handle check-in, check-out, and leave category updates
@@ -130,15 +145,50 @@ const ManageAttendance = () => {
                             </Button>
                         </div>
 
-                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2 }}>
+                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
                             {/* Search Input */}
-                            <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 {/* Search Field */}
                                 <Box sx={{ display: 'flex', gap: 2 }}>
-                                    <TextField size="small" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} sx={{ backgroundColor: 'white' }} />
-                                    <Button variant="contained" onClick={handleSearch} sx={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', minWidth: '80px' }}>
-                                        Go
+                                    <TextField 
+                                        size="small" 
+                                        placeholder="Search by name or employee ID..." 
+                                        value={searchQuery} 
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyPress={handleKeyPress}
+                                        sx={{ width: 350 }} 
+                                    />
+                                    <Button 
+                                        variant="contained" 
+                                        onClick={handleSearch} 
+                                        sx={{ 
+                                            backgroundColor: '#063455', 
+                                            color: 'white', 
+                                            textTransform: 'none',
+                                            '&:hover': {
+                                                backgroundColor: '#052d45',
+                                            },
+                                        }}
+                                    >
+                                        Search
                                     </Button>
+                                    {searchQuery && (
+                                        <Button
+                                            variant="outlined"
+                                            onClick={handleClearSearch}
+                                            sx={{
+                                                color: '#063455',
+                                                borderColor: '#063455',
+                                                textTransform: 'none',
+                                                '&:hover': {
+                                                    borderColor: '#052d45',
+                                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                },
+                                            }}
+                                        >
+                                            Clear
+                                        </Button>
+                                    )}
                                 </Box>
 
                                 {/* Date Picker on the Right */}
@@ -146,6 +196,9 @@ const ManageAttendance = () => {
                                     <DatePicker label="Select Date" value={date} onChange={(newValue) => setDate(newValue)} renderInput={(params) => <TextField {...params} size="small" />} />
                                 </LocalizationProvider>
                             </Box>
+                        </Box>
+
+                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2 }}>
 
                             <TableContainer component={Paper}>
                                 <Table>
@@ -172,8 +225,8 @@ const ManageAttendance = () => {
                                             attendances.map((row, index) => (
                                                 <TableRow key={row.id}>
                                                     <TableCell>{index + 1}</TableCell>
-                                                    <TableCell>{row.employee.user.name}</TableCell>
-                                                    <TableCell>{row.employee.user.designation}</TableCell>
+                                                    <TableCell>{row.employee.name}</TableCell>
+                                                    <TableCell>{row.employee.designation}</TableCell>
                                                     <TableCell>
                                                         <Checkbox
                                                             checked={['present', 'late'].includes(row.status)} // If present or late, show checked
@@ -214,8 +267,8 @@ const ManageAttendance = () => {
                                                             size="small"
                                                             disabled={loadingRows[row.id] || false} // Disable only if that row is loading
                                                             style={{
-                                                                backgroundColor: row.check_in && row.check_out ? '#e3f2fd' : colors.primary,
-                                                                color: row.check_in && row.check_out ? colors.primary : 'white',
+                                                                backgroundColor: row.check_in && row.check_out ? '#e3f2fd' : '#0a3d62',
+                                                                color: row.check_in && row.check_out ? '#0a3d62' : 'white',
                                                                 textTransform: 'none',
                                                             }}
                                                         >

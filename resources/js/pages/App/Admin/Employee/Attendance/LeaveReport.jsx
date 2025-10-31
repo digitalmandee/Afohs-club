@@ -22,7 +22,7 @@ const LeaveReport = () => {
         setIsLoading(true);
         try {
             const res = await axios.get('/api/employees/leaves/reports', {
-                params: { page, limit, month },
+                params: { page, limit, month, search: searchTerm },
             });
             if (res.data.success) {
                 setEmployees(res.data.report_data.employees);
@@ -33,6 +33,26 @@ const LeaveReport = () => {
             console.log(error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleSearch = () => {
+        setCurrentPage(1); // Reset to first page when searching
+        getMonthlyReport(1);
+    };
+
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        setCurrentPage(1);
+        // Trigger search with empty term
+        setTimeout(() => {
+            getMonthlyReport(1);
+        }, 100);
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
         }
     };
 
@@ -67,16 +87,17 @@ const LeaveReport = () => {
                                 Back
                             </Button>
                         </div>
-                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2 }}>
-                            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <TextField
                                         variant="outlined"
-                                        placeholder="Search..."
+                                        placeholder="Search by name or employee ID..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
+                                        onKeyPress={handleKeyPress}
                                         size="small"
-                                        sx={{ width: 300 }}
+                                        sx={{ width: 350 }}
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
@@ -87,19 +108,38 @@ const LeaveReport = () => {
                                     />
                                     <Button
                                         variant="contained"
+                                        onClick={handleSearch}
                                         sx={{
                                             backgroundColor: '#063455',
                                             color: 'white',
                                             textTransform: 'none',
+                                            '&:hover': {
+                                                backgroundColor: '#052d45',
+                                            },
                                         }}
                                     >
-                                        Go
+                                        Search
                                     </Button>
+                                    {searchTerm && (
+                                        <Button
+                                            variant="outlined"
+                                            onClick={handleClearSearch}
+                                            sx={{
+                                                color: '#063455',
+                                                borderColor: '#063455',
+                                                textTransform: 'none',
+                                                '&:hover': {
+                                                    borderColor: '#052d45',
+                                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                },
+                                            }}
+                                        >
+                                            Clear
+                                        </Button>
+                                    )}
                                 </Box>
-                            </Box>
-                            <Box>
                                 <FormControl size="small">
-                                    <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 120 }}>
+                                    <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 150 }}>
                                         {months.map((m) => (
                                             <MenuItem key={m.value} value={m.value}>
                                                 {m.label}

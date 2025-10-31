@@ -14,3 +14,9 @@ Schedule::command('members:expire-by-age')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/family-member-expiry.log'));
+
+Schedule::command('sync:attendance')
+    ->cron('*/5 9-21 * * *')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/attendance-sync.log'));
