@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Button, Typography, Table, TableHead, TableRow, TableCell, TableBody, Paper, TableContainer, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Button, Typography, Table, TableHead, TableRow, TableCell, TableBody, Paper, TableContainer, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
 import { debounce } from 'lodash';
 import { router, usePage } from '@inertiajs/react';
 import SearchIcon from '@mui/icons-material/Search';
@@ -170,6 +170,10 @@ const Reservations = () => {
                                         <TableCell sx={{ fontWeight: 600 }}>Time</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Persons</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Table</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Down Payment</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Nature of Function</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Theme</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Special Request</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                                     </TableRow>
@@ -186,7 +190,19 @@ const Reservations = () => {
                                                 </TableCell>
                                                 <TableCell>{reservation.person_count}</TableCell>
                                                 <TableCell>{reservation.table?.table_no || 'N/A'}</TableCell>
-                                                <TableCell>{reservation.status}</TableCell>
+                                                <TableCell>Rs {reservation.down_payment || '0'}</TableCell>
+                                                <TableCell>{reservation.nature_of_function || '-'}</TableCell>
+                                                <TableCell>{reservation.theme_of_function || '-'}</TableCell>
+                                                <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {reservation.special_request || '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip 
+                                                        label={reservation.status} 
+                                                        size="small"
+                                                        color={reservation.status === 'pending' ? 'warning' : reservation.status === 'confirmed' ? 'success' : 'error'}
+                                                    />
+                                                </TableCell>
                                                 <TableCell>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         {/* Show only if pending */}
@@ -203,7 +219,7 @@ const Reservations = () => {
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={8} align="center">
+                                            <TableCell colSpan={12} align="center">
                                                 No reservations found.
                                             </TableCell>
                                         </TableRow>

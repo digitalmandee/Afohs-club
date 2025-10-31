@@ -5,7 +5,12 @@ import NewSelfOrder from './NewOrder';
 import ReservationOrder from './Reserve';
 import { router, usePage } from '@inertiajs/react';
 import { Add } from '@mui/icons-material';
-import { Box, Button, Chip, CircularProgress, Grid, IconButton, Modal, Paper, Typography } from '@mui/material';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import CancelIcon from '@mui/icons-material/Cancel';
+import { Box, Button, Chip, CircularProgress, Grid, IconButton, Modal, Paper, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
+import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 
 const drawerWidthOpen = 240;
@@ -29,6 +34,12 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(false);
     const [orderLoading, setOrderLoading] = useState(false);
     const [queueOrderLoading, setQueueOrderLoading] = useState(false);
+
+    // Reservation actions state
+    const [showCancelReservationModal, setShowCancelReservationModal] = useState(false);
+    const [selectedReservation, setSelectedReservation] = useState(null);
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
 
     const handleCancelOrder = () => {
         setIsModalVisible(false); // Close the cancel order modal
@@ -88,6 +99,71 @@ const Dashboard = () => {
             .then((res) => setOrderReservtions(res.data.orders))
             .catch((err) => console.log(err))
             .finally(() => setLoading(false)); // stop loader
+    };
+
+    // Handle cancel reservation
+    const handleCancelReservation = (reservation) => {
+        setSelectedReservation(reservation);
+        setShowCancelReservationModal(true);
+    };
+
+    const confirmCancelReservation = () => {
+        if (!selectedReservation) return;
+
+        router.post(
+            route('reservations.cancel', selectedReservation.id),
+            {},
+            {
+                onSuccess: () => {
+                    setShowCancelReservationModal(false);
+                    setSelectedReservation(null);
+                    enqueueSnackbar('Reservation cancelled successfully', { variant: 'success' });
+                    // Refresh reservations
+                    getOrderReservtions(selectedDate.toISOString().split('T')[0]);
+                },
+                onError: () => {
+                    setShowCancelReservationModal(false);
+                    setSelectedReservation(null);
+                    enqueueSnackbar('Failed to cancel reservation', { variant: 'error' });
+                },
+            },
+        );
+    };
+
+    // Handle invoice click
+    const handleInvoiceClick = (reservation) => {
+        setSelectedInvoice(reservation);
+        setShowInvoiceModal(true);
+    };
+
+    // Handle print receipt
+    const handlePrintReceipt = (invoice) => {
+        if (!invoice) return;
+
+        const printWindow = window.open('', '_blank');
+        const content = document.getElementById('invoice-content').innerHTML;
+
+        printWindow.document.write(`
+            <html>
+              <head>
+                <title>Invoice</title>
+                <style>
+                  body { font-family: Arial, sans-serif; padding: 20px; max-width: 300px; margin: auto; }
+                </style>
+              </head>
+              <body>
+                ${content}
+              </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+        printWindow.focus();
+
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 300);
     };
 
     useEffect(() => {
@@ -332,8 +408,7 @@ const Dashboard = () => {
                                             },
                                         }}
                                     >
-                                        {/* Replace this with your actual component */}
-                                        <ReservationOrder />
+                                        <ReservationOrder selectedDate={selectedDate} onClose={() => setShowReserve(false)} weekDays={weekDays} onDateChange={(newDate) => setSelectedDate(newDate)} />
                                     </Box>
                                 </Modal>
 
@@ -354,8 +429,33 @@ const Dashboard = () => {
                                                     p: 1,
                                                     border: '1px solid #e0e0e0',
                                                     bgcolor: isSelected ? '#e6f0fa' : 'white',
+                                                    position: 'relative',
                                                 }}
                                             >
+                                                {/* Badge at top right */}
+                                                {day.orders_count > 0 && (
+                                                    <Box
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            top: 4,
+                                                            right: 4,
+                                                            width: 20,
+                                                            height: 20,
+                                                            bgcolor: '#f44336',
+                                                            color: 'white',
+                                                            borderRadius: '50%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '0.65rem',
+                                                            fontWeight: 'bold',
+                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                                        }}
+                                                    >
+                                                        {day.orders_count}
+                                                    </Box>
+                                                )}
+
                                                 <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500 }}>
                                                     {day.label}
                                                 </Typography>
@@ -364,27 +464,6 @@ const Dashboard = () => {
                                                         {day.dayNum}
                                                     </Typography>
                                                 </Box>
-
-                                                {day.orders_count > 0 && (
-                                                    <Box
-                                                        sx={{
-                                                            mt: 1,
-                                                            mx: 'auto',
-                                                            width: 24,
-                                                            height: 24,
-                                                            bgcolor: '#1976d2',
-                                                            color: 'white',
-                                                            borderRadius: '50%',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            fontSize: '0.75rem',
-                                                            fontWeight: 'bold',
-                                                        }}
-                                                    >
-                                                        {day.orders_count}
-                                                    </Box>
-                                                )}
                                             </Grid>
                                         );
                                     })}
@@ -392,6 +471,38 @@ const Dashboard = () => {
 
                                 {/* Reservation List */}
                                 <Box sx={{ mt: 3 }}>
+                                    {/* Reservation Count Header */}
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            mb: 2,
+                                            p: 1.5,
+                                            bgcolor: '#f5f5f5',
+                                            borderRadius: 1,
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                fontWeight: 500,
+                                                color: '#121212',
+                                            }}
+                                        >
+                                            {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </Typography>
+                                        <Chip
+                                            label={`${orderReservtions.length} Reservation${orderReservtions.length !== 1 ? 's' : ''}`}
+                                            size="small"
+                                            sx={{
+                                                bgcolor: '#1976d2',
+                                                color: 'white',
+                                                fontWeight: 600,
+                                            }}
+                                        />
+                                    </Box>
+
                                     {/* Reservation 1 */}
                                     {loading ? (
                                         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
@@ -402,210 +513,171 @@ const Dashboard = () => {
                                             <Box
                                                 key={index}
                                                 sx={{
-                                                    bgcolor: '#F6F6F6',
-                                                    borderRadius: 1,
-                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                                    bgcolor: '#FFFFFF',
+                                                    borderRadius: 2,
+                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                                                     overflow: 'hidden',
-                                                    mb: 2,
+                                                    mb: 1.5,
+                                                    border: '1px solid #E0E0E0',
                                                 }}
                                             >
-                                                {/* Customer info section */}
+                                                {/* Single compact section */}
                                                 <Box
                                                     sx={{
-                                                        p: 2,
+                                                        p: 1.5,
                                                         display: 'flex',
-                                                        alignItems: 'center',
+                                                        alignItems: 'flex-start',
+                                                        gap: 1.5,
                                                     }}
                                                 >
+                                                    {/* Left side - Table badge */}
                                                     {item.table_id && (
                                                         <Box
                                                             sx={{
+                                                                bgcolor: '#0C67AA',
+                                                                color: 'white',
+                                                                borderRadius: '50%',
+                                                                minWidth: 36,
+                                                                height: 36,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
-                                                                mr: 1,
+                                                                justifyContent: 'center',
+                                                                fontWeight: '600',
+                                                                fontSize: '0.813rem',
+                                                                flexShrink: 0,
                                                             }}
                                                         >
-                                                            <Button
-                                                                variant="contained"
-                                                                sx={{
-                                                                    bgcolor: '#0C67AA',
-                                                                    color: 'white',
-                                                                    borderRadius: '50%',
-                                                                    minWidth: 45,
-                                                                    height: 45,
-                                                                    p: 0,
-                                                                    fontWeight: '500',
-                                                                    fontSize: '0.875rem',
-                                                                }}
-                                                            >
-                                                                {item.table?.table_no}
-                                                            </Button>
+                                                            {item.table?.table_no}
                                                         </Box>
                                                     )}
 
-                                                    <Box
-                                                        sx={{
-                                                            mr: 2,
-                                                            bgcolor: '#E3E3E3',
-                                                            borderRadius: '50%',
-                                                            width: 45,
-                                                            height: 45,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                        }}
-                                                    >
-                                                        <img
-                                                            src="/assets/sofa.png"
-                                                            alt=""
-                                                            style={{
-                                                                height: 22,
-                                                                width: 22,
-                                                            }}
-                                                        />
-                                                    </Box>
-
-                                                    <Box sx={{ flexGrow: 1 }}>
-                                                        <Box
-                                                            sx={{
-                                                                display: 'flex',
-                                                                justifyContent: 'space-between',
-                                                                alignItems: 'center',
-                                                            }}
-                                                        >
-                                                            <Box
+                                                    {/* Middle - Info */}
+                                                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                                                        {/* Name and Status */}
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                                            <Typography
+                                                                variant="body2"
                                                                 sx={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
+                                                                    fontWeight: '600',
+                                                                    color: '#121212',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
                                                                 }}
                                                             >
-                                                                <Typography
-                                                                    variant="subtitle1"
-                                                                    sx={{
-                                                                        fontWeight: '500',
-                                                                        fontSize: '16px',
-                                                                        color: '#121212',
-                                                                        mr: 1,
-                                                                    }}
-                                                                >
-                                                                    {item.member?.full_name} ({item.member?.membership_no})
-                                                                </Typography>
-                                                            </Box>
-                                                            <Box
+                                                                {item.member ? `${item.member?.full_name} (${item.member?.membership_no})` : `${item.customer?.name}`}
+                                                            </Typography>
+                                                            <Chip
+                                                                label={item.status}
+                                                                size="small"
                                                                 sx={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
+                                                                    height: 18,
+                                                                    fontSize: '9px',
+                                                                    bgcolor: item.status === 'pending' ? '#ff9800' : item.status === 'confirmed' ? '#4caf50' : '#f44336',
+                                                                    color: 'white',
+                                                                    '& .MuiChip-label': { px: 1 },
                                                                 }}
-                                                            >
-                                                                <Box
-                                                                    component="span"
-                                                                    sx={{
-                                                                        mr: 0.5,
-                                                                        fontSize: '1rem',
-                                                                    }}
-                                                                >
-                                                                    🕙
-                                                                </Box>
-                                                                <Typography variant="caption">
-                                                                    {formatTime(item.start_time)} - {formatTime(item.end_time)}
-                                                                </Typography>
-                                                            </Box>
+                                                            />
                                                         </Box>
 
+                                                        {/* Details in one line */}
                                                         <Typography
                                                             variant="caption"
                                                             sx={{
-                                                                color: '#7F7F7F',
-                                                                fontSize: '12px',
+                                                                color: '#666',
+                                                                display: 'block',
+                                                                mb: 0.3,
                                                             }}
                                                         >
-                                                            {item.person_count} Person
+                                                            🕙 {formatTime(item.start_time)} - {formatTime(item.end_time)} • {item.person_count} Person • Rs {item.down_payment || '0'}
                                                         </Typography>
-                                                    </Box>
-                                                </Box>
 
-                                                {/* Order actions section */}
-                                                <Box
-                                                    sx={{
-                                                        // borderTop: '1px solid #f0f0f0',
-                                                        p: 2,
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center',
-                                                    }}
-                                                >
-                                                    <Box
-                                                        sx={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                        }}
-                                                    >
-                                                        {/* <Chip
-                                                            label={`#${item.order_number}`}
-                                                            size="small"
-                                                            variant="outlined"
-                                                            sx={{
-                                                                mr: 1,
-                                                                color: '#121212',
-                                                                bgcolor: '#E3E3E3',
-                                                                borderRadius: 1,
-                                                                height: 24,
-                                                                fontSize: '0.75rem',
-                                                                fontWeight: 'medium',
-                                                            }}
-                                                        /> */}
-                                                        {/* <Chip
-                                                            label="DP : 50%"
-                                                            size="small"
-                                                            variant="outlined"
-                                                            sx={{
-                                                                mr: 1,
-                                                                bgcolor: '#E3E3E3',
-                                                                color: '#121212',
-                                                                borderRadius: 1,
-                                                                height: 24,
-                                                                fontSize: '0.75rem',
-                                                            }}
-                                                        /> */}
-                                                    </Box>
-                                                    <Box sx={{ ml: 'auto', mr: 2 }}>
-                                                        <img
-                                                            src="/assets/trash.png"
-                                                            alt=""
-                                                            style={{
-                                                                height: 20,
-                                                                width: 20,
-                                                            }}
-                                                        />
-                                                    </Box>
-                                                    <Button
-                                                        variant="contained"
-                                                        size="small"
-                                                        startIcon={
-                                                            <Box
-                                                                component="span"
+                                                        {/* Optional fields - compact */}
+                                                        {(item.nature_of_function || item.theme_of_function || item.special_request) && (
+                                                            <Typography
+                                                                variant="caption"
                                                                 sx={{
-                                                                    fontSize: '0.875rem',
+                                                                    color: '#888',
+                                                                    display: 'block',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
                                                                 }}
                                                             >
-                                                                ✓
-                                                            </Box>
-                                                        }
-                                                        sx={{
-                                                            bgcolor: '#0e3151',
-                                                            color: 'white',
-                                                            textTransform: 'none',
-                                                            borderRadius: 0,
-                                                            px: 2,
-                                                            py: 0.5,
-                                                            fontSize: '0.875rem',
-                                                            '&:hover': {
-                                                                bgcolor: '#0a2540',
-                                                            },
-                                                        }}
-                                                    >
-                                                        {item.status === 'saved' ? 'Process Order' : item.status === 'cancelled' ? 'Cancelled' : item.status === 'completed' ? 'Completed' : item.status === 'in_progress' ? 'Cooking process' : 'Pending'}
-                                                    </Button>
+                                                                {item.nature_of_function && `${item.nature_of_function}`}
+                                                                {item.theme_of_function && ` • ${item.theme_of_function}`}
+                                                                {item.special_request && ` • ${item.special_request}`}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+
+                                                    {/* Right side - Action buttons */}
+
+                                                    {/* Show Order Menu button only if pending */}
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        <Box sx={{ ml: 'auto', mr: 1 }}>
+                                                            <img
+                                                                src="/assets/trash.png"
+                                                                alt=""
+                                                                onClick={() => handleCancelReservation(item)}
+                                                                style={{
+                                                                    height: 20,
+                                                                    width: 20,
+                                                                    cursor: item.status === 'cancelled' ? 'not-allowed' : 'pointer',
+                                                                    opacity: item.status === 'cancelled' ? 0.5 : 1,
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                        <Button
+                                                            variant="outlined"
+                                                            size="small"
+                                                            onClick={() => handleInvoiceClick(item)}
+                                                            sx={{
+                                                                borderColor: '#0e3151',
+                                                                color: '#0e3151',
+                                                                textTransform: 'none',
+                                                                borderRadius: 0,
+                                                                px: 1.5,
+                                                                py: 1,
+                                                                fontSize: '0.75rem',
+                                                                minWidth: 'auto',
+                                                                '&:hover': {
+                                                                    borderColor: '#0a2540',
+                                                                    bgcolor: '#f5f5f5',
+                                                                },
+                                                            }}
+                                                        >
+                                                            Print
+                                                        </Button>
+                                                        <Button
+                                                            variant="contained"
+                                                            size="small"
+                                                            onClick={() => {
+                                                                if (item.status === 'pending') {
+                                                                    router.visit(route('order.menu', { reservation_id: item.id, order_type: 'reservation' }));
+                                                                }
+                                                            }}
+                                                            startIcon={
+                                                                <Box component="span" sx={{ fontSize: '0.875rem' }}>
+                                                                    ✓
+                                                                </Box>
+                                                            }
+                                                            sx={{
+                                                                bgcolor: '#0e3151',
+                                                                color: 'white',
+                                                                textTransform: 'none',
+                                                                borderRadius: 0,
+                                                                px: 2,
+                                                                py: 0.5,
+                                                                fontSize: '0.875rem',
+                                                                '&:hover': {
+                                                                    bgcolor: '#0a2540',
+                                                                },
+                                                            }}
+                                                        >
+                                                            {item.status === 'saved' ? 'Process Order' : item.status === 'cancelled' ? 'Cancelled' : item.status === 'completed' ? 'Completed' : item.status === 'in_progress' ? 'Cooking process' : 'Process Order'}
+                                                        </Button>
+                                                    </Box>
                                                 </Box>
                                             </Box>
                                         ))
@@ -1206,49 +1278,8 @@ const Dashboard = () => {
                                                 marginLeft: drawerWidthOpen ? '5px' : '0px',
                                                 cursor: 'pointer',
                                             }}
-                                            onClick={() => router.visit('/order/queue')}
+                                            onClick={() => router.visit(route('order.management'))}
                                         />
-                                    </Box>
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            width: '145px',
-                                            height: '48px',
-                                            alignItems: 'center',
-                                        }}
-                                    >
-                                        <Button
-                                            variant="outlined"
-                                            sx={{
-                                                width: '100%',
-
-                                                bgcolor: 'transparent',
-                                                borderRadius: 20,
-                                                borderColor: '#063455',
-                                                color: '#333',
-                                                textTransform: 'none',
-                                                // px: 2
-                                            }}
-                                        >
-                                            Order Saved
-                                            <Box
-                                                component="span"
-                                                sx={{
-                                                    ml: 1,
-                                                    bgcolor: '#1976d2',
-                                                    color: 'white',
-                                                    borderRadius: '50%',
-                                                    width: 20,
-                                                    height: 20,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '0.75rem',
-                                                }}
-                                            >
-                                                1
-                                            </Box>
-                                        </Button>
                                     </Box>
                                 </Box>
 
@@ -1514,6 +1545,83 @@ const Dashboard = () => {
                         </Grid>
                     </Grid>
                 </Box>
+
+                {/* Invoice Modal */}
+                <Dialog
+                    open={showInvoiceModal}
+                    onClose={() => setShowInvoiceModal(false)}
+                    maxWidth="sm"
+                    fullWidth
+                    PaperProps={{
+                        sx: {
+                            position: 'fixed',
+                            top: '20px',
+                            right: '20px',
+                            margin: 0,
+                            borderRadius: 2,
+                            boxShadow: 5,
+                            overflowY: 'auto',
+                            maxHeight: 'calc(100vh - 40px)',
+                        },
+                    }}
+                >
+                    <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1 }}>
+                        Reservation Invoice
+                        <Button onClick={() => setShowInvoiceModal(false)} size="small">
+                            <CloseIcon />
+                        </Button>
+                    </DialogTitle>
+                    <DialogContent dividers>
+                        {selectedInvoice && (
+                            <div id="invoice-content" style={{ padding: '10px', fontFamily: 'Arial' }}>
+                                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                                    <img src="/assets/Logo.png" alt="AFOHS Logo" style={{ height: '60px' }} />
+                                    <h5 style={{ margin: '5px 0' }}>AFOHS CLUB</h5>
+                                    <p style={{ fontSize: '12px' }}>Enjoy the Pride</p>
+                                    <p style={{ fontSize: '12px' }}>PAF Falcon Complex</p>
+                                </div>
+
+                                <h6 style={{ textAlign: 'center', margin: '10px 0' }}>RESERVATION INVOICE</h6>
+
+                                <p>Reservation #: {selectedInvoice.id}</p>
+                                <p>Invoice Date: {selectedInvoice.date}</p>
+                                <p>
+                                    Time: {selectedInvoice.start_time} - {selectedInvoice.end_time}
+                                </p>
+                                <p>Table: {selectedInvoice.table?.table_no || 'N/A'}</p>
+                                <p>Name: {selectedInvoice.member?.full_name || selectedInvoice.customer?.name}</p>
+                                <p>Contact: {selectedInvoice.member?.mobile_number_a || selectedInvoice.customer?.contact}</p>
+                                <hr />
+                                <h6>Advance Paid: {selectedInvoice.down_payment || '0'}</h6>
+                                <p style={{ fontSize: '12px', marginTop: '10px' }}>Thank you for making a reservation at AFOHS Club!</p>
+                            </div>
+                        )}
+                    </DialogContent>
+                    <DialogActions sx={{ justifyContent: 'center', p: 1 }}>
+                        <Button variant="contained" color="primary" onClick={() => handlePrintReceipt(selectedInvoice)}>
+                            Print / Download PDF
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Cancel Confirmation Modal */}
+                <Dialog open={showCancelReservationModal} onClose={() => setShowCancelReservationModal(false)} maxWidth="xs" fullWidth>
+                    <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1 }}>
+                        Cancel Reservation
+                        <Button onClick={() => setShowCancelReservationModal(false)} size="small">
+                            <CloseIcon />
+                        </Button>
+                    </DialogTitle>
+                    <DialogContent>Are you sure you want to cancel reservation #{selectedReservation?.id}?</DialogContent>
+                    <DialogActions>
+                        <Button variant="outlined" onClick={() => setShowCancelReservationModal(false)}>
+                            No
+                        </Button>
+                        <Button variant="contained" color="error" onClick={confirmCancelReservation}>
+                            Yes, Cancel
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </div>
         </>
     );
