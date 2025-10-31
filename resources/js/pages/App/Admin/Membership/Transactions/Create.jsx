@@ -6,13 +6,10 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { Person, Receipt, Search } from '@mui/icons-material';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [] }) {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
     const [membershipFeePaid, setMembershipFeePaid] = useState(false);
@@ -950,14 +947,14 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     return (
         <>
             <Head title="Create Transaction" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#f8fafc',
+                    // marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    // transition: 'margin-left 0.3s ease-in-out',
+                    // marginTop: '5rem',
+                    // backgroundColor: '#f8fafc',
                     minHeight: '100vh',
                 }}
             >

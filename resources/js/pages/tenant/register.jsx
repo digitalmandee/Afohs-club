@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -6,11 +5,9 @@ import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mu
 import { Col, Container, Row } from 'react-bootstrap';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const Register = ({ tenant }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const isEdit = !!tenant;
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
@@ -59,13 +56,13 @@ const Register = ({ tenant }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'all 0.3s ease',
                 }}
-            >
+            > */}
                 <div
                     style={{
                         display: 'flex',
@@ -123,7 +120,7 @@ const Register = ({ tenant }) => {
                         </Box>
                     </Container>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -321,5 +321,5 @@ const SetNewPin = () => {
         </>
     );
 };
-
+SetNewPin.layout = (page) => page;
 export default SetNewPin;

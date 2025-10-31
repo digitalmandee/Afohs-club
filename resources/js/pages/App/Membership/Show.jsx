@@ -45,3 +45,4 @@ export default function MemberProfile({ user }) {
         </>
     );
 }
+MemberProfile.layout = (page) => page;

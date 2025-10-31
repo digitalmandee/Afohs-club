@@ -6,17 +6,13 @@ import axios from 'axios';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 // import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 // import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 // import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 // import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
-
 const ManageAttendance = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [date, setDate] = useState(dayjs());
 
@@ -114,7 +110,7 @@ const ManageAttendance = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -122,7 +118,7 @@ const ManageAttendance = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
@@ -246,7 +242,7 @@ const ManageAttendance = () => {
                         </Box>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
 
             <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
                 <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">

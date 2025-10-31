@@ -301,5 +301,5 @@ const ReservationOrder = () => {
         </Paper>
     );
 };
-
+ReservationOrder.layout = (page) => page;
 export default ReservationOrder;

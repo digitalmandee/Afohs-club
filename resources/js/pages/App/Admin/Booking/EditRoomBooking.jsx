@@ -3,7 +3,6 @@ import { Button } from 'react-bootstrap';
 import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { differenceInCalendarDays } from 'date-fns';
@@ -12,8 +11,8 @@ import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const steps = ['Booking Details', 'Room Selection', 'Charges', 'Upload'];
 
@@ -23,7 +22,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     const urlParams = new URLSearchParams(url.split('?')[1] || '');
     const isCheckout = urlParams.get('type') === 'checkout';
     // Main state for booking type
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -188,14 +187,14 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
                     <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
@@ -248,7 +247,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
                         </Box>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

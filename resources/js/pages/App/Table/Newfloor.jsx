@@ -426,7 +426,7 @@ const NewFloor = ({ floorInfo }) => {
         </>
     );
 };
-
+NewFloor.layout = (page) => page;
 export default NewFloor;
 
 const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) => {

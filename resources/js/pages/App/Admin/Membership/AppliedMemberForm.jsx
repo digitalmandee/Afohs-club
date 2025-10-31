@@ -5,8 +5,8 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 export default function AppliedMemberForm({ memberData = null, onBack }) {
     const [open, setOpen] = useState(true);

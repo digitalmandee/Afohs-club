@@ -136,3 +136,4 @@ export default function Login({ status, canResetPassword }) {
         </>
     );
 }
+Login.layout = (page) => page;

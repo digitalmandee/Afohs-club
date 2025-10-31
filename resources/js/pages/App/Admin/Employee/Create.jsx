@@ -3,15 +3,14 @@ import { TextField, Button, Typography, Box, FormHelperText, Snackbar, Alert, Pa
 import Autocomplete from '@mui/material/Autocomplete';
 import { router, usePage } from '@inertiajs/react';
 import { MdArrowBackIos } from 'react-icons/md';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const EmployeeCreate = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const { props } = usePage();
     const { employeeTypes } = props; // comes from Laravel
@@ -79,7 +78,7 @@ const EmployeeCreate = () => {
     };
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -87,7 +86,7 @@ const EmployeeCreate = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box
                     sx={{
                         px: 2,
@@ -292,7 +291,7 @@ const EmployeeCreate = () => {
                         </Box>
                     </Paper>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

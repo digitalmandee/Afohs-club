@@ -16,14 +16,13 @@ import {
     MoreVert as MoreVertIcon,
     Check as CheckIcon
 } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const LeaveCategory = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // Member types data
     const leaveTypes = [
         {
@@ -72,7 +71,7 @@ const LeaveCategory = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -80,7 +79,7 @@ const LeaveCategory = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Header with back button, title, and add type button */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -181,7 +180,7 @@ const LeaveCategory = () => {
                         ))}
                     </div>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

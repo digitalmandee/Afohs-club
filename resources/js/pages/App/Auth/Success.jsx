@@ -158,5 +158,5 @@ const SuccessScreen = () => {
         </>
     );
 };
-
+SuccessScreen.layout = (page) => page;
 export default SuccessScreen;

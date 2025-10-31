@@ -254,5 +254,5 @@ const CustomerLists = ({ users }) => {
         </>
     );
 };
-
+CustomerLists.layout = (page) => page;
 export default CustomerLists;

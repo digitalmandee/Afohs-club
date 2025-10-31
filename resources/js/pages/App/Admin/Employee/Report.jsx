@@ -13,13 +13,12 @@ import {
     IconButton
 } from "@mui/material"
 import { FilterAlt, ArrowBack } from "@mui/icons-material"
-import SideNav from '@/components/App/AdminSideBar/SideNav'
 import SearchIcon from '@mui/icons-material/Search';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 const AttendanceReport = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const employeeData = [
         {
@@ -52,7 +51,7 @@ const AttendanceReport = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -60,7 +59,7 @@ const AttendanceReport = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6'
                 }}
-            >
+            > */}
                 <Box sx={{
                     px: 3
                 }}>
@@ -204,7 +203,7 @@ const AttendanceReport = () => {
                         </TableContainer>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     )
 }

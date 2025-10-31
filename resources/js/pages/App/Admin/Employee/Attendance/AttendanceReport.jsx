@@ -3,13 +3,12 @@ import { router } from '@inertiajs/react';
 import { ArrowBack } from '@mui/icons-material';
 import { Button, TextField, Checkbox, Pagination, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Box } from '@mui/material';
 import axios from 'axios';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const AttendanceReport = () => {
-	const [open, setOpen] = useState(true);
+	// const [open, setOpen] = useState(true);
 
 	const currentDate = new Date();
 	const [month, setMonth] = useState(currentDate.getMonth() + 1);
@@ -121,7 +120,7 @@ const AttendanceReport = () => {
 
 	return (
 		<>
-			<SideNav open={open} setOpen={setOpen} />
+			{/* <SideNav open={open} setOpen={setOpen} />
 			<div
 				style={{
 					marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -129,7 +128,7 @@ const AttendanceReport = () => {
 					marginTop: '5rem',
 					backgroundColor: '#F6F6F6',
 				}}
-			>
+			> */}
 				<Box sx={{ px: 2, py: 2 }}>
 					<div style={{ paddingTop: '1rem' }}>
 						<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
@@ -341,7 +340,7 @@ const AttendanceReport = () => {
 						</div>
 					</div>
 				</Box>
-			</div>
+			{/* </div> */}
 		</>
 	);
 };

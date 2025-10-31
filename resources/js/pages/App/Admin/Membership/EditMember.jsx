@@ -2,16 +2,13 @@ import { useState } from 'react';
 import { TextField, Button, Paper, Typography, Box, IconButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import { usePage, router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const EditMember = ({ memberType }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [formData, setFormData] = useState({
         nameOfType: memberType.name || '',
         duration: memberType.duration || '',
@@ -78,13 +75,13 @@ const EditMember = ({ memberType }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
+                    // marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    // transition: 'margin-left 0.3s ease-in-out',
+                    // marginTop: '5rem',
+                    // backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     display: 'flex',
                     flexDirection: 'column',

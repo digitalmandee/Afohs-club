@@ -1320,3 +1320,4 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
         </>
     );
 }
+CoffeeShop.layout = (page) => page;

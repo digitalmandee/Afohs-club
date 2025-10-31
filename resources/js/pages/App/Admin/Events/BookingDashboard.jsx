@@ -4,13 +4,11 @@ import { Container, Row, Button, Form, Badge, Card, Col, Modal } from 'react-boo
 import { Search, Add } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography } from '@mui/material';
 import { router } from '@inertiajs/react';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+
 
 const theme = createTheme({
     palette: {
@@ -96,7 +94,7 @@ const dialogStyles = `
 
 
 const EventBookingDashboard = ({ data, eventVenues }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
@@ -139,14 +137,14 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <ThemeProvider theme={theme}>
                     <style>{dialogStyles}</style>
                     <Container fluid className="p-4 bg-light">
@@ -426,7 +424,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                         />
                     </Container>
                 </ThemeProvider>
-            </div>
+            {/* </div> */}
         </>
     );
 };

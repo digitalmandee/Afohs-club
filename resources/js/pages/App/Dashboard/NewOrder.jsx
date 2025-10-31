@@ -253,5 +253,5 @@ const NewSelfOrder = () => {
         </Paper>
     );
 };
-
+NewSelfOrder.layout = (page) => page;
 export default NewSelfOrder;

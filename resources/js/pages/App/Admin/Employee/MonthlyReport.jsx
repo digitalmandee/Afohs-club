@@ -3,14 +3,13 @@ import { Button, Table } from "react-bootstrap";
 import { TextField, IconButton } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import "bootstrap/dist/css/bootstrap.min.css";
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const AttendanceMonthyReport = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const currentDate = new Date();
     const [month, setMonth] = useState(currentDate.getMonth() + 1);
     const [year, setYear] = useState(currentDate.getFullYear());
@@ -82,7 +81,7 @@ const AttendanceMonthyReport = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -90,7 +89,7 @@ const AttendanceMonthyReport = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid px-4" style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "20px" }}>
                     {/* Header */}
                     <div className="d-flex align-items-center mb-4">
@@ -177,7 +176,7 @@ const AttendanceMonthyReport = () => {
                         </Table>
                     </div>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -18,14 +18,11 @@ import {
     ArrowBack,
     Search,
 } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const MembersFinance = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // State for payment data
     const [payments, setPayments] = useState([
         {
@@ -150,7 +147,7 @@ const MembersFinance = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -158,7 +155,7 @@ const MembersFinance = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box sx={{ bgcolor: '#f6f6f6', minHeight: '100vh', p: 2 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -289,7 +286,7 @@ const MembersFinance = () => {
                         </Table>
                     </TableContainer>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

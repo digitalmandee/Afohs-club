@@ -1034,5 +1034,5 @@ const AddProduct = ({ product, id }) => {
         </>
     );
 };
-
+AddProduct.layout = (page) => page;
 export default AddProduct;

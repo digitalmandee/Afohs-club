@@ -1,19 +1,15 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import { TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
-
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const SleepingMembersReport = () => {
     // Get props first
     const { categories, primary_members, statistics, filters, all_categories, all_member_statuses } = usePage().props;
 
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [allFilters, setAllFilters] = useState({
         categories: filters?.categories || [],
         status: filters?.status || []
@@ -103,7 +99,7 @@ const SleepingMembersReport = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -111,7 +107,7 @@ const SleepingMembersReport = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -376,7 +372,7 @@ const SleepingMembersReport = () => {
                         )}
                     </Box>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

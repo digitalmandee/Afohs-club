@@ -16,15 +16,13 @@ import {
     TextField,
 } from "@mui/material"
 import { ArrowBack, AccessTime, Settings, GetApp, Description, ChevronLeft, ChevronRight } from "@mui/icons-material"
-import SideNav from '@/components/App/AdminSideBar/SideNav'
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+
 const SalaryRevision = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [formData, setFormData] = useState({
         guestName: '',
         phone: '',
@@ -95,7 +93,7 @@ const SalaryRevision = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -103,7 +101,7 @@ const SalaryRevision = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6'
                 }}
-            >
+            > */}
                 <Box sx={{
                     px: 3,
                     pt: 2
@@ -421,7 +419,7 @@ const SalaryRevision = () => {
                         </Paper>
                     </div>
                 </Dialog>
-            </div>
+            {/* </div> */}
         </>
     )
 }

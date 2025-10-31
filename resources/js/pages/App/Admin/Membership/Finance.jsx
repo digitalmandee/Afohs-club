@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, TextField, Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Dialog, DialogContent, Select, MenuItem, FormControl, Chip, InputAdornment, Grid, Card, CardContent } from '@mui/material';
 import { ArrowBack, Search, FilterAlt, CreditCard, CalendarMonth, PendingActions, Close, KeyboardArrowDown } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const MembersFinance = ({ membersdata = [] }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // State for filter modal
     const [openFilter, setOpenFilter] = useState(false);
 
@@ -148,7 +145,7 @@ const MembersFinance = ({ membersdata = [] }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -156,7 +153,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box sx={{ bgcolor: '#f9f9f9', minHeight: '100vh', pb: 4 }}>
                     {/* Header */}
                     <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
@@ -623,7 +620,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                         </DialogContent>
                     </Dialog>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

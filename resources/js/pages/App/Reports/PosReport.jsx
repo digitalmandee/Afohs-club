@@ -293,3 +293,4 @@ export default function PosReport({ reportData, restaurantName, startDate, endDa
         </>
     );
 }
+PosReport.layout = (page) => page;

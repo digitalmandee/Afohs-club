@@ -130,5 +130,5 @@ const ManageCustomer = ({ customerData }) => {
         </>
     );
 };
-
+ManageCustomer.layout = (page) => page;
 export default ManageCustomer;

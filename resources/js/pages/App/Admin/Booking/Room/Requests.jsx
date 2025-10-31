@@ -2,17 +2,16 @@ import React, { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, MenuItem, Select } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const BookingRequests = () => {
     const { props } = usePage();
     const { requests } = props;
 
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const handleStatusChange = (id, newStatus) => {
         router.put(
@@ -27,7 +26,7 @@ const BookingRequests = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
 
             <div
                 style={{
@@ -35,7 +34,7 @@ const BookingRequests = () => {
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between">
                         <div className="d-flex align-items-center">
@@ -99,7 +98,7 @@ const BookingRequests = () => {
                         </Table>
                     </TableContainer>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

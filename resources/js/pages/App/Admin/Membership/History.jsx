@@ -2,14 +2,11 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { TextField, Button, Modal, Box, Typography, IconButton, Paper, Table, TableBody, TableCell, Container, TableContainer, TableHead, TableRow, Chip, InputAdornment, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { Search as SearchIcon, FilterAlt as FilterIcon, Print as PrintIcon, ArrowBack as ArrowBackIcon, Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon, CalendarMonth as CalendarMonthIcon } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const MembersHistory = ({ membersdata = [] }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // State for search input
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -103,7 +100,7 @@ const MembersHistory = ({ membersdata = [] }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -111,7 +108,7 @@ const MembersHistory = ({ membersdata = [] }) => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Container maxWidth="lg" sx={{ py: 4 }}>
                     <Box
                         sx={{
@@ -382,7 +379,7 @@ const MembersHistory = ({ membersdata = [] }) => {
                         </Box>
                     </Modal>
                 </Container>
-            </div>
+            {/* </div> */}
         </>
     );
 };

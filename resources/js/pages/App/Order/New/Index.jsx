@@ -395,5 +395,5 @@ const NewOrder = ({ orderNo, memberTypes }) => {
         </>
     );
 };
-
+NewOrder.layout = (page) => page;
 export default NewOrder;

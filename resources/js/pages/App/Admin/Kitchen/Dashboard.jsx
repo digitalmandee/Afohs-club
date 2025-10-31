@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {
@@ -21,11 +20,9 @@ import {
 } from '@mui/material';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const Dashboard = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [date, setDate] = useState('Apr-2025');
 
     const kitchenData = [
@@ -53,14 +50,14 @@ const Dashboard = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                     <Container fluid>
                         {/* Header */}
@@ -113,7 +110,7 @@ const Dashboard = () => {
                         </Row>
                     </Container>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

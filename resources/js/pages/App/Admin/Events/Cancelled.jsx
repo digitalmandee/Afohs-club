@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton, TextField, FormControl, Select, MenuItem, Grid, Chip } from '@mui/material';
@@ -10,8 +9,6 @@ import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoic
 import debounce from 'lodash.debounce';
 import axios from 'axios';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const theme = createTheme({
     palette: {
@@ -31,7 +28,7 @@ const theme = createTheme({
 });
 
 const EventsCancelled = ({ bookings, filters = {} }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState(filters.search_name || '');
     const [searchId, setSearchId] = useState(filters.search_id || '');
     const [bookingDateFrom, setBookingDateFrom] = useState(filters.booking_date_from || '');
@@ -123,14 +120,14 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <ThemeProvider theme={theme}>
                     <Container fluid className="p-4 bg-light">
                         {/* Header */}
@@ -358,7 +355,7 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                     {/* Event Booking Invoice Modal */}
                     <EventBookingInvoiceModal open={showInvoiceModal} onClose={handleCloseInvoice} bookingId={selectedBookingId} setBookings={handleBookingUpdate} />
                 </ThemeProvider>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import AddIcon from '@mui/icons-material/Add';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -10,11 +9,11 @@ import { Box, Button, Card, CircularProgress, InputBase, Modal, Paper, Table, Ta
 import { useState } from 'react';
 import EmployeeDetail from './Detail';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const EmployeeDashboard = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openDetails, setOpenDetails] = useState(false);
 
     const handleOpenDetails = () => setOpenDetails(true);
@@ -51,7 +50,7 @@ const EmployeeDashboard = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -59,7 +58,7 @@ const EmployeeDashboard = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box
                     sx={{
                         px: 2,
@@ -252,7 +251,7 @@ const EmployeeDashboard = () => {
                         </div>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

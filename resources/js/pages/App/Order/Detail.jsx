@@ -792,5 +792,5 @@ const OrderDetail = ({ handleEditItem }) => {
         </>
     );
 };
-
+OrderDetail.layout = (page) => page;
 export default OrderDetail;

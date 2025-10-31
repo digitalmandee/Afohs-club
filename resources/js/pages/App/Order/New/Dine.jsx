@@ -420,5 +420,5 @@ const DineDialog = ({ memberTypes, floorTables }) => {
         </Box>
     );
 };
-
+DineDialog.layout = (page) => page;
 export default DineDialog;

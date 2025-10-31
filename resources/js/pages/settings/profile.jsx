@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
@@ -7,11 +6,9 @@ import DeleteUser from '@/components/delete-user';
 import { Button, TextField, Typography } from '@mui/material'; // Using MUI Button
 import { Col, Form, Row } from 'react-bootstrap';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const Profile = ({ mustVerifyEmail, status }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const { auth } = usePage().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
@@ -28,11 +25,9 @@ const Profile = ({ mustVerifyEmail, status }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    marginTop: '5rem',
                     padding: '24px',
                 }}
             >

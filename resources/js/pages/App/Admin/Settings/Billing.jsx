@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { useForm } from '@inertiajs/react';
 import { Box, Typography, TextField, Grid, Button, Alert } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 export default function Billing({ settings }) {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const { data, setData, post, processing, errors } = useForm({
         overdue_charge_pct: settings.overdue_charge_pct ?? 0,
@@ -62,13 +59,9 @@ export default function Billing({ settings }) {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     padding: '2rem',
                 }}

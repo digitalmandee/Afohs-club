@@ -11,14 +11,11 @@ import {
     ArrowBack as ArrowBackIcon,
     KeyboardArrowDown as KeyboardArrowDownIcon
 } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const AddHoledEmployee = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // State for form fields
     const [formData, setFormData] = useState({
         guestName: '',
@@ -47,7 +44,7 @@ const AddHoledEmployee = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -55,7 +52,7 @@ const AddHoledEmployee = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div style={{
                     fontFamily: 'Arial, sans-serif',
                     padding: '20px',
@@ -209,7 +206,7 @@ const AddHoledEmployee = () => {
                         </form>
                     </Paper>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -22,7 +22,6 @@ import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { format } from 'date-fns';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
 export default function DailyDumpItemsReport({ 
     dumpItemsData, 
@@ -38,9 +37,6 @@ export default function DailyDumpItemsReport({
         start_date: filters?.start_date || startDate,
         end_date: filters?.end_date || endDate
     });
-
-    const drawerWidthOpen = 280;
-    const drawerWidthClosed = 110;
 
     const handleFilterChange = (field, value) => {
         setDateFilters(prev => ({
@@ -77,14 +73,10 @@ export default function DailyDumpItemsReport({
     return (
         <>
             <Head title="Daily Dump Items Report" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#f8fafc',
                     minHeight: '100vh',
                 }}
             >

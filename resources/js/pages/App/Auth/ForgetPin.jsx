@@ -270,5 +270,5 @@ const ForgetPin = () => {
         </>
     );
 };
-
+ForgetPin.layout = (page) => page;
 export default ForgetPin;

@@ -2,14 +2,11 @@ import { useState } from "react"
 import { Container, Row, Card, Col, Button } from "react-bootstrap"
 import { ArrowBack, AccessTime, Settings, GetApp, Description, ChevronLeft, ChevronRight } from "@mui/icons-material"
 import "bootstrap/dist/css/bootstrap.min.css"
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const RunPayrollDashboard = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [startMonthIndex, setStartMonthIndex] = useState(0)
 
     const generateTimelineData = () => {
@@ -80,7 +77,7 @@ const RunPayrollDashboard = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -88,7 +85,7 @@ const RunPayrollDashboard = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Container fluid className="py-4 px-4 bg-light min-vh-100">
                     <div className="mb-4">
                         <h5 className="mb-0 d-flex align-items-center" style={{
@@ -366,7 +363,7 @@ const RunPayrollDashboard = () => {
                         </Col>
                     </Row>
                 </Container>
-            </div>
+            {/* </div> */}
         </>
     )
 }

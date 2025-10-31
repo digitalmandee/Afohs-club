@@ -1,19 +1,16 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const MonthlyMaintenanceFeeReport = () => {
     // Get props first
     const { transactions, statistics, filters, all_cities, all_payment_methods, all_categories, all_genders } = usePage().props;
 
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [allFilters, setAllFilters] = useState({
         member_search: filters?.member_search || '',
         invoice_search: filters?.invoice_search || '',
@@ -139,7 +136,7 @@ const MonthlyMaintenanceFeeReport = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -147,7 +144,7 @@ const MonthlyMaintenanceFeeReport = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -477,7 +474,7 @@ const MonthlyMaintenanceFeeReport = () => {
                         )}
                     </Box>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -8,16 +8,13 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Avatar, Box, InputAdornment } from '@mui/material';
 import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard, Warning } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import SubscriptionFilter from './Filter';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const MonthlyFee = ({ subscriptions, totalSubscriptions, collectedFee, pendingFee }) => {
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openFilterModal, setOpenFilterModal] = useState(false);
 
     const handleOpenModal = (member, event, type = 'actions') => {
@@ -52,7 +49,7 @@ const MonthlyFee = ({ subscriptions, totalSubscriptions, collectedFee, pendingFe
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -60,7 +57,7 @@ const MonthlyFee = ({ subscriptions, totalSubscriptions, collectedFee, pendingFe
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid px-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center pt-3">
@@ -254,7 +251,7 @@ const MonthlyFee = ({ subscriptions, totalSubscriptions, collectedFee, pendingFe
                     </Box>
                     <SubscriptionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

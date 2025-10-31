@@ -2,18 +2,15 @@ import React, { useState } from 'react';
 import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Box, Card, CardContent, Grid, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
 import { Search, FilterAlt, ExpandMore, ExpandLess, Warning, CheckCircle, Schedule, Extension, Group, PersonOff, AccessTime, SupervisorAccount } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import FamilyFilter from './Family/Filter';
 import MembershipCardComponent from './UserCard';
 import { router } from '@inertiajs/react';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [expandedRow, setExpandedRow] = useState(null);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [selectMember, setSelectMember] = useState(null);
@@ -141,7 +138,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -149,7 +146,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Header */}
                     {/* <div className="d-flex justify-content-between align-items-center">
@@ -473,7 +470,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                         </TableContainer>
                     </div>
                 </div>
-            </div>
+            {/* </div> */}
 
             {/* Member Details Modal */}
             <MembershipCardComponent 

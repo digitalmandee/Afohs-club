@@ -2,16 +2,13 @@ import React, { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, FormLabel, FormGroup, FormControlLabel, Checkbox, Accordion, AccordionSummary, AccordionDetails, Grid, Pagination } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon, ExpandMore as ExpandMoreIcon, Security as SecurityIcon } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { useSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240; // Set open width to 240px
-const drawerWidthClosed = 110; // Set closed width to 120px
 
 const RoleManagement = () => {
     const { roles, allPermissions, filters, can } = usePage().props;
     const { enqueueSnackbar } = useSnackbar();
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [createRoleOpen, setCreateRoleOpen] = useState(false);
     const [editRoleOpen, setEditRoleOpen] = useState(false);
@@ -106,13 +103,9 @@ const RoleManagement = () => {
     return (
         <>
             <Head title="Role Management" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     p: 3,
                 }}

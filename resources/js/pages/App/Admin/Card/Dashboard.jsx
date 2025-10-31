@@ -4,7 +4,6 @@ import { router } from '@inertiajs/react';
 import { Search, FilterAlt, People, CreditCard, ExpandMore, ExpandLess } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import CardFilter from './Filter';
 import UserCardComponent from './UserCard';
 import SubscriptionFilter from '../Subscription/Filter';
@@ -13,12 +12,12 @@ import MembershipCardComponent from '../Membership/UserCard';
 import MembershipDashboardFilter from '../Membership/MembershipDashboardFilter';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const CardsDashboard = ({ members, total_active_members, total_active_family_members, filters, memberCategories }) => {
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [selectMember, setSelectMember] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
@@ -55,7 +54,7 @@ const CardsDashboard = ({ members, total_active_members, total_active_family_mem
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -63,7 +62,7 @@ const CardsDashboard = ({ members, total_active_members, total_active_family_mem
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
@@ -484,7 +483,7 @@ const CardsDashboard = ({ members, total_active_members, total_active_family_mem
                         memberData={members.data} 
                     />
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

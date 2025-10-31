@@ -137,5 +137,5 @@ const TableSetting = ({ floorsdata, tablesData }) => {
         </Box>
     );
 };
-
+TableSetting.layout = (page) => page;
 export default TableSetting;

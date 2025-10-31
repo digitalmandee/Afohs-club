@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import { FilterAlt, Search } from '@mui/icons-material';
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme } from '@mui/material';
@@ -10,8 +9,8 @@ import dayjs from 'dayjs'; // Added for duration calculation
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import debounce from 'lodash.debounce';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const theme = createTheme({
     palette: {
@@ -96,7 +95,7 @@ const dialogStyles = `
 `;
 
 const RoomScreen = ({ bookings }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showFilter, setShowFilter] = useState(false);
 
@@ -142,14 +141,14 @@ const RoomScreen = ({ bookings }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <ThemeProvider theme={theme}>
                     <style>{dialogStyles}</style>
                     <Container
@@ -313,7 +312,7 @@ const RoomScreen = ({ bookings }) => {
                         </Modal>
                     </Container>
                 </ThemeProvider>
-            </div>
+            {/* </div> */}
         </>
     );
 };

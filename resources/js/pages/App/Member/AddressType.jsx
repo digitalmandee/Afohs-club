@@ -342,3 +342,4 @@ export default function AddressType({ addressTypes }) {
         </>
     );
 }
+AddressType.layout = (page) => page;

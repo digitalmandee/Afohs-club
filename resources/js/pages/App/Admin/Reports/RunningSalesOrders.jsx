@@ -21,13 +21,8 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { format } from 'date-fns';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
 export default function RunningSalesOrders({ runningOrders, totalOrders, totalAmount, reportDate }) {
-    const [open, setOpen] = useState(true);
-
-    const drawerWidthOpen = 280;
-    const drawerWidthClosed = 110;
 
     const handlePrint = () => {
         const printUrl = route('admin.reports.pos.running-sales-orders.print');
@@ -79,14 +74,10 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
     return (
         <>
             <Head title="Running Sales Orders" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#f8fafc',
                     minHeight: '100vh',
                 }}
             >

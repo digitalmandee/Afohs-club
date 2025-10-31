@@ -768,5 +768,5 @@ const OrderManagement = () => {
         </>
     );
 };
-
+OrderManagement.layout = (page) => page;
 export default OrderManagement;

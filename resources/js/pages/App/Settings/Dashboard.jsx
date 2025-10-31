@@ -2129,5 +2129,5 @@ const SettingDashboard = () => {
         </>
     );
 };
-
+SettingDashboard.layout = (page) => page;
 export default SettingDashboard;

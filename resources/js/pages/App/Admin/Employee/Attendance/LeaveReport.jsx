@@ -3,13 +3,10 @@ import { router } from '@inertiajs/react';
 import { CircularProgress, FormControl, InputAdornment, MenuItem, Select } from '@mui/material';
 import { Search, ArrowBack } from '@mui/icons-material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, Button, TableRow, Paper, Pagination, TextField, Box, Typography } from '@mui/material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import axios from 'axios';
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const LeaveReport = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     const currentDate = new Date();
@@ -51,7 +48,7 @@ const LeaveReport = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -59,7 +56,7 @@ const LeaveReport = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
@@ -161,7 +158,7 @@ const LeaveReport = () => {
                         </Box>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -7,14 +7,13 @@ import Person from '@mui/icons-material/Person';
 import Bathroom from '@mui/icons-material/Bathroom';
 import Edit from '@mui/icons-material/Edit';
 import Delete from '@mui/icons-material/Delete';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const AllRooms = ({ rooms }) => {
-    const [open, setOpen] = React.useState(true);
+    // const [open, setOpen] = React.useState(true);
     const [confirmDialog, setConfirmDialog] = React.useState({ open: false, roomId: null });
 
     const handleEdit = (id) => {
@@ -27,14 +26,14 @@ const AllRooms = ({ rooms }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
@@ -104,7 +103,7 @@ const AllRooms = ({ rooms }) => {
                         </Grid>
                     </Box>
                 </div>
-            </div>
+            {/* </div> */}
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, roomId: null })}>

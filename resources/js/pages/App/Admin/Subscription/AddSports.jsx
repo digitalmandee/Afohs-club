@@ -15,15 +15,12 @@ import {
     ArrowBack as ArrowBackIcon,
     KeyboardArrowDown as KeyboardArrowDownIcon
 } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import SearchIcon from '@mui/icons-material/Search';
 import { router } from '@inertiajs/react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const AddSportsCategory = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     // State for form fields
     const [formData, setFormData] = useState({
         guestName: '',
@@ -52,7 +49,7 @@ const AddSportsCategory = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -60,7 +57,7 @@ const AddSportsCategory = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div style={{
                     fontFamily: 'Arial, sans-serif',
                     padding: '20px',
@@ -332,7 +329,7 @@ const AddSportsCategory = () => {
                         </form>
                     </Paper>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

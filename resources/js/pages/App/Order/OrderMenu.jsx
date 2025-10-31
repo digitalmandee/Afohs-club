@@ -516,5 +516,5 @@ const OrderMenu = () => {
         </>
     );
 };
-
+OrderMenu.layout = (page) => page;
 export default OrderMenu;

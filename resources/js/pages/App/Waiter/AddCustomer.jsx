@@ -261,3 +261,4 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
         </>
     );
 }
+AddWaiter.layout = (page) => page;

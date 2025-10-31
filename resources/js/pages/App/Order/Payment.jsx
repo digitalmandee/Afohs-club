@@ -380,5 +380,5 @@ const PaymentPage = () => {
         </Container>
     );
 };
-
+PaymentPage.layout = (page) => page;
 export default PaymentPage;

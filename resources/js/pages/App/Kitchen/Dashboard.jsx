@@ -798,5 +798,5 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         </>
     );
 };
-
+OrderManagement.layout = (page) => page;
 export default OrderManagement;

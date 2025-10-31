@@ -2,18 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { DayPilot, DayPilotScheduler } from 'daypilot-pro-react';
 import axios from 'axios';
 import moment from 'moment';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const RoomCalendar = () => {
     const schedulerRef = useRef();
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [month, setMonth] = useState(moment().format('MM'));
     const [year, setYear] = useState(moment().format('YYYY'));
     const [resources, setResources] = useState([]);
@@ -125,14 +124,14 @@ const RoomCalendar = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box px={2}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
@@ -169,7 +168,7 @@ const RoomCalendar = () => {
 
                     <DayPilotScheduler ref={schedulerRef} {...dpConfig} style={{ height: '650px' }} />
                 </Box>
-            </div>
+            {/* </div> */}
 
             {/* Check-in Modal */}
             <RoomCheckInModal open={checkInDialogOpen} onClose={handleCloseCheckIn} bookingId={selectedBooking?.id} />

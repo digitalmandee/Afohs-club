@@ -3,18 +3,15 @@ import { router, usePage } from '@inertiajs/react';
 import { MdArrowBackIos } from 'react-icons/md';
 import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box } from '@mui/material';
 import axios from 'axios';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const Management = () => {
     const { props } = usePage();
     const { departments } = props; // comes from Laravel
 
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const [isSaving, setIsSaving] = useState(false);
     const [openDepartment, setOpenDepartment] = useState(false);
@@ -89,7 +86,7 @@ const Management = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -97,7 +94,7 @@ const Management = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box
                     sx={{
                         px: 2,
@@ -171,7 +168,7 @@ const Management = () => {
                         </div>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog} maxWidth="xs" fullWidth>

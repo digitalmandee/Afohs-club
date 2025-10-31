@@ -5,7 +5,6 @@ import { Search, FilterAlt, Add, CalendarMonth } from '@mui/icons-material';
 import { ThemeProvider, createTheme, Box, Typography, FormControl, InputLabel, Select, MenuItem, Popper } from '@mui/material';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { router } from '@inertiajs/react';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import DatePicker from 'react-multi-date-picker';
 import { DateObject } from 'react-multi-date-picker';
 import axios from 'axios';
@@ -16,8 +15,6 @@ import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { addDays, format } from 'date-fns';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const theme = createTheme({
     palette: {
@@ -327,7 +324,7 @@ const numberToWords = (num) => {
 };
 
 const EventBookingDashboard = ({ data, roomTypes }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
@@ -383,14 +380,14 @@ const EventBookingDashboard = ({ data, roomTypes }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <ThemeProvider theme={theme}>
                     <style>{dialogStyles}</style>
                     <Container fluid className="p-4 bg-light">
@@ -735,7 +732,7 @@ const EventBookingDashboard = ({ data, roomTypes }) => {
                         )}
                     </Container>
                 </ThemeProvider>
-            </div>
+            {/* </div> */}
         </>
     );
 };

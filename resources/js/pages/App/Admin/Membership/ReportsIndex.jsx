@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import { 
     Box, 
@@ -28,9 +27,6 @@ import {
     TrendingUp
 } from '@mui/icons-material';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
-
 // Icon mapping
 const iconMap = {
     AttachMoney,
@@ -56,7 +52,7 @@ const ReportsIndex = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -64,7 +60,7 @@ const ReportsIndex = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Header Section */}
                     <Box sx={{ mb: 4 }}>
@@ -196,7 +192,7 @@ const ReportsIndex = () => {
                         })}
                     </Grid>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

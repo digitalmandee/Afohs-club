@@ -9,13 +9,12 @@ import {
     IconButton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const EditRoom = ({ room }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [photoUrl, setPhotoUrl] = useState(room.photo_path ? `/${room.photo_path}` : null);
     const fileInputRef = useRef(null);
 
@@ -134,14 +133,14 @@ const EditRoom = ({ room }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <IconButton
@@ -368,7 +367,7 @@ const EditRoom = ({ room }) => {
                         </Paper>
                     </Box>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

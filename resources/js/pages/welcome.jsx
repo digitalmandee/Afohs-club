@@ -29,3 +29,4 @@ export default function Welcome() {
         </Container>
     );
 }
+Welcome.layout = (page) => page;

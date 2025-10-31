@@ -3,18 +3,15 @@ import { Typography, Button, Card, CardContent, TextField, Table, TableBody, Tab
 import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import SubscriptionFilter from './Filter';
 import SubscriptionCardComponent from './UserCard';
 import MembershipInvoiceSlip from '../Membership/Invoice';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
     // Modal state
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [openFilterModal, setOpenFilterModal] = useState(false);
@@ -24,7 +21,7 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -32,7 +29,7 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
@@ -248,7 +245,7 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                         invoiceId={selectedInvoiceId}
                     />
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

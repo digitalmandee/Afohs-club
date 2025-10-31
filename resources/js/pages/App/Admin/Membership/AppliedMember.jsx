@@ -2,12 +2,9 @@ import React, { useState } from 'react';
 import { Typography, Button, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, InputAdornment, TextField } from '@mui/material';
 import { Search, FilterAlt } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import AppliedMemberForm from './AppliedMemberForm';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) => {
     const [open, setOpen] = useState(true);
@@ -20,7 +17,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
     };
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -28,7 +25,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                     {mode === 'create' || mode === 'edit' ? (
                         <AppliedMemberForm memberData={memberData} />
@@ -143,7 +140,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                         </>
                     )}
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };

@@ -129,5 +129,5 @@ const AmountForm = () => {
         </Paper>
     );
 };
-
+AmountForm.layout = (page) => page;
 export default AmountForm;

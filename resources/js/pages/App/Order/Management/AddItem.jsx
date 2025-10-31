@@ -472,5 +472,5 @@ const popupStyle = {
     border: '1px solid #ccc',
     zIndex: 1000,
 };
-
+AddItems.layout = (page) => page;
 export default AddItems;

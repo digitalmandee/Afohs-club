@@ -1,24 +1,17 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import AddIcon from '@mui/icons-material/Add';
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { useState } from 'react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const Index = ({ tenants }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     padding: '2rem',
                 }}

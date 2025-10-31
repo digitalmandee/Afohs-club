@@ -25,13 +25,10 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { format } from 'date-fns';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 export default function AllPosReports({ allReportsData, tenants, startDate, endDate, grandTotal, filters }) {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
         end_date: filters?.end_date || endDate
@@ -68,14 +65,10 @@ export default function AllPosReports({ allReportsData, tenants, startDate, endD
     return (
         <>
             <Head title="All Restaurants POS Reports" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#f8fafc',
                     minHeight: '100vh',
                 }}
             >

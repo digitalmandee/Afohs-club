@@ -402,3 +402,4 @@ export default function Category({ categoriesList }) {
         </>
     );
 }
+Category.layout = (page) => page;

@@ -2,17 +2,14 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Typography, IconButton, Box, Grid, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddEventMenuCategoryModal from '@/components/App/Events/MenuCategory/AddModal';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const EventMenuCategories = ({ eventMenuCategoriesData }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingMenuCategory, setEditingMenuCategory] = useState(null);
     const [eventMenuCategories, setEventMenuCategories] = useState(eventMenuCategoriesData || []);
@@ -70,12 +67,9 @@ const EventMenuCategories = ({ eventMenuCategoriesData }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     padding: '20px',

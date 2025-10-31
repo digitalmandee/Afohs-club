@@ -159,5 +159,5 @@ const RegularBill = () => {
         </>
     );
 };
-
+RegularBill.layout = (page) => page;
 export default RegularBill;

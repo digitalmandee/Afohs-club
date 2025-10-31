@@ -213,5 +213,5 @@ const QRCodeScreen = () => {
         </Container>
     );
 };
-
+QRCodeScreen.layout = (page) => page;
 export default QRCodeScreen;

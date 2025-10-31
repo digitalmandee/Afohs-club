@@ -4,13 +4,10 @@ import { ArrowBack } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const AddEditSubscriptionCategory = ({ onBack }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const { props } = usePage();
     const csrfToken = props._token;
@@ -87,12 +84,9 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
                     display: 'flex',
                     flexDirection: 'column',

@@ -230,5 +230,5 @@ const OrderHistory = ({ handleBackToProfile }) => {
         </Box>
     );
 };
-
+OrderHistory.layout = (page) => page;
 export default OrderHistory;

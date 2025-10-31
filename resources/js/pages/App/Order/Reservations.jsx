@@ -319,5 +319,5 @@ const Reservations = () => {
         </>
     );
 };
-
+Reservations.layout = (page) => page;
 export default Reservations;

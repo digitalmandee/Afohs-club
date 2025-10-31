@@ -1,4 +1,3 @@
-import SideNav from '@/components/App/AdminSideBar/SideNav';
 import { router } from '@inertiajs/react';
 import AddIcon from '@mui/icons-material/Add';
 import { FaRegEdit } from "react-icons/fa";
@@ -24,11 +23,11 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const DashboardList = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openAddModal, setOpenAddModal] = useState(false);
     const [departmentName, setDepartmentName] = useState('');
 
@@ -67,7 +66,7 @@ const DashboardList = () => {
     ];
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
@@ -75,7 +74,7 @@ const DashboardList = () => {
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
                 }}
-            >
+            > */}
                 <Box
                     sx={{
                         px: 4,
@@ -340,7 +339,7 @@ const DashboardList = () => {
                         </div>
                     </div>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };
