@@ -189,7 +189,7 @@ class DataMigrationController extends Controller
             'membership_date' => $this->validateDate($oldMember->membership_date),
             'full_name' => trim(preg_replace('/\s+/', ' ', $oldMember->title . ' ' . $oldMember->first_name . ' ' . $oldMember->middle_name)),
             'member_category_id' => $memberCategoryId,
-            'member_type_id' => 4,
+            'member_type_id' => 13,
             'classification_id' => $oldMember->mem_classification_id ?? null,
             'card_status' => $this->mapCardStatus($oldMember->card_status ?? null),
             'guardian_name' => $oldMember->father_name ?? null,
@@ -770,21 +770,16 @@ class DataMigrationController extends Controller
         // Extract original filename
         $originalFileName = basename($cleanUrl);
         
-        // Generate new unique filename with timestamp
-        $timestamp = time();
-        $extension = pathinfo($originalFileName, PATHINFO_EXTENSION);
-        $newFileName = $timestamp . '_' . Str::slug(pathinfo($originalFileName, PATHINFO_FILENAME)) . '.' . $extension;
-
         // Map trans_type to new directory structure
         switch ($transType) {
             case 3: // Member profile photos
-                return '/tenants/default/membership/' . $newFileName;
+                return '/tenants/default/membership/' . $originalFileName;
             case 90: // Member documents
-                return '/tenants/default/member_documents/' . $newFileName;
+                return '/tenants/default/member_documents/' . $originalFileName;
             case 100: // Family member profile photos
-                return '/tenants/default/familymembers/' . $newFileName;
+                return '/tenants/default/familymembers/' . $originalFileName;
             default:
-                return '/tenants/default/media/' . $newFileName;
+                return '/tenants/default/media/' . $originalFileName;
         }
     }
 
