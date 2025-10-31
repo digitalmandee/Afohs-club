@@ -45,8 +45,6 @@ const LeaveApplication = () => {
 				params.date = dateValue.format('YYYY-MM-DD');
 			}
 			
-			console.log('Fetching with params:', params); // Debug log
-			
 			const res = await axios.get('/api/employees/leaves/applications', { params });
 			
 			if (res.data.success) {

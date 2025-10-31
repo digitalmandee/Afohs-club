@@ -61,6 +61,7 @@ Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name(
 Route::middleware(['auth:web', 'verified'])->group(function () {
     // admin dashboard routes
     Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard')->middleware('super.admin:dashboard.view');
+    Route::get('dashboard/print', [AdminController::class, 'printDashboard'])->name('dashboard.print')->middleware('super.admin:dashboard.view');
 
     // Employeee Management
     Route::prefix('admin/employees')->middleware('super.admin:employees.view')->group(function () {
@@ -519,6 +520,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     
     Route::prefix('api')->group(function () {
+        // Dashboard Stats API
+        Route::get('dashboard/stats', [AdminController::class, 'getDashboardStats'])->name('api.dashboard.stats');
+
         Route::resource('departments', EmployeeDepartmentController::class)->except(['create', 'show', 'edit']);
         // Replace index with your own custom function
         Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll');
