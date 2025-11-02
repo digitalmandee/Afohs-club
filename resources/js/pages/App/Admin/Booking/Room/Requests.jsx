@@ -26,15 +26,14 @@ const BookingRequests = () => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight:'100vh',
+                    backgroundColor:'#f5f5f5',
                 }}
-            > */}
+            >
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between">
                         <div className="d-flex align-items-center">
@@ -55,7 +54,7 @@ const BookingRequests = () => {
                         </Button>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
@@ -98,7 +97,7 @@ const BookingRequests = () => {
                         </Table>
                     </TableContainer>
                 </Box>
-            {/* </div> */}
+            </div>
         </>
     );
 };

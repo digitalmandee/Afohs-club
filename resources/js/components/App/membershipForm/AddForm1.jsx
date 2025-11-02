@@ -74,7 +74,8 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
-                <IconButton sx={{ color: '#000' }}>
+                <IconButton sx={{ color: '#000' }}
+                onClick={()=>window.history.back()}>
                     <ArrowBack />
                 </IconButton>
                 <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>
@@ -220,11 +221,11 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         Click upload to profile picture (4 MB max)
                                     </Typography>
                                     {showImageButtons && (
-                                        <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                                            <Button size="small" variant="outlined" startIcon={<Edit />} onClick={handleChangeImage} sx={{ textTransform: 'none', borderColor: '#ccc', color: '#333' }}>
+                                        <Box sx={{ mt: 1, display: 'flex', alignItems:'center', gap: 1 }}>
+                                            <Button size="small" startIcon={<Edit />} onClick={handleChangeImage} sx={{ textTransform: 'none', borderColor: '#ccc', color: '#333' }}>
                                                 Change
                                             </Button>
-                                            <Button size="small" variant="outlined" color="error" startIcon={<Delete />} onClick={handleDeleteImage} sx={{ textTransform: 'none' }}>
+                                            <Button size="small" color="error" startIcon={<Delete />} onClick={handleDeleteImage} sx={{ textTransform: 'none' }}>
                                                 Delete
                                             </Button>
                                         </Box>

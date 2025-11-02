@@ -882,7 +882,7 @@ export default function BulkMigration() {
                     // marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     // transition: 'margin-left 0.3s ease-in-out',
                     // marginTop: '5rem',
-                    // backgroundColor: '#f8fafc',
+                    backgroundColor: '#f5f5f5',
                     minHeight: '100vh',
                 }}
             >

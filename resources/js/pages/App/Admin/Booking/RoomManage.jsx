@@ -212,7 +212,7 @@ const RoomScreen = ({ bookings }) => {
 
                         {/* TODO: Updated to use filteredBookings from data.bookings */}
 
-                        <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none' }}>
+                        <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>

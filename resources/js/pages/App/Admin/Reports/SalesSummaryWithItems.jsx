@@ -69,6 +69,7 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
             <div
                 style={{
                     minHeight: '100vh',
+                    backgroundColor:"#f5f5f5"
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -142,7 +143,7 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                         <Grid item xs={12} md={3}>
                             <Card>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+                                    <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
                                         {salesData?.length || 0}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">
@@ -154,7 +155,7 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                         <Grid item xs={12} md={3}>
                             <Card>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
+                                    <Typography variant="h6" color="info.main" sx={{ fontWeight: 'bold' }}>
                                         {grandTotalQty}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">
@@ -166,7 +167,7 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                         <Grid item xs={12} md={3}>
                             <Card>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
+                                    <Typography variant="h6" color="warning.main" sx={{ fontWeight: 'bold' }}>
                                         {formatCurrency(grandTotalDiscount)}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">
@@ -178,7 +179,7 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                         <Grid item xs={12} md={3}>
                             <Card>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
+                                    <Typography variant="h6" color="success.main" sx={{ fontWeight: 'bold' }}>
                                         {formatCurrency(grandTotalSale)}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">

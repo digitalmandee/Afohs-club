@@ -70,6 +70,7 @@ export default function AllPosReports({ allReportsData, tenants, startDate, endD
             <div
                 style={{
                     minHeight: '100vh',
+                    backgroundColor:'#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -140,7 +141,7 @@ export default function AllPosReports({ allReportsData, tenants, startDate, endD
                     <Grid item xs={12} md={3}>
                         <Card>
                             <CardContent sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+                                <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
                                     {grandTotal}
                                 </Typography>
                                 <Typography variant="body1" color="text.secondary">
@@ -152,7 +153,7 @@ export default function AllPosReports({ allReportsData, tenants, startDate, endD
                     <Grid item xs={12} md={3}>
                         <Card>
                             <CardContent sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
+                                <Typography variant="h6" color="success.main" sx={{ fontWeight: 'bold' }}>
                                     {allReportsData.length}
                                 </Typography>
                                 <Typography variant="body1" color="text.secondary">
@@ -164,7 +165,7 @@ export default function AllPosReports({ allReportsData, tenants, startDate, endD
                     <Grid item xs={12} md={3}>
                         <Card>
                             <CardContent sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
+                                <Typography variant="h6" color="info.main" sx={{ fontWeight: 'bold' }}>
                                     {tenants.length}
                                 </Typography>
                                 <Typography variant="body1" color="text.secondary">

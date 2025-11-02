@@ -120,14 +120,13 @@ const EventsCompleted = ({ bookings, filters = {} }) => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight:'100vh',
+                    backgroundColor:'#f5f5f5'
                 }}
-            > */}
+            >
                 <ThemeProvider theme={theme}>
                     <Container fluid className="p-4 bg-light">
                         {/* Header */}
@@ -365,7 +364,7 @@ const EventsCompleted = ({ bookings, filters = {} }) => {
                     {/* Event Booking Invoice Modal */}
                     <EventBookingInvoiceModal open={showInvoiceModal} onClose={handleCloseInvoice} bookingId={selectedBookingId} setBookings={handleBookingUpdate} />
                 </ThemeProvider>
-            {/* </div> */}
+            </div>
         </>
     );
 };

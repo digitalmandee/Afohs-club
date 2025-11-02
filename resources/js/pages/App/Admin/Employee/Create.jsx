@@ -78,15 +78,13 @@ const EmployeeCreate = () => {
     };
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
+                    minHeight:'100vh',
+                    backgroundColor: '#f5f5f5',
                 }}
-            > */}
+            >
                 <Box
                     sx={{
                         px: 2,
@@ -291,7 +289,7 @@ const EmployeeCreate = () => {
                         </Box>
                     </Paper>
                 </Box>
-            {/* </div> */}
+            </div>
         </>
     );
 };

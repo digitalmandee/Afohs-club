@@ -43,7 +43,8 @@ const Password = () => {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    minHeight: '80vh',
+                    minHeight: '100vh',
+                    backgroundColor:'#f5f5f5'
                 }}
             >
                 <Container style={{ maxWidth: '600px', padding: '2rem' }}>

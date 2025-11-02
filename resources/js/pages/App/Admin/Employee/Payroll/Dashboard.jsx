@@ -52,15 +52,13 @@ const PayrollDashboard = () => {
     ];
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
+                    minHeight:'100vh',
+                    backgroundColor: '#f5f5f5',
                 }}
-            > */}
+            >
                 <Box
                     sx={{
                         px: 4,
@@ -89,11 +87,11 @@ const PayrollDashboard = () => {
                             </Typography>
 
                             {/* Right-side buttons container */}
-                            <div style={{ display: 'flex', gap: '20px' }}>
+                            <div style={{ display: 'flex', gap: '20px', height:"40px" }}>
                                 <Button
                                     style={{
                                         color: '#063455',
-                                        width: '160px',
+                                        // width: '160px',
                                         backgroundColor: '#FFFFFF',
                                         textTransform: 'none',
                                         border: '1px solid #7F7F7F',
@@ -139,7 +137,7 @@ const PayrollDashboard = () => {
                                 <div
                                     key={index}
                                     style={{
-                                        flex: '0 0 calc(33.77% - 1rem)',
+                                        flex: '0 0 calc(33.71% - 1rem)',
                                         boxSizing: 'border-box',
                                     }}
                                 >
@@ -299,7 +297,7 @@ const PayrollDashboard = () => {
                         </div>
                     </div>
                 </Box>
-            {/* </div> */}
+            </div>
         </>
     );
 };

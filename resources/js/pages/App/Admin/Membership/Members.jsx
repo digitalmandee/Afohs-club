@@ -94,7 +94,7 @@ const AllMembers = ({ members }) => {
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-                <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+                <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden', }}>
                     {/* Recently Joined Section */}
                     <div className="mx-3">
                         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -105,7 +105,7 @@ const AllMembers = ({ members }) => {
                         <MembershipDashboardFilter />
 
                         {/* Members Table */}
-                        <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX:'auto' }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>

@@ -60,13 +60,8 @@ export default function Billing({ settings }) {
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
-            <div
-                style={{
-                    minHeight: '100vh',
-                    padding: '2rem',
-                }}
-            >
-                <Box p={2} maxWidth="800px" backgroundColor="#fff" mx="auto">
+            <div style={{minHeight:'100vh', backgroundColor:'#f5f5f5'}}>
+                <Box p={2} maxWidth="800px" mx="auto">
                     <Typography variant="h5" marginBottom={4} gutterBottom>
                         Billing Settings
                     </Typography>

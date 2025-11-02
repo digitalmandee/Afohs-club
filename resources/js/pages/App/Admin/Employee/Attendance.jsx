@@ -228,6 +228,7 @@ const AttendanceDashboard = () => {
                                     boxShadow: 'none',
                                     border: '1px solid #ccc',
                                     marginBottom: '24px',
+                                    overflowX: 'auto',
                                 }}
                             >
                                 <Table>

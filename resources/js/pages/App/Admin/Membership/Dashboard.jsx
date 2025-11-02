@@ -67,7 +67,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-                <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+                <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden', }}>
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
@@ -137,7 +137,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                             <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
                         </div>
                         {/* Members Table */}
-                        <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>

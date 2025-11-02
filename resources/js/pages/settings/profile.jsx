@@ -26,11 +26,7 @@ const Profile = ({ mustVerifyEmail, status }) => {
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
-            <div
-                style={{
-                    padding: '24px',
-                }}
-            >
+            <div style={{minHeight:'100vh', backgroundColor:'#F9F9F9', paddingTop:"1rem"}}>
                 <div style={{ maxWidth: '768px', margin: '0 auto' }}>
                     <Row className="align-items-center mb-4">
                         <Col>

@@ -74,7 +74,7 @@ const MembersType = ({ memberTypesData }) => {
                     // marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     // transition: 'margin-left 0.3s ease-in-out',
                     // marginTop: '5rem',
-                    // backgroundColor: '#F6F6F6',
+                    backgroundColor: '#f5f5f5',
                     minHeight: '100vh',
                     padding: '20px',
                 }}

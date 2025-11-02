@@ -71,6 +71,7 @@ const EventMenuAddons = ({ eventMenuAddOnsData }) => {
             <Box
                 sx={{
                     minHeight: '100vh',
+                    backgroundColor:'#f5f5f5',
                     padding: '20px',
                 }}
             >
