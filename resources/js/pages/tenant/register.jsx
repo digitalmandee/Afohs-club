@@ -68,9 +68,8 @@ const Register = ({ tenant }) => {
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        minHeight: '100vh',
-                        paddingTop: '5rem',
-                        paddingBottom: '2rem',
+                        backgroundColor:'#f5f5f5',
+                        minHeight:'100vh'
                     }}
                 >
                     <Container style={{ maxWidth: '700px', width: '100%' }}>

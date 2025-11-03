@@ -63,7 +63,7 @@ const CardsDashboard = ({ members, total_active_members, total_active_family_mem
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-                <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+                <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX:'hidden' }}>
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
@@ -316,7 +316,7 @@ const CardsDashboard = ({ members, total_active_members, total_active_family_mem
                         )}
 
                         {/* Members Table */}
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', position: 'relative' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', position: 'relative' }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>

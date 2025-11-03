@@ -102,15 +102,13 @@ const LeaveApplication = () => {
 
 	return (
 		<>
-			{/* <SideNav open={open} setOpen={setOpen} />
+			{/* <SideNav open={open} setOpen={setOpen} /> */}
 			<div
 				style={{
-					marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-					transition: 'margin-left 0.3s ease-in-out',
-					marginTop: '5rem',
-					backgroundColor: '#F6F6F6',
+					minHeight: '100vh',
+					backgroundColor: '#f5f5f5',
 				}}
-			> */}
+			>
 				<Box sx={{ px: 2, py: 2 }}>
 					<div style={{ paddingTop: '1rem' }}>
 						{/* Header */}
@@ -264,31 +262,55 @@ const LeaveApplication = () => {
 													{application.status}
 												</span>
 											</TableCell>
-											<TableCell>
-												<IconButton size="small" onClick={() => router.visit(route('employees.leaves.application.edit', application.id))}>
-													<EditIcon fontSize="small" />
-												</IconButton>
+										</TableRow>
+									) : applications.length > 0 ? (
+										applications.map((application) => (
+											<TableRow key={application.id}>
+												<TableCell>{application.id}</TableCell>
+												<TableCell>{application.employee?.user?.name}</TableCell>
+												<TableCell>{application.start_date}</TableCell>
+												<TableCell>{application.end_date}</TableCell>
+												<TableCell>{application.number_of_days}</TableCell>
+												<TableCell>{application.leave_category.name}</TableCell>
+												<TableCell>{dayjs(application.created_at).format("YYYY-MM-DD")}</TableCell>
+												<TableCell>
+													<span
+														style={{
+															backgroundColor: application.status === 'approved' ? '#063455' : application.status === 'pending' ? '#FFA726' : '#F44336',
+															color: 'white',
+															padding: '4px 12px',
+															borderRadius: '50px',
+															textTransform: 'capitalize',
+															display: 'inline-block',
+														}}>
+														{application.status}
+													</span>
+												</TableCell>
+												<TableCell>
+													<IconButton size="small" onClick={() => router.visit(route('employees.leaves.application.edit', application.id))}>
+														<EditIcon fontSize="small" />
+													</IconButton>
+												</TableCell>
+											</TableRow>
+										))
+									) : (
+										<TableRow>
+											<TableCell colSpan={9} align="center">
+												No applications found.
 											</TableCell>
 										</TableRow>
-									))
-								) : (
-									<TableRow>
-										<TableCell colSpan={9} align="center">
-											No applications found.
-										</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
-						</Table>
-					</TableContainer>
+									)}
+								</TableBody>
+							</Table>
+						</TableContainer>
 
-					{/* Pagination */}
-					<div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-						<Pagination count={totalPages} page={currentPage} onChange={(e, page) => setCurrentPage(page)} shape="rounded" />
-					</div>
+						{/* Pagination */}
+						<div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+							<Pagination count={totalPages} page={currentPage} onChange={(e, page) => setCurrentPage(page)} shape="rounded" />
+						</div>
 					</div>
 				</Box>
-			{/* </div> */}
+			</div>
 
 		</>
 	);

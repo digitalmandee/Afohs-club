@@ -115,15 +115,13 @@ const Management = () => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight: '100vh',
                     backgroundColor: '#F6F6F6',
                 }}
-            > */}
+            >
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
                         {/* Header */}
@@ -152,7 +150,7 @@ const Management = () => {
                         <div style={{ display: 'flex', width: '90%', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>{categories.length > 0 && categories.map((category, index) => <LeaveCard key={index} data={category} />)}</div>
                     </div>
                 </Box>
-            {/* </div> */}
+            </div>
             <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
                 <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
                     {snackbar.message}

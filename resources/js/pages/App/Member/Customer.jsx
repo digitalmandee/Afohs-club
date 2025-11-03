@@ -115,12 +115,9 @@ const CustomerDashboard = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
-                style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                style={{minHeight:'100vh', backgroundColor:'#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 3, bgcolor: '#f5f7fa', minHeight: '100vh' }}>

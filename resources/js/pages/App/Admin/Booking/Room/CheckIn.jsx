@@ -60,15 +60,13 @@ const RoomCheckIn = ({ bookings, filters }) => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
-                style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                style={{minHeight:'100vh',
+                    backgroundColor:'#f5f5f5',
                 }}
-            > */}
+            >
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Typography
@@ -169,7 +167,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                         </Box>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
@@ -236,7 +234,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                         ))}
                     </Box>
                 </Box>
-            {/* </div> */}
+            </div>
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
         </>

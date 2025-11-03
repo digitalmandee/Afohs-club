@@ -48,14 +48,11 @@ const ManageCustomer = ({ customerData }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
-            <Box
-                sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
+            <div
+                style={{
                     minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
                     padding: '20px',
                 }}
             >
@@ -110,7 +107,7 @@ const ManageCustomer = ({ customerData }) => {
                         </TableBody>
                     </Table>
                 </TableContainer>
-            </Box>
+            </div>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onClose={cancelDelete} aria-labelledby="delete-dialog-title">

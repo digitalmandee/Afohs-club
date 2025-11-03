@@ -57,12 +57,13 @@ const ManageCustomer = ({ customerData }) => {
             <Box
                 sx={{
                     minHeight: '100vh',
+                    backgroundColor:'#f5f5f5',
                     padding: '20px',
                 }}
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('dashboard'))}>
-                        <IconButton>
+                        <IconButton onClick={()=>window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#555' }} />
                         </IconButton>
                         <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
@@ -74,7 +75,7 @@ const ManageCustomer = ({ customerData }) => {
                     </Button>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>

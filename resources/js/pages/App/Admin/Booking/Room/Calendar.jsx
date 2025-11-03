@@ -124,14 +124,13 @@ const RoomCalendar = () => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight:'100vh',
+                    backgroundColor:'#f5f5f5'
                 }}
-            > */}
+            >
                 <Box px={2}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
@@ -168,7 +167,7 @@ const RoomCalendar = () => {
 
                     <DayPilotScheduler ref={schedulerRef} {...dpConfig} style={{ height: '650px' }} />
                 </Box>
-            {/* </div> */}
+            </div>
 
             {/* Check-in Modal */}
             <RoomCheckInModal open={checkInDialogOpen} onClose={handleCloseCheckIn} bookingId={selectedBooking?.id} />

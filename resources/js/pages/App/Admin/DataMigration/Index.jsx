@@ -175,12 +175,10 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         return (
             <AdminLayout>
                 <Head title="Data Migration" />
-                <Box sx={{ p: 3 }}>
                     <Typography variant="h4" gutterBottom>
                         Data Migration
                     </Typography>
                     <Alert severity="error">{stats.error || 'Old tables (memberships, mem_families) not found in database'}</Alert>
-                </Box>
             </AdminLayout>
         );
     }
@@ -188,7 +186,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     return (
         <AdminLayout>
             <Head title="Data Migration" />
-            <Box sx={{ p: 3, pt:10 }}>
+            <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography variant="h4">Data Migration Dashboard</Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>

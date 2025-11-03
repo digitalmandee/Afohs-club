@@ -89,6 +89,7 @@ export default function DailySalesListCashierWise({
             <div
                 style={{
                     minHeight: '100vh',
+                    backgroundColor:'#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 3 }}>

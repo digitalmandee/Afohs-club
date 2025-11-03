@@ -86,15 +86,13 @@ const Management = () => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight:'100vh',
                     backgroundColor: '#F6F6F6',
                 }}
-            > */}
+            >
                 <Box
                     sx={{
                         px: 2,
@@ -168,7 +166,7 @@ const Management = () => {
                         </div>
                     </div>
                 </Box>
-            {/* </div> */}
+            </div>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog} maxWidth="xs" fullWidth>

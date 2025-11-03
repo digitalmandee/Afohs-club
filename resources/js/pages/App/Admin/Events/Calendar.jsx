@@ -324,14 +324,13 @@ const EventCalendar = () => {
 
     return (
         <>
-            {/* <SideNav open={open} toggleDrawer={toggleDrawer} />
+            {/* <SideNav open={open} toggleDrawer={toggleDrawer} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight:'100vh',
+                    backgroundColor:'#f5f5f5'
                 }}
-            > */}
+            >
                 <Box sx={{ p: 2 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -494,7 +493,7 @@ const EventCalendar = () => {
                         </Modal.Footer>
                     </Modal>
                 </Box>
-            {/* </div> */}
+            </div>
         </>
     );
 };

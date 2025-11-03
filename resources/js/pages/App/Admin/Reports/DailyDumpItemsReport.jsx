@@ -78,6 +78,8 @@ export default function DailyDumpItemsReport({
             <div
                 style={{
                     minHeight: '100vh',
+                    backgroundColor:'#f5f5f5',
+                    overflowX:'hidden'
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -195,7 +197,7 @@ export default function DailyDumpItemsReport({
                         <Divider sx={{ mb: 3 }} />
 
                         {dumpItemsData && Array.isArray(dumpItemsData) && dumpItemsData.length > 0 ? (
-                            <TableContainer component={Paper} elevation={1}>
+                            <TableContainer component={Paper} elevation={1} style={{overflowX:'auto'}}>
                                 <Table size="small">
                                     <TableHead>
                                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>

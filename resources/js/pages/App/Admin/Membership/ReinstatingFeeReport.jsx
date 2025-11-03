@@ -147,7 +147,7 @@ const ReinstatingFeeReport = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-                <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+                <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX:'hidden' }}>
                     {/* Top Bar */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <div className="d-flex align-items-center">
@@ -361,7 +361,7 @@ const ReinstatingFeeReport = () => {
                     {/* Reinstating Fee Table */}
                     <Box sx={{ mb: 3 }}>
                         <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>Reinstating Fee List</Typography>
-                        <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                        <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, overflowX:'auto' }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#063455' }}>

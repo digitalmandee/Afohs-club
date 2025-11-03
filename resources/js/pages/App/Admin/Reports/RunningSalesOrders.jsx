@@ -79,6 +79,7 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
             <div
                 style={{
                     minHeight: '100vh',
+                    backgroundColor:'#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -129,7 +130,7 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                         <Grid item xs={12} md={4}>
                             <Card>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+                                    <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
                                         {totalOrders}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">
@@ -141,7 +142,7 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                         <Grid item xs={12} md={4}>
                             <Card>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
+                                    <Typography variant="h6" color="success.main" sx={{ fontWeight: 'bold' }}>
                                         {formatCurrency(totalAmount)}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">
@@ -153,7 +154,7 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                         <Grid item xs={12} md={4}>
                             <Card>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <AccessTimeIcon sx={{ fontSize: 40, color: '#0a3d62', mb: 1 }} />
+                                    <AccessTimeIcon sx={{ fontSize: 25, color: '#0a3d62', mb:1 }} />
                                     <Typography variant="body1" color="text.secondary">
                                         Live Report
                                     </Typography>
