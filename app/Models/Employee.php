@@ -34,6 +34,6 @@ class Employee extends BaseModel
 
     public function leaveApplications()
     {
-        return $this->hasMany(LeaveApplication::class);
+        return $this->hasMany(LeaveApplication::class, 'employee_id', 'id');
     }
 }

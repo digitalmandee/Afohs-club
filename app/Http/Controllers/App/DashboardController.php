@@ -107,8 +107,8 @@ class DashboardController extends Controller
         $days = [];
 
         foreach ($period as $date) {
-            $ordersCount = Order::where('order_type', 'reservation')
-                ->whereDate('start_date', $date->toDateString())
+            // Count reservations from Reservation table
+            $ordersCount = Reservation::whereDate('date', $date->toDateString())
                 ->count();
 
             $days[] = [
@@ -130,7 +130,14 @@ class DashboardController extends Controller
         $date = $request->query('date') ?: date('Y-m-d');
         $limit = $request->query('limit');
 
-        $orders = Reservation::whereDate('date', $date)->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->limit($limit)->get();
+        $orders = Reservation::whereDate('date', $date)
+            ->with([
+                'member:id,full_name,membership_no,mobile_number_a',
+                'customer:id,name,contact',
+                'table:id,table_no'
+            ])
+            ->limit($limit)
+            ->get();
 
         return response()->json(['success' => true, 'orders' => $orders]);
     }
@@ -142,7 +149,7 @@ class DashboardController extends Controller
         $order_type = $request->query('order_type');
 
         if (empty($order_type) || $order_type === 'all') {
-            $orders = Order::whereDate('start_date', $date)->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->withCount([
+            $orders = Order::whereDate('start_date', $date)->with(['member:id,full_name,membership_no', 'table:id,table_no'])->withCount([
                 'orderItems AS completed_order_items_count' => function ($query) {
                     $query->where('order_items.status', 'completed');
                 }
@@ -157,7 +164,7 @@ class DashboardController extends Controller
                 $query->where('order_type', $order_type);
             }
             
-            $orders = $query->with(['member:id,user_id,full_name,membership_no', 'table:id,table_no'])->withCount([
+            $orders = $query->with(['member:id,full_name,membership_no', 'table:id,table_no'])->withCount([
                 'orderItems AS completed_order_items_count' => function ($query) {
                     $query->where('order_items.status', 'completed');
                 }

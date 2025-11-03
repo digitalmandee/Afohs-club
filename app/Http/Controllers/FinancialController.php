@@ -67,7 +67,7 @@ class FinancialController extends Controller
 
         // Food Revenue
         $foodRevenue = FinancialInvoice::where('status', 'paid')
-            ->where('invoice_type', 'food')
+            ->where('invoice_type', 'food_order')
             ->sum('total_price');
 
         // Total Revenue (All Sources)

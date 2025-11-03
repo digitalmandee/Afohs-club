@@ -38,7 +38,7 @@ class LeaveCategoryController extends Controller
 
     public function getAll(Request $request)
     {
-        $leaveCategories = LeaveCategory::where('status', 'published')->select('id', 'name')->orderByDesc('created_at')->get();
+        $leaveCategories = LeaveCategory::where('status', 'published')->select('id','color', 'name')->orderByDesc('created_at')->get();
 
         return response()->json(['success' => true, 'categories' => $leaveCategories]);
     }

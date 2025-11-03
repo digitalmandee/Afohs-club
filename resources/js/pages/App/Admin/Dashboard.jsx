@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Box, Typography, Card, CardContent, Grid, Button, TextField, InputAdornment, MenuItem, List, ListItem, ListItemText, Divider } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Card, CardContent, Grid, Button, TextField, InputAdornment, MenuItem, List, ListItem, ListItemText, Divider, CircularProgress } from '@mui/material';
 import { CalendarToday as CalendarIcon, Print as PrintIcon, People as PeopleIcon, ShoppingBag as ShoppingBagIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import usePermission from '@/hooks/usePermission';
+import axios from 'axios';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -21,22 +22,44 @@ const Dashboard = () => {
     const [selectedMonth, setSelectedMonth] = useState(`${currentMonth}-${currentYear}`);
     const [revenueType, setRevenueType] = useState('Revenue');
     const [chartYear, setChartYear] = useState('2025');
+    const [isLoading, setIsLoading] = useState(true);
+    const [stats, setStats] = useState({
+        totalRevenue: 0,
+        totalProfit: 0,
+        totalBookings: 0,
+        totalRoomBookings: 0,
+        totalEventBookings: 0,
+        totalMembers: 0,
+        totalCustomers: 0,
+        totalEmployees: 0,
+        totalProductOrders: 0,
+        totalSubscriptionOrders: 0,
+    });
+    const [chartData, setChartData] = useState([]);
 
-    // Chart data
-    const chartData = [
-        { name: 'Jan', income: 800, expenses: 500, profit: 300 },
-        { name: 'Feb', income: 1000, expenses: 600, profit: 400 },
-        { name: 'Mar', income: 900, expenses: 500, profit: 400 },
-        { name: 'Apr', income: 1100, expenses: 600, profit: 500 },
-        { name: 'May', income: 1200, expenses: 700, profit: 500 },
-        { name: 'Jun', income: 1000, expenses: 600, profit: 400 },
-        { name: 'Jul', income: 900, expenses: 500, profit: 400 },
-        { name: 'Aug', income: 1300, expenses: 700, profit: 600 },
-        { name: 'Sep', income: 800, expenses: 500, profit: 300 },
-        { name: 'Oct', income: 1000, expenses: 600, profit: 400 },
-        { name: 'Nov', income: 1100, expenses: 600, profit: 500 },
-        { name: 'Dec', income: 1300, expenses: 700, profit: 600 },
-    ];
+    // Fetch dashboard stats
+    const fetchDashboardStats = async () => {
+        setIsLoading(true);
+        try {
+            const params = {
+                month: selectedMonth,
+                year: chartYear,
+            };
+            const res = await axios.get('/api/dashboard/stats', { params });
+            if (res.data.success) {
+                setStats(res.data.stats);
+                setChartData(res.data.chartData);
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDashboardStats();
+    }, [selectedMonth, chartYear]);
 
     // Recent activity data
     const recentActivities = [
@@ -49,6 +72,20 @@ const Dashboard = () => {
         { text: 'New package created "Summer Fitness 2025"', time: '3 hour ago' },
         { text: 'Family member added under waleed khan subscription', time: '5 hour ago' },
     ];
+
+    // Format currency
+    const formatCurrency = (amount) => {
+        return `Rs ${amount.toLocaleString()}`;
+    };
+
+    // Print function - opens print route in new window
+    const handlePrint = () => {
+        const params = new URLSearchParams({
+            month: selectedMonth,
+            year: chartYear,
+        });
+        window.open(`/dashboard/print?${params.toString()}`, '_blank');
+    };
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
@@ -99,9 +136,10 @@ const Dashboard = () => {
                             <Button
                                 variant="contained"
                                 startIcon={<PrintIcon />}
+                                onClick={handlePrint}
                                 sx={{
                                     bgcolor: '#063455',
-                                    '&:hover': { bgcolor: '#063455' },
+                                    '&:hover': { bgcolor: '#052d45' },
                                     textTransform: 'none',
                                     borderRadius: '4px',
                                 }}
@@ -138,7 +176,9 @@ const Dashboard = () => {
                                                 {/* Total Revenue */}
                                                 <Box sx={{ flex: 1, textAlign: 'flex-start' }}>
                                                     <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Revenue</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 0</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>
+                                                        {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : formatCurrency(stats.totalRevenue)}
+                                                    </Typography>
                                                 </Box>
 
                                                 {/* Divider */}
@@ -147,7 +187,9 @@ const Dashboard = () => {
                                                 {/* Total Profit */}
                                                 <Box sx={{ flex: 1, textAlign: 'right' }}>
                                                     <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Profit</Typography>
-                                                    <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>Rs 0</Typography>
+                                                    <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>
+                                                        {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : formatCurrency(stats.totalProfit)}
+                                                    </Typography>
                                                 </Box>
                                             </CardContent>
                                         </Card>
@@ -189,18 +231,24 @@ const Dashboard = () => {
                                                     </Box>
                                                     <Box>
                                                         <Typography sx={{ fontSize: '14px', fontWeight: 400, color: '#C6C6C6' }}>Total Booking</Typography>
-                                                        <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>0</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>
+                                                            {isLoading ? <CircularProgress size={16} sx={{ color: 'white' }} /> : stats.totalBookings}
+                                                        </Typography>
                                                     </Box>
                                                 </Box>
                                                 <Divider orientation="horizontal" flexItem sx={{ bgcolor: '#7F7F7F', height: '2px' }} />
                                                 <Box sx={{ display: 'flex', mt: 2 }}>
                                                     <Box sx={{ flex: 1 }}>
                                                         <Typography sx={{ fontWeight: 400, fontSize: '12px', color: '#C6C6C6' }}>Room Booking</Typography>
-                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>
+                                                            {isLoading ? <CircularProgress size={14} sx={{ color: 'white' }} /> : stats.totalRoomBookings}
+                                                        </Typography>
                                                     </Box>
                                                     <Box sx={{ flex: 1 }}>
                                                         <Typography sx={{ fontWeight: 400, fontSize: '12px', color: '#C6C6C6' }}>Event Booking</Typography>
-                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>
+                                                            {isLoading ? <CircularProgress size={14} sx={{ color: 'white' }} /> : stats.totalEventBookings}
+                                                        </Typography>
                                                     </Box>
                                                 </Box>
                                             </CardContent>
@@ -237,18 +285,24 @@ const Dashboard = () => {
                                                     </Box>
                                                     <Box>
                                                         <Typography sx={{ color: '#C6C6C6', fontSize: '14px', fontWeight: 400 }}>Total Members</Typography>
-                                                        <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>0</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF' }}>
+                                                            {isLoading ? <CircularProgress size={16} sx={{ color: 'white' }} /> : stats.totalMembers}
+                                                        </Typography>
                                                     </Box>
                                                 </Box>
                                                 <Divider orientation="horizontal" flexItem sx={{ bgcolor: '#7F7F7F', height: '2px' }} />
                                                 <Box sx={{ display: 'flex', mt: 2 }}>
                                                     <Box sx={{ flex: 1 }}>
                                                         <Typography sx={{ color: '#C6C6C6', fontSize: '12px', fontWeight: 400 }}>Total Customer</Typography>
-                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>
+                                                            {isLoading ? <CircularProgress size={14} sx={{ color: 'white' }} /> : stats.totalCustomers}
+                                                        </Typography>
                                                     </Box>
                                                     <Box sx={{ flex: 1 }}>
                                                         <Typography sx={{ color: '#C6C6C6', fontSize: '12px', fontWeight: 400 }}>Total Employee</Typography>
-                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>0</Typography>
+                                                        <Typography sx={{ fontWeight: 500, fontSize: '18px', color: '#FFFFFF' }}>
+                                                            {isLoading ? <CircularProgress size={14} sx={{ color: 'white' }} /> : stats.totalEmployees}
+                                                        </Typography>
                                                     </Box>
                                                 </Box>
                                             </CardContent>
@@ -294,7 +348,9 @@ const Dashboard = () => {
 
                                                 {/* Text Content */}
                                                 <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', mb: 1 }}>Total Product Order</Typography>
-                                                <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>0</Typography>
+                                                <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>
+                                                    {isLoading ? <CircularProgress size={16} sx={{ color: 'white' }} /> : stats.totalProductOrders}
+                                                </Typography>
                                                 <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', display: 'inline', ml: 1 }}>Items</Typography>
                                             </CardContent>
                                         </Card>
@@ -332,7 +388,9 @@ const Dashboard = () => {
 
                                                 {/* Text Content */}
                                                 <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', mb: 1 }}>Total Subscription Order</Typography>
-                                                <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>0</Typography>
+                                                <Typography sx={{ fontWeight: 500, fontSize: '20px', color: '#FFFFFF', display: 'inline' }}>
+                                                    {isLoading ? <CircularProgress size={16} sx={{ color: 'white' }} /> : stats.totalSubscriptionOrders}
+                                                </Typography>
                                                 <Typography sx={{ color: '#C6C6C6', fontWeight: 400, fontSize: '14px', display: 'inline', ml: 1 }}>Order</Typography>
                                             </CardContent>
                                         </Card>

@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.10.1",
         "mike42/escpos-php": "^4.0",
         "predis/predis": "^3.0",
+        "rats/zkteco": "^002.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^6.17",
         "stancl/tenancy": "^3.9",

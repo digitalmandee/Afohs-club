@@ -29,9 +29,7 @@ Route::group([
 
     // Tenant auth-protected routes
     Route::middleware([AuthenticateTenant::class, 'auth:tenant'])->group(function () {
-        // Route::group(['middleware' => ['check.web:,dashboard']], function () {
-            Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
-        // });
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
 
         // All Orders
         Route::get('/order/all', [DashboardController::class, 'allOrders'])->name('order.all');
@@ -50,7 +48,7 @@ Route::group([
 
         // Members
         Route::resource('customers', CustomerController::class)->except(['show']);
-        
+
         Route::get('/members', [MembersController::class, 'index'])->name('members.index');
 
         // Waiter Dashboard

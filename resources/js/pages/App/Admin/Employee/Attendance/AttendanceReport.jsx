@@ -269,7 +269,7 @@ const AttendanceReport = () => {
 								<tbody>
 									{isLoading ? (
 										<tr>
-											<td className="py-2 text-center" colSpan={getDaysInMonth(month, year) + 3}>
+											<td className="py-2" style={{ textAlign: "center" }} colSpan={getDaysInMonth(month, year) + 3}>
 												<CircularProgress sx={{ color: "#E0E8F0" }} />
 											</td>
 										</tr>
