@@ -315,3 +315,4 @@ export default function SportsSubscriptionsReportPrint({ transactions, statistic
         </>
     );
 }
+SportsSubscriptionsReportPrint.layout = (page) => page;

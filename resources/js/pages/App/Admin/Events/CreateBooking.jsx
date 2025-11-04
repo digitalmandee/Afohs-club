@@ -309,17 +309,16 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight:'100vh',
+                    backgroundColor:'#f5f5f5',
                 }}
-            > */}
+            >
                 {/* Header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
-                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 5 }}>
+                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('events.dashboard'))}>
                         <ArrowBack />
                     </IconButton>
                     <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
@@ -330,7 +329,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                 <Box
                     sx={{
                         margin: '0 auto',
-                        bgcolor: '#FFFFFF',
+                        // bgcolor: '#FFFFFF',
                         borderRadius: '4px',
                         marginTop: 5,
                     }}
@@ -369,7 +368,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                         </Box>
                     </div>
                 </Box>
-            {/* </div> */}
+            </div>
         </>
     );
 };

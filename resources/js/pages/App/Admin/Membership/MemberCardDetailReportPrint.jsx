@@ -269,3 +269,4 @@ export default function MemberCardDetailReportPrint({ categories, statistics, fi
         </>
     );
 }
+MemberCardDetailReportPrint.layout = (page) => page;

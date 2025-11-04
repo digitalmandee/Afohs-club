@@ -317,3 +317,4 @@ export default function PendingMaintenanceQuartersReportPrint({ summary, grand_t
         </>
     );
 }
+PendingMaintenanceQuartersReportPrint.layout = (page) => page;

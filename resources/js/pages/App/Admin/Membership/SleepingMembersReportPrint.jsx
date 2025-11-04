@@ -360,3 +360,4 @@ export default function SleepingMembersReportPrint({ categories, primary_members
         </>
     );
 }
+SleepingMembersReportPrint.layout = (page) => page;

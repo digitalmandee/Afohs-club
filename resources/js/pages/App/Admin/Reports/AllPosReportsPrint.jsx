@@ -264,3 +264,4 @@ export default function AllPosReportsPrint({ allReportsData, startDate, endDate,
         </>
     );
 }
+AllPosReportsPrint.layout = (page) => page;

@@ -835,7 +835,7 @@ export default function SideNav({ open, setOpen }) {
 
                                                                     return (
                                                                         <>
-                                                                            <ListItem disablePadding sx={{ pl: 2, pr: 4 }}>
+                                                                            <ListItem disablePadding sx={{ pl: 2, pr: 2 }}>
                                                                                 <ListItemButton
                                                                                     onClick={() => {
                                                                                         if (hasNested) {

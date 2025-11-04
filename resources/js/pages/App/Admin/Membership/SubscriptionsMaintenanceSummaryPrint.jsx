@@ -280,3 +280,4 @@ export default function SubscriptionsMaintenanceSummaryPrint({ summary, grand_to
         </>
     );
 }
+SubscriptionsMaintenanceSummaryPrint.layout = (page) => page;

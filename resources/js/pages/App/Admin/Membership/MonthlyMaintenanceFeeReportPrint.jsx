@@ -317,3 +317,4 @@ export default function MonthlyMaintenanceFeeReportPrint({ transactions, statist
         </>
     );
 }
+MonthlyMaintenanceFeeReportPrint.layout = (page) => page;
