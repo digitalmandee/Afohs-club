@@ -108,8 +108,7 @@ class DashboardController extends Controller
 
         foreach ($period as $date) {
             // Count reservations from Reservation table
-            $ordersCount = Reservation::whereDate('date', $date->toDateString())
-                ->count();
+            $ordersCount = Reservation::whereDate('date', $date->toDateString())->count();
 
             $days[] = [
                 'label' => $date->format('D'),  // Sun, Mon, etc.

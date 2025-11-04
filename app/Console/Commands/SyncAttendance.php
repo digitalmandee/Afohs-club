@@ -34,18 +34,18 @@ class SyncAttendance extends Command
         // $logs = $this->zkService->getAttendance();
 
         $logs = [
-            [
-                'uid' => 1,
-                'id' => '12345678',
-                'timestamp' => '2025-10-31 9:00:00',
-                'type' => 'check-in'
-            ],
-            [
-                'uid' => 1,
-                'id' => '12345679',
-                'timestamp' => '2025-10-31 9:10:00',
-                'type' => 'check-in'
-            ]
+            // [
+            //     'uid' => 1,
+            //     'id' => '12345678',
+            //     'timestamp' => '2025-10-31 9:00:00',
+            //     'type' => 'check-in'
+            // ],
+            // [
+            //     'uid' => 1,
+            //     'id' => '12345679',
+            //     'timestamp' => '2025-10-31 9:10:00',
+            //     'type' => 'check-in'
+            // ]
         ];
 
         if (!$logs) {
