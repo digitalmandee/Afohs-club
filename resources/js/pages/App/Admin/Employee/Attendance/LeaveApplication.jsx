@@ -247,7 +247,7 @@ const LeaveApplication = () => {
                                                 <TableCell>{application.start_date}</TableCell>
                                                 <TableCell>{application.end_date}</TableCell>
                                                 <TableCell>{application.number_of_days}</TableCell>
-                                                <TableCell>{application.leave_category.name}</TableCell>
+                                                <TableCell>{application.leave_category?.name}</TableCell>
                                                 <TableCell>{dayjs(application.created_at).format('YYYY-MM-DD')}</TableCell>
                                                 <TableCell>
                                                     <span

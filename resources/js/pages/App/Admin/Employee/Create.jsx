@@ -13,20 +13,25 @@ const EmployeeCreate = () => {
     // const [open, setOpen] = useState(true);
 
     const { props } = usePage();
-    const { employeeTypes } = props; // comes from Laravel
+    const { employeeTypes, employee, isEdit } = props; // comes from Laravel
 
     const [formData, setFormData] = useState({
-        name: '',
-        employee_id: '',
-        email: '',
-        designation: '',
-        phone_no: '',
-        salary: '',
-        joining_date: '',
-        department: null,
-        gender: '',
-        employment_type: 'full_time',
-        employee_type_id: null,
+        name: employee?.name || '',
+        employee_id: employee?.employee_id || '',
+        email: employee?.email || '',
+        designation: employee?.designation || '',
+        phone_no: employee?.phone_no || '',
+        salary: employee?.salary || '',
+        joining_date: employee?.joining_date || '',
+        department: employee?.department || null,
+        gender: employee?.gender || '',
+        employment_type: employee?.employment_type || 'full_time',
+        employee_type_id: employee?.employee_type_id || null,
+        address: employee?.address || '',
+        emergency_no: employee?.emergency_no || '',
+        marital_status: employee?.marital_status || '',
+        national_id: employee?.national_id || '',
+        account_no: employee?.account_no || '',
     });
 
     const [isLoading, setIsLoading] = useState(false);
@@ -65,13 +70,19 @@ const EmployeeCreate = () => {
                 ...formData,
                 department_id: formData.department?.id || null,
             };
-            await axios.post(route('api.employees.store'), payload);
-
-            enqueueSnackbar('Employee added successfully!', { variant: 'success' });
+            
+            if (isEdit) {
+                await axios.put(route('api.employees.update', employee.employee_id), payload);
+                enqueueSnackbar('Employee updated successfully!', { variant: 'success' });
+            } else {
+                await axios.post(route('api.employees.store'), payload);
+                enqueueSnackbar('Employee added successfully!', { variant: 'success' });
+            }
+            
             setTimeout(() => router.visit(route('employees.dashboard')), 1500);
         } catch (error) {
             // console.log(error.response.data);
-            enqueueSnackbar(error.response.data.message || 'Failed to add employee.', { variant: 'error' });
+            enqueueSnackbar(error.response.data.message || `Failed to ${isEdit ? 'update' : 'add'} employee.`, { variant: 'error' });
         } finally {
             setIsLoading(false);
         }
@@ -95,7 +106,7 @@ const EmployeeCreate = () => {
                         <div onClick={() => router.visit(route('employees.dashboard'))} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                             <MdArrowBackIos style={{ fontSize: '20px', cursor: 'pointer' }} />
                         </div>
-                        <h3 style={{ margin: 0 }}>Personal Detail</h3>
+                        <h3 style={{ margin: 0 }}>{isEdit ? 'Edit Employee' : 'Personal Detail'}</h3>
                     </div>
                     <Paper
                         sx={{
@@ -140,11 +151,17 @@ const EmployeeCreate = () => {
                         >
                             {[
                                 { label: 'Employee Name*', name: 'name', placeholder: 'First Name' },
-                                { label: 'Employee ID*', name: 'employee_id', placeholder: '12345' },
+                                { label: 'Employee ID*', name: 'employee_id', placeholder: '12345', disabled: isEdit },
                                 { label: 'Designation*', name: 'designation', placeholder: 'HR Manager' },
                                 { label: 'E-mail*', name: 'email', placeholder: 'Abc@gmail.com' },
                                 { label: 'Phone Number*', name: 'phone_no', placeholder: '03000000000', type: 'number', pattern: '[0-9]*' },
                                 { label: 'Salary*', name: 'salary', placeholder: '30000', type: 'number', min: 0 },
+                                ...(isEdit ? [
+                                    { label: 'Address', name: 'address', placeholder: 'Complete Address' },
+                                    { label: 'Emergency Contact', name: 'emergency_no', placeholder: '03000000000', type: 'number' },
+                                    { label: 'National ID', name: 'national_id', placeholder: 'CNIC Number' },
+                                    { label: 'Account Number', name: 'account_no', placeholder: 'Bank Account Number' },
+                                ] : [])
                             ].map((field, index) => (
                                 <Box key={index}>
                                     <Typography variant="body1" sx={{ fontWeight: 500, color: '#000000', marginBottom: '1rem' }}>
@@ -168,6 +185,7 @@ const EmployeeCreate = () => {
                                         error={!!errors[field.name]}
                                         helperText={errors[field.name]}
                                         type={field.type || 'text'} // 👈 enforce type
+                                        disabled={field.disabled || false}
                                         inputProps={{
                                             pattern: field.pattern || undefined,
                                             min: field.min || undefined,
@@ -277,14 +295,51 @@ const EmployeeCreate = () => {
                                     <option value="female">Female</option>
                                 </TextField>
                             </Box>
+
+                            {isEdit && (
+                                <Box>
+                                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#000000', marginBottom: '1rem' }}>
+                                        Marital Status
+                                    </Typography>
+                                    <TextField
+                                        sx={{
+                                            backgroundColor: '#FFFFFF',
+                                            '& .MuiOutlinedInput-root': {
+                                                '& fieldset': {
+                                                    border: '1px solid #E9E9E9',
+                                                },
+                                                '&:hover fieldset': {
+                                                    border: '1px solid #E9E9E9',
+                                                },
+                                                '&.Mui-focused fieldset': {
+                                                    border: '1px solid #E9E9E9',
+                                                },
+                                            },
+                                        }}
+                                        select
+                                        name="marital_status"
+                                        value={formData.marital_status}
+                                        onChange={(e) => setFormData({ ...formData, marital_status: e.target.value })}
+                                        fullWidth
+                                        variant="outlined"
+                                        SelectProps={{ native: true }}
+                                    >
+                                        <option value="">Select Marital Status</option>
+                                        <option value="single">Single</option>
+                                        <option value="married">Married</option>
+                                        <option value="divorced">Divorced</option>
+                                        <option value="widowed">Widowed</option>
+                                    </TextField>
+                                </Box>
+                            )}
                         </form>
 
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px', gap: '12px' }}>
-                            <Button variant="contained" sx={{ backgroundColor: 'white', color: 'black' }} onClick={() => router.visit(document.referrer || '/')}>
+                            <Button variant="contained" sx={{ backgroundColor: 'white', color: 'black' }} onClick={() => router.visit(route('employees.dashboard'))}>
                                 Cancel
                             </Button>
                             <Button disabled={isLoading} variant="contained" onClick={handleSubmit} sx={{ backgroundColor: '#0a3d62', color: 'white' }}>
-                                Submit
+                                {isEdit ? 'Update' : 'Submit'}
                             </Button>
                         </Box>
                     </Paper>

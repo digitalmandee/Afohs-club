@@ -138,7 +138,7 @@ const ManageAttendance = () => {
                             <Typography variant="h5" style={{ fontWeight: 'bold' }}>
                                 Manage Attendance
                             </Typography>
-                            <Button startIcon={<ArrowBack />} onClick={() => router.visit(route('employees.attendances.report'))} variant="outlined" size="small">
+                            <Button startIcon={<ArrowBack />} onClick={() => window.history.back()} variant="outlined" size="small">
                                 Back
                             </Button>
                         </div>

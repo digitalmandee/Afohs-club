@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination } from '@mui/material';
+import { Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination, IconButton, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Box, Chip } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CategoryIcon from '@mui/icons-material/Category';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -7,7 +7,10 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import DescriptionIcon from '@mui/icons-material/Description';
 import EventNoteIcon from '@mui/icons-material/EventNote';
-import { Box } from '@mui/system';
+import EventSeatIcon from '@mui/icons-material/EventSeat';
+import PeopleIcon from '@mui/icons-material/People';
+import PrintIcon from '@mui/icons-material/Print';
+import EditIcon from '@mui/icons-material/Edit';
 import { router, usePage } from '@inertiajs/react';
 
 // const drawerWidthOpen = 240;
@@ -15,8 +18,60 @@ import { router, usePage } from '@inertiajs/react';
 
 const AttendanceDashboard = () => {
     const { props } = usePage();
-    const { employees } = props; // coming from Laravel
+    const { employees, stats, departments, employeeTypes, filters } = props; // coming from Laravel
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const [selectedDepartments, setSelectedDepartments] = useState(filters?.department_ids || []);
+    const [selectedEmployeeTypes, setSelectedEmployeeTypes] = useState(filters?.employee_type_ids || []);
+    const [isLoading, setIsLoading] = useState(false);
     // const [open, setOpen] = useState(true);
+
+    const handleFilter = () => {
+        setIsLoading(true);
+        router.get(route('employees.attendances.dashboard'), {
+            search: searchTerm,
+            department_ids: selectedDepartments,
+            employee_type_ids: selectedEmployeeTypes,
+            page: 1 // Reset to first page when filtering
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            onFinish: () => setIsLoading(false),
+            onError: () => setIsLoading(false),
+        });
+    };
+
+    const handleClearFilters = () => {
+        setSelectedDepartments([]);
+        setSelectedEmployeeTypes([]);
+        setSearchTerm('');
+        router.get(route('employees.attendances.dashboard'), {}, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handleSearch = () => {
+        router.get(route('employees.attendances.dashboard'), { 
+            search: searchTerm,
+            department_ids: selectedDepartments,
+            employee_type_ids: selectedEmployeeTypes,
+            page: 1 // Reset to first page when searching
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        router.get(route('employees.attendances.dashboard'), {
+            department_ids: selectedDepartments,
+            employee_type_ids: selectedEmployeeTypes,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
 
     return (
         <>
@@ -34,10 +89,11 @@ const AttendanceDashboard = () => {
                                 <Typography variant="text" style={{ fontWeight: '500', fontSize: '24px' }}>
                                     Application Dashboard
                                 </Typography>
-                                <Button style={{ color: 'white', backgroundColor: '#FF66B2' }} onClick={() => router.push(`/employee/leave/application/new`)}>
+                                <Button style={{ color: 'white', backgroundColor: '#0a3d62' }} onClick={() => router.visit(route('employees.leaves.application.create'))}>
                                     New Application
                                 </Button>
                             </div>
+
                             <div
                                 style={{
                                     display: 'flex',
@@ -68,7 +124,7 @@ const AttendanceDashboard = () => {
                                         icon: <SettingsIcon style={{ color: '#33CC33' }} />,
                                         bgColor: '#E5FFE5',
                                         borderColor: '#A4FFBF',
-                                        path: '',
+                                        path: route('employees.leaves.application.index'),
                                     },
                                     {
                                         label: 'Leave Report',
@@ -123,7 +179,7 @@ const AttendanceDashboard = () => {
                                             justifyContent: 'center',
                                             textAlign: 'center',
                                         }}
-                                        onClick={() => card.path && router.push('/' + card.path)}
+                                        onClick={() => card.path && router.visit(card.path)}
                                     >
                                         <div
                                             style={{
@@ -144,41 +200,177 @@ const AttendanceDashboard = () => {
                                 ))}
                             </div>
 
+                            {/* Filter Section */}
+                            <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', width: '98%' }}>
+                                <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>Search & Filter Options</Typography>
+
+                                {/* Search Fields */}
+                                <Grid container spacing={2} sx={{ mb: 3 }}>
+                                    <Grid item xs={12} md={4}>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="Search by name, ID, email, or designation..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    handleFilter();
+                                                }
+                                            }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: 2,
+                                                },
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <FormControl fullWidth size="small">
+                                            <InputLabel>Departments</InputLabel>
+                                            <Select
+                                                multiple
+                                                value={selectedDepartments}
+                                                label="Departments"
+                                                onChange={(e) => setSelectedDepartments(e.target.value)}
+                                                renderValue={(selected) => (
+                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                        {selected.map((value) => {
+                                                            const dept = departments?.find(d => d.id === value);
+                                                            return (
+                                                                <Chip
+                                                                    key={value}
+                                                                    label={dept?.name || value}
+                                                                    size="small"
+                                                                    sx={{
+                                                                        backgroundColor: '#063455',
+                                                                        color: 'white',
+                                                                        '& .MuiChip-deleteIcon': {
+                                                                            color: 'white',
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </Box>
+                                                )}
+                                                sx={{
+                                                    borderRadius: 2,
+                                                }}
+                                            >
+                                                {departments?.map((dept) => (
+                                                    <MenuItem key={dept.id} value={dept.id}>
+                                                        {dept.name}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <FormControl fullWidth size="small">
+                                            <InputLabel>Employee Types</InputLabel>
+                                            <Select
+                                                multiple
+                                                value={selectedEmployeeTypes}
+                                                label="Employee Types"
+                                                onChange={(e) => setSelectedEmployeeTypes(e.target.value)}
+                                                renderValue={(selected) => (
+                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                        {selected.map((value) => {
+                                                            const type = employeeTypes?.find(t => t.id === value);
+                                                            return (
+                                                                <Chip
+                                                                    key={value}
+                                                                    label={type?.name || value}
+                                                                    size="small"
+                                                                    sx={{
+                                                                        backgroundColor: '#063455',
+                                                                        color: 'white',
+                                                                        '& .MuiChip-deleteIcon': {
+                                                                            color: 'white',
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </Box>
+                                                )}
+                                                sx={{
+                                                    borderRadius: 2,
+                                                }}
+                                            >
+                                                {employeeTypes?.map((type) => (
+                                                    <MenuItem key={type.id} value={type.id}>
+                                                        {type.name}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12} md={2}>
+                                        <Button
+                                            fullWidth
+                                            variant="contained"
+                                            onClick={handleFilter}
+                                            disabled={isLoading}
+                                            sx={{
+                                                backgroundColor: '#063455',
+                                                color: 'white',
+                                                textTransform: 'none',
+                                                borderRadius: 2,
+                                                height: '40px',
+                                                '&:hover': {
+                                                    backgroundColor: '#052d45',
+                                                },
+                                                '&:disabled': {
+                                                    backgroundColor: '#ccc',
+                                                    color: '#666',
+                                                },
+                                            }}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <CircularProgress size={16} sx={{ mr: 1, color: 'inherit' }} />
+                                                    Loading...
+                                                </>
+                                            ) : (
+                                                'Filter'
+                                            )}
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+
+                                {/* Clear Filter Button */}
+                                {(selectedDepartments.length > 0 || selectedEmployeeTypes.length > 0 || searchTerm) && (
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} md={2}>
+                                            <Button
+                                                fullWidth
+                                                variant="outlined"
+                                                onClick={handleClearFilters}
+                                                sx={{
+                                                    color: '#063455',
+                                                    borderColor: '#063455',
+                                                    textTransform: 'none',
+                                                    borderRadius: 2,
+                                                    height: '40px',
+                                                    '&:hover': {
+                                                        borderColor: '#052d45',
+                                                        backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                    },
+                                                }}
+                                            >
+                                                Clear Filters
+                                            </Button>
+                                        </Grid>
+                                    </Grid>
+                                )}
+                            </Box>
+
                             {/* Employee List Section */}
                             <div style={{ backgroundColor: 'white', width: '98%', borderRadius: '12px', padding: '24px' }}>
                                 <div style={{ marginBottom: '24px' }}>
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: '0 1rem',
-                                        }}
-                                    >
-                                        <div style={{ fontSize: '18px', fontWeight: '500' }}>Employee List</div>
-                                        <div style={{ position: 'relative', width: '250px' }}>
-                                            <input
-                                                type="text"
-                                                placeholder="Find by name"
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '8px 16px 8px 40px',
-                                                    border: '1px solid #E0E0E0',
-                                                    borderRadius: '8px',
-                                                    fontSize: '14px',
-                                                }}
-                                            />
-                                            <SearchIcon
-                                                style={{
-                                                    position: 'absolute',
-                                                    left: '1.5rem',
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    color: '#666',
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
+                                    <div style={{ fontSize: '18px', fontWeight: '500', padding: '0 1rem' }}>Employee List</div>
                                 </div>
 
                                 <TableContainer component={Paper} style={{ borderRadius: '1rem', border: '1px solid #ccc' }}>
@@ -193,25 +385,134 @@ const AttendanceDashboard = () => {
                                                 <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Joining Date</TableCell>
                                                 <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Email Address</TableCell>
                                                 <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Employee Status</TableCell>
+                                                <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Actions</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
                                             {employees.data.length > 0 ? (
-                                                employees.data.map((emp) => (
-                                                    <TableRow key={emp.id}>
-                                                        <TableCell>#{emp.employee_id}</TableCell>
-                                                        <TableCell>{emp.name}</TableCell>
-                                                        <TableCell>{emp.employee_type?.name}</TableCell>
-                                                        <TableCell>{emp.department?.name}</TableCell>
-                                                        <TableCell>{emp.designation}</TableCell>
-                                                        <TableCell>{emp.joining_date}</TableCell>
-                                                        <TableCell>{emp.email}</TableCell>
-                                                        <TableCell>{emp.status ?? 'Active'}</TableCell>
-                                                    </TableRow>
-                                                ))
+                                                employees.data.map((emp) => {
+                                                    // Check if department or employee type is deleted (has deleted_at field)
+                                                    const isDepartmentDeleted = emp.department?.deleted_at !== null;
+                                                    const isEmployeeTypeDeleted = emp.employee_type?.deleted_at !== null;
+                                                    const hasDeletedRelation = isDepartmentDeleted || isEmployeeTypeDeleted;
+                                                    
+                                                    const rowStyle = hasDeletedRelation ? {
+                                                        backgroundColor: '#ffebee', // Light red background
+                                                        color: '#d32f2f', // Red text
+                                                        opacity: 0.7
+                                                    } : {};
+                                                    
+                                                    return (
+                                                        <TableRow key={emp.id} style={rowStyle}>
+                                                            <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                                #{emp.employee_id}
+                                                            </TableCell>
+                                                            <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                                {emp.name}
+                                                            </TableCell>
+                                                            <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                                {emp.employee_type?.name ? (
+                                                                    <>
+                                                                        {emp.employee_type.name}
+                                                                        {isEmployeeTypeDeleted && (
+                                                                            <Typography 
+                                                                                variant="caption" 
+                                                                                style={{ 
+                                                                                    color: '#d32f2f', 
+                                                                                    fontStyle: 'italic',
+                                                                                    display: 'block',
+                                                                                    fontSize: '0.7rem'
+                                                                                }}
+                                                                            >
+                                                                                (Type Deleted)
+                                                                            </Typography>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <Typography 
+                                                                        variant="caption" 
+                                                                        style={{ color: '#d32f2f', fontStyle: 'italic' }}
+                                                                    >
+                                                                        No Type
+                                                                    </Typography>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                                {emp.department?.name ? (
+                                                                    <>
+                                                                        {emp.department.name}
+                                                                        {isDepartmentDeleted && (
+                                                                            <Typography 
+                                                                                variant="caption" 
+                                                                                style={{ 
+                                                                                    color: '#d32f2f', 
+                                                                                    fontStyle: 'italic',
+                                                                                    display: 'block',
+                                                                                    fontSize: '0.7rem'
+                                                                                }}
+                                                                            >
+                                                                                (Department Deleted)
+                                                                            </Typography>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <Typography 
+                                                                        variant="caption" 
+                                                                        style={{ color: '#d32f2f', fontStyle: 'italic' }}
+                                                                    >
+                                                                        No Department
+                                                                    </Typography>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                                {emp.designation}
+                                                            </TableCell>
+                                                            <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                                {emp.joining_date}
+                                                            </TableCell>
+                                                            <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                                {emp.email}
+                                                            </TableCell>
+                                                            <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                                {hasDeletedRelation ? (
+                                                                    <Typography 
+                                                                        variant="caption" 
+                                                                        style={{ 
+                                                                            color: '#d32f2f', 
+                                                                            fontWeight: 'bold',
+                                                                            backgroundColor: '#ffcdd2',
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px'
+                                                                        }}
+                                                                    >
+                                                                        Needs Attention
+                                                                        {isDepartmentDeleted && isEmployeeTypeDeleted ? ' (Dept & Type)' : 
+                                                                         isDepartmentDeleted ? ' (Department)' : ' (Type)'}
+                                                                    </Typography>
+                                                                ) : (
+                                                                    emp.status ?? 'Active'
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <IconButton
+                                                                    onClick={() => router.visit(route('employees.edit', emp.employee_id))}
+                                                                    size="small"
+                                                                    sx={{ 
+                                                                        color: '#0a3d62',
+                                                                        '&:hover': {
+                                                                            backgroundColor: '#f5f5f5'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <EditIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={7} align="center">
+                                                    <TableCell colSpan={9} align="center">
                                                         No employees found.
                                                     </TableCell>
                                                 </TableRow>
@@ -222,7 +523,16 @@ const AttendanceDashboard = () => {
 
                                 {/* Pagination */}
                                 <Box sx={{ display: 'flex', justifyContent: 'end', mt: 3 }}>
-                                    <Pagination count={employees.last_page} page={employees.current_page} onChange={(e, page) => router.get(route('employees.attendances.dashboard'), { page })} />
+                                    <Pagination 
+                                        count={employees.last_page} 
+                                        page={employees.current_page} 
+                                        onChange={(e, page) => router.get(route('employees.attendances.dashboard'), { 
+                                            page,
+                                            search: searchTerm,
+                                            department_ids: selectedDepartments,
+                                            employee_type_ids: selectedEmployeeTypes,
+                                        })} 
+                                    />
                                 </Box>
                             </div>
                         </div>

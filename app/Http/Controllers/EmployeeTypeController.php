@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EmployeeType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -23,7 +24,7 @@ class EmployeeTypeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:employee_types,name',
+            'name' => 'required|string|unique:employee_types,name,NULL,id,deleted_at,NULL',
         ]);
 
         try {
@@ -37,6 +38,7 @@ class EmployeeTypeController extends Controller
                 'employeeType' => $employeeType
             ], 200);
         } catch (\Throwable $th) {
+            Log::error($th->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => $th->getMessage()
@@ -47,7 +49,7 @@ class EmployeeTypeController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|unique:employee_types,name,' . $id,
+            'name' => 'required|string|unique:employee_types,name,' . $id . ',id,deleted_at,NULL',
         ]);
 
         try {

@@ -67,6 +67,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::prefix('admin/employees')->middleware('super.admin:employees.view')->group(function () {
         Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('employees.dashboard');
         Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
+        Route::get('/edit/{employeeId}', [EmployeeController::class, 'edit'])->name('employees.edit');
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
         Route::get('/types', [EmployeeTypeController::class, 'index'])->name('employees.types');
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
