@@ -88,13 +88,22 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
             <div
                 style={{
                     minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2, width: '600px' }}>
-                    <IconButton onClick={onBack} sx={{ color: '#000' }}>
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    // maxWidth: '600px',
+                    justifyContent: 'flex-start',
+                    mb: 2,
+                    mt: 2
+                }}>
+                    <IconButton onClick={()=>window.history.back()} sx={{ color: '#000' }}>
                         <ArrowBack />
                     </IconButton>
                     <Typography variant="h5" sx={{ ml: 1 }}>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
-import { Autocomplete, TextField, Button, Alert, Select, MenuItem, FormHelperText, FormControl, InputLabel, Snackbar, Typography } from '@mui/material';
+import { Autocomplete, IconButton, TextField, Button, Alert, Select, MenuItem, FormHelperText, FormControl, InputLabel, Snackbar, Typography } from '@mui/material';
 import { Box } from '@mui/system';
+import { ArrowBack } from "@mui/icons-material"
 import axios from 'axios';
 
 
@@ -81,18 +82,19 @@ const LeaveApplication = () => {
 
 	return (
 		<>
-			{/* <SideNav open={open} setOpen={setOpen} />
+			{/* <SideNav open={open} setOpen={setOpen} /> */}
 			<div
 				style={{
-					marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-					transition: 'margin-left 0.3s ease-in-out',
-					marginTop: '5rem',
-					backgroundColor: '#F6F6F6',
+					backgroundColor: '#f5f5f5',
 				}}
-			> */}
+			>
 				<Box sx={{ px: 2, py: 2 }}>
-					<div style={{ paddingTop: '1rem' }}>
-						<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+					<div style={{ paddingTop: '0.5rem' }}>
+						<div style={{ display: 'flex', alignItems:'center', marginBottom: '24px' }}>
+							<IconButton sx={{ color: '#333', mr: 1 }}
+							onClick={()=>window.history.back()}>
+								<ArrowBack />
+							</IconButton>
 							<Typography variant="h5" style={{ fontWeight: 'bold' }}>
 								{leaveApplication ? 'Edit Leave Application' : 'New Leave Application'}
 							</Typography>
@@ -189,7 +191,7 @@ const LeaveApplication = () => {
 						</form>
 					</div>
 				</Box>
-			{/* </div> */}
+			</div>
 
 			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
 				<Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Typography, Box, FormHelperText, Snackbar, Alert, Paper, RadioGroup, FormControlLabel, Radio } from '@mui/material';
+import { TextField, Button, IconButton, Typography, Box, FormHelperText, Snackbar, Alert, Paper, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import { router, usePage } from '@inertiajs/react';
+import { ArrowBack } from "@mui/icons-material"
 import { MdArrowBackIos } from 'react-icons/md';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
@@ -81,7 +82,7 @@ const EmployeeCreate = () => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
+                    minHeight: '100vh',
                     backgroundColor: '#f5f5f5',
                 }}
             >
@@ -93,7 +94,9 @@ const EmployeeCreate = () => {
                 >
                     <div style={{ paddingTop: '1rem', display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
                         <div onClick={() => router.visit(route('employees.dashboard'))} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                            <MdArrowBackIos style={{ fontSize: '20px', cursor: 'pointer' }} />
+                            <IconButton sx={{ color: '#333', mr: 1 }}>
+                                <ArrowBack />
+                            </IconButton>
                         </div>
                         <h3 style={{ margin: 0 }}>Personal Detail</h3>
                     </div>

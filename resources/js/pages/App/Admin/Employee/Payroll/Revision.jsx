@@ -93,15 +93,13 @@ const SalaryRevision = () => {
     ];
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight:'100vh',
                     backgroundColor: '#F6F6F6'
                 }}
-            > */}
+            >
                 <Box sx={{
                     px: 3,
                     pt: 2
@@ -419,7 +417,7 @@ const SalaryRevision = () => {
                         </Paper>
                     </div>
                 </Dialog>
-            {/* </div> */}
+            </div>
         </>
     )
 }

@@ -59,9 +59,6 @@ const MonthlyReport = () => {
                             <Typography variant="h5" style={{ fontWeight: 'bold' }}>
                                 Monthly Attendance Report
                             </Typography>
-                            <Button startIcon={<ArrowBack />} onClick={() => router.visit(route('employees.attendances.report'))} variant="outlined" size="small">
-                                Back
-                            </Button>
                         </div>
                         <Box sx={{ padding: 3, borderRadius: 2 }}>
                             {/* Header Section */}

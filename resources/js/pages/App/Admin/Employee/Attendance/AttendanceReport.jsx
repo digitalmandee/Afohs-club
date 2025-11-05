@@ -133,14 +133,6 @@ const AttendanceReport = () => {
 							<Typography variant="h5" style={{ fontWeight: 'bold' }}>
 								Attendance Report
 							</Typography>
-							<Button
-								startIcon={<ArrowBack />}
-								onClick={() => router.visit(route('employees.attendances.management'))}
-								variant="outlined"
-								size="small"
-							>
-								Back
-							</Button>
 						</div>
 						<div style={{ display: "flex", justifyContent: "end", gap: "8px" }}>
 							{/* Month & Year Section */}

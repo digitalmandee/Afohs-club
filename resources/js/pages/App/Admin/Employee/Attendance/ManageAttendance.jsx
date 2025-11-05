@@ -138,9 +138,6 @@ const ManageAttendance = () => {
                             <Typography variant="h5" style={{ fontWeight: 'bold' }}>
                                 Manage Attendance
                             </Typography>
-                            <Button startIcon={<ArrowBack />} onClick={() => router.visit(route('employees.attendances.report'))} variant="outlined" size="small">
-                                Back
-                            </Button>
                         </div>
 
                         <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>

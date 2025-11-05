@@ -357,16 +357,16 @@ export default function SideNav({ open, setOpen }) {
             icon: <PaymentsIcon />,
             children: [
                 {
+                    text: 'Dashboard',
+                    path: route('finance.dashboard'),
+                },
+                {
                     text: 'Bulk Transaction',
                     path: route('finance.transaction.bulk-migration'),
                 },
                 {
                     text: 'Add Transaction',
                     path: route('finance.transaction.create'),
-                },
-                {
-                    text: 'Dashboard',
-                    path: route('finance.dashboard'),
                 },
                 {
                     text: 'Transaction',

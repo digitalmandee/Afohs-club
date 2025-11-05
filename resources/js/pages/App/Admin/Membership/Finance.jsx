@@ -157,9 +157,9 @@ const MembersFinance = ({ membersdata = [] }) => {
                 <Box sx={{ bgcolor: '#f9f9f9', minHeight: '100vh', pb: 4 }}>
                     {/* Header */}
                     <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
-                        <IconButton sx={{ color: '#333', mr: 1 }}>
+                        {/* <IconButton sx={{ color: '#333', mr: 1 }}>
                             <ArrowBack />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
                             Finance
                             {/* <pre>{JSON.stringify(membersdata, null, 2)}</pre> */}
