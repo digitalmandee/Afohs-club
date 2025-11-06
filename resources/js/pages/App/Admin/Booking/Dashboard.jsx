@@ -195,10 +195,10 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
                 justifyContent: 'center',   // ✅ centers horizontally
                 alignItems: 'center',       // ✅ centers vertically
                 // height: '100vh',
-                backgroundColor: '#f9f9f9', // optional nice background
+                backgroundColor: '#f5f5f5', // optional nice background
             }}
         >
-            <div style={{ padding: '10px', borderRadius: '4px', width: '90%' }}>
+            <div style={{ padding: '10px', borderRadius: '4px', width: '95%' }}>
                 <div
                     style={{
                         display: 'grid',

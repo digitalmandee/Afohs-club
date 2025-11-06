@@ -105,9 +105,6 @@ const LeaveReport = () => {
                             <Typography variant="h5" style={{ fontWeight: 'bold' }}>
                                 Leave Report
                             </Typography>
-                            <Button startIcon={<ArrowBack />} onClick={() => router.visit(route('employees.leaves.application.index'))} variant="outlined" size="small">
-                                Back
-                            </Button>
                         </div>
                         <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

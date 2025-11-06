@@ -199,3 +199,4 @@ export default function RunningSalesOrdersPrint({ runningOrders, totalOrders, to
         </>
     );
 }
+RunningSalesOrdersPrint.layout = (page) => page;

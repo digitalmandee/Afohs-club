@@ -299,3 +299,4 @@ export default function RestaurantWisePosReportPrint({ allReportsData, startDate
         </>
     );
 }
+RestaurantWisePosReportPrint.layout = (page) => page;

@@ -317,3 +317,4 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
         </>
     );
 }
+NewYearEveReportPrint.layout = (page) => page;

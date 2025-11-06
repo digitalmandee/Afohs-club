@@ -202,3 +202,4 @@ export default function DailySalesListCashierWisePrint({
         </>
     );
 }
+DailySalesListCashierWisePrint.layout = (page) => page;

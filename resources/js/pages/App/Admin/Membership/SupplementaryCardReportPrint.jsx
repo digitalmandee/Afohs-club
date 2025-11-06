@@ -255,3 +255,4 @@ export default function SupplementaryCardReportPrint({ categories, statistics, f
         </>
     );
 }
+SupplementaryCardReportPrint.layout = (page) => page;

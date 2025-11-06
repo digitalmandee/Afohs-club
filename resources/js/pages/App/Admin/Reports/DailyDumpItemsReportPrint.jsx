@@ -210,3 +210,4 @@ export default function DailyDumpItemsReportPrint({
         </>
     );
 }
+DailyDumpItemsReportPrint.layout = (page) => page;
