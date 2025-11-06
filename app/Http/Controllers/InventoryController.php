@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\Category;
+use App\Models\Ingredient;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantValue;
@@ -66,6 +67,10 @@ class InventoryController extends Controller
             'description' => 'nullable|string',
             'images' => 'nullable|array',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
+            'ingredients' => 'nullable|array',
+            'ingredients.*.id' => 'required_with:ingredients|exists:ingredients,id',
+            'ingredients.*.quantity_used' => 'required_with:ingredients|numeric|min:0',
+            'ingredients.*.cost' => 'nullable|numeric|min:0',
         ]);
 
         DB::beginTransaction();
@@ -124,6 +129,23 @@ class InventoryController extends Controller
             }
         }
 
+        // Handle ingredients if provided
+        if ($request->has('ingredients') && is_array($request->input('ingredients'))) {
+            foreach ($request->input('ingredients') as $ingredientData) {
+                // Validate ingredient availability
+                $ingredient = Ingredient::find($ingredientData['id']);
+                if ($ingredient && $ingredient->hasEnoughQuantity($ingredientData['quantity_used'])) {
+                    // Attach ingredient to product with pivot data
+                    $product->ingredients()->attach($ingredientData['id'], [
+                        'quantity_used' => $ingredientData['quantity_used'],
+                        'cost' => $ingredientData['cost'] ?? 0
+                    ]);
+                    
+                    // Don't deduct from ingredient stock yet - only when product is actually made/sold
+                }
+            }
+        }
+
         DB::commit();
         return redirect()->back()->with('success', 'Product created.');
     }
@@ -140,7 +162,7 @@ class InventoryController extends Controller
      */
     public function show(string $id)
     {
-        $product = Product::with(['variants:id,product_id,name,type,active', 'variants.items', 'category', 'kitchen'])->find($id);
+        $product = Product::with(['variants:id,product_id,name,type,active', 'variants.items', 'category', 'kitchen', 'ingredients'])->find($id);
 
         return Inertia::render('App/Inventory/Product', compact('product', 'id'));
     }
@@ -175,6 +197,10 @@ class InventoryController extends Controller
             'images' => 'nullable|array',
             'deleted_images' => 'nullable|array',
             'deleted_images.*' => 'string',
+            'ingredients' => 'nullable|array',
+            'ingredients.*.id' => 'required_with:ingredients|exists:ingredients,id',
+            'ingredients.*.quantity_used' => 'required_with:ingredients|numeric|min:0',
+            'ingredients.*.cost' => 'nullable|numeric|min:0',
         ]);
 
         // Get current product to access existing images
@@ -276,6 +302,20 @@ class InventoryController extends Controller
             }
 
             ProductVariant::where('product_id', $id)->whereNotIn('id', $submittedVariantIds)->orWhereDoesntHave('values')->delete();
+        }
+
+        // Handle ingredients update
+        if ($request->has('ingredients')) {
+            // First, detach all existing ingredients
+            $product->ingredients()->detach();
+            
+            // Then attach new ingredients with pivot data
+            foreach ($request->input('ingredients') as $ingredientData) {
+                $product->ingredients()->attach($ingredientData['id'], [
+                    'quantity_used' => $ingredientData['quantity_used'],
+                    'cost' => $ingredientData['cost'] ?? 0
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', 'Product updated.');

@@ -121,7 +121,30 @@ class UserController extends Controller
         }
 
         // Case 1: bookingType = 0 => Search in Users table (members)
-        if ($bookingType === '0' || $bookingType === '2') {
+        // Case 4: bookingType = 'employee' => Search in Employees table
+        if ($bookingType === 'employee') {
+            $employees = Employee::select('id', 'name', 'employee_id', 'email', 'designation', 'phone_no')
+                ->where(function ($q) use ($query) {
+                    $q->where('name', 'like', "%{$query}%")
+                      ->orWhere('employee_id', 'like', "%{$query}%")
+                      ->orWhere('email', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get();
+
+            $results = $employees->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'booking_type' => 'employee',
+                    'name' => $employee->name,
+                    'label' => "{$employee->name} ({$employee->employee_id})",
+                    'employee_id' => $employee->employee_id,
+                    'email' => $employee->email,
+                    'phone' => $employee->phone_no,
+                    'designation' => $employee->designation,
+                ];
+            });
+        } elseif ($bookingType === '0' || $bookingType === '2') {
             $members = Member::select(
                 'members.id',
                 'members.full_name',

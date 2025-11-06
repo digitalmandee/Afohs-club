@@ -109,6 +109,7 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
         { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index') },
         { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category') },
+        { text: 'Ingredients', icon: <CategoryIcon />, path: route('ingredients.index') },
         { text: 'Reservations', icon: <RiSofaLine style={{ height: '25px', width: '25px' }} />, path: route('reservations.index') },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index') },
         {

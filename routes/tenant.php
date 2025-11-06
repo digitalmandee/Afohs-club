@@ -9,6 +9,7 @@ use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\WaiterController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FloorController;
+use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
@@ -111,27 +112,44 @@ Route::group([
 
         // End of floors routes
 
+        // setting
+        Route::get('/setting', [SettingController::class, 'index'])->name('setting.index');
+        Route::put('/setting', [SettingController::class, 'update'])->name('setting.update');
+        Route::get('/setting/showTax', [SettingController::class, 'showTax'])->name('setting.showTax');
+
         // Inventory Category
         Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
         Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
         Route::put('/inventory/category/{category}/update', [CategoryController::class, 'update'])->name('category.update');
         Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
-        // setting
-        Route::get('/setting', [SettingController::class, 'index'])->name('setting.index');
-        Route::put('/setting', [SettingController::class, 'update'])->name('setting.update');
-        Route::get('/setting/showTax', [SettingController::class, 'showTax'])->name('setting.showTax');
+
+        // Ingredients Management
+        Route::get('/inventory/ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
+        Route::get('/inventory/ingredients/create', [IngredientController::class, 'create'])->name('ingredients.create');
+        Route::post('/inventory/ingredients', [IngredientController::class, 'store'])->name('ingredients.store');
+        Route::get('/inventory/ingredients/{ingredient}', [IngredientController::class, 'show'])->name('ingredients.show');
+        Route::get('/inventory/ingredients/{ingredient}/edit', [IngredientController::class, 'edit'])->name('ingredients.edit');
+        Route::put('/inventory/ingredients/{ingredient}', [IngredientController::class, 'update'])->name('ingredients.update');
+        Route::delete('/inventory/ingredients/{ingredient}', [IngredientController::class, 'destroy'])->name('ingredients.destroy');
+        Route::get('/inventory/ingredients/{ingredient}/add-stock', [IngredientController::class, 'showAddStock'])->name('ingredients.add-stock.form');
+        Route::post('/inventory/ingredients/{ingredient}/add-stock', [IngredientController::class, 'addStock'])->name('ingredients.add-stock');
+        
+        // API Routes for Ingredients
+        Route::get('/api/ingredients', [IngredientController::class, 'getIngredients'])->name('api.ingredients');
+        Route::post('/api/ingredients/check-availability', [IngredientController::class, 'checkAvailability'])->name('api.ingredients.check-availability');
+
         // Inventory Items
         Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
-        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
-        Route::post('/inventory/{id}/update', [InventoryController::class, 'update'])->name('inventory.update');
-        Route::delete('/inventory/{id}/destroy', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-        Route::get('/add/product', function () {
+        Route::get('/inventory/products', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::get('/inventory/products/add', function () {
             return Inertia::render('App/Inventory/Product');
         })->name('product.create');
-        Route::post('/inventory/create', [InventoryController::class, 'store'])->name('inventory.store');
+        Route::get('/inventory/products/edit/{id}', [InventoryController::class, 'show'])->name('inventory.show');
+        Route::post('/inventory/products/{id}/update', [InventoryController::class, 'update'])->name('inventory.update');
+        Route::delete('/inventory/products/{id}/destroy', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+        Route::post('/inventory/products/create', [InventoryController::class, 'store'])->name('inventory.store');
         // Get Single Product
-        Route::get('/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
+        Route::get('/inventory/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
 
         Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
         Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
