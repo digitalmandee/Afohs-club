@@ -110,6 +110,9 @@ class LeaveApplicationController extends Controller
         $limit = (int) $request->query('limit', 10);  // Ensure limit is integer
         $search = $request->query('search', '');  // Search parameter
 
+        // Get all active leave categories
+        $leaveCategories = LeaveCategory::where('status', 'published')->orderBy('name')->get();
+
         // Create month start and end dates properly
         $monthStart = Carbon::createFromFormat('Y-m-d', $monthly . '-01')->startOfDay();
         $monthEnd = Carbon::createFromFormat('Y-m-d', $monthly . '-01')->endOfMonth()->endOfDay();
@@ -225,8 +228,35 @@ class LeaveApplicationController extends Controller
                 $totalSummary['leave_categories'][str_replace(' ', '_', $leave->leave_category)] += $leaveSummary[str_replace(' ', '_', $leave->leave_category)];
             }
 
+            // Check if employee joined after the month start - if so, don't count absence
+            $employeeJoinDate = Carbon::parse($employee->created_at);
+            $employeeWorkingDays = $totalWorkingDays;
+            
+            // If employee joined during this month, calculate working days from join date
+            if ($employeeJoinDate->gte($monthStart)) {
+                if ($monthEnd->isFuture() && $monthStart->isFuture()) {
+                    $employeeWorkingDays = 0;
+                } elseif ($monthStart->isPast() && $monthEnd->isFuture()) {
+                    // Current month - count from join date to today
+                    $daysFromJoin = max(0, $today->diffInDays($employeeJoinDate->startOfDay()));
+                    $sundaysFromJoin = collect($sundays)->filter(function($sunday) use ($employeeJoinDate, $today) {
+                        $sundayDate = Carbon::parse($sunday);
+                        return $sundayDate->gte($employeeJoinDate) && $sundayDate->lte($today);
+                    })->count();
+                    $employeeWorkingDays = max(0, $daysFromJoin - $sundaysFromJoin);
+                } else {
+                    // Past month - count from join date to month end
+                    $daysFromJoin = $monthEnd->diffInDays($employeeJoinDate->startOfDay()) + 1;
+                    $sundaysFromJoin = collect($sundays)->filter(function($sunday) use ($employeeJoinDate, $monthEnd) {
+                        $sundayDate = Carbon::parse($sunday);
+                        return $sundayDate->gte($employeeJoinDate) && $sundayDate->lte($monthEnd);
+                    })->count();
+                    $employeeWorkingDays = max(0, $daysFromJoin - $sundaysFromJoin);
+                }
+            }
+
             // Calculate total absence correctly (ensure it's never negative)
-            $totalAbsence = max(0, $totalWorkingDays - ($totalLeave + $attendanceData->total_attendance));
+            $totalAbsence = max(0, $employeeWorkingDays - ($totalLeave + $attendanceData->total_attendance));
 
             // Update totals
             $totalSummary['total_attendance'] += $attendanceData->total_attendance;
@@ -254,6 +284,7 @@ class LeaveApplicationController extends Controller
                 'current_page' => $employees->currentPage(),
                 'last_page' => $employees->lastPage(),
                 'total_records' => $employees->total(),
+                'leave_categories' => $leaveCategories,
             ],
         ]);
     }
@@ -349,8 +380,35 @@ class LeaveApplicationController extends Controller
             $timePresent = $attendance->where('status', 'present')->whereNotNull('check_in')->count();
             $timeLate = $attendance->where('status', 'late')->whereNotNull('check_in')->count();
 
+            // Check if employee joined after the month start - if so, calculate working days from join date
+            $employeeJoinDate = Carbon::parse($employee->created_at);
+            $employeeWorkingDays = $totalWorkingDays;
+            
+            // If employee joined during this month, calculate working days from join date
+            if ($employeeJoinDate->gte($monthStart)) {
+                if ($monthEnd->isFuture() && $monthStart->isFuture()) {
+                    $employeeWorkingDays = 0;
+                } elseif ($monthStart->isPast() && $monthEnd->isFuture()) {
+                    // Current month - count from join date to today
+                    $daysFromJoin = max(0, $today->diffInDays($employeeJoinDate->startOfDay()));
+                    $sundaysFromJoin = collect($sundays)->filter(function($sunday) use ($employeeJoinDate, $today) {
+                        $sundayDate = Carbon::parse($sunday);
+                        return $sundayDate->gte($employeeJoinDate) && $sundayDate->lte($today);
+                    })->count();
+                    $employeeWorkingDays = max(0, $daysFromJoin - $sundaysFromJoin);
+                } else {
+                    // Past month - count from join date to month end
+                    $daysFromJoin = $monthEnd->diffInDays($employeeJoinDate->startOfDay()) + 1;
+                    $sundaysFromJoin = collect($sundays)->filter(function($sunday) use ($employeeJoinDate, $monthEnd) {
+                        $sundayDate = Carbon::parse($sunday);
+                        return $sundayDate->gte($employeeJoinDate) && $sundayDate->lte($monthEnd);
+                    })->count();
+                    $employeeWorkingDays = max(0, $daysFromJoin - $sundaysFromJoin);
+                }
+            }
+
             // Calculate absence (only for past and current months up to today)
-            $employeeAbsence = max(0, $totalWorkingDays - ($leaveCount + $attendanceCount));
+            $employeeAbsence = max(0, $employeeWorkingDays - ($leaveCount + $attendanceCount));
 
             // Update totals
             $totalLeave += $leaveCount;

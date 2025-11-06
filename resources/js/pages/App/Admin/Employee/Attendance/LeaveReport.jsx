@@ -13,6 +13,7 @@ const LeaveReport = () => {
     const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     const [month, setMonth] = useState(currentMonth);
     const [employees, setEmployees] = useState([]);
+    const [leaveCategories, setLeaveCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -26,6 +27,7 @@ const LeaveReport = () => {
             });
             if (res.data.success) {
                 setEmployees(res.data.report_data.employees);
+                setLeaveCategories(res.data.report_data.leave_categories || []);
                 setTotalPages(res.data.report_data.last_page);
                 setCurrentPage(res.data.report_data.current_page);
             }
@@ -41,13 +43,25 @@ const LeaveReport = () => {
         getMonthlyReport(1);
     };
 
-    const handleClearSearch = () => {
+    const handleClearSearch = async () => {
         setSearchTerm('');
         setCurrentPage(1);
-        // Trigger search with empty term
-        setTimeout(() => {
-            getMonthlyReport(1);
-        }, 100);
+        // Directly call API with empty search term
+        setIsLoading(true);
+        try {
+            const res = await axios.get('/api/employees/leaves/reports', {
+                params: { page: 1, limit, month, search: '' }, // Explicitly pass empty search
+            });
+            if (res.data.success) {
+                setEmployees(res.data.report_data.employees);
+                setTotalPages(res.data.report_data.last_page);
+                setCurrentPage(res.data.report_data.current_page);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleKeyPress = (e) => {
@@ -59,6 +73,16 @@ const LeaveReport = () => {
     useEffect(() => {
         getMonthlyReport(currentPage);
     }, [currentPage, limit, month]);
+
+    // Auto-search when search term is cleared
+    useEffect(() => {
+        if (searchTerm === '') {
+            const timeoutId = setTimeout(() => {
+                getMonthlyReport(1);
+            }, 300); // Debounce for 300ms
+            return () => clearTimeout(timeoutId);
+        }
+    }, [searchTerm]);
 
     // Generate months dynamically
     const months = Array.from({ length: 12 }, (_, i) => {
@@ -150,9 +174,11 @@ const LeaveReport = () => {
                                     <TableRow style={{ backgroundColor: '#063455' }}>
                                         <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>#</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Employee Name</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Casual Leave</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Sick Leave</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Annual Leave</TableCell>
+                                        {leaveCategories.map((category) => (
+                                            <TableCell key={category.id} sx={{ fontWeight: 'bold', color: 'white' }}>
+                                                {category.name}
+                                            </TableCell>
+                                        ))}
                                         <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Total Attendance</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Total Absence</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Total Leave</TableCell>
@@ -160,7 +186,7 @@ const LeaveReport = () => {
                                 </TableHead>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} align="center">
+                                        <TableCell colSpan={5 + leaveCategories.length} align="center">
                                             <CircularProgress sx={{ color: '#063455' }} />
                                         </TableCell>
                                     </TableRow>
@@ -169,9 +195,14 @@ const LeaveReport = () => {
                                         <TableRow key={employee.employee_id}>
                                             <TableCell>{employee.employee_id}</TableCell>
                                             <TableCell>{employee.employee_name}</TableCell>
-                                            <TableCell>{employee.leave_categories?.Casual_Leave || 0}</TableCell>
-                                            <TableCell>{employee.leave_categories?.Sick_Leave || 0}</TableCell>
-                                            <TableCell>{employee.leave_categories?.Annual_Leave || 0}</TableCell>
+                                            {leaveCategories.map((category) => {
+                                                const categoryKey = category.name.replace(/\s+/g, '_');
+                                                return (
+                                                    <TableCell key={category.id}>
+                                                        {employee.leave_categories?.[categoryKey] || 0}
+                                                    </TableCell>
+                                                );
+                                            })}
                                             <TableCell>{employee.total_attendance}</TableCell>
                                             <TableCell>{employee.total_absence}</TableCell>
                                             <TableCell>{employee.total_leave}</TableCell>
@@ -179,7 +210,7 @@ const LeaveReport = () => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={8} align="center">
+                                        <TableCell colSpan={5 + leaveCategories.length} align="center">
                                             No employees found.
                                         </TableCell>
                                     </TableRow>

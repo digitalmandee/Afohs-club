@@ -20,6 +20,7 @@ class CreateDepartmentsTable extends Migration
             $table->bigInteger('updated_by')->nullable();
             $table->bigInteger('deleted_by')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // Add soft deletes column
         });
     }
 

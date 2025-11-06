@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class EmployeeType extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -37,5 +38,10 @@ class EmployeeType extends BaseModel
             }
             $employeeType->slug = $slug;
         });
+    }
+
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
     }
 }

@@ -115,8 +115,6 @@ const ViewProfile = ({ member }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
-
             <Box
                 component="main"
                 sx={{

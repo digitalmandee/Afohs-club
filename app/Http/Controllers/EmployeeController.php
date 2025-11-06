@@ -30,9 +30,45 @@ class EmployeeController extends Controller
         //     ->first();
 
         $limit = $request->query('limit') ?? 10;
-        // Employees with pagination
-        $employees = Employee::with(['department', 'employeeType'])
-            ->paginate($limit);
+        $search = $request->query('search', '');
+        $departmentFilters = $request->query('department_ids', []);
+        $employeeTypeFilters = $request->query('employee_type_ids', []);
+        
+        // Employees with pagination - include deleted departments and employee types
+        $employeesQuery = Employee::with([
+                'department' => function($query) {
+                    $query->withTrashed(); // Include soft deleted departments
+                }, 
+                'employeeType' => function($query) {
+                    $query->withTrashed(); // Include soft deleted employee types
+                }
+            ]);
+
+        // Apply search filter if provided
+        if (!empty($search)) {
+            $employeesQuery->where(function($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('employee_id', 'like', '%' . $search . '%')
+                      ->orWhere('email', 'like', '%' . $search . '%')
+                      ->orWhere('designation', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Apply department filters if provided
+        if (!empty($departmentFilters) && is_array($departmentFilters)) {
+            $employeesQuery->whereIn('department_id', $departmentFilters);
+        }
+
+        // Apply employee type filters if provided
+        if (!empty($employeeTypeFilters) && is_array($employeeTypeFilters)) {
+            $employeesQuery->whereIn('employee_type_id', $employeeTypeFilters);
+        }
+
+        $employees = $employeesQuery->paginate($limit)->withQueryString();
+
+        // Get filter options
+        $departments = \App\Models\Department::select('id', 'name')->get();
+        $employeeTypes = \App\Models\EmployeeType::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Employee/Dashboard1', [
             'stats' => [
@@ -45,6 +81,13 @@ class EmployeeController extends Controller
                 'total_late' => $attendanceStats->total_late ?? 0,
             ],
             'employees' => $employees,
+            'departments' => $departments,
+            'employeeTypes' => $employeeTypes,
+            'filters' => [
+                'search' => $search,
+                'department_ids' => $departmentFilters,
+                'employee_type_ids' => $employeeTypeFilters,
+            ],
         ]);
     }
 
@@ -53,6 +96,25 @@ class EmployeeController extends Controller
         $employeeTypes = EmployeeType::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Employee/Create', compact('employeeTypes'));
+    }
+
+    public function edit($employeeId)
+    {
+        $employee = Employee::with(['department', 'employeeType'])
+            ->where('employee_id', $employeeId)
+            ->first();
+
+        if (!$employee) {
+            return abort(404, 'Employee not found');
+        }
+
+        $employeeTypes = EmployeeType::select('id', 'name')->get();
+
+        return Inertia::render('App/Admin/Employee/Create', [
+            'employeeTypes' => $employeeTypes,
+            'employee' => $employee,
+            'isEdit' => true
+        ]);
     }
 
     public function store(Request $request)
