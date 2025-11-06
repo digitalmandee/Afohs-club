@@ -95,15 +95,13 @@ const LeavesList = () => {
     ];
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6'
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5'
                 }}
-            > */}
+            >
                 <Box sx={{
                     px: 3,
                     pt: 2
@@ -205,8 +203,8 @@ const LeavesList = () => {
                                     ) : (
                                         employeeData.map((employee, index) => (
                                             <TableRow key={index}>
-                                                <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C', cursor:'pointer' }}
-                                                onClick={()=>router.visit('/employee/payroll/leaves/Initialize')}
+                                                <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C', cursor: 'pointer' }}
+                                                    onClick={() => router.visit('/employee/payroll/leaves/Initialize')}
                                                 >
                                                     {employee.ID}
                                                 </TableCell>
@@ -229,7 +227,7 @@ const LeavesList = () => {
                                                     {employee.status}
                                                 </TableCell>
                                                 <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                     <img src="/assets/edit.png" alt="edit" style={{ cursor: 'pointer', width: 20, height: 20 }} />
+                                                    <img src="/assets/edit.png" alt="edit" style={{ cursor: 'pointer', width: 20, height: 20 }} />
                                                 </TableCell>
                                             </TableRow>
                                         ))
@@ -239,7 +237,7 @@ const LeavesList = () => {
                         </TableContainer>
                     </div>
                 </Box>
-            {/* </div> */}
+            </div>
         </>
     )
 }

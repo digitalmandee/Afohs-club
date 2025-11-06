@@ -250,3 +250,4 @@ export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDa
         </>
     );
 }
+SalesSummaryWithItemsPrint.layout = (page) => page;

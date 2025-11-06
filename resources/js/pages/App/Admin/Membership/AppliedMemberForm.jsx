@@ -183,14 +183,22 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
         <>
             <div
                 style={{
-                    backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
+                    backgroundColor: "#f5f5f5",
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
+                    // padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2, width: '600px' }}>
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    // maxWidth: '600px',
+                    justifyContent: 'flex-start',
+                    mb: 2
+                }}>
                     <IconButton onClick={() => router.get(route('applied-member.index'))} sx={{ color: '#000' }}>
                         <ArrowBack />
                     </IconButton>

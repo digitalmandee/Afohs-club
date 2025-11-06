@@ -49,6 +49,7 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                 sx={{
                     minHeight: '100vh',
                     padding: '20px',
+                    backgroundColor:'#f5f5f5',
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }} onClick={() => router.visit(route('events.dashboard'))}>

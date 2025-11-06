@@ -323,3 +323,4 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
         </>
     );
 }
+PendingMaintenanceReportPrint.layout = (page) => page;

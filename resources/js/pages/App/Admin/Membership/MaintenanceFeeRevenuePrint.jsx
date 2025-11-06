@@ -304,3 +304,4 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
         </>
     );
 }
+MaintenanceFeeRevenuePrint.layout = (page) => page;

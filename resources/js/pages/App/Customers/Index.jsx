@@ -48,9 +48,13 @@ const ManageCustomer = ({ customerData }) => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} /> */}
+            <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
+
+                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    transition: 'margin-left 0.3s ease-in-out',
+                    marginTop: '5rem',
                     minHeight: '100vh',
                     backgroundColor: '#f5f5f5',
                     padding: '20px',

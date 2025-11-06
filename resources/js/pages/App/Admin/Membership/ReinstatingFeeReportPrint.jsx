@@ -310,3 +310,4 @@ export default function ReinstatingFeeReportPrint({ transactions, statistics, fi
         </>
     );
 }
+ReinstatingFeeReportPrint.layout = (page) => page;

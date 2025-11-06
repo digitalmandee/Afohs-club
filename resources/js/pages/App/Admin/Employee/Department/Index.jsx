@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { MdArrowBackIos } from 'react-icons/md';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box } from '@mui/material';
+import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box } from '@mui/material';
 import axios from 'axios';
+import { ArrowBack } from "@mui/icons-material"
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 
@@ -89,7 +90,7 @@ const Management = () => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
+                    minHeight: '100vh',
                     backgroundColor: '#F6F6F6',
                 }}
             >
@@ -103,8 +104,10 @@ const Management = () => {
                         {/* Header */}
                         <div className="row mb-4 align-items-center">
                             <div className="col-auto d-flex align-items-center">
-                                <div onClick={() => router.visit(document.referrer || '/')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                                    <MdArrowBackIos style={{ fontSize: '20px' }} />
+                                <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                    <IconButton sx={{ color: '#333', mr: 1 }}>
+                                        <ArrowBack />
+                                    </IconButton>
                                 </div>
                                 <Typography
                                     variant="h5"

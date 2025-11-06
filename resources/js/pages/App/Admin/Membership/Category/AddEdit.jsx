@@ -91,17 +91,29 @@ const AddEditMembershipCategory = ({ onBack }) => {
                     
                 }}
             > */}
-                <div style={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2, width: '600px' }}>
-                    <IconButton onClick={onBack} sx={{ color: '#000' }}>
+            <div style={{
+                minHeight: '100vh',
+                backgroundColor: "#f5f5f5",
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                paddingTop: '1rem',
+            }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        // maxWidth: '600px',
+                        justifyContent: 'flex-start',
+                        ml:4,
+                        mb: 2,
+                    }}
+                >
+                    <IconButton onClick={() => window.history.back()} sx={{ color: '#000' }}>
                         <ArrowBack />
                     </IconButton>
-                    <Typography variant="h5" sx={{ ml: 1 }}>
+                    <Typography variant="h5">
                         {isEditMode ? 'Edit Membership Category' : 'Add Membership Category'}
                     </Typography>
                 </Box>
