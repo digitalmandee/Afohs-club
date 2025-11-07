@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert } from '@mui/material';
-import { ArrowBack, Person, Groups, Edit, Phone, Email, LocationOn, CalendarToday, CreditCard, Badge, Warning } from '@mui/icons-material';
+import { Box, Typography, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog } from '@mui/material';
+import { ArrowBack, Person, Groups, Edit, Phone, Email, LocationOn, CalendarToday, CreditCard, Badge, Warning, Receipt, Visibility } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
+import ReceiptComponent from '@/components/App/Invoice/Receipt';
 
 function TabPanel({ children, value, index, ...other }) {
     return (
@@ -23,6 +24,20 @@ const ViewProfile = ({ member }) => {
         per_page: 10,
         total: 0,
     });
+
+    // Order History State
+    const [orderHistory, setOrderHistory] = useState([]);
+    const [orderLoading, setOrderLoading] = useState(false);
+    const [orderPagination, setOrderPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        per_page: 10,
+        total: 0,
+    });
+
+    // Receipt Dialog State
+    const [openReceiptModal, setOpenReceiptModal] = useState(false);
+    const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState(null);
 
     // Helper function to format status
     const formatStatus = (status) => {
@@ -48,6 +63,16 @@ const ViewProfile = ({ member }) => {
         }
     };
 
+    // Helper function to format currency
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-PK', {
+            style: 'currency',
+            currency: 'PKR',
+        })
+            .format(amount)
+            .replace('PKR', 'Rs');
+    };
+
     // Get status color
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
@@ -70,13 +95,9 @@ const ViewProfile = ({ member }) => {
     const loadFamilyMembers = async (page = 1) => {
         setFamilyLoading(true);
         try {
-            const response = await axios.get(`/admin/membership/profile/${member.id}/family-members`, {
-                params: {
-                    page: page,
-                    per_page: familyPagination.per_page,
-                },
+            const response = await axios.get(route('membership.profile.family-members', member.id), {
+                params: { page, per_page: familyPagination.per_page },
             });
-
             setFamilyMembers(response.data.data);
             setFamilyPagination({
                 current_page: response.data.current_page,
@@ -91,9 +112,32 @@ const ViewProfile = ({ member }) => {
         }
     };
 
+    // Load order history
+    const loadOrderHistory = async (page = 1) => {
+        setOrderLoading(true);
+        try {
+            const response = await axios.get(route('membership.profile.order-history', member.id), {
+                params: { page, per_page: orderPagination.per_page },
+            });
+            setOrderHistory(response.data.data);
+            setOrderPagination({
+                current_page: response.data.current_page,
+                last_page: response.data.last_page,
+                per_page: response.data.per_page,
+                total: response.data.total,
+            });
+        } catch (error) {
+            console.error('Error loading order history:', error);
+        } finally {
+            setOrderLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (tabValue === 1) {
             loadFamilyMembers();
+        } else if (tabValue === 2) {
+            loadOrderHistory();
         }
     }, [tabValue]);
 
@@ -103,6 +147,21 @@ const ViewProfile = ({ member }) => {
 
     const handleFamilyPageChange = (event, page) => {
         loadFamilyMembers(page);
+    };
+
+    const handleOrderPageChange = (event, page) => {
+        loadOrderHistory(page);
+    };
+
+    const handleViewReceipt = (order) => {
+        // Open receipt in dialog modal
+        setSelectedOrderForReceipt(order);
+        setOpenReceiptModal(true);
+    };
+
+    const handleCloseReceiptModal = () => {
+        setOpenReceiptModal(false);
+        setSelectedOrderForReceipt(null);
     };
 
     const handleBack = () => {
@@ -334,6 +393,7 @@ const ViewProfile = ({ member }) => {
                         >
                             <Tab icon={<Person sx={{ fontSize: '24px' }} />} label="Profile Details" id="member-tab-0" aria-controls="member-tabpanel-0" sx={{ px: 4 }} />
                             <Tab icon={<Groups sx={{ fontSize: '24px' }} />} label="Family Members" id="member-tab-1" aria-controls="member-tabpanel-1" sx={{ px: 4 }} />
+                            <Tab icon={<Receipt sx={{ fontSize: '24px' }} />} label="Order History" id="member-tab-2" aria-controls="member-tabpanel-2" sx={{ px: 4 }} />
                         </Tabs>
                     </Box>
 
@@ -924,8 +984,184 @@ const ViewProfile = ({ member }) => {
                             </Box>
                         )}
                     </TabPanel>
+
+                    {/* Order History Tab */}
+                    <TabPanel value={tabValue} index={2}>
+                        <Box sx={{ mb: 4 }}>
+                            <Typography variant="h5" sx={{ fontWeight: 700, color: '#063455', mb: 3 }}>
+                                Order History
+                            </Typography>
+                        </Box>
+
+                        {orderLoading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                                <CircularProgress size={40} sx={{ color: '#063455' }} />
+                            </Box>
+                        ) : orderHistory && orderHistory.length > 0 ? (
+                            <>
+                                <Grid container spacing={3}>
+                                    {orderHistory.map((order) => (
+                                        <Grid item xs={12} md={6} lg={4} key={order.id}>
+                                            <Card
+                                                sx={{
+                                                    borderRadius: '12px',
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                    border: '1px solid #E5E5EA',
+                                                    transition: 'all 0.3s ease',
+                                                    '&:hover': {
+                                                        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                                                        transform: 'translateY(-2px)',
+                                                    },
+                                                }}
+                                            >
+                                                <CardContent sx={{ p: 3 }}>
+                                                    {/* Order Header */}
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                                        <Box>
+                                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455', mb: 0.5 }}>
+                                                                Order #{order.invoice_id || order.id}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {formatDate(order.created_at)}
+                                                            </Typography>
+                                                        </Box>
+                                                        <Chip
+                                                            label={formatStatus(order.status)}
+                                                            color={order.status === 'completed' ? 'success' : order.status === 'pending' ? 'warning' : 'default'}
+                                                            size="small"
+                                                            sx={{ fontWeight: 600 }}
+                                                        />
+                                                    </Box>
+
+                                                    {/* Order Details */}
+                                                    <Box sx={{ mb: 2 }}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                            Order Type: <strong>{formatStatus(order.order_type)}</strong>
+                                                        </Typography>
+                                                        {order.table_no && (
+                                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                                Table: <strong>{order.table_no}</strong>
+                                                            </Typography>
+                                                        )}
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                            Items: <strong>{order.order_items?.length || 0}</strong>
+                                                        </Typography>
+                                                    </Box>
+
+                                                    {/* Amount */}
+                                                    <Box sx={{ mb: 2 }}>
+                                                        <Typography variant="h5" sx={{ fontWeight: 700, color: '#063455' }}>
+                                                            {formatCurrency(order.amount)}
+                                                        </Typography>
+                                                        {order.payment_status && (
+                                                            <Chip
+                                                                label={order.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                                                                color={order.payment_status === 'paid' ? 'success' : 'error'}
+                                                                size="small"
+                                                                sx={{ mt: 1, fontWeight: 600 }}
+                                                            />
+                                                        )}
+                                                    </Box>
+
+                                                    {/* Action Button */}
+                                                    <Button
+                                                        variant="outlined"
+                                                        startIcon={<Visibility />}
+                                                        onClick={() => handleViewReceipt(order)}
+                                                        fullWidth
+                                                        sx={{
+                                                            borderColor: '#063455',
+                                                            color: '#063455',
+                                                            fontWeight: 600,
+                                                            '&:hover': {
+                                                                backgroundColor: '#063455',
+                                                                color: 'white',
+                                                            },
+                                                        }}
+                                                    >
+                                                        View Receipt
+                                                    </Button>
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+
+                                {/* Pagination */}
+                                {orderPagination.last_page > 1 && (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                                        <Pagination
+                                            count={orderPagination.last_page}
+                                            page={orderPagination.current_page}
+                                            onChange={handleOrderPageChange}
+                                            color="primary"
+                                            size="large"
+                                            sx={{
+                                                '& .MuiPaginationItem-root': {
+                                                    color: '#063455',
+                                                    fontWeight: 600,
+                                                    '&.Mui-selected': {
+                                                        backgroundColor: '#063455',
+                                                        color: 'white',
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                )}
+                            </>
+                        ) : (
+                            <Box
+                                sx={{
+                                    backgroundColor: '#E5E5EA',
+                                    borderRadius: '12px',
+                                    p: 4,
+                                    textAlign: 'center',
+                                    border: '1px solid #E5E5EA',
+                                }}
+                            >
+                                <Receipt sx={{ color: '#063455', fontSize: '48px', mb: 2 }} />
+                                <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600, mb: 1 }}>
+                                    No Order History
+                                </Typography>
+                                <Typography variant="body1" color="text.secondary">
+                                    This member hasn't placed any orders yet.
+                                </Typography>
+                            </Box>
+                        )}
+                    </TabPanel>
                 </Card>
             </Box>
+
+            {/* Receipt Modal Dialog */}
+            <Dialog
+                open={openReceiptModal}
+                onClose={handleCloseReceiptModal}
+                PaperProps={{
+                    style: {
+                        position: 'fixed',
+                        top: 0,
+                        right: 0,
+                        margin: 0,
+                        height: '100vh',
+                        maxHeight: '100vh',
+                        width: '100%',
+                        maxWidth: '300px',
+                        borderRadius: 0,
+                        overflow: 'auto',
+                    },
+                }}
+            >
+                <Box sx={{ display: 'flex', height: '100vh' }}>
+                    {/* Receipt Component */}
+                    <ReceiptComponent 
+                        invoiceId={selectedOrderForReceipt?.invoice_id || selectedOrderForReceipt?.id} 
+                        invoiceRoute="member.orderhistory.invoice"
+                        openModal={openReceiptModal} 
+                        closeModal={handleCloseReceiptModal} 
+                    />
+                </Box>
+            </Dialog>
         </>
     );
 };

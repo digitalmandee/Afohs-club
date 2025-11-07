@@ -3,11 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
-class Product extends Model
+class Product extends BaseModel
 {
     use HasFactory, SoftDeletes;
 
@@ -53,4 +52,23 @@ class Product extends Model
     {
         return $this->belongsTo(Restaurant::class);
     }
+
+    /**
+     * Relationship with ingredients through pivot table
+     */
+    public function ingredients()
+    {
+        return $this->belongsToMany(Ingredient::class, 'product_ingredients', 'product_id', 'ingredient_id')
+                    ->withPivot('quantity_used', 'cost')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the product ingredients pivot records
+     */
+    public function productIngredients()
+    {
+        return $this->hasMany(ProductIngredient::class);
+    }
+
 }

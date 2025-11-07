@@ -517,7 +517,7 @@ class MembershipController extends Controller
             if ($request->has('documents')) {
                 $requestDocs = (array) ($request->documents ?? []);
                 $existingMediaIds = [];
-                
+
                 // FIRST: Get current media IDs BEFORE creating new ones
                 $currentMediaIds = $member->media()->where('type', 'member_docs')->pluck('id')->toArray();
 
@@ -550,7 +550,7 @@ class MembershipController extends Controller
                 // THIRD: Delete old media that are not in the keep list
                 // Only compare against the ORIGINAL media IDs (before we added new ones)
                 $mediaIdsToDelete = array_diff($currentMediaIds, $existingMediaIds);
-                
+
                 // Delete the media records and their files
                 if (!empty($mediaIdsToDelete)) {
                     $member->media()
@@ -796,6 +796,50 @@ class MembershipController extends Controller
         $familyMembers = Member::where('parent_id', $id)->with(['profilePhoto:id,mediable_id,mediable_type,file_path'])->paginate($perPage);
 
         return response()->json($familyMembers);
+    }
+
+    // Get Member Order History (Transactions)
+    public function getMemberOrderHistory(Request $request, $id)
+    {
+        $perPage = $request->get('per_page', 10);
+
+        // Get member with their transactions/orders
+        $member = Member::findOrFail($id);
+
+        // Get orders for this member using the same structure as TransactionController
+        $query = \App\Models\Order::query()
+            ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation'])
+            ->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no', 'orderItems:id,order_id'])
+            ->where('member_id', $member->id)
+            ->orderBy('created_at', 'desc');
+
+        $orders = $query->paginate($perPage);
+
+        // Get order IDs for invoice lookup
+        $orderIds = $orders->pluck('id')->toArray();
+
+        // Get invoices for these orders (same as TransactionController)
+        $invoices = \App\Models\FinancialInvoice::select('id', 'data', 'status')
+            ->whereJsonContains('data->order_id', $orderIds)
+            ->get();
+
+        // Map invoices to orders
+        $invoiceMap = [];
+        foreach ($invoices as $invoice) {
+            $invoiceData = json_decode($invoice->data, true);
+            if (isset($invoiceData['order_id'])) {
+                $invoiceMap[$invoiceData['order_id']] = $invoice;
+            }
+        }
+
+        // Add invoice data to orders
+        $orders->getCollection()->transform(function ($order) use ($invoiceMap) {
+            $order->invoice = $invoiceMap[$order->id] ?? null;
+            $order->invoice_id = $order->invoice ? $order->invoice->id : null;
+            return $order;
+        });
+
+        return response()->json($orders);
     }
 
     public function updateStatus(Request $request)

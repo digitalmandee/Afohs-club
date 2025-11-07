@@ -44,6 +44,8 @@ use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\AdminPosReportController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\VoucherController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -343,6 +345,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit')->middleware('permission:members.edit');
         Route::get('profile/{id}', [MembershipController::class, 'showMemberProfile'])->name('membership.profile')->middleware('permission:members.view');
         Route::get('profile/{id}/family-members', [MembershipController::class, 'getMemberFamilyMembers'])->name('membership.profile.family-members')->middleware('permission:members.view');
+        Route::get('profile/{id}/order-history', [MembershipController::class, 'getMemberOrderHistory'])->name('membership.profile.order-history')->middleware('permission:members.view');
+        Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('member.orderhistory.invoice');
         Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update')->middleware('permission:members.edit');
         Route::post('store', [MembershipController::class, 'store'])->name('membership.store')->middleware('permission:members.create');
         Route::post('update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status')->middleware('permission:members.edit');
@@ -519,6 +523,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('pos/daily-dump-items-report/print', [AdminPosReportController::class, 'dailyDumpItemsReportPrint'])->name('admin.reports.pos.daily-dump-items-report.print');
     });
 
+    // Voucher Management Routes
+    Route::prefix('admin/vouchers')->middleware('super.admin:vouchers.view')->group(function () {
+        Route::get('/', [VoucherController::class, 'dashboard'])->name('vouchers.dashboard');
+        Route::get('/create', [VoucherController::class, 'create'])->name('vouchers.create');
+        Route::post('/', [VoucherController::class, 'store'])->name('vouchers.store');
+        Route::get('/{voucher}', [VoucherController::class, 'show'])->name('vouchers.show');
+        Route::get('/{voucher}/edit', [VoucherController::class, 'edit'])->name('vouchers.edit');
+        Route::put('/{voucher}', [VoucherController::class, 'update'])->name('vouchers.update');
+        Route::delete('/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy');
+        Route::post('/{voucher}/mark-used', [VoucherController::class, 'markAsUsed'])->name('vouchers.mark-used');
+        Route::post('/update-status', [VoucherController::class, 'updateStatus'])->name('vouchers.update-status');
+    });
+
     
     Route::prefix('api')->group(function () {
         // Dashboard Stats API
@@ -563,6 +580,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('all/report', [AttendanceController::class, 'allEmployeesReport'])->name('api.attendances.all.report');
 
             Route::get('leaves/reports/monthly', [LeaveApplicationController::class, 'leaveReportMonthly']);
+        });
+
+        // Voucher API routes
+        Route::prefix('vouchers')->group(function () {
+            Route::get('/', [VoucherController::class, 'getVouchers'])->name('api.vouchers.index');
+            Route::get('/{voucher}', [VoucherController::class, 'show'])->name('api.vouchers.show');
+            Route::post('/{voucher}/mark-used', [VoucherController::class, 'markAsUsed'])->name('api.vouchers.mark-used');
         });
     });
 });

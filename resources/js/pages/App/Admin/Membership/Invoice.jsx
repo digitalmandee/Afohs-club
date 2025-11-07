@@ -20,7 +20,7 @@ const handlePrintReceipt = (invoice) => {
         },
         details: {
             invoiceNumber: invoice.invoice_no || 'N/A',
-            issueDate: invoice.member?.card_expiry_date,
+            issueDate: invoice.issue_date,
             paymentMethod: invoice.payment_method,
             validFrom: (invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') ? invoice.valid_from : null,
             validTo: (invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') ? invoice.valid_to : null,

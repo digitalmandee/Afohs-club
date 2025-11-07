@@ -5,7 +5,53 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 // Receipt component for reuse
-const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, showButtons = true, closeModal }) => {
+const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, showButtons = true, closeModal, invoiceRoute }) => {
+    const styles = {
+        receiptContainer: {
+            width: invoiceRoute ? '100%' : '40%',
+            backgroundColor: '#f5f5f5',
+            padding: '20px',
+            borderRight: '1px solid #ddd',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            overflowY: 'auto',
+            height: '100vh',
+        },
+        receiptHeader: {
+            textAlign: 'center',
+            marginBottom: '10px',
+        },
+        receiptOrderId: {
+            border: '1px dashed #ccc',
+            padding: '10px',
+            textAlign: 'center',
+            marginBottom: '15px',
+        },
+        receiptDivider: {
+            borderTop: '1px dashed #ccc',
+            margin: '10px 0',
+        },
+        receiptFooter: {
+            textAlign: 'center',
+            marginTop: '20px',
+            fontSize: '11px',
+        },
+        receiptLogo: {
+            width: '80px',
+        },
+        receiptRow: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '5px',
+        },
+        receiptTotal: {
+            fontWeight: 'bold',
+            marginTop: '10px',
+            borderTop: '1px dashed #ccc',
+            paddingTop: '10px',
+        },
+    };
+
     const { auth } = usePage().props;
     const user = auth.user;
 
@@ -41,7 +87,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
         // Otherwise fetch by invoiceId (for payment mode)
         else if (openModal && invoiceId) {
             setLoading(true);
-            axios.get(route('transaction.invoice', { invoiceId: invoiceId })).then((response) => {
+            axios.get(route(invoiceRoute ? invoiceRoute : 'transaction.invoice', { invoiceId: invoiceId })).then((response) => {
                 console.log('response', response.data);
 
                 setPaymentData(response.data);
@@ -103,12 +149,16 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
               <div>${data.member?.full_name || data.member?.name || data.customer?.name || 'N/A'}</div>
             </div>
 
-            ${data.member ? (
-                <div class="row">
-                    <div>Member Id Card</div>
-                    <div>${data.member?.membership_no}</div>
-                </div>
-            ):''}
+            ${
+                data.member ? (
+                    <div class="row">
+                        <div>Member Id Card</div>
+                        <div>${data.member?.membership_no}</div>
+                    </div>
+                ) : (
+                    ''
+                )
+            }
 
             <div class="row">
               <div>Order Type</div>
@@ -128,8 +178,8 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
               <div style="margin-bottom: 10px;">
                 <div><strong>${item.order_item?.name || item.name}</strong></div>
                 <div class="row">
-                  <div>${item.order_item?.quantity || item.quantity} x Rs ${(item.order_item?.total_price || item.price)}</div>
-                  <div>Rs ${((item.order_item?.quantity || item.quantity) * (item.order_item?.total_price || item.price))}</div>
+                  <div>${item.order_item?.quantity || item.quantity} x Rs ${item.order_item?.total_price || item.price}</div>
+                  <div>Rs ${(item.order_item?.quantity || item.quantity) * (item.order_item?.total_price || item.price)}</div>
                 </div>
               </div>
             `,
@@ -353,49 +403,3 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 };
 
 export default Receipt;
-
-const styles = {
-    receiptContainer: {
-        width: '40%',
-        backgroundColor: '#f5f5f5',
-        padding: '20px',
-        borderRight: '1px solid #ddd',
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        overflowY: 'auto',
-        height: '100vh',
-    },
-    receiptHeader: {
-        textAlign: 'center',
-        marginBottom: '10px',
-    },
-    receiptOrderId: {
-        border: '1px dashed #ccc',
-        padding: '10px',
-        textAlign: 'center',
-        marginBottom: '15px',
-    },
-    receiptDivider: {
-        borderTop: '1px dashed #ccc',
-        margin: '10px 0',
-    },
-    receiptFooter: {
-        textAlign: 'center',
-        marginTop: '20px',
-        fontSize: '11px',
-    },
-    receiptLogo: {
-        width: '80px',
-    },
-    receiptRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        marginBottom: '5px',
-    },
-    receiptTotal: {
-        fontWeight: 'bold',
-        marginTop: '10px',
-        borderTop: '1px dashed #ccc',
-        paddingTop: '10px',
-    },
-};

@@ -1,8 +1,8 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
-import { Add as AddIcon, Close as CloseIcon, EventSeat as EventSeatIcon, FormatBold as FormatBoldIcon, FormatItalic as FormatItalicIcon, FormatListBulleted, FormatListNumbered, InsertEmoticon as InsertEmoticonIcon, Link as LinkIcon, LocalMall as LocalMallIcon, LocalShipping as LocalShippingIcon, ShoppingBag as ShoppingBagIcon } from '@mui/icons-material';
+import { Add as AddIcon, Close as CloseIcon, EventSeat as EventSeatIcon, FormatBold as FormatBoldIcon, FormatItalic as FormatItalicIcon, FormatListBulleted, FormatListNumbered, InsertEmoticon as InsertEmoticonIcon, Link as LinkIcon, LocalMall as LocalMallIcon, LocalShipping as LocalShippingIcon, ShoppingBag as ShoppingBagIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Autocomplete, Box, Button, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import { Alert, Autocomplete, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, MenuItem, Paper, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ChevronDown } from 'lucide-react';
@@ -53,6 +53,10 @@ const AddProduct = ({ product, id }) => {
     const [uploadedImages, setUploadedImages] = useState([]);
     const [existingImages, setExistingImages] = useState([]); // For existing images from server
     const [deletedImages, setDeletedImages] = useState([]); // Track deleted images
+
+    // Ingredients state
+    const [ingredients, setIngredients] = useState([]);
+    const [selectedIngredients, setSelectedIngredients] = useState([]);
     const [formData, setFormData] = useState({
         discountValue: data.discountValue || '',
         discountType: data.discountType || 'percentage',
@@ -74,25 +78,27 @@ const AddProduct = ({ product, id }) => {
 
     // Menu Steps
     const handleNextStep = () => {
-        const validationErrors = getMenuValidationErrors(data);
-        if (validationErrors.length > 0) {
-            // Map errors to fields
-            const newFieldErrors = {};
-            validationErrors.forEach((error) => {
-                if (error.includes('Name')) newFieldErrors.name = error;
-                if (error.includes('Category')) newFieldErrors.category_id = error;
-                if (error.includes('Current stock')) newFieldErrors.current_stock = error;
-                if (error.includes('Minimal stock')) newFieldErrors.minimal_stock = error;
-                if (error.includes('order type')) newFieldErrors.available_order_types = error;
-                if (error.includes('COGS')) newFieldErrors.cost_of_goods_sold = error;
-                if (error.includes('Base price')) newFieldErrors.base_price = error;
-                if (error.includes('Profit')) newFieldErrors.profit = error;
-            });
-            setFieldErrors(newFieldErrors);
-            return;
+        if (addMenuStep === 1) {
+            const validationErrors = getMenuValidationErrors(data);
+            if (validationErrors.length > 0) {
+                // Map errors to fields
+                const newFieldErrors = {};
+                validationErrors.forEach((error) => {
+                    if (error.includes('Name')) newFieldErrors.name = error;
+                    if (error.includes('Category')) newFieldErrors.category_id = error;
+                    if (error.includes('Current stock')) newFieldErrors.current_stock = error;
+                    if (error.includes('Minimal stock')) newFieldErrors.minimal_stock = error;
+                    if (error.includes('order type')) newFieldErrors.available_order_types = error;
+                    if (error.includes('COGS')) newFieldErrors.cost_of_goods_sold = error;
+                    if (error.includes('Base price')) newFieldErrors.base_price = error;
+                    if (error.includes('Profit')) newFieldErrors.profit = error;
+                });
+                setFieldErrors(newFieldErrors);
+                return;
+            }
+            setFieldErrors({}); // Clear errors if validation passes
         }
-        setFieldErrors({}); // Clear errors if validation passes
-        setAddMenuStep(2);
+        setAddMenuStep(addMenuStep + 1);
     };
 
     const getMenuValidationErrors = (menu) => {
@@ -109,7 +115,7 @@ const AddProduct = ({ product, id }) => {
     };
 
     const handlePreviousStep = () => {
-        setAddMenuStep(1);
+        setAddMenuStep(addMenuStep - 1);
         setFieldErrors({}); // Clear errors when going back
     };
 
@@ -240,8 +246,8 @@ const AddProduct = ({ product, id }) => {
 
     // Handle existing image deletion
     const handleDeleteExistingImage = (imageUrl) => {
-        setExistingImages((prev) => prev.filter(img => img !== imageUrl));
-        
+        setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
+
         // Convert full URL back to path for backend (remove origin, keep the full path)
         const imagePath = imageUrl.replace(window.location.origin, '');
         setDeletedImages((prev) => [...prev, imagePath]);
@@ -260,6 +266,50 @@ const AddProduct = ({ product, id }) => {
         fileInputRef.current.click();
     };
 
+    // Ingredient functions
+    const loadIngredients = async () => {
+        try {
+            const response = await axios.get(route('api.ingredients'));
+            setIngredients(response.data);
+        } catch (error) {
+            console.error('Error loading ingredients:', error);
+        }
+    };
+
+    const addIngredient = (ingredient) => {
+        if (!selectedIngredients.find((ing) => ing.id === ingredient.id)) {
+            setSelectedIngredients([
+                ...selectedIngredients,
+                {
+                    id: ingredient.id,
+                    name: ingredient.name,
+                    unit: ingredient.unit,
+                    remaining_quantity: ingredient.remaining_quantity,
+                    quantity_used: 0,
+                    cost: ingredient.price || 0, // Auto-populate with ingredient price
+                },
+            ]);
+        }
+    };
+
+    const removeIngredient = (ingredientId) => {
+        setSelectedIngredients(selectedIngredients.filter((ing) => ing.id !== ingredientId));
+    };
+
+    const updateIngredientQuantity = (ingredientId, field, value) => {
+        setSelectedIngredients(selectedIngredients.map((ing) => (ing.id === ingredientId ? { ...ing, [field]: parseFloat(value) || 0 } : ing)));
+    };
+
+    const calculateTotalIngredientCost = () => {
+        if (!selectedIngredients || selectedIngredients.length === 0) {
+            return 0;
+        }
+        return selectedIngredients.reduce((total, ing) => {
+            const cost = parseFloat(ing.cost) || 0;
+            return total + cost;
+        }, 0);
+    };
+
     // Save new menu
     const handleSaveMenu = () => {
         setData((prev) => ({
@@ -272,6 +322,11 @@ const AddProduct = ({ product, id }) => {
             discount: data.discountValue || null,
             discountType: data.discountType || null,
             deleted_images: deletedImages, // Include deleted images for backend processing
+            ingredients: selectedIngredients.map((ing) => ({
+                id: ing.id,
+                quantity_used: ing.quantity_used,
+                cost: ing.cost,
+            })),
         }));
         submit('post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
             onSuccess: () => {
@@ -313,14 +368,27 @@ const AddProduct = ({ product, id }) => {
 
     useEffect(() => {
         fetchCategories();
-        
+        loadIngredients();
+
         // Load existing images when editing
         if (id && product && product.images) {
             // Images already have full paths from FileHelper
-            const imageUrls = product.images.map(image => 
-                image.startsWith('http') ? image : `${window.location.origin}${image}`
-            );
+            const imageUrls = product.images.map((image) => (image.startsWith('http') ? image : `${window.location.origin}${image}`));
             setExistingImages(imageUrls);
+        }
+
+        // Load existing ingredients when editing
+        if (id && product?.ingredients) {
+            setSelectedIngredients(
+                product.ingredients.map((ing) => ({
+                    id: ing.id,
+                    name: ing.name,
+                    unit: ing.unit,
+                    remaining_quantity: ing.remaining_quantity,
+                    quantity_used: ing.pivot?.quantity_used || 0,
+                    cost: ing.pivot?.cost || ing.price || 0, // Use saved cost or ingredient price as fallback
+                })),
+            );
         }
     }, [id, product]);
 
@@ -354,7 +422,7 @@ const AddProduct = ({ product, id }) => {
                 </Box>
                 <Box
                     sx={{
-                        width: '650px',
+                        width: '80%',
                         margin: '0 auto',
                     }}
                 >
@@ -399,7 +467,28 @@ const AddProduct = ({ product, id }) => {
                                     2
                                 </Box>
                                 <Typography variant="body2" fontWeight="bold" color={addMenuStep === 2 ? 'text.primary' : 'text.secondary'}>
-                                    Descriptions and Image
+                                    Ingredients
+                                </Typography>
+                            </Box>
+                            <Box sx={{ flex: 1, mx: 2, height: 1, backgroundColor: '#e0e0e0' }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Box
+                                    sx={{
+                                        width: 30,
+                                        height: 30,
+                                        borderRadius: '50%',
+                                        backgroundColor: addMenuStep === 3 ? '#003B5C' : '#e0e0e0',
+                                        color: addMenuStep === 3 ? 'white' : 'text.secondary',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        mr: 1,
+                                    }}
+                                >
+                                    3
+                                </Box>
+                                <Typography variant="body2" fontWeight="bold" color={addMenuStep === 3 ? 'text.primary' : 'text.secondary'}>
+                                    Descriptions & Images
                                 </Typography>
                             </Box>
                         </Box>
@@ -820,8 +909,110 @@ const AddProduct = ({ product, id }) => {
                             </Box>
                         )}
 
-                        {/* Step 2: Descriptions and Image */}
+                        {/* Step 2: Ingredients */}
                         {addMenuStep === 2 && (
+                            <Box sx={{ px: 3, pb: 3 }}>
+                                <Typography variant="h6" sx={{ mb: 3, color: '#121212' }}>
+                                    Ingredients Management
+                                </Typography>
+
+                                {/* Header */}
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body1" sx={{ color: '#121212', fontSize: '14px' }}>
+                                        Select ingredients used in this product (Recipe only - no stock deduction)
+                                    </Typography>
+                                </Box>
+
+                                {/* Add Ingredient */}
+                                <Box sx={{ mb: 3 }}>
+                                    <Autocomplete
+                                        options={ingredients.filter((ing) => !selectedIngredients.find((sel) => sel.id === ing.id))}
+                                        getOptionLabel={(option) => `${option.name} (${option.remaining_quantity} ${option.unit}) - Rs ${option.price || 0}`}
+                                        onChange={(event, newValue) => {
+                                            if (newValue) {
+                                                addIngredient(newValue);
+                                            }
+                                        }}
+                                        renderInput={(params) => <TextField {...params} label="Add Ingredient" placeholder="Search and select ingredients..." size="small" />}
+                                    />
+                                </Box>
+
+                                {/* Selected Ingredients Table */}
+                                {selectedIngredients.length > 0 && (
+                                    <TableContainer component={Paper} sx={{ mb: 2 }}>
+                                        <Table size="small">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>
+                                                        <strong>Ingredient</strong>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <strong>Available</strong>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <strong>Quantity Used</strong>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <strong>Cost (PKR)</strong>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <strong>Quantity Per Unit</strong>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <strong>Actions</strong>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {selectedIngredients.map((ingredient) => {
+                                                    return (
+                                                        <TableRow key={ingredient.id}>
+                                                            <TableCell>{ingredient.name}</TableCell>
+                                                            <TableCell>
+                                                                {ingredient.remaining_quantity} {ingredient.unit}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <TextField size="small" type="number" value={ingredient.quantity_used} onChange={(e) => updateIngredientQuantity(ingredient.id, 'quantity_used', e.target.value)} inputProps={{ min: 0, step: 0.01 }} sx={{ width: '100px' }} />
+                                                                <Typography variant="caption" sx={{ ml: 1 }}>
+                                                                    {ingredient.unit}
+                                                                </Typography>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <TextField size="small" type="number" value={ingredient.cost} onChange={(e) => updateIngredientQuantity(ingredient.id, 'cost', e.target.value)} inputProps={{ min: 0, step: 0.01 }} sx={{ width: '100px' }} />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Typography variant="body2">
+                                                                    {ingredient.quantity_used} {ingredient.unit}
+                                                                </Typography>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <IconButton size="small" color="error" onClick={() => removeIngredient(ingredient.id)}>
+                                                                    <DeleteIcon />
+                                                                </IconButton>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
+                                                <TableRow>
+                                                    <TableCell colSpan={3}>
+                                                        <strong>Total Ingredient Cost:</strong>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <strong>Rs {(calculateTotalIngredientCost() || 0).toFixed(2)}</strong>
+                                                    </TableCell>
+                                                    <TableCell colSpan={2}></TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                )}
+
+                                {selectedIngredients.length === 0 && <Alert severity="info">No ingredients selected. Add ingredients to track usage and costs.</Alert>}
+                            </Box>
+                        )}
+
+                        {/* Step 3: Descriptions and Image */}
+                        {addMenuStep === 3 && (
                             <Box sx={{ px: 3, pb: 3 }}>
                                 <Typography variant="body1" sx={{ mb: 2 }}>
                                     Menu Image
@@ -865,7 +1056,7 @@ const AddProduct = ({ product, id }) => {
                                             </IconButton>
                                         </Box>
                                     ))}
-                                    
+
                                     {/* Display newly uploaded images */}
                                     {uploadedImages.map((image, index) => (
                                         <Box
@@ -985,6 +1176,32 @@ const AddProduct = ({ product, id }) => {
                     <DialogActions sx={{ p: 3, justifyContent: 'flex-end' }}>
                         {addMenuStep === 1 ? (
                             <>
+                                <Button
+                                    onClick={handleNextStep}
+                                    variant="contained"
+                                    sx={{
+                                        backgroundColor: '#003B5C',
+                                        '&:hover': {
+                                            backgroundColor: '#002A41',
+                                        },
+                                    }}
+                                >
+                                    Next
+                                </Button>
+                            </>
+                        ) : addMenuStep === 2 ? (
+                            <>
+                                <Button
+                                    onClick={handlePreviousStep}
+                                    sx={{
+                                        color: 'text.primary',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                        },
+                                    }}
+                                >
+                                    Previous
+                                </Button>
                                 <Button
                                     onClick={handleNextStep}
                                     variant="contained"

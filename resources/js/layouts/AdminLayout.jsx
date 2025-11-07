@@ -10,24 +10,7 @@ const AdminLayout = ({ children }) => {
 
     return (
         <Box sx={{ display: 'flex' }}>
-            <SideNav open={open} setOpen={setOpen} />
-            <div
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    width: { sm: `calc(100% - ${open ? drawerWidthOpen : drawerWidthClosed}px)` },
-                    ml: { sm: `${open ? drawerWidthOpen : drawerWidthClosed}px` },
-                    transition: (theme) =>
-                        theme.transitions.create(['margin', 'width'], {
-                            easing: theme.transitions.easing.sharp,
-                            duration: theme.transitions.duration.leavingScreen,
-                        }),
-                    minHeight: '100vh',
-                    backgroundColor: '#f5f5f5',
-                }}
-            >
-                {children}
-            </div>
+            <div>{children}</div>
         </Box>
     );
 };

@@ -29,6 +29,7 @@ import { FaKitchenSet } from 'react-icons/fa6';
 import MemberIcon from '@/components/App/Icons/Member';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -371,6 +372,11 @@ export default function SideNav({ open, setOpen }) {
                 {
                     text: 'Transaction',
                     path: route('finance.transaction'),
+                },
+                {
+                    text: 'Vouchers',
+                    icon: <ConfirmationNumberIcon />,
+                    path: route('vouchers.dashboard'),
                 },
             ],
         },

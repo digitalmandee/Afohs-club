@@ -58,7 +58,7 @@ const AllRooms = ({ rooms }) => {
                                         }}
                                     >
                                         <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                                            <img src={'/' + room?.photo_path} alt={room.name} style={{ width: '117px', height: '77px' }} />
+                                            <img src={room?.photo_path} alt={room.name} style={{ width: '117px', height: '77px' }} />
                                         </Box>
 
                                         <Box sx={{ p: 2, flexGrow: 1 }}>
