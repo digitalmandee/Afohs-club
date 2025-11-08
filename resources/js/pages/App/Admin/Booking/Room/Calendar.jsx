@@ -39,10 +39,23 @@ const RoomCalendar = () => {
                 barColor: statusBar(b.status),
                 fontColor: statusTextColor(b.status),
                 bubbleHtml: `
-                    <strong>${b.guest_name}</strong><br/>
-                    Status: ${b.status.replace('_', ' ')}<br/>
-                    <a href="#" onclick="window.checkIn(${b.id}); return false;">Check-in</a><br/>
-                    <a href="/booking-management/rooms/edit-booking/${b.id}?type=checkout" target="_blank">Check-out</a>
+                    <div style="padding: 10px; font-family: Arial, sans-serif; line-height: 1.4;">
+                        <strong style="color: #333;">${b.guest_name}</strong><br/>
+                        <span style="color: #666;">Status: <span style="color: ${getStatusColor(b.status)}; font-weight: bold;">${b.status?.charAt(0).toUpperCase() + b.status?.slice(1).replace('_', ' ')}</span></span><br/>
+                        
+                        <div style="margin: 8px 0; padding: 6px; background: #f0f8ff; border-radius: 4px;">
+                            <a href="#" onclick="window.checkIn(${b.id}); return false;" 
+                               style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-in</a>
+                            <a href="/booking-management/rooms/edit-booking/${b.id}?type=checkout" target="_blank"
+                               style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Check-out</a>
+                        </div>
+                        
+                        <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
+                            <strong style="color: #1976d2; font-style: italic; font-size: 12px;">Booking Dates</strong><br/>
+                            <span style="font-size: 11px;">Check-in: ${b.check_in_date}</span><br/>
+                            <span style="font-size: 11px;">Check-out: ${b.check_out_date}</span>
+                        </div>
+                    </div>
                 `,
             }));
 
@@ -76,6 +89,18 @@ const RoomCalendar = () => {
     const statusBar = (s) => ({ booked: 'blue', checked_in: 'black', checked_out: 'white', confirmed: 'white', refund: 'black', cancelled: 'white' })[s] || 'black';
 
     const statusTextColor = (s) => ({ booked: 'white', checked_in: 'black', checked_out: 'white', confirmed: 'white', refund: 'white', cancelled: 'white' })[s] || 'black';
+
+    const getStatusColor = (status) => {
+        const colors = {
+            'booked': '#007bff',
+            'confirmed': '#6f42c1', 
+            'checked_in': '#ffc107',
+            'checked_out': '#28a745',
+            'cancelled': '#dc3545',
+            'refund': '#17a2b8'
+        };
+        return colors[status] || '#6c757d';
+    };
 
     // Calculate dynamic days based on month and next month
     const startDate = moment(`${year}-${month}-01`);
