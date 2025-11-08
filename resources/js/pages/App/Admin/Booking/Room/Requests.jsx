@@ -30,8 +30,8 @@ const BookingRequests = () => {
 
             <div
                 style={{
-                    minHeight:'100vh',
-                    backgroundColor:'#f5f5f5',
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -54,12 +54,14 @@ const BookingRequests = () => {
                         </Button>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>ID</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Booking Date</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Check-In</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Check-Out</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Guest/Member</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Room</TableCell>
@@ -74,8 +76,17 @@ const BookingRequests = () => {
                                     <TableRow key={req.id} style={{ borderBottom: '1px solid #eee' }}>
                                         <TableCell>{req.id}</TableCell>
                                         <TableCell>{req.booking_date}</TableCell>
-                                        <TableCell>{req.booking_type}</TableCell>
-                                        <TableCell>{req.booking_type.startsWith('guest-') ? req.customer?.name : req.member?.full_name}</TableCell>
+                                        <TableCell>{req.check_in_date || 'N/A'}</TableCell>
+                                        <TableCell>{req.check_out_date || 'N/A'}</TableCell>
+                                        <TableCell>{req.booking_type == 0 ? 'Member' : req.booking_type == 2 ? 'Corporate Member' : req.booking_type == 'guest-1' ? 'Applied Member' : req.booking_type == 'guest-2' ? 'Affiliated Member' : 'VIP Guest'}</TableCell>
+                                        <TableCell>
+                                            {req.booking_type.startsWith('guest-') 
+                                                ? req.customer?.name 
+                                                : req.member?.full_name 
+                                                    ? `${req.member.full_name} (${req.member.membership_no})` 
+                                                    : 'N/A'
+                                            }
+                                        </TableCell>
                                         <TableCell>{req.room?.name}</TableCell>
                                         <TableCell>{req.persons}</TableCell>
                                         <TableCell>{req.per_day_charge}</TableCell>

@@ -17,7 +17,6 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
     const isEditMode = Boolean(memberData);
 
     const [formData, setFormData] = useState({
-        member_id: props.membershipNo,
         name: '',
         email: '',
         phone_number: '',
@@ -34,7 +33,6 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
     useEffect(() => {
         if (isEditMode) {
             setFormData({
-                member_id: memberData.member_id || '',
                 name: memberData.name || '',
                 email: memberData.email || '',
                 phone_number: memberData.phone_number || '',
@@ -116,7 +114,6 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
         }
 
         const dataToSubmit = {
-            member_id: formData.member_id ? parseInt(formData.member_id) : null,
             name: formData.name,
             email: formData.email,
             phone_number: formData.phone_number,
@@ -208,10 +205,6 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                 </Box>
                 <Paper sx={{ p: 3, maxWidth: '600px', width: '100%' }}>
                     <form onSubmit={handleSubmit}>
-                        <Box sx={{ mb: 2 }}>
-                            <Typography>Member ID</Typography>
-                            <TextField fullWidth size="small" name="member_id" value={formData.member_id} onChange={handleInputChange} type="number" error={!!errors.member_id} helperText={errors.member_id || 'Must be unique if provided'} />
-                        </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Name *</Typography>
                             <TextField fullWidth size="small" name="name" value={formData.name} onChange={handleInputChange} required error={!!errors.name} helperText={errors.name} />

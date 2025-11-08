@@ -174,6 +174,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                 <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
                                     <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Booking Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Check-In</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Check-Out</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Persons</TableCell>
@@ -188,6 +190,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell>{booking.id}</TableCell>
                                             <TableCell>{booking.booking_date}</TableCell>
+                                            <TableCell>{booking.check_in_date}</TableCell>
+                                            <TableCell>{booking.check_out_date}</TableCell>
                                             <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
                                             <TableCell>{booking.room?.name}</TableCell>
                                             <TableCell>{booking.persons}</TableCell>
@@ -202,7 +206,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={8} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                        <TableCell colSpan={10} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
                                             No bookings found
                                         </TableCell>
                                     </TableRow>

@@ -552,7 +552,6 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                                                                     </Typography>
                                                                 </div>
                                                                 <Badge
-                                                                    onClick={() => router.visit(route('rooms.dashboard'))}
                                                                     bg=""
                                                                     style={{
                                                                         backgroundColor: booking.status === 'confirmed' ? '#0e5f3c' : '#842029',

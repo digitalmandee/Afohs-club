@@ -13,7 +13,9 @@ const RoomBookingRequestForm = ({ mode }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
 
     const [formData, setFormData] = useState({
-        bookingDate: request?.booking_date || '',
+        bookingDate: request?.booking_date || new Date().toISOString().split('T')[0], // Auto-select current date
+        checkInDate: request?.check_in_date || '',
+        checkOutDate: request?.check_out_date || '',
         bookingType: request?.booking_type || '',
         guest: request?.member || request?.customer || '',
         roomId: request?.room_id || '',
@@ -60,6 +62,8 @@ const RoomBookingRequestForm = ({ mode }) => {
 
         const payload = {
             booking_date: formData.bookingDate,
+            check_in_date: formData.checkInDate,
+            check_out_date: formData.checkOutDate,
             booking_type: formData.bookingType,
             room_id: formData.roomId,
             booking_category: formData.bookingCategory,
@@ -67,7 +71,8 @@ const RoomBookingRequestForm = ({ mode }) => {
             security_deposit: formData.securityDeposit,
             per_day_charge: formData.perDayCharge,
         };
-
+        console.log(formData.guest);
+        
         if (formData.bookingType.startsWith('guest-')) {
             payload.customer_id = formData.guest?.id || null;
         } else {
@@ -110,27 +115,111 @@ const RoomBookingRequestForm = ({ mode }) => {
                     <Paper sx={{ p: 3 }}>
                         <form onSubmit={handleSubmit}>
                             <Grid container spacing={2}>
-                                {/* Booking Date */}
-                                <Grid item xs={12} sm={6}>
-                                    <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.booking_date} helperText={errors.booking_date} />
+                                {/* Booking Date - Auto-selected, read-only */}
+                                <Grid item xs={12} sm={4}>
+                                    <TextField 
+                                        label="Booking Date" 
+                                        name="bookingDate" 
+                                        type="date" 
+                                        value={formData.bookingDate} 
+                                        onChange={handleChange} 
+                                        fullWidth 
+                                        InputLabelProps={{ shrink: true }} 
+                                        InputProps={{ readOnly: true }}
+                                        disabled
+                                        error={!!errors.booking_date} 
+                                        helperText={errors.booking_date || "Auto-selected to today's date"} 
+                                    />
+                                </Grid>
+
+                                {/* Check-In Date */}
+                                <Grid item xs={12} sm={4}>
+                                    <TextField 
+                                        label="Check-In Date" 
+                                        name="checkInDate" 
+                                        type="date" 
+                                        value={formData.checkInDate} 
+                                        onChange={handleChange} 
+                                        fullWidth 
+                                        InputLabelProps={{ shrink: true }} 
+                                        error={!!errors.check_in_date} 
+                                        helperText={errors.check_in_date} 
+                                        inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                                    />
+                                </Grid>
+
+                                {/* Check-Out Date */}
+                                <Grid item xs={12} sm={4}>
+                                    <TextField 
+                                        label="Check-Out Date" 
+                                        name="checkOutDate" 
+                                        type="date" 
+                                        value={formData.checkOutDate} 
+                                        onChange={handleChange} 
+                                        fullWidth 
+                                        InputLabelProps={{ shrink: true }} 
+                                        error={!!errors.check_out_date} 
+                                        helperText={errors.check_out_date} 
+                                        inputProps={{ min: formData.checkInDate || new Date().toISOString().split('T')[0] }}
+                                    />
                                 </Grid>
 
                                 {/* Booking Type */}
                                 <Grid item xs={12}>
                                     <FormLabel>Booking Type</FormLabel>
-                                    <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
-                                        <FormControlLabel value="member" control={<Radio />} label="Member" />
-                                        <FormControlLabel value="corporate" control={<Radio />} label="Corporate Member" />
-                                        <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
-                                        <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" />
-                                        <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" />
-                                    </RadioGroup>
+                                    {mode === 'edit' ? (
+                                        <TextField
+                                            value={
+                                                formData.bookingType == 0 ? 'Member' : 
+                                                formData.bookingType == 2 ? 'Corporate Member' : 
+                                                formData.bookingType == 'guest-1' ? 'Applied Member' : 
+                                                formData.bookingType == 'guest-2' ? 'Affiliated Member' : 
+                                                'VIP Guest'
+                                            }
+                                            fullWidth
+                                            InputProps={{ readOnly: true }}
+                                            disabled
+                                            sx={{ mt: 1 }}
+                                        />
+                                    ) : (
+                                        <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
+                                            <FormControlLabel value="0" control={<Radio />} label="Member" />
+                                            <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
+                                            <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
+                                            <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" />
+                                            <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" />
+                                        </RadioGroup>
+                                    )}
                                     {errors.booking_type && <Typography color="error">{errors.booking_type}</Typography>}
                                 </Grid>
 
                                 {/* Member / Guest Search */}
                                 <Grid item xs={12}>
-                                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleGuestSelect} params={{ type: formData.bookingType }} endpoint="admin.api.search-users" placeholder="Search members..." />
+                                    {mode === 'edit' ? (
+                                        <TextField
+                                            label="Member / Guest Name"
+                                            value={
+                                                request?.member ? 
+                                                    `${request.member.full_name} (${request.member.membership_no})` : 
+                                                request?.customer ? 
+                                                    `${request.customer.name} (ID: ${request.customer.customer_no})` : 
+                                                    'No member/guest selected'
+                                            }
+                                            fullWidth
+                                            InputProps={{ readOnly: true }}
+                                            disabled
+                                        />
+                                    ) : (
+                                        <AsyncSearchTextField 
+                                            label="Member / Guest Name" 
+                                            name="guest" 
+                                            value={formData.guest} 
+                                            onChange={(guest) => handleGuestSelect(guest.target.value)} 
+                                            params={{ type: formData.bookingType }} 
+                                            endpoint="admin.api.search-users" 
+                                            placeholder="Search members..." 
+                                        />
+                                    )}
                                 </Grid>
 
                                 {/* Select Room */}

@@ -44,12 +44,10 @@ class AppliedMember extends Model
     public static function generateMembershipNumber(): string
     {
         $lastNumber = self::orderBy('id', 'desc')
-            ->pluck('member_id')
+            ->pluck('id')
             ->max() ?? 0;
 
         $next = $lastNumber + 1;
-
-        // Minimum 3 digits, but will grow if needed (e.g., "001", "099", "1000")
-        return str_pad((string) $next, 1, '0', STR_PAD_LEFT);
+        return $next;
     }
 }

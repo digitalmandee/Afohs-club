@@ -37,6 +37,7 @@ const RoomCalendar = () => {
                 text: `#${b.booking_no}: ${b.guest_name}`,
                 backColor: statusBack(b.status),
                 barColor: statusBar(b.status),
+                fontColor: statusTextColor(b.status),
                 bubbleHtml: `
                     <strong>${b.guest_name}</strong><br/>
                     Status: ${b.status.replace('_', ' ')}<br/>
@@ -70,9 +71,11 @@ const RoomCalendar = () => {
         };
     }, [events]);
 
-    const statusBack = (s) => ({ booked: 'blue', checked_in: 'yellow', checked_out: '#ddd', refund: 'green' })[s] || 'gray';
+    const statusBack = (s) => ({ booked: 'blue', checked_in: 'yellow', checked_out: 'green', confirmed: 'purple', refund: 'green', cancelled: 'red' })[s] || 'gray';
 
-    const statusBar = (s) => ({ booked: 'blue', checked_in: 'black', checked_out: 'black', refund: 'black' })[s] || 'black';
+    const statusBar = (s) => ({ booked: 'blue', checked_in: 'black', checked_out: 'white', confirmed: 'white', refund: 'black', cancelled: 'white' })[s] || 'black';
+
+    const statusTextColor = (s) => ({ booked: 'white', checked_in: 'black', checked_out: 'white', confirmed: 'white', refund: 'white', cancelled: 'white' })[s] || 'black';
 
     // Calculate dynamic days based on month and next month
     const startDate = moment(`${year}-${month}-01`);

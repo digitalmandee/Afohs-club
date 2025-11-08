@@ -12,9 +12,7 @@ class RoomBookingRequestController extends Controller
 {
     public function index()
     {
-        $requests = RoomBookingRequest::with(['room', 'member', 'customer'])
-            ->latest()
-            ->get();
+        $requests = RoomBookingRequest::with(['room', 'member', 'customer'])->latest()->get();
 
         return Inertia::render('App/Admin/Booking/Room/Requests', [
             'requests' => $requests
@@ -43,6 +41,8 @@ class RoomBookingRequestController extends Controller
     {
         $validated = $request->validate([
             'booking_date' => 'required|date',
+            'check_in_date' => 'required|date|after_or_equal:today',
+            'check_out_date' => 'required|date|after:check_in_date',
             'booking_type' => 'required|string',
             'room_id' => 'required|exists:rooms,id',
             'booking_category' => 'required|exists:room_categories,id',
@@ -51,21 +51,28 @@ class RoomBookingRequestController extends Controller
             'per_day_charge' => 'required|numeric|min:0',
         ]);
 
-        // Prevent duplicate booking request for same date and room
+        // Prevent duplicate booking request for overlapping dates and same room
         $exists = RoomBookingRequest::where('room_id', $validated['room_id'])
-            ->where('booking_date', $validated['booking_date'])
+            ->where(function($query) use ($validated) {
+                $query->whereBetween('check_in_date', [$validated['check_in_date'], $validated['check_out_date']])
+                      ->orWhereBetween('check_out_date', [$validated['check_in_date'], $validated['check_out_date']])
+                      ->orWhere(function($q) use ($validated) {
+                          $q->where('check_in_date', '<=', $validated['check_in_date'])
+                            ->where('check_out_date', '>=', $validated['check_out_date']);
+                      });
+            })
             ->whereIn('status', ['pending', 'approved'])
             ->exists();
 
         if ($exists) {
-            return back()->withErrors(['booking_date' => 'A booking request for this date and room already exists.'])->withInput();
+            return back()->withErrors(['check_in_date' => 'A booking request for these dates and room already exists or overlaps with existing booking.'])->withInput();
         }
 
         // Add logic for member or customer
         if (str_starts_with($validated['booking_type'], 'guest-')) {
             $request->validate(['customer_id' => 'required|exists:customers,id']);
         } else {
-            $request->validate(['member_id' => 'required|exists:users,id']);
+            $request->validate(['member_id' => 'required|exists:members,id']);
         }
 
         $validated['member_id'] = $request->member_id ?? null;
@@ -95,7 +102,7 @@ class RoomBookingRequestController extends Controller
             ->select('id', 'name', 'max_capacity')
             ->get();
 
-        $request = RoomBookingRequest::findOrFail($id);
+        $request = RoomBookingRequest::with(['member', 'customer'])->findOrFail($id);
 
         return Inertia::render('App/Admin/Booking/Request', [
             'rooms' => $rooms,
@@ -109,6 +116,8 @@ class RoomBookingRequestController extends Controller
     {
         $validated = $request->validate([
             'booking_date' => 'required|date',
+            'check_in_date' => 'required|date',
+            'check_out_date' => 'required|date|after:check_in_date',
             'persons' => 'required|integer|min:1',
             'security_deposit' => 'nullable|numeric',
             'per_day_charge' => 'required|numeric|min:0',
@@ -117,7 +126,7 @@ class RoomBookingRequestController extends Controller
         $roomRequest = RoomBookingRequest::findOrFail($id);
         $roomRequest->update($validated);
 
-        return redirect()->route('rooms.requests.index')->with('success', 'Booking Request updated successfully.');
+        return redirect()->route('rooms.request')->with('success', 'Booking Request updated successfully.');
     }
 
     public function updateStatus(Request $request, $id)

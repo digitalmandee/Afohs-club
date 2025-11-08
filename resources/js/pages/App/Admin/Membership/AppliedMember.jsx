@@ -89,7 +89,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                         <Table>
                                             <TableHead>
                                                 <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member ID</TableCell>
+                                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>ID</TableCell>
                                                     <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Name</TableCell>
                                                     <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Email</TableCell>
                                                     <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Phone Number</TableCell>
@@ -104,12 +104,12 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                             <TableBody>
                                                 {familyGroups.map((member, index) => (
                                                     <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.member_id}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.id}</TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.email}</TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.phone_number || 'N/A'}</TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.address || 'N/A'}</TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.cnic ? formatCnic(member.cnic) : 'N/A'}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.cnic}</TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.amount_paid}</TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.start_date}</TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.end_date}</TableCell>
