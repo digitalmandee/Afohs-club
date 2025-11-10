@@ -41,7 +41,7 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
     // Calculate daypass fee
     const calculateDaypassFee = (monthlyFee) => {
         if (!monthlyFee || monthlyFee <= 0) return 0;
-        return Math.round((monthlyFee / 30) * 100) / 100; // Round to 2 decimal places
+        return Math.round(monthlyFee / 30); // Round to whole number
     };
 
     const handleInputChange = (e) => {

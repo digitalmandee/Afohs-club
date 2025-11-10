@@ -25,6 +25,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [fieldErrors, setFieldErrors] = useState({});
     const [isDragOver, setIsDragOver] = useState(false);
     const [isValidatingFamilyCnic, setIsValidatingFamilyCnic] = useState(false);
+    const [familyCnicValidationTimeout, setFamilyCnicValidationTimeout] = useState(null);
     const [isValidatingMembershipNo, setIsValidatingMembershipNo] = useState(false);
     const [membershipNoStatus, setMembershipNoStatus] = useState(null); // 'available', 'exists', 'error'
     const [membershipNoSuggestion, setMembershipNoSuggestion] = useState(null);
@@ -112,6 +113,78 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         return emailRegex.test(email.trim());
     };
 
+    // Real-time CNIC validation function for family members
+    const validateFamilyCnicRealTime = async (cnicValue) => {
+        // Clear previous timeout
+        if (familyCnicValidationTimeout) {
+            clearTimeout(familyCnicValidationTimeout);
+        }
+
+        // Clear previous CNIC errors
+        setFamilyMemberErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.cnic;
+            return newErrors;
+        });
+
+        // Check CNIC format first
+        if (!cnicValue) {
+            return;
+        }
+
+        if (!/^\d{5}-\d{7}-\d{1}$/.test(cnicValue)) {
+            setFamilyMemberErrors(prev => ({
+                ...prev,
+                cnic: 'CNIC must be in the format XXXXX-XXXXXXX-X'
+            }));
+            return;
+        }
+
+        // Check if CNIC matches primary member's CNIC
+        if (cnicValue === data.cnic_no) {
+            setFamilyMemberErrors(prev => ({
+                ...prev,
+                cnic: 'Family member CNIC must not be the same as the primary user CNIC'
+            }));
+            return;
+        }
+
+        // Set timeout for API call (debounce)
+        const timeoutId = setTimeout(async () => {
+            setIsValidatingFamilyCnic(true);
+            try {
+                const response = await axios.post('/api/check-duplicate-cnic', {
+                    cnic_no: cnicValue,
+                    member_id: data.member_id || null // Exclude current member if editing
+                });
+
+                if (response.data.exists) {
+                    setFamilyMemberErrors(prev => ({
+                        ...prev,
+                        cnic: 'This CNIC number is already registered with another member'
+                    }));
+                } else {
+                    // CNIC is valid and available
+                    setFamilyMemberErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.cnic;
+                        return newErrors;
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking family member CNIC:', error);
+                setFamilyMemberErrors(prev => ({
+                    ...prev,
+                    cnic: 'Error validating CNIC. Please try again.'
+                }));
+            } finally {
+                setIsValidatingFamilyCnic(false);
+            }
+        }, 800); // 800ms delay for debouncing
+
+        setFamilyCnicValidationTimeout(timeoutId);
+    };
+
     const handleFamilyMemberChange = (field, value) => {
         let updatedMember = {
             ...currentFamilyMember,
@@ -137,6 +210,11 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                 delete currentErrors.email;
             }
             setFamilyMemberErrors(currentErrors);
+        }
+
+        // Real-time CNIC validation
+        if (field === 'cnic') {
+            validateFamilyCnicRealTime(value);
         }
 
         setCurrentFamilyMember(updatedMember);
@@ -205,33 +283,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             return;
         }
 
-        // Check for duplicate CNIC in database if CNIC is provided
-        if (currentFamilyMember.cnic) {
-            setIsValidatingFamilyCnic(true);
-            try {
-                const response = await axios.post('/api/check-duplicate-cnic', {
-                    cnic_no: currentFamilyMember.cnic,
-                    member_id: isEdit && currentFamilyMember.id && !currentFamilyMember.id.toString().startsWith('new-') 
-                        ? currentFamilyMember.id 
-                        : null // Exclude current family member if editing existing one
-                });
+        // Check if there are any existing CNIC validation errors
+        if (familyMemberErrors.cnic) {
+            return; // Stop submission if CNIC has validation errors
+        }
 
-                if (response.data.exists) {
-                    setFamilyMemberErrors({
-                        cnic: 'This CNIC number is already registered with another member'
-                    });
-                    setIsValidatingFamilyCnic(false);
-                    return;
-                }
-            } catch (error) {
-                console.error('Error checking family member CNIC:', error);
-                setFamilyMemberErrors({
-                    cnic: 'Error validating CNIC. Please try again.'
-                });
-                setIsValidatingFamilyCnic(false);
-                return;
-            }
-            setIsValidatingFamilyCnic(false);
+        // Check if CNIC is still being validated
+        if (isValidatingFamilyCnic) {
+            return; // Stop submission if CNIC is still being validated
         }
 
         // Email validation (format only)

@@ -753,17 +753,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const handleDateChange = (field, value) => {
         // For maintenance fees, enforce month boundaries
         if (data.fee_type === 'maintenance_fee' && value) {
-            console.log(`Original ${field} value:`, value);
-
             if (field === 'valid_from') {
                 // Always set to first day of selected month
                 const correctedValue = getFirstDayOfMonth(value);
-                console.log(`Corrected ${field} value:`, correctedValue);
                 value = correctedValue;
             } else if (field === 'valid_to') {
                 // Always set to last day of selected month
                 const correctedValue = getLastDayOfMonth(value);
-                console.log(`Corrected ${field} value:`, correctedValue);
                 value = correctedValue;
             }
         }
@@ -776,9 +772,12 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             setDateValidation(validation);
 
             // Recalculate amount if both dates are present
-            if (selectedMember && data.valid_from && data.valid_to) {
-                const fromDate = new Date(field === 'valid_from' ? value : data.valid_from);
-                const toDate = new Date(field === 'valid_to' ? value : data.valid_to);
+            const currentFromDate = field === 'valid_from' ? value : data.valid_from;
+            const currentToDate = field === 'valid_to' ? value : data.valid_to;
+            
+            if (selectedMember && currentFromDate && currentToDate) {
+                const fromDate = new Date(currentFromDate);
+                const toDate = new Date(currentToDate);
 
                 if (fromDate && toDate && toDate >= fromDate) {
                     if (data.fee_type === 'maintenance_fee') {
@@ -798,14 +797,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                         // Calculate amount for subscription fee based on selected category and date range
                         const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
                         
-                        console.log('=== SUBSCRIPTION DATE CHANGE DEBUG ===');
-                        console.log('Selected Category:', selectedCategory);
-                        console.log('Payment Type:', selectedCategory?.payment_type);
-                        console.log('Fee:', selectedCategory?.fee);
-                        console.log('Daypass Fee:', selectedCategory?.daypass_fee);
-                        console.log('From Date:', fromDate);
-                        console.log('To Date:', toDate);
-                        
                         if (selectedCategory) {
                             let newAmount;
                             let periodText;
@@ -816,19 +807,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                 const daypassFee = selectedCategory.daypass_fee || Math.round(selectedCategory.fee / 30);
                                 newAmount = Math.round(daypassFee * daysDiff);
                                 periodText = `${daysDiff} day${daysDiff > 1 ? 's' : ''}`;
-                                
-                                console.log('Days Diff:', daysDiff);
-                                console.log('Daypass Fee:', daypassFee);
-                                console.log('New Amount:', newAmount);
                             } else {
                                 // For monthly: calculate number of months
                                 const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
                                 newAmount = Math.round(selectedCategory.fee * monthsDiff);
                                 periodText = `${monthsDiff} month${monthsDiff > 1 ? 's' : ''}`;
-                                
-                                console.log('Months Diff:', monthsDiff);
-                                console.log('Monthly Fee:', selectedCategory.fee);
-                                console.log('New Amount:', newAmount);
                             }
 
                             setData('amount', newAmount);
@@ -836,8 +819,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                             enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${periodText}`, {
                                 variant: 'info',
                             });
-                        } else {
-                            console.log('No selected category found for ID:', data.subscription_category_id);
                         }
                     }
                 }
@@ -1770,7 +1751,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         label="Valid From"
                                                                         type="date"
                                                                         value={data.valid_from}
-                                                                        onChange={(e) => setData('valid_from', e.target.value)}
+                                                                        onChange={(e) => handleDateChange('valid_from', e.target.value)}
                                                                         error={!!errors.valid_from}
                                                                         helperText={errors.valid_from || 'Subscription start date'}
                                                                         sx={{
@@ -1785,7 +1766,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         label="Valid To"
                                                                         type="date"
                                                                         value={data.valid_to}
-                                                                        onChange={(e) => setData('valid_to', e.target.value)}
+                                                                        onChange={(e) => handleDateChange('valid_to', e.target.value)}
                                                                         error={!!errors.valid_to}
                                                                         helperText={errors.valid_to || 'Leave empty for unlimited validity'}
                                                                         sx={{

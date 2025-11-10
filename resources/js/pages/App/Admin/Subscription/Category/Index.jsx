@@ -119,7 +119,7 @@ const SubscriptionCategories = ({ subscriptionCategories }) => {
                                                 {category.payment_type === 'daypass' ? 'Daily Fee:' : 'Monthly Fee:'}
                                             </strong> 
                                             {category.payment_type === 'daypass' 
-                                                ? `Rs ${Math.round((category.fee / 30) * 100) / 100}` 
+                                                ? `Rs ${category.daypass_fee || 0}` 
                                                 : `Rs ${category.fee?.toLocaleString() || 0}`
                                             }
                                         </Typography>

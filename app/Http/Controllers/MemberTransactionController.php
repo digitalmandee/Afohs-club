@@ -314,7 +314,7 @@ class MemberTransactionController extends Controller
             // Membership fee is lifetime - set to member's joining date and far future
             $memberJoinDate = Carbon::parse($member->membership_date);
             $invoiceData['valid_from'] = $memberJoinDate->format('Y-m-d');
-            $invoiceData['valid_to'] = $memberJoinDate->addYears(50)->format('Y-m-d'); // Lifetime validity
+            $invoiceData['valid_to'] = null; // Lifetime validity
         } elseif ($request->fee_type === 'subscription_fee') {
             // Use manual validity dates from request for subscription fees
             $invoiceData['valid_from'] = $request->valid_from;

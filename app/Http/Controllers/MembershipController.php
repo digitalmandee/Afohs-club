@@ -424,34 +424,27 @@ class MembershipController extends Controller
                 }
             }
 
-            // $memberTypeArray = $memberCategory->toArray();  // includes all fields from DB
+            // Create unpaid membership fee invoice
+            $memberCategory = MemberCategory::find($request->membership_category);
 
-            // $memberTypeArray['amount'] = $memberCategory->fee;
-            // $memberTypeArray['invoice_type'] = 'membership';
-
-            // $data = [$memberTypeArray];
-
-            // // Create membership invoice
-            // $now = Carbon::now();
-            // $quarter = ceil($now->month / 3);  // Calculate quarter number (1 to 4)
-            // $paidForQuarter = $now->year . '-Q' . $quarter;
-
-            // $invoice = FinancialInvoice::create([
-            //     'invoice_no' => $this->getInvoiceNo(),
-            //     'member_id' => $primaryUser->id,
-            //     'amount' => $memberCategory->subscription_fee * 3,
-            //     'subscription_type' => 'quarter',
-            //     'invoice_type' => 'membership',
-            //     'issue_date' => $now,
-            //     'paid_for_quarter' => $paidForQuarter,
-            //     'data' => $data,
-            //     'status' => 'unpaid',
-            // ]);
-
-            // // Add membership invoice id to member
-            // $member = Member::where('user_id', $primaryUser->id)->first();
-            // $member->invoice_id = $invoice->id;
-            // $member->save();
+            if ($memberCategory && $memberCategory->fee > 0) {
+                $invoice = FinancialInvoice::create([
+                    'invoice_no' => $this->generateInvoiceNumber(),
+                    'member_id' => $mainMember->id,
+                    'fee_type' => 'membership_fee',
+                    'invoice_type' => 'membership',
+                    'amount' => $memberCategory->fee,
+                    'discount_type' => null,
+                    'discount_value' => 0,
+                    'total_price' => $memberCategory->fee,
+                    'payment_method' => null, // Will be set when payment is made
+                    'valid_from' => $request->membership_date,
+                    'valid_to' => null,
+                    'status' => 'unpaid',
+                    'invoiceable_id' => $mainMember->id,
+                    'invoiceable_type' => Member::class,
+                ]);
+            }
 
             DB::commit();
 
@@ -462,6 +455,26 @@ class MembershipController extends Controller
         }
     }
 
+    private function generateInvoiceNumber()
+    {
+        // Get the highest invoice_no from all financial_invoices (not just transaction types)
+        $lastInvoice = FinancialInvoice::orderBy('invoice_no', 'desc')
+            ->whereNotNull('invoice_no')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastInvoice && $lastInvoice->invoice_no) {
+            $nextNumber = $lastInvoice->invoice_no + 1;
+        }
+
+        // Double-check that this number doesn't exist (safety check)
+        while (FinancialInvoice::where('invoice_no', $nextNumber)->exists()) {
+            $nextNumber++;
+        }
+
+        return $nextNumber;
+    }
+    
     public function updateMember(Request $request)
     {
         try {
