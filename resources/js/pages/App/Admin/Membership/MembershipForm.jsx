@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Typography, Button, IconButton } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import AddForm1 from '@/components/App/membershipForm/AddForm1';
 import AddForm2 from '@/components/App/membershipForm/AddForm2';
 import AddForm3 from '@/components/App/membershipForm/AddForm3';
 import { enqueueSnackbar } from 'notistack';
-import Payment from './Payment';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 

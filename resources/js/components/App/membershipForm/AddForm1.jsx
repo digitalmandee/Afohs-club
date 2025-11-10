@@ -6,6 +6,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 
 const AddForm1 = ({ data, handleChange, onNext }) => {
     // Handle profile_photo object {id, file_path}
@@ -16,6 +17,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});
+    const [isValidatingCnic, setIsValidatingCnic] = useState(false);
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {
@@ -44,7 +46,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const errors = {};
 
         // if (!data.coa_category_id) errors.coa_category_id = 'COA Account is required';
@@ -65,6 +67,35 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
         if (Object.keys(errors).length > 0) {
             return; // Stop submission if errors exist
+        }
+
+        // Check for duplicate CNIC in database
+        if (data.cnic_no) {
+            setIsValidatingCnic(true);
+            try {
+                const response = await axios.post('/api/check-duplicate-cnic', {
+                    cnic_no: data.cnic_no,
+                    member_id: data.member_id || null // Exclude current member if editing
+                });
+
+                if (response.data.exists) {
+                    setFormErrors({
+                        ...errors,
+                        cnic_no: 'This CNIC number is already registered with another member'
+                    });
+                    setIsValidatingCnic(false);
+                    return; // Stop submission if CNIC already exists
+                }
+            } catch (error) {
+                console.error('Error checking CNIC:', error);
+                setFormErrors({
+                    ...errors,
+                    cnic_no: 'Error validating CNIC. Please try again.'
+                });
+                setIsValidatingCnic(false);
+                return;
+            }
+            setIsValidatingCnic(false);
         }
 
         onNext();
@@ -333,7 +364,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                     name="cnic_no"
                                     value={data.cnic_no}
                                     error={!!formErrors.cnic_no}
-                                    helperText={formErrors.cnic_no}
+                                    helperText={isValidatingCnic ? 'Checking CNIC availability...' : formErrors.cnic_no}
                                     onChange={(e) => {
                                         let value = e.target.value;
                                         // Auto-format the input as the user types
@@ -343,7 +374,17 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         if (value.length > 15) value = value.slice(0, 15); // Limit to 15 characters
                                         handleChange({ target: { name: 'cnic_no', value } });
                                     }}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
+                                    sx={{ 
+                                        '& .MuiOutlinedInput-root': { 
+                                            borderRadius: '4px',
+                                            ...(isValidatingCnic && {
+                                                borderColor: '#1976d2',
+                                                '& fieldset': {
+                                                    borderColor: '#1976d2',
+                                                }
+                                            })
+                                        } 
+                                    }}
                                 />
                             </Grid>
 
@@ -519,8 +560,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                         '&:hover': { backgroundColor: '#083854' },
                     }}
                     onClick={handleSubmit}
+                    disabled={isValidatingCnic}
                 >
-                    Save & Next
+                    {isValidatingCnic ? 'Saving...' : 'Save & Next'}
                 </Button>
             </Box>
         </div>

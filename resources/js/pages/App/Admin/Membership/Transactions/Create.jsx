@@ -34,7 +34,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const { data, setData, post, processing, errors, reset } = useForm({
         member_id: '',
         fee_type: '',
-        payment_frequency: 'quarterly',
+        payment_frequency: 'monthly',
         discount_type: '',
         discount_value: '',
         payment_method: 'cash',
@@ -52,7 +52,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     // Auto-update payment suggestions when member changes
     useEffect(() => {
         if (selectedMember && data.fee_type === 'maintenance_fee') {
-            const currentFrequency = data.payment_frequency || 'quarterly';
+            const currentFrequency = data.payment_frequency || 'monthly';
             suggestMaintenancePeriod(currentFrequency);
         }
     }, [selectedMember, memberTransactions]); // Trigger when member or their transactions change
@@ -67,7 +67,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 latestEndDate: null,
             };
         }
-        
+
         const membershipYear = new Date(membershipDate).getFullYear();
         const membershipMonth = new Date(membershipDate).getMonth(); // 0-based (0 = Jan, 11 = Dec)
         const currentYear = new Date().getFullYear();
@@ -86,11 +86,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         if (sortedTransactions.length > 0) {
             const mostRecentTransaction = sortedTransactions[0];
             const mostRecentEnd = new Date(mostRecentTransaction.valid_to);
-            
+
             // Check if we've moved past the first year (December 31st of membership year)
             const firstYearEnd = new Date(membershipYear, 11, 31); // Dec 31 of membership year
             isFirstYear = mostRecentEnd <= firstYearEnd;
-            
+
             latestEndDate = mostRecentEnd.toISOString().split('T')[0];
         }
 
@@ -104,22 +104,22 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         sortedTransactions.forEach((transaction) => {
             const txStart = new Date(transaction.valid_from);
             const txEnd = new Date(transaction.valid_to);
-            
+
             let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
             const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-            
+
             while (currentDate <= endDate) {
                 const month = currentDate.getMonth();
                 const year = currentDate.getFullYear();
-                
+
                 const monthStart = new Date(year, month, 1);
                 const monthEnd = new Date(year, month + 1, 0);
-                const hasOverlap = (txStart <= monthEnd && txEnd >= monthStart);
-                
+                const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
+
                 if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonthsInFirstYear.includes(month)) {
                     paidMonthsInFirstYear.push(month);
                 }
-                
+
                 currentDate.setMonth(currentDate.getMonth() + 1);
             }
         });
@@ -129,45 +129,45 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         if (isFirstYear && !allFirstYearMonthsPaid) {
             // FIRST YEAR: Monthly payment logic (only show if still paying monthly)
             // Map months to quarters for display (approximate)
-            paidMonthsInFirstYear.forEach(month => {
+            paidMonthsInFirstYear.forEach((month) => {
                 const quarter = Math.floor(month / 3) + 1; // 0-2->Q1, 3-5->Q2, 6-8->Q3, 9-11->Q4
                 if (!paidQuarters.includes(quarter)) {
                     paidQuarters.push(quarter);
                 }
             });
-
         } else {
             // SUBSEQUENT YEARS: Quarterly payment logic (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
             // Determine the correct analysis year based on latest payment
             let analysisYear = currentYear;
-            
+
             // If we have payments, use the year after the latest payment end date
             if (sortedTransactions.length > 0) {
                 const latestPaymentEnd = new Date(sortedTransactions[0].valid_to);
                 const latestPaymentYear = latestPaymentEnd.getFullYear();
                 const latestPaymentMonth = latestPaymentEnd.getMonth();
-                
+
                 console.log('Latest payment end:', latestPaymentEnd);
                 console.log('Latest payment year:', latestPaymentYear);
                 console.log('Current year:', currentYear);
-                
+
                 // Analyze the year of the latest payment to show its quarter status
                 analysisYear = latestPaymentYear;
-                
+
                 console.log('Analysis year determined:', analysisYear);
             }
-            
+
             // For quarter analysis, we need to check if the latest payment year is complete
             // If latest payment ended in December of a future year, show all quarters as paid for that year
             let quarterlyTransactions = [];
-            
+
             if (sortedTransactions.length > 0) {
                 const latestPaymentEnd = new Date(sortedTransactions[0].valid_to);
                 const latestPaymentYear = latestPaymentEnd.getFullYear();
                 const latestPaymentMonth = latestPaymentEnd.getMonth();
-                
+
                 // If latest payment ended in December of any year, that year is complete
-                if (latestPaymentMonth === 11) { // December
+                if (latestPaymentMonth === 11) {
+                    // December
                     showCompletedYear = true;
                     analysisYear = latestPaymentYear;
                     // Show all quarters as paid for the completed year
@@ -177,10 +177,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     quarterlyTransactions = sortedTransactions.filter((transaction) => {
                         const txStart = new Date(transaction.valid_from);
                         const txEnd = new Date(transaction.valid_to);
-                        
+
                         // Include transactions that overlap with analysis year
-                        return (txStart.getFullYear() <= analysisYear && txEnd.getFullYear() >= analysisYear) ||
-                               (txStart.getFullYear() === analysisYear || txEnd.getFullYear() === analysisYear);
+                        return (txStart.getFullYear() <= analysisYear && txEnd.getFullYear() >= analysisYear) || txStart.getFullYear() === analysisYear || txEnd.getFullYear() === analysisYear;
                     });
                 }
             } else {
@@ -190,73 +189,72 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
             // Analyze which months are covered by all transactions combined
             const paidMonthsInYear = new Set();
-            
+
             console.log('Quarterly transactions to analyze:', quarterlyTransactions);
             console.log('Analysis year:', analysisYear);
-            
+
             quarterlyTransactions.forEach((transaction) => {
                 const txStart = new Date(transaction.valid_from);
                 const txEnd = new Date(transaction.valid_to);
-                
+
                 console.log(`Analyzing transaction: ${transaction.valid_from} to ${transaction.valid_to}`);
-                
+
                 // Mark each month covered by this transaction
                 let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
                 const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-                
+
                 while (currentDate <= endDate) {
                     const year = currentDate.getFullYear();
                     const month = currentDate.getMonth();
-                    
+
                     console.log(`Checking month: ${year}-${month}, analysisYear: ${analysisYear}`);
-                    
+
                     // Count months from current analysis year
                     if (year === analysisYear) {
                         const monthKey = `${year}-${month}`;
                         paidMonthsInYear.add(monthKey);
                         console.log(`Added paid month: ${monthKey}`);
                     }
-                    
+
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 }
             });
-            
+
             console.log('Paid months in year:', Array.from(paidMonthsInYear));
-            
+
             // Now check which quarters are completely covered and track partial quarters
             const currentAnalysisYear = analysisYear; // Use current year for analysis
             const partialQuarters = {}; // Track which quarters are partially paid
-            
+
             for (let quarter = 1; quarter <= 4; quarter++) {
                 const quarterStartMonth = (quarter - 1) * 3; // Q1=0(Jan), Q2=3(Apr), Q3=6(Jul), Q4=9(Oct)
                 const monthsInQuarter = [quarterStartMonth, quarterStartMonth + 1, quarterStartMonth + 2];
-                
-                const paidMonthsInQuarter = monthsInQuarter.filter(month => {
+
+                const paidMonthsInQuarter = monthsInQuarter.filter((month) => {
                     const monthKey = `${currentAnalysisYear}-${month}`;
                     return paidMonthsInYear.has(monthKey);
                 });
-                
+
                 const allMonthsPaid = paidMonthsInQuarter.length === 3;
                 const someMonthsPaid = paidMonthsInQuarter.length > 0;
-                
-                
+
                 if (allMonthsPaid) {
                     paidQuarters.push(quarter);
                 } else if (someMonthsPaid) {
                     // Track partial quarter info
-                    const unpaidMonths = monthsInQuarter.filter(month => {
+                    const unpaidMonths = monthsInQuarter.filter((month) => {
                         const monthKey = `${currentAnalysisYear}-${month}`;
                         return !paidMonthsInYear.has(monthKey);
                     });
-                    
+
                     partialQuarters[quarter] = {
                         paidMonths: paidMonthsInQuarter,
                         unpaidMonths: unpaidMonths,
-                        nextUnpaidMonth: Math.min(...unpaidMonths)
+                        nextUnpaidMonth: Math.min(...unpaidMonths),
                     };
                 }
             }
-            
+
             // Store partial quarter info for later use
             window.partialQuarters = partialQuarters;
         }
@@ -278,26 +276,26 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             sortedTransactions.forEach((transaction) => {
                 const txStart = new Date(transaction.valid_from);
                 const txEnd = new Date(transaction.valid_to);
-                
+
                 // More accurate month detection: check each month the transaction spans
                 let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
                 const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-                
+
                 while (currentDate <= endDate) {
                     const month = currentDate.getMonth();
                     const year = currentDate.getFullYear();
-                    
+
                     // Check if this month overlaps with the transaction period
                     const monthStart = new Date(year, month, 1);
                     const monthEnd = new Date(year, month + 1, 0); // Last day of month
-                    
+
                     // Transaction covers this month if there's any overlap
-                    const hasOverlap = (txStart <= monthEnd && txEnd >= monthStart);
-                    
+                    const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
+
                     if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
                         paidMonths.push(month);
                     }
-                    
+
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 }
             });
@@ -309,14 +307,14 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 isNewCycle = true;
             } else {
                 // Still in first year, find next month
-                const nextMonth = monthsInFirstYear.find(month => !paidMonths.includes(month));
+                const nextMonth = monthsInFirstYear.find((month) => !paidMonths.includes(month));
                 nextQuarter = Math.floor((nextMonth || 0) / 3) + 1;
             }
         } else {
             // Quarterly system logic
             const hasAllQuarters = paidQuarters.includes(1) && paidQuarters.includes(2) && paidQuarters.includes(3) && paidQuarters.includes(4);
             const partialQuarters = window.partialQuarters || {};
-            
+
             if (hasAllQuarters || showCompletedYear) {
                 nextQuarter = 1;
                 isNewCycle = true;
@@ -336,7 +334,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                         break;
                     }
                 }
-                
+
                 // If no partial quarters, find next unpaid quarter
                 if (!foundPartialQuarter) {
                     for (let i = 1; i <= 4; i++) {
@@ -370,7 +368,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         setSearchLoading(true);
         try {
             const response = await axios.get(route('finance.transaction.search'), {
-                params: { query }
+                params: { query },
             });
             setSearchResults(response.data.members || []);
         } catch (error) {
@@ -450,8 +448,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 setData('valid_to', fourYearsLater.toISOString().split('T')[0]);
             } else if (feeType === 'maintenance_fee') {
                 setData('amount', selectedMember.member_category.subscription_fee);
-                // Auto-suggest quarterly period based on member joining date
-                suggestMaintenancePeriod('quarterly');
+                // Auto-suggest monthly period based on member joining date
+                suggestMaintenancePeriod('monthly');
             } else if (feeType === 'subscription_fee') {
                 // For subscription fees, user will select type and category manually
                 // Set default start date to today
@@ -476,7 +474,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         const membershipYear = membershipDate.getFullYear();
         const membershipMonth = membershipDate.getMonth(); // 0-based
         const currentYear = new Date().getFullYear();
-        
+
         // Debug logging
         console.log('=== SUGGEST MAINTENANCE PERIOD DEBUG ===');
         console.log('Member:', selectedMember.full_name);
@@ -485,43 +483,42 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         console.log('Current Year:', currentYear);
         console.log('Transactions:', memberTransactions);
         console.log('Quarter Status:', quarterStatus);
-        
 
         // Check if we're still in the first year (monthly payment system)
         const firstYearEnd = new Date(Date.UTC(membershipYear, 11, 31)); // Dec 31 of membership year
         const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
-        
+
         // Check if all first year months are already paid
         const monthsInFirstYear = [];
         for (let month = membershipMonth + 1; month <= 11; month++) {
             monthsInFirstYear.push(month);
         }
-        
+
         const paidMonths = [];
-        const maintenanceTransactions = memberTransactions.filter(t => t.fee_type === 'maintenance_fee' && t.status === 'paid');
+        const maintenanceTransactions = memberTransactions.filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid');
         maintenanceTransactions.forEach((transaction) => {
             const txStart = new Date(transaction.valid_from);
             const txEnd = new Date(transaction.valid_to);
-            
+
             let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
             const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-            
+
             while (currentDate <= endDate) {
                 const month = currentDate.getMonth();
                 const year = currentDate.getFullYear();
-                
+
                 const monthStart = new Date(year, month, 1);
                 const monthEnd = new Date(year, month + 1, 0);
-                const hasOverlap = (txStart <= monthEnd && txEnd >= monthStart);
-                
+                const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
+
                 if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
                     paidMonths.push(month);
                 }
-                
+
                 currentDate.setMonth(currentDate.getMonth() + 1);
             }
         });
-        
+
         const allFirstYearMonthsPaid = paidMonths.length >= monthsInFirstYear.length;
 
         let startDate, endDate, amount;
@@ -549,7 +546,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 monthsToAdd = 6;
             } else if (frequency === 'three_quarters') {
                 monthsToAdd = 9;
-            } else { // annually
+            } else {
+                // annually
                 monthsToAdd = 12;
             }
 
@@ -565,17 +563,16 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
             // Calculate amount based on actual months covered
             const actualMonths = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-            const monthlyFee = selectedMember.member_category.subscription_fee / 3; // Quarterly fee / 3 months
+            const monthlyFee = selectedMember.member_category.subscription_fee; // Monthly fee (base fee)
             amount = Math.round(monthlyFee * actualMonths);
-
         } else {
             // SUBSEQUENT YEARS OR FIRST YEAR COMPLETE: Quarterly payment system (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
             // But also support monthly payments and partial quarter completion
             const partialQuarters = window.partialQuarters || {};
             const currentPartialQuarter = partialQuarters[quarterStatus.nextAvailableQuarter];
-            
+
             let quartersToAdd, monthsToAdd;
-            
+
             // Check if we're completing a partial quarter
             if (currentPartialQuarter && frequency === 'quarterly') {
                 // For partial quarter completion, only pay remaining months
@@ -593,7 +590,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             } else if (frequency === 'three_quarters') {
                 monthsToAdd = 9;
                 quartersToAdd = 3;
-            } else { // annually
+            } else {
+                // annually
                 monthsToAdd = 12;
                 quartersToAdd = 4;
             }
@@ -631,21 +629,21 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
             endDate.setUTCDate(0); // Last day of previous month (complete month)
 
-            // Calculate amount based on frequency and partial quarter logic
+            // Calculate amount based on frequency and monthly fee logic
             if (frequency === 'monthly') {
-                const monthlyFee = selectedMember.member_category.subscription_fee / 3; // Quarterly fee / 3 months
+                const monthlyFee = selectedMember.member_category.subscription_fee; // Monthly fee (base fee)
                 amount = Math.round(monthlyFee);
             } else if (currentPartialQuarter && frequency === 'quarterly') {
                 // For partial quarter completion, charge only for remaining months
-                const monthlyFee = selectedMember.member_category.subscription_fee / 3;
+                const monthlyFee = selectedMember.member_category.subscription_fee; // Monthly fee (base fee)
                 amount = Math.round(monthlyFee * monthsToAdd);
             } else {
-                const quarterlyAmount = selectedMember.member_category.subscription_fee;
-                amount = quarterlyAmount * quartersToAdd;
+                // For quarterly, half-yearly, or annual payments, multiply monthly fee by number of months
+                const monthlyFee = selectedMember.member_category.subscription_fee; // Monthly fee (base fee)
+                amount = Math.round(monthlyFee * monthsToAdd);
             }
         }
 
-        
         setData('valid_from', startDate.toISOString().split('T')[0]);
         setData('valid_to', endDate.toISOString().split('T')[0]);
         setData('starting_quarter', quarterStatus.nextAvailableQuarter);
@@ -719,7 +717,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         // Create a date object for the first day of next month, then subtract 1 day
         const nextMonth = new Date(parseInt(year), parseInt(month), 1); // This gives us first day of next month
         const lastDay = new Date(nextMonth - 1); // Subtract 1 day to get last day of current month
-        
+
         // Format as YYYY-MM-DD
         const lastDayFormatted = lastDay.toISOString().split('T')[0];
         return lastDayFormatted;
@@ -728,16 +726,16 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     // Helper function to calculate period description from dates
     const calculatePeriodDescription = (startDate, endDate) => {
         if (!startDate || !endDate) return '';
-        
+
         const start = new Date(startDate);
         const end = new Date(endDate);
-        
+
         // Calculate total months
         const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
-        
+
         // Calculate quarters (3 months = 1 quarter)
         const quarters = Math.round((monthsDiff / 3) * 10) / 10; // Round to 1 decimal place
-        
+
         if (monthsDiff === 1) {
             return '1 Month';
         } else if (monthsDiff < 3) {
@@ -756,7 +754,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         // For maintenance fees, enforce month boundaries
         if (data.fee_type === 'maintenance_fee' && value) {
             console.log(`Original ${field} value:`, value);
-            
+
             if (field === 'valid_from') {
                 // Always set to first day of selected month
                 const correctedValue = getFirstDayOfMonth(value);
@@ -769,36 +767,79 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 value = correctedValue;
             }
         }
-        
+
         setData(field, value);
 
         // Update validation after a short delay
         setTimeout(() => {
             const validation = validateDateOverlap();
             setDateValidation(validation);
-            
-            // Recalculate amount if both dates are present and fee type is maintenance
-            if (data.fee_type === 'maintenance_fee' && selectedMember && data.valid_from && data.valid_to) {
+
+            // Recalculate amount if both dates are present
+            if (selectedMember && data.valid_from && data.valid_to) {
                 const fromDate = new Date(field === 'valid_from' ? value : data.valid_from);
                 const toDate = new Date(field === 'valid_to' ? value : data.valid_to);
-                
-                if (fromDate && toDate && toDate > fromDate) {
-                    // Calculate number of months between dates
-                    const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + 
-                                     (toDate.getMonth() - fromDate.getMonth()) + 1;
-                    
-                    // Calculate quarters (round up to nearest quarter)
-                    const quarters = Math.ceil(monthsDiff / 3);
-                    
-                    // Calculate amount based on quarters
-                    const quarterlyFee = selectedMember.member_category.subscription_fee;
-                    const newAmount = quarterlyFee * quarters;
-                    
-                    setData('amount', newAmount);
-                    
-                    enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${quarters} quarters (${monthsDiff} months)`, { 
-                        variant: 'info' 
-                    });
+
+                if (fromDate && toDate && toDate >= fromDate) {
+                    if (data.fee_type === 'maintenance_fee') {
+                        // Calculate number of months between dates for maintenance fee
+                        const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
+
+                        // Calculate amount based on monthly fee
+                        const monthlyFee = selectedMember.member_category.subscription_fee;
+                        const newAmount = monthlyFee * monthsDiff;
+
+                        setData('amount', newAmount);
+
+                        enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${monthsDiff} months`, {
+                            variant: 'info',
+                        });
+                    } else if (data.fee_type === 'subscription_fee' && data.subscription_category_id) {
+                        // Calculate amount for subscription fee based on selected category and date range
+                        const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
+                        
+                        console.log('=== SUBSCRIPTION DATE CHANGE DEBUG ===');
+                        console.log('Selected Category:', selectedCategory);
+                        console.log('Payment Type:', selectedCategory?.payment_type);
+                        console.log('Fee:', selectedCategory?.fee);
+                        console.log('Daypass Fee:', selectedCategory?.daypass_fee);
+                        console.log('From Date:', fromDate);
+                        console.log('To Date:', toDate);
+                        
+                        if (selectedCategory) {
+                            let newAmount;
+                            let periodText;
+
+                            if (selectedCategory.payment_type === 'daypass') {
+                                // For daypass: calculate number of days
+                                const daysDiff = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                                const daypassFee = selectedCategory.daypass_fee || Math.round(selectedCategory.fee / 30);
+                                newAmount = Math.round(daypassFee * daysDiff);
+                                periodText = `${daysDiff} day${daysDiff > 1 ? 's' : ''}`;
+                                
+                                console.log('Days Diff:', daysDiff);
+                                console.log('Daypass Fee:', daypassFee);
+                                console.log('New Amount:', newAmount);
+                            } else {
+                                // For monthly: calculate number of months
+                                const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
+                                newAmount = Math.round(selectedCategory.fee * monthsDiff);
+                                periodText = `${monthsDiff} month${monthsDiff > 1 ? 's' : ''}`;
+                                
+                                console.log('Months Diff:', monthsDiff);
+                                console.log('Monthly Fee:', selectedCategory.fee);
+                                console.log('New Amount:', newAmount);
+                            }
+
+                            setData('amount', newAmount);
+
+                            enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${periodText}`, {
+                                variant: 'info',
+                            });
+                        } else {
+                            console.log('No selected category found for ID:', data.subscription_category_id);
+                        }
+                    }
                 }
             }
         }, 100);
@@ -852,7 +893,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 setData({
                     member_id: '',
                     fee_type: 'maintenance_fee',
-                    payment_frequency: 'quarterly',
+                    payment_frequency: 'monthly',
                     amount: '',
                     discount_type: '',
                     discount_value: '',
@@ -904,7 +945,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             currency: 'PKR',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
-        }).format(Math.round(amount)).replace('PKR', 'Rs ');
+        })
+            .format(Math.round(amount))
+            .replace('PKR', 'Rs ');
     };
 
     // Helper function to format status
@@ -913,7 +956,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         return status
             .replace(/[_-]/g, ' ') // Remove underscores and hyphens
             .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
             .join(' ');
     };
 
@@ -962,7 +1005,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     {/* Header */}
                     <Box sx={{ mb: 4 }}>
                         <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: '#1e293b', mb: 1 }}>
-                            Create New Transaction
+                            Invoice Generation
                         </Typography>
                         <Typography variant="body1" color="text.secondary">
                             Search for a member and create a new transaction
@@ -1093,7 +1136,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 </Grid>
                                                 <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Maintenance Fee (Quarterly)
+                                                        Maintenance Fee (Monthly)
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
                                                         Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
@@ -1101,10 +1144,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 </Grid>
                                                 <Grid item xs={12} sm={6} lg={4}>
                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Monthly Rate
+                                                        Quarterly Fee
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
-                                                        Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee / 3).toLocaleString() : 'N/A'}
+                                                        Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee * 3).toLocaleString() : 'N/A'}
                                                     </Typography>
                                                 </Grid>
                                             </Grid>
@@ -1186,13 +1229,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     const membershipYear = membershipDate.getFullYear();
                                                                     const firstYearEnd = new Date(membershipYear, 11, 31);
                                                                     const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
-                                                                    
+
                                                                     return (
                                                                         <>
                                                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                                                                                 {isFirstYear ? 'First Year (Monthly Payment)' : 'Quarterly Payment System'}
                                                                             </Typography>
-                                                                            
+
                                                                             {isFirstYear ? (
                                                                                 <Box sx={{ mb: 2 }}>
                                                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -1204,7 +1247,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                                                                         <strong>Payable Period:</strong> {new Date(membershipYear, membershipDate.getMonth() + 1, 1).toLocaleDateString('en-US', { month: 'long' })} - December {membershipYear}
                                                                                     </Typography>
-                                                                                    
+
                                                                                     {/* Debug: Show paid months */}
                                                                                     {(() => {
                                                                                         const membershipMonth = membershipDate.getMonth();
@@ -1212,42 +1255,48 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                         for (let month = membershipMonth + 1; month <= 11; month++) {
                                                                                             monthsInFirstYear.push(month);
                                                                                         }
-                                                                                        
+
                                                                                         const paidMonths = [];
-                                                                                        memberTransactions.filter(t => t.fee_type === 'maintenance_fee' && t.status === 'paid').forEach((transaction) => {
-                                                                                            const txStart = new Date(transaction.valid_from);
-                                                                                            const txEnd = new Date(transaction.valid_to);
-                                                                                            
-                                                                                            // More accurate month detection: check each month the transaction spans
-                                                                                            let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
-                                                                                            const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-                                                                                            
-                                                                                            while (currentDate <= endDate) {
-                                                                                                const month = currentDate.getMonth();
-                                                                                                const year = currentDate.getFullYear();
-                                                                                                
-                                                                                                // Check if this month overlaps with the transaction period
-                                                                                                const monthStart = new Date(year, month, 1);
-                                                                                                const monthEnd = new Date(year, month + 1, 0); // Last day of month
-                                                                                                
-                                                                                                // Transaction covers this month if there's any overlap
-                                                                                                const hasOverlap = (txStart <= monthEnd && txEnd >= monthStart);
-                                                                                                
-                                                                                                if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
-                                                                                                    paidMonths.push(month);
+                                                                                        memberTransactions
+                                                                                            .filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid')
+                                                                                            .forEach((transaction) => {
+                                                                                                const txStart = new Date(transaction.valid_from);
+                                                                                                const txEnd = new Date(transaction.valid_to);
+
+                                                                                                // More accurate month detection: check each month the transaction spans
+                                                                                                let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
+                                                                                                const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
+
+                                                                                                while (currentDate <= endDate) {
+                                                                                                    const month = currentDate.getMonth();
+                                                                                                    const year = currentDate.getFullYear();
+
+                                                                                                    // Check if this month overlaps with the transaction period
+                                                                                                    const monthStart = new Date(year, month, 1);
+                                                                                                    const monthEnd = new Date(year, month + 1, 0); // Last day of month
+
+                                                                                                    // Transaction covers this month if there's any overlap
+                                                                                                    const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
+
+                                                                                                    if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
+                                                                                                        paidMonths.push(month);
+                                                                                                    }
+
+                                                                                                    currentDate.setMonth(currentDate.getMonth() + 1);
                                                                                                 }
-                                                                                                
-                                                                                                currentDate.setMonth(currentDate.getMonth() + 1);
-                                                                                            }
-                                                                                        });
-                                                                                        
+                                                                                            });
+
                                                                                         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                                                                        
+
                                                                                         return (
                                                                                             <Typography variant="body2" color="text.secondary">
-                                                                                                <strong>Paid Months:</strong> {paidMonths.length > 0 ? paidMonths.map(m => monthNames[m]).join(', ') : 'None'} 
+                                                                                                <strong>Paid Months:</strong> {paidMonths.length > 0 ? paidMonths.map((m) => monthNames[m]).join(', ') : 'None'}
                                                                                                 <br />
-                                                                                                <strong>Remaining:</strong> {monthsInFirstYear.filter(m => !paidMonths.includes(m)).map(m => monthNames[m]).join(', ') || 'All paid!'}
+                                                                                                <strong>Remaining:</strong>{' '}
+                                                                                                {monthsInFirstYear
+                                                                                                    .filter((m) => !paidMonths.includes(m))
+                                                                                                    .map((m) => monthNames[m])
+                                                                                                    .join(', ') || 'All paid!'}
                                                                                             </Typography>
                                                                                         );
                                                                                     })()}
@@ -1264,15 +1313,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                     </Typography>
                                                                                 </>
                                                                             )}
-                                                                            
+
                                                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                                                <strong>Next payment:</strong> {isFirstYear ? 'Monthly payment system' : `Quarter ${quarterStatus.nextAvailableQuarter}`}
-                                                                                {!isFirstYear && quarterStatus.latestEndDate && (
-                                                                                    <span> (Last payment ended: {formatDate(quarterStatus.latestEndDate)})</span>
-                                                                                )}
-                                                                                {!quarterStatus.latestEndDate && !isFirstYear && (
-                                                                                    <span> (No previous maintenance payments found)</span>
-                                                                                )}
+                                                                                <strong>Next payment:</strong> Monthly payment system
+                                                                                {!isFirstYear && quarterStatus.latestEndDate && <span> (Last payment ended: {formatDate(quarterStatus.latestEndDate)})</span>}
+                                                                                {!quarterStatus.latestEndDate && !isFirstYear && <span> (No previous maintenance payments found)</span>}
                                                                             </Typography>
                                                                         </>
                                                                     );
@@ -1286,44 +1331,24 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             </Typography>
                                                             <Alert severity="info" sx={{ mb: 2 }}>
                                                                 <Typography variant="body2">
-                                                                    <strong>Next suggested payment:</strong> Quarter {quarterStatus.nextAvailableQuarter} 
+                                                                    <strong>Next suggested payment:</strong> Monthly maintenance fee
                                                                     <br />
                                                                     Select your desired payment period using the dates below. Amount will calculate automatically.
                                                                 </Typography>
                                                             </Alert>
-                                                            
+
                                                             {/* Quick Payment Period Buttons */}
                                                             <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                                                                <Button 
-                                                                    size="small" 
-                                                                    variant="outlined" 
-                                                                    onClick={() => suggestMaintenancePeriod('monthly')}
-                                                                    sx={{ borderRadius: 2 }}
-                                                                >
+                                                                <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('monthly')} sx={{ borderRadius: 2 }}>
                                                                     1 Month
                                                                 </Button>
-                                                                <Button 
-                                                                    size="small" 
-                                                                    variant="outlined" 
-                                                                    onClick={() => suggestMaintenancePeriod('quarterly')}
-                                                                    sx={{ borderRadius: 2 }}
-                                                                >
+                                                                <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('quarterly')} sx={{ borderRadius: 2 }}>
                                                                     1 Quarter (3 months)
                                                                 </Button>
-                                                                <Button 
-                                                                    size="small" 
-                                                                    variant="outlined" 
-                                                                    onClick={() => suggestMaintenancePeriod('half_yearly')}
-                                                                    sx={{ borderRadius: 2 }}
-                                                                >
+                                                                <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('half_yearly')} sx={{ borderRadius: 2 }}>
                                                                     6 Months
                                                                 </Button>
-                                                                <Button 
-                                                                    size="small" 
-                                                                    variant="outlined" 
-                                                                    onClick={() => suggestMaintenancePeriod('annually')}
-                                                                    sx={{ borderRadius: 2 }}
-                                                                >
+                                                                <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('annually')} sx={{ borderRadius: 2 }}>
                                                                     1 Year
                                                                 </Button>
                                                             </Box>
@@ -1341,15 +1366,15 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             <Grid container spacing={2}>
                                                                 <Grid item xs={12} md={6}>
                                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
-                                                                        Current Status: 
-                                                                        <Chip 
-                                                                            label={formatStatus(selectedMember.status)} 
-                                                                            size="small" 
-                                                                            sx={{ 
+                                                                        Current Status:
+                                                                        <Chip
+                                                                            label={formatStatus(selectedMember.status)}
+                                                                            size="small"
+                                                                            sx={{
                                                                                 ml: 1,
                                                                                 backgroundColor: selectedMember.status === 'active' ? '#dcfce7' : '#fecaca',
-                                                                                color: selectedMember.status === 'active' ? '#166534' : '#dc2626'
-                                                                            }} 
+                                                                                color: selectedMember.status === 'active' ? '#166534' : '#dc2626',
+                                                                            }}
                                                                         />
                                                                     </Typography>
                                                                 </Grid>
@@ -1360,14 +1385,12 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 </Grid>
                                                                 <Grid item xs={12}>
                                                                     <Typography variant="body2" sx={{ color: '#92400e' }}>
-                                                                         <strong>Reinstating Fee:</strong> This fee is charged to reactivate members whose status is cancelled, expired, suspended, or terminated. Upon successful payment, the member status will be updated to "Active".
+                                                                        <strong>Reinstating Fee:</strong> This fee is charged to reactivate members whose status is cancelled, expired, suspended, or terminated. Upon successful payment, the member status will be updated to "Active".
                                                                     </Typography>
                                                                 </Grid>
                                                                 {!['cancelled', 'expired', 'suspended', 'terminated'].includes(selectedMember.status) && (
                                                                     <Grid item xs={12}>
-                                                                        <Alert severity="warning">
-                                                                            This member's current status ({formatStatus(selectedMember.status)}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.
-                                                                        </Alert>
+                                                                        <Alert severity="warning">This member's current status ({formatStatus(selectedMember.status)}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.</Alert>
                                                                     </Grid>
                                                                 )}
                                                             </Grid>
@@ -1432,11 +1455,38 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                             onChange={(e) => {
                                                                                 const categoryId = e.target.value;
                                                                                 setData('subscription_category_id', categoryId);
-                                                                                
-                                                                                // Auto-populate amount from selected category
-                                                                                const selectedCategory = subscriptionCategories?.find(cat => cat.id == categoryId);
+
+                                                                                // Auto-populate amount and dates from selected category
+                                                                                const selectedCategory = subscriptionCategories?.find((cat) => cat.id == categoryId);
                                                                                 if (selectedCategory) {
-                                                                                    setData('amount', selectedCategory.fee);
+                                                                                    // Set amount based on payment type
+                                                                                    const amount = selectedCategory.payment_type === 'daypass' 
+                                                                                        ? selectedCategory.daypass_fee || Math.round(selectedCategory.fee / 30)
+                                                                                        : selectedCategory.fee;
+                                                                                    setData('amount', amount);
+
+                                                                                    // Auto-set dates based on payment type
+                                                                                    const today = new Date();
+                                                                                    const startDate = today.toISOString().split('T')[0];
+                                                                                    
+                                                                                    let endDate;
+                                                                                    if (selectedCategory.payment_type === 'daypass') {
+                                                                                        // For daypass: valid for 1 day only
+                                                                                        endDate = startDate; // Same day
+                                                                                    } else {
+                                                                                        // For monthly: valid for 1 month
+                                                                                        const nextMonth = new Date(today);
+                                                                                        nextMonth.setMonth(today.getMonth() + 1);
+                                                                                        nextMonth.setDate(today.getDate() - 1); // End day before same date next month
+                                                                                        endDate = nextMonth.toISOString().split('T')[0];
+                                                                                    }
+                                                                                    
+                                                                                    setData('valid_from', startDate);
+                                                                                    setData('valid_to', endDate);
+
+                                                                                    // Show notification about auto-set dates
+                                                                                    const paymentTypeText = selectedCategory.payment_type === 'daypass' ? 'daypass (1 day)' : 'monthly (30 days)';
+                                                                                    enqueueSnackbar(`Auto-set dates for ${paymentTypeText} subscription`, { variant: 'info' });
                                                                                 }
                                                                             }}
                                                                             error={!!errors.subscription_category_id}
@@ -1446,7 +1496,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         >
                                                                             <MenuItem value="">Select Category</MenuItem>
                                                                             {subscriptionCategories
-                                                                                ?.filter(cat => cat.subscription_type_id == data.subscription_type_id)
+                                                                                ?.filter((cat) => cat.subscription_type_id == data.subscription_type_id)
                                                                                 ?.map((category) => (
                                                                                     <MenuItem key={category.id} value={category.id}>
                                                                                         {category.name} - Rs. {category.fee}
@@ -1467,13 +1517,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         Family Member Relation
                                                                     </Typography>
                                                                     <FormControl fullWidth>
-                                                                        <Select
-                                                                            value={data.family_member_relation}
-                                                                            onChange={(e) => setData('family_member_relation', e.target.value)}
-                                                                            error={!!errors.family_member_relation}
-                                                                            sx={{ borderRadius: 2 }}
-                                                                            displayEmpty
-                                                                        >
+                                                                        <Select value={data.family_member_relation} onChange={(e) => setData('family_member_relation', e.target.value)} error={!!errors.family_member_relation} sx={{ borderRadius: 2 }} displayEmpty>
                                                                             <MenuItem value="SELF">SELF</MenuItem>
                                                                             {['Father', 'Son', 'Daughter', 'Wife', 'Mother', 'Grand Son', 'Grand Daughter', 'Second Wife', 'Husband', 'Sister', 'Brother', 'Nephew', 'Niece', 'Father in law', 'Mother in Law'].map((relation) => (
                                                                                 <MenuItem key={relation} value={relation}>
@@ -1652,18 +1696,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 <Grid item xs={6}>
                                                                     <TextField
                                                                         fullWidth
-                                                                        label={data.fee_type === 'maintenance_fee' ? "Valid From (1st of month)" : "Valid From"}
+                                                                        label={data.fee_type === 'maintenance_fee' ? 'Valid From (1st of month)' : 'Valid From'}
                                                                         type="date"
                                                                         value={data.valid_from}
                                                                         onChange={(e) => handleDateChange('valid_from', e.target.value)}
                                                                         InputLabelProps={{ shrink: true }}
                                                                         error={!!(errors.valid_from || formErrors.valid_from || !dateValidation.isValid)}
-                                                                        helperText={
-                                                                            errors.valid_from || 
-                                                                            formErrors.valid_from?.[0] || 
-                                                                            (!dateValidation.isValid ? 'Date conflict detected' : '') ||
-                                                                            (data.fee_type === 'maintenance_fee' ? 'Will auto-set to 1st of selected month' : '')
-                                                                        }
+                                                                        helperText={errors.valid_from || formErrors.valid_from?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to 1st of selected month' : '')}
                                                                         sx={{
                                                                             '& .MuiOutlinedInput-root': { borderRadius: 2 },
                                                                         }}
@@ -1672,18 +1711,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 <Grid item xs={6}>
                                                                     <TextField
                                                                         fullWidth
-                                                                        label={data.fee_type === 'maintenance_fee' ? "Valid To (last day of month)" : "Valid To"}
+                                                                        label={data.fee_type === 'maintenance_fee' ? 'Valid To (last day of month)' : 'Valid To'}
                                                                         type="date"
                                                                         value={data.valid_to}
                                                                         onChange={(e) => handleDateChange('valid_to', e.target.value)}
                                                                         InputLabelProps={{ shrink: true }}
                                                                         error={!!(errors.valid_to || formErrors.valid_to || !dateValidation.isValid)}
-                                                                        helperText={
-                                                                            errors.valid_to || 
-                                                                            formErrors.valid_to?.[0] || 
-                                                                            (!dateValidation.isValid ? 'Date conflict detected' : '') ||
-                                                                            (data.fee_type === 'maintenance_fee' ? 'Will auto-set to last day of selected month' : '')
-                                                                        }
+                                                                        helperText={errors.valid_to || formErrors.valid_to?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to last day of selected month' : '')}
                                                                         sx={{
                                                                             '& .MuiOutlinedInput-root': { borderRadius: 2 },
                                                                         }}
@@ -1764,7 +1798,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                             {data.valid_from && (
                                                                 <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
-                                                                    <strong>Subscription Period:</strong> {formatDate(data.valid_from)} 
+                                                                    <strong>Subscription Period:</strong> {formatDate(data.valid_from)}
                                                                     {data.valid_to ? ` to ${formatDate(data.valid_to)}` : ' (Unlimited)'}
                                                                 </Alert>
                                                             )}
@@ -1803,13 +1837,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         variant="contained"
                                                         size="large"
                                                         fullWidth
-                                                        disabled={
-                                                            submitting || 
-                                                            !data.fee_type || 
-                                                            !data.amount || 
-                                                            (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) ||
-                                                            (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))
-                                                        }
+                                                        disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))}
                                                         sx={{
                                                             mt: 3,
                                                             py: 2,
@@ -1926,15 +1954,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     <TableRow key={transaction.id}>
                                                                         <TableCell>{transaction.invoice_no}</TableCell>
                                                                         <TableCell>
-                                                                            <Chip 
-                                                                                label={transaction.fee_type?.replace('_', ' ').toUpperCase()} 
-                                                                                color={
-                                                                                    transaction.fee_type === 'membership_fee' ? 'primary' : 
-                                                                                    transaction.fee_type === 'subscription_fee' ? 'success' : 
-                                                                                    'secondary'
-                                                                                } 
-                                                                                size="small" 
-                                                                            />
+                                                                            <Chip label={transaction.fee_type?.replace('_', ' ').toUpperCase()} color={transaction.fee_type === 'membership_fee' ? 'primary' : transaction.fee_type === 'subscription_fee' ? 'success' : 'secondary'} size="small" />
                                                                         </TableCell>
                                                                         <TableCell>
                                                                             {transaction.fee_type === 'subscription_fee' ? (
@@ -1963,21 +1983,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         </TableCell>
                                                                         <TableCell>{formatCurrency(transaction.total_price)}</TableCell>
                                                                         <TableCell>
-                                                                            <Chip 
-                                                                                label={transaction.payment_method === 'credit_card' ? `💳 ${transaction.credit_card_type?.toUpperCase() || 'CARD'}` : '💵 CASH'} 
-                                                                                color={transaction.payment_method === 'credit_card' ? 'info' : 'default'} 
-                                                                                size="small" 
-                                                                            />
+                                                                            <Chip label={transaction.payment_method === 'credit_card' ? `💳 ${transaction.credit_card_type?.toUpperCase() || 'CARD'}` : '💵 CASH'} color={transaction.payment_method === 'credit_card' ? 'info' : 'default'} size="small" />
                                                                         </TableCell>
                                                                         <TableCell>
                                                                             {transaction.receipt ? (
-                                                                                <Button
-                                                                                    size="small"
-                                                                                    variant="outlined"
-                                                                                    startIcon={<Receipt />}
-                                                                                    onClick={() => window.open(`${transaction.receipt}`, '_blank')}
-                                                                                    sx={{ fontSize: '11px', py: 0.5, px: 1 }}
-                                                                                >
+                                                                                <Button size="small" variant="outlined" startIcon={<Receipt />} onClick={() => window.open(`${transaction.receipt}`, '_blank')} sx={{ fontSize: '11px', py: 0.5, px: 1 }}>
                                                                                     View
                                                                                 </Button>
                                                                             ) : (

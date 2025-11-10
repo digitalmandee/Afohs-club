@@ -319,7 +319,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Relationship</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Phone Number</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Date of Birth</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Expiry Date</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
@@ -377,7 +377,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.relation}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.date_of_birth ? new Date(user.date_of_birth).toLocaleDateString() : 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_expiry_date ? new Date(user.card_expiry_date).toLocaleDateString() : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                                     <TableCell>
                                                         <Chip

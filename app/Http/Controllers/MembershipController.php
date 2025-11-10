@@ -848,8 +848,9 @@ class MembershipController extends Controller
             'member_id' => 'required|exists:members,id',
             'status' => 'required|in:active,suspended,cancelled,absent,expired,terminated,not_assign,in_suspension_process',
             'reason' => 'nullable|string',
-            'duration_type' => 'nullable|in:1Day,1Monthly,1Year,CustomDate',
-            'custom_end_date' => 'nullable|date',
+            'duration_type' => 'required_if:status,suspended,absent|in:1Day,1Monthly,1Year,CustomDate',
+            'custom_start_date' => 'required_if:duration_type,CustomDate|date',
+            'custom_end_date' => 'required_if:duration_type,CustomDate|date|after:custom_start_date',
         ]);
 
         $member = Member::findOrFail($request->member_id);
@@ -857,7 +858,7 @@ class MembershipController extends Controller
         $startDate = now();
         $endDate = null;
 
-        if (in_array($request->status, ['suspended'])) {
+        if (in_array($request->status, ['suspended', 'absent'])) {
             switch ($request->duration_type) {
                 case '1Day':
                     $endDate = now()->addDay();
@@ -869,6 +870,7 @@ class MembershipController extends Controller
                     $endDate = now()->addYear();
                     break;
                 case 'CustomDate':
+                    $startDate = Carbon::parse($request->custom_start_date);
                     $endDate = Carbon::parse($request->custom_end_date);
                     break;
             }

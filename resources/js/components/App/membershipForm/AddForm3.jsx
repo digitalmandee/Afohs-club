@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment, CircularProgress } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
@@ -7,10 +7,13 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { enqueueSnackbar } from 'notistack';
+import axios from 'axios';
 
 const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
@@ -21,6 +24,10 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [familyMemberErrors, setFamilyMemberErrors] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
     const [isDragOver, setIsDragOver] = useState(false);
+    const [isValidatingFamilyCnic, setIsValidatingFamilyCnic] = useState(false);
+    const [isValidatingMembershipNo, setIsValidatingMembershipNo] = useState(false);
+    const [membershipNoStatus, setMembershipNoStatus] = useState(null); // 'available', 'exists', 'error'
+    const [membershipNoSuggestion, setMembershipNoSuggestion] = useState(null);
     const fileInputRef = useRef(null);
 
     const calculateAge = (dateOfBirth) => {
@@ -33,7 +40,62 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
             age--;
         }
+        
         return age;
+    };
+
+    const validateMembershipNumber = async (membershipNo) => {
+        if (!membershipNo || membershipNo.trim() === '') {
+            setMembershipNoStatus(null);
+            setMembershipNoSuggestion(null);
+            return;
+        }
+
+        setIsValidatingMembershipNo(true);
+        setMembershipNoStatus(null);
+        
+        try {
+            const response = await axios.post('/api/check-duplicate-membership-no', {
+                membership_no: membershipNo,
+                member_id: data.member_id || null
+            });
+
+            if (response.data.exists) {
+                setMembershipNoStatus('exists');
+                setMembershipNoSuggestion(response.data.suggestion);
+            } else {
+                setMembershipNoStatus('available');
+                setMembershipNoSuggestion(null);
+            }
+        } catch (error) {
+            console.error('Error checking membership number:', error);
+            setMembershipNoStatus('error');
+            setMembershipNoSuggestion(null);
+        }
+        
+        setIsValidatingMembershipNo(false);
+    };
+
+    const generateUniqueMembershipNumber = async (categoryName, isKinship = false) => {
+        try {
+            // Get the next available number from the backend
+            const response = await axios.get('/api/get-next-membership-number');
+            const nextNumber = response.data.next_number;
+            
+            // Format: "CATEGORY_NAME NUMBER" or "CATEGORY_NAME NUMBER-1" for kinship
+            const membershipNo = isKinship ? 
+                `${categoryName} ${nextNumber}-1` : 
+                `${categoryName} ${nextNumber}`;
+            
+            return membershipNo;
+        } catch (error) {
+            console.error('Error generating membership number:', error);
+            // Fallback to timestamp-based number
+            const timestamp = Date.now().toString().slice(-4);
+            return isKinship ? 
+                `${categoryName} ${timestamp}-1` : 
+                `${categoryName} ${timestamp}`;
+        }
     };
 
     const calculateExpiryDate = (dateOfBirth) => {
@@ -44,6 +106,12 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         return expiryDate.toISOString().split('T')[0];
     };
 
+    const validateEmailFormat = (email) => {
+        if (!email || email.trim() === '') return null;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email.trim());
+    };
+
     const handleFamilyMemberChange = (field, value) => {
         let updatedMember = {
             ...currentFamilyMember,
@@ -51,15 +119,24 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         };
 
         // Auto-calculate expiry date when date of birth changes
-        if (field === 'date_of_birth' && value) {
-            const age = calculateAge(value);
-            const autoExpiryDate = calculateExpiryDate(value);
-            
-            // Only set auto expiry if member is under 25
-            if (age < 25) {
-                updatedMember.card_expiry_date = autoExpiryDate;
-                updatedMember.auto_expiry_calculated = true;
+        if (field === 'date_of_birth') {
+            updatedMember.card_expiry_date = calculateExpiryDate(value);
+        }
+
+        // Real-time email validation
+        if (field === 'email') {
+            const currentErrors = { ...familyMemberErrors };
+            if (value && value.trim() !== '') {
+                const isValidFormat = validateEmailFormat(value);
+                if (!isValidFormat) {
+                    currentErrors.email = 'Please enter a valid email address';
+                } else {
+                    delete currentErrors.email;
+                }
+            } else {
+                delete currentErrors.email;
             }
+            setFamilyMemberErrors(currentErrors);
         }
 
         setCurrentFamilyMember(updatedMember);
@@ -93,7 +170,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         setShowFamilyMember(true);
     };
 
-    const handleSaveFamilyMember = () => {
+    const handleSaveFamilyMember = async () => {
         const errors = {};
 
         const isEdit = data.family_members.some((fm) => fm.id === currentFamilyMember.id);
@@ -122,28 +199,49 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             errors.status = 'Status is required';
         }
 
-        // Email uniqueness
-        if (!currentFamilyMember.email) {
-            delete errors.email;
-        } else {
-            const mainEmail = data.personal_email?.trim().toLowerCase() || '';
-            const memberEmail = currentFamilyMember.email?.trim().toLowerCase();
+        // Check for basic validation errors first
+        if (Object.keys(errors).length > 0) {
+            setFamilyMemberErrors(errors);
+            return;
+        }
 
-            if (memberEmail === mainEmail) {
-                errors.email = 'Family member email must not be same as member email';
+        // Check for duplicate CNIC in database if CNIC is provided
+        if (currentFamilyMember.cnic) {
+            setIsValidatingFamilyCnic(true);
+            try {
+                const response = await axios.post('/api/check-duplicate-cnic', {
+                    cnic_no: currentFamilyMember.cnic,
+                    member_id: isEdit && currentFamilyMember.id && !currentFamilyMember.id.toString().startsWith('new-') 
+                        ? currentFamilyMember.id 
+                        : null // Exclude current family member if editing existing one
+                });
+
+                if (response.data.exists) {
+                    setFamilyMemberErrors({
+                        cnic: 'This CNIC number is already registered with another member'
+                    });
+                    setIsValidatingFamilyCnic(false);
+                    return;
+                }
+            } catch (error) {
+                console.error('Error checking family member CNIC:', error);
+                setFamilyMemberErrors({
+                    cnic: 'Error validating CNIC. Please try again.'
+                });
+                setIsValidatingFamilyCnic(false);
+                return;
             }
+            setIsValidatingFamilyCnic(false);
+        }
 
-            const emailAlreadyUsed = data.family_members.some((fm) => {
-                if (!fm.email) return false;
-
-                const fmEmail = fm.email.trim().toLowerCase();
-                console.log(isEdit, fm.id, currentFamilyMember.id);
-                if (isEdit && fm.id === currentFamilyMember.id) return false;
-                return fmEmail === memberEmail;
-            });
-
-            if (emailAlreadyUsed) {
-                errors.email = 'This email is already used by another family member';
+        // Email validation (format only)
+        if (currentFamilyMember.email && currentFamilyMember.email.trim() !== '') {
+            const memberEmail = currentFamilyMember.email.trim();
+            
+            // Email format validation only
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(memberEmail)) {
+                errors.email = 'Please enter a valid email address';
             }
         }
 
@@ -694,7 +792,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 <Select
                                                     name="membership_category"
                                                     value={data.membership_category}
-                                                    onChange={(e) => {
+                                                    onChange={async (e) => {
                                                         const selectedCategoryId = e.target.value;
                                                         const selectedCategory = membercategories.find((item) => item.id === Number(selectedCategoryId));
                                                         const categoryName = selectedCategory?.name || '';
@@ -706,9 +804,27 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                             },
                                                         });
 
-                                                        if (!selectedKinshipUser) {
-                                                            const membershipNoParts = data.membership_no.split(' ');
-                                                            const newMembershipNo = membershipNoParts.length > 1 ? `${categoryName} ${membershipNoParts[1]}` : `${categoryName} ${data.membership_no}`;
+                                                        // Generate unique membership number when category changes
+                                                        if (categoryName) {
+                                                            const isKinship = !!selectedKinshipUser;
+                                                            
+                                                            // If there's an existing membership number, preserve the number part
+                                                            let existingNumber = null;
+                                                            if (data.membership_no) {
+                                                                const parts = data.membership_no.split(' ');
+                                                                if (parts.length >= 2) {
+                                                                    existingNumber = parts[parts.length - 1]; // Get the number part
+                                                                }
+                                                            }
+                                                            
+                                                            let newMembershipNo;
+                                                            if (existingNumber) {
+                                                                // Keep existing number, just change category
+                                                                newMembershipNo = `${categoryName} ${existingNumber}`;
+                                                            } else {
+                                                                // Generate new unique number
+                                                                newMembershipNo = await generateUniqueMembershipNumber(categoryName, isKinship);
+                                                            }
 
                                                             handleChange({
                                                                 target: {
@@ -716,6 +832,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     value: newMembershipNo,
                                                                 },
                                                             });
+
+                                                            // Validate the new membership number
+                                                            setTimeout(() => validateMembershipNumber(newMembershipNo), 500);
                                                         }
                                                     }}
                                                     displayEmpty
@@ -770,7 +889,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
                                                     if (kinshipUser && kinshipUser.membership_no) {
                                                         const kinshipParts = kinshipUser.membership_no.split(' ');
-                                                        const kinshipNum = kinshipParts[1]?.split('-')[0];
+                                                        const kinshipNum = kinshipParts[1];
 
                                                         const existingMembers = [];
                                                         let suffix = kinshipUser.total_kinships + 1;
@@ -806,14 +925,43 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 value={data.membership_no}
                                                 onChange={(e) => {
                                                     handleChange(e);
+                                                    // Validate membership number after a short delay
+                                                    setTimeout(() => validateMembershipNumber(e.target.value), 500);
                                                 }}
                                                 inputProps={{
                                                     maxLength: 12,
                                                     inputMode: 'numeric',
                                                 }}
+                                                InputProps={{
+                                                    endAdornment: (
+                                                        <InputAdornment position="end">
+                                                            {isValidatingMembershipNo && (
+                                                                <CircularProgress size={20} />
+                                                            )}
+                                                            {!isValidatingMembershipNo && membershipNoStatus === 'available' && (
+                                                                <CheckIcon sx={{ color: '#4caf50' }} />
+                                                            )}
+                                                            {!isValidatingMembershipNo && membershipNoStatus === 'exists' && (
+                                                                <CloseRoundedIcon sx={{ color: '#f44336' }} />
+                                                            )}
+                                                            {!isValidatingMembershipNo && membershipNoStatus === 'error' && (
+                                                                <CloseRoundedIcon sx={{ color: '#ff9800' }} />
+                                                            )}
+                                                        </InputAdornment>
+                                                    )
+                                                }}
+                                                error={membershipNoStatus === 'exists'}
+                                                helperText={
+                                                    isValidatingMembershipNo ? 'Checking availability...' :
+                                                    membershipNoStatus === 'available' ? 'Membership number is available' :
+                                                    membershipNoStatus === 'exists' ? `Membership number already exists${membershipNoSuggestion ? `. Try: ${membershipNoSuggestion}` : ''}` :
+                                                    membershipNoStatus === 'error' ? 'Error checking membership number' :
+                                                    ''
+                                                }
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
+                                                        borderColor: membershipNoStatus === 'available' ? '#4caf50' : 
+                                                                   membershipNoStatus === 'exists' ? '#f44336' : '#ccc',
                                                     },
                                                 }}
                                             />
@@ -1362,6 +1510,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     fullWidth
                                                                     placeholder="Enter Email"
                                                                     variant="outlined"
+                                                                    name="email"
+                                                                    type="email"
                                                                     value={currentFamilyMember.email}
                                                                     error={!!familyMemberErrors.email}
                                                                     helperText={familyMemberErrors.email}
@@ -1381,6 +1531,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     fullWidth
                                                                     placeholder="e.g. 12345-24"
                                                                     variant="outlined"
+                                                                    name="barcode_no"
                                                                     value={currentFamilyMember.barcode_no}
                                                                     onChange={(e) => handleFamilyMemberChange('barcode_no', e.target.value)}
                                                                     inputProps={{
@@ -1424,7 +1575,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     variant="outlined"
                                                                     value={currentFamilyMember.cnic}
                                                                     error={!!familyMemberErrors.cnic}
-                                                                    helperText={familyMemberErrors.cnic}
+                                                                    helperText={isValidatingFamilyCnic ? 'Checking CNIC availability...' : familyMemberErrors.cnic}
                                                                     onChange={(e) => {
                                                                         let value = e.target.value;
                                                                         value = value.replace(/[^\d-]/g, '');
@@ -1435,8 +1586,15 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     }}
                                                                     sx={{
                                                                         '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
+                                                                            borderColor: isValidatingFamilyCnic ? '#1976d2' : '#ccc',
                                                                         },
+                                                                        ...(isValidatingFamilyCnic && {
+                                                                            '& .MuiOutlinedInput-root': {
+                                                                                '& fieldset': {
+                                                                                    borderColor: '#1976d2',
+                                                                                }
+                                                                            }
+                                                                        })
                                                                     }}
                                                                 />
                                                             </Box>
@@ -1577,8 +1735,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 textTransform: 'none',
                                                             }}
                                                             onClick={handleSaveFamilyMember}
+                                                            disabled={isValidatingFamilyCnic}
                                                         >
-                                                            Save Members
+                                                            {isValidatingFamilyCnic ? 'Validating CNIC...' : 'Save Members'}
                                                         </Button>
                                                     </Box>
                                                 </>

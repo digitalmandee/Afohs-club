@@ -7,7 +7,8 @@ import { enqueueSnackbar } from 'notistack';
 const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
     const [suspensionReason, setSuspensionReason] = useState('');
     const [suspensionDuration, setSuspensionDuration] = useState('1Day');
-    const [customDate, setCustomDate] = useState('');
+    const [customStartDate, setCustomStartDate] = useState('');
+    const [customEndDate, setCustomEndDate] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -18,8 +19,13 @@ const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
             newErrors.reason = 'Suspension reason is required.';
         }
 
-        if (suspensionDuration === 'CustomDate' && !customDate) {
-            newErrors.customDate = 'Please select a custom end date.';
+        if (suspensionDuration === 'CustomDate' && (!customStartDate || !customEndDate)) {
+            if (!customStartDate) newErrors.customStartDate = 'Please select a start date.';
+            if (!customEndDate) newErrors.customEndDate = 'Please select an end date.';
+        }
+
+        if (suspensionDuration === 'CustomDate' && customStartDate && customEndDate && new Date(customStartDate) >= new Date(customEndDate)) {
+            newErrors.customEndDate = 'End date must be after start date.';
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -37,7 +43,8 @@ const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
                 status: 'suspended',
                 reason: suspensionReason,
                 duration_type: suspensionDuration,
-                custom_end_date: suspensionDuration === 'CustomDate' ? customDate : null,
+                custom_start_date: suspensionDuration === 'CustomDate' ? customStartDate : null,
+                custom_end_date: suspensionDuration === 'CustomDate' ? customEndDate : null,
             };
 
             await axios.post(route('membership.update-status'), payload);
@@ -127,19 +134,38 @@ const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
                 </FormControl>
 
                 {suspensionDuration === 'CustomDate' && (
-                    <TextField
-                        type="date"
-                        fullWidth
-                        label="Custom End Date"
-                        value={customDate}
-                        onChange={(e) => setCustomDate(e.target.value)}
-                        error={!!errors.customDate}
-                        helperText={errors.customDate}
-                        sx={{ mt: 2 }}
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
+                    <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TextField
+                            type="date"
+                            fullWidth
+                            label="Start Date"
+                            value={customStartDate}
+                            onChange={(e) => setCustomStartDate(e.target.value)}
+                            error={!!errors.customStartDate}
+                            helperText={errors.customStartDate}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            inputProps={{
+                                min: new Date().toISOString().split('T')[0],
+                            }}
+                        />
+                        <TextField
+                            type="date"
+                            fullWidth
+                            label="End Date"
+                            value={customEndDate}
+                            onChange={(e) => setCustomEndDate(e.target.value)}
+                            error={!!errors.customEndDate}
+                            helperText={errors.customEndDate}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            inputProps={{
+                                min: customStartDate || new Date().toISOString().split('T')[0],
+                            }}
+                        />
+                    </Box>
                 )}
             </DialogContent>
 
