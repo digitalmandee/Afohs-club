@@ -54,7 +54,6 @@ class SubscriptionCategoryController extends Controller
             'description' => 'nullable|string|max:1000',
             'fee' => 'nullable|integer',
             'status' => 'required|in:active,inactive',
-            'payment_type' => 'required|in:monthly,daypass',
         ]);
 
         SubscriptionCategory::create($validated);
@@ -90,7 +89,6 @@ class SubscriptionCategoryController extends Controller
             'description' => 'nullable|string|max:1000',
             'fee' => 'nullable|integer',
             'status' => 'required|in:active,inactive',
-            'payment_type' => 'required|in:monthly,daypass',
         ]);
 
         $subscriptionCategory->update($validated);

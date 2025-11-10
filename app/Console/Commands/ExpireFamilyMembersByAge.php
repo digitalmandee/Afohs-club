@@ -20,7 +20,7 @@ class ExpireFamilyMembersByAge extends Command
      *
      * @var string
      */
-    protected $description = 'Automatically expire family members who have reached 25 years of age';
+    protected $description = 'Automatically expire family members who have reached 25 years of age (excludes wives)';
 
     /**
      * Execute the console command.
@@ -29,7 +29,7 @@ class ExpireFamilyMembersByAge extends Command
     {
         $isDryRun = $this->option('dry-run');
         
-        $this->info('Starting family member age-based expiry process...');
+        $this->info('Starting family member age-based expiry process (excluding wives)...');
         
         // Get family members who should be expired by age
         $membersToExpire = Member::familyMembersToExpire()->get();
@@ -54,16 +54,6 @@ class ExpireFamilyMembersByAge extends Command
                     $member->expireByAge("Automatic expiry - Member reached {$age} years of age");
                     $this->line("✓ Expired: {$memberInfo}");
                     $expiredCount++;
-                    
-                    // Log the expiry
-                    Log::info("Family member expired by age", [
-                        'member_id' => $member->id,
-                        'member_name' => $member->full_name,
-                        'age' => $age,
-                        'parent_id' => $member->parent_id,
-                        'membership_no' => $member->membership_no,
-                    ]);
-                    
                 } catch (\Exception $e) {
                     $this->error("✗ Failed to expire {$memberInfo}: {$e->getMessage()}");
                     Log::error("Failed to expire family member by age", [

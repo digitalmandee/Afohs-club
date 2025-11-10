@@ -102,36 +102,28 @@ const SubscriptionCategories = ({ subscriptionCategories }) => {
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary" mb={1}>
                                         <strong>Payment Type:</strong> 
-                                        <span style={{ 
-                                            backgroundColor: category.payment_type === 'daypass' ? '#e3f2fd' : '#f3e5f5',
-                                            color: category.payment_type === 'daypass' ? '#1976d2' : '#7b1fa2',
+                                        <span style={{
+                                            backgroundColor: '#f3e5f5',
+                                            color: '#7b1fa2',
                                             padding: '2px 8px',
                                             borderRadius: '12px',
                                             fontSize: '11px',
                                             marginLeft: '8px'
                                         }}>
-                                            {category.payment_type === 'daypass' ? 'Daypass' : 'Monthly'}
+                                            Monthly
                                         </span>
                                     </Typography>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }} mb={1}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                         <Typography variant="body2" color="text.secondary">
-                                            <strong>
-                                                {category.payment_type === 'daypass' ? 'Daily Fee:' : 'Monthly Fee:'}
-                                            </strong> 
-                                            {category.payment_type === 'daypass' 
-                                                ? `Rs ${category.daypass_fee || 0}` 
-                                                : `Rs ${category.fee?.toLocaleString() || 0}`
-                                            }
+                                            <strong>Monthly Fee:</strong> Rs {category.fee?.toLocaleString() || 0}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            <strong>Status:</strong> {category.status}
+                                            <strong>Daily Fee:</strong> Rs {category.fee ? Math.round(category.fee / 30) : 0}
                                         </Typography>
                                     </Box>
-                                    {category.payment_type === 'daypass' && (
-                                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                            Base Monthly Fee: Rs {category.fee?.toLocaleString() || 0}
-                                        </Typography>
-                                    )}
+                                    <Typography variant="body2" color="text.secondary" mb={1}>
+                                        <strong>Status:</strong> {category.status}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>

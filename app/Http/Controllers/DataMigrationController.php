@@ -335,6 +335,7 @@ class DataMigrationController extends Controller
             'cnic_no' => $oldFamily->cnic,
             'mobile_number_a' => $oldFamily->contact,
             'martial_status' => $oldFamily->maritial_status,
+            'gender' => $oldFamily->gender ?? null,
             'profile_photo' => $this->migrateFamilyPhoto($oldFamily->fam_picture),
             'membership_no' => $familyMembershipNo,
             'card_status' => $this->mapCardStatus($oldFamily->card_status),

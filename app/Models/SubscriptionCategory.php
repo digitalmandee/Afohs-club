@@ -10,24 +10,18 @@ class SubscriptionCategory extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'subscription_type_id', 'description', 'fee', 'subscription_fee', 'status', 'payment_type', 'daypass_fee'];
+    protected $fillable = ['name', 'subscription_type_id', 'description', 'fee', 'subscription_fee', 'status'];
 
-    // Automatically calculate daypass fee when monthly fee is set
-    protected static function boot()
-    {
-        parent::boot();
-        
-        static::saving(function ($model) {
-            if ($model->payment_type === 'daypass' && $model->fee) {
-                $model->daypass_fee = round($model->fee / 30); // Round to whole number
-            }
-        });
-    }
-
-    // Accessor to get the appropriate fee based on payment type
+    // Accessor to get the monthly fee (default fee)
     public function getEffectiveFeeAttribute()
     {
-        return $this->payment_type === 'daypass' ? $this->daypass_fee : $this->fee;
+        return $this->fee;
+    }
+
+    // Calculate day fee on demand
+    public function getDayFeeAttribute()
+    {
+        return $this->fee ? round($this->fee / 30) : 0;
     }
 
     public function subscriptionType()

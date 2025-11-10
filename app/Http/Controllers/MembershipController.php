@@ -378,6 +378,9 @@ class MembershipController extends Controller
                         'parent_id' => $mainMember->id,
                         'membership_no' => $mainMember->membership_no . '-' . $familyMemberData['family_suffix'],
                         'family_suffix' => $familyMemberData['family_suffix'],
+                        'first_name' => $familyMemberData['first_name'] ?? null,
+                        'middle_name' => $familyMemberData['middle_name'] ?? null,
+                        'last_name' => $familyMemberData['last_name'] ?? null,
                         'full_name' => $familyMemberData['full_name'],
                         'personal_email' => $familyMemberData['email'],
                         'relation' => $familyMemberData['relation'],
@@ -389,6 +392,9 @@ class MembershipController extends Controller
                         'card_expiry_date' => $familyMemberData['card_expiry_date'] ?? null,
                         'cnic_no' => $familyMemberData['cnic'],
                         'mobile_number_a' => $familyMemberData['phone_number'],
+                        'passport_no' => $familyMemberData['passport_no'] ?? null,
+                        'nationality' => $familyMemberData['nationality'] ?? null,
+                        'martial_status' => $familyMemberData['martial_status'] ?? null,
                     ]);
 
                     // Handle family member profile photo using Media model
@@ -636,6 +642,9 @@ class MembershipController extends Controller
                             'parent_id' => $member->id,
                             'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
                             'family_suffix' => $newMemberData['family_suffix'],
+                            'first_name' => $newMemberData['first_name'] ?? null,
+                            'middle_name' => $newMemberData['middle_name'] ?? null,
+                            'last_name' => $newMemberData['last_name'] ?? null,
                             'full_name' => $newMemberData['full_name'],
                             'personal_email' => $newMemberData['email'] ?? null,
                             'relation' => $newMemberData['relation'],
@@ -647,6 +656,9 @@ class MembershipController extends Controller
                             'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
                             'cnic_no' => $newMemberData['cnic'],
                             'mobile_number_a' => $newMemberData['phone_number'] ?? null,
+                            'passport_no' => $newMemberData['passport_no'] ?? null,
+                            'nationality' => $newMemberData['nationality'] ?? null,
+                            'martial_status' => $newMemberData['martial_status'] ?? null,
                         ]);
 
                         // Handle family member profile photo using Media model
@@ -717,6 +729,9 @@ class MembershipController extends Controller
                             // Update member fields
                             $updateFamily->update([
                                 'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
+                                'first_name' => $newMemberData['first_name'] ?? null,
+                                'middle_name' => $newMemberData['middle_name'] ?? null,
+                                'last_name' => $newMemberData['last_name'] ?? null,
                                 'full_name' => $newMemberData['full_name'],
                                 'barcode_no' => $newMemberData['barcode_no'] ?? null,
                                 'personal_email' => $newMemberData['email'] ?? null,
@@ -729,6 +744,9 @@ class MembershipController extends Controller
                                 'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
                                 'cnic_no' => $newMemberData['cnic'] ?? null,
                                 'mobile_number_a' => $newMemberData['phone_number'] ?? null,
+                                'passport_no' => $newMemberData['passport_no'] ?? null,
+                                'nationality' => $newMemberData['nationality'] ?? null,
+                                'martial_status' => $newMemberData['martial_status'] ?? null,
                             ]);
                         }
                     }

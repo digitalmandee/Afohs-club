@@ -76,7 +76,7 @@ class MemberTransactionController extends Controller
         $subscriptionTypes = SubscriptionType::all(['id', 'name']);
         $subscriptionCategories = SubscriptionCategory::where('status', 'active')
             ->with('subscriptionType:id,name')
-            ->get(['id', 'name', 'subscription_type_id', 'payment_type', 'fee', 'daypass_fee', 'description']);
+            ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
 
         return Inertia::render('App/Admin/Membership/Transactions/Create', [
             'subscriptionTypes' => $subscriptionTypes,
@@ -106,7 +106,10 @@ class MemberTransactionController extends Controller
     public function getMemberTransactions($memberId)
     {
         $member = Member::where('id', $memberId)
-            ->with(['memberCategory:id,name,fee,subscription_fee'])
+            ->with([
+                'memberCategory:id,name,fee,subscription_fee',
+                'familyMembers:id,parent_id,full_name,relation,membership_no,status'
+            ])
             ->first();
 
         if (!$member) {
@@ -149,7 +152,7 @@ class MemberTransactionController extends Controller
                 // Subscription fee specific validation
                 'subscription_type_id' => 'required_if:fee_type,subscription_fee|exists:subscription_types,id',
                 'subscription_category_id' => 'required_if:fee_type,subscription_fee|exists:subscription_categories,id',
-                'family_member_relation' => 'required_if:fee_type,subscription_fee|in:SELF,Father,Son,Daughter,Wife,Mother,Grand Son,Grand Daughter,Second Wife,Husband,Sister,Brother,Nephew,Niece,Father in law,Mother in Law',
+                'family_member_id' => 'nullable|exists:members,id',
             ]);
 
             if ($validator->fails()) {
@@ -196,6 +199,7 @@ class MemberTransactionController extends Controller
             if ($request->fee_type === 'subscription_fee') {
                 $subscription = Subscription::create([
                     'member_id' => $request->member_id,
+                    'family_member_id' => $request->family_member_id, // null = SELF (primary member)
                     'subscription_category_id' => $request->subscription_category_id,
                     'subscription_type_id' => $request->subscription_type_id,
                     'valid_from' => $request->valid_from,
@@ -270,7 +274,18 @@ class MemberTransactionController extends Controller
             $data['subscription_category_id'] = $request->subscription_category_id;
             $data['subscription_type_name'] = $subscriptionType ? $subscriptionType->name : null;
             $data['subscription_category_name'] = $subscriptionCategory ? $subscriptionCategory->name : null;
-            $data['family_member_relation'] = $request->family_member_relation;
+            
+            // Handle family member selection
+            if ($request->family_member_id) {
+                $familyMember = Member::find($request->family_member_id);
+                $data['family_member_id'] = $request->family_member_id;
+                $data['family_member_name'] = $familyMember ? $familyMember->full_name : null;
+                $data['family_member_relation'] = $familyMember ? $familyMember->relation : null;
+            } else {
+                $data['family_member_id'] = null;
+                $data['family_member_name'] = $member->full_name;
+                $data['family_member_relation'] = 'SELF';
+            }
         }
 
         // Handle credit card specific data

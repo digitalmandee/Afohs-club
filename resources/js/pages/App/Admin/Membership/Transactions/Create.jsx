@@ -46,7 +46,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         receipt_file: null,
         subscription_type_id: '',
         subscription_category_id: '',
-        family_member_relation: 'SELF',
+        family_member_id: null, // null means SELF (primary member)
     });
 
     // Auto-update payment suggestions when member changes
@@ -56,6 +56,21 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             suggestMaintenancePeriod(currentFrequency);
         }
     }, [selectedMember, memberTransactions]); // Trigger when member or their transactions change
+
+    // Auto-set fee type based on member status
+    useEffect(() => {
+        if (selectedMember) {
+            if (selectedMember.status === 'cancelled') {
+                // For cancelled members, automatically set to reinstating fee
+                setData('fee_type', 'reinstating_fee');
+            } else {
+                // For non-cancelled members, clear fee type if it was reinstating fee
+                if (data.fee_type === 'reinstating_fee') {
+                    setData('fee_type', '');
+                }
+            }
+        }
+    }, [selectedMember?.status]); // Trigger when member status changes
 
     const analyzeQuarterStatus = (transactions, membershipDate) => {
         if (!membershipDate) {
@@ -385,6 +400,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
         try {
             const response = await axios.get(route('finance.transaction.member', member.id));
+            setSelectedMember(response.data.member);
             setMemberTransactions(response.data.transactions);
             setFilteredTransactions(response.data.transactions);
             setMembershipFeePaid(response.data.membership_fee_paid);
@@ -801,17 +817,23 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                             let newAmount;
                             let periodText;
 
-                            if (selectedCategory.payment_type === 'daypass') {
-                                // For daypass: calculate number of days
-                                const daysDiff = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                                const daypassFee = selectedCategory.daypass_fee || Math.round(selectedCategory.fee / 30);
-                                newAmount = Math.round(daypassFee * daysDiff);
-                                periodText = `${daysDiff} day${daysDiff > 1 ? 's' : ''}`;
-                            } else {
-                                // For monthly: calculate number of months
+                            // Calculate total days between dates
+                            const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                            
+                            // Check if it's full months or partial days
+                            const isFullMonths = fromDate.getDate() === 1 && 
+                                               (toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate());
+                            
+                            if (isFullMonths) {
+                                // Full months calculation
                                 const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
                                 newAmount = Math.round(selectedCategory.fee * monthsDiff);
-                                periodText = `${monthsDiff} month${monthsDiff > 1 ? 's' : ''}`;
+                                periodText = `${monthsDiff} month${monthsDiff > 1 ? 's' : ''} (${totalDays} days)`;
+                            } else {
+                                // Daily calculation - use average month (30 days) for consistency
+                                const dailyRate = Math.round(selectedCategory.fee / 30);
+                                newAmount = dailyRate * totalDays;
+                                periodText = `${totalDays} day${totalDays > 1 ? 's' : ''} (Rs ${dailyRate}/day)`;
                             }
 
                             setData('amount', newAmount);
@@ -1174,17 +1196,29 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     </Typography>
                                                     <FormControl fullWidth>
                                                         <Select value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                            <MenuItem value="membership_fee" disabled={membershipFeePaid}>
-                                                                Membership Fee {membershipFeePaid && '(Already Paid)'}
-                                                            </MenuItem>
-                                                            <MenuItem value="maintenance_fee">Maintenance Fee</MenuItem>
-                                                            <MenuItem value="subscription_fee">Subscription Fee</MenuItem>
-                                                            <MenuItem value="reinstating_fee">Reinstating Fee</MenuItem>
+                                                            {selectedMember?.status === 'cancelled' ? [
+                                                                // Only show Reinstating Fee for cancelled members
+                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">Reinstating Fee</MenuItem>
+                                                            ] : [
+                                                                // Show all fee types for non-cancelled members
+                                                                <MenuItem key="membership_fee" value="membership_fee" disabled={membershipFeePaid}>
+                                                                    Membership Fee {membershipFeePaid && '(Already Paid)'}
+                                                                </MenuItem>,
+                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">Maintenance Fee</MenuItem>,
+                                                                <MenuItem key="subscription_fee" value="subscription_fee">Subscription Fee</MenuItem>,
+                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">Reinstating Fee</MenuItem>
+                                                            ]}
                                                         </Select>
                                                         {errors.fee_type && (
                                                             <Typography variant="caption" color="error" sx={{ mt: 1 }}>
                                                                 {errors.fee_type}
                                                             </Typography>
+                                                        )}
+                                                        {selectedMember?.status === 'cancelled' && (
+                                                            <Alert severity="info" sx={{ mt: 2 }}>
+                                                                <strong>Member Status: Cancelled</strong><br />
+                                                                Only Reinstating Fee is available for cancelled members. This fee will reactivate the member's status upon successful payment.
+                                                            </Alert>
                                                         )}
                                                     </FormControl>
                                                 </Grid>
@@ -1440,34 +1474,24 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                 // Auto-populate amount and dates from selected category
                                                                                 const selectedCategory = subscriptionCategories?.find((cat) => cat.id == categoryId);
                                                                                 if (selectedCategory) {
-                                                                                    // Set amount based on payment type
-                                                                                    const amount = selectedCategory.payment_type === 'daypass' 
-                                                                                        ? selectedCategory.daypass_fee || Math.round(selectedCategory.fee / 30)
-                                                                                        : selectedCategory.fee;
-                                                                                    setData('amount', amount);
+                                                                                    // Set amount to monthly fee (payment_type removed)
+                                                                                    setData('amount', selectedCategory.fee);
 
-                                                                                    // Auto-set dates based on payment type
+                                                                                    // Auto-set dates for monthly subscription
                                                                                     const today = new Date();
                                                                                     const startDate = today.toISOString().split('T')[0];
                                                                                     
-                                                                                    let endDate;
-                                                                                    if (selectedCategory.payment_type === 'daypass') {
-                                                                                        // For daypass: valid for 1 day only
-                                                                                        endDate = startDate; // Same day
-                                                                                    } else {
-                                                                                        // For monthly: valid for 1 month
-                                                                                        const nextMonth = new Date(today);
-                                                                                        nextMonth.setMonth(today.getMonth() + 1);
-                                                                                        nextMonth.setDate(today.getDate() - 1); // End day before same date next month
-                                                                                        endDate = nextMonth.toISOString().split('T')[0];
-                                                                                    }
+                                                                                    // For monthly: valid for 1 month
+                                                                                    const nextMonth = new Date(today);
+                                                                                    nextMonth.setMonth(today.getMonth() + 1);
+                                                                                    nextMonth.setDate(today.getDate() - 1); // End day before same date next month
+                                                                                    const endDate = nextMonth.toISOString().split('T')[0];
                                                                                     
                                                                                     setData('valid_from', startDate);
                                                                                     setData('valid_to', endDate);
 
                                                                                     // Show notification about auto-set dates
-                                                                                    const paymentTypeText = selectedCategory.payment_type === 'daypass' ? 'daypass (1 day)' : 'monthly (30 days)';
-                                                                                    enqueueSnackbar(`Auto-set dates for ${paymentTypeText} subscription`, { variant: 'info' });
+                                                                                    enqueueSnackbar(`Auto-set dates for monthly (30 days) subscription`, { variant: 'info' });
                                                                                 }
                                                                             }}
                                                                             error={!!errors.subscription_category_id}
@@ -1492,25 +1516,56 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     </FormControl>
                                                                 </Grid>
 
-                                                                {/* Family Member Relation */}
+                                                                {/* Family Member Selection */}
                                                                 <Grid item xs={12}>
                                                                     <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
-                                                                        Family Member Relation
+                                                                        Family Member
                                                                     </Typography>
                                                                     <FormControl fullWidth>
-                                                                        <Select value={data.family_member_relation} onChange={(e) => setData('family_member_relation', e.target.value)} error={!!errors.family_member_relation} sx={{ borderRadius: 2 }} displayEmpty>
-                                                                            <MenuItem value="SELF">SELF</MenuItem>
-                                                                            {['Father', 'Son', 'Daughter', 'Wife', 'Mother', 'Grand Son', 'Grand Daughter', 'Second Wife', 'Husband', 'Sister', 'Brother', 'Nephew', 'Niece', 'Father in law', 'Mother in Law'].map((relation) => (
-                                                                                <MenuItem key={relation} value={relation}>
-                                                                                    {relation}
+                                                                        <Select 
+                                                                            value={data.family_member_id || ''} 
+                                                                            onChange={(e) => setData('family_member_id', e.target.value || null)} 
+                                                                            error={!!errors.family_member_id} 
+                                                                            sx={{ borderRadius: 2 }} 
+                                                                            displayEmpty
+                                                                        >
+                                                                            <MenuItem value="">
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                    <Person sx={{ mr: 1, fontSize: 18, color: '#1976d2' }} />
+                                                                                    <Box>
+                                                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                                            {selectedMember?.full_name} (SELF)
+                                                                                        </Typography>
+                                                                                        <Typography variant="caption" color="text.secondary">
+                                                                                            Primary Member - {selectedMember?.membership_no}
+                                                                                        </Typography>
+                                                                                    </Box>
+                                                                                </Box>
+                                                                            </MenuItem>
+                                                                            {selectedMember?.family_members?.map((familyMember) => (
+                                                                                <MenuItem key={familyMember.id} value={familyMember.id}>
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                        <Person sx={{ mr: 1, fontSize: 18, color: '#666' }} />
+                                                                                        <Box>
+                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                                                {familyMember.full_name}
+                                                                                            </Typography>
+                                                                                            <Typography variant="caption" color="text.secondary">
+                                                                                                {familyMember.relation} - {familyMember.membership_no}
+                                                                                            </Typography>
+                                                                                        </Box>
+                                                                                    </Box>
                                                                                 </MenuItem>
                                                                             ))}
                                                                         </Select>
-                                                                        {errors.family_member_relation && (
+                                                                        {errors.family_member_id && (
                                                                             <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                                                {errors.family_member_relation}
+                                                                                {errors.family_member_id}
                                                                             </Typography>
                                                                         )}
+                                                                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                                                            Select the family member for whom this subscription is being purchased. Leave as "SELF" for the primary member.
+                                                                        </Typography>
                                                                     </FormControl>
                                                                 </Grid>
                                                             </Grid>
@@ -1781,6 +1836,37 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
                                                                     <strong>Subscription Period:</strong> {formatDate(data.valid_from)}
                                                                     {data.valid_to ? ` to ${formatDate(data.valid_to)}` : ' (Unlimited)'}
+                                                                    {data.valid_from && data.valid_to && data.subscription_category_id && (() => {
+                                                                        const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
+                                                                        if (selectedCategory) {
+                                                                            const fromDate = new Date(data.valid_from);
+                                                                            const toDate = new Date(data.valid_to);
+                                                                            const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                                                                            const isFullMonths = fromDate.getDate() === 1 && 
+                                                                                               (toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate());
+                                                                            
+                                                                            if (isFullMonths) {
+                                                                                const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
+                                                                                return (
+                                                                                    <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                                                                                        <strong>Billing:</strong> {monthsDiff} month{monthsDiff > 1 ? 's' : ''} × Rs {selectedCategory.fee?.toLocaleString()} = Rs {(selectedCategory.fee * monthsDiff)?.toLocaleString()}
+                                                                                        <br />
+                                                                                        <strong>Duration:</strong> {totalDays} days (Full month{monthsDiff > 1 ? 's' : ''})
+                                                                                    </div>
+                                                                                );
+                                                                            } else {
+                                                                                const dailyRate = Math.round(selectedCategory.fee / 30);
+                                                                                return (
+                                                                                    <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                                                                                        <strong>Billing:</strong> {totalDays} day{totalDays > 1 ? 's' : ''} × Rs {dailyRate} = Rs {(dailyRate * totalDays)?.toLocaleString()}
+                                                                                        <br />
+                                                                                        <strong>Daily Rate:</strong> Rs {selectedCategory.fee?.toLocaleString()} ÷ 30 days = Rs {dailyRate}/day
+                                                                                    </div>
+                                                                                );
+                                                                            }
+                                                                        }
+                                                                        return null;
+                                                                    })()}
                                                                 </Alert>
                                                             )}
                                                         </Box>

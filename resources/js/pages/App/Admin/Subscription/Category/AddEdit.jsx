@@ -21,7 +21,6 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
         description: '',
         fee: '',
         status: 'active',
-        payment_type: 'monthly',
     });
 
     useEffect(() => {
@@ -33,13 +32,12 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
                 fee: subscriptionCategory.fee ?? '',
                 subscription_fee: subscriptionCategory.subscription_fee ?? '',
                 status: subscriptionCategory.status || 'active',
-                payment_type: subscriptionCategory.payment_type || 'monthly',
             });
         }
     }, [subscriptionCategory]);
 
-    // Calculate daypass fee
-    const calculateDaypassFee = (monthlyFee) => {
+    // Calculate day fee
+    const calculateDayFee = (monthlyFee) => {
         if (!monthlyFee || monthlyFee <= 0) return 0;
         return Math.round(monthlyFee / 30); // Round to whole number
     };
@@ -58,7 +56,6 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
             description: formData.description || null,
             fee: parseInt(formData.fee, 10) || 0,
             status: formData.status,
-            payment_type: formData.payment_type,
         };
 
         try {
@@ -141,38 +138,12 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
                             <TextField fullWidth size="small" name="description" value={formData.description} onChange={handleInputChange} multiline rows={2} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
-                            <Typography>Payment Type</Typography>
-                            <TextField select fullWidth size="small" name="payment_type" value={formData.payment_type} onChange={handleInputChange} required>
-                                <MenuItem value="monthly">Monthly Payment</MenuItem>
-                                <MenuItem value="daypass">Daypass Payment</MenuItem>
-                            </TextField>
-                        </Box>
-                        <Box sx={{ mb: 2 }}>
-                            <Typography>
-                                {formData.payment_type === 'monthly' ? 'Monthly Fee' : 'Monthly Fee (Base for Daypass Calculation)'}
-                            </Typography>
+                            <Typography>Monthly Fee</Typography>
                             <TextField fullWidth size="small" name="fee" value={formData.fee} onChange={handleInputChange} type="number" required />
+                            <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                                Daily fee will be auto-calculated as: Monthly Fee ÷ 30 days = Rs {calculateDayFee(formData.fee)} per day
+                            </Typography>
                         </Box>
-                        {formData.payment_type === 'daypass' && (
-                            <Box sx={{ mb: 2 }}>
-                                <Typography>Daypass Fee (Auto-calculated)</Typography>
-                                <TextField 
-                                    fullWidth 
-                                    size="small" 
-                                    value={`Rs ${calculateDaypassFee(formData.fee)}`}
-                                    disabled
-                                    sx={{ 
-                                        '& .MuiInputBase-input.Mui-disabled': { 
-                                            WebkitTextFillColor: '#000',
-                                            backgroundColor: '#f5f5f5'
-                                        } 
-                                    }}
-                                />
-                                <Typography variant="caption" color="textSecondary">
-                                    Calculated as: Monthly Fee ÷ 30 days = Rs {calculateDaypassFee(formData.fee)} per day
-                                </Typography>
-                            </Box>
-                        )}
                         <Box sx={{ mb: 2 }}>
                             <Typography>Status</Typography>
                             <TextField select fullWidth size="small" name="status" value={formData.status} onChange={handleInputChange}>
