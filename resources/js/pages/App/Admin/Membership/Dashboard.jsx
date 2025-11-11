@@ -148,6 +148,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
+                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
                                         <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
@@ -183,6 +184,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                             <TableCell>

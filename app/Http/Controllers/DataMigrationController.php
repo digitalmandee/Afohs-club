@@ -329,6 +329,8 @@ class DataMigrationController extends Controller
             'old_family_id' => $oldFamily->id,
             'parent_id' => $parentMember->id,
             'full_name' => trim(preg_replace('/\s+/', ' ', $oldFamily->title . ' ' . $oldFamily->first_name . ' ' . $oldFamily->middle_name)),
+            'first_name' => $oldFamily->first_name,
+            'middle_name' => $oldFamily->middle_name,
             'date_of_birth' => $this->validateDate($oldFamily->date_of_birth),
             'relation' => $this->mapFamilyRelation($oldFamily->fam_relationship),
             'nationality' => $oldFamily->nationality,
@@ -336,7 +338,6 @@ class DataMigrationController extends Controller
             'mobile_number_a' => $oldFamily->contact,
             'martial_status' => $oldFamily->maritial_status,
             'gender' => $oldFamily->gender ?? null,
-            'profile_photo' => $this->migrateFamilyPhoto($oldFamily->fam_picture),
             'membership_no' => $familyMembershipNo,
             'card_status' => $this->mapCardStatus($oldFamily->card_status),
             'card_issue_date' => $this->validateDate($oldFamily->sup_card_issue),
@@ -557,6 +558,50 @@ class DataMigrationController extends Controller
             }
 
             Log::error('Reset migration error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function resetFamiliesOnly(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Disable foreign key checks temporarily
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            // Force delete only family members (children), keep primary members
+            $familyMembers = Member::withTrashed()->whereNotNull('parent_id')->get();
+            foreach ($familyMembers as $familyMember) {
+                $familyMember->forceDelete();
+            }
+
+            // Re-enable foreign key checks
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            DB::commit();
+
+            Log::info('Family members reset completed - all family member records permanently deleted');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Family members reset successfully - all family member records permanently deleted'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Make sure to re-enable foreign key checks even on error
+            try {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            } catch (\Exception $fkError) {
+                Log::error('Error re-enabling foreign key checks: ' . $fkError->getMessage());
+            }
+
+            Log::error('Reset families error: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,

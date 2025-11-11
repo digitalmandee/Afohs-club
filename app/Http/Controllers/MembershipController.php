@@ -116,10 +116,17 @@ class MembershipController extends Controller
                 'application_no' => $member->application_no,
                 'barcode_no' => $member->barcode_no,
                 'family_suffix' => $member->family_suffix,
+                'first_name' => $member->first_name,
+                'middle_name' => $member->middle_name,
+                'last_name' => $member->last_name,
                 'full_name' => $member->full_name,
                 'member_type_id' => $user->member_type_id,
                 'membership_category' => $user->member_category_id,
                 'relation' => $member->relation,
+                'gender' => $member->gender,
+                'nationality' => $member->nationality,
+                'passport_no' => $member->passport_no,
+                'martial_status' => $member->martial_status,
                 'cnic' => $member->cnic_no,
                 'date_of_birth' => optional($member->date_of_birth)->format('Y-m-d'),
                 'phone_number' => $member->mobile_number_a,
@@ -814,6 +821,9 @@ class MembershipController extends Controller
             'kinshipMember:id,full_name,membership_no'
         ])->findOrFail($id);
 
+        // Add membership duration to member
+        $member->membership_duration = $member->membership_duration;
+
         return Inertia::render('App/Admin/Membership/ViewProfile', [
             'member' => $member
         ]);
@@ -824,7 +834,10 @@ class MembershipController extends Controller
     {
         $perPage = $request->get('per_page', 10);
 
-        $familyMembers = Member::where('parent_id', $id)->with(['profilePhoto:id,mediable_id,mediable_type,file_path'])->paginate($perPage);
+        $familyMembers = Member::where('parent_id', $id)
+            ->with(['profilePhoto:id,mediable_id,mediable_type,file_path'])
+            ->select('id', 'parent_id', 'full_name', 'membership_no', 'relation', 'gender', 'status', 'card_status', 'card_expiry_date', 'passport_no', 'nationality', 'martial_status')
+            ->paginate($perPage);
 
         return response()->json($familyMembers);
     }

@@ -1632,6 +1632,35 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                             </Box>
                                                         </Grid>
 
+                                                        {/* Gender */}
+                                                        <Grid item xs={6}>
+                                                            <Box sx={{ mb: 3 }}>
+                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Gender</Typography>
+                                                                <FormControl fullWidth variant="outlined">
+                                                                    <Select
+                                                                        displayEmpty
+                                                                        value={currentFamilyMember.gender || ''}
+                                                                        onChange={(e) => handleFamilyMemberChange('gender', e.target.value)}
+                                                                        renderValue={(selected) => {
+                                                                            if (!selected) {
+                                                                                return <Typography sx={{ color: '#757575' }}>Choose Gender</Typography>;
+                                                                            }
+                                                                            return selected;
+                                                                        }}
+                                                                        sx={{
+                                                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                                                borderColor: '#ccc',
+                                                                            },
+                                                                        }}
+                                                                    >
+                                                                        <MenuItem value="Male">Male</MenuItem>
+                                                                        <MenuItem value="Female">Female</MenuItem>
+                                                                        <MenuItem value="Other">Other</MenuItem>
+                                                                    </Select>
+                                                                </FormControl>
+                                                            </Box>
+                                                        </Grid>
+
                                                         {/* Marital Status */}
                                                         <Grid item xs={6}>
                                                             <Box sx={{ mb: 3 }}>

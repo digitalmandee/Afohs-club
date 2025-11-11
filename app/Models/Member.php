@@ -97,6 +97,11 @@ class Member extends BaseModel
         'auto_expiry_calculated' => 'boolean',
     ];
 
+    protected $appends = [
+        'membership_duration',
+        'membership_start_date'
+    ];
+
     public static function generateNextMembershipNumber(): string
     {
         $lastNumber = self::orderBy('id', 'desc')
@@ -344,5 +349,52 @@ class Member extends BaseModel
     public function expiryExtendedBy()
     {
         return $this->belongsTo(User::class, 'expiry_extended_by');
+    }
+
+    /**
+     * Calculate membership duration from membership start date
+     */
+    public function getMembershipDurationAttribute()
+    {
+        // Use membership_date if available, otherwise fall back to created_at
+        $startDate = $this->membership_date ? Carbon::parse($this->membership_date) : $this->created_at;
+        
+        if (!$startDate) {
+            return 'N/A';
+        }
+
+        try {
+            $now = Carbon::now();
+            
+            // Calculate total months first
+            $totalMonths = $startDate->diffInMonths($now);
+            
+            // Convert to years and remaining months
+            $years = intval($totalMonths / 12);
+            $months = $totalMonths % 12;
+
+            if ($years > 0) {
+                if ($months > 0) {
+                    return $years . ' year' . ($years > 1 ? 's' : '') . ', ' . $months . ' month' . ($months > 1 ? 's' : '');
+                } else {
+                    return $years . ' year' . ($years > 1 ? 's' : '');
+                }
+            } else {
+                if ($months <= 0) {
+                    return 'Less than 1 month';
+                }
+                return $months . ' month' . ($months > 1 ? 's' : '');
+            }
+        } catch (\Exception $e) {
+            return 'Invalid date';
+        }
+    }
+
+    /**
+     * Get membership start date (membership_date or created_at)
+     */
+    public function getMembershipStartDateAttribute()
+    {
+        return $this->membership_date ?: $this->created_at;
     }
 }

@@ -471,6 +471,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
         Route::post('/migrate-media', [DataMigrationController::class, 'migrateMedia'])->name('data-migration.migrate-media');
         Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
+        Route::post('/reset-families', [DataMigrationController::class, 'resetFamiliesOnly'])->name('data-migration.reset-families');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
     });
 
