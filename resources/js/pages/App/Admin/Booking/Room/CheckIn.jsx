@@ -65,6 +65,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
             <div
                 style={{minHeight:'100vh',
                     backgroundColor:'#f5f5f5',
+                    overflowX:'hidden'
                 }}
             >
                 <Box sx={{ p: 3 }}>

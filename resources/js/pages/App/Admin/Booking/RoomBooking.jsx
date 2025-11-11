@@ -178,16 +178,15 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+                    minHeight:'100vh',
+                    backgroundColor:'#f5f5f5'
                 }}
-            > */}
+            >
                 {/* Header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', pt: 2, ml: 2 }}>
                     <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                         <ArrowBack />
                     </IconButton>
@@ -238,7 +237,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
                         </Box>
                     </div>
                 </Box>
-            {/* </div> */}
+            </div>
         </>
     );
 };
@@ -257,24 +256,24 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
     return (
         <>
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                     <TextField label="Booking No." name="bookingNo" value={formData.bookingNo} inputProps={{ readOnly: true }} fullWidth />
                 </Grid>
                 {JSON.stringify()}
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                     <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={4}>
                     <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={4}>
                     <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
                 </Grid>
-                <Grid item xs={6}>
-                    <TextField label="Arrival Details" name="arrivalDetails" value={formData.arrivalDetails} onChange={handleChange} fullWidth multiline rows={2} />
+                <Grid item xs={6} sm={4}>
+                    <TextField label="Arrival Details" name="arrivalDetails" value={formData.arrivalDetails} onChange={handleChange} fullWidth multiline rows={1} />
                 </Grid>
-                <Grid item xs={6}>
-                    <TextField label="Departure Details" name="departureDetails" value={formData.departureDetails} onChange={handleChange} fullWidth multiline rows={2} />
+                <Grid item xs={6} sm={4}>
+                    <TextField label="Departure Details" name="departureDetails" value={formData.departureDetails} onChange={handleChange} fullWidth multiline rows={1} />
                 </Grid>
                 <Grid item xs={12}>
                     <FormLabel>Booking Type</FormLabel>
@@ -287,7 +286,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                     </RadioGroup>
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid item xs={12} sm={4}>
                     <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: formData.bookingType }} placeholder="Search members..." />
                     {errors.guest && (
                         <Typography variant="body2" color="error">
@@ -328,7 +327,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 Guest Info
             </Typography>
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={3}>
                     <TextField label="Booked By" name="bookedBy" value={formData.bookedBy} onChange={handleChange} fullWidth />
                 </Grid>
                 <Grid item xs={6} sm={3}>
@@ -337,31 +336,31 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 <Grid item xs={6} sm={3}>
                     <TextField label="Guest Last Name" name="guestLastName" value={formData.guestLastName} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={3}>
                     <TextField label="Company / Institution" name="company" value={formData.company} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={4}>
                     <TextField label="Address" name="address" value={formData.address} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={2}>
                     <TextField label="Country" name="country" value={formData.country} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={2}>
                     <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                     <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={4}>
                     <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={4}>
                     <TextField label="CNIC / Passport No." name="cnic" value={formData.cnic} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={4}>
                     <TextField label="Enter Relationship" name="guestRelation" value={formData.guestRelation} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={12} sm={3}>
                     <TextField label="Accompanied Guest Name" name="accompaniedGuest" value={formData.accompaniedGuest} onChange={handleChange} fullWidth />
                 </Grid>
             </Grid>
