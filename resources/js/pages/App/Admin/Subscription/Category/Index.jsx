@@ -100,14 +100,30 @@ const SubscriptionCategories = ({ subscriptionCategories }) => {
                                     <Typography variant="body2" color="text.secondary" mb={1}>
                                         <strong>Description:</strong> {category.description || 'N/A'}
                                     </Typography>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }} mb={1}>
+                                    <Typography variant="body2" color="text.secondary" mb={1}>
+                                        <strong>Payment Type:</strong> 
+                                        <span style={{
+                                            backgroundColor: '#f3e5f5',
+                                            color: '#7b1fa2',
+                                            padding: '2px 8px',
+                                            borderRadius: '12px',
+                                            fontSize: '11px',
+                                            marginLeft: '8px'
+                                        }}>
+                                            Monthly
+                                        </span>
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                         <Typography variant="body2" color="text.secondary">
-                                            <strong>Fee:</strong> {category.fee.toLocaleString()} Rs
+                                            <strong>Monthly Fee:</strong> Rs {category.fee?.toLocaleString() || 0}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            <strong>Status:</strong> {category.status}
+                                            <strong>Daily Fee:</strong> Rs {category.fee ? Math.round(category.fee / 30) : 0}
                                         </Typography>
                                     </Box>
+                                    <Typography variant="body2" color="text.secondary" mb={1}>
+                                        <strong>Status:</strong> {category.status}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>

@@ -108,13 +108,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('/create-booking', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.booking.create');
 
             Route::get('dashboard', [RoomController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
-            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
-            Route::put('booking/update-status/{id}', [RoomController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
-            Route::get('add', [RoomController::class, 'create'])->name('rooms.add')->middleware('super.admin:rooms.create');
             Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
             Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
             Route::get('check-out', [RoomController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
             Route::post('store', [RoomController::class, 'store'])->name('rooms.store')->middleware('permission:rooms.create');
+            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
+            Route::put('booking/update-status/{id}', [RoomController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
+            Route::get('add', [RoomController::class, 'create'])->name('rooms.add')->middleware('super.admin:rooms.create');
             Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit')->middleware('super.admin:rooms.edit');
             Route::post('{id}', [RoomController::class, 'update'])->name('rooms.update')->middleware('permission:rooms.edit');
             Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:rooms.delete');
@@ -297,6 +297,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('api/members/by-user/{user}', [MembersController::class, 'byUser']);
     Route::post('api/pay-multiple-invoices', [SubscriptionController::class, 'payMultipleInvoices']);
     Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPay']);
+    Route::post('api/check-duplicate-cnic', [MembersController::class, 'checkDuplicateCnic'])->name('api.check-duplicate-cnic');
+    Route::post('api/check-duplicate-membership-no', [MembersController::class, 'checkDuplicateMembershipNo'])->name('api.check-duplicate-membership-no');
+    Route::get('api/get-next-membership-number', [MembersController::class, 'getNextMembershipNumber'])->name('api.get-next-membership-number');
 
     // Financial Routes
     Route::group(['prefix' => 'admin/finance'], function () {
@@ -340,8 +343,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     
     Route::group(['prefix' => 'admin/membership'], function () {
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
-        Route::get('create', [MembershipController::class, 'create'])->name('membership.add')->middleware('permission:members.create');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('permission:members.view');
+        Route::get('create', [MembershipController::class, 'create'])->name('membership.add')->middleware('permission:members.create');
         Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit')->middleware('permission:members.edit');
         Route::get('profile/{id}', [MembershipController::class, 'showMemberProfile'])->name('membership.profile')->middleware('permission:members.view');
         Route::get('profile/{id}/family-members', [MembershipController::class, 'getMemberFamilyMembers'])->name('membership.profile.family-members')->middleware('permission:members.view');
@@ -468,6 +471,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
         Route::post('/migrate-media', [DataMigrationController::class, 'migrateMedia'])->name('data-migration.migrate-media');
         Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
+        Route::post('/reset-families', [DataMigrationController::class, 'resetFamiliesOnly'])->name('data-migration.reset-families');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
     });
 

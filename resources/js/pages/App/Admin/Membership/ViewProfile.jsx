@@ -748,6 +748,14 @@ const ViewProfile = ({ member }) => {
                                                 </Typography>
                                                 <Chip label={formatStatus(member.card_status)} size="small" variant="outlined" />
                                             </Grid>
+                                            <Grid item xs={12} sm={6}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Membership Duration
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {member.membership_duration || 'N/A'}
+                                                </Typography>
+                                            </Grid>
                                             <Grid item xs={12}>
                                                 <Typography variant="body2" color="text.secondary">
                                                     Guardian Name
@@ -889,7 +897,10 @@ const ViewProfile = ({ member }) => {
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Membership No</TableCell>
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Relation</TableCell>
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Gender</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Date of Birth</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Card Expiry Date</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Passport</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Nationality</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Marital Status</TableCell>
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Status</TableCell>
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Card Status</TableCell>
                                             </TableRow>
@@ -915,7 +926,16 @@ const ViewProfile = ({ member }) => {
                                                         <Typography variant="body2">{familyMember.gender || 'N/A'}</Typography>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Typography variant="body2">{formatDate(familyMember.date_of_birth)}</Typography>
+                                                        <Typography variant="body2">{formatDate(familyMember.card_expiry_date)}</Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2">{familyMember.passport_no || 'N/A'}</Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2">{familyMember.nationality || 'N/A'}</Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2">{familyMember.martial_status || 'N/A'}</Typography>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Chip label={formatStatus(familyMember.status)} color={getStatusColor(familyMember.status)} size="small" />

@@ -19,7 +19,6 @@ class AppliedMemberController extends Controller
         $members = AppliedMember::all()->map(function ($member) {
             return [
                 'id' => $member->id,
-                'member_id' => $member->member_id,
                 'name' => $member->name,
                 'email' => $member->email,
                 'phone_number' => $member->phone_number,
@@ -37,7 +36,6 @@ class AppliedMemberController extends Controller
             $member = AppliedMember::findOrFail($request->query('id'));
             $memberData = [
                 'id' => $member->id,
-                'member_id' => $member->member_id,
                 'name' => $member->name,
                 'email' => $member->email,
                 'phone_number' => $member->phone_number,
@@ -64,7 +62,6 @@ class AppliedMemberController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'member_id' => 'nullable|integer|exists:users,id|unique:applied_member,member_id',
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:applied_member,email|max:255',
                 'phone_number' => 'required|string|regex:/^[0-9]{11}$/',
@@ -75,7 +72,6 @@ class AppliedMemberController extends Controller
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'is_permanent_member' => 'required|boolean',
             ], [
-                'member_id.unique' => 'The member ID is already in use.',
                 'email.unique' => 'The email address is already in use.',
                 'phone_number.regex' => 'The phone number must be exactly 11 digits.',
                 'cnic.required' => 'The CNIC is required.',
@@ -91,7 +87,6 @@ class AppliedMemberController extends Controller
             }
 
             AppliedMember::create([
-                'member_id' => $request->member_id ?: null,
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
@@ -117,7 +112,6 @@ class AppliedMemberController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'member_id' => 'nullable|integer|exists:users,id|unique:applied_member,member_id,' . $id,
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:applied_member,email,' . $id . '|max:255',
                 'phone_number' => 'required|string|regex:/^[0-9]{11}$/',
@@ -128,7 +122,6 @@ class AppliedMemberController extends Controller
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'is_permanent_member' => 'required|boolean',
             ], [
-                'member_id.unique' => 'The member ID is already in use.',
                 'email.unique' => 'The email address is already in use.',
                 'phone_number.regex' => 'The phone number must be exactly 11 digits.',
                 'cnic.required' => 'The CNIC is required.',
@@ -147,7 +140,6 @@ class AppliedMemberController extends Controller
 
             // Update the applied_member table
             $member->update([
-                'member_id' => $request->member_id ?: null,
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
@@ -161,28 +153,8 @@ class AppliedMemberController extends Controller
             $newMemberId = null;
             // If is_permanent_member is true, distribute data to other tables and assign role
             if ($request->is_permanent_member) {
-                // Create or update user in users table
-                $user = User::updateOrCreate(
-                    ['email' => $request->email],
-                    [
-                        'name' => $request->name,
-                        'email' => $request->email,
-                        'phone_number' => $request->phone_number,
-                        'password' => bcrypt('123456'),  // Adjust as per your requirements
-                    ]
-                );
-
-                // Assign the 'user' role to the user
-                $user->assignRole('user');
-
-                // Update member_id in applied_member if not set
-                if (!$member->member_id) {
-                    $member->update(['member_id' => $user->id]);
-                }
-
                 // Create or update member in member table
-                $member = Member::updateOrCreate(
-                    ['user_id' => $user->id],
+                $newMember = Member::create(
                     [
                         'application_no' => Member::generateNextApplicationNo(),
                         'membership_no' => Member::generateNextMembershipNumber(),
@@ -197,7 +169,12 @@ class AppliedMemberController extends Controller
                     ]
                 );
 
-                $newMemberId = $member->id;
+                $newMemberId = $newMember->id;
+
+                // Update member_id in applied_member if not set
+                if (!$member->member_id) {
+                    $member->update(['member_id' => $newMember->id]);
+                }
             }
 
             return response()->json(['message' => 'Applied member updated successfully.', 'is_permanent_member' => $request->is_permanent_member, 'member_id' => $newMemberId], 200);

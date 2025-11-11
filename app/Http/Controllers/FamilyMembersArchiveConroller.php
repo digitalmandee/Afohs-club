@@ -15,7 +15,7 @@ class FamilyMembersArchiveConroller extends Controller
     public function index(Request $request)
     {
         $query = Member::whereNotNull('parent_id')
-            ->select('id', 'full_name', 'membership_no', 'parent_id', 'family_suffix', 'personal_email', 'mobile_number_a', 'cnic_no', 'date_of_birth', 'card_issue_date', 'card_status', 'relation', 'status', 'expiry_extension_date', 'expiry_extension_reason', 'expiry_extended_by')
+            ->select('id', 'full_name', 'membership_no', 'parent_id', 'family_suffix', 'personal_email', 'mobile_number_a', 'cnic_no', 'date_of_birth', 'card_issue_date', 'card_expiry_date', 'card_status', 'relation', 'gender', 'status', 'expiry_extension_date', 'expiry_extension_reason', 'expiry_extended_by')
             ->with(['parent:id,member_type_id,full_name,membership_no', 'profilePhoto:id,mediable_id,mediable_type,file_path']);
 
         // Membership No
@@ -180,7 +180,6 @@ class FamilyMembersArchiveConroller extends Controller
                 'message' => 'Expiry date extended successfully.',
                 'member' => $member->fresh(['expiryExtendedBy'])
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to extend family member expiry', [
                 'member_id' => $member->id,
@@ -216,7 +215,7 @@ class FamilyMembersArchiveConroller extends Controller
         foreach ($request->member_ids as $memberId) {
             try {
                 $member = Member::find($memberId);
-                
+
                 if ($member && $member->isFamilyMember() && $member->shouldExpireByAge()) {
                     $member->expireByAge("Manual expiry by Super Admin: " . Auth::user()->name);
                     $expiredCount++;

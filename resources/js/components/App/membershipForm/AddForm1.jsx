@@ -6,6 +6,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 
 const AddForm1 = ({ data, handleChange, onNext }) => {
     // Handle profile_photo object {id, file_path}
@@ -16,6 +17,8 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     const [dateError, setDateError] = useState(''); // New state for date validation
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});
+    const [isValidatingCnic, setIsValidatingCnic] = useState(false);
+    const [cnicValidationTimeout, setCnicValidationTimeout] = useState(null);
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {
@@ -44,7 +47,83 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         }
     };
 
-    const handleSubmit = () => {
+    // Real-time CNIC validation function
+    const validateCnicRealTime = async (cnicValue) => {
+        // Clear previous timeout
+        if (cnicValidationTimeout) {
+            clearTimeout(cnicValidationTimeout);
+        }
+
+        // Clear previous CNIC errors
+        setFormErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.cnic_no;
+            return newErrors;
+        });
+
+        // Check CNIC format first
+        if (!cnicValue) {
+            return;
+        }
+
+        if (!/^\d{5}-\d{7}-\d{1}$/.test(cnicValue)) {
+            setFormErrors(prev => ({
+                ...prev,
+                cnic_no: 'CNIC must be in the format XXXXX-XXXXXXX-X'
+            }));
+            return;
+        }
+
+        // Set timeout for API call (debounce)
+        const timeoutId = setTimeout(async () => {
+            setIsValidatingCnic(true);
+            try {
+                const response = await axios.post('/api/check-duplicate-cnic', {
+                    cnic_no: cnicValue,
+                    member_id: data.member_id || null // Exclude current member if editing
+                });
+
+                if (response.data.exists) {
+                    setFormErrors(prev => ({
+                        ...prev,
+                        cnic_no: 'This CNIC number is already registered with another member'
+                    }));
+                } else {
+                    // CNIC is valid and available
+                    setFormErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.cnic_no;
+                        return newErrors;
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking CNIC:', error);
+                setFormErrors(prev => ({
+                    ...prev,
+                    cnic_no: 'Error validating CNIC. Please try again.'
+                }));
+            } finally {
+                setIsValidatingCnic(false);
+            }
+        }, 800); // 800ms delay for debouncing
+
+        setCnicValidationTimeout(timeoutId);
+    };
+
+    // Enhanced handleChange to include real-time CNIC validation
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        
+        // Call the original handleChange
+        handleChange(event);
+        
+        // If it's CNIC field, validate in real-time
+        if (name === 'cnic_no') {
+            validateCnicRealTime(value);
+        }
+    };
+
+    const handleSubmit = async () => {
         const errors = {};
 
         // if (!data.coa_category_id) errors.coa_category_id = 'COA Account is required';
@@ -61,10 +140,19 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         if (!data.date_of_birth) errors.date_of_birth = 'Date of Birth is required';
         else if (dateError) errors.date_of_birth = dateError;
 
-        setFormErrors(errors);
 
         if (Object.keys(errors).length > 0) {
             return; // Stop submission if errors exist
+        }
+
+        // Check if there are any existing CNIC validation errors
+        if (formErrors.cnic_no) {
+            return; // Stop submission if CNIC has validation errors
+        }
+
+        // Check if CNIC is still being validated
+        if (isValidatingCnic) {
+            return; // Stop submission if CNIC is still being validated
         }
 
         onNext();
@@ -333,17 +421,27 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                     name="cnic_no"
                                     value={data.cnic_no}
                                     error={!!formErrors.cnic_no}
-                                    helperText={formErrors.cnic_no}
+                                    helperText={isValidatingCnic ? 'Checking CNIC availability...' : formErrors.cnic_no}
                                     onChange={(e) => {
                                         let value = e.target.value;
                                         // Auto-format the input as the user types
-                                        value = value.replace(/[^\d-]/g, ''); // Remove non-digits and non-hyphens
+                                        value = value.replace(/\D/g, ''); // Remove non-digits
                                         if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
                                         if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
                                         if (value.length > 15) value = value.slice(0, 15); // Limit to 15 characters
-                                        handleChange({ target: { name: 'cnic_no', value } });
+                                        handleInputChange({ target: { name: 'cnic_no', value } });
                                     }}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
+                                    sx={{ 
+                                        '& .MuiOutlinedInput-root': { 
+                                            borderRadius: '4px',
+                                            ...(isValidatingCnic && {
+                                                borderColor: '#1976d2',
+                                                '& fieldset': {
+                                                    borderColor: '#1976d2',
+                                                }
+                                            })
+                                        } 
+                                    }}
                                 />
                             </Grid>
 
@@ -519,8 +617,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                         '&:hover': { backgroundColor: '#083854' },
                     }}
                     onClick={handleSubmit}
+                    disabled={isValidatingCnic}
                 >
-                    Save & Next
+                    {isValidatingCnic ? 'Saving...' : 'Save & Next'}
                 </Button>
             </Box>
         </div>

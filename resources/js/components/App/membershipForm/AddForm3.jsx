@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment, CircularProgress } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
@@ -7,10 +7,13 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { enqueueSnackbar } from 'notistack';
+import axios from 'axios';
 
 const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
@@ -21,6 +24,11 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [familyMemberErrors, setFamilyMemberErrors] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
     const [isDragOver, setIsDragOver] = useState(false);
+    const [isValidatingFamilyCnic, setIsValidatingFamilyCnic] = useState(false);
+    const [familyCnicValidationTimeout, setFamilyCnicValidationTimeout] = useState(null);
+    const [isValidatingMembershipNo, setIsValidatingMembershipNo] = useState(false);
+    const [membershipNoStatus, setMembershipNoStatus] = useState(null); // 'available', 'exists', 'error'
+    const [membershipNoSuggestion, setMembershipNoSuggestion] = useState(null);
     const fileInputRef = useRef(null);
 
     const calculateAge = (dateOfBirth) => {
@@ -29,11 +37,62 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         const birthDate = new Date(dateOfBirth);
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
-        
+
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
             age--;
         }
+
         return age;
+    };
+
+    const validateMembershipNumber = async (membershipNo) => {
+        if (!membershipNo || membershipNo.trim() === '') {
+            setMembershipNoStatus(null);
+            setMembershipNoSuggestion(null);
+            return;
+        }
+
+        setIsValidatingMembershipNo(true);
+        setMembershipNoStatus(null);
+
+        try {
+            const response = await axios.post('/api/check-duplicate-membership-no', {
+                membership_no: membershipNo,
+                member_id: data.member_id || null,
+            });
+
+            if (response.data.exists) {
+                setMembershipNoStatus('exists');
+                setMembershipNoSuggestion(response.data.suggestion);
+            } else {
+                setMembershipNoStatus('available');
+                setMembershipNoSuggestion(null);
+            }
+        } catch (error) {
+            console.error('Error checking membership number:', error);
+            setMembershipNoStatus('error');
+            setMembershipNoSuggestion(null);
+        }
+
+        setIsValidatingMembershipNo(false);
+    };
+
+    const generateUniqueMembershipNumber = async (categoryName, isKinship = false) => {
+        try {
+            // Get the next available number from the backend
+            const response = await axios.get('/api/get-next-membership-number');
+            const nextNumber = response.data.next_number;
+
+            // Format: "CATEGORY_NAME NUMBER" or "CATEGORY_NAME NUMBER-1" for kinship
+            const membershipNo = isKinship ? `${categoryName} ${nextNumber}-1` : `${categoryName} ${nextNumber}`;
+
+            return membershipNo;
+        } catch (error) {
+            console.error('Error generating membership number:', error);
+            // Fallback to timestamp-based number
+            const timestamp = Date.now().toString().slice(-4);
+            return isKinship ? `${categoryName} ${timestamp}-1` : `${categoryName} ${timestamp}`;
+        }
     };
 
     const calculateExpiryDate = (dateOfBirth) => {
@@ -44,6 +103,84 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         return expiryDate.toISOString().split('T')[0];
     };
 
+    const validateEmailFormat = (email) => {
+        if (!email || email.trim() === '') return null;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email.trim());
+    };
+
+    // Real-time CNIC validation function for family members
+    const validateFamilyCnicRealTime = async (cnicValue) => {
+        // Clear previous timeout
+        if (familyCnicValidationTimeout) {
+            clearTimeout(familyCnicValidationTimeout);
+        }
+
+        // Clear previous CNIC errors
+        setFamilyMemberErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors.cnic;
+            return newErrors;
+        });
+
+        // Check CNIC format first
+        if (!cnicValue) {
+            return;
+        }
+
+        if (!/^\d{5}-\d{7}-\d{1}$/.test(cnicValue)) {
+            setFamilyMemberErrors((prev) => ({
+                ...prev,
+                cnic: 'CNIC must be in the format XXXXX-XXXXXXX-X',
+            }));
+            return;
+        }
+
+        // Check if CNIC matches primary member's CNIC
+        if (cnicValue === data.cnic_no) {
+            setFamilyMemberErrors((prev) => ({
+                ...prev,
+                cnic: 'Family member CNIC must not be the same as the primary user CNIC',
+            }));
+            return;
+        }
+
+        // Set timeout for API call (debounce)
+        const timeoutId = setTimeout(async () => {
+            setIsValidatingFamilyCnic(true);
+            try {
+                const response = await axios.post('/api/check-duplicate-cnic', {
+                    cnic_no: cnicValue,
+                    member_id: data.member_id || null, // Exclude current member if editing
+                });
+
+                if (response.data.exists) {
+                    setFamilyMemberErrors((prev) => ({
+                        ...prev,
+                        cnic: 'This CNIC number is already registered with another member',
+                    }));
+                } else {
+                    // CNIC is valid and available
+                    setFamilyMemberErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.cnic;
+                        return newErrors;
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking family member CNIC:', error);
+                setFamilyMemberErrors((prev) => ({
+                    ...prev,
+                    cnic: 'Error validating CNIC. Please try again.',
+                }));
+            } finally {
+                setIsValidatingFamilyCnic(false);
+            }
+        }, 800); // 800ms delay for debouncing
+
+        setFamilyCnicValidationTimeout(timeoutId);
+    };
+
     const handleFamilyMemberChange = (field, value) => {
         let updatedMember = {
             ...currentFamilyMember,
@@ -51,15 +188,44 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         };
 
         // Auto-calculate expiry date when date of birth changes
-        if (field === 'date_of_birth' && value) {
-            const age = calculateAge(value);
-            const autoExpiryDate = calculateExpiryDate(value);
-            
-            // Only set auto expiry if member is under 25
-            if (age < 25) {
-                updatedMember.card_expiry_date = autoExpiryDate;
-                updatedMember.auto_expiry_calculated = true;
+        if (field === 'date_of_birth') {
+            updatedMember.card_expiry_date = calculateExpiryDate(value);
+        }
+
+        // Real-time email validation
+        if (field === 'email') {
+            const currentErrors = { ...familyMemberErrors };
+            if (value && value.trim() !== '') {
+                const isValidFormat = validateEmailFormat(value);
+                if (!isValidFormat) {
+                    currentErrors.email = 'Please enter a valid email address';
+                } else {
+                    delete currentErrors.email;
+                }
+            } else {
+                delete currentErrors.email;
             }
+            setFamilyMemberErrors(currentErrors);
+        }
+
+        // Real-time CNIC validation
+        if (field === 'cnic') {
+            validateFamilyCnicRealTime(value);
+        }
+
+        // Auto-generate full name when first, middle, or last name changes
+        if (['first_name', 'middle_name', 'last_name'].includes(field)) {
+            const firstName = field === 'first_name' ? value : updatedMember.first_name || '';
+            const middleName = field === 'middle_name' ? value : updatedMember.middle_name || '';
+            const lastName = field === 'last_name' ? value : updatedMember.last_name || '';
+
+            // Generate full name by combining all parts and removing extra spaces
+            const fullName = [firstName, middleName, lastName]
+                .filter((name) => name && name.trim())
+                .join(' ')
+                .trim();
+
+            updatedMember.full_name = fullName;
         }
 
         setCurrentFamilyMember(updatedMember);
@@ -93,14 +259,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         setShowFamilyMember(true);
     };
 
-    const handleSaveFamilyMember = () => {
+    const handleSaveFamilyMember = async () => {
         const errors = {};
 
         const isEdit = data.family_members.some((fm) => fm.id === currentFamilyMember.id);
 
         // --- Validation ---
-        if (!currentFamilyMember.full_name) {
-            errors.full_name = 'Full Name is required';
+        if (!currentFamilyMember.first_name) {
+            errors.first_name = 'First Name is required';
         }
         if (!currentFamilyMember.relation) {
             errors.relation = 'Relation is required';
@@ -122,28 +288,30 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             errors.status = 'Status is required';
         }
 
-        // Email uniqueness
-        if (!currentFamilyMember.email) {
-            delete errors.email;
-        } else {
-            const mainEmail = data.personal_email?.trim().toLowerCase() || '';
-            const memberEmail = currentFamilyMember.email?.trim().toLowerCase();
+        // Check for basic validation errors first
+        if (Object.keys(errors).length > 0) {
+            setFamilyMemberErrors(errors);
+            return;
+        }
 
-            if (memberEmail === mainEmail) {
-                errors.email = 'Family member email must not be same as member email';
-            }
+        // Check if there are any existing CNIC validation errors
+        if (familyMemberErrors.cnic) {
+            return; // Stop submission if CNIC has validation errors
+        }
 
-            const emailAlreadyUsed = data.family_members.some((fm) => {
-                if (!fm.email) return false;
+        // Check if CNIC is still being validated
+        if (isValidatingFamilyCnic) {
+            return; // Stop submission if CNIC is still being validated
+        }
 
-                const fmEmail = fm.email.trim().toLowerCase();
-                console.log(isEdit, fm.id, currentFamilyMember.id);
-                if (isEdit && fm.id === currentFamilyMember.id) return false;
-                return fmEmail === memberEmail;
-            });
+        // Email validation (format only)
+        if (currentFamilyMember.email && currentFamilyMember.email.trim() !== '') {
+            const memberEmail = currentFamilyMember.email.trim();
 
-            if (emailAlreadyUsed) {
-                errors.email = 'This email is already used by another family member';
+            // Email format validation only
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(memberEmail)) {
+                errors.email = 'Please enter a valid email address';
             }
         }
 
@@ -296,12 +464,12 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     // Upload documents
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
-        
+
         // documents: array of media IDs (numbers) and new File objects
         // previewFiles: array of media objects {id, file_name, ...} and new File objects
         const existingDocs = data.documents || [];
         const existingPreviews = data.previewFiles || [];
-        
+
         // Add new files to both arrays
         handleChangeData('documents', [...existingDocs, ...files]);
         handleChangeData('previewFiles', [...existingPreviews, ...files]);
@@ -320,12 +488,12 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragOver(false);
-        
+
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
             const existingDocs = data.documents || [];
             const existingPreviews = data.previewFiles || [];
-            
+
             handleChangeData('documents', [...existingDocs, ...files]);
             handleChangeData('previewFiles', [...existingPreviews, ...files]);
         }
@@ -339,7 +507,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         const isFileObject = file instanceof File;
         let fileName = '';
         let previewUrl = '';
-        
+
         if (isFileObject) {
             fileName = file.name;
             previewUrl = URL.createObjectURL(file);
@@ -350,16 +518,19 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             fileName = file.split('/').pop();
             previewUrl = file;
         }
-        
+
         const ext = fileName.split('.').pop().toLowerCase();
-        
+
         return (
-            <div key={index} style={{ 
-                position: 'relative', 
-                width: '100px', 
-                textAlign: 'center',
-                marginBottom: '10px'
-            }}>
+            <div
+                key={index}
+                style={{
+                    position: 'relative',
+                    width: '100px',
+                    textAlign: 'center',
+                    marginBottom: '10px',
+                }}
+            >
                 <IconButton
                     size="small"
                     onClick={() => handleFileRemove(index)}
@@ -372,9 +543,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                         width: 24,
                         height: 24,
                         '&:hover': {
-                            backgroundColor: '#d32f2f'
+                            backgroundColor: '#d32f2f',
                         },
-                        zIndex: 1
+                        zIndex: 1,
                     }}
                 >
                     <CloseIcon fontSize="small" />
@@ -382,18 +553,18 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
                 {['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext) ? (
                     <div>
-                        <img 
-                            src={previewUrl} 
-                            alt={`Document ${index + 1}`} 
-                            style={{ 
-                                width: '60px', 
-                                height: '60px', 
-                                objectFit: 'cover', 
-                                borderRadius: '6px', 
+                        <img
+                            src={previewUrl}
+                            alt={`Document ${index + 1}`}
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                objectFit: 'cover',
+                                borderRadius: '6px',
                                 cursor: 'pointer',
-                                border: '2px solid #ddd'
-                            }} 
-                            onClick={() => window.open(previewUrl, '_blank')} 
+                                border: '2px solid #ddd',
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
                         />
                         <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Image</p>
                     </div>
@@ -409,7 +580,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -431,7 +602,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -453,7 +624,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -461,9 +632,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                 FILE
                             </Typography>
                         </div>
-                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
-                            {ext.toUpperCase()}
-                        </p>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>{ext.toUpperCase()}</p>
                     </div>
                 )}
             </div>
@@ -474,14 +643,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         // Clone both arrays
         const updatedPreviewFiles = [...(data.previewFiles || [])];
         const updatedDocuments = [...(data.documents || [])];
-        
+
         // Remove from both arrays at the same index
         // This works because both arrays are kept in sync:
         // - previewFiles[i] is the display object (media object or File)
         // - documents[i] is the value to send (media ID or File)
         updatedPreviewFiles.splice(index, 1);
         updatedDocuments.splice(index, 1);
-        
+
         handleChangeData('previewFiles', updatedPreviewFiles);
         handleChangeData('documents', updatedDocuments);
     };
@@ -694,7 +863,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 <Select
                                                     name="membership_category"
                                                     value={data.membership_category}
-                                                    onChange={(e) => {
+                                                    onChange={async (e) => {
                                                         const selectedCategoryId = e.target.value;
                                                         const selectedCategory = membercategories.find((item) => item.id === Number(selectedCategoryId));
                                                         const categoryName = selectedCategory?.name || '';
@@ -706,9 +875,27 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                             },
                                                         });
 
-                                                        if (!selectedKinshipUser) {
-                                                            const membershipNoParts = data.membership_no.split(' ');
-                                                            const newMembershipNo = membershipNoParts.length > 1 ? `${categoryName} ${membershipNoParts[1]}` : `${categoryName} ${data.membership_no}`;
+                                                        // Generate unique membership number when category changes
+                                                        if (categoryName) {
+                                                            const isKinship = !!selectedKinshipUser;
+
+                                                            // If there's an existing membership number, preserve the number part
+                                                            let existingNumber = null;
+                                                            if (data.membership_no) {
+                                                                const parts = data.membership_no.split(' ');
+                                                                if (parts.length >= 2) {
+                                                                    existingNumber = parts[parts.length - 1]; // Get the number part
+                                                                }
+                                                            }
+
+                                                            let newMembershipNo;
+                                                            if (existingNumber) {
+                                                                // Keep existing number, just change category
+                                                                newMembershipNo = `${categoryName} ${existingNumber}`;
+                                                            } else {
+                                                                // Generate new unique number
+                                                                newMembershipNo = await generateUniqueMembershipNumber(categoryName, isKinship);
+                                                            }
 
                                                             handleChange({
                                                                 target: {
@@ -716,6 +903,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     value: newMembershipNo,
                                                                 },
                                                             });
+
+                                                            // Validate the new membership number
+                                                            setTimeout(() => validateMembershipNumber(newMembershipNo), 500);
                                                         }
                                                     }}
                                                     displayEmpty
@@ -770,7 +960,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
                                                     if (kinshipUser && kinshipUser.membership_no) {
                                                         const kinshipParts = kinshipUser.membership_no.split(' ');
-                                                        const kinshipNum = kinshipParts[1]?.split('-')[0];
+                                                        const kinshipNum = kinshipParts[1];
 
                                                         const existingMembers = [];
                                                         let suffix = kinshipUser.total_kinships + 1;
@@ -806,14 +996,28 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 value={data.membership_no}
                                                 onChange={(e) => {
                                                     handleChange(e);
+                                                    // Validate membership number after a short delay
+                                                    setTimeout(() => validateMembershipNumber(e.target.value), 500);
                                                 }}
                                                 inputProps={{
                                                     maxLength: 12,
                                                     inputMode: 'numeric',
                                                 }}
+                                                InputProps={{
+                                                    endAdornment: (
+                                                        <InputAdornment position="end">
+                                                            {isValidatingMembershipNo && <CircularProgress size={20} />}
+                                                            {!isValidatingMembershipNo && membershipNoStatus === 'available' && <CheckIcon sx={{ color: '#4caf50' }} />}
+                                                            {!isValidatingMembershipNo && membershipNoStatus === 'exists' && <CloseRoundedIcon sx={{ color: '#f44336' }} />}
+                                                            {!isValidatingMembershipNo && membershipNoStatus === 'error' && <CloseRoundedIcon sx={{ color: '#ff9800' }} />}
+                                                        </InputAdornment>
+                                                    ),
+                                                }}
+                                                error={membershipNoStatus === 'exists'}
+                                                helperText={isValidatingMembershipNo ? 'Checking availability...' : membershipNoStatus === 'available' ? 'Membership number is available' : membershipNoStatus === 'exists' ? `Membership number already exists${membershipNoSuggestion ? `. Try: ${membershipNoSuggestion}` : ''}` : membershipNoStatus === 'error' ? 'Error checking membership number' : ''}
                                                 sx={{
                                                     '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
+                                                        borderColor: membershipNoStatus === 'available' ? '#4caf50' : membershipNoStatus === 'exists' ? '#f44336' : '#ccc',
                                                     },
                                                 }}
                                             />
@@ -957,7 +1161,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         },
                                                     }}
                                                 >
-                                                    {['active', 'inactive', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
+                                                    {['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
                                                         const label = status.replace(/_/g, ' ');
                                                         return (
                                                             <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
@@ -975,15 +1179,17 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
                                                     Uploaded Documents ({data.previewFiles.length})
                                                 </Typography>
-                                                <div style={{ 
-                                                    display: 'flex', 
-                                                    flexWrap: 'wrap', 
-                                                    gap: '15px',
-                                                    padding: '15px',
-                                                    backgroundColor: '#f9f9f9',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #e0e0e0'
-                                                }}>
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        gap: '15px',
+                                                        padding: '15px',
+                                                        backgroundColor: '#f9f9f9',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #e0e0e0',
+                                                    }}
+                                                >
                                                     {data.previewFiles.map((file, index) => getFilePreview(file, index))}
                                                 </div>
                                             </Box>
@@ -1082,28 +1288,20 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         borderColor: '#0a3d62',
                                                         backgroundColor: '#f5f5f5',
                                                         transform: 'translateY(-2px)',
-                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                                                    }
+                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                                    },
                                                 }}
                                             >
-                                                <input 
-                                                    ref={fileInputRef}
-                                                    type="file" 
-                                                    multiple 
-                                                    accept=".pdf,.doc,.docx,image/*" 
-                                                    name="documents" 
-                                                    onChange={handleFileChange} 
-                                                    style={{ display: 'none' }} 
-                                                />
-                                                
+                                                <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,image/*" name="documents" onChange={handleFileChange} style={{ display: 'none' }} />
+
                                                 <Box sx={{ mb: 2 }}>
                                                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3"/>
-                                                        <path d="M14 2L20 8H14V2Z" fill="#2196f3"/>
-                                                        <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3"/>
+                                                        <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3" />
+                                                        <path d="M14 2L20 8H14V2Z" fill="#2196f3" />
+                                                        <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3" />
                                                     </svg>
                                                 </Box>
-                                                
+
                                                 <Typography variant="h6" sx={{ mb: 1, color: isDragOver ? '#2196f3' : '#666' }}>
                                                     {isDragOver ? 'Drop files here' : 'Upload Documents'}
                                                 </Typography>
@@ -1121,15 +1319,17 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                                     Uploaded Documents ({data.previewFiles.length})
                                                 </Typography>
-                                                <div style={{ 
-                                                    display: 'flex', 
-                                                    flexWrap: 'wrap', 
-                                                    gap: '15px',
-                                                    padding: '15px',
-                                                    backgroundColor: '#f9f9f9',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #e0e0e0'
-                                                }}>
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        gap: '15px',
+                                                        padding: '15px',
+                                                        backgroundColor: '#f9f9f9',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #e0e0e0',
+                                                    }}
+                                                >
                                                     {data.previewFiles.map((file, index) => getFilePreview(file, index))}
                                                 </div>
                                             </Grid>
@@ -1142,7 +1342,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         sx={{
                                             textTransform: 'none',
                                             color: '#666',
-                                            '&:hover': { backgroundColor: '#f5f5f5' }
+                                            '&:hover': { backgroundColor: '#f5f5f5' },
                                         }}
                                     >
                                         Close
@@ -1299,17 +1499,56 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     </Box>
 
                                                     <Grid container spacing={2}>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Full Name*</Typography>
+                                                        {/* First Name */}
+                                                        <Grid item xs={4}>
+                                                            <Box>
+                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>First Name*</Typography>
                                                                 <TextField
                                                                     fullWidth
-                                                                    placeholder="Enter Full Name"
+                                                                    placeholder="Enter First Name"
                                                                     variant="outlined"
-                                                                    value={currentFamilyMember.full_name}
-                                                                    onChange={(e) => handleFamilyMemberChange('full_name', e.target.value)}
-                                                                    error={!!familyMemberErrors.full_name}
-                                                                    helperText={familyMemberErrors.full_name}
+                                                                    value={currentFamilyMember.first_name || ''}
+                                                                    onChange={(e) => handleFamilyMemberChange('first_name', e.target.value)}
+                                                                    error={!!familyMemberErrors.first_name}
+                                                                    helperText={familyMemberErrors.first_name}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: '#ccc',
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        </Grid>
+
+                                                        {/* Middle Name */}
+                                                        <Grid item xs={4}>
+                                                            <Box>
+                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Middle Name</Typography>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    placeholder="Enter Middle Name"
+                                                                    variant="outlined"
+                                                                    value={currentFamilyMember.middle_name || ''}
+                                                                    onChange={(e) => handleFamilyMemberChange('middle_name', e.target.value)}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: '#ccc',
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        </Grid>
+
+                                                        {/* Last Name */}
+                                                        <Grid item xs={4}>
+                                                            <Box>
+                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Last Name</Typography>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    placeholder="Enter Last Name"
+                                                                    variant="outlined"
+                                                                    value={currentFamilyMember.last_name || ''}
+                                                                    onChange={(e) => handleFamilyMemberChange('last_name', e.target.value)}
                                                                     sx={{
                                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                                             borderColor: '#ccc',
@@ -1319,7 +1558,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                             </Box>
                                                         </Grid>
                                                         <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                            <Box>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Relation with Primary*</Typography>
                                                                 <FormControl fullWidth variant="outlined" error={!!familyMemberErrors.relation}>
                                                                     <Select
@@ -1352,6 +1591,105 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 </FormControl>
                                                             </Box>
                                                         </Grid>
+
+                                                        {/* Passport No */}
+                                                        <Grid item xs={6}>
+                                                            <Box>
+                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Passport No</Typography>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    placeholder="Enter Passport Number"
+                                                                    variant="outlined"
+                                                                    value={currentFamilyMember.passport_no || ''}
+                                                                    onChange={(e) => handleFamilyMemberChange('passport_no', e.target.value)}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: '#ccc',
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        </Grid>
+                                                    </Grid>
+
+                                                    <Grid container spacing={2}>
+                                                        {/* Nationality */}
+                                                        <Grid item xs={6}>
+                                                            <Box sx={{ mb: 3 }}>
+                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Nationality</Typography>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    placeholder="Enter Nationality"
+                                                                    variant="outlined"
+                                                                    value={currentFamilyMember.nationality || ''}
+                                                                    onChange={(e) => handleFamilyMemberChange('nationality', e.target.value)}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: '#ccc',
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        </Grid>
+
+                                                        {/* Gender */}
+                                                        <Grid item xs={6}>
+                                                            <Box sx={{ mb: 3 }}>
+                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Gender</Typography>
+                                                                <FormControl fullWidth variant="outlined">
+                                                                    <Select
+                                                                        displayEmpty
+                                                                        value={currentFamilyMember.gender || ''}
+                                                                        onChange={(e) => handleFamilyMemberChange('gender', e.target.value)}
+                                                                        renderValue={(selected) => {
+                                                                            if (!selected) {
+                                                                                return <Typography sx={{ color: '#757575' }}>Choose Gender</Typography>;
+                                                                            }
+                                                                            return selected;
+                                                                        }}
+                                                                        sx={{
+                                                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                                                borderColor: '#ccc',
+                                                                            },
+                                                                        }}
+                                                                    >
+                                                                        <MenuItem value="Male">Male</MenuItem>
+                                                                        <MenuItem value="Female">Female</MenuItem>
+                                                                        <MenuItem value="Other">Other</MenuItem>
+                                                                    </Select>
+                                                                </FormControl>
+                                                            </Box>
+                                                        </Grid>
+
+                                                        {/* Marital Status */}
+                                                        <Grid item xs={6}>
+                                                            <Box sx={{ mb: 3 }}>
+                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Marital Status</Typography>
+                                                                <FormControl fullWidth variant="outlined">
+                                                                    <Select
+                                                                        displayEmpty
+                                                                        value={currentFamilyMember.martial_status || ''}
+                                                                        onChange={(e) => handleFamilyMemberChange('martial_status', e.target.value)}
+                                                                        renderValue={(selected) => {
+                                                                            if (!selected) {
+                                                                                return <Typography sx={{ color: '#757575' }}>Choose Marital Status</Typography>;
+                                                                            }
+                                                                            return selected;
+                                                                        }}
+                                                                        sx={{
+                                                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                                                borderColor: '#ccc',
+                                                                            },
+                                                                        }}
+                                                                    >
+                                                                        <MenuItem value="Single">Single</MenuItem>
+                                                                        <MenuItem value="Married">Married</MenuItem>
+                                                                        <MenuItem value="Divorced">Divorced</MenuItem>
+                                                                        <MenuItem value="Widowed">Widowed</MenuItem>
+                                                                    </Select>
+                                                                </FormControl>
+                                                            </Box>
+                                                        </Grid>
                                                     </Grid>
 
                                                     <Grid container spacing={2}>
@@ -1362,6 +1700,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     fullWidth
                                                                     placeholder="Enter Email"
                                                                     variant="outlined"
+                                                                    name="email"
+                                                                    type="email"
                                                                     value={currentFamilyMember.email}
                                                                     error={!!familyMemberErrors.email}
                                                                     helperText={familyMemberErrors.email}
@@ -1381,6 +1721,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     fullWidth
                                                                     placeholder="e.g. 12345-24"
                                                                     variant="outlined"
+                                                                    name="barcode_no"
                                                                     value={currentFamilyMember.barcode_no}
                                                                     onChange={(e) => handleFamilyMemberChange('barcode_no', e.target.value)}
                                                                     inputProps={{
@@ -1424,7 +1765,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     variant="outlined"
                                                                     value={currentFamilyMember.cnic}
                                                                     error={!!familyMemberErrors.cnic}
-                                                                    helperText={familyMemberErrors.cnic}
+                                                                    helperText={isValidatingFamilyCnic ? 'Checking CNIC availability...' : familyMemberErrors.cnic}
                                                                     onChange={(e) => {
                                                                         let value = e.target.value;
                                                                         value = value.replace(/[^\d-]/g, '');
@@ -1435,8 +1776,15 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     }}
                                                                     sx={{
                                                                         '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
+                                                                            borderColor: isValidatingFamilyCnic ? '#1976d2' : '#ccc',
                                                                         },
+                                                                        ...(isValidatingFamilyCnic && {
+                                                                            '& .MuiOutlinedInput-root': {
+                                                                                '& fieldset': {
+                                                                                    borderColor: '#1976d2',
+                                                                                },
+                                                                            },
+                                                                        }),
                                                                     }}
                                                                 />
                                                             </Box>
@@ -1534,7 +1882,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                         },
                                                                     }}
                                                                 >
-                                                                    {['active', 'inactive', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
+                                                                    {['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
                                                                         const label = status.replace(/_/g, ' ');
                                                                         return (
                                                                             <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
@@ -1577,8 +1925,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 textTransform: 'none',
                                                             }}
                                                             onClick={handleSaveFamilyMember}
+                                                            disabled={isValidatingFamilyCnic}
                                                         >
-                                                            Save Members
+                                                            {isValidatingFamilyCnic ? 'Validating CNIC...' : 'Save Members'}
                                                         </Button>
                                                     </Box>
                                                 </>

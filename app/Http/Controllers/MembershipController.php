@@ -116,10 +116,17 @@ class MembershipController extends Controller
                 'application_no' => $member->application_no,
                 'barcode_no' => $member->barcode_no,
                 'family_suffix' => $member->family_suffix,
+                'first_name' => $member->first_name,
+                'middle_name' => $member->middle_name,
+                'last_name' => $member->last_name,
                 'full_name' => $member->full_name,
                 'member_type_id' => $user->member_type_id,
                 'membership_category' => $user->member_category_id,
                 'relation' => $member->relation,
+                'gender' => $member->gender,
+                'nationality' => $member->nationality,
+                'passport_no' => $member->passport_no,
+                'martial_status' => $member->martial_status,
                 'cnic' => $member->cnic_no,
                 'date_of_birth' => optional($member->date_of_birth)->format('Y-m-d'),
                 'phone_number' => $member->mobile_number_a,
@@ -378,6 +385,9 @@ class MembershipController extends Controller
                         'parent_id' => $mainMember->id,
                         'membership_no' => $mainMember->membership_no . '-' . $familyMemberData['family_suffix'],
                         'family_suffix' => $familyMemberData['family_suffix'],
+                        'first_name' => $familyMemberData['first_name'] ?? null,
+                        'middle_name' => $familyMemberData['middle_name'] ?? null,
+                        'last_name' => $familyMemberData['last_name'] ?? null,
                         'full_name' => $familyMemberData['full_name'],
                         'personal_email' => $familyMemberData['email'],
                         'relation' => $familyMemberData['relation'],
@@ -389,6 +399,9 @@ class MembershipController extends Controller
                         'card_expiry_date' => $familyMemberData['card_expiry_date'] ?? null,
                         'cnic_no' => $familyMemberData['cnic'],
                         'mobile_number_a' => $familyMemberData['phone_number'],
+                        'passport_no' => $familyMemberData['passport_no'] ?? null,
+                        'nationality' => $familyMemberData['nationality'] ?? null,
+                        'martial_status' => $familyMemberData['martial_status'] ?? null,
                     ]);
 
                     // Handle family member profile photo using Media model
@@ -424,34 +437,27 @@ class MembershipController extends Controller
                 }
             }
 
-            // $memberTypeArray = $memberCategory->toArray();  // includes all fields from DB
+            // Create unpaid membership fee invoice
+            $memberCategory = MemberCategory::find($request->membership_category);
 
-            // $memberTypeArray['amount'] = $memberCategory->fee;
-            // $memberTypeArray['invoice_type'] = 'membership';
-
-            // $data = [$memberTypeArray];
-
-            // // Create membership invoice
-            // $now = Carbon::now();
-            // $quarter = ceil($now->month / 3);  // Calculate quarter number (1 to 4)
-            // $paidForQuarter = $now->year . '-Q' . $quarter;
-
-            // $invoice = FinancialInvoice::create([
-            //     'invoice_no' => $this->getInvoiceNo(),
-            //     'member_id' => $primaryUser->id,
-            //     'amount' => $memberCategory->subscription_fee * 3,
-            //     'subscription_type' => 'quarter',
-            //     'invoice_type' => 'membership',
-            //     'issue_date' => $now,
-            //     'paid_for_quarter' => $paidForQuarter,
-            //     'data' => $data,
-            //     'status' => 'unpaid',
-            // ]);
-
-            // // Add membership invoice id to member
-            // $member = Member::where('user_id', $primaryUser->id)->first();
-            // $member->invoice_id = $invoice->id;
-            // $member->save();
+            if ($memberCategory && $memberCategory->fee > 0) {
+                $invoice = FinancialInvoice::create([
+                    'invoice_no' => $this->generateInvoiceNumber(),
+                    'member_id' => $mainMember->id,
+                    'fee_type' => 'membership_fee',
+                    'invoice_type' => 'membership',
+                    'amount' => $memberCategory->fee,
+                    'discount_type' => null,
+                    'discount_value' => 0,
+                    'total_price' => $memberCategory->fee,
+                    'payment_method' => null, // Will be set when payment is made
+                    'valid_from' => $request->membership_date,
+                    'valid_to' => null,
+                    'status' => 'unpaid',
+                    'invoiceable_id' => $mainMember->id,
+                    'invoiceable_type' => Member::class,
+                ]);
+            }
 
             DB::commit();
 
@@ -462,6 +468,26 @@ class MembershipController extends Controller
         }
     }
 
+    private function generateInvoiceNumber()
+    {
+        // Get the highest invoice_no from all financial_invoices (not just transaction types)
+        $lastInvoice = FinancialInvoice::orderBy('invoice_no', 'desc')
+            ->whereNotNull('invoice_no')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastInvoice && $lastInvoice->invoice_no) {
+            $nextNumber = $lastInvoice->invoice_no + 1;
+        }
+
+        // Double-check that this number doesn't exist (safety check)
+        while (FinancialInvoice::where('invoice_no', $nextNumber)->exists()) {
+            $nextNumber++;
+        }
+
+        return $nextNumber;
+    }
+    
     public function updateMember(Request $request)
     {
         try {
@@ -623,6 +649,9 @@ class MembershipController extends Controller
                             'parent_id' => $member->id,
                             'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
                             'family_suffix' => $newMemberData['family_suffix'],
+                            'first_name' => $newMemberData['first_name'] ?? null,
+                            'middle_name' => $newMemberData['middle_name'] ?? null,
+                            'last_name' => $newMemberData['last_name'] ?? null,
                             'full_name' => $newMemberData['full_name'],
                             'personal_email' => $newMemberData['email'] ?? null,
                             'relation' => $newMemberData['relation'],
@@ -634,6 +663,9 @@ class MembershipController extends Controller
                             'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
                             'cnic_no' => $newMemberData['cnic'],
                             'mobile_number_a' => $newMemberData['phone_number'] ?? null,
+                            'passport_no' => $newMemberData['passport_no'] ?? null,
+                            'nationality' => $newMemberData['nationality'] ?? null,
+                            'martial_status' => $newMemberData['martial_status'] ?? null,
                         ]);
 
                         // Handle family member profile photo using Media model
@@ -704,6 +736,9 @@ class MembershipController extends Controller
                             // Update member fields
                             $updateFamily->update([
                                 'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
+                                'first_name' => $newMemberData['first_name'] ?? null,
+                                'middle_name' => $newMemberData['middle_name'] ?? null,
+                                'last_name' => $newMemberData['last_name'] ?? null,
                                 'full_name' => $newMemberData['full_name'],
                                 'barcode_no' => $newMemberData['barcode_no'] ?? null,
                                 'personal_email' => $newMemberData['email'] ?? null,
@@ -716,6 +751,9 @@ class MembershipController extends Controller
                                 'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
                                 'cnic_no' => $newMemberData['cnic'] ?? null,
                                 'mobile_number_a' => $newMemberData['phone_number'] ?? null,
+                                'passport_no' => $newMemberData['passport_no'] ?? null,
+                                'nationality' => $newMemberData['nationality'] ?? null,
+                                'martial_status' => $newMemberData['martial_status'] ?? null,
                             ]);
                         }
                     }
@@ -783,6 +821,9 @@ class MembershipController extends Controller
             'kinshipMember:id,full_name,membership_no'
         ])->findOrFail($id);
 
+        // Add membership duration to member
+        $member->membership_duration = $member->membership_duration;
+
         return Inertia::render('App/Admin/Membership/ViewProfile', [
             'member' => $member
         ]);
@@ -793,7 +834,10 @@ class MembershipController extends Controller
     {
         $perPage = $request->get('per_page', 10);
 
-        $familyMembers = Member::where('parent_id', $id)->with(['profilePhoto:id,mediable_id,mediable_type,file_path'])->paginate($perPage);
+        $familyMembers = Member::where('parent_id', $id)
+            ->with(['profilePhoto:id,mediable_id,mediable_type,file_path'])
+            ->select('id', 'parent_id', 'full_name', 'membership_no', 'relation', 'gender', 'status', 'card_status', 'card_expiry_date', 'passport_no', 'nationality', 'martial_status')
+            ->paginate($perPage);
 
         return response()->json($familyMembers);
     }
@@ -848,8 +892,9 @@ class MembershipController extends Controller
             'member_id' => 'required|exists:members,id',
             'status' => 'required|in:active,suspended,cancelled,absent,expired,terminated,not_assign,in_suspension_process',
             'reason' => 'nullable|string',
-            'duration_type' => 'nullable|in:1Day,1Monthly,1Year,CustomDate',
-            'custom_end_date' => 'nullable|date',
+            'duration_type' => 'required_if:status,suspended,absent|in:1Day,1Monthly,1Year,CustomDate',
+            'custom_start_date' => 'required_if:duration_type,CustomDate|date',
+            'custom_end_date' => 'required_if:duration_type,CustomDate|date|after:custom_start_date',
         ]);
 
         $member = Member::findOrFail($request->member_id);
@@ -857,7 +902,7 @@ class MembershipController extends Controller
         $startDate = now();
         $endDate = null;
 
-        if (in_array($request->status, ['suspended'])) {
+        if (in_array($request->status, ['suspended', 'absent'])) {
             switch ($request->duration_type) {
                 case '1Day':
                     $endDate = now()->addDay();
@@ -869,6 +914,7 @@ class MembershipController extends Controller
                     $endDate = now()->addYear();
                     break;
                 case 'CustomDate':
+                    $startDate = Carbon::parse($request->custom_start_date);
                     $endDate = Carbon::parse($request->custom_end_date);
                     break;
             }

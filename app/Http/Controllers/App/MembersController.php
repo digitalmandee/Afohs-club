@@ -39,4 +39,112 @@ class MembersController extends Controller
 
         return response()->json($member);
     }
+
+    public function checkDuplicateCnic(Request $request)
+    {
+        $request->validate([
+            'cnic_no' => 'required|string',
+            'member_id' => 'nullable|integer'
+        ]);
+
+        $query = Member::where('cnic_no', $request->cnic_no);
+        
+        // Exclude current member if editing
+        if ($request->member_id) {
+            $query->where('id', '!=', $request->member_id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? 'CNIC already exists' : 'CNIC is available'
+        ]);
+    }
+
+    public function checkDuplicateMembershipNo(Request $request)
+    {
+        $request->validate([
+            'membership_no' => 'required|string',
+            'member_id' => 'nullable|integer'
+        ]);
+
+        // Extract the number part from membership number (e.g., "123" from "OP 123" or "123-1" from "AR/S 123-1")
+        $membershipNo = $request->membership_no;
+        $numberPart = '';
+        
+        // Split by space and get the last part (the number part)
+        $parts = explode(' ', trim($membershipNo));
+        if (count($parts) >= 2) {
+            $numberPart = end($parts); // Get the last part (e.g., "123" or "123-1")
+        } else {
+            $numberPart = $membershipNo; // If no space, use the whole string
+        }
+
+        // Search for any membership number that ends with this number part
+        $query = Member::where('membership_no', 'LIKE', '% ' . $numberPart)
+                      ->orWhere('membership_no', $numberPart);
+        
+        // Exclude current member if editing
+        if ($request->member_id) {
+            $query->where('id', '!=', $request->member_id);
+        }
+
+        $existingMembers = $query->get(['membership_no', 'first_name', 'last_name']);
+        $exists = $existingMembers->count() > 0;
+
+        // Generate next available number suggestion
+        $suggestion = null;
+        if ($exists) {
+            // Find the highest number in use
+            $allNumbers = Member::select('membership_no')->get()->pluck('membership_no');
+            $maxNumber = 0;
+            
+            foreach ($allNumbers as $membershipNumber) {
+                $parts = explode(' ', trim($membershipNumber));
+                $numPart = count($parts) >= 2 ? end($parts) : $membershipNumber;
+                
+                // Extract base number (before any dash)
+                $baseNum = explode('-', $numPart)[0];
+                if (is_numeric($baseNum)) {
+                    $maxNumber = max($maxNumber, (int)$baseNum);
+                }
+            }
+            
+            $suggestion = $maxNumber + 1;
+        }
+
+        return response()->json([
+            'exists' => $exists,
+            'number_part' => $numberPart,
+            'existing_members' => $existingMembers,
+            'suggestion' => $suggestion,
+            'message' => $exists ? 'Membership number already exists' : 'Membership number is available'
+        ]);
+    }
+
+    public function getNextMembershipNumber()
+    {
+        // Find the highest number in use
+        $allNumbers = Member::select('membership_no')->get()->pluck('membership_no');
+        $maxNumber = 0;
+        
+        foreach ($allNumbers as $membershipNumber) {
+            $parts = explode(' ', trim($membershipNumber));
+            $numPart = count($parts) >= 2 ? end($parts) : $membershipNumber;
+            
+            // Extract base number (before any dash)
+            $baseNum = explode('-', $numPart)[0];
+            if (is_numeric($baseNum)) {
+                $maxNumber = max($maxNumber, (int)$baseNum);
+            }
+        }
+        
+        $nextNumber = $maxNumber + 1;
+
+        return response()->json([
+            'next_number' => $nextNumber,
+            'message' => 'Next available membership number generated'
+        ]);
+    }
 }

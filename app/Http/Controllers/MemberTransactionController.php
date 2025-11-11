@@ -33,11 +33,11 @@ class MemberTransactionController extends Controller
         $totalRevenue = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee', 'reinstating_fee'])
             ->where('status', 'paid')
             ->sum('total_price');
-        
+
         $membershipFeeRevenue = FinancialInvoice::where('fee_type', 'membership_fee')
             ->where('status', 'paid')
             ->sum('total_price');
-        
+
         $maintenanceFeeRevenue = FinancialInvoice::where('fee_type', 'maintenance_fee')
             ->where('status', 'paid')
             ->sum('total_price');
@@ -87,16 +87,16 @@ class MemberTransactionController extends Controller
     public function searchMembers(Request $request)
     {
         $query = $request->input('query');
-        
+
         $members = Member::whereNull('parent_id')
             ->where(function ($q) use ($query) {
                 $q->where('full_name', 'like', "%{$query}%")
-                  ->orWhere('membership_no', 'like', "%{$query}%")
-                  ->orWhere('cnic_no', 'like', "%{$query}%")
-                  ->orWhere('mobile_number_a', 'like', "%{$query}%");
+                    ->orWhere('membership_no', 'like', "%{$query}%")
+                    ->orWhere('cnic_no', 'like', "%{$query}%")
+                    ->orWhere('mobile_number_a', 'like', "%{$query}%");
             })
             ->with(['memberCategory:id,name,fee,subscription_fee'])
-            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id','status')
+            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id', 'status')
             ->limit(10)
             ->get();
 
@@ -106,7 +106,10 @@ class MemberTransactionController extends Controller
     public function getMemberTransactions($memberId)
     {
         $member = Member::where('id', $memberId)
-            ->with(['memberCategory:id,name,fee,subscription_fee'])
+            ->with([
+                'memberCategory:id,name,fee,subscription_fee',
+                'familyMembers:id,parent_id,full_name,relation,membership_no,status'
+            ])
             ->first();
 
         if (!$member) {
@@ -149,7 +152,7 @@ class MemberTransactionController extends Controller
                 // Subscription fee specific validation
                 'subscription_type_id' => 'required_if:fee_type,subscription_fee|exists:subscription_types,id',
                 'subscription_category_id' => 'required_if:fee_type,subscription_fee|exists:subscription_categories,id',
-                'family_member_relation' => 'required_if:fee_type,subscription_fee|in:SELF,Father,Son,Daughter,Wife,Mother,Grand Son,Grand Daughter,Second Wife,Husband,Sister,Brother,Nephew,Niece,Father in law,Mother in Law',
+                'family_member_id' => 'nullable|exists:members,id',
             ]);
 
             if ($validator->fails()) {
@@ -159,7 +162,7 @@ class MemberTransactionController extends Controller
             DB::beginTransaction();
 
             $member = Member::where('id', $request->member_id)->first();
-            
+
             // Check if membership fee already paid for membership fee type
             if ($request->fee_type === 'membership_fee') {
                 $existingMembershipFee = FinancialInvoice::where('member_id', $request->member_id)
@@ -190,12 +193,13 @@ class MemberTransactionController extends Controller
             }
 
             $invoiceData = $this->prepareInvoiceData($request, $member);
-            
+
             // Create subscription first if fee_type is subscription_fee
             $subscription = null;
             if ($request->fee_type === 'subscription_fee') {
                 $subscription = Subscription::create([
                     'member_id' => $request->member_id,
+                    'family_member_id' => $request->family_member_id, // null = SELF (primary member)
                     'subscription_category_id' => $request->subscription_category_id,
                     'subscription_type_id' => $request->subscription_type_id,
                     'valid_from' => $request->valid_from,
@@ -203,19 +207,19 @@ class MemberTransactionController extends Controller
                     'status' => 'active',
                     'qr_code' => null, // Will be generated after creation
                 ]);
-                
+
                 // Generate QR code for subscription
                 $qrCodeData = route('subscription.details', ['id' => $subscription->id]);
                 $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
                 $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'subscription_qr_codes');
                 $subscription->qr_code = $qrImagePath;
                 $subscription->save();
-                
+
                 // Set polymorphic relationship
                 $invoiceData['invoiceable_id'] = $subscription->id;
                 $invoiceData['invoiceable_type'] = Subscription::class;
             }
-            
+
             $invoice = FinancialInvoice::create($invoiceData);
 
             // Update member status to active if reinstating fee is paid
@@ -230,7 +234,6 @@ class MemberTransactionController extends Controller
                 'message' => 'Transaction created successfully!',
                 'transaction' => $invoice->load('member:id,full_name,membership_no')
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Transaction creation failed: ' . $e->getMessage());
@@ -266,25 +269,36 @@ class MemberTransactionController extends Controller
         if ($request->fee_type === 'subscription_fee') {
             $subscriptionType = SubscriptionType::find($request->subscription_type_id);
             $subscriptionCategory = SubscriptionCategory::find($request->subscription_category_id);
-            
+
             $data['subscription_type_id'] = $request->subscription_type_id;
             $data['subscription_category_id'] = $request->subscription_category_id;
             $data['subscription_type_name'] = $subscriptionType ? $subscriptionType->name : null;
             $data['subscription_category_name'] = $subscriptionCategory ? $subscriptionCategory->name : null;
-            $data['family_member_relation'] = $request->family_member_relation;
+            
+            // Handle family member selection
+            if ($request->family_member_id) {
+                $familyMember = Member::find($request->family_member_id);
+                $data['family_member_id'] = $request->family_member_id;
+                $data['family_member_name'] = $familyMember ? $familyMember->full_name : null;
+                $data['family_member_relation'] = $familyMember ? $familyMember->relation : null;
+            } else {
+                $data['family_member_id'] = null;
+                $data['family_member_name'] = $member->full_name;
+                $data['family_member_relation'] = 'SELF';
+            }
         }
 
         // Handle credit card specific data
         if ($request->payment_method === 'credit_card') {
             $data['credit_card_type'] = $request->credit_card_type;
-            
+
             // Handle file upload
             if ($request->hasFile('receipt_file')) {
                 $filePath = FileHelper::saveImage($request->file('receipt_file'), 'receipts');
                 $data['receipt_path'] = $filePath;
             }
         }
-        
+
         $invoiceData = [
             'invoice_no' => $this->generateInvoiceNumber(),
             'member_id' => $request->member_id,
@@ -315,7 +329,7 @@ class MemberTransactionController extends Controller
             // Membership fee is lifetime - set to member's joining date and far future
             $memberJoinDate = Carbon::parse($member->membership_date);
             $invoiceData['valid_from'] = $memberJoinDate->format('Y-m-d');
-            $invoiceData['valid_to'] = $memberJoinDate->addYears(50)->format('Y-m-d'); // Lifetime validity
+            $invoiceData['valid_to'] = null; // Lifetime validity
         } elseif ($request->fee_type === 'subscription_fee') {
             // Use manual validity dates from request for subscription fees
             $invoiceData['valid_from'] = $request->valid_from;
@@ -333,7 +347,7 @@ class MemberTransactionController extends Controller
         // Handle maintenance fee specific data
         if ($request->fee_type === 'maintenance_fee') {
             $invoiceData['payment_frequency'] = $request->payment_frequency;
-            
+
             // Use starting quarter from request or calculate based on member's joining date
             if ($request->starting_quarter) {
                 $invoiceData['quarter_number'] = $request->starting_quarter;
@@ -354,14 +368,14 @@ class MemberTransactionController extends Controller
     {
         $membershipDate = Carbon::parse($member->membership_date);
         $now = now();
-        
+
         // Calculate which quarter we're in based on membership date
         $monthsSinceMembership = $membershipDate->diffInMonths($now);
         $quartersSinceMembership = floor($monthsSinceMembership / 3);
-        
+
         // Calculate current quarter start based on membership date
         $currentQuarterStart = $membershipDate->copy()->addMonths($quartersSinceMembership * 3);
-        
+
         $quartersToAdd = 1; // Default for quarterly
         if ($paymentFrequency === 'half_yearly') {
             $quartersToAdd = 2;
@@ -370,9 +384,9 @@ class MemberTransactionController extends Controller
         } elseif ($paymentFrequency === 'annually') {
             $quartersToAdd = 4;
         }
-        
+
         $quarterEnd = $currentQuarterStart->copy()->addMonths($quartersToAdd * 3)->subDay();
-        
+
         return [
             'quarter_number' => $quartersSinceMembership + 1,
             'start_date' => $currentQuarterStart,
@@ -420,7 +434,7 @@ class MemberTransactionController extends Controller
             $search = $request->search;
             $query->whereHas('member', function ($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%")
-                  ->orWhere('membership_no', 'like', "%{$search}%");
+                    ->orWhere('membership_no', 'like', "%{$search}%");
             });
         }
 
@@ -503,7 +517,7 @@ class MemberTransactionController extends Controller
                 $amount = round(floatval($paymentData['amount']));
                 $discountValue = floatval($paymentData['discount_value'] ?? 0);
                 $discountType = $paymentData['discount_type'] ?? '';
-                
+
                 $totalPrice = $amount;
                 if ($discountType && $discountValue > 0) {
                     if ($discountType === 'percent') {
@@ -512,7 +526,7 @@ class MemberTransactionController extends Controller
                         $totalPrice = $amount - $discountValue;
                     }
                 }
-                
+
                 // Round the final total price
                 $totalPrice = round($totalPrice);
 
@@ -528,7 +542,7 @@ class MemberTransactionController extends Controller
                 // Handle dates based on fee type
                 $validFrom = $paymentData['valid_from'] ?? null;
                 $validTo = $paymentData['valid_to'] ?? null;
-                
+
                 if ($paymentData['fee_type'] === 'membership_fee') {
                     // Membership fee is lifetime - set to member's joining date and far future
                     $memberJoinDate = Carbon::parse($member->membership_date);
@@ -571,11 +585,10 @@ class MemberTransactionController extends Controller
                 'message' => 'Successfully created ' . count($createdTransactions) . ' transactions',
                 'transactions' => $createdTransactions
             ]);
-
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Bulk transaction creation failed: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create transactions: ' . $e->getMessage()

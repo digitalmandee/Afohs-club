@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, Typography, Button, LinearProgress, Box, Grid, Alert, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Chip, Divider, CircularProgress } from '@mui/material';
-import { PlayArrow, Stop, Refresh, CheckCircle, Error, Warning, Assessment, Storage, People, FamilyRestroom, Image } from '@mui/icons-material';
+import { PlayArrow, Stop, Refresh, CheckCircle, Error, Warning, Assessment, Storage, People, FamilyRestroom, Image, DeleteSweep } from '@mui/icons-material';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
 
@@ -15,6 +15,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [validationDialog, setValidationDialog] = useState(false);
     const [validationResults, setValidationResults] = useState(null);
     const [resetDialog, setResetDialog] = useState(false);
+    const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const migrationRunning = useRef({ members: false, families: false, media: false });
 
     useEffect(() => {
@@ -171,6 +172,22 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         }
     };
 
+    const resetFamiliesOnly = async () => {
+        try {
+            await axios.post('/admin/data-migration/reset-families');
+            setResetFamiliesDialog(false);
+            refreshStats();
+            setMigrationStatus(prev => ({
+                ...prev,
+                families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+            }));
+            alert('Family members reset successfully');
+        } catch (error) {
+            console.error('Reset families error:', error);
+            alert('Error resetting family members: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
     if (!stats.old_tables_exist) {
         return (
             <AdminLayout>
@@ -195,6 +212,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         </Button>
                         <Button variant="outlined" startIcon={<Assessment />} onClick={validateMigration}>
                             Validate Migration
+                        </Button>
+                        <Button variant="outlined" color="warning" startIcon={<DeleteSweep />} onClick={() => setResetFamiliesDialog(true)}>
+                            Reset Families Only
                         </Button>
                         <Button variant="outlined" color="error" startIcon={<Warning />} onClick={() => setResetDialog(true)}>
                             Reset Migration
@@ -557,6 +577,24 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         <Button onClick={() => setResetDialog(false)}>Cancel</Button>
                         <Button onClick={resetMigration} color="error" variant="contained">
                             Reset
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Reset Families Only Dialog */}
+                <Dialog open={resetFamiliesDialog} onClose={() => setResetFamiliesDialog(false)}>
+                    <DialogTitle>Reset Family Members Only</DialogTitle>
+                    <DialogContent>
+                        <Typography>
+                            Are you sure you want to reset only family member migration data? 
+                            This will delete all family member records (records with parent_id) from the members table, 
+                            but will keep primary members intact.
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setResetFamiliesDialog(false)}>Cancel</Button>
+                        <Button onClick={resetFamiliesOnly} color="warning" variant="contained">
+                            Reset Families Only
                         </Button>
                     </DialogActions>
                 </Dialog>

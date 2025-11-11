@@ -36,6 +36,12 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
         }
     }, [subscriptionCategory]);
 
+    // Calculate day fee
+    const calculateDayFee = (monthlyFee) => {
+        if (!monthlyFee || monthlyFee <= 0) return 0;
+        return Math.round(monthlyFee / 30); // Round to whole number
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -132,8 +138,11 @@ const AddEditSubscriptionCategory = ({ onBack }) => {
                             <TextField fullWidth size="small" name="description" value={formData.description} onChange={handleInputChange} multiline rows={2} />
                         </Box>
                         <Box sx={{ mb: 2 }}>
-                            <Typography>Fee</Typography>
+                            <Typography>Monthly Fee</Typography>
                             <TextField fullWidth size="small" name="fee" value={formData.fee} onChange={handleInputChange} type="number" required />
+                            <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                                Daily fee will be auto-calculated as: Monthly Fee ÷ 30 days = Rs {calculateDayFee(formData.fee)} per day
+                            </Typography>
                         </Box>
                         <Box sx={{ mb: 2 }}>
                             <Typography>Status</Typography>
