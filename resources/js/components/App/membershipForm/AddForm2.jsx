@@ -206,7 +206,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
 
                             <Grid container spacing={3}>
                                 {/* Name */}
-                                <Grid item xs={12}>
+                                <Grid item xs={12} sm={6}>
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Name
                                     </Typography>

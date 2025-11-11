@@ -396,7 +396,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
                 </Typography>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={3}>
                 <FormControl fullWidth>
                     <InputLabel>Booking Category</InputLabel>
                     <Select value={formData.bookingCategory} onChange={handleChange} name="bookingCategory" label="Booking Category">
@@ -415,16 +415,16 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
                 )}
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid item xs={2}>
                 <TextField label="Per Day Room Charges" name="perDayCharge" value={formData.perDayCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={2}>
                 <TextField label="No. of Nights" name="nights" value={formData.nights} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={2}>
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={3}>
                 <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth />
             </Grid>
         </Grid>
