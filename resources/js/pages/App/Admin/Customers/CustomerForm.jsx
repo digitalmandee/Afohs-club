@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { IconButton, Button, Typography, Box, TextField, MenuItem } from '@mui/material';
+import { IconButton, Button, Grid, Typography, Box, TextField, MenuItem } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { router, usePage, useForm } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
@@ -44,6 +44,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                 sx={{
                     minHeight: '100vh',
                     padding: '20px',
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('guests.index'))}>
@@ -55,41 +56,339 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                     </Typography>
                 </Box>
 
-                <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 600, mx: 'auto', mt: 5, bgcolor: '#fff', p: 3 }}>
-                    <TextField fullWidth label="Customer No" margin="normal" value={data.customer_no} disabled error={!!errors.customer_no} helperText={errors.customer_no} />
+                <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 600, mx: 'auto', mt: 3, bgcolor: '#fff', p: 3 }}>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Customer No"
+                                margin="normal"
+                                value={data.customer_no}
+                                disabled
+                                error={!!errors.customer_no}
+                                helperText={errors.customer_no}
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            />
+                        </Grid>
 
-                    <TextField fullWidth label="Name*" margin="normal" value={data.name} onChange={(e) => setData('name', e.target.value)} error={!!errors.name} helperText={errors.name} />
-                    <TextField fullWidth label="Contact*" margin="normal" value={data.contact} onChange={(e) => setData('contact', e.target.value)} error={!!errors.contact} helperText={errors.contact} />
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Name*"
+                                margin="normal"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                error={!!errors.name}
+                                helperText={errors.name}
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            />
+                        </Grid>
 
-                    <TextField fullWidth select label="Gender*" margin="normal" value={data.gender} onChange={(e) => setData('gender', e.target.value)} error={!!errors.gender} helperText={errors.gender}>
-                        {genderOptions.map((option) => (
-                            <MenuItem key={option} value={option}>
-                                {option}
-                            </MenuItem>
-                        ))}
-                    </TextField>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Contact*"
+                                margin="normal"
+                                value={data.contact}
+                                onChange={(e) => setData('contact', e.target.value)}
+                                error={!!errors.contact}
+                                helperText={errors.contact}
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            />
+                        </Grid>
 
-                    <TextField fullWidth label="Address" margin="normal" value={data.address} onChange={(e) => setData('address', e.target.value)} />
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                select
+                                label="Gender*"
+                                margin="normal"
+                                value={data.gender}
+                                onChange={(e) => setData('gender', e.target.value)}
+                                error={!!errors.gender}
+                                helperText={errors.gender}
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            >
+                                {genderOptions.map((option) => (
+                                    <MenuItem key={option} value={option}>
+                                        {option}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
 
-                    <TextField fullWidth label="CNIC" margin="normal" value={data.cnic} onChange={(e) => setData('cnic', e.target.value)} />
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Address"
+                                margin="normal"
+                                value={data.address}
+                                onChange={(e) => setData('address', e.target.value)}
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            />
+                        </Grid>
 
-                    <TextField fullWidth label="Email" margin="normal" value={data.email} onChange={(e) => setData('email', e.target.value)} />
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="CNIC"
+                                margin="normal"
+                                value={data.cnic}
+                                onChange={(e) => setData('cnic', e.target.value)}
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            />
+                        </Grid>
 
-                    <TextField fullWidth select label="Guest Type*" margin="normal" value={data.guest_type_id} onChange={(e) => setData('guest_type_id', e.target.value)} error={!!errors.guest_type_id} helperText={errors.guest_type_id}>
-                        {guestTypes.map((type) => (
-                            <MenuItem key={type.id} value={type.id}>
-                                {type.name}
-                            </MenuItem>
-                        ))}
-                    </TextField>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Email"
+                                margin="normal"
+                                value={data.email}
+                                onChange={(e) => setData('email', e.target.value)}
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            />
+                        </Grid>
 
-                    <AsyncSearchTextField label="Member Name" name="guest" value={data.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: '0' }} placeholder="Search members..." />
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                select
+                                label="Guest Type*"
+                                margin="normal"
+                                value={data.guest_type_id}
+                                onChange={(e) => setData('guest_type_id', e.target.value)}
+                                error={!!errors.guest_type_id}
+                                helperText={errors.guest_type_id}
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            >
+                                {guestTypes.map((type) => (
+                                    <MenuItem key={type.id} value={type.id}>
+                                        {type.name}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
 
-                    <TextField fullWidth label="Member No" margin="normal" value={data.member_no} onChange={(e) => setData('member_no', e.target.value)} disabled />
+                        <Grid item xs={12} sm={6}>
+                            <Box
+                                sx={{
+                                    width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' }, '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            >
+                                <AsyncSearchTextField
+                                    label="Member Name"
+                                    name="guest"
+                                    value={data.guest}
+                                    onChange={handleChange}
+                                    endpoint="admin.api.search-users"
+                                    params={{ type: '0' }}
+                                    placeholder="Search members..."
+                                    fullWidth
+                                />
+                            </Box>
+                        </Grid>
 
-                    <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={processing}>
-                        {isEdit ? 'Update' : 'Save'}
-                    </Button>
+                        <Grid item xs={12} sm={6} sx={{ mt: -1.4 }}>
+                            <TextField
+                                fullWidth
+                                label="Member No"
+                                margin="normal"
+                                value={data.member_no}
+                                onChange={(e) => setData('member_no', e.target.value)}
+                                disabled
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiInputBase-root': {
+                                        height: 35,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    '& .MuiSelect-select': {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 14px !important', // override MUI default
+                                        height: '100%',
+                                        boxSizing: 'border-box',
+                                    },
+                                    '& legend': {
+                                        display: 'none', // hides outline label gap
+                                    },
+                                    '& label': {
+                                        top: '-10px', // tweak this to move label vertically
+                                    },
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button type="submit" variant="contained" disabled={processing}>
+                            {isEdit ? 'Update' : 'Save'}
+                        </Button>
+                    </Box>
                 </Box>
             </Box>
         </>

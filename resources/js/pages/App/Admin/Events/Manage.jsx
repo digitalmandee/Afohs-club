@@ -78,17 +78,17 @@ const EventsManage = ({ bookings, filters = {} }) => {
         setEventDateTo('');
         setSelectedVenue([]);
         setSelectedStatus([]);
-        
+
         // Clear URL parameters
-        router.get(route('events.manage'), {}, { 
+        router.get(route('events.manage'), {}, {
             preserveState: true,
-            preserveScroll: true 
+            preserveScroll: true
         });
     };
 
     const handleApply = () => {
         const filterParams = {};
-        
+
         if (searchTerm) filterParams.search_name = searchTerm;
         if (searchId) filterParams.search_id = searchId;
         if (bookingDateFrom) filterParams.booking_date_from = bookingDateFrom;
@@ -98,15 +98,15 @@ const EventsManage = ({ bookings, filters = {} }) => {
         if (selectedVenue.length > 0) filterParams.venues = selectedVenue;
         if (selectedStatus.length > 0) filterParams.status = selectedStatus;
 
-        router.get(route('events.manage'), filterParams, { 
+        router.get(route('events.manage'), filterParams, {
             preserveState: true,
-            preserveScroll: true 
+            preserveScroll: true
         });
     };
 
     const getStatusBadge = (booking) => {
         const { status, invoice } = booking;
-        
+
         if (status === 'confirmed') {
             return <Badge bg="success">Confirmed</Badge>;
         } else if (status === 'completed') {
@@ -143,8 +143,9 @@ const EventsManage = ({ bookings, filters = {} }) => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
-                    backgroundColor:'#f5f5f5'
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
+                    overflowX: 'hidden'
                 }}
             >
                 <ThemeProvider theme={theme}>
@@ -345,7 +346,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                         </Paper>
 
                         {/* Bookings Table */}
-                        <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
@@ -373,29 +374,42 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                     {getStatusBadge(booking)}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Button
-                                                        variant="outlined"
-                                                        size="small"
-                                                        onClick={() => handleShowInvoice(booking)}
-                                                        style={{
-                                                            marginRight: '8px',
-                                                            border: '1px solid #003366',
-                                                            color: '#003366'
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 1, // adds space between buttons
+                                                            flexWrap: 'nowrap', // ensures they stay on the same line
                                                         }}
                                                     >
-                                                        View Details
-                                                    </Button>
-                                                    <Button
-                                                        variant="contained"
-                                                        size="small"
-                                                        onClick={() => router.visit(route('events.booking.edit', booking.id))}
-                                                        style={{
-                                                            backgroundColor: '#003366',
-                                                            border: 'none'
-                                                        }}
-                                                    >
-                                                        Edit
-                                                    </Button>
+                                                        <Button
+                                                            variant="outlined"
+                                                            size="small"
+                                                            onClick={() => handleShowInvoice(booking)}
+                                                            sx={{
+                                                                border: '1px solid #003366',
+                                                                color: '#003366',
+                                                                textTransform: 'none',
+                                                                width:100
+                                                            }}
+                                                        >
+                                                            View Details
+                                                        </Button>
+
+                                                        <Button
+                                                            variant="contained"
+                                                            size="small"
+                                                            onClick={() => router.visit(route('events.booking.edit', booking.id))}
+                                                            sx={{
+                                                                backgroundColor: '#003366',
+                                                                border: 'none',
+                                                                textTransform: 'none',
+                                                                '&:hover': { backgroundColor: '#002855' },
+                                                            }}
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    </Box>
                                                 </TableCell>
                                             </TableRow>
                                         ))

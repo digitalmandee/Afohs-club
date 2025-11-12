@@ -249,7 +249,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                     <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                 </Box>
 
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                     {/* Application Number */}
                     <Grid item xs={6}>
                         <Box
@@ -382,7 +382,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                             </Grid>
 
                             {/* Father/Husband Name */}
-                            <Grid item xs={4}>
+                            <Grid item xs={5}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     Father/Husband Name*
                                 </Typography>
@@ -390,7 +390,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                             </Grid>
 
                             {/* Father Membership No */}
-                            <Grid item xs={8}>
+                            <Grid item xs={7}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     If father is a member then membership No
                                 </Typography>
@@ -399,10 +399,10 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                         </Grid>
 
                         {/* Right Column */}
-                        <Grid item xs={12} md={6} container spacing={3}>
+                        <Grid item xs={12} md={6} container spacing={2.5}>
                             {/* Nationality */}
                             <Grid item xs={6}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant="body2">
                                     Nationality*
                                 </Typography>
                                 <TextField fullWidth variant="outlined" placeholder="Enter Nationality e.g. Pakistan" size="small" name="nationality" value={data.nationality} error={!!formErrors.nationality} helperText={formErrors.nationality} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
@@ -410,7 +410,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
                             {/* CNIC No */}
                             <Grid item xs={6}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     CNIC No*
                                 </Typography>
                                 <TextField
@@ -447,7 +447,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
                             {/* Passport No */}
                             <Grid item xs={6}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     Passport No
                                 </Typography>
                                 <TextField fullWidth variant="outlined" placeholder="Enter passport number" size="small" name="passport_no" value={data.passport_no} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
@@ -455,7 +455,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
                             {/* Gender */}
                             <Grid item xs={6}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     Gender*
                                 </Typography>
                                 <FormControl fullWidth size="small" error={!!formErrors.gender}>
@@ -490,7 +490,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
                             {/* NTN */}
                             <Grid item xs={6}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     NTN (if any)
                                 </Typography>
                                 <TextField fullWidth variant="outlined" placeholder="Enter national NTN number" size="small" name="ntn" value={data.ntn} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
@@ -498,7 +498,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
                             {/* Date of Birth */}
                             <Grid item xs={6}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     Date of Birth*
                                 </Typography>
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -531,7 +531,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                             </Grid>
 
                             <Grid item xs={12}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     Marital Status
                                 </Typography>
                                 <FormControl fullWidth size="small" error={!!formErrors.martial_status}>
@@ -567,7 +567,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
                             {/* Education */}
                             <Grid item xs={12}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     Education
                                 </Typography>
                                 <TextField

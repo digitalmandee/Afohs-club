@@ -63,13 +63,13 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                 <Box sx={{ p: 3 }}>
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid item xs={12} sm={4}>
                                 <TextField label="Menu Name" fullWidth value={data.name} onChange={(e) => setData('name', e.target.value)} error={!!errors.name} helperText={errors.name} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid item xs={12} sm={4}>
                                 <TextField label="Amount" type="number" fullWidth value={data.amount} onChange={(e) => setData('amount', e.target.value)} error={!!errors.amount} helperText={errors.amount} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid item xs={12} sm={4}>
                                 <FormControl fullWidth>
                                     <InputLabel>Status</InputLabel>
                                     <Select value={data.status} onChange={(e) => setData('status', e.target.value)}>
@@ -79,7 +79,7 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                                 </FormControl>
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid item xs={12} sm={4}>
                                 <Typography variant="h6" sx={{ mt: 2 }}>
                                     Menu Items
                                 </Typography>

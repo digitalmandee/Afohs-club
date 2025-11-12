@@ -176,313 +176,313 @@ const BookingPayment = ({ invoice }) => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    paddingBottom: '2rem',
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
+                    // paddingBottom: '2rem',
                 }}
-            > */}
-            <div style={{
-                paddingBottom: "2rem"
-            }}>
-                {/* Header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 15, ml: 5 }}>
-                    <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
-                        <ArrowBack />
-                    </IconButton>
-                    <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
-                        {paymentMethod === 'cash' ? 'Cash Payment' : 'Bank Payment'}
-                    </h2>
-                </Box>
+            >
+                <div style={{
+                    paddingBottom: "2rem"
+                }}>
+                    {/* Header */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                        <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
+                            <ArrowBack />
+                        </IconButton>
+                        <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
+                            {paymentMethod === 'cash' ? 'Cash Payment' : 'Bank Payment'}
+                        </h2>
+                    </Box>
 
-                <div className="my-4 p-4 bg-white rounded border" style={{ maxWidth: '700px', margin: '0 auto' }}>
-                    <Card className="mb-4 p-3">
-                        <Box>
-                            <h5 style={{ color: '#003366', fontWeight: 600 }}>Customer Info</h5>
-                        </Box>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
-                                <p className="mb-1">
-                                    <strong>{invoice.customer ? 'Customer' : 'Member'}: </strong>
-                                    {invoice.customer ? invoice.customer?.customer_no : invoice.member?.membership_no}
-                                </p>
-                                <p className="mb-1">
-                                    <strong>Name:</strong> {invoice.customer ? invoice.customer.name : invoice.member ? invoice.member.full_name : 'N/A'}
-                                </p>
-                                <p className="mb-1">
-                                    <strong>Email:</strong> {invoice.customer ? invoice.customer.email : invoice.member ? invoice.member.personal_email : 'N/A'}
-                                </p>
+                    <div className="my-4 p-4 bg-white rounded border" style={{ maxWidth: '700px', margin: '0 auto' }}>
+                        <Card className="mb-4 p-3">
+                            <Box>
+                                <h5 style={{ color: '#003366', fontWeight: 600 }}>Customer Info</h5>
+                            </Box>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <p className="mb-1">
+                                        <strong>{invoice.customer ? 'Customer' : 'Member'}: </strong>
+                                        {invoice.customer ? invoice.customer?.customer_no : invoice.member?.membership_no}
+                                    </p>
+                                    <p className="mb-1">
+                                        <strong>Name:</strong> {invoice.customer ? invoice.customer.name : invoice.member ? invoice.member.full_name : 'N/A'}
+                                    </p>
+                                    <p className="mb-1">
+                                        <strong>Email:</strong> {invoice.customer ? invoice.customer.email : invoice.member ? invoice.member.personal_email : 'N/A'}
+                                    </p>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <p className="mb-1">
+                                        <strong>Booking No:</strong> #{invoice?.invoiceable?.booking_no}
+                                    </p>
+                                    <p className="mb-1">
+                                        <strong>Status:</strong> {invoice.status}
+                                    </p>
+                                    <p className="mb-1">
+                                        <strong>Advance Paid:</strong> Rs {advancePayment.toFixed(2)}
+                                    </p>
+                                    <p className="mb-1">
+                                        <strong>Remaining:</strong> Rs {remainingAmount.toFixed(2)}
+                                    </p>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <p className="mb-1">
-                                    <strong>Booking No:</strong> #{invoice?.invoiceable?.booking_no}
-                                </p>
-                                <p className="mb-1">
-                                    <strong>Status:</strong> {invoice.status}
-                                </p>
-                                <p className="mb-1">
-                                    <strong>Advance Paid:</strong> Rs {advancePayment.toFixed(2)}
-                                </p>
-                                <p className="mb-1">
-                                    <strong>Remaining:</strong> Rs {remainingAmount.toFixed(2)}
-                                </p>
-                            </Grid>
-                        </Grid>
-                    </Card>
-                    <h6
-                        className="mb-4"
-                        style={{
-                            color: '#121212',
-                            fontWeight: 500,
-                            fontSize: '20px',
-                        }}
-                    >
-                        Choose Payment Method
-                    </h6>
-                    <Row className="mb-4 gx-3">
-                        <Col md={4} className="mb-3 mb-md-0">
-                            <div
-                                className="border rounded p-3 text-center"
-                                onClick={() => handlePaymentMethodSelect('cash')}
-                                style={{
-                                    cursor: 'pointer',
-                                    backgroundColor: paymentMethod === 'cash' ? '#B0DEFF' : 'transparent',
-                                    border: paymentMethod === 'cash' ? '1px solid #063455' : '1px solid #dee2e6',
-                                }}
-                            >
-                                <div className="d-flex justify-content-center mb-2">
-                                    <img
-                                        src="/assets/money-bills.png"
-                                        alt=""
-                                        style={{
-                                            width: 24,
-                                            height: 20,
-                                        }}
-                                    />
-                                </div>
-                                <div>Cash</div>
-                            </div>
-                        </Col>
-
-                        <Col md={4}>
-                            <div
-                                className="border rounded p-3 text-center"
-                                onClick={() => handlePaymentMethodSelect('credit_card')}
-                                style={{
-                                    cursor: 'pointer',
-                                    backgroundColor: paymentMethod === 'credit_card' ? '#B0DEFF' : 'transparent',
-                                    border: paymentMethod === 'credit_card' ? '1px solid #063455' : '1px solid #dee2e6',
-                                }}
-                            >
-                                <div className="d-flex justify-content-center mb-2">
-                                    <img
-                                        src="/assets/credit-card-change.png"
-                                        alt=""
-                                        style={{
-                                            width: 24,
-                                            height: 20,
-                                        }}
-                                    />
-                                </div>
-                                <div>Credit Card</div>
-                            </div>
-                        </Col>
-                        <Col md={4}>
-                            <div
-                                className="border rounded p-3 text-center"
-                                onClick={() => handlePaymentMethodSelect('bank')}
-                                style={{
-                                    cursor: 'pointer',
-                                    backgroundColor: paymentMethod === 'bank' ? '#B0DEFF' : 'transparent',
-                                    border: paymentMethod === 'bank' ? '1px solid #063455' : '1px solid #dee2e6',
-                                }}
-                            >
-                                <div className="d-flex justify-content-center mb-2">
-                                    <img
-                                        src="/assets/credit-card-change.png"
-                                        alt=""
-                                        style={{
-                                            width: 24,
-                                            height: 20,
-                                        }}
-                                    />
-                                </div>
-                                <div>Bank Transfer</div>
-                            </div>
-                        </Col>
-                    </Row>
-
-                    {paymentMethod === 'cash' || paymentMethod === 'credit_card' ? (
-                        <>
-                            <Row className="mb-3 gx-3">
-                                <Col md={6} className="mb-3 mb-md-0">
-                                    <Form.Group>
-                                        <Form.Label
-                                            className="small"
+                        </Card>
+                        <h6
+                            className="mb-4"
+                            style={{
+                                color: '#121212',
+                                fontWeight: 500,
+                                fontSize: '20px',
+                            }}
+                        >
+                            Choose Payment Method
+                        </h6>
+                        <Row className="mb-4 gx-3">
+                            <Col md={4} className="mb-3 mb-md-0">
+                                <div
+                                    className="border rounded p-3 text-center"
+                                    onClick={() => handlePaymentMethodSelect('cash')}
+                                    style={{
+                                        cursor: 'pointer',
+                                        backgroundColor: paymentMethod === 'cash' ? '#B0DEFF' : 'transparent',
+                                        border: paymentMethod === 'cash' ? '1px solid #063455' : '1px solid #dee2e6',
+                                    }}
+                                >
+                                    <div className="d-flex justify-content-center mb-2">
+                                        <img
+                                            src="/assets/money-bills.png"
+                                            alt=""
                                             style={{
-                                                color: '#121212',
-                                                fontWeight: 400,
-                                                fontSize: '14px',
+                                                width: 24,
+                                                height: 20,
+                                            }}
+                                        />
+                                    </div>
+                                    <div>Cash</div>
+                                </div>
+                            </Col>
+
+                            <Col md={4}>
+                                <div
+                                    className="border rounded p-3 text-center"
+                                    onClick={() => handlePaymentMethodSelect('credit_card')}
+                                    style={{
+                                        cursor: 'pointer',
+                                        backgroundColor: paymentMethod === 'credit_card' ? '#B0DEFF' : 'transparent',
+                                        border: paymentMethod === 'credit_card' ? '1px solid #063455' : '1px solid #dee2e6',
+                                    }}
+                                >
+                                    <div className="d-flex justify-content-center mb-2">
+                                        <img
+                                            src="/assets/credit-card-change.png"
+                                            alt=""
+                                            style={{
+                                                width: 24,
+                                                height: 20,
+                                            }}
+                                        />
+                                    </div>
+                                    <div>Credit Card</div>
+                                </div>
+                            </Col>
+                            <Col md={4}>
+                                <div
+                                    className="border rounded p-3 text-center"
+                                    onClick={() => handlePaymentMethodSelect('bank')}
+                                    style={{
+                                        cursor: 'pointer',
+                                        backgroundColor: paymentMethod === 'bank' ? '#B0DEFF' : 'transparent',
+                                        border: paymentMethod === 'bank' ? '1px solid #063455' : '1px solid #dee2e6',
+                                    }}
+                                >
+                                    <div className="d-flex justify-content-center mb-2">
+                                        <img
+                                            src="/assets/credit-card-change.png"
+                                            alt=""
+                                            style={{
+                                                width: 24,
+                                                height: 20,
+                                            }}
+                                        />
+                                    </div>
+                                    <div>Bank Transfer</div>
+                                </div>
+                            </Col>
+                        </Row>
+
+                        {paymentMethod === 'cash' || paymentMethod === 'credit_card' ? (
+                            <>
+                                <Row className="mb-3 gx-3">
+                                    <Col md={6} className="mb-3 mb-md-0">
+                                        <Form.Group>
+                                            <Form.Label
+                                                className="small"
+                                                style={{
+                                                    color: '#121212',
+                                                    fontWeight: 400,
+                                                    fontSize: '14px',
+                                                }}
+                                            >
+                                                Input Amount
+                                            </Form.Label>
+                                            <InputGroup>
+                                                <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
+                                                <Form.Control type="text" name="inputAmount" value={invoiceForm.inputAmount} onChange={handlePaymentChange} className="border" />
+                                            </InputGroup>
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md={6}>
+                                        <Form.Group>
+                                            <Form.Label
+                                                className="small"
+                                                style={{
+                                                    color: '#121212',
+                                                    fontWeight: 400,
+                                                    fontSize: '14px',
+                                                }}
+                                            >
+                                                Customer Changes
+                                            </Form.Label>
+                                            <h4>Rs {Math.round(invoiceForm.customerCharges)}</h4>
+                                        </Form.Group>
+                                    </Col>
+                                </Row>
+
+                                <div className="d-flex flex-wrap gap-2 mb-4">
+                                    {['Exact money', '10.00', '20.00', '50.00', '100.00'].map((value) => (
+                                        <Button
+                                            key={value}
+                                            variant="outlined"
+                                            className="p-2"
+                                            onClick={() => handleQuickAmount(value === 'Exact money' ? Math.round(minAmount) : parseInt(value))}
+                                            sx={{
+                                                textTransform: 'none',
+                                                borderColor: '#ccc',
+                                                color: '#333',
+                                                fontSize: '0.875rem',
+                                                '&:hover': { borderColor: '#999', bgcolor: '#f5f5f5' },
                                             }}
                                         >
-                                            Input Amount
-                                        </Form.Label>
-                                        <InputGroup>
-                                            <InputGroup.Text className="bg-white border">Rs</InputGroup.Text>
-                                            <Form.Control type="text" name="inputAmount" value={invoiceForm.inputAmount} onChange={handlePaymentChange} className="border" />
-                                        </InputGroup>
-                                    </Form.Group>
-                                </Col>
-                                <Col md={6}>
-                                    <Form.Group>
-                                        <Form.Label
-                                            className="small"
-                                            style={{
-                                                color: '#121212',
-                                                fontWeight: 400,
-                                                fontSize: '14px',
-                                            }}
-                                        >
-                                            Customer Changes
-                                        </Form.Label>
-                                        <h4>Rs {Math.round(invoiceForm.customerCharges)}</h4>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
+                                            {value === 'Exact money' ? 'Exact money' : `Rs ${value}`}
+                                        </Button>
+                                    ))}
+                                </div>
 
-                            <div className="d-flex flex-wrap gap-2 mb-4">
-                                {['Exact money', '10.00', '20.00', '50.00', '100.00'].map((value) => (
-                                    <Button
-                                        key={value}
-                                        variant="outlined"
-                                        className="p-2"
-                                        onClick={() => handleQuickAmount(value === 'Exact money' ? Math.round(minAmount) : parseInt(value))}
-                                        sx={{
-                                            textTransform: 'none',
-                                            borderColor: '#ccc',
-                                            color: '#333',
-                                            fontSize: '0.875rem',
-                                            '&:hover': { borderColor: '#999', bgcolor: '#f5f5f5' },
-                                        }}
-                                    >
-                                        {value === 'Exact money' ? 'Exact money' : `Rs ${value}`}
-                                    </Button>
-                                ))}
-                            </div>
+                                <Form.Group className="mb-4">
+                                    <Form.Label className="small" style={{ fontWeight: 500 }}>
+                                        Booking Status
+                                    </Form.Label>
+                                    <Box>
+                                        <Select fullWidth name="bookingStatus" value={invoiceForm.bookingStatus} onChange={handleInputChange} displayEmpty sx={{ backgroundColor: '#fff', borderRadius: '4px' }}>
+                                            <MenuItem value="">Select Status</MenuItem>
+                                            {invoice.invoice_type === 'room_booking' && (
+                                                <MenuItem value="checked_out">Check Out</MenuItem>
+                                            )}
+                                            {invoice.invoice_type === 'event_booking' && (
+                                                <MenuItem value="completed">Completed</MenuItem>
+                                            )}
+                                        </Select>
+                                    </Box>
+                                </Form.Group>
 
-                            <Form.Group className="mb-4">
-                                <Form.Label className="small" style={{ fontWeight: 500 }}>
-                                    Booking Status
-                                </Form.Label>
-                                <Box>
-                                    <Select fullWidth name="bookingStatus" value={invoiceForm.bookingStatus} onChange={handleInputChange} displayEmpty sx={{ backgroundColor: '#fff', borderRadius: '4px' }}>
-                                        <MenuItem value="">Select Status</MenuItem>
-                                        {invoice.invoice_type === 'room_booking' && (
-                                            <MenuItem value="checked_out">Check Out</MenuItem>
-                                        )}
-                                        {invoice.invoice_type === 'event_booking' && (
-                                            <MenuItem value="completed">Completed</MenuItem>
-                                        )}
-                                    </Select>
-                                </Box>
-                            </Form.Group>
-
-                            {error && (
-                                <Typography color="error" sx={{ mb: 2 }}>
-                                    {error}
-                                </Typography>
-                            )}
-
-                            {paymentMethod === 'credit_card' && (
-                                <Box sx={{ mb: 4 }}>
-                                    <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
-                                        Upload Receipt
+                                {error && (
+                                    <Typography color="error" sx={{ mb: 2 }}>
+                                        {error}
                                     </Typography>
-                                    <input type="file" name="receipt" accept="image/*,application/pdf" onChange={handlePaymentChange} style={{ display: 'block' }} />
-                                </Box>
-                            )}
-                        </>
-                    ) : (
-                        <>
-                            <Form.Group className="mb-3">
-                                <Form.Label className="small">Choose Bank Store</Form.Label>
-                                <div className="d-flex flex-wrap gap-2">
-                                    <Button
-                                        variant={invoiceForm.bankName === 'HBL' ? 'dark' : 'outline-secondary'}
-                                        onClick={() => handleBankSelect('HBL')}
-                                        className="rounded-pill"
-                                        style={{
-                                            backgroundColor: invoiceForm.bankName === 'HBL' ? '#003366' : 'transparent',
-                                            borderColor: invoiceForm.bankName === 'HBL' ? '#003366' : '#dee2e6',
-                                        }}
-                                    >
-                                        HBL
-                                    </Button>
-                                    <Button
-                                        variant={invoiceForm.bankName === 'MCB Bank' ? 'dark' : 'outline-secondary'}
-                                        onClick={() => handleBankSelect('MCB Bank')}
-                                        className="rounded-pill"
-                                        style={{
-                                            backgroundColor: invoiceForm.bankName === 'MCB Bank' ? '#003366' : 'transparent',
-                                            borderColor: invoiceForm.bankName === 'MCB Bank' ? '#003366' : '#dee2e6',
-                                        }}
-                                    >
-                                        MCB Bank
-                                    </Button>
-                                    <Button
-                                        variant={invoiceForm.bankName === 'UBL' ? 'dark' : 'outline-secondary'}
-                                        onClick={() => handleBankSelect('UBL')}
-                                        className="rounded-pill"
-                                        style={{
-                                            backgroundColor: invoiceForm.bankName === 'UBL' ? '#003366' : 'transparent',
-                                            borderColor: invoiceForm.bankName === 'UBL' ? '#003366' : '#dee2e6',
-                                        }}
-                                    >
-                                        UBL
-                                    </Button>
-                                    <Button
-                                        variant={invoiceForm.bankName === 'Standard Chartered' ? 'dark' : 'outline-secondary'}
-                                        onClick={() => handleBankSelect('Standard Chartered')}
-                                        className="rounded-pill"
-                                        style={{
-                                            backgroundColor: invoiceForm.bankName === 'Standard Chartered' ? '#003366' : 'transparent',
-                                            borderColor: invoiceForm.bankName === 'Standard Chartered' ? '#003366' : '#dee2e6',
-                                        }}
-                                    >
-                                        Standard Chartered
-                                    </Button>
-                                </div>
-                            </Form.Group>
+                                )}
 
-                            <Form.Group className="mb-3">
-                                <Form.Label className="small">Customer Account Number</Form.Label>
-                                <Form.Control type="text" placeholder="88-08543-6982" name="accountNumber" value={invoiceForm.accountNumber} onChange={handleInputChange} className="border" />
-                            </Form.Group>
+                                {paymentMethod === 'credit_card' && (
+                                    <Box sx={{ mb: 4 }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                                            Upload Receipt
+                                        </Typography>
+                                        <input type="file" name="receipt" accept="image/*,application/pdf" onChange={handlePaymentChange} style={{ display: 'block' }} />
+                                    </Box>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small">Choose Bank Store</Form.Label>
+                                    <div className="d-flex flex-wrap gap-2">
+                                        <Button
+                                            variant={invoiceForm.bankName === 'HBL' ? 'dark' : 'outline-secondary'}
+                                            onClick={() => handleBankSelect('HBL')}
+                                            className="rounded-pill"
+                                            style={{
+                                                backgroundColor: invoiceForm.bankName === 'HBL' ? '#003366' : 'transparent',
+                                                borderColor: invoiceForm.bankName === 'HBL' ? '#003366' : '#dee2e6',
+                                            }}
+                                        >
+                                            HBL
+                                        </Button>
+                                        <Button
+                                            variant={invoiceForm.bankName === 'MCB Bank' ? 'dark' : 'outline-secondary'}
+                                            onClick={() => handleBankSelect('MCB Bank')}
+                                            className="rounded-pill"
+                                            style={{
+                                                backgroundColor: invoiceForm.bankName === 'MCB Bank' ? '#003366' : 'transparent',
+                                                borderColor: invoiceForm.bankName === 'MCB Bank' ? '#003366' : '#dee2e6',
+                                            }}
+                                        >
+                                            MCB Bank
+                                        </Button>
+                                        <Button
+                                            variant={invoiceForm.bankName === 'UBL' ? 'dark' : 'outline-secondary'}
+                                            onClick={() => handleBankSelect('UBL')}
+                                            className="rounded-pill"
+                                            style={{
+                                                backgroundColor: invoiceForm.bankName === 'UBL' ? '#003366' : 'transparent',
+                                                borderColor: invoiceForm.bankName === 'UBL' ? '#003366' : '#dee2e6',
+                                            }}
+                                        >
+                                            UBL
+                                        </Button>
+                                        <Button
+                                            variant={invoiceForm.bankName === 'Standard Chartered' ? 'dark' : 'outline-secondary'}
+                                            onClick={() => handleBankSelect('Standard Chartered')}
+                                            className="rounded-pill"
+                                            style={{
+                                                backgroundColor: invoiceForm.bankName === 'Standard Chartered' ? '#003366' : 'transparent',
+                                                borderColor: invoiceForm.bankName === 'Standard Chartered' ? '#003366' : '#dee2e6',
+                                            }}
+                                        >
+                                            Standard Chartered
+                                        </Button>
+                                    </div>
+                                </Form.Group>
 
-                            <Form.Group className="mb-3">
-                                <Form.Label className="small">Customer Account Name</Form.Label>
-                                <Form.Control type="text" placeholder="Mr. Jamal" name="accountName" value={invoiceForm.accountName} onChange={handleInputChange} className="border" />
-                            </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small">Customer Account Number</Form.Label>
+                                    <Form.Control type="text" placeholder="88-08543-6982" name="accountNumber" value={invoiceForm.accountNumber} onChange={handleInputChange} className="border" />
+                                </Form.Group>
 
-                            <Form.Group className="mb-3">
-                                <Form.Label className="small">Notes</Form.Label>
-                                <Form.Control type="text" placeholder="e.g. lunch at afohs club." name="notes" value={invoiceForm.notes} onChange={handleInputChange} className="border" />
-                            </Form.Group>
-                        </>
-                    )}
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small">Customer Account Name</Form.Label>
+                                    <Form.Control type="text" placeholder="Mr. Jamal" name="accountName" value={invoiceForm.accountName} onChange={handleInputChange} className="border" />
+                                </Form.Group>
 
-                    <div className="d-flex justify-content-end align-items-center mt-4">
-                        <div className="d-flex gap-2">
-                            <Button variant="outlined" color="secondary" onClick={handleSkipNow} className="d-flex align-items-center">
-                                Skip for Now
-                            </Button>
-                            <Button style={{ backgroundColor: '#003366', borderColor: '#003366' }} className="d-flex align-items-center" onClick={handlePayNow} disabled={loading}>
-                                Pay Now
-                                <KeyboardArrowRight fontSize="small" className="ms-1" />
-                            </Button>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small">Notes</Form.Label>
+                                    <Form.Control type="text" placeholder="e.g. lunch at afohs club." name="notes" value={invoiceForm.notes} onChange={handleInputChange} className="border" />
+                                </Form.Group>
+                            </>
+                        )}
+
+                        <div className="d-flex justify-content-end align-items-center mt-4">
+                            <div className="d-flex gap-2">
+                                <Button variant="outlined" color="secondary" onClick={handleSkipNow} className="d-flex align-items-center">
+                                    Skip for Now
+                                </Button>
+                                <Button style={{ backgroundColor: '#003366', borderColor: '#003366' }} className="d-flex align-items-center" onClick={handlePayNow} disabled={loading}>
+                                    Pay Now
+                                    <KeyboardArrowRight fontSize="small" className="ms-1" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
