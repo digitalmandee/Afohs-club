@@ -36,4 +36,69 @@ class Employee extends BaseModel
     {
         return $this->hasMany(LeaveApplication::class, 'employee_id', 'id');
     }
+
+    /**
+     * Get the current salary structure for this employee
+     */
+    public function salaryStructure()
+    {
+        return $this->hasOne(EmployeeSalaryStructure::class)->where('is_active', true)->latest();
+    }
+
+    /**
+     * Get all salary structures for this employee
+     */
+    public function salaryStructures()
+    {
+        return $this->hasMany(EmployeeSalaryStructure::class);
+    }
+
+    /**
+     * Get active allowances for this employee
+     */
+    public function allowances()
+    {
+        return $this->hasMany(EmployeeAllowance::class)->where('is_active', true);
+    }
+
+    /**
+     * Get active deductions for this employee
+     */
+    public function deductions()
+    {
+        return $this->hasMany(EmployeeDeduction::class)->where('is_active', true);
+    }
+
+    /**
+     * Get all payslips for this employee
+     */
+    public function payslips()
+    {
+        return $this->hasMany(Payslip::class);
+    }
+
+    /**
+     * Get the latest payslip for this employee
+     */
+    public function latestPayslip()
+    {
+        return $this->hasOne(Payslip::class)->latest();
+    }
+
+    /**
+     * Check if employee has active salary structure
+     */
+    public function hasActiveSalaryStructure()
+    {
+        return $this->salaryStructure()->exists();
+    }
+
+    /**
+     * Get current basic salary
+     */
+    public function getCurrentBasicSalary()
+    {
+        $salaryStructure = $this->salaryStructure;
+        return $salaryStructure ? $salaryStructure->basic_salary : 0;
+    }
 }

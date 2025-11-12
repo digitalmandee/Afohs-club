@@ -1,0 +1,554 @@
+import { useState, useEffect } from 'react';
+import { router } from '@inertiajs/react';
+import { route } from 'ziggy-js';
+import AdminLayout from '@/layouts/AdminLayout';
+import {
+    Box,
+    Card,
+    CardContent,
+    Typography,
+    Button,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    Chip,
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Grid,
+    Pagination,
+    CircularProgress,
+    Alert,
+    Snackbar,
+    TextField,
+    InputAdornment,
+    Tooltip,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Checkbox,
+    Avatar
+} from '@mui/material';
+import {
+    ArrowBack as ArrowBackIcon,
+    Visibility as VisibilityIcon,
+    Print as PrintIcon,
+    Download as DownloadIcon,
+    Search as SearchIcon,
+    CheckCircle as CheckCircleIcon,
+    Cancel as CancelIcon,
+    Assignment as AssignmentIcon,
+    FilterList as FilterListIcon,
+    Person as PersonIcon,
+    GetApp as GetAppIcon
+} from '@mui/icons-material';
+import axios from 'axios';
+
+const drawerWidth = 240;
+
+const PeriodPayslips = ({ period }) => {
+    const [payslips, setPayslips] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [selectedPayslips, setSelectedPayslips] = useState([]);
+    const [selectedPayslip, setSelectedPayslip] = useState(null);
+    const [showPayslipDialog, setShowPayslipDialog] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+    useEffect(() => {
+        fetchPayslips();
+    }, [currentPage, searchTerm, statusFilter]);
+
+    const fetchPayslips = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/payroll/periods/${period.id}/payslips`, {
+                params: {
+                    page: currentPage,
+                    per_page: 15,
+                    search: searchTerm,
+                    status: statusFilter,
+                },
+            });
+
+            if (response.data.success) {
+                setPayslips(response.data.payslips.data || []);
+                setTotalPages(response.data.payslips.last_page || 1);
+            }
+        } catch (error) {
+            console.error('Error fetching payslips:', error);
+            showSnackbar('Error loading payslips', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleViewPayslip = async (payslipId) => {
+        try {
+            const response = await axios.get(`/api/payroll/payslips/${payslipId}`);
+            if (response.data.success) {
+                setSelectedPayslip(response.data.payslip);
+                setShowPayslipDialog(true);
+            }
+        } catch (error) {
+            console.error('Error fetching payslip:', error);
+            showSnackbar('Error loading payslip details', 'error');
+        }
+    };
+
+    const handleApprovePayslip = async (payslipId) => {
+        try {
+            const response = await axios.post(`/api/payroll/payslips/${payslipId}/approve`);
+            if (response.data.success) {
+                showSnackbar('Payslip approved successfully!', 'success');
+                fetchPayslips();
+            }
+        } catch (error) {
+            console.error('Error approving payslip:', error);
+            showSnackbar('Error approving payslip', 'error');
+        }
+    };
+
+    const handleRejectPayslip = async (payslipId) => {
+        if (window.confirm('Are you sure you want to reject this payslip?')) {
+            try {
+                const response = await axios.post(`/api/payroll/payslips/${payslipId}/reject`);
+                if (response.data.success) {
+                    showSnackbar('Payslip rejected successfully!', 'success');
+                    fetchPayslips();
+                }
+            } catch (error) {
+                console.error('Error rejecting payslip:', error);
+                showSnackbar('Error rejecting payslip', 'error');
+            }
+        }
+    };
+
+    const handleRevertToDraft = async (payslipId) => {
+        if (window.confirm('Are you sure you want to revert this payslip back to draft status?')) {
+            try {
+                const response = await axios.post(`/api/payroll/payslips/${payslipId}/revert-to-draft`);
+                if (response.data.success) {
+                    showSnackbar('Payslip reverted to draft successfully!', 'success');
+                    fetchPayslips();
+                }
+            } catch (error) {
+                console.error('Error reverting payslip:', error);
+                showSnackbar('Error reverting payslip', 'error');
+            }
+        }
+    };
+
+    const handleBulkApprove = async () => {
+        if (selectedPayslips.length === 0) {
+            showSnackbar('Please select payslips to approve', 'warning');
+            return;
+        }
+
+        try {
+            const response = await axios.post('/api/payroll/payslips/bulk-approve', {
+                payslip_ids: selectedPayslips
+            });
+            if (response.data.success) {
+                showSnackbar(`${selectedPayslips.length} payslips approved successfully!`, 'success');
+                setSelectedPayslips([]);
+                fetchPayslips();
+            }
+        } catch (error) {
+            console.error('Error bulk approving payslips:', error);
+            showSnackbar('Error approving payslips', 'error');
+        }
+    };
+
+    const handleSelectPayslip = (payslipId) => {
+        setSelectedPayslips(prev => 
+            prev.includes(payslipId) 
+                ? prev.filter(id => id !== payslipId)
+                : [...prev, payslipId]
+        );
+    };
+
+    const handleSelectAll = () => {
+        if (selectedPayslips.length === payslips.length) {
+            setSelectedPayslips([]);
+        } else {
+            setSelectedPayslips(payslips.map(p => p.id));
+        }
+    };
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+        setCurrentPage(1);
+    };
+
+    const handlePageChange = (event, page) => {
+        setCurrentPage(page);
+    };
+
+    const showSnackbar = (message, severity = 'success') => {
+        setSnackbar({ open: true, message, severity });
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'approved': return 'success';
+            case 'paid': return 'primary';
+            case 'draft': return 'warning';
+            case 'rejected': return 'error';
+            default: return 'default';
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'approved': return 'Approved';
+            case 'paid': return 'Paid';
+            case 'draft': return 'Draft';
+            case 'rejected': return 'Rejected';
+            default: return status;
+        }
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-PK', {
+            style: 'currency',
+            currency: 'PKR',
+        })
+            .format(amount || 0)
+            .replace('PKR', 'Rs');
+    };
+
+    return (
+        <AdminLayout>
+            {/* Header */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.periods'))} sx={{ color: '#063455' }}>
+                        Back to Periods
+                    </Button>
+                    <Box>
+                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                            Period Payslips
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                            {period?.period_name} - {period ? new Date(period.start_date).toLocaleDateString() : ''} to {period ? new Date(period.end_date).toLocaleDateString() : ''}
+                        </Typography>
+                    </Box>
+                </Box>
+                <AssignmentIcon sx={{ fontSize: 40, color: '#063455', opacity: 0.7 }} />
+            </Box>
+
+            {/* Filters and Actions */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+                <Grid item xs={12} md={4}>
+                    <TextField
+                        fullWidth
+                        placeholder="Search employees..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon sx={{ color: '#063455' }} />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                    <FormControl fullWidth>
+                        <InputLabel>Status Filter</InputLabel>
+                        <Select
+                            value={statusFilter}
+                            label="Status Filter"
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <MenuItem value="">All Status</MenuItem>
+                            <MenuItem value="draft">Draft</MenuItem>
+                            <MenuItem value="approved">Approved</MenuItem>
+                            <MenuItem value="paid">Paid</MenuItem>
+                            <MenuItem value="rejected">Rejected</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                    <Box sx={{ display: 'flex', gap: 1, height: '100%', alignItems: 'center' }}>
+                        {selectedPayslips.length > 0 && (
+                            <Button
+                                variant="contained"
+                                startIcon={<CheckCircleIcon />}
+                                onClick={handleBulkApprove}
+                                sx={{ 
+                                    backgroundColor: '#2e7d32',
+                                    '&:hover': { backgroundColor: '#1b5e20' }
+                                }}
+                            >
+                                Approve ({selectedPayslips.length})
+                            </Button>
+                        )}
+                    </Box>
+                </Grid>
+                <Grid item xs={12} md={2}>
+                    <Card sx={{ background: 'linear-gradient(135deg, #063455 0%, #0a4a6b 100%)', color: 'white' }}>
+                        <CardContent sx={{ py: 1.5, textAlign: 'center' }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                {payslips.length}
+                            </Typography>
+                            <Typography variant="body2">Total Payslips</Typography>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
+
+            {/* Payslips Table */}
+            <Card>
+                <TableContainer component={Paper}>
+                    <Table>
+                        <TableHead>
+                            <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>
+                                    <Checkbox
+                                        checked={selectedPayslips.length === payslips.length && payslips.length > 0}
+                                        indeterminate={selectedPayslips.length > 0 && selectedPayslips.length < payslips.length}
+                                        onChange={handleSelectAll}
+                                        sx={{ color: '#063455' }}
+                                    />
+                                </TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee ID</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Department</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Gross Salary</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Deductions</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Net Salary</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                                        <CircularProgress sx={{ color: '#063455' }} />
+                                    </TableCell>
+                                </TableRow>
+                            ) : payslips.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                                        <Typography color="textSecondary">No payslips found for this period</Typography>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                payslips.map((payslip) => (
+                                    <TableRow 
+                                        key={payslip.id} 
+                                        sx={{ 
+                                            '&:hover': { backgroundColor: '#f5f5f5' },
+                                            backgroundColor: selectedPayslips.includes(payslip.id) ? '#e3f2fd' : 'inherit'
+                                        }}
+                                    >
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={selectedPayslips.includes(payslip.id)}
+                                                onChange={() => handleSelectPayslip(payslip.id)}
+                                                sx={{ color: '#063455' }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Avatar sx={{ width: 32, height: 32, backgroundColor: '#063455' }}>
+                                                    <PersonIcon fontSize="small" />
+                                                </Avatar>
+                                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                    {payslip.employee?.user?.name || payslip.employee?.name || 'N/A'}
+                                                </Typography>
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell>{payslip.employee?.employee_id || 'N/A'}</TableCell>
+                                        <TableCell>{payslip.employee?.department?.name || 'N/A'}</TableCell>
+                                        <TableCell>
+                                            <Typography sx={{ fontWeight: 600, color: '#2e7d32' }}>{formatCurrency(payslip.gross_salary)}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography sx={{ fontWeight: 600, color: '#d32f2f' }}>{formatCurrency(payslip.total_deductions)}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography sx={{ fontWeight: 600, color: '#063455' }}>{formatCurrency(payslip.net_salary)}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip 
+                                                label={getStatusText(payslip.status)} 
+                                                size="small" 
+                                                color={getStatusColor(payslip.status)}
+                                                sx={{ fontWeight: 600 }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                                <Tooltip title="View Details">
+                                                    <IconButton size="small" onClick={() => handleViewPayslip(payslip.id)} sx={{ color: '#063455' }}>
+                                                        <VisibilityIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                {(payslip.status === 'draft') && (
+                                                    <>
+                                                        <Tooltip title="Approve Payslip">
+                                                            <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#2e7d32' }}>
+                                                                <CheckCircleIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Reject Payslip">
+                                                            <IconButton size="small" onClick={() => handleRejectPayslip(payslip.id)} sx={{ color: '#d32f2f' }}>
+                                                                <CancelIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
+                                                {(payslip.status === 'approved') && (
+                                                    <Tooltip title="Revert to Draft">
+                                                        <IconButton size="small" onClick={() => handleRevertToDraft(payslip.id)} sx={{ color: '#ff9800' }}>
+                                                            <CancelIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                                <Tooltip title="Print Payslip">
+                                                    <IconButton 
+                                                        size="small" 
+                                                        onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')}
+                                                        sx={{ color: '#1976d2' }}
+                                                    >
+                                                        <PrintIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                        <Pagination
+                            count={totalPages}
+                            page={currentPage}
+                            onChange={(event, page) => setCurrentPage(page)}
+                            color="primary"
+                            sx={{
+                                '& .MuiPaginationItem-root': {
+                                    color: '#063455',
+                                },
+                                '& .Mui-selected': {
+                                    backgroundColor: '#063455',
+                                    color: 'white',
+                                },
+                            }}
+                        />
+                    </Box>
+                )}
+            </Card>
+
+            {/* Payslip Details Dialog */}
+            <Dialog open={showPayslipDialog} onClose={() => setShowPayslipDialog(false)} maxWidth="md" fullWidth>
+                <DialogTitle>
+                    <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
+                        Payslip Details
+                    </Typography>
+                </DialogTitle>
+                <DialogContent>
+                    {selectedPayslip && (
+                        <Box sx={{ mt: 2 }}>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Employee Name
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
+                                        {selectedPayslip.employee?.user?.name || selectedPayslip.employee?.name || 'N/A'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Employee ID
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
+                                        {selectedPayslip.employee?.employee_id || 'N/A'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Basic Salary
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
+                                        {formatCurrency(selectedPayslip.basic_salary)}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Total Allowances
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2, color: '#2e7d32' }}>
+                                        {formatCurrency(selectedPayslip.total_allowances)}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Total Deductions
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2, color: '#d32f2f' }}>
+                                        {formatCurrency(selectedPayslip.total_deductions)}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        Net Salary
+                                    </Typography>
+                                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#063455' }}>
+                                        {formatCurrency(selectedPayslip.net_salary)}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setShowPayslipDialog(false)}>Close</Button>
+                    <Button
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#063455',
+                            '&:hover': { backgroundColor: '#052d45' },
+                        }}
+                    >
+                        Print Payslip
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Snackbar */}
+            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+        </AdminLayout>
+    );
+};
+
+export default PeriodPayslips;

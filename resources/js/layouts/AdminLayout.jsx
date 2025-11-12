@@ -9,7 +9,7 @@ const AdminLayout = ({ children }) => {
     const [open, setOpen] = useState(true);
 
     return (
-        <Box sx={{ display: 'flex' }}>
+        <Box>
             <div>{children}</div>
         </Box>
     );

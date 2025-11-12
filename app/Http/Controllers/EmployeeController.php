@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\EmployeeLog;
 use App\Models\EmployeeType;
+use App\Models\EmployeeSalaryStructure;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
 class EmployeeController extends Controller
@@ -121,14 +124,19 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
-            'employee_id' => 'required',
-            'email' => 'required|email',
-            'designation' => 'required|string',
+            'employee_id' => 'required|unique:employees,employee_id',
+            'email' => 'required|email|unique:employees,email',
+            'designation' => 'nullable|string',
             'phone_no' => 'required',
             'gender' => 'required|in:male,female',
+            'marital_status' => 'nullable|in:single,married,divorced,widowed',
+            'national_id' => 'nullable|string',
+            'account_no' => 'nullable|string',
+            'address' => 'nullable|string',
+            'emergency_no' => 'nullable|string',
             'department_id' => 'required|exists:departments,id',
-            'salary' => 'required|numeric',
-            'joining_date' => 'required|date',
+            'salary' => 'nullable|numeric',
+            'joining_date' => 'nullable|date',
             'employment_type' => 'required|in:full_time,part_time,contract',
             'employee_type_id' => 'required|exists:employee_types,id',
         ]);
@@ -161,7 +169,7 @@ class EmployeeController extends Controller
                 $user->assignRole('cashier');
             }
 
-            Employee::create([
+            $employee = Employee::create([
                 'user_id' => $user?->id,  // null if not cashier
                 'department_id' => $request->department_id,
                 'employee_type_id' => $request->employee_type_id,
@@ -171,10 +179,21 @@ class EmployeeController extends Controller
                 'designation' => $request->designation,
                 'phone_no' => $request->phone_no,
                 'gender' => $request->gender,
+                'marital_status' => $request->marital_status,
+                'national_id' => $request->national_id,
+                'account_no' => $request->account_no,
+                'address' => $request->address,
+                'emergency_no' => $request->emergency_no,
                 'salary' => $request->salary,
                 'joining_date' => $request->joining_date,
                 'employment_type' => $request->employment_type,
+                'created_by' => Auth::id(),
             ]);
+
+            // Auto-create salary structure if salary is provided
+            if ($request->filled('salary') && $request->salary > 0) {
+                $this->createOrUpdateSalaryStructure($employee, $request->salary);
+            }
 
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Employee created successfully'], 201);
@@ -247,22 +266,15 @@ class EmployeeController extends Controller
                 }
             }
 
+            // Store old salary before updating
+            $oldSalary = $employee->salary;
+
             // Update employee data
-            $employee->update([
-                'employee_id' => $request->employee_id,
-                'name' => $request->name,
-                'email' => $request->email,
-                'designation' => $request->designation,
-                'phone_no' => $request->phone_no,
-                'gender' => $request->gender,
-                'marital_status' => $request->marital_status,
-                'national_id' => $request->national_id,
-                'account_no' => $request->account_no,
-                'address' => $request->address,
-                'emergency_no' => $request->emergency_no,
-                'salary' => $request->salary,
-                'joining_date' => $request->joining_date,
-            ]);
+            $employee->update($request->only([
+                'name', 'employee_id', 'email', 'designation', 'phone_no', 
+                'gender', 'marital_status', 'national_id', 'account_no', 
+                'address', 'emergency_no', 'salary', 'joining_date'
+            ]));
 
             // Update associated user if exists
             if ($employee->user) {
@@ -272,11 +284,57 @@ class EmployeeController extends Controller
                 ]);
             }
 
+            // Auto-create/update salary structure only if salary changed and > 0
+            if ($request->filled('salary') && $request->salary > 0) {
+                // Only update salary structure if salary actually changed
+                if ($oldSalary != $request->salary) {
+                    $this->createOrUpdateSalaryStructure($employee, $request->salary);
+                }
+            }
+
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Employee updated successfully'], 200);
         } catch (\Throwable $th) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+    }
+
+
+    private function createOrUpdateSalaryStructure($employee, $newSalary)
+    {
+        // Get current active salary structure
+        $currentStructure = EmployeeSalaryStructure::where('employee_id', $employee->id)
+            ->where('is_active', true)
+            ->first();
+
+        if ($currentStructure) {
+            // If active structure exists, check if salary actually changed
+            if ($currentStructure->basic_salary != $newSalary) {
+                // Only update the basic_salary, preserve allowances and deductions
+                $currentStructure->update([
+                    'basic_salary' => $newSalary,
+                    'updated_by' => Auth::id(),
+                ]);
+            }
+            // If salary is same, do nothing - preserve existing structure
+        } else {
+            // No active structure exists, check if admin intentionally deactivated it
+            $hasInactiveStructure = EmployeeSalaryStructure::where('employee_id', $employee->id)
+                ->where('is_active', false)
+                ->exists();
+
+            if (!$hasInactiveStructure) {
+                // No salary structure exists at all, create new one (first time)
+                EmployeeSalaryStructure::create([
+                    'employee_id' => $employee->id,
+                    'basic_salary' => $newSalary,
+                    'is_active' => true,
+                    'effective_from' => now(),
+                    'created_by' => Auth::id(),
+                ]);
+            }
+            // If inactive structure exists, respect admin's decision - don't auto-create
         }
     }
 }

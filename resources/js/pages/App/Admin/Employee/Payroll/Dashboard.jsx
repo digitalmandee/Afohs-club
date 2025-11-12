@@ -1,304 +1,349 @@
 import { router } from '@inertiajs/react';
+import AdminLayout from '@/layouts/AdminLayout';
 import PeopleIcon from '@mui/icons-material/People';
-import {
-    Box,
-    Button,
-    Card,
-    CircularProgress,
-    InputBase,
-    Modal,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography,
-} from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { useState } from 'react';
-// import AttendanceFilter from './Filter';
+import { Box, Button, Card, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Grid, Chip, IconButton, Alert, Snackbar } from '@mui/material';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { AccountBalance, TrendingUp, Schedule, MonetizationOn, Settings, Assessment, Refresh } from '@mui/icons-material';
 
+const PayrollDashboard = ({ stats: initialStats }) => {
+    const [stats, setStats] = useState(initialStats || {});
+    const [loading, setLoading] = useState(false);
+    const [recentPeriods, setRecentPeriods] = useState([]);
+    const [error, setError] = useState('');
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-const PayrollDashboard = () => {
-    // const [open, setOpen] = useState(true);
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
 
-    const employeeData = [
-        {
-            period: 'Apr-2025',
-            total_employee: 80,
-            total_salary: 111110,
-            total_CTC: 2,
-            Gross_salary: 800000,
-            total_deduction: 4,
-        },
-        {
-            period: 'Apr-2025',
-            total_employee: 80,
-            total_salary: 111110,
-            total_CTC: 2,
-            Gross_salary: 800000,
-            total_deduction: 4,
-        },
-        {
-            period: 'Apr-2025',
-            total_employee: 80,
-            total_salary: 111110,
-            total_CTC: 2,
-            Gross_salary: 800000,
-            total_deduction: 4,
-        },
-    ];
+    const fetchDashboardData = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const response = await axios.get('/api/payroll/dashboard/stats');
+            if (response.data.success) {
+                setStats(response.data.stats);
+                setRecentPeriods(response.data.stats.recent_periods || []);
+            } else {
+                setError('Failed to fetch dashboard data');
+                setSnackbarOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+            setError('Error loading dashboard data. Please try again.');
+            setSnackbarOpen(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-PK', {
+            style: 'currency',
+            currency: 'PKR',
+        })
+            .format(amount || 0)
+            .replace('PKR', 'Rs');
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbarOpen(false);
+    };
+
     return (
-        <>
-            {/* <SideNav open={open} setOpen={setOpen} /> */}
-            <div
-                style={{
-                    minHeight:'100vh',
-                    backgroundColor: '#f5f5f5',
-                }}
-            >
-                <Box
-                    sx={{
-                        px: 4,
-                        py: 2,
-                    }}
-                >
-                    <div style={{ paddingTop: '1rem', backgroundColor: 'transparent' }}>
-                        {/* Header */}
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                width: '100%',
-                                marginBottom: '24px'
+        <AdminLayout>
+            <Box sx={{ p: 3 }}>
+                <div style={{ paddingTop: '1rem', backgroundColor: 'transparent' }}>
+                    {/* Header */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            width: '100%',
+                            marginBottom: '24px',
+                        }}
+                    >
+                        <Typography
+                            sx={{
+                                fontWeight: 500,
+                                fontSize: '30px',
+                                color: '#063455',
                             }}
                         >
-                            <Typography
+                            Payroll Dashboard
+                        </Typography>
+
+                        {/* Right-side buttons container */}
+                        <div style={{ display: 'flex', gap: '12px', height: '40px' }}>
+                            <IconButton
+                                onClick={fetchDashboardData}
                                 sx={{
-                                    fontWeight: 500,
-                                    fontSize: '30px',
                                     color: '#063455',
+                                    border: '1px solid #063455',
+                                    borderRadius: '8px',
                                 }}
+                                disabled={loading}
                             >
-                                Payroll Dashboard
-                            </Typography>
-
-                            {/* Right-side buttons container */}
-                            <div style={{ display: 'flex', gap: '20px', height:"40px" }}>
-                                <Button
-                                    style={{
-                                        color: '#063455',
-                                        // width: '160px',
-                                        backgroundColor: '#FFFFFF',
-                                        textTransform: 'none',
-                                        border: '1px solid #7F7F7F',
-                                        fontWeight: 500,
-                                        fontSize: '16px'
-                                    }}
-                                    onClick={()=>router.visit('/employee/payroll/salary/component')}
-                                >
-                                    Salary Component
-                                </Button>
-                                <Button
-                                    style={{
-                                        color: 'white',
-                                        width: '100px',
-                                        backgroundColor: '#063455',
-                                        textTransform: 'none'
-                                    }}
-                                    onClick={()=>router.visit('/employee/payroll/runpayroll/dashboard')}
-                                >
-                                    Run Payroll
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Metric Cards */}
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexWrap: 'wrap', // ✅ Allow wrapping
-                                gap: '1rem',
-                                marginBottom: '24px',
-                                justifyContent: 'flex-start', // optional: makes the cards align left
-                            }}
-                        >
-                            {[
-                                { title: 'Total Employee', value: 320, icon: PeopleIcon },
-                                { title: 'Total Gross Salary', value: 200, imgSrc: '/assets/ctc.png' },
-                                { title: 'Total CTC', value: 120, imgSrc: '/assets/ctc.png' },
-                                { title: 'Payable Days', value: 120, imgSrc: '/assets/calendar.png' },
-                                { title: 'Total Net Salary', value: 120, imgSrc: '/assets/wallet.png' },
-                                { title: 'Total Deduction', value: 120, imgSrc: '/assets/wallet.png' },
-                            ].map((item, index) => (
-                                <div
-                                    key={index}
-                                    style={{
-                                        flex: '0 0 calc(33.71% - 1rem)',
-                                        boxSizing: 'border-box',
-                                    }}
-                                >
-                                    <Card
-                                        style={{
-                                            backgroundColor: '#063455',
-                                            color: '#fff',
-                                            borderRadius: '2px',
-                                            height: '160px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            padding: '1rem',
-                                            boxShadow: 'none',
-                                            border: 'none',
-                                        }}
-                                    >
-                                        <div
-                                            style={{
-                                                backgroundColor: '#202728',
-                                                borderRadius: '50%',
-                                                width: '50px',
-                                                height: '50px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginRight: '1rem',
-                                            }}
-                                        >
-                                            {item.icon ? (
-                                                <item.icon style={{ color: '#fff', fontSize: '28px' }} />
-                                            ) : item.imgSrc ? (
-                                                <img src={item.imgSrc} alt={item.title} style={{ width: '28px', height: '28px' }} />
-                                            ) : null}
-                                        </div>
-                                        <div>
-                                            <Typography variant="body2" style={{ color: '#DDE6E8' }}>
-                                                {item.title}
-                                            </Typography>
-                                            <Typography variant="h6" style={{ fontWeight: 'bold', color: '#fff' }}>
-                                                {item.value}
-                                            </Typography>
-                                        </div>
-                                    </Card>
-                                </div>
-                            ))}
-                        </div>
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '24px',
-                            }}
-                        >
-                            {/* Left Group: Search and Filter */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                <Typography sx={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>
-                                    Payroll Summary by Financial Year
-                                </Typography>
-                            </div>
-
-                            {/* View All Link (Right Side) */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                {/* Input Field with Right-side Dropdown Icon */}
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        border: '1px solid #121212',
-                                        // borderRadius: '4px',
-                                        width: '200px',
-                                        padding: '4px 8px',
-                                        backgroundColor: '#FFFFFF',
-                                        justifyContent: 'space-between',
-                                    }}
-                                >
-                                    <InputBase
-                                        placeholder="Financial Year 2024-2025"
-                                        fullWidth
-                                        sx={{ fontSize: '14px' }}
-                                        inputProps={{ style: { padding: 0 } }}
-                                    />
-                                    <ArrowDropDownIcon style={{ color: '#121212', marginLeft: '8px' }} />
-                                </div>
-                            </div>
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            {/* Booking Table */}
-                            <TableContainer
-                                component={Paper}
+                                <Refresh />
+                            </IconButton>
+                            <Button
+                                startIcon={<Settings />}
                                 style={{
-                                    width: '100%',
+                                    color: '#063455',
                                     backgroundColor: '#FFFFFF',
-                                    borderRadius: '1rem',
-                                    boxShadow: 'none',
-                                    border: '1px solid #ccc',
-                                    marginBottom: '24px',
+                                    textTransform: 'none',
+                                    border: '1px solid #7F7F7F',
+                                    fontWeight: 500,
+                                    fontSize: '14px',
                                 }}
+                                onClick={() => router.visit(route('employees.payroll.settings'))}
                             >
-                                <Table>
-                                    <TableHead style={{ backgroundColor: '#E5E5EA' }}>
-                                        <TableRow>
-                                            <TableCell style={{ color: '#000000', fontWeight: 500, fontSize: '16px' }}>Period</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: 500, fontSize: '16px' }}>Total Employee</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: 500, fontSize: '16px' }}>Total Salary</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: 500, fontSize: '16px' }}>Total CTC</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: 500, fontSize: '16px' }}>Gross Salary</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: 500, fontSize: '16px' }}>Total Deduction</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {employeeData.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={7} align="center">
-                                                    <CircularProgress sx={{ color: '#0F172A' }} />
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            employeeData.map((employee, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell
-                                                        onClick={() => router.visit('/employee/payroll/monthly/summary')}
-                                                        style={{
-                                                            cursor: 'pointer',
-                                                            fontWeight: 500,
-                                                            fontSize: '16px',
-                                                            color: '#6C6C6C',
-                                                        }}
-                                                    >
-                                                        {employee.period}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.total_employee}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.total_salary}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.total_CTC}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.Gross_salary}
-                                                    </TableCell>
-                                                    <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
-                                                        {employee.total_deduction}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-                            {/* <AttendanceFilter
-                                open={openFilter}
-                                onClose={() => setOpenFilter(false)}
-                            /> */}
+                                Settings
+                            </Button>
+                            <Button
+                                startIcon={<Assessment />}
+                                style={{
+                                    color: '#063455',
+                                    backgroundColor: '#FFFFFF',
+                                    textTransform: 'none',
+                                    border: '1px solid #7F7F7F',
+                                    fontWeight: 500,
+                                    fontSize: '14px',
+                                }}
+                                onClick={() => router.visit(route('employees.payroll.salaries'))}
+                            >
+                                Manage Salaries
+                            </Button>
+                            <Button
+                                startIcon={<TrendingUp />}
+                                style={{
+                                    color: 'white',
+                                    backgroundColor: '#063455',
+                                    textTransform: 'none',
+                                    fontWeight: 500,
+                                    fontSize: '14px',
+                                }}
+                                onClick={() => router.visit(route('employees.payroll.process'))}
+                            >
+                                Process Payroll
+                            </Button>
                         </div>
                     </div>
-                </Box>
-            </div>
-        </>
+
+                    {/* Metric Cards */}
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                        {[
+                            {
+                                title: 'Total Employees',
+                                value: stats.total_employees || 0,
+                                icon: PeopleIcon,
+                                color: '#063455',
+                            },
+                            {
+                                title: 'Employees with Salary',
+                                value: stats.employees_with_salary || 0,
+                                icon: AccountBalance,
+                                color: '#2e7d32',
+                            },
+                            {
+                                title: 'Current Period',
+                                value: stats.current_period?.period_name || 'No Active Period',
+                                icon: Schedule,
+                                color: '#ed6c02',
+                                isText: true,
+                            },
+                            {
+                                title: 'Pending Payslips',
+                                value: stats.pending_payslips || 0,
+                                icon: Assessment,
+                                color: '#d32f2f',
+                            },
+                            {
+                                title: 'This Month Payroll',
+                                value: stats.this_month_payroll ? formatCurrency(stats.this_month_payroll.total_net_amount) : 'Rs 0',
+                                icon: MonetizationOn,
+                                color: '#1976d2',
+                                isText: true,
+                            },
+                            {
+                                title: 'Active Employees',
+                                value: stats.active_employees || 0,
+                                icon: TrendingUp,
+                                color: '#388e3c',
+                            },
+                        ].map((item, index) => (
+                            <Grid item xs={12} sm={6} md={4} key={index}>
+                                <Card
+                                    sx={{
+                                        background: `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`,
+                                        color: 'white',
+                                        borderRadius: '12px',
+                                        height: '140px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        p: 3,
+                                        boxShadow: `0 4px 20px ${item.color}40`,
+                                        transition: 'transform 0.2s ease-in-out',
+                                        '&:hover': {
+                                            transform: 'translateY(-2px)',
+                                            boxShadow: `0 6px 25px ${item.color}60`,
+                                        },
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                            borderRadius: '50%',
+                                            width: '60px',
+                                            height: '60px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            mr: 2,
+                                        }}
+                                    >
+                                        <item.icon style={{ color: '#fff', fontSize: '32px' }} />
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="body2" sx={{ opacity: 0.9, mb: 0.5 }}>
+                                            {item.title}
+                                        </Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#fff' }}>
+                                            {loading ? '...' : item.isText ? item.value : item.value.toLocaleString()}
+                                        </Typography>
+                                    </Box>
+                                </Card>
+                            </Grid>
+                        ))}
+                    </Grid>
+
+                    {/* Recent Payroll Periods Section */}
+                    <Box sx={{ mb: 4 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                                Recent Payroll Periods
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => router.visit(route('employees.payroll.payslips'))}
+                                    sx={{
+                                        color: '#063455',
+                                        borderColor: '#063455',
+                                        textTransform: 'none',
+                                        '&:hover': {
+                                            borderColor: '#052d45',
+                                            backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                        },
+                                    }}
+                                >
+                                    View All Payslips
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => router.visit(route('employees.payroll.periods'))}
+                                    sx={{
+                                        color: '#063455',
+                                        borderColor: '#063455',
+                                        textTransform: 'none',
+                                        '&:hover': {
+                                            borderColor: '#052d45',
+                                            backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                        },
+                                    }}
+                                >
+                                    View All Periods
+                                </Button>
+                            </Box>
+                        </Box>
+                        <TableContainer
+                            component={Paper}
+                            sx={{
+                                borderRadius: '12px',
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                                border: '1px solid #e0e0e0',
+                            }}
+                        >
+                            <Table>
+                                <TableHead>
+                                    <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Period Name</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Date Range</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employees</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Net Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                                                <CircularProgress sx={{ color: '#063455' }} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : recentPeriods.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                                                <Typography color="textSecondary">No payroll periods found</Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        recentPeriods.map((period, index) => (
+                                            <TableRow
+                                                key={period.id}
+                                                sx={{
+                                                    '&:hover': { backgroundColor: '#f5f5f5' },
+                                                    cursor: 'pointer',
+                                                }}
+                                                onClick={() => router.visit(route('employees.payroll.payslips.period', period.id))}
+                                            >
+                                                <TableCell sx={{ fontWeight: 500 }}>{period.period_name}</TableCell>
+                                                <TableCell>
+                                                    {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip label={period.status} size="small" color={period.status === 'completed' ? 'success' : period.status === 'processing' ? 'warning' : period.status === 'paid' ? 'primary' : 'default'} />
+                                                </TableCell>
+                                                <TableCell>{period.total_employees || 0}</TableCell>
+                                                <TableCell>{formatCurrency(period.total_net_amount || 0)}</TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        size="small"
+                                                        variant="outlined"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.visit(route('employees.payroll.payslips.period', period.id));
+                                                        }}
+                                                        sx={{
+                                                            color: '#063455',
+                                                            borderColor: '#063455',
+                                                            textTransform: 'none',
+                                                            fontSize: '12px',
+                                                        }}
+                                                    >
+                                                        View Payslips
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Box>
+                </div>
+            </Box>
+
+            {/* Error Snackbar */}
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
+                    {error}
+                </Alert>
+            </Snackbar>
+        </AdminLayout>
     );
 };
 
