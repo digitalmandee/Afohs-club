@@ -701,12 +701,12 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     return (
         <>
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-                <Container maxWidth="lg" sx={{ py: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
+                {/* <Container maxWidth="lg" sx={{ py: 4 }}> */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <IconButton onClick={onBack} sx={{ color: '#000' }}>
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>
+                        <Typography variant="h5" component="h1" sx={{ fontWeight: 500, color: '#333' }}>
                             Membership Information
                         </Typography>
                     </Box>
@@ -837,7 +837,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                             sx={{
                                                                 border: '1px solid #ccc',
                                                                 borderRadius: 1,
-                                                                p: 1,
+                                                                // p: 1,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 bgcolor: data.member_type_id == type.id ? '#fff' : 'transparent',
@@ -856,7 +856,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             )}
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid item xs={4}>
                                         <Box>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category *</Typography>
                                             <FormControl fullWidth variant="outlined">
@@ -920,6 +920,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         displayEmpty: true,
                                                     }}
                                                     sx={{
+                                                        height: 40,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        '& .MuiSelect-select': {
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            paddingY: 0,
+                                                        },
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
                                                         },
@@ -943,8 +951,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </Box>
                                     </Grid>
 
-                                    <Grid item xs={6}>
-                                        <Box>
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Kinship</Typography>
                                             <AsyncSearchTextField
                                                 label=""
@@ -981,12 +989,15 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 endpoint="admin.api.search-users"
                                                 placeholder="Search Kinship..."
                                                 disabled={!data.membership_category}
+                                            // textFieldProps={{
+                                            //     sx: { '& .MuiInputBase-root': { height: 40, alignItems: 'center' } }
+                                            // }}
                                             />
                                         </Box>
                                     </Grid>
 
-                                    <Grid item xs={6}>
-                                        <Box>
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Number *</Typography>
                                             <TextField
                                                 fullWidth
@@ -1024,8 +1035,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </Box>
                                     </Grid>
 
-                                    <Grid item xs={6}>
-                                        <Box>
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Barcode Number</Typography>
                                             <TextField
                                                 fullWidth
@@ -1037,6 +1048,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     handleChange(e);
                                                 }}
                                                 sx={{
+                                                    // height: 10,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    '& .MuiSelect-select': {
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        paddingY: 0,
+                                                    },
                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                         borderColor: '#ccc',
                                                     },
@@ -1045,8 +1064,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </Box>
                                     </Grid>
 
-                                    <Grid item xs={6}>
-                                        <Box>
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Date *</Typography>
                                             <TextField
                                                 fullWidth
@@ -1070,8 +1089,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             )}
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
-                                        <Box>
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
                                             <FormControl fullWidth variant="outlined">
                                                 <Select
@@ -1086,6 +1105,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         return selected;
                                                     }}
                                                     sx={{
+                                                        height: 40,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        '& .MuiSelect-select': {
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            paddingY: 0,
+                                                        },
                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                             borderColor: '#ccc',
                                                         },
@@ -1101,8 +1128,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </Box>
                                     </Grid>
 
-                                    <Grid item xs={6}>
-                                        <Box sx={{ mb: 1 }}>
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
                                             <TextField
                                                 fullWidth
@@ -1121,8 +1148,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             />
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
-                                        <Box sx={{ mb: 1 }}>
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
                                             <TextField
                                                 fullWidth
@@ -1141,8 +1168,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             />
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={12}>
-                                        <Box>
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Status</Typography>
                                             <FormControl fullWidth variant="outlined">
                                                 <Select
@@ -1501,7 +1528,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     <Grid container spacing={2}>
                                                         {/* First Name */}
                                                         <Grid item xs={4}>
-                                                            <Box>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>First Name*</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1522,7 +1549,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
                                                         {/* Middle Name */}
                                                         <Grid item xs={4}>
-                                                            <Box>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Middle Name</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1541,7 +1568,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
                                                         {/* Last Name */}
                                                         <Grid item xs={4}>
-                                                            <Box>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Last Name</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1557,8 +1584,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 />
                                                             </Box>
                                                         </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Box>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Relation with Primary*</Typography>
                                                                 <FormControl fullWidth variant="outlined" error={!!familyMemberErrors.relation}>
                                                                     <Select
@@ -1593,8 +1620,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         </Grid>
 
                                                         {/* Passport No */}
-                                                        <Grid item xs={6}>
-                                                            <Box>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Passport No</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1610,12 +1637,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 />
                                                             </Box>
                                                         </Grid>
-                                                    </Grid>
-
-                                                    <Grid container spacing={2}>
                                                         {/* Nationality */}
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Nationality</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1631,10 +1655,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 />
                                                             </Box>
                                                         </Grid>
+                                                    </Grid>
+
+                                                    <Grid container spacing={2} sx={{mt:1}}>
 
                                                         {/* Gender */}
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, mb: 3, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Gender</Typography>
                                                                 <FormControl fullWidth variant="outlined">
                                                                     <Select
@@ -1662,8 +1689,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         </Grid>
 
                                                         {/* Marital Status */}
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, mb: 3, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Marital Status</Typography>
                                                                 <FormControl fullWidth variant="outlined">
                                                                     <Select
@@ -1690,11 +1717,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 </FormControl>
                                                             </Box>
                                                         </Grid>
-                                                    </Grid>
-
-                                                    <Grid container spacing={2}>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Email</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1714,8 +1738,11 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 />
                                                             </Box>
                                                         </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                    </Grid>
+
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Barcode Number</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1736,11 +1763,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 />
                                                             </Box>
                                                         </Grid>
-                                                    </Grid>
-
-                                                    <Grid container spacing={2}>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Phone Number</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1756,8 +1780,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 />
                                                             </Box>
                                                         </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>CNIC</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1791,9 +1815,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         </Grid>
                                                     </Grid>
 
-                                                    <Grid container spacing={2}>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                    <Grid container spacing={2} sx={{mt:1}}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Date of Birth *</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1819,8 +1843,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 )}
                                                             </Box>
                                                         </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1838,8 +1862,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 />
                                                             </Box>
                                                         </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
                                                                 <TextField
                                                                     fullWidth
@@ -1862,8 +1886,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 )}
                                                             </Box>
                                                         </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Box sx={{ mb: 3 }}>
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                                 <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Status</Typography>
                                                                 <Select
                                                                     name="status"
@@ -1956,7 +1980,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                             </Button>
                         </Box>
                     </Box>
-                </Container>
+                {/* </Container> */}
             </div>
         </>
     );

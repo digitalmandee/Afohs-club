@@ -259,16 +259,13 @@ const Payment = ({ invoice, onBack }) => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    // marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    // transition: 'margin-left 0.3s ease-in-out',
-                    // marginTop: '5rem',
-                    // backgroundColor: '#F6F6F6',
                     minHeight: '100vh',
+                    backgroundColor:'#f5f5f5',
                     padding: '2rem',
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <IconButton onClick={onBack} sx={{ color: '#000' }}>
+                    <IconButton onClick={()=>window.history.back()} sx={{ color: '#000' }}>
                         <ArrowBack />
                     </IconButton>
                     <Typography variant="h5" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>

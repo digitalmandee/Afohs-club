@@ -138,7 +138,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                 <Grid container>
                     {/* Contact Information Section */}
                     <Grid item xs={12} md={6}>
-                        <Paper sx={{ p: 3, mb: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
+                        <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                                 <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
                                     Contact Information
@@ -206,7 +206,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
 
                             <Grid container spacing={3}>
                                 {/* Name */}
-                                <Grid item xs={12}>
+                                <Grid item xs={12} sm={6}>
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Name
                                     </Typography>
@@ -263,7 +263,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
 
                     {/* Current Address and Permanent Address Sections */}
                     <Grid item xs={12} md={6}>
-                        <Paper sx={{ p: 3, mb: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
+                        <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
                             {/* Current Address Section */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                                 <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
@@ -367,7 +367,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                             </Grid>
 
                             {/* Action Buttons */}
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 3, mt: 4 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, mb:1.5 }}>
                                 <Button
                                     variant="outlined"
                                     sx={{
