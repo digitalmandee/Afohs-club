@@ -181,8 +181,8 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
-                    backgroundColor:'#f5f5f5'
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5'
                 }}
             >
                 {/* Header */}
@@ -198,7 +198,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
                 <Box
                     sx={{
                         margin: '0 auto',
-                        bgcolor: '#FFFFFF',
+                        // bgcolor: '#FFFFFF',
                         borderRadius: '4px',
                         marginTop: 5,
                     }}
@@ -223,7 +223,17 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
                         </Stepper>
                     </Box>
                     {/* Main Content */}
-                    <div className="mx-4 my-4 p-4 bg-white rounded border">
+                    <Box
+                        sx={{
+                            width: '70%',
+                            mx: 'auto',
+                            my: 4,
+                            p: 4,
+                            bgcolor: '#fff',
+                            borderRadius: 2,
+                            border: '1px solid #e0e0e0',
+                        }}
+                    >
                         <Box sx={{ width: '100%', p: 0 }}>
                             <Box sx={{ mb: 4 }}>{renderStepContent(activeStep)}</Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -235,7 +245,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
                                 </Button>
                             </Box>
                         </Box>
-                    </div>
+                    </Box>
                 </Box>
             </div>
         </>
@@ -360,7 +370,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 <Grid item xs={6} sm={4}>
                     <TextField label="Enter Relationship" name="guestRelation" value={formData.guestRelation} onChange={handleChange} fullWidth />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={4}>
                     <TextField label="Accompanied Guest Name" name="accompaniedGuest" value={formData.accompaniedGuest} onChange={handleChange} fullWidth />
                 </Grid>
             </Grid>
@@ -396,7 +406,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
                 </Typography>
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={4}>
                 <FormControl fullWidth>
                     <InputLabel>Booking Category</InputLabel>
                     <Select value={formData.bookingCategory} onChange={handleChange} name="bookingCategory" label="Booking Category">
@@ -418,13 +428,13 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
             <Grid item xs={2}>
                 <TextField label="Per Day Room Charges" name="perDayCharge" value={formData.perDayCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={2}>
+            <Grid item xs={3}>
                 <TextField label="No. of Nights" name="nights" value={formData.nights} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={2}>
+            <Grid item xs={3}>
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={4}>
                 <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth />
             </Grid>
         </Grid>
@@ -620,7 +630,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragOver(false);
-        
+
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
             const syntheticEvent = {
@@ -641,13 +651,13 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
         const isFileObject = file instanceof File;
         const fileName = isFileObject ? file.name : file.split('/').pop();
         const ext = fileName.split('.').pop().toLowerCase();
-        
+
         const previewUrl = isFileObject ? URL.createObjectURL(file) : file;
-        
+
         return (
-            <div key={index} style={{ 
-                position: 'relative', 
-                width: '100px', 
+            <div key={index} style={{
+                position: 'relative',
+                width: '100px',
                 textAlign: 'center',
                 marginBottom: '10px'
             }}>
@@ -673,18 +683,18 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
 
                 {['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext) ? (
                     <div>
-                        <img 
-                            src={previewUrl} 
-                            alt={`Document ${index + 1}`} 
-                            style={{ 
-                                width: '60px', 
-                                height: '60px', 
-                                objectFit: 'cover', 
-                                borderRadius: '6px', 
+                        <img
+                            src={previewUrl}
+                            alt={`Document ${index + 1}`}
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                objectFit: 'cover',
+                                borderRadius: '6px',
                                 cursor: 'pointer',
                                 border: '2px solid #ddd'
-                            }} 
-                            onClick={() => window.open(previewUrl, '_blank')} 
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
                         />
                         <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Image</p>
                     </div>
@@ -788,24 +798,24 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                         }
                     }}
                 >
-                    <input 
+                    <input
                         ref={fileInputRef}
-                        type="file" 
-                        multiple 
-                        accept=".pdf,.doc,.docx,image/*" 
-                        name="documents" 
-                        onChange={handleFileChange} 
-                        style={{ display: 'none' }} 
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,image/*"
+                        name="documents"
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
                     />
-                    
+
                     <Box sx={{ mb: 2 }}>
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3"/>
-                            <path d="M14 2L20 8H14V2Z" fill="#2196f3"/>
-                            <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3"/>
+                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3" />
+                            <path d="M14 2L20 8H14V2Z" fill="#2196f3" />
+                            <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3" />
                         </svg>
                     </Box>
-                    
+
                     <Typography variant="h6" sx={{ mb: 1, color: isDragOver ? '#2196f3' : '#666' }}>
                         {isDragOver ? 'Drop files here' : 'Upload Documents'}
                     </Typography>
@@ -823,9 +833,9 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         Uploaded Documents ({formData.previewFiles.length})
                     </Typography>
-                    <div style={{ 
-                        display: 'flex', 
-                        flexWrap: 'wrap', 
+                    <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
                         gap: '15px',
                         padding: '15px',
                         backgroundColor: '#f9f9f9',

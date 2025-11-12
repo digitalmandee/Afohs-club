@@ -213,13 +213,13 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         setFormData((prev) => {
             const updatedPreviewFiles = [...(prev.previewFiles || [])];
             const removedFile = updatedPreviewFiles[index];
-            
+
             // Remove from preview files
             updatedPreviewFiles.splice(index, 1);
-            
+
             // Update documents array (only keep File objects, not string paths)
             const updatedDocuments = (prev.documents || []).filter(doc => doc instanceof File);
-            
+
             return {
                 ...prev,
                 previewFiles: updatedPreviewFiles,
@@ -243,11 +243,11 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
 
         // Proceed with actual submission
         const formDataToSubmit = { ...formData };
-        
+
         // Separate new files from existing document paths
         const newFiles = formDataToSubmit.documents || [];
         const existingDocs = [];
-        
+
         // Process previewFiles to separate new files from existing paths
         if (formDataToSubmit.previewFiles) {
             formDataToSubmit.previewFiles.forEach(file => {
@@ -258,25 +258,25 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                 // New File objects are already in formDataToSubmit.documents
             });
         }
-        
+
         // Add existing documents to form data
         formDataToSubmit.existingDocuments = existingDocs;
-        
+
         // Remove previewFiles as it's not needed on backend
         delete formDataToSubmit.previewFiles;
-        
+
         const payload = objectToFormData(formDataToSubmit);
 
         setIsSubmitting(true);
-        
+
         const url = editMode ? route('events.booking.update', { id: bookingData.id }) : route('events.booking.store');
         const method = editMode ? 'put' : 'post';
-        
+
         axios.post(url, payload)
             .then((res) => {
-                
+
                 enqueueSnackbar(editMode ? 'Booking updated successfully' : 'Booking submitted successfully', { variant: 'success' });
-                
+
                 if (editMode) {
                     // Redirect back to events dashboard after edit
                     router.visit(route('events.dashboard'));
@@ -312,8 +312,8 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
-                    backgroundColor:'#f5f5f5',
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 {/* Header */}
@@ -354,7 +354,18 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                         </Stepper>
                     </Box>
                     {/* Main Content */}
-                    <div className="mx-4 my-4 p-4 bg-white rounded border">
+                    {/* <div className="mx-4 my-4 p-4 bg-white rounded border"> */}
+                    <Box
+                        sx={{
+                            width: '70%',
+                            mx: 'auto',
+                            my: 4,
+                            p: 4,
+                            bgcolor: '#fff',
+                            borderRadius: 2,
+                            border: '1px solid #e0e0e0',
+                        }}
+                    >
                         <Box sx={{ width: '100%', p: 0 }}>
                             <Box sx={{ mb: 4 }}>{renderStepContent(activeStep)}</Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -366,9 +377,9 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                                 </Button>
                             </Box>
                         </Box>
-                    </div>
-                </Box>
-            </div>
+                    </Box>
+                </Box >
+            </div >
         </>
     );
 };
@@ -399,14 +410,14 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
     return (
         <>
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={3}>
                     <TextField label="Booking No." name="bookingNo" value={formData.bookingNo} inputProps={{ readOnly: true }} fullWidth />
                 </Grid>
                 {JSON.stringify()}
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={3}>
                     <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={6}>
                     <FormLabel>Booking Type</FormLabel>
                     <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
                         <FormControlLabel value="0" control={<Radio disabled={editMode} />} label="Member" />
@@ -414,15 +425,15 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                     </RadioGroup>
                 </Grid>
 
-                <Grid item xs={12}>
-                    <AsyncSearchTextField 
-                        label="Member / Guest Name" 
-                        name="guest" 
-                        value={formData.guest} 
-                        onChange={handleChange} 
-                        endpoint="admin.api.search-users" 
-                        params={{ type: formData.bookingType }} 
-                        placeholder="Search members..." 
+                <Grid item xs={6}>
+                    <AsyncSearchTextField
+                        label="Member / Guest Name"
+                        name="guest"
+                        value={formData.guest}
+                        onChange={handleChange}
+                        endpoint="admin.api.search-users"
+                        params={{ type: formData.bookingType }}
+                        placeholder="Search members..."
                         disabled={editMode}
                     />
 
@@ -466,7 +477,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                 Event Details
             </Typography>
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={3}>
                     <TextField label="Booked By*" name="bookedBy" value={formData.bookedBy} onChange={handleChange} fullWidth error={!!errors.bookedBy} helperText={errors.bookedBy} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
@@ -475,14 +486,14 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                 <Grid item xs={6} sm={3}>
                     <TextField label="Event Date*" type="date" name="eventDate" value={formData.eventDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventDate} helperText={errors.eventDate} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={3}>
                     <TextField label="Timing (From)*" type="time" name="eventTimeFrom" value={formData.eventTimeFrom} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeFrom} helperText={errors.eventTimeFrom} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} sm={3}>
                     <TextField label="Timing (To)*" type="time" name="eventTimeTo" value={formData.eventTimeTo} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeTo} helperText={errors.eventTimeTo} />
                 </Grid>
-                <Grid item xs={12}>
-                    <FormControl fullWidth sx={{ mt: 2 }} error={!!errors.venue}>
+                <Grid item xs={6} sm={4}>
+                    <FormControl fullWidth error={!!errors.venue}>
                         <InputLabel>Venue*</InputLabel>
                         <Select value={Number(formData.venue)} onChange={handleChange} name="venue" label="Venue*">
                             <MenuItem value="">Choose Venue</MenuItem>
@@ -837,7 +848,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragOver(false);
-        
+
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
             // Create a synthetic event to match the existing handleFileChange function
@@ -859,14 +870,14 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
         const isFileObject = file instanceof File;
         const fileName = isFileObject ? file.name : file.split('/').pop();
         const ext = fileName.split('.').pop().toLowerCase();
-        
+
         // Create preview URL for File objects
         const previewUrl = isFileObject ? URL.createObjectURL(file) : file;
-        
+
         return (
-            <div key={index} style={{ 
-                position: 'relative', 
-                width: '100px', 
+            <div key={index} style={{
+                position: 'relative',
+                width: '100px',
                 textAlign: 'center',
                 marginBottom: '10px'
             }}>
@@ -895,18 +906,18 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                 {['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext) ? (
                     // Image Preview
                     <div>
-                        <img 
-                            src={previewUrl} 
-                            alt={`Document ${index + 1}`} 
-                            style={{ 
-                                width: '60px', 
-                                height: '60px', 
-                                objectFit: 'cover', 
-                                borderRadius: '6px', 
+                        <img
+                            src={previewUrl}
+                            alt={`Document ${index + 1}`}
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                objectFit: 'cover',
+                                borderRadius: '6px',
                                 cursor: 'pointer',
                                 border: '2px solid #ddd'
-                            }} 
-                            onClick={() => window.open(previewUrl, '_blank')} 
+                            }}
+                            onClick={() => window.open(previewUrl, '_blank')}
                         />
                         <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>Image</p>
                     </div>
@@ -1014,25 +1025,25 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                     }}
                 >
                     {/* Hidden file input */}
-                    <input 
+                    <input
                         ref={fileInputRef}
-                        type="file" 
-                        multiple 
-                        accept=".pdf,.doc,.docx,image/*" 
-                        name="documents" 
-                        onChange={handleFileChange} 
-                        style={{ display: 'none' }} 
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,image/*"
+                        name="documents"
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
                     />
-                    
+
                     {/* Upload Icon */}
                     <Box sx={{ mb: 2 }}>
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3"/>
-                            <path d="M14 2L20 8H14V2Z" fill="#2196f3"/>
-                            <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3"/>
+                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3" />
+                            <path d="M14 2L20 8H14V2Z" fill="#2196f3" />
+                            <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3" />
                         </svg>
                     </Box>
-                    
+
                     <Typography variant="h6" sx={{ mb: 1, color: isDragOver ? '#2196f3' : '#666' }}>
                         {isDragOver ? 'Drop files here' : 'Upload Documents'}
                     </Typography>
@@ -1051,9 +1062,9 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         Uploaded Documents ({formData.previewFiles.length})
                     </Typography>
-                    <div style={{ 
-                        display: 'flex', 
-                        flexWrap: 'wrap', 
+                    <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
                         gap: '15px',
                         padding: '15px',
                         backgroundColor: '#f9f9f9',
@@ -1066,13 +1077,13 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
             )}
 
             <Grid item xs={12}>
-                <TextField 
-                    label="Additional Notes" 
-                    name="notes" 
-                    value={formData.notes} 
-                    onChange={handleChange} 
-                    fullWidth 
-                    multiline 
+                <TextField
+                    label="Additional Notes"
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    fullWidth
+                    multiline
                     rows={3}
                     placeholder="Enter any additional notes or instructions..."
                 />

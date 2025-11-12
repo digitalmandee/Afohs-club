@@ -63,9 +63,10 @@ const RoomCheckIn = ({ bookings, filters }) => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
-                style={{minHeight:'100vh',
-                    backgroundColor:'#f5f5f5',
-                    overflowX:'hidden'
+                style={{
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
+                    overflowX: 'hidden'
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -198,12 +199,21 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                             <TableCell>{booking.per_day_charge}</TableCell>
                                             <TableCell>{booking.status.replace(/_/g, ' ')}</TableCell>
                                             <TableCell>
-                                                <Button variant="outlined" size="small" style={{ marginRight: '8px' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
-                                                    Check Out
-                                                </Button>
-                                                <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>
-                                                    View
-                                                </Button>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1, // adds space between buttons
+                                                        flexWrap: 'nowrap', // ensures they stay on the same line
+                                                    }}
+                                                >
+                                                    <Button variant="outlined" size="small" style={{ marginRight: '8px', width:100 }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
+                                                        Check Out
+                                                    </Button>
+                                                    <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>
+                                                        View
+                                                    </Button>
+                                                </Box>
                                             </TableCell>
                                         </TableRow>
                                     ))
