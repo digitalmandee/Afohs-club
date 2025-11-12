@@ -405,7 +405,7 @@ const EmployeeDashboard = () => {
                                                     </TableCell>
                                                     <TableCell>
                                                         <IconButton
-                                                            onClick={() => router.visit(route('employees.edit', emp.employee_id))}
+                                                            onClick={() => router.visit(route('employees.edit', emp.id))}
                                                             size="small"
                                                             sx={{ 
                                                                 color: '#0a3d62',
