@@ -49,7 +49,7 @@ const OrderMenu = () => {
     // Search functionality
     const handleSearch = async (value) => {
         setSearchTerm(value);
-        
+
         if (value.trim() === '') {
             setShowSearchResults(false);
             setSearchResults([]);
@@ -60,9 +60,9 @@ const OrderMenu = () => {
         setIsSearching(true);
         try {
             const response = await axios.get(route('order.search.products'), {
-                params: { search: value.trim() }
+                params: { search: value.trim() },
             });
-            
+
             if (response.data.success) {
                 setSearchResults(response.data.products);
                 setShowSearchResults(true);
@@ -83,10 +83,10 @@ const OrderMenu = () => {
             // Clear current category selection since we're switching restaurants
             setSelectedCategory('');
         }
-        
+
         // Add product to order
         handleProductClick(product);
-        
+
         // Clear search
         setSearchTerm('');
         setShowSearchResults(false);
@@ -452,6 +452,8 @@ const OrderMenu = () => {
                                                                 flexDirection: 'column',
                                                                 alignItems: 'center',
                                                                 border: product.tenant_id !== selectedRestaurant ? '2px solid #ff9800' : '1px solid #eee',
+                                                                opacity: product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
+                                                                cursor: product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
                                                                 borderRadius: 2,
                                                                 height: '100%',
                                                                 width: 100,
@@ -478,13 +480,13 @@ const OrderMenu = () => {
                                                                         alignItems: 'center',
                                                                         justifyContent: 'center',
                                                                         fontSize: '10px',
-                                                                        fontWeight: 'bold'
+                                                                        fontWeight: 'bold',
                                                                     }}
                                                                 >
                                                                     !
                                                                 </Box>
                                                             )}
-                                                            
+
                                                             {product.images && product.images.length > 0 && (
                                                                 <Box
                                                                     sx={{
@@ -514,7 +516,7 @@ const OrderMenu = () => {
                                                                     fontWeight: 500,
                                                                     mb: 0.5,
                                                                     textAlign: 'center',
-                                                                    fontSize: '11px'
+                                                                    fontSize: '11px',
                                                                 }}
                                                             >
                                                                 {product.name}
@@ -533,9 +535,7 @@ const OrderMenu = () => {
                                             </Grid>
                                         ) : (
                                             <Box sx={{ textAlign: 'center', p: 4 }}>
-                                                <Typography color="text.secondary">
-                                                    No products found for "{searchTerm}"
-                                                </Typography>
+                                                <Typography color="text.secondary">No products found for "{searchTerm}"</Typography>
                                             </Box>
                                         )}
                                     </Box>
@@ -557,7 +557,8 @@ const OrderMenu = () => {
                                                             borderRadius: 2,
                                                             height: '100%',
                                                             width: 100,
-                                                            cursor: 'pointer',
+                                                            opacity: product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
+                                                            cursor: product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
                                                             // bgcolor: 'pink',
                                                             '&:hover': {
                                                                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
