@@ -66,6 +66,7 @@ Route::group([
         Route::post('/order/reservation', [ReservationController::class, 'orderReservation'])->name('order.reservation');
         Route::get('/order/new', [OrderController::class, 'index'])->name('order.new');
         Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
+        Route::get('/order/search-products', [OrderController::class, 'searchProducts'])->name('order.search.products');
         Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
         Route::post('/order/{id}/update', [OrderController::class, 'update'])->name('orders.update');
 

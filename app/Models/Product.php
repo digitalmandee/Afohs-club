@@ -71,4 +71,9 @@ class Product extends BaseModel
         return $this->hasMany(ProductIngredient::class);
     }
 
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
 }

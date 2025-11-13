@@ -713,4 +713,26 @@ class OrderController extends Controller
 
         return response()->json(['categories' => $categories]);
     }
+
+    public function searchProducts(Request $request)
+    {
+        $searchTerm = $request->query('search');
+        
+        if (empty($searchTerm)) {
+            return response()->json(['success' => true, 'products' => []], 200);
+        }
+
+        // Search products across all restaurants by ID or name
+        $products = Product::with(['variants:id,product_id,name', 'variants.values', 'category', 'tenant:id,name'])
+            ->where(function ($query) use ($searchTerm) {
+                $query->where('id', 'like', "%{$searchTerm}%")
+                      ->where('menu_code', 'like', "%{$searchTerm}%")
+                      ->orWhere('name', 'like', "%{$searchTerm}%");
+            })
+            ->where('current_stock', '>', 0) // Only show products with stock
+            ->limit(20) // Limit results for performance
+            ->get();
+
+        return response()->json(['success' => true, 'products' => $products], 200);
+    }
 }

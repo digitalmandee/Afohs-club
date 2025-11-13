@@ -29,14 +29,69 @@ const OrderMenu = () => {
     const [activeView, setActiveView] = useState('orderDetail');
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
 
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
+        // Clear search when selecting category
+        setSearchTerm('');
+        setShowSearchResults(false);
+        setSearchResults([]);
     };
 
     const [variantPopupOpen, setVariantPopupOpen] = useState(false);
     const [variantProduct, setVariantProduct] = useState(null);
     const [initialEditItem, setInitialEditItem] = useState(null);
+
+    // Search functionality
+    const handleSearch = async (value) => {
+        setSearchTerm(value);
+        
+        if (value.trim() === '') {
+            setShowSearchResults(false);
+            setSearchResults([]);
+            setIsSearching(false);
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            const response = await axios.get(route('order.search.products'), {
+                params: { search: value.trim() }
+            });
+            
+            if (response.data.success) {
+                setSearchResults(response.data.products);
+                setShowSearchResults(true);
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    // Handle product click from search results
+    const handleSearchProductClick = (product) => {
+        // If product is from different restaurant, switch restaurant first
+        if (product.tenant_id !== selectedRestaurant) {
+            setSelectedRestaurant(product.tenant_id);
+            // Clear current category selection since we're switching restaurants
+            setSelectedCategory('');
+        }
+        
+        // Add product to order
+        handleProductClick(product);
+        
+        // Clear search
+        setSearchTerm('');
+        setShowSearchResults(false);
+        setSearchResults([]);
+    };
 
     // This would be called when user clicks a product
     const handleProductClick = (product) => {
@@ -320,9 +375,11 @@ const OrderMenu = () => {
                                     }}
                                 >
                                     <TextField
-                                        placeholder="Search"
+                                        placeholder="Search by ID, menu code or name"
                                         variant="outlined"
                                         size="small"
+                                        value={searchTerm}
+                                        onChange={(e) => handleSearch(e.target.value)}
                                         sx={{
                                             width: 300,
                                             // height:44,
@@ -372,69 +429,182 @@ const OrderMenu = () => {
                                     bgcolor: 'transparent',
                                 }}
                             >
-                                <Grid container spacing={0} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                                    {products.length > 0 &&
-                                        products.map((product, index) => (
-                                            <Grid item key={product.id} sx={{ width: '15%' }}>
-                                                <Paper
-                                                    elevation={0}
-                                                    onClick={() => handleProductClick(product)}
-                                                    sx={{
-                                                        p: 2,
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        border: '1px solid #eee',
-                                                        borderRadius: 2,
-                                                        height: '100%',
-                                                        width: 100,
-                                                        cursor: 'pointer',
-                                                        // bgcolor: 'pink',
-                                                        '&:hover': {
-                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                                        },
-                                                    }}
-                                                >
-                                                    {product.images && product.images.length > 0 && (
-                                                        <Box
+                                {/* Search Results */}
+                                {showSearchResults ? (
+                                    <Box>
+                                        <Typography variant="h6" sx={{ mb: 2, color: '#063455' }}>
+                                            Search Results ({searchResults.length})
+                                        </Typography>
+                                        {isSearching ? (
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                                                <Typography>Searching...</Typography>
+                                            </Box>
+                                        ) : searchResults.length > 0 ? (
+                                            <Grid container spacing={0} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                                                {searchResults.map((product, index) => (
+                                                    <Grid item key={product.id} sx={{ width: '15%' }}>
+                                                        <Paper
+                                                            elevation={0}
+                                                            onClick={() => handleSearchProductClick(product)}
                                                             sx={{
-                                                                width: 40,
-                                                                height: 40,
-                                                                borderRadius: '50%',
-                                                                overflow: 'hidden',
-                                                                // mb: 1,
+                                                                p: 2,
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                alignItems: 'center',
+                                                                border: product.tenant_id !== selectedRestaurant ? '2px solid #ff9800' : '1px solid #eee',
+                                                                borderRadius: 2,
+                                                                height: '100%',
+                                                                width: 100,
+                                                                cursor: 'pointer',
+                                                                position: 'relative',
+                                                                '&:hover': {
+                                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                                },
                                                             }}
                                                         >
-                                                            <Box
-                                                                component="img"
-                                                                src={tenantAsset(product.images[0])}
-                                                                alt={product.name}
-                                                                sx={{
-                                                                    width: '100%',
-                                                                    height: '100%',
-                                                                    objectFit: 'cover',
-                                                                }}
-                                                            />
-                                                        </Box>
-                                                    )}
+                                                            {/* Restaurant indicator */}
+                                                            {product.tenant_id !== selectedRestaurant && (
+                                                                <Box
+                                                                    sx={{
+                                                                        position: 'absolute',
+                                                                        top: -5,
+                                                                        right: -5,
+                                                                        bgcolor: '#ff9800',
+                                                                        color: 'white',
+                                                                        borderRadius: '50%',
+                                                                        width: 20,
+                                                                        height: 20,
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        fontSize: '10px',
+                                                                        fontWeight: 'bold'
+                                                                    }}
+                                                                >
+                                                                    !
+                                                                </Box>
+                                                            )}
+                                                            
+                                                            {product.images && product.images.length > 0 && (
+                                                                <Box
+                                                                    sx={{
+                                                                        width: 40,
+                                                                        height: 40,
+                                                                        borderRadius: '50%',
+                                                                        overflow: 'hidden',
+                                                                        mb: 1,
+                                                                    }}
+                                                                >
+                                                                    <Box
+                                                                        component="img"
+                                                                        src={tenantAsset(product.images[0])}
+                                                                        alt={product.name}
+                                                                        sx={{
+                                                                            width: '100%',
+                                                                            height: '100%',
+                                                                            objectFit: 'cover',
+                                                                        }}
+                                                                    />
+                                                                </Box>
+                                                            )}
 
-                                                    <Typography
-                                                        variant="body1"
+                                                            <Typography
+                                                                variant="body2"
+                                                                sx={{
+                                                                    fontWeight: 500,
+                                                                    mb: 0.5,
+                                                                    textAlign: 'center',
+                                                                    fontSize: '11px'
+                                                                }}
+                                                            >
+                                                                {product.name}
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '10px' }}>
+                                                                Rs {product.base_price}
+                                                            </Typography>
+                                                            {product.tenant && product.tenant_id !== selectedRestaurant && (
+                                                                <Typography variant="caption" sx={{ textAlign: 'center', color: '#ff9800', fontSize: '9px', mt: 0.5 }}>
+                                                                    {product.tenant.name}
+                                                                </Typography>
+                                                            )}
+                                                        </Paper>
+                                                    </Grid>
+                                                ))}
+                                            </Grid>
+                                        ) : (
+                                            <Box sx={{ textAlign: 'center', p: 4 }}>
+                                                <Typography color="text.secondary">
+                                                    No products found for "{searchTerm}"
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                ) : (
+                                    /* Regular Category Products */
+                                    <Grid container spacing={0} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                                        {products.length > 0 &&
+                                            products.map((product, index) => (
+                                                <Grid item key={product.id} sx={{ width: '15%' }}>
+                                                    <Paper
+                                                        elevation={0}
+                                                        onClick={() => handleProductClick(product)}
                                                         sx={{
-                                                            fontWeight: 500,
-                                                            mb: 0.5,
-                                                            textAlign: 'center',
+                                                            p: 2,
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            border: '1px solid #eee',
+                                                            borderRadius: 2,
+                                                            height: '100%',
+                                                            width: 100,
+                                                            cursor: 'pointer',
+                                                            // bgcolor: 'pink',
+                                                            '&:hover': {
+                                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                            },
                                                         }}
                                                     >
-                                                        {product.name}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-                                                        Rs {product.base_price}
-                                                    </Typography>
-                                                </Paper>
-                                            </Grid>
-                                        ))}
-                                </Grid>
+                                                        {product.images && product.images.length > 0 && (
+                                                            <Box
+                                                                sx={{
+                                                                    width: 40,
+                                                                    height: 40,
+                                                                    borderRadius: '50%',
+                                                                    overflow: 'hidden',
+                                                                    // mb: 1,
+                                                                }}
+                                                            >
+                                                                <Box
+                                                                    component="img"
+                                                                    src={tenantAsset(product.images[0])}
+                                                                    alt={product.name}
+                                                                    sx={{
+                                                                        width: '100%',
+                                                                        height: '100%',
+                                                                        objectFit: 'cover',
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        )}
+
+                                                        <Typography
+                                                            variant="body1"
+                                                            sx={{
+                                                                fontWeight: 500,
+                                                                mb: 0.5,
+                                                                textAlign: 'center',
+                                                            }}
+                                                        >
+                                                            {product.name}
+                                                        </Typography>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                                                            Rs {product.base_price}
+                                                        </Typography>
+                                                    </Paper>
+                                                </Grid>
+                                            ))}
+                                    </Grid>
+                                )}
                             </Paper>
                         </Box>
 
