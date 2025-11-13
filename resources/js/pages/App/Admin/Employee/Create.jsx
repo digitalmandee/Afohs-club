@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TextField, Button, IconButton, Typography, Box, FormHelperText, Snackbar, Alert, Paper, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowBack } from "@mui/icons-material"
+import { ArrowBack } from '@mui/icons-material';
 import { MdArrowBackIos } from 'react-icons/md';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
@@ -58,6 +58,7 @@ const EmployeeCreate = () => {
         if (!formData.joining_date) newErrors.joining_date = 'Joining date is required';
         if (!formData.department) newErrors.department = 'Department is required';
         if (!formData.gender) newErrors.gender = 'Gender is required';
+        if (!formData.marital_status) newErrors.marital_status = 'Martial status is required';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -71,7 +72,7 @@ const EmployeeCreate = () => {
                 ...formData,
                 department_id: formData.department?.id || null,
             };
-            
+
             if (isEdit) {
                 await axios.put(route('api.employees.update', employee.employee_id), payload);
                 enqueueSnackbar('Employee updated successfully!', { variant: 'success' });
@@ -79,7 +80,7 @@ const EmployeeCreate = () => {
                 await axios.post(route('api.employees.store'), payload);
                 enqueueSnackbar('Employee added successfully!', { variant: 'success' });
             }
-            
+
             setTimeout(() => router.visit(route('employees.dashboard')), 1500);
         } catch (error) {
             // console.log(error.response.data);
@@ -159,12 +160,12 @@ const EmployeeCreate = () => {
                                 { label: 'E-mail*', name: 'email', placeholder: 'Abc@gmail.com' },
                                 { label: 'Phone Number*', name: 'phone_no', placeholder: '03000000000', type: 'number', pattern: '[0-9]*' },
                                 { label: 'Salary*', name: 'salary', placeholder: '30000', type: 'number', min: 0 },
-                                ...(isEdit ? [
-                                    { label: 'Address', name: 'address', placeholder: 'Complete Address' },
-                                    { label: 'Emergency Contact', name: 'emergency_no', placeholder: '03000000000', type: 'number' },
-                                    { label: 'National ID', name: 'national_id', placeholder: 'CNIC Number' },
-                                    { label: 'Account Number', name: 'account_no', placeholder: 'Bank Account Number' },
-                                ] : [])
+                                // ...(isEdit ? [
+                                { label: 'Address', name: 'address', placeholder: 'Complete Address' },
+                                { label: 'Emergency Contact', name: 'emergency_no', placeholder: '03000000000', type: 'number' },
+                                { label: 'National ID', name: 'national_id', placeholder: 'CNIC Number' },
+                                { label: 'Account Number', name: 'account_no', placeholder: 'Bank Account Number' },
+                                // ] : [])
                             ].map((field, index) => (
                                 <Box key={index}>
                                     <Typography variant="body1" sx={{ fontWeight: 500, color: '#000000', marginBottom: '1rem' }}>
@@ -299,42 +300,44 @@ const EmployeeCreate = () => {
                                 </TextField>
                             </Box>
 
-                            {isEdit && (
-                                <Box>
-                                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#000000', marginBottom: '1rem' }}>
-                                        Marital Status
-                                    </Typography>
-                                    <TextField
-                                        sx={{
-                                            backgroundColor: '#FFFFFF',
-                                            '& .MuiOutlinedInput-root': {
-                                                '& fieldset': {
-                                                    border: '1px solid #E9E9E9',
-                                                },
-                                                '&:hover fieldset': {
-                                                    border: '1px solid #E9E9E9',
-                                                },
-                                                '&.Mui-focused fieldset': {
-                                                    border: '1px solid #E9E9E9',
-                                                },
+                            {/* {isEdit && ( */}
+                            <Box>
+                                <Typography variant="body1" sx={{ fontWeight: 500, color: '#000000', marginBottom: '1rem' }}>
+                                    Martial Status*
+                                </Typography>
+                                <TextField
+                                    sx={{
+                                        backgroundColor: '#FFFFFF',
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                border: '1px solid #E9E9E9',
                                             },
-                                        }}
-                                        select
-                                        name="marital_status"
-                                        value={formData.marital_status}
-                                        onChange={(e) => setFormData({ ...formData, marital_status: e.target.value })}
-                                        fullWidth
-                                        variant="outlined"
-                                        SelectProps={{ native: true }}
-                                    >
-                                        <option value="">Select Marital Status</option>
-                                        <option value="single">Single</option>
-                                        <option value="married">Married</option>
-                                        <option value="divorced">Divorced</option>
-                                        <option value="widowed">Widowed</option>
-                                    </TextField>
-                                </Box>
-                            )}
+                                            '&:hover fieldset': {
+                                                border: '1px solid #E9E9E9',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                border: '1px solid #E9E9E9',
+                                            },
+                                        },
+                                    }}
+                                    select
+                                    name="marital_status"
+                                    value={formData.marital_status}
+                                    onChange={(e) => setFormData({ ...formData, marital_status: e.target.value })}
+                                    fullWidth
+                                    variant="outlined"
+                                    error={!!errors.marital_status}
+                                    helperText={errors.marital_status}
+                                    SelectProps={{ native: true }}
+                                >
+                                    <option value="">Select Martial Status</option>
+                                    <option value="single">Single</option>
+                                    <option value="married">Married</option>
+                                    <option value="divorced">Divorced</option>
+                                    <option value="widowed">Widowed</option>
+                                </TextField>
+                            </Box>
+                            {/* )} */}
                         </form>
 
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px', gap: '12px' }}>

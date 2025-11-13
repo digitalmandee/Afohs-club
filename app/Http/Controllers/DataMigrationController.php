@@ -610,6 +610,42 @@ class DataMigrationController extends Controller
         }
     }
 
+    public function deleteProfilePhotos(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Delete all media records where type is 'profile_photo' (including soft deleted ones)
+            $mediaRecords = \App\Models\Media::withTrashed()->where('type', 'profile_photo')->get();
+            $deletedCount = $mediaRecords->count();
+            
+            foreach ($mediaRecords as $media) {
+                $media->forceDelete(); // Permanently delete including soft deleted records
+            }
+
+            DB::commit();
+
+            Log::info('Profile photos deletion completed', [
+                'deleted_count' => $deletedCount
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Profile photos deleted successfully - {$deletedCount} records removed",
+                'deleted_count' => $deletedCount
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Delete profile photos error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function validateMigration()
     {
         try {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, Typography, Button, LinearProgress, Box, Grid, Alert, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Chip, Divider, CircularProgress } from '@mui/material';
-import { PlayArrow, Stop, Refresh, CheckCircle, Error, Warning, Assessment, Storage, People, FamilyRestroom, Image, DeleteSweep } from '@mui/icons-material';
+import { PlayArrow, Stop, Refresh, CheckCircle, Error, Warning, Assessment, Storage, People, FamilyRestroom, Image, DeleteSweep, PhotoCamera } from '@mui/icons-material';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
 
@@ -16,6 +16,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [validationResults, setValidationResults] = useState(null);
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
+    const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
     const migrationRunning = useRef({ members: false, families: false, media: false });
 
     useEffect(() => {
@@ -188,6 +189,18 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         }
     };
 
+    const deleteProfilePhotos = async () => {
+        try {
+            const response = await axios.post('/admin/data-migration/delete-profile-photos');
+            setDeletePhotosDialog(false);
+            refreshStats();
+            alert(`Profile photos deleted successfully - ${response.data.deleted_count} records removed`);
+        } catch (error) {
+            console.error('Delete profile photos error:', error);
+            alert('Error deleting profile photos: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
     if (!stats.old_tables_exist) {
         return (
             <AdminLayout>
@@ -212,6 +225,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         </Button>
                         <Button variant="outlined" startIcon={<Assessment />} onClick={validateMigration}>
                             Validate Migration
+                        </Button>
+                        <Button variant="outlined" color="info" startIcon={<PhotoCamera />} onClick={() => setDeletePhotosDialog(true)}>
+                            Delete Profile Photos
                         </Button>
                         <Button variant="outlined" color="warning" startIcon={<DeleteSweep />} onClick={() => setResetFamiliesDialog(true)}>
                             Reset Families Only
@@ -595,6 +611,29 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         <Button onClick={() => setResetFamiliesDialog(false)}>Cancel</Button>
                         <Button onClick={resetFamiliesOnly} color="warning" variant="contained">
                             Reset Families Only
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Delete Profile Photos Dialog */}
+                <Dialog open={deletePhotosDialog} onClose={() => setDeletePhotosDialog(false)}>
+                    <DialogTitle>Delete Profile Photos</DialogTitle>
+                    <DialogContent>
+                        <Typography>
+                            Are you sure you want to delete all profile photos? 
+                            This will permanently remove all media records where type is 'profile_photo' 
+                            for both family members and primary members from the media table.
+                        </Typography>
+                        <Alert severity="warning" sx={{ mt: 2 }}>
+                            <Typography variant="body2">
+                                <strong>Warning:</strong> This action cannot be undone. All profile photos will be permanently deleted.
+                            </Typography>
+                        </Alert>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setDeletePhotosDialog(false)}>Cancel</Button>
+                        <Button onClick={deleteProfilePhotos} color="info" variant="contained">
+                            Delete Profile Photos
                         </Button>
                     </DialogActions>
                 </Dialog>

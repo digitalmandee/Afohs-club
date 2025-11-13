@@ -40,6 +40,9 @@ class DatabaseSeeder extends Seeder
             EmployeeTypeSeeder::class,
             MemberClassificationSeeder::class,
             
+            // Payroll System
+            PayrollSeeder::class,
+            
             // Role and Permission System
             PermissionsSeeder::class,
             RolesSeeder::class,

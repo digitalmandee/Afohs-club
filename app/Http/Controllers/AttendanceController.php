@@ -239,8 +239,8 @@ class AttendanceController extends Controller
         // Validate
         $request->validate([
             'leave_category_id' => 'nullable|integer|exists:leave_categories,id',
-            'check_in' => 'nullable|date_format:H:i:s|before:check_out',
-            'check_out' => 'nullable|date_format:H:i:s|after:check_in',
+            'check_in' => 'nullable|date_format:H:i:s,H:i|before:check_out',
+            'check_out' => 'nullable|date_format:H:i:s,H:i|after:check_in',
             'status' => [
                 'required',
                 function ($attribute, $value, $fail) use ($request) {
@@ -254,11 +254,23 @@ class AttendanceController extends Controller
         // Find attendance or fail
         $attendance = Attendance::findOrFail($attendanceId);
 
+        // Normalize time format (add seconds if not present)
+        $checkIn = $request->check_in;
+        $checkOut = $request->check_out;
+        
+        if ($checkIn && strlen($checkIn) === 5) {
+            $checkIn .= ':00'; // Add seconds if format is H:i
+        }
+        
+        if ($checkOut && strlen($checkOut) === 5) {
+            $checkOut .= ':00'; // Add seconds if format is H:i
+        }
+
         // Update attendance fields
         $attendance->fill([
             'leave_category_id' => $request->leave_category_id,
-            'check_in' => $request->check_in,
-            'check_out' => $request->check_out,
+            'check_in' => $checkIn,
+            'check_out' => $checkOut,
             'status' => $request->status,
         ])->save();
 
