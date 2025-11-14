@@ -5,10 +5,13 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 
 const AddForm1 = ({ data, handleChange, onNext }) => {
+    const { props } = usePage();
+    const isEditMode = !!props.user?.id;
+
     // Handle profile_photo object {id, file_path}
     const initialImage = data?.profile_photo?.file_path || null;
 
@@ -55,7 +58,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         }
 
         // Clear previous CNIC errors
-        setFormErrors(prev => {
+        setFormErrors((prev) => {
             const newErrors = { ...prev };
             delete newErrors.cnic_no;
             return newErrors;
@@ -67,9 +70,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         }
 
         if (!/^\d{5}-\d{7}-\d{1}$/.test(cnicValue)) {
-            setFormErrors(prev => ({
+            setFormErrors((prev) => ({
                 ...prev,
-                cnic_no: 'CNIC must be in the format XXXXX-XXXXXXX-X'
+                cnic_no: 'CNIC must be in the format XXXXX-XXXXXXX-X',
             }));
             return;
         }
@@ -80,17 +83,17 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
             try {
                 const response = await axios.post('/api/check-duplicate-cnic', {
                     cnic_no: cnicValue,
-                    member_id: data.member_id || null // Exclude current member if editing
+                    member_id: data.member_id || null, // Exclude current member if editing
                 });
 
                 if (response.data.exists) {
-                    setFormErrors(prev => ({
+                    setFormErrors((prev) => ({
                         ...prev,
-                        cnic_no: 'This CNIC number is already registered with another member'
+                        cnic_no: 'This CNIC number is already registered with another member',
                     }));
                 } else {
                     // CNIC is valid and available
-                    setFormErrors(prev => {
+                    setFormErrors((prev) => {
                         const newErrors = { ...prev };
                         delete newErrors.cnic_no;
                         return newErrors;
@@ -98,9 +101,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                 }
             } catch (error) {
                 console.error('Error checking CNIC:', error);
-                setFormErrors(prev => ({
+                setFormErrors((prev) => ({
                     ...prev,
-                    cnic_no: 'Error validating CNIC. Please try again.'
+                    cnic_no: 'Error validating CNIC. Please try again.',
                 }));
             } finally {
                 setIsValidatingCnic(false);
@@ -113,10 +116,10 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     // Enhanced handleChange to include real-time CNIC validation
     const handleInputChange = (event) => {
         const { name, value } = event.target;
-        
+
         // Call the original handleChange
         handleChange(event);
-        
+
         // If it's CNIC field, validate in real-time
         if (name === 'cnic_no') {
             validateCnicRealTime(value);
@@ -130,7 +133,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         if (!data.first_name) errors.first_name = 'First Name is required';
         // if (!data.last_name) errors.last_name = 'Last Name is required';
         if (!data.guardian_name) errors.guardian_name = 'This Name is required';
-        if (!data.nationality) errors.nationality = 'Nationality is required';
+        // if (!data.nationality) errors.nationality = 'Nationality is required';
         if (!data.gender) errors.gender = 'Gender is required';
         if (!data.cnic_no) {
             errors.cnic_no = 'CNIC No is required';
@@ -139,7 +142,6 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         }
         if (!data.date_of_birth) errors.date_of_birth = 'Date of Birth is required';
         else if (dateError) errors.date_of_birth = dateError;
-
 
         if (Object.keys(errors).length > 0) {
             return; // Stop submission if errors exist
@@ -162,8 +164,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
-                <IconButton sx={{ color: '#000' }}
-                onClick={()=>window.history.back()}>
+                <IconButton sx={{ color: '#000' }} onClick={() => window.history.back()}>
                     <ArrowBack />
                 </IconButton>
                 <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>
@@ -251,29 +252,31 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
 
                 <Grid container spacing={2}>
                     {/* Application Number */}
-                    <Grid item xs={6}>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                backgroundColor: '#f5f5f5',
-                                borderRadius: '8px',
-                                padding: '12px 16px',
-                                border: '1px solid #ddd',
-                            }}
-                        >
-                            <Typography variant="body1" sx={{ color: '#777' }}>
-                                Application Number :
-                            </Typography>
-                            <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                #{data.application_no}
-                            </Typography>
-                            {/* add member status woth proper background design accordng */}
-                            <Typography variant="body1" sx={{ ml: 2, color: data.status === 'active' ? '#2e7d32' : (data.status === 'suspended' || data.status === 'cancelled') ? '#FFA90B' : '#d32f2f', textTransform: 'capitalize', fontWeight: 700 }}>
-                                ( {data.status} )
-                            </Typography>
-                        </Box>
-                    </Grid>
+                    {isEditMode && (
+                        <Grid item xs={6}>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: '#f5f5f5',
+                                    borderRadius: '8px',
+                                    padding: '12px 16px',
+                                    border: '1px solid #ddd',
+                                }}
+                            >
+                                <Typography variant="body1" sx={{ color: '#777' }}>
+                                    Membership No: 
+                                </Typography>
+                                <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
+                                     #{data.membership_no}
+                                </Typography>
+                                {/* add member status woth proper background design accordng */}
+                                <Typography variant="body1" sx={{ ml: 2, color: data.status === 'active' ? '#2e7d32' : data.status === 'suspended' || data.status === 'cancelled' ? '#FFA90B' : '#d32f2f', textTransform: 'capitalize', fontWeight: 700 }}>
+                                    ( {data.status} )
+                                </Typography>
+                            </Box>
+                        </Grid>
+                    )}
 
                     {/* Two column layout */}
                     <Grid item xs={12} container spacing={3}>
@@ -309,7 +312,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         Click upload to profile picture (4 MB max)
                                     </Typography>
                                     {showImageButtons && (
-                                        <Box sx={{ mt: 1, display: 'flex', alignItems:'center', gap: 1 }}>
+                                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                                             <Button size="small" startIcon={<Edit />} onClick={handleChangeImage} sx={{ textTransform: 'none', borderColor: '#ccc', color: '#333' }}>
                                                 Change
                                             </Button>
@@ -402,9 +405,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                         <Grid item xs={12} md={6} container spacing={2.5}>
                             {/* Nationality */}
                             <Grid item xs={6}>
-                                <Typography variant="body2">
-                                    Nationality*
-                                </Typography>
+                                <Typography variant="body2">Nationality*</Typography>
                                 <TextField fullWidth variant="outlined" placeholder="Enter Nationality e.g. Pakistan" size="small" name="nationality" value={data.nationality} error={!!formErrors.nationality} helperText={formErrors.nationality} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
@@ -431,16 +432,16 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         if (value.length > 15) value = value.slice(0, 15); // Limit to 15 characters
                                         handleInputChange({ target: { name: 'cnic_no', value } });
                                     }}
-                                    sx={{ 
-                                        '& .MuiOutlinedInput-root': { 
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
                                             borderRadius: '4px',
                                             ...(isValidatingCnic && {
                                                 borderColor: '#1976d2',
                                                 '& fieldset': {
                                                     borderColor: '#1976d2',
-                                                }
-                                            })
-                                        } 
+                                                },
+                                            }),
+                                        },
                                     }}
                                 />
                             </Grid>
