@@ -647,8 +647,8 @@ class MembershipController extends Controller
                         $familyMember = Member::create([
                             'barcode_no' => $newMemberData['barcode_no'] ?? null,
                             'parent_id' => $member->id,
-                            'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
-                            'family_suffix' => $newMemberData['family_suffix'],
+                            'membership_no' => $request->membership_no . ($newMemberData['family_suffix']? '-' . $newMemberData['family_suffix']:''),
+                            'family_suffix' => $newMemberData['family_suffix'] ?? null,
                             'first_name' => $newMemberData['first_name'] ?? null,
                             'middle_name' => $newMemberData['middle_name'] ?? null,
                             'last_name' => $newMemberData['last_name'] ?? null,
@@ -735,7 +735,6 @@ class MembershipController extends Controller
 
                             // Update member fields
                             $updateFamily->update([
-                                'membership_no' => $request->membership_no . '-' . $newMemberData['family_suffix'],
                                 'first_name' => $newMemberData['first_name'] ?? null,
                                 'middle_name' => $newMemberData['middle_name'] ?? null,
                                 'last_name' => $newMemberData['last_name'] ?? null,

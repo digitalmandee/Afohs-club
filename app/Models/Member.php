@@ -245,6 +245,11 @@ class Member extends BaseModel
      */
     public function shouldExpireByAge()
     {
+        // Exclude wives from age-based expiry
+        if ($this->relation === 'Wife') {
+            return false;
+        }
+
         return $this->isFamilyMember() && 
                $this->age >= 25 && 
                $this->status !== 'expired' &&
