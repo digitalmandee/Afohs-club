@@ -25,8 +25,19 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const [creditCardAmount, setCreditCardAmount] = useState('0');
     const [bankTransferAmount, setBankTransferAmount] = useState('0');
 
+    // ENT
+    const [entReason, setEntReason] = useState('');
+    const [entComment, setEntComment] = useState('');
+
+    // CTS
+    const [ctsComment, setCtsComment] = useState('');
+
     const handlePaymentMethodChange = (method) => {
         setActivePaymentMethod(method);
+        if (method == 'ent' || method == 'cts') {
+            setInputAmount(invoiceData.total_price);
+            setCustomerChanges('0');
+        }
     };
 
     const handleBankSelection = (bank) => {
@@ -34,6 +45,8 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleQuickAmountClick = (amount) => {
+        if (activePaymentMethod === 'ent' || activePaymentMethod === 'cts') return;
+
         setInputAmount(amount);
         // Calculate customer changes
         const total = invoiceData.total_price;
@@ -42,6 +55,8 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleNumberClick = (number) => {
+        if (activePaymentMethod === 'ent' || activePaymentMethod === 'cts') return;
+
         let newAmount;
         if (inputAmount === invoiceData.total_price) {
             newAmount = number;
@@ -89,8 +104,6 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     const handleOrderAndPay = async () => {
         // Amount validation
-        console.log('Input amount:', inputAmount, 'Invoice total:', invoiceData.total_price);
-
         if (parseFloat(inputAmount) < invoiceData.total_price) {
             enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
             return;
@@ -129,6 +142,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     }),
                 },
             };
+        }
+
+        if (activePaymentMethod === 'ent') {
+            payload.payment.ent_reason = entReason;
+            payload.payment.ent_comment = entComment;
+        }
+
+        if (activePaymentMethod === 'cts') {
+            payload.payment.cts_comment = ctsComment;
         }
 
         await handleSendToKitchen(payload);
@@ -190,6 +212,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     bank_transfer: bankTransferAmount,
                 }),
             };
+
+            if (activePaymentMethod === 'ent') {
+                payload.ent_reason = entReason;
+                payload.ent_comment = entComment;
+            }
+
+            if (activePaymentMethod === 'cts') {
+                payload.cts_comment = ctsComment;
+            }
 
             router.post(route('order.payment'), payload, {
                 onSuccess: () => {
@@ -322,6 +353,18 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                             />
                             <Typography variant="body1" fontWeight={activePaymentMethod === 'split_payment' ? 'medium' : 'normal'}>
                                 Split Payment
+                            </Typography>
+                        </Box>
+
+                        <Box sx={activePaymentMethod === 'ent' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('ent')}>
+                            <Typography variant="body1" fontWeight={activePaymentMethod === 'ent' ? 'medium' : 'normal'}>
+                                ENT
+                            </Typography>
+                        </Box>
+
+                        <Box sx={activePaymentMethod === 'cts' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('cts')}>
+                            <Typography variant="body1" fontWeight={activePaymentMethod === 'cts' ? 'medium' : 'normal'}>
+                                CTS
                             </Typography>
                         </Box>
                     </Box>
@@ -555,6 +598,40 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         Rs {customerChanges}
                                     </Typography>
                                 </Box>
+                            </Grid>
+                        </Grid>
+                    )}
+
+                    {/* Entertainment (ENT) */}
+                    {activePaymentMethod === 'ent' && (
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle1">Amount</Typography>
+                                <TextField fullWidth value={invoiceData.total_price} disabled sx={{ mb: 1 }} size="small" />
+
+                                <Typography variant="subtitle1">Reason</Typography>
+                                <Select fullWidth value={entReason} onChange={(e) => setEntReason(e.target.value)} sx={{ mb: 1 }} size="small">
+                                    <MenuItem value="birthday">Birthday</MenuItem>
+                                    <MenuItem value="guest">Special Guest</MenuItem>
+                                    <MenuItem value="management">Management Approval</MenuItem>
+                                    <MenuItem value="other">Other</MenuItem>
+                                </Select>
+
+                                <Typography variant="subtitle1">Comment</Typography>
+                                <TextField fullWidth multiline rows={3} value={entComment} onChange={(e) => setEntComment(e.target.value)} size="small" />
+                            </Grid>
+                        </Grid>
+                    )}
+
+                    {/* CTS */}
+                    {activePaymentMethod === 'cts' && (
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle1">Amount</Typography>
+                                <TextField fullWidth value={invoiceData.total_price} disabled sx={{ mb: 3 }} />
+
+                                <Typography variant="subtitle1">Comment</Typography>
+                                <TextField fullWidth multiline rows={3} value={ctsComment} onChange={(e) => setCtsComment(e.target.value)} />
                             </Grid>
                         </Grid>
                     )}

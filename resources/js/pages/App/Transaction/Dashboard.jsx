@@ -653,7 +653,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                     fontSize: '18px',
                                                                 }}
                                                             >
-                                                                {order.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order.customer?.name}`}
+                                                                {order.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order.customer ? order.customer.name : order.employee?.name}`}
                                                             </Typography>
                                                             {/* {order.isVIP && <Box component="span" ml={1} display="inline-block" width={16} height={16} borderRadius="50%" bgcolor="#ffc107" />} */}
                                                         </Box>
@@ -665,7 +665,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                                 fontSize: '14px',
                                                             }}
                                                         >
-                                                            {order.order_items_count} Items ({order.member_id ? 'Member' : 'Guest'})
+                                                            {order.order_items_count} Items ({order.member_id ? 'Member' : order.customer_id ? 'Guest' : 'Employee'})
                                                         </Typography>
                                                     </Box>
                                                     <Box textAlign="right">

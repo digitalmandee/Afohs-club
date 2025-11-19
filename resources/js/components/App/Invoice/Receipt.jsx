@@ -75,6 +75,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 order_type: invoiceData.order_type || 'N/A',
                 member: invoiceData.member?.booking_type === 'member' ? invoiceData.member : null,
                 customer: invoiceData.member?.booking_type === 'guest' ? invoiceData.member : null,
+                employee: invoiceData.member?.booking_type === 'employee' ? invoiceData.member : null,
                 table: invoiceData.table || null,
                 cashier: invoiceData.cashier || null,
                 waiter: invoiceData.waiter || null,
@@ -274,7 +275,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 <Typography variant="caption" color="text.secondary">
                     Customer Name
                 </Typography>
-                <Typography variant="caption">{paymentData.member?.full_name || paymentData.member?.name || paymentData.customer?.name || 'N/A'}</Typography>
+                <Typography variant="caption">{paymentData.member?.full_name || paymentData.member?.name || (paymentData.customer ? paymentData.customer.name : paymentData.employee?.name) || 'N/A'}</Typography>
             </Box>
 
             {paymentData.member && (
