@@ -108,7 +108,7 @@ const RoleManagement = () => {
                 sx={{
                     minHeight: '100vh',
                     p: 3,
-                    backgroundColor:'#f5f5f5'
+                    backgroundColor: '#f5f5f5'
                 }}
             >
                 {/* Header */}
@@ -135,89 +135,95 @@ const RoleManagement = () => {
                 </Box>
 
                 {/* Search */}
-                <Card sx={{ mb: 3 }}>
-                    <CardContent>
-                        <form onSubmit={handleSearch}>
-                            <TextField
-                                fullWidth
-                                placeholder="Search roles..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <SearchIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                        </form>
-                    </CardContent>
-                </Card>
+                <Box sx={{ mb: 5 }}>
+                    <Box onSubmit={handleSearch}>
+                        <TextField
+                            placeholder="Search roles..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            sx={{
+                                width: "300px",
+                                height: 10,
+                                backgroundColor: "transparent",
+                                "& .MuiInputBase-root": {
+                                    height: 40,
+                                    backgroundColor: "transparent",
+                                    paddingRight: 0,
+                                },
+                                "& .MuiOutlinedInput-notchedOutline": {
+                                    borderColor: "#999", // optional border color
+                                },
+                            }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon fontSize="small" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                    </Box>
+                </Box>
 
                 {/* Roles Table */}
-                <Card>
-                    <CardContent>
-                        <TableContainer component={Paper}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 600 }}>Role Name</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Permissions Count</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Users Count</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {roles.data.map((role) => (
-                                        <TableRow key={role.id}>
-                                            <TableCell>
-                                                <Chip label={role.name} color={getRoleColor(role.name)} variant="outlined" />
-                                            </TableCell>
-                                            <TableCell>{role.permissions.length}</TableCell>
-                                            <TableCell>{role.users_count || 0}</TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                                    {can.edit && (
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => {
-                                                                setSelectedRole(role);
-                                                                setEditRoleOpen(true);
-                                                            }}
-                                                            sx={{ color: '#063455' }}
-                                                        >
-                                                            <EditIcon />
-                                                        </IconButton>
-                                                    )}
-                                                    {can.delete && role.name !== 'super-admin' && (
-                                                        <IconButton size="small" onClick={() => handleDeleteRole(role)} sx={{ color: '#d32f2f' }}>
-                                                            <DeleteIcon />
-                                                        </IconButton>
-                                                    )}
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                <TableContainer component={Paper}>
+                    <Table>
+                        <TableHead sx={{bgcolor:'#E5E5EA'}}>
+                            <TableRow>
+                                <TableCell sx={{ fontWeight: 600 }}>Role Name</TableCell>
+                                <TableCell sx={{ fontWeight: 600 }}>Permissions Count</TableCell>
+                                <TableCell sx={{ fontWeight: 600 }}>Users Count</TableCell>
+                                <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {roles.data.map((role) => (
+                                <TableRow key={role.id}>
+                                    <TableCell>
+                                        <Chip label={role.name} color={getRoleColor(role.name)} variant="outlined" />
+                                    </TableCell>
+                                    <TableCell>{role.permissions.length}</TableCell>
+                                    <TableCell>{role.users_count || 0}</TableCell>
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                            {can.edit && (
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => {
+                                                        setSelectedRole(role);
+                                                        setEditRoleOpen(true);
+                                                    }}
+                                                    sx={{ color: '#063455' }}
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                            )}
+                                            {can.delete && role.name !== 'super-admin' && (
+                                                <IconButton size="small" onClick={() => handleDeleteRole(role)} sx={{ color: '#d32f2f' }}>
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            )}
+                                        </Box>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
 
-                        {/* Pagination */}
-                        {roles.last_page > 1 && (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                                <Pagination
-                                    count={roles.last_page}
-                                    page={roles.current_page}
-                                    onChange={(e, page) => {
-                                        router.get(route('admin.roles.index'), { ...filters, page });
-                                    }}
-                                    color="primary"
-                                />
-                            </Box>
-                        )}
-                    </CardContent>
-                </Card>
+                {/* Pagination */}
+                {roles.last_page > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                        <Pagination
+                            count={roles.last_page}
+                            page={roles.current_page}
+                            onChange={(e, page) => {
+                                router.get(route('admin.roles.index'), { ...filters, page });
+                            }}
+                            color="primary"
+                        />
+                    </Box>
+                )}
 
                 {/* Create Role Dialog */}
                 <Dialog open={createRoleOpen} onClose={() => setCreateRoleOpen(false)} maxWidth="md" fullWidth>

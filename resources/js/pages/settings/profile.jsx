@@ -26,16 +26,11 @@ const Profile = ({ mustVerifyEmail, status }) => {
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
-            <div style={{minHeight:'100vh', backgroundColor:'#F9F9F9', paddingTop:"1rem"}}>
-                <div style={{ maxWidth: '768px', margin: '0 auto' }}>
-                    <Row className="align-items-center mb-4">
-                        <Col>
-                            <Typography variant="h5" style={{ color: '#063455', fontWeight: 500 }}>
-                                Profile Information
-                            </Typography>
-                        </Col>
-                    </Row>
-
+            <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingTop: "1rem" }}>
+                <Typography variant="h4" style={{ color: '#063455', fontWeight: 500, marginLeft:"30px"}}>
+                    Profile Information
+                </Typography>
+                <div style={{ maxWidth: '500px', margin: '0 auto', paddingTop:'1rem' }}>
                     <div
                         style={{
                             borderRadius: '16px',
