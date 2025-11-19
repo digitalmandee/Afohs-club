@@ -12,6 +12,7 @@ class Reservation extends BaseModel
     protected $fillable = [
         'member_id',
         'customer_id',
+        'employee_id',
         'table_id',
         'nature_of_function',
         'theme_of_function',
@@ -48,5 +49,10 @@ class Reservation extends BaseModel
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'id');
     }
 }

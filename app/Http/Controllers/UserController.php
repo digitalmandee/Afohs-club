@@ -59,7 +59,16 @@ class UserController extends Controller
             return response()->json(['success' => true, 'results' => $results]);
         } else if ($memberType == 2) {
             $customers = Customer::select(
-                'id', 'customer_no', 'name', 'email', 'contact', 'cnic', 'address', 'member_name', 'member_no', 'guest_type_id'
+                'id',
+                'customer_no',
+                'name',
+                'email',
+                'contact',
+                'cnic',
+                'address',
+                'member_name',
+                'member_no',
+                'guest_type_id'
             )
                 ->where(function ($q) use ($query) {
                     $q
@@ -82,6 +91,32 @@ class UserController extends Controller
                     'cnic' => $customer->cnic,
                     'phone' => $customer->contact,
                     'address' => $customer->address,
+                ];
+            });
+        } else if ($memberType == 3) {
+            $employees = Employee::select(
+                'id',
+                'employee_id',
+                'name',
+                'email',
+                'phone_no',
+            )
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%")
+                        ->orWhere('employee_id', 'like', "%{$query}%");
+                })->limit(10)->get();
+
+            $results = $employees->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'booking_type' => 'employee',
+                    'name' => $employee->name,
+                    'label' => "{$employee->name} ({$employee->employee_id})",
+                    'customer_no' => $employee->employee_id,
+                    'email' => $employee->email,
+                    'phone' => $employee->phone_no,
                 ];
             });
         }
@@ -126,8 +161,8 @@ class UserController extends Controller
             $employees = Employee::select('id', 'name', 'employee_id', 'email', 'designation', 'phone_no')
                 ->where(function ($q) use ($query) {
                     $q->where('name', 'like', "%{$query}%")
-                      ->orWhere('employee_id', 'like', "%{$query}%")
-                      ->orWhere('email', 'like', "%{$query}%");
+                        ->orWhere('employee_id', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%");
                 })
                 ->limit(10)
                 ->get();
@@ -185,7 +220,16 @@ class UserController extends Controller
             // Case 2: bookingType = 1 => Search in customers
         } elseif ($bookingType === '1') {
             $customers = Customer::select(
-                'id', 'customer_no', 'name', 'email', 'contact', 'cnic', 'address', 'member_name', 'member_no', 'guest_type_id'
+                'id',
+                'customer_no',
+                'name',
+                'email',
+                'contact',
+                'cnic',
+                'address',
+                'member_name',
+                'member_no',
+                'guest_type_id'
             )
                 ->where(function ($q) use ($query) {
                     $q
@@ -216,7 +260,16 @@ class UserController extends Controller
             $guestTypeId = (int) Str::after($bookingType, 'guest-');
 
             $customers = Customer::select(
-                'id', 'customer_no', 'name', 'email', 'contact', 'cnic', 'address', 'member_name', 'member_no', 'guest_type_id'
+                'id',
+                'customer_no',
+                'name',
+                'email',
+                'contact',
+                'cnic',
+                'address',
+                'member_name',
+                'member_no',
+                'guest_type_id'
             )
                 ->where('guest_type_id', $guestTypeId)
                 ->where(function ($q) use ($query) {

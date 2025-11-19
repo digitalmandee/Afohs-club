@@ -100,55 +100,6 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                 </Box>
             </Box>
 
-            {/* Membership Type Selection */}
-            {/* <Box sx={{ px: 2, mb: 2 }}>
-                <FormControl component="fieldset">
-                    <RadioGroup row name="membership-type" value={orderDetails.membership_type} onChange={(e) => handleMembershipType(e.target.value)}>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: 1,
-                                width: '100%',
-                            }}
-                        >
-                            {memberTypes.map((option) => {
-                                const isSelected = orderDetails.membership_type == option.id;
-                                return (
-                                    <Box
-                                        key={option.id}
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            border: `1px solid ${isSelected ? '#A27B5C' : '#E3E3E3'}`,
-                                            bgcolor: isSelected ? '#FCF7EF' : 'transparent',
-                                            borderRadius: 1,
-                                            px: 2,
-                                            py: 1,
-                                            width: 'calc(33.33% - 8px)',
-                                            transition: 'all 0.2s ease-in-out',
-                                        }}
-                                    >
-                                        <FormControlLabel
-                                            value={option.id}
-                                            control={<Radio size="small" />}
-                                            label={<Typography variant="body2">{option.name}</Typography>}
-                                            sx={{
-                                                m: 0,
-                                                width: '100%',
-                                                '& .MuiFormControlLabel-label': {
-                                                    flexGrow: 1,
-                                                },
-                                            }}
-                                        />
-                                    </Box>
-                                );
-                            })}
-                        </Box>
-                    </RadioGroup>
-                </FormControl>
-            </Box> */}
-
             <Box sx={{ px: 2, mb: 2 }}>
                 <FormControl component="fieldset">
                     <RadioGroup row name="membership-type" value={orderDetails.member_type} onChange={(e) => handleMemberType(e.target.value)}>
@@ -163,6 +114,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                             {[
                                 { id: 1, name: 'Member' },
                                 { id: 2, name: 'Guest' },
+                                { id: 3, name: 'Employee' },
                             ].map((option) => {
                                 const isSelected = orderDetails.member_type == option.id;
                                 return (

@@ -8,6 +8,7 @@ class FinancialInvoice extends BaseModel
         'invoice_no',
         'customer_id',
         'member_id',
+        'employee_id',
         'subscription_type',
         'invoice_type',
         'discount_type',
@@ -64,6 +65,11 @@ class FinancialInvoice extends BaseModel
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id', 'id');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'id');
     }
 
     public function createdBy()

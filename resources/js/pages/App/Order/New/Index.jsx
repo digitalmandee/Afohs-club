@@ -73,7 +73,6 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                 }}
             >
                 {/* Order Detailss */}
-                {/* {JSON.stringify(orderDetails)} */}
                 <Box
                     sx={{
                         display: 'flex',

@@ -193,11 +193,11 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                             }}
                         >
                             <Typography variant="subtitle2" sx={{ fontWeight: 500, fontSize: '18px' }}>
-                                #{order?.order_number ?? '—'}
+                                #{order?.id ?? '—'}
                             </Typography>
 
                             <Typography variant="h6" sx={{ fontWeight: 500, fontSize: '18px' }}>
-                                {order?.member?.member_type?.name ?? '—'}{' '}
+                                {order.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order.customer ? order.customer.name : order.employee?.name}`}
                             </Typography>
                             <Box
                                 sx={{
@@ -355,7 +355,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                 <Box sx={{ px: 4, py: 2, bgcolor: '#f9f9f9' }}>
                                                     <FormControl fullWidth sx={{ mb: 2 }}>
                                                         <InputLabel>Remark</InputLabel>
-                                                        <Select size="small" sx={{ py:1}} value={item.remark || ''} onChange={(e) => updateItem(index, { remark: e.target.value })}>
+                                                        <Select size="small" sx={{ py: 1 }} value={item.remark || ''} onChange={(e) => updateItem(index, { remark: e.target.value })}>
                                                             <MenuItem value="CANCELLED BY CUSTOMER">CANCELLED BY CUSTOMER</MenuItem>
                                                             <MenuItem value="GUEST MIND CHANGE">GUEST MIND CHANGE</MenuItem>
                                                             <MenuItem value="FOOD COMPLAIN">FOOD COMPLAIN</MenuItem>

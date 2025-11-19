@@ -180,6 +180,7 @@ class OrderController extends Controller
             'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
             'member:id,member_type_id,full_name,membership_no',
             'customer:id,name,customer_no',
+            'employee:id,employee_id,name',
             'member.memberType:id,name'
         ]);
         $allrestaurants = Tenant::select('id', 'name')->get();
@@ -191,15 +192,15 @@ class OrderController extends Controller
                 $q
                     ->where('id', 'like', "%$search%")
                     ->orWhereHas('member', fn($q) =>
-                        $q
-                            ->where('full_name', 'like', "%$search%")
-                            ->orWhere('membership_no', 'like', "%$search%"))
+                    $q
+                        ->where('full_name', 'like', "%$search%")
+                        ->orWhere('membership_no', 'like', "%$search%"))
                     ->orWhereHas('customer', fn($q) =>
-                        $q
-                            ->where('name', 'like', "%$search%")
-                            ->orWhere('customer_no', 'like', "%$search%"))
+                    $q
+                        ->where('name', 'like', "%$search%")
+                        ->orWhere('customer_no', 'like', "%$search%"))
                     ->orWhereHas('table', fn($q) =>
-                        $q->where('table_no', 'like', "%$search%"));
+                    $q->where('table_no', 'like', "%$search%"));
             });
         }
 
@@ -316,6 +317,17 @@ class OrderController extends Controller
                         'email' => $customer->email,
                         'address' => $customer->address
                     ];
+                } elseif ($request->member_type == 3) {
+                    $employee = Employee::select('id', 'employee_id', 'name', 'email', 'phone_no')
+                        ->where('id', $request->member_id)
+                        ->first();
+                    $orderContext['member'] = [
+                        'id' => $employee->id,
+                        'employee_id' => $employee->employee_id,
+                        'booking_type' => 'employee',
+                        'name' => $employee->name,
+                        'email' => $employee->email,
+                    ];
                 }
             }
 
@@ -407,8 +419,10 @@ class OrderController extends Controller
 
             if ($request->member['booking_type'] == 'member') {
                 $orderData['member_id'] = $request->member['id'];
-            } else {
+            } elseif ($request->member['booking_type'] == 'guest') {
                 $orderData['customer_id'] = $request->member['id'];
+            } else {
+                $orderData['employee_id'] = $request->member['id'];
             }
 
             if ($orderType == 'takeaway') {
@@ -433,7 +447,6 @@ class OrderController extends Controller
                 $orderData['paid_at'] = now();
                 $orderData['payment_status'] = 'paid';
             }
-            Log::info('Pass');
 
             $order = Order::updateOrCreate(
                 ['id' => $request->id],
@@ -511,8 +524,10 @@ class OrderController extends Controller
 
             if ($request->member['booking_type'] == 'member') {
                 $invoiceData['member_id'] = $request->member['id'];
-            } else {
+            } elseif ($request->member['booking_type'] == 'guest') {
                 $invoiceData['customer_id'] = $request->member['id'];
+            } else {
+                $invoiceData['employee_id'] = $request->member['id'];
             }
 
             if ($orderType == 'takeaway') {
@@ -588,7 +603,8 @@ class OrderController extends Controller
 
         // Custom check for subtotal/total_price dependency
         if (($request->has('subtotal') && !$request->has('total_price')) ||
-                ($request->has('total_price') && !$request->has('subtotal'))) {
+            ($request->has('total_price') && !$request->has('subtotal'))
+        ) {
             return redirect()->back()->withErrors([
                 'subtotal' => 'Subtotal and total_price must be provided together.'
             ]);
@@ -608,16 +624,18 @@ class OrderController extends Controller
                 'cancelType' => $request->cancelType ?? null,
             ];
 
-            if ($request->has('subtotal') && $request->has('total_price') && 
-                $validated['subtotal'] !== null && $validated['total_price'] !== null) {
+            if (
+                $request->has('subtotal') && $request->has('total_price') &&
+                $validated['subtotal'] !== null && $validated['total_price'] !== null
+            ) {
                 $updateData['amount'] = $validated['subtotal'];
                 $updateData['total_price'] = $validated['total_price'];
-                
+
                 // Update discount if provided
                 if ($request->has('discount')) {
                     $updateData['discount'] = $validated['discount'];
                 }
-                
+
                 // Update tax if provided
                 if ($request->has('tax_rate')) {
                     $updateData['tax'] = $validated['tax_rate'];
@@ -657,8 +675,10 @@ class OrderController extends Controller
                 if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
-                } elseif ($request->has('subtotal') && $request->has('total_price') && 
-                          $validated['subtotal'] !== null && $validated['total_price'] !== null) {
+                } elseif (
+                    $request->has('subtotal') && $request->has('total_price') &&
+                    $validated['subtotal'] !== null && $validated['total_price'] !== null
+                ) {
                     // Otherwise update amounts if provided
                     $financialInvoice->update([
                         'amount' => $validated['subtotal'],
@@ -717,7 +737,7 @@ class OrderController extends Controller
     public function searchProducts(Request $request)
     {
         $searchTerm = $request->query('search');
-        
+
         if (empty($searchTerm)) {
             return response()->json(['success' => true, 'products' => []], 200);
         }
@@ -726,8 +746,8 @@ class OrderController extends Controller
         $products = Product::with(['variants:id,product_id,name', 'variants.values', 'category', 'tenant:id,name'])
             ->where(function ($query) use ($searchTerm) {
                 $query->where('id', 'like', "%{$searchTerm}%")
-                      ->where('menu_code', 'like', "%{$searchTerm}%")
-                      ->orWhere('name', 'like', "%{$searchTerm}%");
+                    ->where('menu_code', 'like', "%{$searchTerm}%")
+                    ->orWhere('name', 'like', "%{$searchTerm}%");
             })
             ->where('current_stock', '>', 0) // Only show products with stock
             ->limit(20) // Limit results for performance
