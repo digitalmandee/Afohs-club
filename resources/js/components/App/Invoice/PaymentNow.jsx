@@ -300,7 +300,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                         sx={{
                             display: 'flex',
                             borderBottom: '1px solid #e0e0e0',
-                            mb: 3,
+                            mb: 2,
                         }}
                     >
                         <Box sx={activePaymentMethod === 'cash' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('cash')}>
@@ -355,7 +355,9 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 Split Payment
                             </Typography>
                         </Box>
+                    </Box>
 
+                    <Box sx={{ display: 'flex', borderBottom: '1px solid #e0e0e0', mb: 2 }}>
                         <Box sx={activePaymentMethod === 'ent' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('ent')}>
                             <Typography variant="body1" fontWeight={activePaymentMethod === 'ent' ? 'medium' : 'normal'}>
                                 ENT
@@ -708,7 +710,7 @@ const styles = {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '15px',
+        padding: '8px 10px',
         cursor: 'pointer',
         borderBottom: '2px solid transparent',
     },
@@ -718,7 +720,7 @@ const styles = {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '15px',
+        padding: '8px 10px',
         cursor: 'pointer',
         borderBottom: '2px solid #0a3d62',
         backgroundColor: '#e3f2fd',

@@ -116,26 +116,6 @@ class RoomController extends Controller
 
     public function dashboard()
     {
-        // ✅ Get the latest bookings with invoice using polymorphic relationship
-        $bookings = RoomBooking::with([
-                'room:id,name,room_type_id',
-                'customer:id,customer_no,email,name',
-                'member:id,membership_no,full_name',
-                'invoice:id,invoiceable_id,invoiceable_type,status'
-            ])
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // ✅ Transform invoice data for frontend
-        $bookings->transform(function ($booking) {
-            $booking->invoice = $booking->invoice ? [
-                'id' => $booking->invoice->id,
-                'status' => $booking->invoice->status,
-            ] : null;
-            return $booking;
-        });
-
         // Other stats
         $totalBookings = RoomBooking::count();
         $totalRoomBookings = RoomBooking::count();
@@ -155,7 +135,6 @@ class RoomController extends Controller
             ->count();
 
         $data = [
-            'bookingsData' => $bookings,
             'rooms' => $rooms,
             'totalRooms' => $totalRooms,
             'availableRoomsToday' => $availableRoomsToday,
@@ -340,31 +319,36 @@ class RoomController extends Controller
         // Apply search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%")
-                  ->orWhereHas('member', function ($q) use ($search) {
-                      $q->where('full_name', 'like', "%{$search}%")
-                        ->orWhere('membership_no', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('customer', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('customer_no', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('room', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                $q
+                    ->where('id', 'like', "%{$search}%")
+                    ->orWhereHas('member', function ($q) use ($search) {
+                        $q
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('customer_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('room', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
         // Apply date range filter (check_in_date and check_out_date)
         if ($startDate && $endDate) {
             $query->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('check_in_date', [$startDate, $endDate])
-                  ->orWhereBetween('check_out_date', [$startDate, $endDate])
-                  ->orWhere(function ($q) use ($startDate, $endDate) {
-                      // Bookings that span the date range
-                      $q->where('check_in_date', '<=', $startDate)
-                        ->where('check_out_date', '>=', $endDate);
-                  });
+                $q
+                    ->whereBetween('check_in_date', [$startDate, $endDate])
+                    ->orWhereBetween('check_out_date', [$startDate, $endDate])
+                    ->orWhere(function ($q) use ($startDate, $endDate) {
+                        // Bookings that span the date range
+                        $q
+                            ->where('check_in_date', '<=', $startDate)
+                            ->where('check_out_date', '>=', $endDate);
+                    });
             });
         } elseif ($startDate) {
             $query->where('check_out_date', '>=', $startDate);
@@ -372,7 +356,8 @@ class RoomController extends Controller
             $query->where('check_in_date', '<=', $endDate);
         }
 
-        $bookings = $query->orderBy('check_in_date', 'desc')
+        $bookings = $query
+            ->orderBy('check_in_date', 'desc')
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -393,7 +378,7 @@ class RoomController extends Controller
         $search = $request->input('search', '');
         $startDate = $request->input('start_date', '');
         $endDate = $request->input('end_date', '');
-        
+
         $query = RoomBooking::with([
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
@@ -404,31 +389,36 @@ class RoomController extends Controller
         // Apply search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%")
-                  ->orWhereHas('member', function ($q) use ($search) {
-                      $q->where('full_name', 'like', "%{$search}%")
-                        ->orWhere('membership_no', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('customer', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('customer_no', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('room', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                $q
+                    ->where('id', 'like', "%{$search}%")
+                    ->orWhereHas('member', function ($q) use ($search) {
+                        $q
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('customer_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('room', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
         // Apply date range filter (check_in_date and check_out_date)
         if ($startDate && $endDate) {
             $query->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('check_in_date', [$startDate, $endDate])
-                  ->orWhereBetween('check_out_date', [$startDate, $endDate])
-                  ->orWhere(function ($q) use ($startDate, $endDate) {
-                      // Bookings that span the date range
-                      $q->where('check_in_date', '<=', $startDate)
-                        ->where('check_out_date', '>=', $endDate);
-                  });
+                $q
+                    ->whereBetween('check_in_date', [$startDate, $endDate])
+                    ->orWhereBetween('check_out_date', [$startDate, $endDate])
+                    ->orWhere(function ($q) use ($startDate, $endDate) {
+                        // Bookings that span the date range
+                        $q
+                            ->where('check_in_date', '<=', $startDate)
+                            ->where('check_out_date', '>=', $endDate);
+                    });
             });
         } elseif ($startDate) {
             $query->where('check_out_date', '>=', $startDate);
@@ -436,7 +426,8 @@ class RoomController extends Controller
             $query->where('check_in_date', '<=', $endDate);
         }
 
-        $bookings = $query->orderBy('check_out_date', 'desc')
+        $bookings = $query
+            ->orderBy('check_out_date', 'desc')
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -462,13 +453,13 @@ class RoomController extends Controller
         ]);
 
         $booking = RoomBooking::findOrFail($id);
-        
+
         $booking->status = $request->status;
-        
+
         if ($request->has('cancellation_reason')) {
             $booking->cancellation_reason = $request->cancellation_reason;
         }
-        
+
         $booking->save();
 
         return response()->json([

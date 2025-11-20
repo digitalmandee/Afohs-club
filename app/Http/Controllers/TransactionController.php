@@ -128,10 +128,10 @@ class TransactionController extends Controller
             'credit_card_type' => 'required_if:payment_method,credit_card|string|nullable',
             'receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
             // ENT
-            'ent_reason' => 'required_if:payment_method,ent|string|nullable',
+            'ent_reason' => 'nullable|string',
             'ent_comment' => 'nullable|string',
             // CTS
-            'cts_comment' => 'required_if:payment_method,cts|string|nullable',
+            'cts_comment' => 'nullable|string',
         ]);
 
         $invoice = Order::findOrFail($request->order_id);
@@ -183,8 +183,8 @@ class TransactionController extends Controller
          * |--------------------------------------------------------------------------
          */
         if ($request->payment_method === 'ent') {
-            $invoice->ent_reason = $request->ent_reason;
-            $invoice->ent_comment = $request->ent_comment;
+            // $invoice->ent_reason = $request->ent_reason;
+            // $invoice->ent_comment = $request->ent_comment;
 
             // ENT = no money paid
             $invoice->paid_amount = 0;
@@ -196,7 +196,7 @@ class TransactionController extends Controller
          * |--------------------------------------------------------------------------
          */
         if ($request->payment_method === 'cts') {
-            $invoice->cts_comment = $request->cts_comment;
+            // $invoice->cts_comment = $request->cts_comment;
 
             // CTS = no money paid
             $invoice->paid_amount = 0;
@@ -216,7 +216,11 @@ class TransactionController extends Controller
                 'status' => 'paid',
                 'payment_date' => now(),
                 'payment_method' => $request->payment_method,
-                'paid_amount' => $invoice->paid_amount,
+                // 'paid_amount' => ($request->payment_method === 'ent' || $request->payment_method === 'cts') ? 0 : $request->paid_amount,
+                'paid_amount' => $request->paid_amount,
+                'ent_reason' => $request->ent_reason,
+                'ent_comment' => $request->ent_comment,
+                'cts_comment' => $request->cts_comment,
             ]);
 
         return back()->with('success', 'Payment successful');

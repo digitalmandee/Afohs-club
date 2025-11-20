@@ -4,35 +4,35 @@ use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\SubscriptionTypeController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminPosReportController;
 use App\Http\Controllers\AppliedMemberController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\RoleManagementController;
-use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\EmployeeDepartmentController;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\LeaveCategoryController;
-use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\EmployeeTypeController;
 use App\Http\Controllers\EventBookingController;
-use App\Http\Controllers\PayrollController;
-use App\Http\Controllers\PayrollApiController;
-use App\Http\Controllers\EventMenuAddOnsController;
 use App\Http\Controllers\EventChargesTypeController;
+use App\Http\Controllers\EventMenuAddOnsController;
 use App\Http\Controllers\EventMenuCategoryController;
 use App\Http\Controllers\EventMenuController;
 use App\Http\Controllers\EventMenuTypeController;
 use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FamilyMembersArchiveConroller;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\LeaveApplicationController;
+use App\Http\Controllers\LeaveCategoryController;
 use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MemberTransactionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PayrollApiController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RoomBookingController;
 use App\Http\Controllers\RoomBookingRequestController;
 use App\Http\Controllers\RoomCategoryController;
@@ -43,10 +43,10 @@ use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\SubscriptionCategoryController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\UserMemberController;
-use App\Http\Controllers\AdminPosReportController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\VoucherController;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
@@ -99,33 +99,35 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::prefix('payroll')->group(function () {
             // Payroll Dashboard
             Route::get('dashboard', [PayrollController::class, 'dashboard'])->name('employees.payroll.dashboard');
-            
+
             // Payroll Settings
             Route::get('settings', [PayrollController::class, 'settings'])->name('employees.payroll.settings');
-            
+
             // Employee Salary Management
             Route::get('salaries', [PayrollController::class, 'employeeSalaries'])->name('employees.payroll.salaries');
             Route::get('salaries/create/{employeeId}', [PayrollController::class, 'createSalaryStructure'])->name('employees.payroll.salaries.create');
             Route::get('salaries/edit/{employeeId}', [PayrollController::class, 'editSalaryStructure'])->name('employees.payroll.salaries.edit');
             Route::get('salaries/view/{employeeId}', [PayrollController::class, 'viewSalaryStructure'])->name('employees.payroll.salaries.view');
-            
+
             // Allowance & Deduction Types Management
             Route::get('allowance-types', [PayrollController::class, 'allowanceTypes'])->name('employees.payroll.allowance-types');
             Route::get('deduction-types', [PayrollController::class, 'deductionTypes'])->name('employees.payroll.deduction-types');
-            
+
             // Payroll Processing
             Route::get('process', [PayrollController::class, 'processPayroll'])->name('employees.payroll.process');
+            // Payroll Preview (full page)
+            Route::get('preview', [PayrollController::class, 'previewPayrollPage'])->name('employees.payroll.preview');
             Route::get('periods', [PayrollController::class, 'payrollPeriods'])->name('employees.payroll.periods');
             Route::get('periods/create', [PayrollController::class, 'createPeriod'])->name('employees.payroll.periods.create');
             Route::get('periods/{periodId}/edit', [PayrollController::class, 'editPeriod'])->name('employees.payroll.periods.edit');
             Route::get('periods/{periodId}/payslips', [PayrollController::class, 'periodPayslips'])->name('employees.payroll.periods.payslips');
-            
+
             // Payslips Management
             Route::get('payslips', [PayrollController::class, 'payslips'])->name('employees.payroll.payslips');
             Route::get('payslips/{periodId}', [PayrollController::class, 'periodPayslips'])->name('employees.payroll.payslips.period');
             Route::get('payslip/{payslipId}', [PayrollController::class, 'viewPayslip'])->name('employees.payroll.payslip.view');
             Route::get('payslips/{payslipId}/print', [PayrollController::class, 'printPayslip'])->name('employees.payroll.payslips.print');
-            
+
             // Reports
             Route::get('reports', [PayrollController::class, 'reports'])->name('employees.payroll.reports');
             Route::get('reports/summary/{periodId?}', [PayrollController::class, 'summaryReport'])->name('employees.payroll.reports.summary');
@@ -211,7 +213,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
 
-    // 
+    //
     Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
 
     // Search
@@ -263,7 +265,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/Component');
     })->name('employee.component');
 
-
     Route::get('/employee/payroll/runpayroll/dashboard', function () {
         return Inertia::render('App/Admin/Employee/Payroll/RunPayroll');
     })->name('employee.runpayroll');
@@ -312,7 +313,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/Payroll/AddCheque');
     })->name('employee.addcheque');
 
-
     Route::group(['prefix' => 'admin/subscription'], function () {
         // Subscription Routes
         Route::get('dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard')->middleware('permission:subscriptions.dashboard.view');
@@ -328,7 +328,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Subscription details route (public access for QR code scanning)
     Route::get('subscription/details/{id}', [SubscriptionController::class, 'showDetails'])->name('subscription.details');
-
 
     Route::get('/api/customers/search', [SubscriptionController::class, 'search']);
 
@@ -363,40 +362,42 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::prefix('api/payroll')->group(function () {
         // Dashboard Stats
         Route::get('/dashboard/stats', [PayrollApiController::class, 'getDashboardStats'])->name('api.payroll.dashboard.stats');
-        
+
         // Settings
         Route::get('/settings', [PayrollApiController::class, 'getSettings'])->name('api.payroll.settings');
         Route::post('/settings', [PayrollApiController::class, 'updateSettings'])->name('api.payroll.settings.update');
-        
+
         // Allowance Types
         Route::get('/allowance-types', [PayrollApiController::class, 'getAllowanceTypes'])->name('api.payroll.allowance-types');
         Route::post('/allowance-types', [PayrollApiController::class, 'storeAllowanceType'])->name('api.payroll.allowance-types.store');
         Route::put('/allowance-types/{id}', [PayrollApiController::class, 'updateAllowanceType'])->name('api.payroll.allowance-types.update');
         Route::delete('/allowance-types/{id}', [PayrollApiController::class, 'deleteAllowanceType'])->name('api.payroll.allowance-types.delete');
-        
+
         // Deduction Types
         Route::get('/deduction-types', [PayrollApiController::class, 'getDeductionTypes'])->name('api.payroll.deduction-types');
         Route::post('/deduction-types', [PayrollApiController::class, 'storeDeductionType'])->name('api.payroll.deduction-types.store');
         Route::put('/deduction-types/{id}', [PayrollApiController::class, 'updateDeductionType'])->name('api.payroll.deduction-types.update');
         Route::delete('/deduction-types/{id}', [PayrollApiController::class, 'deleteDeductionType'])->name('api.payroll.deduction-types.delete');
-        
+
         // Employee Salaries
         Route::get('/employees/salaries', [PayrollApiController::class, 'getEmployeeSalaries'])->name('api.payroll.employees.salaries');
         Route::post('/employees/{employeeId}/salary-structure', [PayrollApiController::class, 'storeSalaryStructure'])->name('api.payroll.employees.salary-structure.store');
         Route::put('/employees/{employeeId}/salary-structure', [PayrollApiController::class, 'updateSalaryStructure'])->name('api.payroll.employees.salary-structure.update');
         Route::get('/employees/{employeeId}/salary-details', [PayrollApiController::class, 'getEmployeeSalaryDetails'])->name('api.payroll.employees.salary-details');
-        
+
         // Payroll Periods
         Route::get('/periods', [PayrollApiController::class, 'getPayrollPeriods'])->name('api.payroll.periods');
         Route::post('/periods', [PayrollApiController::class, 'storePayrollPeriod'])->name('api.payroll.periods.store');
         Route::put('/periods/{id}', [PayrollApiController::class, 'updatePayrollPeriod'])->name('api.payroll.periods.update');
         Route::delete('/periods/{id}', [PayrollApiController::class, 'deletePayrollPeriod'])->name('api.payroll.periods.delete');
         Route::post('/periods/{id}/mark-as-paid', [PayrollApiController::class, 'markPeriodAsPaid'])->name('api.payroll.periods.mark-as-paid');
-        
+
         // Payroll Processing
         Route::post('/periods/{periodId}/process', [PayrollApiController::class, 'processPayroll'])->name('api.payroll.periods.process');
         Route::get('/periods/{periodId}/preview', [PayrollApiController::class, 'previewPayroll'])->name('api.payroll.periods.preview');
-        
+        // Create a short-lived preview session token to avoid long query strings
+        Route::post('/preview-session', [PayrollApiController::class, 'createPreviewSession'])->name('api.payroll.preview.session');
+
         // Payslips
         Route::get('/periods/{periodId}/payslips', [PayrollApiController::class, 'getPeriodPayslips'])->name('api.payroll.periods.payslips');
         Route::get('/payslips/{payslipId}', [PayrollApiController::class, 'getPayslip'])->name('api.payroll.payslips.show');
@@ -404,7 +405,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/payslips/{payslipId}/reject', [PayrollApiController::class, 'rejectPayslip'])->name('api.payroll.payslips.reject');
         Route::post('/payslips/{payslipId}/revert-to-draft', [PayrollApiController::class, 'revertPayslipToDraft'])->name('api.payroll.payslips.revert-to-draft');
         Route::post('/payslips/bulk-approve', [PayrollApiController::class, 'bulkApprovePayslips'])->name('api.payroll.payslips.bulk-approve');
-        
+
         // Reports
         Route::get('/reports/summary/{periodId}', [PayrollApiController::class, 'getSummaryReport'])->name('api.payroll.reports.summary');
         Route::get('/reports/detailed/{periodId}', [PayrollApiController::class, 'getDetailedReport'])->name('api.payroll.reports.detailed');
@@ -432,7 +433,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Kitchen/History');
     })->name('kitchen.history');
 
-    
     Route::group(['prefix' => 'admin/membership'], function () {
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('permission:members.view');
@@ -447,7 +447,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status')->middleware('permission:members.edit');
         // Card Routes
         Route::get('/cards', [CardController::class, 'index'])->name('cards.dashboard');
-        
+
         // Reports Index - Dashboard with all reports
         Route::get('reports', [MemberFeeRevenueController::class, 'reportsIndex'])->name('membership.reports')->middleware('permission:reports.view');
 
@@ -633,7 +633,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/update-status', [VoucherController::class, 'updateStatus'])->name('vouchers.update-status');
     });
 
-    
     Route::prefix('api')->group(function () {
         // Dashboard Stats API
         Route::get('dashboard/stats', [AdminController::class, 'getDashboardStats'])->name('api.dashboard.stats');
