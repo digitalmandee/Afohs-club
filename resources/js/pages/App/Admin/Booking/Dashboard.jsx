@@ -216,7 +216,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
                         style={{
                             flex: '1',
                             backgroundColor: '#fff',
-                            padding: '12px',
+                            padding: '8px 12px',
                             height: '100%',
                             borderRight: '2px solid #063455',
                         }}
@@ -230,7 +230,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
                             }}
                         >
                             <span>
-                                <CalendarMonthIcon fontSize="large" sx={{ color: '#063455' }} />
+                                <CalendarMonthIcon fontSize="medium" sx={{ color: '#063455' }} />
                             </span>
                             <div className="date-range" style={{ width: '100%' }}>
                                 <Box>
@@ -256,7 +256,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
                     </Box>
 
                     {/* Persons Input */}
-                    <div style={{ flex: '1', backgroundColor: '#fff', padding: '12px', borderLeft: '2px solid #063455', height: '100%' }}>
+                    <div style={{ flex: '1', backgroundColor: '#fff', padding: '8px 12px', borderLeft: '2px solid #063455', height: '100%' }}>
                         <div
                             style={{
                                 display: 'flex',
@@ -265,7 +265,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
                             }}
                         >
                             <span>
-                                <PeopleIcon fontSize="large" sx={{ color: '#063455' }} />
+                                <PeopleIcon fontSize="medium" sx={{ color: '#063455' }} />
                             </span>
                             <span style={{ whiteSpace: 'nowrap' }}>Total Person:</span>
                             <input

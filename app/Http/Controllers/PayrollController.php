@@ -446,7 +446,7 @@ class PayrollController extends Controller
     public function printPayslip($payslipId)
     {
         $payslip = Payslip::with([
-            'employee:id,name,employee_id,department_id',
+            'employee:id,name,employee_id,department_id,joining_date,designation',
             'employee.department:id,name',
             'employee.user:id,name',
             'payrollPeriod:id,period_name,start_date,end_date',
