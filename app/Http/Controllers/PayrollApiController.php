@@ -541,10 +541,10 @@ class PayrollApiController extends Controller
     {
         $period = PayrollPeriod::findOrFail($id);
 
-        if (!$period->isEditable()) {
+        if ($period->status === 'paid') {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete processed payroll period'
+                'message' => 'Cannot delete paid payroll period'
             ], 422);
         }
 
