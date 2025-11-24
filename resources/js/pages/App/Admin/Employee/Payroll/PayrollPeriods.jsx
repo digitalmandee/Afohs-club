@@ -2,39 +2,8 @@ import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import {
-    Box,
-    Card,
-    Typography,
-    Button,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Chip,
-    IconButton,
-    Pagination,
-    CircularProgress,
-    Alert,
-    Snackbar,
-    Tooltip,
-    Menu,
-    MenuItem
-} from '@mui/material';
-import {
-    Add as AddIcon,
-    Edit as EditIcon,
-    Delete as DeleteIcon,
-    Visibility as VisibilityIcon,
-    MoreVert as MoreVertIcon,
-    ArrowBack as ArrowBackIcon,
-    PlayArrow as PlayArrowIcon,
-    Assessment as AssessmentIcon,
-    Payment as PaymentIcon
-} from '@mui/icons-material';
+import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Pagination, CircularProgress, Alert, Snackbar, Tooltip, Menu, MenuItem } from '@mui/material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as VisibilityIcon, MoreVert as MoreVertIcon, ArrowBack as ArrowBackIcon, PlayArrow as PlayArrowIcon, Assessment as AssessmentIcon, Payment as PaymentIcon } from '@mui/icons-material';
 import axios from 'axios';
 const PayrollPeriods = () => {
     const [periods, setPeriods] = useState([]);
@@ -55,10 +24,10 @@ const PayrollPeriods = () => {
             const response = await axios.get('/api/payroll/periods', {
                 params: {
                     page: currentPage,
-                    per_page: 15
-                }
+                    per_page: 15,
+                },
             });
-            
+
             if (response.data.success) {
                 setPeriods(response.data.periods.data || []);
                 setTotalPages(response.data.periods.last_page || 1);
@@ -67,17 +36,16 @@ const PayrollPeriods = () => {
             console.error('Error fetching periods:', error);
             showSnackbar('Error loading payroll periods', 'error');
             setLoading(false);
-        }finally {
+        } finally {
             setLoading(false);
         }
     };
-
 
     const handleDeletePeriod = async (period) => {
         if (window.confirm(`Are you sure you want to delete the payroll period "${period.period_name}"?`)) {
             try {
                 const response = await axios.delete(`/api/payroll/periods/${period.id}`);
-                
+
                 if (response.data.success) {
                     showSnackbar('Payroll period deleted successfully!', 'success');
                     fetchPeriods();
@@ -94,7 +62,7 @@ const PayrollPeriods = () => {
         if (window.confirm(`Are you sure you want to mark the payroll period "${period.period_name}" as PAID?\n\nThis confirms that salaries have been transferred to employee accounts and will lock the period from further changes.`)) {
             try {
                 const response = await axios.post(`/api/payroll/periods/${period.id}/mark-as-paid`);
-                
+
                 if (response.data.success) {
                     showSnackbar('Period marked as paid successfully!', 'success');
                     fetchPeriods();
@@ -113,7 +81,7 @@ const PayrollPeriods = () => {
             period_name: '',
             start_date: null,
             end_date: null,
-            pay_date: null
+            pay_date: null,
         });
     };
 
@@ -121,7 +89,6 @@ const PayrollPeriods = () => {
         handleCloseMenu();
         router.visit(route('employees.payroll.periods.edit', period.id));
     };
-
 
     const handleMenuClick = (event, period) => {
         setAnchorEl(event.currentTarget);
@@ -147,18 +114,24 @@ const PayrollPeriods = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'completed': return 'success';
-            case 'processing': return 'warning';
-            case 'paid': return 'primary';
-            default: return 'default';
+            case 'completed':
+                return 'success';
+            case 'processing':
+                return 'warning';
+            case 'paid':
+                return 'primary';
+            default:
+                return 'default';
         }
     };
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
             style: 'currency',
-            currency: 'PKR'
-        }).format(amount || 0).replace('PKR', 'Rs');
+            currency: 'PKR',
+        })
+            .format(amount || 0)
+            .replace('PKR', 'Rs');
     };
 
     return (
@@ -167,11 +140,7 @@ const PayrollPeriods = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button
-                            startIcon={<ArrowBackIcon />}
-                            onClick={() => router.visit(route('employees.payroll.dashboard'))}
-                            sx={{ color: '#063455' }}
-                        >
+                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.dashboard'))} sx={{ color: '#063455' }}>
                             Back to Dashboard
                         </Button>
                         <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
@@ -182,9 +151,9 @@ const PayrollPeriods = () => {
                         startIcon={<AddIcon />}
                         onClick={() => router.visit(route('employees.payroll.periods.create'))}
                         variant="contained"
-                        sx={{ 
+                        sx={{
                             backgroundColor: '#063455',
-                            '&:hover': { backgroundColor: '#052d45' }
+                            '&:hover': { backgroundColor: '#052d45' },
                         }}
                     >
                         Create New Period
@@ -216,17 +185,12 @@ const PayrollPeriods = () => {
                                 ) : periods.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                                            <Typography color="textSecondary">
-                                                No payroll periods found
-                                            </Typography>
+                                            <Typography color="textSecondary">No payroll periods found</Typography>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     periods.map((period) => (
-                                        <TableRow 
-                                            key={period.id}
-                                            sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
-                                        >
+                                        <TableRow key={period.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                             <TableCell>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                                                     {period.period_name}
@@ -235,52 +199,30 @@ const PayrollPeriods = () => {
                                             <TableCell>
                                                 {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
                                             </TableCell>
+                                            <TableCell>{period.pay_date ? new Date(period.pay_date).toLocaleDateString() : 'Not Set'}</TableCell>
                                             <TableCell>
-                                                {period.pay_date ? new Date(period.pay_date).toLocaleDateString() : 'Not Set'}
+                                                <Chip label={period.status} size="small" color={getStatusColor(period.status)} />
                                             </TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={period.status}
-                                                    size="small"
-                                                    color={getStatusColor(period.status)}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                {period.total_employees || 0}
-                                            </TableCell>
-                                            <TableCell>
-                                                {formatCurrency(period.total_net_amount || 0)}
-                                            </TableCell>
+                                            <TableCell>{period.total_employees || 0}</TableCell>
+                                            <TableCell>{formatCurrency(period.total_net_amount || 0)}</TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                                     <Tooltip title="View Payslips">
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => router.visit(route('employees.payroll.payslips.period', period.id))}
-                                                            sx={{ color: '#063455' }}
-                                                        >
+                                                        <IconButton size="small" onClick={() => router.visit(route('employees.payroll.payslips.period', period.id))} sx={{ color: '#063455' }}>
                                                             <VisibilityIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-                                                    
+
                                                     {period.status === 'draft' && (
                                                         <Tooltip title="Process Payroll">
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => router.visit(route('employees.payroll.process'))}
-                                                                sx={{ color: '#2e7d32' }}
-                                                            >
+                                                            <IconButton size="small" onClick={() => router.visit(route('employees.payroll.process'))} sx={{ color: '#2e7d32' }}>
                                                                 <PlayArrowIcon fontSize="small" />
                                                             </IconButton>
                                                         </Tooltip>
                                                     )}
-                                                    
+
                                                     <Tooltip title="More Actions">
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={(e) => handleMenuClick(e, period)}
-                                                            sx={{ color: '#666' }}
-                                                        >
+                                                        <IconButton size="small" onClick={(e) => handleMenuClick(e, period)} sx={{ color: '#666' }}>
                                                             <MoreVertIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
@@ -316,11 +258,7 @@ const PayrollPeriods = () => {
                 </Card>
 
                 {/* Context Menu */}
-                <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleCloseMenu}
-                >
+                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
                     <MenuItem onClick={() => handleEdit(selectedPeriod)}>
                         <EditIcon sx={{ mr: 1, fontSize: 20 }} />
                         Edit Period
@@ -342,12 +280,7 @@ const PayrollPeriods = () => {
                 </Menu>
 
                 {/* Snackbar for notifications */}
-                <Snackbar
-                    open={snackbar.open}
-                    autoHideDuration={6000}
-                    onClose={handleCloseSnackbar}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                >
+                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                     <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                         {snackbar.message}
                     </Alert>
