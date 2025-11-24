@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, CardContent, Typography, Button, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Checkbox, FormControlLabel, LinearProgress, Alert, Snackbar, Divider, Step, Stepper, StepLabel, StepContent, CircularProgress, Pagination, TextField } from '@mui/material';
+import { Box, Card, CardContent, Typography, Button, Grid, Table, TableBody, IconButton, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Checkbox, FormControlLabel, LinearProgress, Alert, Snackbar, Divider, Step, Stepper, StepLabel, StepContent, CircularProgress, Pagination, TextField } from '@mui/material';
 import { PlayArrow as PlayArrowIcon, Preview as PreviewIcon, ArrowBack as ArrowBackIcon, CheckCircle as CheckCircleIcon, Warning as WarningIcon, Error as ErrorIcon } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -209,22 +209,22 @@ const ProcessPayroll = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{ p: 3 }}>
+            <Box sx={{bgcolor:'#f5f5f5', p: 2 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.dashboard'))} sx={{ color: '#063455' }}>
-                            Back to Dashboard
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Process Payroll
                         </Typography>
                     </Box>
                 </Box>
 
-                <Grid container spacing={4}>
+                <Grid container spacing={2}>
                     {/* Stepper */}
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                         <Card>
                             <CardContent>
                                 <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600, mb: 3 }}>
@@ -287,7 +287,7 @@ const ProcessPayroll = () => {
                     </Grid>
 
                     {/* Main Content */}
-                    <Grid item xs={12} md={8}>
+                    <Grid item xs={12} md={9}>
                         {!currentPeriod ? (
                             <Card>
                                 <CardContent sx={{ textAlign: 'center', py: 6 }}>

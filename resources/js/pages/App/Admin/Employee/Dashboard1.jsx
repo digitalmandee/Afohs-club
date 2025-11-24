@@ -81,7 +81,7 @@ const EmployeeDashboard = () => {
                     <div style={{ paddingTop: '1rem' }}>
                         {/* Header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: 'bold' }}>
+                            <Typography variant="h5" style={{ color:'#0a3d62', fontWeight:'600' }}>
                                 Employee Management
                             </Typography>
                             <Button style={{ color: 'white', backgroundColor: '#0a3d62' }} onClick={() => router.visit(route('employees.create'))}>
@@ -287,15 +287,15 @@ const EmployeeDashboard = () => {
                             <Table>
                                 <TableHead style={{ backgroundColor: '#E5E5EA' }}>
                                     <TableRow>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>EMP ID</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Name</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Type</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Department</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Designation</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Joining Date</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Email Address</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Employee Status</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Actions</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>EMP ID</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>Name</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>Type</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>Department</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>Designation</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>Joining Date</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>Email Address</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>Employee Status</TableCell>
+                                        <TableCell style={{ color: '#000000', fontWeight: '600', fontSize: '14px' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

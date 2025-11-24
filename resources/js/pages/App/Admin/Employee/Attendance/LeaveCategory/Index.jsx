@@ -122,34 +122,32 @@ const Management = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             >
-                <Box sx={{ px: 2, py: 2 }}>
-                    <div style={{ paddingTop: '1rem' }}>
-                        {/* Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: 'bold' }}>
-                                Leave Categories
-                            </Typography>
-                            <div style={{ maxWidth: '120px' }}>
-                                <Button
-                                    onClick={() => router.visit(route('employees.leaves.category.create'))}
-                                    variant="contained"
-                                    fullWidth
-                                    style={{
-                                        backgroundColor: '#063455',
-                                        color: 'white',
-                                        textTransform: 'none',
-                                        padding: '12px',
-                                        fontSize: '16px',
-                                    }}
-                                >
-                                    Add
-                                </Button>
-                            </div>
+                <div style={{ padding: '2rem' }}>
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                        <Typography variant="h5" style={{ fontWeight: '600', color: '#0A3D62' }}>
+                            Leave Categories
+                        </Typography>
+                        <div style={{ maxWidth: '120px' }}>
+                            <Button
+                                onClick={() => router.visit(route('employees.leaves.category.create'))}
+                                variant="contained"
+                                fullWidth
+                                style={{
+                                    backgroundColor: '#0A3D62',
+                                    color: 'white',
+                                    textTransform: 'none',
+                                    padding: '12px',
+                                    fontSize: '16px',
+                                }}
+                            >
+                                Add Leave
+                            </Button>
                         </div>
-                        {/* Cards Section */}
-                        <div style={{ display: 'flex', width: '90%', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>{categories.length > 0 && categories.map((category, index) => <LeaveCard key={index} data={category} />)}</div>
                     </div>
-                </Box>
+                    {/* Cards Section */}
+                    <div style={{ display: 'flex', width: '90%', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>{categories.length > 0 && categories.map((category, index) => <LeaveCard key={index} data={category} />)}</div>
+                </div>
             </div>
             <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
                 <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">

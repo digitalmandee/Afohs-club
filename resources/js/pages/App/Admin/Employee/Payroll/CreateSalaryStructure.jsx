@@ -205,13 +205,9 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Button
-                                startIcon={<ArrowBackIcon />}
-                                onClick={() => router.visit(route('employees.payroll.salaries'))}
-                                sx={{ color: '#063455' }}
-                            >
-                                Back to Salaries
-                            </Button>
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBackIcon />
+                            </IconButton>
                             <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
                                 Create Salary Structure
                             </Typography>

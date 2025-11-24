@@ -118,15 +118,15 @@ const PayrollPreview = ({ period: initialPeriod, token: initialToken }) => {
                                         <TableContainer component={Paper} sx={{ maxHeight: 500 }}>
                                             <Table stickyHeader size="small">
                                                 <TableHead>
-                                                    <TableRow>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Employee</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Basic Salary</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Allowances</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Deductions</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Order Deductions</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Gross Salary</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Net Salary</TableCell>
+                                                    <TableRow sx={{bgcolor:'#E5E5EA'}}>
+                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Employee</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Department</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Basic Salary</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Allowances</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Deductions</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Order Deductions</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Gross Salary</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Net Salary</TableCell>
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>

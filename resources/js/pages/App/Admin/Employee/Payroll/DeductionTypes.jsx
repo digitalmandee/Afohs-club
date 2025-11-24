@@ -134,14 +134,14 @@ const DeductionTypes = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{ p: 3 }}>
+            <Box sx={{bgcolor:'#f5f5f5', p: 2 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.settings'))} sx={{ color: '#063455' }}>
-                            Back to Settings
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', }}>
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Deduction Types
                         </Typography>
                     </Box>
@@ -163,13 +163,13 @@ const DeductionTypes = () => {
                     <TableContainer component={Paper}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Type</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Description</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Mandatory</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Type</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Description</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Mandatory</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

@@ -135,12 +135,9 @@ const ManageAttendance = () => {
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: 'bold' }}>
+                            <Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
                                 Manage Attendance
                             </Typography>
-                            <Button startIcon={<ArrowBack />} onClick={() => window.history.back()} variant="outlined" size="small">
-                                Back
-                            </Button>
                         </div>
 
                         <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
@@ -164,7 +161,7 @@ const ManageAttendance = () => {
                                             color: 'white', 
                                             textTransform: 'none',
                                             '&:hover': {
-                                                backgroundColor: '#052d45',
+                                                backgroundColor: '#063455',
                                             },
                                         }}
                                     >
@@ -200,16 +197,16 @@ const ManageAttendance = () => {
 
                             <TableContainer component={Paper}>
                                 <Table>
-                                    <TableHead style={{ backgroundColor: '#f8f9fa' }}>
+                                    <TableHead style={{ backgroundColor: '#E5E5EA' }}>
                                         <TableRow>
-                                            <TableCell>#</TableCell>
-                                            <TableCell>Employee Name</TableCell>
-                                            <TableCell>Designation</TableCell>
-                                            <TableCell>Attendance</TableCell>
-                                            <TableCell>Leave Category</TableCell>
-                                            <TableCell>Check-In</TableCell>
-                                            <TableCell>Check-Out</TableCell>
-                                            <TableCell>Action</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>#</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Employee Name</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Designation</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Attendance</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Leave Category</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Check-In</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Check-Out</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Action</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>

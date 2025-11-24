@@ -58,7 +58,7 @@ const PayrollPeriods = () => {
                     per_page: 15
                 }
             });
-            
+
             if (response.data.success) {
                 setPeriods(response.data.periods.data || []);
                 setTotalPages(response.data.periods.last_page || 1);
@@ -67,7 +67,7 @@ const PayrollPeriods = () => {
             console.error('Error fetching periods:', error);
             showSnackbar('Error loading payroll periods', 'error');
             setLoading(false);
-        }finally {
+        } finally {
             setLoading(false);
         }
     };
@@ -77,7 +77,7 @@ const PayrollPeriods = () => {
         if (window.confirm(`Are you sure you want to delete the payroll period "${period.period_name}"?`)) {
             try {
                 const response = await axios.delete(`/api/payroll/periods/${period.id}`);
-                
+
                 if (response.data.success) {
                     showSnackbar('Payroll period deleted successfully!', 'success');
                     fetchPeriods();
@@ -94,7 +94,7 @@ const PayrollPeriods = () => {
         if (window.confirm(`Are you sure you want to mark the payroll period "${period.period_name}" as PAID?\n\nThis confirms that salaries have been transferred to employee accounts and will lock the period from further changes.`)) {
             try {
                 const response = await axios.post(`/api/payroll/periods/${period.id}/mark-as-paid`);
-                
+
                 if (response.data.success) {
                     showSnackbar('Period marked as paid successfully!', 'success');
                     fetchPeriods();
@@ -163,18 +163,14 @@ const PayrollPeriods = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ bgcolor:'#f5f5f5', p: 2 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button
-                            startIcon={<ArrowBackIcon />}
-                            onClick={() => router.visit(route('employees.payroll.dashboard'))}
-                            sx={{ color: '#063455' }}
-                        >
-                            Back to Dashboard
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payroll Periods
                         </Typography>
                     </Box>
@@ -182,7 +178,7 @@ const PayrollPeriods = () => {
                         startIcon={<AddIcon />}
                         onClick={() => router.visit(route('employees.payroll.periods.create'))}
                         variant="contained"
-                        sx={{ 
+                        sx={{
                             backgroundColor: '#063455',
                             '&:hover': { backgroundColor: '#052d45' }
                         }}
@@ -196,14 +192,14 @@ const PayrollPeriods = () => {
                     <TableContainer component={Paper}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Period Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Date Range</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Pay Date</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employees</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Net Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Period Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Date Range</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Pay Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employees</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Net Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -223,7 +219,7 @@ const PayrollPeriods = () => {
                                     </TableRow>
                                 ) : (
                                     periods.map((period) => (
-                                        <TableRow 
+                                        <TableRow
                                             key={period.id}
                                             sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
                                         >
@@ -262,7 +258,7 @@ const PayrollPeriods = () => {
                                                             <VisibilityIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-                                                    
+
                                                     {period.status === 'draft' && (
                                                         <Tooltip title="Process Payroll">
                                                             <IconButton
@@ -274,7 +270,7 @@ const PayrollPeriods = () => {
                                                             </IconButton>
                                                         </Tooltip>
                                                     )}
-                                                    
+
                                                     <Tooltip title="More Actions">
                                                         <IconButton
                                                             size="small"

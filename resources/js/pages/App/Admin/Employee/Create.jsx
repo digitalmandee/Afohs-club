@@ -100,17 +100,16 @@ const EmployeeCreate = () => {
             >
                 <Box
                     sx={{
-                        px: 2,
-                        py: 2,
+                        p:2
                     }}
                 >
-                    <div style={{ paddingTop: '1rem', display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
                         <div onClick={() => router.visit(route('employees.dashboard'))} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                            <IconButton sx={{ color: '#333', mr: 1 }}>
+                            <IconButton>
                                 <ArrowBack />
                             </IconButton>
                         </div>
-                        <h3 style={{ margin: 0 }}>{isEdit ? 'Edit Employee' : 'Personal Detail'}</h3>
+                        <h2 style={{ margin: 0, fontWeight:'600', color:'#0A3D62' }}>{isEdit ? 'Edit Employee' : 'Personal Detail'}</h2>
                     </div>
                     <Paper
                         sx={{

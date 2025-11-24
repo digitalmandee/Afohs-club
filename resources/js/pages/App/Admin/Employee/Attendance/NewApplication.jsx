@@ -91,11 +91,11 @@ const LeaveApplication = () => {
 				<Box sx={{ px: 2, py: 2 }}>
 					<div style={{ paddingTop: '0.5rem' }}>
 						<div style={{ display: 'flex', alignItems:'center', marginBottom: '24px' }}>
-							<IconButton sx={{ color: '#333', mr: 1 }}
+							<IconButton
 							onClick={()=>window.history.back()}>
 								<ArrowBack />
 							</IconButton>
-							<Typography variant="h5" style={{ fontWeight: 'bold' }}>
+							<Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
 								{leaveApplication ? 'Edit Leave Application' : 'New Leave Application'}
 							</Typography>
 						</div>

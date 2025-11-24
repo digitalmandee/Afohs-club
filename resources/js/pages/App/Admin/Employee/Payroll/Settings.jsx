@@ -15,7 +15,7 @@ import {
     MenuItem,
     Alert,
     Snackbar,
-    Divider,
+    IconButton,
     Switch,
     FormControlLabel,
     InputAdornment,
@@ -117,23 +117,19 @@ const PayrollSettings = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ bgcolor:'#f5f5f5', p: 3 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button
-                            startIcon={<ArrowBackIcon />}
-                            onClick={() => router.visit(route('employees.payroll.dashboard'))}
-                            sx={{ color: '#063455' }}
-                        >
-                            Back to Dashboard
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <IconButton edge="start" onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payroll Settings
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
+                        {/* <Button
                             startIcon={<RefreshIcon />}
                             onClick={fetchSettings}
                             variant="outlined"
@@ -141,7 +137,7 @@ const PayrollSettings = () => {
                             disabled={loading}
                         >
                             Refresh
-                        </Button>
+                        </Button> */}
                         <Button
                             startIcon={<SaveIcon />}
                             onClick={handleSave}

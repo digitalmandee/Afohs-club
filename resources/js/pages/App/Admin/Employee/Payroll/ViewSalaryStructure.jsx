@@ -21,6 +21,7 @@ import {
     Divider,
     Chip,
     Avatar,
+    IconButton,
     CircularProgress
 } from '@mui/material';
 import {
@@ -90,18 +91,14 @@ const ViewSalaryStructure = ({ employee }) => {
 
     return (
         <AdminLayout>
-            <Box sx={{ p: 3 }}>
+            <Box sx={{bgcolor:'#f5f5f5', p: 2 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button
-                            startIcon={<ArrowBackIcon />}
-                            onClick={() => router.visit(route('employees.payroll.salaries'))}
-                            sx={{ color: '#063455' }}
-                        >
-                            Back to Salaries
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => window.history.back()}>
+                                <ArrowBackIcon />
+                            </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Salary Structure Details
                         </Typography>
                     </Box>
@@ -121,9 +118,9 @@ const ViewSalaryStructure = ({ employee }) => {
                     )}
                 </Box>
 
-                <Grid container spacing={4}>
+                <Grid container spacing={2}>
                     {/* Employee Information */}
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                         <Card>
                             <CardContent>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -228,7 +225,7 @@ const ViewSalaryStructure = ({ employee }) => {
                     </Grid>
 
                     {/* Salary Structure Details */}
-                    <Grid item xs={12} md={8}>
+                    <Grid item xs={12} md={9}>
                         {getSalaryStructure() ? (
                             <Box>
                                 {/* Basic Information */}

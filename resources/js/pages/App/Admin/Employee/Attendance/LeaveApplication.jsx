@@ -109,184 +109,182 @@ const LeaveApplication = () => {
                     backgroundColor: '#f5f5f5',
                 }}
             >
-                <Box sx={{ px: 2, py: 2 }}>
-                    <div style={{ paddingTop: '1rem' }}>
-                        {/* Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: 'bold' }}>
-                                Leave Applications
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                startIcon={<Add />}
-                                onClick={() => router.visit(route('employees.leaves.application.create'))}
-                                style={{
-                                    backgroundColor: '#063455',
-                                    color: 'white',
-                                    textTransform: 'none',
-                                }}
-                            >
-                                New Application
-                            </Button>
-                        </div>
-                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                    <TextField
-                                        variant="outlined"
-                                        placeholder="Search by employee name or ID..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        onKeyPress={handleKeyPress}
-                                        size="small"
-                                        sx={{ width: 350 }}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Search color="action" />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
+                <div style={{ padding: '2rem' }}>
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <Typography variant="h5" style={{ fontWeight: '600', color: '#0A3D62' }}>
+                            Leave Applications
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            startIcon={<Add />}
+                            onClick={() => router.visit(route('employees.leaves.application.create'))}
+                            style={{
+                                backgroundColor: '#063455',
+                                color: 'white',
+                                textTransform: 'none',
+                            }}
+                        >
+                            New Application
+                        </Button>
+                    </div>
+                    <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                <TextField
+                                    variant="outlined"
+                                    placeholder="Search by employee name or ID..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    size="small"
+                                    sx={{ width: 350 }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <Search color="action" />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                                <Button
+                                    variant="contained"
+                                    onClick={handleSearch}
+                                    sx={{
+                                        backgroundColor: '#063455',
+                                        color: 'white',
+                                        textTransform: 'none',
+                                        '&:hover': {
+                                            backgroundColor: '#052d45',
+                                        },
+                                    }}
+                                >
+                                    Search
+                                </Button>
+                                {searchTerm && (
                                     <Button
-                                        variant="contained"
-                                        onClick={handleSearch}
+                                        variant="outlined"
+                                        onClick={handleClearSearch}
                                         sx={{
-                                            backgroundColor: '#063455',
-                                            color: 'white',
+                                            color: '#063455',
+                                            borderColor: '#063455',
                                             textTransform: 'none',
                                             '&:hover': {
-                                                backgroundColor: '#052d45',
+                                                borderColor: '#052d45',
+                                                backgroundColor: 'rgba(6, 52, 85, 0.04)',
                                             },
                                         }}
                                     >
-                                        Search
+                                        Clear
                                     </Button>
-                                    {searchTerm && (
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleClearSearch}
-                                            sx={{
-                                                color: '#063455',
-                                                borderColor: '#063455',
-                                                textTransform: 'none',
-                                                '&:hover': {
-                                                    borderColor: '#052d45',
-                                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
-                                                },
-                                            }}
-                                        >
-                                            Clear
-                                        </Button>
-                                    )}
-                                </Box>
+                                )}
+                            </Box>
 
-                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                    {/* Date Picker */}
-                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                        <DatePicker
-                                            label="Select Date"
-                                            value={date}
-                                            onChange={(newValue) => setDate(newValue)}
-                                            renderInput={(params) => <TextField {...params} size="small" />}
-                                            slotProps={{
-                                                field: { clearable: true },
-                                            }}
-                                        />
-                                    </LocalizationProvider>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                {/* Date Picker */}
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Select Date"
+                                        value={date}
+                                        onChange={(newValue) => setDate(newValue)}
+                                        renderInput={(params) => <TextField {...params} size="small" />}
+                                        slotProps={{
+                                            field: { clearable: true },
+                                        }}
+                                    />
+                                </LocalizationProvider>
 
-                                    {/* Clear All Filters Button */}
-                                    {(searchTerm || date) && (
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleClearAllFilters}
-                                            sx={{
-                                                color: '#d32f2f',
-                                                borderColor: '#d32f2f',
-                                                textTransform: 'none',
-                                                '&:hover': {
-                                                    borderColor: '#b71c1c',
-                                                    backgroundColor: 'rgba(211, 47, 47, 0.04)',
-                                                },
-                                            }}
-                                        >
-                                            Clear All Filters
-                                        </Button>
-                                    )}
-                                </Box>
+                                {/* Clear All Filters Button */}
+                                {(searchTerm || date) && (
+                                    <Button
+                                        variant="outlined"
+                                        onClick={handleClearAllFilters}
+                                        sx={{
+                                            color: '#d32f2f',
+                                            borderColor: '#d32f2f',
+                                            textTransform: 'none',
+                                            '&:hover': {
+                                                borderColor: '#b71c1c',
+                                                backgroundColor: 'rgba(211, 47, 47, 0.04)',
+                                            },
+                                        }}
+                                    >
+                                        Clear All Filters
+                                    </Button>
+                                )}
                             </Box>
                         </Box>
+                    </Box>
 
-                        <TableContainer component={Paper}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455' }}>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>#</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Employee Name</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Start Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>End Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Leave Days</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Leave Category</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Created At</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Action</TableCell>
+                    <TableContainer component={Paper}>
+                        <Table>
+                            <TableHead>
+                                <TableRow style={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>#</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Employee Name</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Start Date</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>End Date</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Leave Days</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Leave Category</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Created At</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Action</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {isLoading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={9} align="center">
+                                            <CircularProgress sx={{ color: '#E0E8F0' }} />
+                                        </TableCell>
                                     </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {isLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={9} align="center">
-                                                <CircularProgress sx={{ color: '#E0E8F0' }} />
+                                ) : applications.length > 0 ? (
+                                    applications.map((application) => (
+                                        <TableRow key={application.id}>
+                                            <TableCell>{application.id}</TableCell>
+                                            <TableCell>{application.employee?.name}</TableCell>
+                                            <TableCell>{application.start_date}</TableCell>
+                                            <TableCell>{application.end_date}</TableCell>
+                                            <TableCell>{application.number_of_days}</TableCell>
+                                            <TableCell>{application.leave_category?.name}</TableCell>
+                                            <TableCell>{dayjs(application.created_at).format('YYYY-MM-DD')}</TableCell>
+                                            <TableCell>
+                                                <span
+                                                    style={{
+                                                        backgroundColor: application.status === 'approved' ? '#063455' : application.status === 'pending' ? '#FFA726' : '#F44336',
+                                                        color: 'white',
+                                                        padding: '4px 12px',
+                                                        borderRadius: '50px',
+                                                        textTransform: 'capitalize',
+                                                        display: 'inline-block',
+                                                    }}
+                                                >
+                                                    {application.status}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <IconButton size="small" onClick={() => router.visit(route('employees.leaves.application.edit', application.id))}>
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
                                             </TableCell>
                                         </TableRow>
-                                    ) : applications.length > 0 ? (
-                                        applications.map((application) => (
-                                            <TableRow key={application.id}>
-                                                <TableCell>{application.id}</TableCell>
-                                                <TableCell>{application.employee?.name}</TableCell>
-                                                <TableCell>{application.start_date}</TableCell>
-                                                <TableCell>{application.end_date}</TableCell>
-                                                <TableCell>{application.number_of_days}</TableCell>
-                                                <TableCell>{application.leave_category?.name}</TableCell>
-                                                <TableCell>{dayjs(application.created_at).format('YYYY-MM-DD')}</TableCell>
-                                                <TableCell>
-                                                    <span
-                                                        style={{
-                                                            backgroundColor: application.status === 'approved' ? '#063455' : application.status === 'pending' ? '#FFA726' : '#F44336',
-                                                            color: 'white',
-                                                            padding: '4px 12px',
-                                                            borderRadius: '50px',
-                                                            textTransform: 'capitalize',
-                                                            display: 'inline-block',
-                                                        }}
-                                                    >
-                                                        {application.status}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <IconButton size="small" onClick={() => router.visit(route('employees.leaves.application.edit', application.id))}>
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={9} align="center">
-                                                No applications found.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={9} align="center">
+                                            No applications found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-                        {/* Pagination */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-                            <Pagination count={totalPages} page={currentPage} onChange={(e, page) => setCurrentPage(page)} shape="rounded" />
-                        </div>
+                    {/* Pagination */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+                        <Pagination count={totalPages} page={currentPage} onChange={(e, page) => setCurrentPage(page)} shape="rounded" />
                     </div>
-                </Box>
+                </div>
             </div>
         </>
     );

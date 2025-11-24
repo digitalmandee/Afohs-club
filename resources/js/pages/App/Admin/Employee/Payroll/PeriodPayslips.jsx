@@ -197,363 +197,402 @@ const PeriodPayslips = ({ period }) => {
 
     return (
         <AdminLayout>
-            {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.periods'))} sx={{ color: '#063455' }}>
-                        Back to Periods
-                    </Button>
-                    <Box>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
-                            Period Payslips
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                            {period?.period_name} - {period ? new Date(period.start_date).toLocaleDateString() : ''} to {period ? new Date(period.end_date).toLocaleDateString() : ''}
-                        </Typography>
-                    </Box>
-                </Box>
-                <AssignmentIcon sx={{ fontSize: 40, color: '#063455', opacity: 0.7 }} />
-            </Box>
+            <div style={{
+                minHeight: '100vh',
+                backgroundColor: '#f5f5f5',
+                padding: '1rem'
+            }}>
 
-            {/* Filters and Actions */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={4}>
-                    <TextField
-                        fullWidth
-                        placeholder="Search employees..."
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchIcon sx={{ color: '#063455' }} />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <FormControl fullWidth>
-                        <InputLabel>Status Filter</InputLabel>
-                        <Select value={statusFilter} label="Status Filter" onChange={(e) => setStatusFilter(e.target.value)}>
-                            <MenuItem value="">All Status</MenuItem>
-                            <MenuItem value="draft">Draft</MenuItem>
-                            <MenuItem value="approved">Approved</MenuItem>
-                            <MenuItem value="paid">Paid</MenuItem>
-                            <MenuItem value="rejected">Rejected</MenuItem>
-                        </Select>
-                    </FormControl>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <Box sx={{ display: 'flex', gap: 1, height: '100%', alignItems: 'center' }}>
-                        {selectedPayslips.length > 0 && (
-                            <Button
-                                variant="contained"
-                                startIcon={<CheckCircleIcon />}
-                                onClick={handleBulkApprove}
-                                sx={{
-                                    backgroundColor: '#2e7d32',
-                                    '&:hover': { backgroundColor: '#1b5e20' },
-                                }}
-                            >
-                                Approve ({selectedPayslips.length})
-                            </Button>
-                        )}
-                    </Box>
-                </Grid>
-                <Grid item xs={12} md={2}>
-                    <Card sx={{ background: 'linear-gradient(135deg, #063455 0%, #0a4a6b 100%)', color: 'white' }}>
-                        <CardContent sx={{ py: 1.5, textAlign: 'center' }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                {payslips.length}
+                {/* Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                                Period Payslips
                             </Typography>
-                            <Typography variant="body2">Total Payslips</Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
+                            <Typography variant="body2" color="textSecondary">
+                                {period?.period_name} - {period ? new Date(period.start_date).toLocaleDateString() : ''} to {period ? new Date(period.end_date).toLocaleDateString() : ''}
+                            </Typography>
+                        </Box>
+                    </Box>
+                    {/* <AssignmentIcon sx={{ fontSize: 40, color: '#063455', opacity: 0.7 }} /> */}
+                </Box>
 
-            {/* Payslips Table */}
-            <Card>
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>
-                                    <Checkbox checked={selectedPayslips.length === payslips.length && payslips.length > 0} indeterminate={selectedPayslips.length > 0 && selectedPayslips.length < payslips.length} onChange={handleSelectAll} sx={{ color: '#063455' }} />
-                                </TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee ID</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Department</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Gross Salary</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Deductions</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Net Salary</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                                        <CircularProgress sx={{ color: '#063455' }} />
-                                    </TableCell>
-                                </TableRow>
-                            ) : payslips.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                                        <Typography color="textSecondary">No payslips found for this period</Typography>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                payslips.map((payslip) => (
-                                    <TableRow
-                                        key={payslip.id}
-                                        sx={{
-                                            '&:hover': { backgroundColor: '#f5f5f5' },
-                                            backgroundColor: selectedPayslips.includes(payslip.id) ? '#e3f2fd' : 'inherit',
-                                        }}
-                                    >
-                                        <TableCell>
-                                            <Checkbox checked={selectedPayslips.includes(payslip.id)} onChange={() => handleSelectPayslip(payslip.id)} sx={{ color: '#063455' }} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Avatar sx={{ width: 32, height: 32, backgroundColor: '#063455' }}>
-                                                    <PersonIcon fontSize="small" />
-                                                </Avatar>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                    {payslip.employee?.user?.name || payslip.employee?.name || 'N/A'}
-                                                </Typography>
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell>{payslip.employee?.employee_id || 'N/A'}</TableCell>
-                                        <TableCell>{payslip.employee?.department?.name || 'N/A'}</TableCell>
-                                        <TableCell>
-                                            <Typography sx={{ fontWeight: 600, color: '#2e7d32' }}>{formatCurrency(payslip.gross_salary)}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography sx={{ fontWeight: 600, color: '#d32f2f' }}>{formatCurrency(payslip.total_deductions)}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography sx={{ fontWeight: 600, color: '#063455' }}>{formatCurrency(payslip.net_salary)}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip label={getStatusText(payslip.status)} size="small" color={getStatusColor(payslip.status)} sx={{ fontWeight: 600 }} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Tooltip title="View Details">
-                                                    <IconButton size="small" onClick={() => handleViewPayslip(payslip.id)} sx={{ color: '#063455' }}>
-                                                        <VisibilityIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                {payslip.status === 'draft' && (
-                                                    <>
-                                                        <Tooltip title="Approve Payslip">
-                                                            <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#2e7d32' }}>
-                                                                <CheckCircleIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Reject Payslip">
-                                                            <IconButton size="small" onClick={() => handleRejectPayslip(payslip.id)} sx={{ color: '#d32f2f' }}>
-                                                                <CancelIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </>
-                                                )}
-                                                {payslip.status === 'approved' && (
-                                                    <Tooltip title="Revert to Draft">
-                                                        <IconButton size="small" onClick={() => handleRevertToDraft(payslip.id)} sx={{ color: '#ff9800' }}>
-                                                            <CancelIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
-                                                <Tooltip title="View Orders">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => {
-                                                            setOrdersForDialog(payslip.order_deductions || []);
-                                                            setShowOrdersDialog(true);
-                                                        }}
-                                                        sx={{ color: '#6a1b9a' }}
-                                                    >
-                                                        <GetAppIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Print Payslip">
-                                                    <IconButton size="small" onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')} sx={{ color: '#1976d2' }}>
-                                                        <PrintIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                        <Pagination
-                            count={totalPages}
-                            page={currentPage}
-                            onChange={(event, page) => setCurrentPage(page)}
-                            color="primary"
+                {/* Filters and Actions */}
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            fullWidth
+                            placeholder="Search employees..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{ color: '#063455' }} />
+                                    </InputAdornment>
+                                ),
+                            }}
                             sx={{
-                                '& .MuiPaginationItem-root': {
-                                    color: '#063455',
+                                height: 40,
+                                display: 'flex',
+                                alignItems: 'center',
+                                "& .MuiInputBase-root": {
+                                    height: 40,
+                                    display: 'flex',
+                                    alignItems: 'center',
                                 },
-                                '& .Mui-selected': {
-                                    backgroundColor: '#063455',
-                                    color: 'white',
+                                "& .MuiInputBase-input": {
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    paddingY: 0,
+                                    paddingTop: '2px',
                                 },
                             }}
                         />
-                    </Box>
-                )}
-            </Card>
-
-            {/* Payslip Details Dialog */}
-            <Dialog open={showPayslipDialog} onClose={() => setShowPayslipDialog(false)} maxWidth="md" fullWidth>
-                <DialogTitle>
-                    <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
-                        Payslip Details
-                    </Typography>
-                </DialogTitle>
-                <DialogContent>
-                    {selectedPayslip && (
-                        <Box sx={{ mt: 2 }}>
-                            <Grid container spacing={3}>
-                                <Grid item xs={12} md={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        Employee Name
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
-                                        {selectedPayslip.employee?.user?.name || selectedPayslip.employee?.name || 'N/A'}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        Employee ID
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
-                                        {selectedPayslip.employee?.employee_id || 'N/A'}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        Basic Salary
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
-                                        {formatCurrency(selectedPayslip.basic_salary)}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        Total Allowances
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2, color: '#2e7d32' }}>
-                                        {formatCurrency(selectedPayslip.total_allowances)}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        Total Deductions
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 600, mb: 2, color: '#d32f2f' }}>
-                                        {formatCurrency(selectedPayslip.total_deductions)}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        Net Salary
-                                    </Typography>
-                                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#063455' }}>
-                                        {formatCurrency(selectedPayslip.net_salary)}
-                                    </Typography>
-                                </Grid>
-                            </Grid>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                        <FormControl fullWidth>
+                            <InputLabel>Status Filter</InputLabel>
+                            <Select value={statusFilter} label="Status Filter" onChange={(e) => setStatusFilter(e.target.value)}
+                                sx={{
+                                    height: 40,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    "& .MuiInputBase-root": {
+                                        height: 40,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        paddingY: 0,
+                                        paddingTop: '2px',
+                                    },
+                                }}>
+                                <MenuItem value="">All Status</MenuItem>
+                                <MenuItem value="draft">Draft</MenuItem>
+                                <MenuItem value="approved">Approved</MenuItem>
+                                <MenuItem value="paid">Paid</MenuItem>
+                                <MenuItem value="rejected">Rejected</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                        <Box sx={{ display: 'flex', gap: 1, height: '100%', alignItems: 'center' }}>
+                            {selectedPayslips.length > 0 && (
+                                <Button
+                                    variant="contained"
+                                    startIcon={<CheckCircleIcon />}
+                                    onClick={handleBulkApprove}
+                                    sx={{
+                                        backgroundColor: '#2e7d32',
+                                        '&:hover': { backgroundColor: '#1b5e20' },
+                                    }}
+                                >
+                                    Approve ({selectedPayslips.length})
+                                </Button>
+                            )}
                         </Box>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setShowPayslipDialog(false)}>Close</Button>
-                    <Button
-                        variant="contained"
-                        sx={{
-                            backgroundColor: '#063455',
-                            '&:hover': { backgroundColor: '#052d45' },
-                        }}
-                    >
-                        Print Payslip
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                        <Card sx={{ background: 'linear-gradient(135deg, #063455 0%, #0a4a6b 100%)', color: 'white' }}>
+                            <CardContent sx={{ textAlign: 'center' }}>
+                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                    {payslips.length}
+                                </Typography>
+                                <Typography variant="body2">Total Payslips</Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
 
-            {/* Orders Dialog */}
-            <Dialog open={showOrdersDialog} onClose={() => setShowOrdersDialog(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
-                        CTS Order Deductions
-                    </Typography>
-                </DialogTitle>
-                <DialogContent>
-                    {ordersForDialog.length === 0 ? (
-                        <Box sx={{ py: 3 }}>
-                            <Typography color="textSecondary">No CTS orders found for this payslip.</Typography>
-                        </Box>
-                    ) : (
-                        <TableContainer>
-                            <Table size="small">
-                                <TableHead>
+                {/* Payslips Table */}
+                <Card>
+                    <TableContainer component={Paper}>
+                        <Table>
+                            <TableHead>
+                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>
+                                        <Checkbox checked={selectedPayslips.length === payslips.length && payslips.length > 0} indeterminate={selectedPayslips.length > 0 && selectedPayslips.length < payslips.length} onChange={handleSelectAll} sx={{ color: '#063455' }} />
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee ID</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Department</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Gross Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Deductions</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Net Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {loading ? (
                                     <TableRow>
-                                        <TableCell>Date</TableCell>
-                                        <TableCell>Order ID</TableCell>
-                                        <TableCell>Amount</TableCell>
-                                        <TableCell>Note</TableCell>
+                                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                                            <CircularProgress sx={{ color: '#063455' }} />
+                                        </TableCell>
                                     </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {ordersForDialog.map((o) => {
-                                        const alreadyDeducted = !!o.deducted_at;
-                                        return (
-                                            <TableRow key={o.id} sx={{ opacity: alreadyDeducted ? 0.6 : 1, fontStyle: alreadyDeducted ? 'italic' : 'normal' }}>
-                                                <TableCell>{o.paid_at ? new Date(o.paid_at).toLocaleDateString() : '—'}</TableCell>
-                                                <TableCell>{o.id}</TableCell>
-                                                <TableCell>{formatCurrency(o.amount)}</TableCell>
-                                                <TableCell>
-                                                    <Box>
-                                                        <Typography variant="body2">{o.note || '—'}</Typography>
-                                                        {o.deducted_at && (
-                                                            <Typography variant="caption" color="textSecondary">
-                                                                Deducted: {new Date(o.deducted_at).toLocaleString()}
-                                                            </Typography>
-                                                        )}
-                                                    </Box>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setShowOrdersDialog(false)}>Close</Button>
-                </DialogActions>
-            </Dialog>
+                                ) : payslips.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                                            <Typography color="textSecondary">No payslips found for this period</Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    payslips.map((payslip) => (
+                                        <TableRow
+                                            key={payslip.id}
+                                            sx={{
+                                                '&:hover': { backgroundColor: '#f5f5f5' },
+                                                backgroundColor: selectedPayslips.includes(payslip.id) ? '#e3f2fd' : 'inherit',
+                                            }}
+                                        >
+                                            <TableCell>
+                                                <Checkbox checked={selectedPayslips.includes(payslip.id)} onChange={() => handleSelectPayslip(payslip.id)} sx={{ color: '#063455' }} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Avatar sx={{ width: 32, height: 32, backgroundColor: '#063455' }}>
+                                                        <PersonIcon fontSize="small" />
+                                                    </Avatar>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                        {payslip.employee?.user?.name || payslip.employee?.name || 'N/A'}
+                                                    </Typography>
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>{payslip.employee?.employee_id || 'N/A'}</TableCell>
+                                            <TableCell>{payslip.employee?.department?.name || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <Typography sx={{ fontWeight: 600, color: '#2e7d32', borderRadius:'4px' }}>{formatCurrency(payslip.gross_salary)}</Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography sx={{ fontWeight: 600, color: '#d32f2f', borderRadius:'4px' }}>{formatCurrency(payslip.total_deductions)}</Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography sx={{ fontWeight: 600, color: '#063455', borderRadius:'4px' }}>{formatCurrency(payslip.net_salary)}</Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip label={getStatusText(payslip.status)} size="small" color={getStatusColor(payslip.status)} sx={{ fontWeight: 600 }} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title="View Details">
+                                                        <IconButton size="small" onClick={() => handleViewPayslip(payslip.id)} sx={{ color: '#063455' }}>
+                                                            <VisibilityIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    {payslip.status === 'draft' && (
+                                                        <>
+                                                            <Tooltip title="Approve Payslip">
+                                                                <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#2e7d32' }}>
+                                                                    <CheckCircleIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                            <Tooltip title="Reject Payslip">
+                                                                <IconButton size="small" onClick={() => handleRejectPayslip(payslip.id)} sx={{ color: '#d32f2f' }}>
+                                                                    <CancelIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </>
+                                                    )}
+                                                    {payslip.status === 'approved' && (
+                                                        <Tooltip title="Revert to Draft">
+                                                            <IconButton size="small" onClick={() => handleRevertToDraft(payslip.id)} sx={{ color: '#ff9800' }}>
+                                                                <CancelIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
+                                                    <Tooltip title="View Orders">
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => {
+                                                                setOrdersForDialog(payslip.order_deductions || []);
+                                                                setShowOrdersDialog(true);
+                                                            }}
+                                                            sx={{ color: '#6a1b9a' }}
+                                                        >
+                                                            <GetAppIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Print Payslip">
+                                                        <IconButton size="small" onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')} sx={{ color: '#1976d2' }}>
+                                                            <PrintIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-            {/* Snackbar */}
-            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                            <Pagination
+                                count={totalPages}
+                                page={currentPage}
+                                onChange={(event, page) => setCurrentPage(page)}
+                                color="primary"
+                                sx={{
+                                    '& .MuiPaginationItem-root': {
+                                        color: '#063455',
+                                    },
+                                    '& .Mui-selected': {
+                                        backgroundColor: '#063455',
+                                        color: 'white',
+                                    },
+                                }}
+                            />
+                        </Box>
+                    )}
+                </Card>
+
+                {/* Payslip Details Dialog */}
+                <Dialog open={showPayslipDialog} onClose={() => setShowPayslipDialog(false)} maxWidth="md" fullWidth>
+                    <DialogTitle>
+                        <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
+                            Payslip Details
+                        </Typography>
+                    </DialogTitle>
+                    <DialogContent>
+                        {selectedPayslip && (
+                            <Box sx={{ mt: 2 }}>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="subtitle2" color="textSecondary">
+                                            Employee Name
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
+                                            {selectedPayslip.employee?.user?.name || selectedPayslip.employee?.name || 'N/A'}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="subtitle2" color="textSecondary">
+                                            Employee ID
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
+                                            {selectedPayslip.employee?.employee_id || 'N/A'}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="subtitle2" color="textSecondary">
+                                            Basic Salary
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
+                                            {formatCurrency(selectedPayslip.basic_salary)}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="subtitle2" color="textSecondary">
+                                            Total Allowances
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 2, color: '#2e7d32' }}>
+                                            {formatCurrency(selectedPayslip.total_allowances)}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="subtitle2" color="textSecondary">
+                                            Total Deductions
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 2, color: '#d32f2f' }}>
+                                            {formatCurrency(selectedPayslip.total_deductions)}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="subtitle2" color="textSecondary">
+                                            Net Salary
+                                        </Typography>
+                                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#063455' }}>
+                                            {formatCurrency(selectedPayslip.net_salary)}
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            </Box>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setShowPayslipDialog(false)}>Close</Button>
+                        <Button
+                            variant="contained"
+                            sx={{
+                                backgroundColor: '#063455',
+                                '&:hover': { backgroundColor: '#052d45' },
+                            }}
+                        >
+                            Print Payslip
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Orders Dialog */}
+                <Dialog open={showOrdersDialog} onClose={() => setShowOrdersDialog(false)} maxWidth="sm" fullWidth>
+                    <DialogTitle>
+                        <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
+                            CTS Order Deductions
+                        </Typography>
+                    </DialogTitle>
+                    <DialogContent>
+                        {ordersForDialog.length === 0 ? (
+                            <Box sx={{ py: 3 }}>
+                                <Typography color="textSecondary">No CTS orders found for this payslip.</Typography>
+                            </Box>
+                        ) : (
+                            <TableContainer>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Date</TableCell>
+                                            <TableCell>Order ID</TableCell>
+                                            <TableCell>Amount</TableCell>
+                                            <TableCell>Note</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {ordersForDialog.map((o) => {
+                                            const alreadyDeducted = !!o.deducted_at;
+                                            return (
+                                                <TableRow key={o.id} sx={{ opacity: alreadyDeducted ? 0.6 : 1, fontStyle: alreadyDeducted ? 'italic' : 'normal' }}>
+                                                    <TableCell>{o.paid_at ? new Date(o.paid_at).toLocaleDateString() : '—'}</TableCell>
+                                                    <TableCell>{o.id}</TableCell>
+                                                    <TableCell>{formatCurrency(o.amount)}</TableCell>
+                                                    <TableCell>
+                                                        <Box>
+                                                            <Typography variant="body2">{o.note || '—'}</Typography>
+                                                            {o.deducted_at && (
+                                                                <Typography variant="caption" color="textSecondary">
+                                                                    Deducted: {new Date(o.deducted_at).toLocaleString()}
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setShowOrdersDialog(false)}>Close</Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Snackbar */}
+                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                    <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
+            </div>
         </AdminLayout>
     );
 };

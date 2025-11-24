@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
+import { TbCashBanknoteOff } from "react-icons/tb";
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Box,
@@ -112,32 +113,15 @@ const EmployeeSalaries = () => {
             }}>
                 <Box sx={{ p: 2 }}>
                     {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton onClick={() => window.history.back()}>
                                 <ArrowBackIcon />
                             </IconButton>
-                            <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                            <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                                 Employee Salaries
                             </Typography>
                         </Box>
-                    </Box>
-
-                    {/* Search and Actions */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <TextField
-                            placeholder="Search employees..."
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon sx={{ color: '#063455' }} />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button
                                 variant="contained"
@@ -152,7 +136,7 @@ const EmployeeSalaries = () => {
                             </Button>
                             <Button
                                 variant="outlined"
-                                startIcon={<AccountBalanceIcon />}
+                                startIcon={<TbCashBanknoteOff />}
                                 onClick={() => router.visit(route('employees.payroll.deduction-types'))}
                                 sx={{
                                     color: '#063455',
@@ -165,19 +149,45 @@ const EmployeeSalaries = () => {
                         </Box>
                     </Box>
 
+                    {/* Search and Actions */}
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
+                        <TextField
+                            placeholder="Search employees..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{m:0, p:0}} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{
+                                '& .MuiInputBase-root': {
+                                    height: 40,           // 🔥 Controls total height
+                                    borderRadius: 1,
+                                    width: 215
+                                },
+                                '& .MuiInputBase-input': {
+                                    padding: '0 14px',     // 🔥 Centers placeholder vertically
+                                }
+                            }}
+                        />
+                    </Box>
+
                     {/* Employees Table */}
                     <Card>
                         <TableContainer component={Paper}>
                             <Table>
                                 <TableHead>
-                                    <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Department</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee Type</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Basic Salary</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Effective From</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                                    <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
+                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Department</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee Type</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Basic Salary</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Effective From</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -235,6 +245,7 @@ const EmployeeSalaries = () => {
                                                         label={getSalaryStatusText(employee)}
                                                         size="small"
                                                         color={getSalaryStatusColor(employee)}
+                                                        sx={{ borderRadius: '4px' }}
                                                     />
                                                 </TableCell>
                                                 <TableCell>
