@@ -42,8 +42,7 @@ class PayrollProcessingService
             'deductions' => function ($query) {
                 $query->where('is_active', true);
             },
-            'department:id,name',
-            'employeeType:id,name'
+            'department:id,name'
         ]);
 
         if ($employeeIds) {

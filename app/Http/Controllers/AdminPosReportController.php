@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
 use App\Models\Category;
 use App\Models\Employee;
 use App\Models\FinancialInvoice;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class AdminPosReportController extends Controller
 {
@@ -327,9 +327,9 @@ class AdminPosReportController extends Controller
                     // Process order items
                     foreach ($order->orderItems as $orderItem) {
                         $item = $orderItem->order_item;
-                        $qty = (float)($item['quantity'] ?? 0);
-                        $price = (float)($item['price'] ?? 0);
-                        $totalPrice = (float)($item['total_price'] ?? 0);
+                        $qty = (float) ($item['quantity'] ?? 0);
+                        $price = (float) ($item['price'] ?? 0);
+                        $totalPrice = (float) ($item['total_price'] ?? 0);
                         $subTotal = $price * $qty;
                         $discount = $subTotal - $totalPrice;
 
@@ -434,9 +434,9 @@ class AdminPosReportController extends Controller
                     // Process order items
                     foreach ($order->orderItems as $orderItem) {
                         $item = $orderItem->order_item;
-                        $qty = (float)($item['quantity'] ?? 0);
-                        $price = (float)($item['price'] ?? 0);
-                        $totalPrice = (float)($item['total_price'] ?? 0);
+                        $qty = (float) ($item['quantity'] ?? 0);
+                        $price = (float) ($item['price'] ?? 0);
+                        $totalPrice = (float) ($item['total_price'] ?? 0);
                         $subTotal = $price * $qty;
                         $discount = $subTotal - $totalPrice;
 
@@ -512,10 +512,11 @@ class AdminPosReportController extends Controller
         // Get all cashiers from Employee model (assuming cashier is an employee type)
         $allCashiers = Employee::with(['employeeType'])
             ->whereHas('employeeType', function ($q) {
-                $q->where('name', 'LIKE', '%Cashier%')
+                $q
+                    ->where('name', 'LIKE', '%Cashier%')
                     ->orWhere('slug', 'LIKE', '%cashier%');
             })
-            ->select('id', 'name', 'employee_type_id')
+            ->select('id', 'name')
             ->get();
         Log::info('allCashiers: ' . $allCashiers);
         // Get financial invoices with food_order type within date range
@@ -602,13 +603,13 @@ class AdminPosReportController extends Controller
                     }
 
                     // Calculate amounts from Order and FinancialInvoice
-                    $saleAmount = (float)($order->total_price ?? 0);
-                    $discountAmount = (float)($order->discount ?? 0);
-                    $taxAmount = (float)($order->tax ?? 0);
+                    $saleAmount = (float) ($order->total_price ?? 0);
+                    $discountAmount = (float) ($order->discount ?? 0);
+                    $taxAmount = (float) ($order->tax ?? 0);
 
                     // Get payment info from FinancialInvoice
-                    $invoiceAmount = (float)($invoice->amount ?? 0);
-                    $paidAmount = (float)($invoice->paid_amount ?? 0);
+                    $invoiceAmount = (float) ($invoice->amount ?? 0);
+                    $paidAmount = (float) ($invoice->paid_amount ?? 0);
                     $unpaidAmount = $invoiceAmount - $paidAmount;
 
                     // Get cash and credit based on payment_method
@@ -723,13 +724,13 @@ class AdminPosReportController extends Controller
                     }
 
                     // Calculate amounts from Order and FinancialInvoice
-                    $saleAmount = (float)($order->total_price ?? 0);
-                    $discountAmount = (float)($order->discount ?? 0);
-                    $taxAmount = (float)($order->tax ?? 0);
+                    $saleAmount = (float) ($order->total_price ?? 0);
+                    $discountAmount = (float) ($order->discount ?? 0);
+                    $taxAmount = (float) ($order->tax ?? 0);
 
                     // Get payment info from FinancialInvoice
-                    $invoiceAmount = (float)($invoice->amount ?? 0);
-                    $paidAmount = (float)($invoice->paid_amount ?? 0);
+                    $invoiceAmount = (float) ($invoice->amount ?? 0);
+                    $paidAmount = (float) ($invoice->paid_amount ?? 0);
                     $unpaidAmount = $invoiceAmount - $paidAmount;
 
                     // Get cash and credit based on payment_method
@@ -810,14 +811,15 @@ class AdminPosReportController extends Controller
 
         // Process cancelled items data with deduplication
         $dumpItemsData = [];
-        $processedItems = []; // To avoid duplicates
+        $processedItems = [];  // To avoid duplicates
         $totalQuantity = 0;
         $totalSalePrice = 0;
         $totalFoodValue = 0;
 
         foreach ($cancelledItems as $orderItem) {
             $order = $orderItem->order;
-            if (!$order) continue;
+            if (!$order)
+                continue;
 
             // Get invoice number from FinancialInvoice
             $invoiceNo = 'N/A';
@@ -842,21 +844,21 @@ class AdminPosReportController extends Controller
                 if (!isset($processedItems[$uniqueKey])) {
                     $processedItems[$uniqueKey] = true;
 
-                    $quantity = (float)($item['quantity'] ?? 1);
-                    $itemPrice = (float)($item['price'] ?? 0); // Price from order_item JSON
-                    $totalPrice = (float)($item['total_price'] ?? 0); // Total price from order_item JSON
-                    $salePrice = $itemPrice; // Use price from order_item for SALE PRICE
-                    $foodValue = $totalPrice; // Use total_price from order_item for FOOD VALUE
+                    $quantity = (float) ($item['quantity'] ?? 1);
+                    $itemPrice = (float) ($item['price'] ?? 0);  // Price from order_item JSON
+                    $totalPrice = (float) ($item['total_price'] ?? 0);  // Total price from order_item JSON
+                    $salePrice = $itemPrice;  // Use price from order_item for SALE PRICE
+                    $foodValue = $totalPrice;  // Use total_price from order_item for FOOD VALUE
 
                     // Get menu_code and product name from Product table
                     $menuCode = 'N/A';
-                    $productName = $itemName; // Default to order_item name
+                    $productName = $itemName;  // Default to order_item name
 
                     if ($productId) {
                         $product = Product::find($productId);
                         if ($product) {
                             $menuCode = $product->menu_code ?? 'N/A';
-                            $productName = $product->name ?? $itemName; // Use product name if available
+                            $productName = $product->name ?? $itemName;  // Use product name if available
                         }
                     }
 
@@ -873,7 +875,7 @@ class AdminPosReportController extends Controller
                         'remarks' => $orderItem->remark ?? 'N/A',
                         'sale_price' => $salePrice,
                         'food_value' => $foodValue,
-                        'cancelled_by' => 'N/A' // As requested, set to N/A for now
+                        'cancelled_by' => 'N/A'  // As requested, set to N/A for now
                     ];
 
                     $totalQuantity += $quantity;
@@ -912,14 +914,15 @@ class AdminPosReportController extends Controller
 
         // Process cancelled items data with deduplication
         $dumpItemsData = [];
-        $processedItems = []; // To avoid duplicates
+        $processedItems = [];  // To avoid duplicates
         $totalQuantity = 0;
         $totalSalePrice = 0;
         $totalFoodValue = 0;
 
         foreach ($cancelledItems as $orderItem) {
             $order = $orderItem->order;
-            if (!$order) continue;
+            if (!$order)
+                continue;
 
             // Get invoice number from FinancialInvoice
             $invoiceNo = 'N/A';
@@ -944,21 +947,21 @@ class AdminPosReportController extends Controller
                 if (!isset($processedItems[$uniqueKey])) {
                     $processedItems[$uniqueKey] = true;
 
-                    $quantity = (float)($item['quantity'] ?? 1);
-                    $itemPrice = (float)($item['price'] ?? 0); // Price from order_item JSON
-                    $totalPrice = (float)($item['total_price'] ?? 0); // Total price from order_item JSON
-                    $salePrice = $itemPrice; // Use price from order_item for SALE PRICE
-                    $foodValue = $totalPrice; // Use total_price from order_item for FOOD VALUE
+                    $quantity = (float) ($item['quantity'] ?? 1);
+                    $itemPrice = (float) ($item['price'] ?? 0);  // Price from order_item JSON
+                    $totalPrice = (float) ($item['total_price'] ?? 0);  // Total price from order_item JSON
+                    $salePrice = $itemPrice;  // Use price from order_item for SALE PRICE
+                    $foodValue = $totalPrice;  // Use total_price from order_item for FOOD VALUE
 
                     // Get menu_code and product name from Product table
                     $menuCode = 'N/A';
-                    $productName = $itemName; // Default to order_item name
+                    $productName = $itemName;  // Default to order_item name
 
                     if ($productId) {
                         $product = Product::find($productId);
                         if ($product) {
                             $menuCode = $product->menu_code ?? 'N/A';
-                            $productName = $product->name ?? $itemName; // Use product name if available
+                            $productName = $product->name ?? $itemName;  // Use product name if available
                         }
                     }
 
@@ -975,7 +978,7 @@ class AdminPosReportController extends Controller
                         'remarks' => $orderItem->remark ?? 'N/A',
                         'sale_price' => $salePrice,
                         'food_value' => $foodValue,
-                        'cancelled_by' => 'N/A' // As requested, set to N/A for now
+                        'cancelled_by' => 'N/A'  // As requested, set to N/A for now
                     ];
 
                     $totalQuantity += $quantity;
@@ -1029,7 +1032,7 @@ class AdminPosReportController extends Controller
         foreach ($orders as $order) {
             foreach ($order->orderItems as $orderItem) {
                 $items = $orderItem->order_item;
-                Log::info("Items: ", $items);
+                Log::info('Items: ', $items);
                 $this->processItem($items, $reportData, $totalQuantity, $tenantId);
             }
         }
@@ -1069,7 +1072,8 @@ class AdminPosReportController extends Controller
         $quantity = $item['quantity'] ?? 1;
         $categoryName = $item['category'] ?? 'Uncategorized';
 
-        if (!$productId) return;
+        if (!$productId)
+            return;
 
         // Get the product to check its tenant_id
         $product = Product::find($productId);
@@ -1084,7 +1088,7 @@ class AdminPosReportController extends Controller
         // Only include products that belong to this tenant
         if ($product->tenant_id != $currentTenantId) {
             Log::info("Skipping product {$productId} - belongs to tenant {$product->tenant_id}, not {$currentTenantId}");
-            return; // Skip products from other restaurants
+            return;  // Skip products from other restaurants
         }
 
         // Initialize category if not exists
@@ -1132,7 +1136,7 @@ class AdminPosReportController extends Controller
         // Group items by category - only include products that belong to this tenant
         foreach ($orders as $order) {
             // Get order-level discount
-            $orderDiscount = (float)($order->discount ?? 0);
+            $orderDiscount = (float) ($order->discount ?? 0);
             $orderSubTotal = 0;
 
             // First pass: calculate order subtotal for proportional discount distribution
@@ -1140,8 +1144,8 @@ class AdminPosReportController extends Controller
                 $item = $orderItem->order_item;
                 $itemTenantId = $item['tenant_id'] ?? null;
                 if ($itemTenantId == $tenantId) {
-                    $quantity = (float)($item['quantity'] ?? 1);
-                    $price = (float)($item['price'] ?? 0);
+                    $quantity = (float) ($item['quantity'] ?? 1);
+                    $price = (float) ($item['price'] ?? 0);
                     $orderSubTotal += ($price * $quantity);
                 }
             }
@@ -1183,9 +1187,9 @@ class AdminPosReportController extends Controller
     private function processFinancialItem($item, &$reportData, &$totalQuantity, &$totalSubTotal, &$totalDiscount, &$totalSale, $currentTenantId, $orderDiscount = 0, $orderSubTotal = 0)
     {
         $itemId = $item['id'] ?? null;
-        $quantity = (float)($item['quantity'] ?? 1);
-        $price = (float)($item['price'] ?? 0);
-        $totalPrice = (float)($item['total_price'] ?? 0);
+        $quantity = (float) ($item['quantity'] ?? 1);
+        $price = (float) ($item['price'] ?? 0);
+        $totalPrice = (float) ($item['total_price'] ?? 0);
         $itemTenantId = $item['tenant_id'] ?? null;
         $categoryName = $item['category'] ?? 'Unknown Category';
         $itemName = $item['name'] ?? 'Unknown Item';

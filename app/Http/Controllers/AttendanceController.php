@@ -28,9 +28,10 @@ class AttendanceController extends Controller
 
         // Apply search filter if provided
         if (!empty($search)) {
-            $attendanceQuery->whereHas('employee', function($query) use ($search) {
-                $query->where('name', 'like', '%' . $search . '%')
-                      ->orWhere('employee_id', 'like', '%' . $search . '%');
+            $attendanceQuery->whereHas('employee', function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('employee_id', 'like', '%' . $search . '%');
             });
         }
 
@@ -57,25 +58,22 @@ class AttendanceController extends Controller
         $limit = $request->query('limit') ?? 10;
         $search = $request->query('search', '');
         $departmentFilters = $request->query('department_ids', []);
-        $employeeTypeFilters = $request->query('employee_type_ids', []);
-        
+
         // Employees with pagination - include deleted departments and employee types
         $employeesQuery = Employee::with([
-                'department' => function($query) {
-                    $query->withTrashed(); // Include soft deleted departments
-                }, 
-                'employeeType' => function($query) {
-                    $query->withTrashed(); // Include soft deleted employee types
-                }
-            ]);
+            'department' => function ($query) {
+                $query->withTrashed();  // Include soft deleted departments
+            }
+        ]);
 
         // Apply search filter if provided
         if (!empty($search)) {
-            $employeesQuery->where(function($query) use ($search) {
-                $query->where('name', 'like', '%' . $search . '%')
-                      ->orWhere('employee_id', 'like', '%' . $search . '%')
-                      ->orWhere('email', 'like', '%' . $search . '%')
-                      ->orWhere('designation', 'like', '%' . $search . '%');
+            $employeesQuery->where(function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('employee_id', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('designation', 'like', '%' . $search . '%');
             });
         }
 
@@ -84,16 +82,10 @@ class AttendanceController extends Controller
             $employeesQuery->whereIn('department_id', $departmentFilters);
         }
 
-        // Apply employee type filters if provided
-        if (!empty($employeeTypeFilters) && is_array($employeeTypeFilters)) {
-            $employeesQuery->whereIn('employee_type_id', $employeeTypeFilters);
-        }
-
         $employees = $employeesQuery->paginate($limit)->withQueryString();
 
         // Get filter options
         $departments = \App\Models\Department::select('id', 'name')->get();
-        $employeeTypes = \App\Models\EmployeeType::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Employee/Attendance/Dashboard', [
             'stats' => [
@@ -104,11 +96,9 @@ class AttendanceController extends Controller
             ],
             'employees' => $employees,
             'departments' => $departments,
-            'employeeTypes' => $employeeTypes,
             'filters' => [
                 'search' => $search,
                 'department_ids' => $departmentFilters,
-                'employee_type_ids' => $employeeTypeFilters,
             ],
         ]);
     }
@@ -257,13 +247,13 @@ class AttendanceController extends Controller
         // Normalize time format (add seconds if not present)
         $checkIn = $request->check_in;
         $checkOut = $request->check_out;
-        
+
         if ($checkIn && strlen($checkIn) === 5) {
-            $checkIn .= ':00'; // Add seconds if format is H:i
+            $checkIn .= ':00';  // Add seconds if format is H:i
         }
-        
+
         if ($checkOut && strlen($checkOut) === 5) {
-            $checkOut .= ':00'; // Add seconds if format is H:i
+            $checkOut .= ':00';  // Add seconds if format is H:i
         }
 
         // Update attendance fields

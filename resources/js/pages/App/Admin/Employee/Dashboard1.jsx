@@ -13,59 +13,70 @@ import SearchIcon from '@mui/icons-material/Search';
 
 const EmployeeDashboard = () => {
     const { props } = usePage();
-    const { employees, stats, departments, employeeTypes, filters } = props; // coming from Laravel
+    const { employees, stats, departments, filters } = props; // coming from Laravel
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [selectedDepartments, setSelectedDepartments] = useState(filters?.department_ids || []);
-    const [selectedEmployeeTypes, setSelectedEmployeeTypes] = useState(filters?.employee_type_ids || []);
     const [isLoading, setIsLoading] = useState(false);
     // const [open, setOpen] = useState(true);
 
     const handleFilter = () => {
         setIsLoading(true);
-        router.get(route('employees.dashboard'), {
-            search: searchTerm,
-            department_ids: selectedDepartments,
-            employee_type_ids: selectedEmployeeTypes,
-            page: 1 // Reset to first page when filtering
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-            onFinish: () => setIsLoading(false),
-            onError: () => setIsLoading(false),
-        });
+        router.get(
+            route('employees.dashboard'),
+            {
+                search: searchTerm,
+                department_ids: selectedDepartments,
+                page: 1, // Reset to first page when filtering
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onFinish: () => setIsLoading(false),
+                onError: () => setIsLoading(false),
+            },
+        );
     };
 
     const handleClearFilters = () => {
         setSelectedDepartments([]);
-        setSelectedEmployeeTypes([]);
         setSearchTerm('');
-        router.get(route('employees.dashboard'), {}, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            route('employees.dashboard'),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     const handleSearch = () => {
-        router.get(route('employees.dashboard'), {
-            search: searchTerm,
-            department_ids: selectedDepartments,
-            employee_type_ids: selectedEmployeeTypes,
-            page: 1 // Reset to first page when searching
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            route('employees.dashboard'),
+            {
+                search: searchTerm,
+                department_ids: selectedDepartments,
+                page: 1, // Reset to first page when searching
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     const handleClearSearch = () => {
         setSearchTerm('');
-        router.get(route('employees.dashboard'), {
-            department_ids: selectedDepartments,
-            employee_type_ids: selectedEmployeeTypes,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            route('employees.dashboard'),
+            {
+                department_ids: selectedDepartments,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     return (
@@ -73,7 +84,7 @@ const EmployeeDashboard = () => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
+                    minHeight: '100vh',
                     backgroundColor: '#f5f5f5',
                 }}
             >
@@ -151,7 +162,7 @@ const EmployeeDashboard = () => {
                                             renderValue={(selected) => (
                                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                     {selected.map((value) => {
-                                                        const dept = departments?.find(d => d.id === value);
+                                                        const dept = departments?.find((d) => d.id === value);
                                                         return (
                                                             <Chip
                                                                 key={value}
@@ -176,47 +187,6 @@ const EmployeeDashboard = () => {
                                             {departments?.map((dept) => (
                                                 <MenuItem key={dept.id} value={dept.id}>
                                                     {dept.name}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} md={3}>
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel>Employee Types</InputLabel>
-                                        <Select
-                                            multiple
-                                            value={selectedEmployeeTypes}
-                                            label="Employee Types"
-                                            onChange={(e) => setSelectedEmployeeTypes(e.target.value)}
-                                            renderValue={(selected) => (
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                    {selected.map((value) => {
-                                                        const type = employeeTypes?.find(t => t.id === value);
-                                                        return (
-                                                            <Chip
-                                                                key={value}
-                                                                label={type?.name || value}
-                                                                size="small"
-                                                                sx={{
-                                                                    backgroundColor: '#063455',
-                                                                    color: 'white',
-                                                                    '& .MuiChip-deleteIcon': {
-                                                                        color: 'white',
-                                                                    },
-                                                                }}
-                                                            />
-                                                        );
-                                                    })}
-                                                </Box>
-                                            )}
-                                            sx={{
-                                                borderRadius: 2,
-                                            }}
-                                        >
-                                            {employeeTypes?.map((type) => (
-                                                <MenuItem key={type.id} value={type.id}>
-                                                    {type.name}
                                                 </MenuItem>
                                             ))}
                                         </Select>
@@ -256,7 +226,7 @@ const EmployeeDashboard = () => {
                             </Grid>
 
                             {/* Clear Filter Button */}
-                            {(selectedDepartments.length > 0 || selectedEmployeeTypes.length > 0 || searchTerm) && (
+                            {(selectedDepartments.length > 0 || searchTerm) && (
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} md={2}>
                                         <Button
@@ -289,7 +259,6 @@ const EmployeeDashboard = () => {
                                     <TableRow>
                                         <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>EMP ID</TableCell>
                                         <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Name</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Type</TableCell>
                                         <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Department</TableCell>
                                         <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Designation</TableCell>
                                         <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Joining Date</TableCell>
@@ -301,64 +270,33 @@ const EmployeeDashboard = () => {
                                 <TableBody>
                                     {employees.data.length > 0 ? (
                                         employees.data.map((emp) => {
-                                            // Check if department or employee type is deleted (has deleted_at field)
+                                            // Check if department is deleted (has deleted_at field)
                                             const isDepartmentDeleted = emp.department?.deleted_at !== null;
-                                            const isEmployeeTypeDeleted = emp.employee_type?.deleted_at !== null;
-                                            const hasDeletedRelation = isDepartmentDeleted || isEmployeeTypeDeleted;
-                                            
-                                            const rowStyle = hasDeletedRelation ? {
-                                                backgroundColor: '#ffebee', // Light red background
-                                                color: '#d32f2f', // Red text
-                                                opacity: 0.7
-                                            } : {};
-                                            
+
+                                            const rowStyle = isDepartmentDeleted
+                                                ? {
+                                                      backgroundColor: '#ffebee', // Light red background
+                                                      color: '#d32f2f', // Red text
+                                                      opacity: 0.7,
+                                                  }
+                                                : {};
+
                                             return (
                                                 <TableRow key={emp.id} style={rowStyle}>
-                                                    <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
-                                                        #{emp.employee_id}
-                                                    </TableCell>
-                                                    <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
-                                                        {emp.name}
-                                                    </TableCell>
-                                                    <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
-                                                        {emp.employee_type?.name ? (
-                                                            <>
-                                                                {emp.employee_type.name}
-                                                                {isEmployeeTypeDeleted && (
-                                                                    <Typography 
-                                                                        variant="caption" 
-                                                                        style={{ 
-                                                                            color: '#d32f2f', 
-                                                                            fontStyle: 'italic',
-                                                                            display: 'block',
-                                                                            fontSize: '0.7rem'
-                                                                        }}
-                                                                    >
-                                                                        (Type Deleted)
-                                                                    </Typography>
-                                                                )}
-                                                            </>
-                                                        ) : (
-                                                            <Typography 
-                                                                variant="caption" 
-                                                                style={{ color: '#d32f2f', fontStyle: 'italic' }}
-                                                            >
-                                                                No Type
-                                                            </Typography>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>#{emp.employee_id}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>{emp.name}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>
                                                         {emp.department?.name ? (
                                                             <>
                                                                 {emp.department.name}
                                                                 {isDepartmentDeleted && (
-                                                                    <Typography 
-                                                                        variant="caption" 
-                                                                        style={{ 
-                                                                            color: '#d32f2f', 
+                                                                    <Typography
+                                                                        variant="caption"
+                                                                        style={{
+                                                                            color: '#d32f2f',
                                                                             fontStyle: 'italic',
                                                                             display: 'block',
-                                                                            fontSize: '0.7rem'
+                                                                            fontSize: '0.7rem',
                                                                         }}
                                                                     >
                                                                         (Department Deleted)
@@ -366,52 +304,41 @@ const EmployeeDashboard = () => {
                                                                 )}
                                                             </>
                                                         ) : (
-                                                            <Typography 
-                                                                variant="caption" 
-                                                                style={{ color: '#d32f2f', fontStyle: 'italic' }}
-                                                            >
+                                                            <Typography variant="caption" style={{ color: '#d32f2f', fontStyle: 'italic' }}>
                                                                 No Department
                                                             </Typography>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
-                                                        {emp.designation}
-                                                    </TableCell>
-                                                    <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
-                                                        {emp.joining_date}
-                                                    </TableCell>
-                                                    <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
-                                                        {emp.email}
-                                                    </TableCell>
-                                                    <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
-                                                        {hasDeletedRelation ? (
-                                                            <Typography 
-                                                                variant="caption" 
-                                                                style={{ 
-                                                                    color: '#d32f2f', 
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>{emp.designation}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>{emp.joining_date}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>{emp.email}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>
+                                                        {isDepartmentDeleted ? (
+                                                            <Typography
+                                                                variant="caption"
+                                                                style={{
+                                                                    color: '#d32f2f',
                                                                     fontWeight: 'bold',
                                                                     backgroundColor: '#ffcdd2',
                                                                     padding: '2px 8px',
-                                                                    borderRadius: '4px'
+                                                                    borderRadius: '4px',
                                                                 }}
                                                             >
-                                                                Needs Attention
-                                                                {isDepartmentDeleted && isEmployeeTypeDeleted ? ' (Dept & Type)' : 
-                                                                 isDepartmentDeleted ? ' (Department)' : ' (Type)'}
+                                                                Needs Attention (Department)
                                                             </Typography>
                                                         ) : (
-                                                            emp.status ?? 'Active'
+                                                            (emp.status ?? 'Active')
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
                                                         <IconButton
                                                             onClick={() => router.visit(route('employees.edit', emp.id))}
                                                             size="small"
-                                                            sx={{ 
+                                                            sx={{
                                                                 color: '#0a3d62',
                                                                 '&:hover': {
-                                                                    backgroundColor: '#f5f5f5'
-                                                                }
+                                                                    backgroundColor: '#f5f5f5',
+                                                                },
                                                             }}
                                                         >
                                                             <EditIcon fontSize="small" />
@@ -433,15 +360,16 @@ const EmployeeDashboard = () => {
 
                         {/* Pagination */}
                         <Box sx={{ display: 'flex', justifyContent: 'end', mt: 3 }}>
-                            <Pagination 
-                                count={employees.last_page} 
-                                page={employees.current_page} 
-                                onChange={(e, page) => router.get(route('employees.dashboard'), { 
-                                    page,
-                                    search: searchTerm,
-                                    department_ids: selectedDepartments,
-                                    employee_type_ids: selectedEmployeeTypes,
-                                })} 
+                            <Pagination
+                                count={employees.last_page}
+                                page={employees.current_page}
+                                onChange={(e, page) =>
+                                    router.get(route('employees.dashboard'), {
+                                        page,
+                                        search: searchTerm,
+                                        department_ids: selectedDepartments,
+                                    })
+                                }
                             />
                         </Box>
                     </div>
