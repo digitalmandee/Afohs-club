@@ -2,14 +2,17 @@
 
 namespace App\Services;
 
+use App\Models\Attendance;
+use App\Models\DeductionType;
 use App\Models\Employee;
+use App\Models\Order;
 use App\Models\PayrollPeriod;
+use App\Models\PayrollSetting;
 use App\Models\Payslip;
 use App\Models\PayslipAllowance;
 use App\Models\PayslipDeduction;
-use App\Models\Attendance;
-use App\Models\PayrollSetting;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -28,15 +31,15 @@ class PayrollProcessingService
     public function processPayrollForPeriod($periodId, $employeeIds = null)
     {
         $period = PayrollPeriod::findOrFail($periodId);
-        
+
         $employeesQuery = Employee::with([
-            'salaryStructure' => function($query) {
+            'salaryStructure' => function ($query) {
                 $query->where('is_active', true)->latest();
             },
-            'allowances' => function($query) {
+            'allowances' => function ($query) {
                 $query->where('is_active', true);
             },
-            'deductions' => function($query) {
+            'deductions' => function ($query) {
                 $query->where('is_active', true);
             },
             'department:id,name',
@@ -48,18 +51,41 @@ class PayrollProcessingService
         }
 
         $employees = $employeesQuery->get();
-        
+
         DB::beginTransaction();
-        
+
         try {
             $totalEmployees = 0;
             $totalGrossAmount = 0;
             $totalDeductions = 0;
             $totalNetAmount = 0;
 
+            // Batch fetch CTS orders for all employees to avoid per-employee queries
+            $ordersByEmployee = collect();
+            try {
+                if ($employees->count() > 0) {
+                    $employeeIdsList = $employees->pluck('id')->toArray();
+                    $periodStart = Carbon::parse($period->start_date)->startOfDay();
+                    $periodEnd = Carbon::parse($period->end_date)->endOfDay();
+
+                    // Only consider CTS orders that have not been deducted yet to avoid double-deduction
+                    $ctsOrders = Order::whereIn('employee_id', $employeeIdsList)
+                        ->where('payment_method', 'cts')
+                        ->whereNull('deducted_in_payslip_id')
+                        ->whereBetween('paid_at', [$periodStart, $periodEnd])
+                        ->get()
+                        ->groupBy('employee_id');
+
+                    $ordersByEmployee = $ctsOrders;
+                }
+            } catch (\Exception $ex) {
+                $ordersByEmployee = collect();
+            }
+
             foreach ($employees as $employee) {
-                $payslip = $this->generatePayslip($employee, $period);
-                
+                $employeeOrders = $ordersByEmployee->get($employee->id, collect());
+                $payslip = $this->generatePayslip($employee, $period, $employeeOrders);
+
                 if ($payslip) {
                     $totalEmployees++;
                     $totalGrossAmount += $payslip->gross_salary;
@@ -75,12 +101,12 @@ class PayrollProcessingService
                 'total_deductions' => $totalDeductions,
                 'total_net_amount' => $totalNetAmount,
                 'status' => 'completed',
-                'processed_by' => auth()->id(),
+                'processed_by' => Auth::id(),
                 'processed_at' => now()
             ]);
 
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => "Payroll processed successfully for {$totalEmployees} employees",
@@ -90,11 +116,10 @@ class PayrollProcessingService
                     'total_net_amount' => $totalNetAmount
                 ]
             ];
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Payroll processing error: ' . $e->getMessage());
-            
+
             return [
                 'success' => false,
                 'message' => 'Error processing payroll: ' . $e->getMessage()
@@ -105,15 +130,15 @@ class PayrollProcessingService
     /**
      * Generate payslip for individual employee
      */
-    public function generatePayslip($employee, $period)
+    public function generatePayslip($employee, $period, $employeeOrders = null)
     {
         // Check if payslip already exists
         $existingPayslip = Payslip::where('employee_id', $employee->id)
-                                 ->where('payroll_period_id', $period->id)
-                                 ->first();
+            ->where('payroll_period_id', $period->id)
+            ->first();
 
         if ($existingPayslip) {
-            return $existingPayslip; // Skip if already processed
+            return $existingPayslip;  // Skip if already processed
         }
 
         // Get salary structure
@@ -125,9 +150,40 @@ class PayrollProcessingService
 
         // Calculate attendance data
         $attendanceData = $this->calculateAttendanceData($employee, $period);
-        
+
         // Calculate salary components
         $salaryComponents = $this->calculateSalaryComponents($employee, $attendanceData, $salaryStructure);
+
+        // Use employeeOrders (passed from batch fetch) as CTS orders for this employee
+        $totalOrderDeductions = 0;
+        $orderDeductions = [];
+        try {
+            $ctsOrders = $employeeOrders instanceof \Illuminate\Support\Collection ? $employeeOrders : collect();
+            Log::info("CTS Orders (batched) for Employee {$employee->id}: " . $ctsOrders->count());
+
+            foreach ($ctsOrders as $order) {
+                // defensive: skip orders already marked as deducted
+                if (!empty($order->deducted_in_payslip_id)) {
+                    continue;
+                }
+
+                $amt = $order->total_price ?? $order->paid_amount ?? $order->amount ?? 0;
+                $amt = (float) $amt;
+                $orderDeductions[] = [
+                    'order_id' => $order->id,
+                    'amount' => $amt,
+                    'paid_at' => $order->paid_at ? (string) $order->paid_at : null
+                ];
+                $totalOrderDeductions += $amt;
+            }
+        } catch (\Exception $ex) {
+            $totalOrderDeductions = 0;
+            $orderDeductions = [];
+        }
+
+        // Adjust totals to include order deductions
+        $totalDeductionsWithOrders = $salaryComponents['total_deductions'] + $totalOrderDeductions;
+        $netSalaryWithOrders = ($salaryComponents['gross_salary']) - $totalDeductionsWithOrders;
 
         // Create payslip
         $payslip = Payslip::create([
@@ -137,26 +193,22 @@ class PayrollProcessingService
             'employee_id_number' => $employee->employee_id,
             'designation' => $employee->designation,
             'department' => $employee->department->name ?? 'N/A',
-            
             // Salary Components
             'basic_salary' => $salaryComponents['basic_salary'],
             'total_allowances' => $salaryComponents['total_allowances'],
-            'total_deductions' => $salaryComponents['total_deductions'],
+            'total_deductions' => $totalDeductionsWithOrders,
             'gross_salary' => $salaryComponents['gross_salary'],
-            'net_salary' => $salaryComponents['net_salary'],
-            
+            'net_salary' => $netSalaryWithOrders,
             // Attendance Data
             'total_working_days' => $attendanceData['total_working_days'],
             'days_present' => $attendanceData['days_present'],
             'days_absent' => $attendanceData['days_absent'],
             'days_late' => $attendanceData['days_late'],
             'overtime_hours' => $attendanceData['overtime_hours'],
-            
             // Calculations
             'absent_deduction' => $salaryComponents['absent_deduction'],
             'late_deduction' => $salaryComponents['late_deduction'],
             'overtime_amount' => $salaryComponents['overtime_amount'],
-            
             'status' => 'draft'
         ]);
 
@@ -181,6 +233,47 @@ class PayrollProcessingService
             ]);
         }
 
+        // Create CTS order-based deductions (if any) and map to a DeductionType
+        if (!empty($orderDeductions)) {
+            // Try to find an existing deduction type for CTS orders
+            $ctsDeductionType = DeductionType::where('name', 'like', '%cts%')->orWhere('name', 'like', '%CTS%')->first();
+            if (!$ctsDeductionType) {
+                // Create a fallback deduction type
+                $ctsDeductionType = DeductionType::create([
+                    'name' => 'CTS Order',
+                    'type' => 'fixed',
+                    'is_mandatory' => false,
+                    'calculation_base' => 'basic_salary',
+                    'is_active' => true,
+                    'description' => 'Deductions for CTS (Customer To Settle) orders'
+                ]);
+            }
+
+            foreach ($orderDeductions as $od) {
+                $pd = PayslipDeduction::create([
+                    'payslip_id' => $payslip->id,
+                    'order_id' => $od['order_id'] ?? null,
+                    'deduction_type_id' => $ctsDeductionType->id,
+                    'deduction_name' => 'CTS Order #' . ($od['order_id'] ?? 'N/A'),
+                    'amount' => $od['amount'] ?? 0
+                ]);
+
+                // Mark the order as deducted (link back to payslip)
+                try {
+                    if (!empty($od['order_id'])) {
+                        $order = Order::find($od['order_id']);
+                        if ($order) {
+                            $order->deducted_in_payslip_id = $payslip->id;
+                            $order->deducted_at = now();
+                            $order->save();
+                        }
+                    }
+                } catch (\Exception $ex) {
+                    // Ignore order update failures
+                }
+            }
+        }
+
         return $payslip;
     }
 
@@ -190,14 +283,14 @@ class PayrollProcessingService
     private function calculateAttendanceData($employee, $period)
     {
         $attendances = Attendance::where('employee_id', $employee->id)
-                                ->whereBetween('date', [$period->start_date, $period->end_date])
-                                ->get();
+            ->whereBetween('date', [$period->start_date, $period->end_date])
+            ->get();
 
         $totalWorkingDays = $this->calculateWorkingDays($period->start_date, $period->end_date);
         $daysPresent = $attendances->whereIn('status', ['present', 'late'])->count();
         $daysAbsent = $attendances->where('status', 'absent')->count();
         $daysLate = $attendances->where('status', 'late')->count();
-        
+
         // Calculate overtime hours
         $overtimeHours = 0;
         foreach ($attendances as $attendance) {
@@ -205,7 +298,7 @@ class PayrollProcessingService
                 $checkIn = Carbon::parse($attendance->check_in);
                 $checkOut = Carbon::parse($attendance->check_out);
                 $hoursWorked = $checkOut->diffInHours($checkIn);
-                
+
                 if ($hoursWorked > $this->settings->working_hours_per_day) {
                     $overtimeHours += $hoursWorked - $this->settings->working_hours_per_day;
                 }
@@ -228,52 +321,52 @@ class PayrollProcessingService
     {
         $basicSalary = $salaryStructure->basic_salary;
         $dailySalary = $basicSalary / $this->settings->working_days_per_month;
-        
+
         // Calculate allowances
         $allowances = [];
         $totalAllowances = 0;
-        
+
         foreach ($employee->allowances as $employeeAllowance) {
             $amount = 0;
-            
+
             if ($employeeAllowance->allowanceType->type === 'fixed') {
                 $amount = $employeeAllowance->amount;
             } elseif ($employeeAllowance->allowanceType->type === 'percentage') {
                 $amount = ($basicSalary * $employeeAllowance->percentage) / 100;
             }
-            
+
             $allowances[] = [
                 'type_id' => $employeeAllowance->allowance_type_id,
                 'name' => $employeeAllowance->allowanceType->name,
                 'amount' => $amount,
                 'is_taxable' => $employeeAllowance->allowanceType->is_taxable
             ];
-            
+
             $totalAllowances += $amount;
         }
 
         // Calculate deductions
         $deductions = [];
         $totalDeductions = 0;
-        
+
         foreach ($employee->deductions as $employeeDeduction) {
             $amount = 0;
-            $calculationBase = $employeeDeduction->deductionType->calculation_base === 'basic_salary' 
-                             ? $basicSalary 
-                             : ($basicSalary + $totalAllowances);
-            
+            $calculationBase = $employeeDeduction->deductionType->calculation_base === 'basic_salary'
+                ? $basicSalary
+                : ($basicSalary + $totalAllowances);
+
             if ($employeeDeduction->deductionType->type === 'fixed') {
                 $amount = $employeeDeduction->amount;
             } elseif ($employeeDeduction->deductionType->type === 'percentage') {
                 $amount = ($calculationBase * $employeeDeduction->percentage) / 100;
             }
-            
+
             $deductions[] = [
                 'type_id' => $employeeDeduction->deduction_type_id,
                 'name' => $employeeDeduction->deductionType->name,
                 'amount' => $amount
             ];
-            
+
             $totalDeductions += $amount;
         }
 
@@ -281,7 +374,7 @@ class PayrollProcessingService
         $absentDeduction = 0;
         if ($attendanceData['days_absent'] > $this->settings->max_allowed_absents) {
             $excessAbsents = $attendanceData['days_absent'] - $this->settings->max_allowed_absents;
-            
+
             if ($this->settings->absent_deduction_type === 'full_day') {
                 $absentDeduction = $dailySalary * $excessAbsents;
             } elseif ($this->settings->absent_deduction_type === 'fixed_amount') {
@@ -290,16 +383,16 @@ class PayrollProcessingService
         }
 
         // Calculate late deduction
-        $lateDeduction = $attendanceData['days_late'] * $this->settings->late_deduction_per_minute * 60; // Assuming 1 hour late per day
+        $lateDeduction = $attendanceData['days_late'] * $this->settings->late_deduction_per_minute * 60;  // Assuming 1 hour late per day
 
         // Calculate overtime amount
-        $overtimeAmount = $attendanceData['overtime_hours'] * 
-                         ($basicSalary / ($this->settings->working_days_per_month * $this->settings->working_hours_per_day)) * 
-                         $this->settings->overtime_rate_multiplier;
+        $overtimeAmount = $attendanceData['overtime_hours']
+            * ($basicSalary / ($this->settings->working_days_per_month * $this->settings->working_hours_per_day))
+            * $this->settings->overtime_rate_multiplier;
 
         // Add attendance-based deductions to total
         $totalDeductions += $absentDeduction + $lateDeduction;
-        
+
         // Add overtime to allowances
         $totalAllowances += $overtimeAmount;
 
@@ -330,7 +423,7 @@ class PayrollProcessingService
         $workingDays = 0;
 
         while ($start->lte($end)) {
-            if ($start->dayOfWeek !== Carbon::SUNDAY) { // Exclude Sundays
+            if ($start->dayOfWeek !== Carbon::SUNDAY) {  // Exclude Sundays
                 $workingDays++;
             }
             $start->addDay();
@@ -345,7 +438,7 @@ class PayrollProcessingService
     public function generateSummaryReport($period)
     {
         $payslips = Payslip::where('payroll_period_id', $period->id)->get();
-        
+
         return [
             'total_employees' => $payslips->count(),
             'total_basic_salary' => $payslips->sum('basic_salary'),

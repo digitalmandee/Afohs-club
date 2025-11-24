@@ -7,11 +7,11 @@ use App\Helpers\FileHelper;
 use App\Jobs\PrintOrderJob;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\FinancialInvoice;
 use App\Models\Floor;
 use App\Models\Invoices;
 use App\Models\Member;
-use App\Models\Employee;
 use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -192,15 +192,15 @@ class OrderController extends Controller
                 $q
                     ->where('id', 'like', "%$search%")
                     ->orWhereHas('member', fn($q) =>
-                    $q
-                        ->where('full_name', 'like', "%$search%")
-                        ->orWhere('membership_no', 'like', "%$search%"))
+                        $q
+                            ->where('full_name', 'like', "%$search%")
+                            ->orWhere('membership_no', 'like', "%$search%"))
                     ->orWhereHas('customer', fn($q) =>
-                    $q
-                        ->where('name', 'like', "%$search%")
-                        ->orWhere('customer_no', 'like', "%$search%"))
+                        $q
+                            ->where('name', 'like', "%$search%")
+                            ->orWhere('customer_no', 'like', "%$search%"))
                     ->orWhereHas('table', fn($q) =>
-                    $q->where('table_no', 'like', "%$search%"));
+                        $q->where('table_no', 'like', "%$search%"));
             });
         }
 
@@ -535,6 +535,9 @@ class OrderController extends Controller
                 $invoiceData['payment_date'] = now();
                 $invoiceData['payment_method'] = $request->payment['payment_method'];
                 $invoiceData['paid_amount'] = $request->payment['paid_amount'];
+                $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
+                $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
+                $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
             }
 
             FinancialInvoice::create($invoiceData);
@@ -603,8 +606,7 @@ class OrderController extends Controller
 
         // Custom check for subtotal/total_price dependency
         if (($request->has('subtotal') && !$request->has('total_price')) ||
-            ($request->has('total_price') && !$request->has('subtotal'))
-        ) {
+                ($request->has('total_price') && !$request->has('subtotal'))) {
             return redirect()->back()->withErrors([
                 'subtotal' => 'Subtotal and total_price must be provided together.'
             ]);
@@ -625,8 +627,10 @@ class OrderController extends Controller
             ];
 
             if (
-                $request->has('subtotal') && $request->has('total_price') &&
-                $validated['subtotal'] !== null && $validated['total_price'] !== null
+                $request->has('subtotal') &&
+                $request->has('total_price') &&
+                $validated['subtotal'] !== null &&
+                $validated['total_price'] !== null
             ) {
                 $updateData['amount'] = $validated['subtotal'];
                 $updateData['total_price'] = $validated['total_price'];
@@ -676,8 +680,10 @@ class OrderController extends Controller
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
                 } elseif (
-                    $request->has('subtotal') && $request->has('total_price') &&
-                    $validated['subtotal'] !== null && $validated['total_price'] !== null
+                    $request->has('subtotal') &&
+                    $request->has('total_price') &&
+                    $validated['subtotal'] !== null &&
+                    $validated['total_price'] !== null
                 ) {
                     // Otherwise update amounts if provided
                     $financialInvoice->update([
@@ -745,12 +751,13 @@ class OrderController extends Controller
         // Search products across all restaurants by ID or name
         $products = Product::with(['variants:id,product_id,name', 'variants.values', 'category', 'tenant:id,name'])
             ->where(function ($query) use ($searchTerm) {
-                $query->where('id', 'like', "%{$searchTerm}%")
+                $query
+                    ->where('id', 'like', "%{$searchTerm}%")
                     ->where('menu_code', 'like', "%{$searchTerm}%")
                     ->orWhere('name', 'like', "%{$searchTerm}%");
             })
-            ->where('current_stock', '>', 0) // Only show products with stock
-            ->limit(20) // Limit results for performance
+            ->where('current_stock', '>', 0)  // Only show products with stock
+            ->limit(20)  // Limit results for performance
             ->get();
 
         return response()->json(['success' => true, 'products' => $products], 200);

@@ -197,7 +197,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                             </Typography>
 
                             <Typography variant="h6" sx={{ fontWeight: 500, fontSize: '18px' }}>
-                                {order.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order.customer ? order.customer.name : order.employee?.name}`}
+                                {order?.member ? `${order.member?.full_name} (${order.member?.membership_no})` : `${order?.customer ? order.customer.name : order?.employee?.name}`}
                             </Typography>
                             <Box
                                 sx={{

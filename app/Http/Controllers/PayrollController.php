@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Models\Employee;
-use App\Models\PayrollPeriod;
-use App\Models\Payslip;
-use App\Models\PayrollSetting;
 use App\Models\AllowanceType;
 use App\Models\DeductionType;
+use App\Models\Employee;
 use App\Models\EmployeeSalaryStructure;
+use App\Models\Order;
+use App\Models\PayrollPeriod;
+use App\Models\PayrollSetting;
+use App\Models\Payslip;
 use App\Services\PayrollProcessingService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class PayrollController extends Controller
 {
@@ -34,8 +37,8 @@ class PayrollController extends Controller
             'current_period' => PayrollPeriod::where('status', 'processing')->first(),
             'pending_payslips' => Payslip::where('status', 'draft')->count(),
             'this_month_payroll' => PayrollPeriod::whereMonth('start_date', now()->month)
-                                                ->whereYear('start_date', now()->year)
-                                                ->first(),
+                ->whereYear('start_date', now()->year)
+                ->first(),
         ];
 
         return Inertia::render('App/Admin/Employee/Payroll/Dashboard', [
@@ -49,7 +52,7 @@ class PayrollController extends Controller
     public function settings()
     {
         $settings = PayrollSetting::first();
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/Settings', [
             'settings' => $settings
         ]);
@@ -61,7 +64,7 @@ class PayrollController extends Controller
     public function allowanceTypes()
     {
         $allowanceTypes = AllowanceType::where('is_active', true)->get();
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/AllowanceTypes', [
             'allowanceTypes' => $allowanceTypes
         ]);
@@ -73,7 +76,7 @@ class PayrollController extends Controller
     public function deductionTypes()
     {
         $deductionTypes = DeductionType::where('is_active', true)->get();
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/DeductionTypes', [
             'deductionTypes' => $deductionTypes
         ]);
@@ -85,7 +88,7 @@ class PayrollController extends Controller
     public function employeeSalaries()
     {
         $employees = Employee::with([
-            'salaryStructure' => function($query) {
+            'salaryStructure' => function ($query) {
                 $query->where('is_active', true)->latest();
             },
             'department:id,name',
@@ -165,10 +168,37 @@ class PayrollController extends Controller
     {
         $currentPeriod = PayrollPeriod::where('status', 'processing')->first();
         $employees = Employee::with(['salaryStructure', 'department'])->get();
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/ProcessPayroll', [
             'currentPeriod' => $currentPeriod,
             'employees' => $employees
+        ]);
+    }
+
+    /**
+     * Display payroll preview page (full page with pagination)
+     */
+    public function previewPayrollPage(Request $request)
+    {
+        $periodId = $request->query('period_id');
+        $token = $request->query('token');
+
+        $period = null;
+        if ($periodId) {
+            $period = PayrollPeriod::find($periodId);
+        } elseif ($token) {
+            // try to resolve period from cached preview session
+            $session = \Illuminate\Support\Facades\Cache::get('payroll_preview_' . $token);
+            if ($session && !empty($session['period_id'])) {
+                $period = PayrollPeriod::find($session['period_id']);
+            }
+        } else {
+            $period = PayrollPeriod::where('status', 'processing')->first();
+        }
+
+        return Inertia::render('App/Admin/Employee/Payroll/PayrollPreview', [
+            'period' => $period,
+            'token' => $token ?? null
         ]);
     }
 
@@ -186,7 +216,7 @@ class PayrollController extends Controller
     public function createPeriod()
     {
         $lastPeriod = PayrollPeriod::orderBy('end_date', 'desc')->first();
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/CreatePeriod', [
             'lastPeriod' => $lastPeriod
         ]);
@@ -198,7 +228,7 @@ class PayrollController extends Controller
     public function editPeriod($periodId)
     {
         $period = PayrollPeriod::findOrFail($periodId);
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/EditPeriod', [
             'period' => $period
         ]);
@@ -209,10 +239,20 @@ class PayrollController extends Controller
      */
     public function payslips()
     {
-        $periods = PayrollPeriod::with(['payslips' => function($query) {
-            $query->selectRaw('payroll_period_id, count(*) as total_payslips, sum(net_salary) as total_amount')
-                  ->groupBy('payroll_period_id');
-        }])->orderBy('start_date', 'desc')->paginate(15);
+        $periods = PayrollPeriod::orderBy('start_date', 'desc')->paginate(15);
+
+        // For each period attach total CTS order deductions (batch query)
+        $periods->getCollection()->transform(function ($period) {
+            $periodStart = Carbon::parse($period->start_date)->startOfDay();
+            $periodEnd = Carbon::parse($period->end_date)->endOfDay();
+
+            $totalOrderDeductions = Order::where('payment_method', 'cts')
+                ->whereBetween('paid_at', [$periodStart, $periodEnd])
+                ->sum(DB::raw('COALESCE(total_price, 0)'));
+
+            $period->total_order_deductions = (float) $totalOrderDeductions;
+            return $period;
+        });
 
         return Inertia::render('App/Admin/Employee/Payroll/Payslips', [
             'periods' => $periods
@@ -226,8 +266,39 @@ class PayrollController extends Controller
     {
         $period = PayrollPeriod::findOrFail($periodId);
         $payslips = Payslip::with(['employee:id,name,employee_id'])
-                           ->where('payroll_period_id', $periodId)
-                           ->paginate(20);
+            ->where('payroll_period_id', $periodId)
+            ->paginate(20);
+
+        // Batch fetch CTS orders for employees in these payslips
+        $payslipIds = $payslips->pluck('id')->toArray();
+        $ordersByPayslip = collect();
+
+        if (!empty($payslipIds)) {
+            $ctsOrders = Order::whereIn('deducted_in_payslip_id', $payslipIds)
+                ->get()
+                ->groupBy('deducted_in_payslip_id');
+
+            $ordersByPayslip = $ctsOrders;
+        }
+
+        // Attach order deduction summaries to each payslip
+        $payslips->getCollection()->transform(function ($payslip) use ($ordersByPayslip) {
+            $empOrders = $ordersByPayslip->get($payslip->id, collect());
+            $totalOrderDeductions = $empOrders->sum(function ($o) {
+                return (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0);
+            });
+            $payslip->order_deductions = $empOrders->map(function ($o) {
+                return [
+                    'id' => $o->id,
+                    'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
+                    'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                    'note' => $o->payment_note ?? $o->remark ?? null,
+                    'deducted_at' => $o->deducted_at ? (string) $o->deducted_at : null
+                ];
+            })->values();
+            $payslip->total_order_deductions = $totalOrderDeductions;
+            return $payslip;
+        });
 
         return Inertia::render('App/Admin/Employee/Payroll/PeriodPayslips', [
             'period' => $period,
@@ -247,6 +318,21 @@ class PayrollController extends Controller
             'deductions.deductionType'
         ])->findOrFail($payslipId);
 
+        // Attach CTS order deductions related to this payslip
+        $ctsOrders = Order::where('deducted_in_payslip_id', $payslip->id)
+            ->get();
+
+        $payslip->order_deductions = $ctsOrders->map(function ($o) {
+            return [
+                'id' => $o->id,
+                'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
+                'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                'note' => $o->payment_note ?? $o->remark ?? null,
+                'deducted_at' => $o->deducted_at ? (string) $o->deducted_at : null
+            ];
+        })->values();
+        $payslip->total_order_deductions = $payslip->order_deductions->sum('amount');
+
         return Inertia::render('App/Admin/Employee/Payroll/ViewPayslip', [
             'payslip' => $payslip
         ]);
@@ -258,7 +344,7 @@ class PayrollController extends Controller
     public function reports()
     {
         $periods = PayrollPeriod::orderBy('start_date', 'desc')->take(12)->get();
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/Reports', [
             'periods' => $periods
         ]);
@@ -271,13 +357,13 @@ class PayrollController extends Controller
     {
         // Handle both query parameter and route parameter
         $periodId = $periodId ?: $request->query('period_id');
-        
+
         if (!$periodId) {
             return redirect()->route('employees.payroll.reports')->with('error', 'Period ID is required');
         }
-        
+
         $period = PayrollPeriod::findOrFail($periodId);
-        
+
         // For now, return basic summary data until PayrollProcessingService is available
         $summary = [
             'total_employees' => $period->total_employees ?? 0,
@@ -285,7 +371,7 @@ class PayrollController extends Controller
             'total_deductions' => $period->total_deductions ?? 0,
             'total_net_amount' => $period->total_net_amount ?? 0,
         ];
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/SummaryReport', [
             'period' => $period,
             'summary' => $summary
@@ -299,17 +385,17 @@ class PayrollController extends Controller
     {
         // Handle both query parameter and route parameter
         $periodId = $periodId ?: $request->query('period_id');
-        
+
         if (!$periodId) {
             return redirect()->route('employees.payroll.reports')->with('error', 'Period ID is required');
         }
-        
+
         $period = PayrollPeriod::findOrFail($periodId);
-        
+
         $payslips = Payslip::with(['employee', 'allowances', 'deductions'])
-                           ->where('payroll_period_id', $periodId)
-                           ->get();
-        
+            ->where('payroll_period_id', $periodId)
+            ->get();
+
         return Inertia::render('App/Admin/Employee/Payroll/DetailedReport', [
             'period' => $period,
             'payslips' => $payslips
@@ -322,7 +408,7 @@ class PayrollController extends Controller
     public function summaryReportPrint($periodId)
     {
         $period = PayrollPeriod::findOrFail($periodId);
-        
+
         // For now, return basic summary data until PayrollProcessingService is available
         $summary = [
             'total_employees' => $period->total_employees ?? 0,
@@ -330,7 +416,7 @@ class PayrollController extends Controller
             'total_deductions' => $period->total_deductions ?? 0,
             'total_net_amount' => $period->total_net_amount ?? 0,
         ];
-        
+
         return Inertia::render('App/Admin/Employee/Payroll/PrintSummaryReport', [
             'period' => $period,
             'summary' => $summary
@@ -343,11 +429,11 @@ class PayrollController extends Controller
     public function detailedReportPrint($periodId)
     {
         $period = PayrollPeriod::findOrFail($periodId);
-        
+
         $payslips = Payslip::with(['employee', 'allowances', 'deductions'])
-                           ->where('payroll_period_id', $periodId)
-                           ->get();
-        
+            ->where('payroll_period_id', $periodId)
+            ->get();
+
         return Inertia::render('App/Admin/Employee/Payroll/PrintDetailedReport', [
             'period' => $period,
             'payslips' => $payslips
@@ -360,7 +446,7 @@ class PayrollController extends Controller
     public function printPayslip($payslipId)
     {
         $payslip = Payslip::with([
-            'employee:id,name,employee_id,department_id',
+            'employee:id,name,employee_id,department_id,joining_date,designation',
             'employee.department:id,name',
             'employee.user:id,name',
             'payrollPeriod:id,period_name,start_date,end_date',
@@ -368,9 +454,22 @@ class PayrollController extends Controller
             'deductions.deductionType:id,name'
         ])->findOrFail($payslipId);
 
+        // Attach CTS order deductions for print view
+        $ctsOrders = Order::where('deducted_in_payslip_id', $payslip->id)
+            ->get();
+
+        $payslip->order_deductions = $ctsOrders->map(function ($o) {
+            return [
+                'id' => $o->id,
+                'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
+                'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                'note' => $o->payment_note ?? $o->remark ?? null
+            ];
+        })->values();
+        $payslip->total_order_deductions = $payslip->order_deductions->sum('amount');
+
         return Inertia::render('App/Admin/Employee/Payroll/PrintPayslip', [
             'payslip' => $payslip
         ]);
     }
-
 }

@@ -53,10 +53,12 @@ const PayrollDashboard = ({ stats: initialStats }) => {
 
     return (
         <AdminLayout>
-            <div style={{
-                minHeight: '100vh',
-                backgroundColor: '#f5f5f5'
-            }}>
+            <div
+                style={{
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
+                }}
+            >
                 <Box sx={{ p: 2 }}>
                     <div style={{ paddingTop: '1rem', backgroundColor: 'transparent' }}>
                         {/* Header */}
@@ -149,39 +151,39 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                     title: 'Employees with Salary',
                                     value: stats.employees_with_salary || 0,
                                     icon: AccountBalance,
-                                    color: '#2e7d32',
+                                    color: '#063455',
                                 },
                                 {
                                     title: 'Current Period',
                                     value: stats.current_period?.period_name || 'No Active Period',
                                     icon: Schedule,
-                                    color: '#ed6c02',
+                                    color: '#063455',
                                     isText: true,
                                 },
                                 {
                                     title: 'Pending Payslips',
                                     value: stats.pending_payslips || 0,
                                     icon: Assessment,
-                                    color: '#d32f2f',
+                                    color: '#063455',
                                 },
                                 {
                                     title: 'This Month Payroll',
                                     value: stats.this_month_payroll ? formatCurrency(stats.this_month_payroll.total_net_amount) : 'Rs 0',
                                     icon: MonetizationOn,
-                                    color: '#1976d2',
+                                    color: '#063455',
                                     isText: true,
                                 },
                                 {
                                     title: 'Active Employees',
                                     value: stats.active_employees || 0,
                                     icon: TrendingUp,
-                                    color: '#388e3c',
+                                    color: '#063455',
                                 },
                             ].map((item, index) => (
                                 <Grid item xs={12} sm={6} md={4} key={index}>
                                     <Card
                                         sx={{
-                                            background: `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`,
+                                            background: item.color,
                                             color: 'white',
                                             borderRadius: '12px',
                                             height: '140px',

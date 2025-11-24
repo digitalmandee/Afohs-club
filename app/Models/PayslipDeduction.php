@@ -11,6 +11,7 @@ class PayslipDeduction extends Model
 
     protected $fillable = [
         'payslip_id',
+        'order_id',
         'deduction_type_id',
         'deduction_name',
         'amount'

@@ -12,6 +12,8 @@ const ViewPayslip = ({ payslipId }) => {
     const [payslip, setPayslip] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showOrdersDialog, setShowOrdersDialog] = useState(false);
+    const [ordersForDialog, setOrdersForDialog] = useState([]);
 
     useEffect(() => {
         fetchPayslip();
@@ -141,6 +143,17 @@ const ViewPayslip = ({ payslipId }) => {
                                 color: 'white',
                                 '&:hover': { backgroundColor: '#1b5e20' },
                             }}
+                        >
+                            <DownloadIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="View CTS Orders">
+                        <IconButton
+                            onClick={() => {
+                                setOrdersForDialog(payslip.order_deductions || []);
+                                setShowOrdersDialog(true);
+                            }}
+                            sx={{ backgroundColor: '#6a1b9a', color: 'white', '&:hover': { backgroundColor: '#4a148c' } }}
                         >
                             <DownloadIcon />
                         </IconButton>
@@ -412,6 +425,60 @@ const ViewPayslip = ({ payslipId }) => {
                     </Card>
                 </Grid>
             </Grid>
+
+            {/* Orders Dialog */}
+            <Dialog open={showOrdersDialog} onClose={() => setShowOrdersDialog(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
+                        CTS Order Deductions
+                    </Typography>
+                </DialogTitle>
+                <DialogContent>
+                    {!ordersForDialog || ordersForDialog.length === 0 ? (
+                        <Box sx={{ py: 3 }}>
+                            <Typography color="textSecondary">No CTS orders found for this payslip.</Typography>
+                        </Box>
+                    ) : (
+                        <TableContainer>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Date</TableCell>
+                                        <TableCell>Order ID</TableCell>
+                                        <TableCell>Amount</TableCell>
+                                        <TableCell>Note</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {ordersForDialog.map((o) => {
+                                        const alreadyDeducted = !!o.deducted_at;
+                                        return (
+                                            <TableRow key={o.id} sx={{ opacity: alreadyDeducted ? 0.6 : 1, fontStyle: alreadyDeducted ? 'italic' : 'normal' }}>
+                                                <TableCell>{o.paid_at ? new Date(o.paid_at).toLocaleDateString() : '—'}</TableCell>
+                                                <TableCell>{o.id}</TableCell>
+                                                <TableCell>{formatCurrency(o.amount)}</TableCell>
+                                                <TableCell>
+                                                    <Box>
+                                                        <Typography variant="body2">{o.note || '—'}</Typography>
+                                                        {o.deducted_at && (
+                                                            <Typography variant="caption" color="textSecondary">
+                                                                Deducted: {new Date(o.deducted_at).toLocaleString()}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setShowOrdersDialog(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
         </AdminLayout>
     );
 };

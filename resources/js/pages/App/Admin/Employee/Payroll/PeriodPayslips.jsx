@@ -2,53 +2,8 @@ import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import {
-    Box,
-    Card,
-    CardContent,
-    Typography,
-    Button,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Chip,
-    IconButton,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Grid,
-    Pagination,
-    CircularProgress,
-    Alert,
-    Snackbar,
-    TextField,
-    InputAdornment,
-    Tooltip,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Checkbox,
-    Avatar
-} from '@mui/material';
-import {
-    ArrowBack as ArrowBackIcon,
-    Visibility as VisibilityIcon,
-    Print as PrintIcon,
-    Download as DownloadIcon,
-    Search as SearchIcon,
-    CheckCircle as CheckCircleIcon,
-    Cancel as CancelIcon,
-    Assignment as AssignmentIcon,
-    FilterList as FilterListIcon,
-    Person as PersonIcon,
-    GetApp as GetAppIcon
-} from '@mui/icons-material';
+import { Box, Card, CardContent, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Pagination, CircularProgress, Alert, Snackbar, TextField, InputAdornment, Tooltip, FormControl, InputLabel, Select, MenuItem, Checkbox, Avatar } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Visibility as VisibilityIcon, Print as PrintIcon, Download as DownloadIcon, Search as SearchIcon, CheckCircle as CheckCircleIcon, Cancel as CancelIcon, Assignment as AssignmentIcon, FilterList as FilterListIcon, Person as PersonIcon, GetApp as GetAppIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 const drawerWidth = 240;
@@ -63,6 +18,8 @@ const PeriodPayslips = ({ period }) => {
     const [selectedPayslips, setSelectedPayslips] = useState([]);
     const [selectedPayslip, setSelectedPayslip] = useState(null);
     const [showPayslipDialog, setShowPayslipDialog] = useState(false);
+    const [showOrdersDialog, setShowOrdersDialog] = useState(false);
+    const [ordersForDialog, setOrdersForDialog] = useState([]);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     useEffect(() => {
@@ -157,7 +114,7 @@ const PeriodPayslips = ({ period }) => {
 
         try {
             const response = await axios.post('/api/payroll/payslips/bulk-approve', {
-                payslip_ids: selectedPayslips
+                payslip_ids: selectedPayslips,
             });
             if (response.data.success) {
                 showSnackbar(`${selectedPayslips.length} payslips approved successfully!`, 'success');
@@ -171,18 +128,14 @@ const PeriodPayslips = ({ period }) => {
     };
 
     const handleSelectPayslip = (payslipId) => {
-        setSelectedPayslips(prev => 
-            prev.includes(payslipId) 
-                ? prev.filter(id => id !== payslipId)
-                : [...prev, payslipId]
-        );
+        setSelectedPayslips((prev) => (prev.includes(payslipId) ? prev.filter((id) => id !== payslipId) : [...prev, payslipId]));
     };
 
     const handleSelectAll = () => {
         if (selectedPayslips.length === payslips.length) {
             setSelectedPayslips([]);
         } else {
-            setSelectedPayslips(payslips.map(p => p.id));
+            setSelectedPayslips(payslips.map((p) => p.id));
         }
     };
 
@@ -205,21 +158,31 @@ const PeriodPayslips = ({ period }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'approved': return 'success';
-            case 'paid': return 'primary';
-            case 'draft': return 'warning';
-            case 'rejected': return 'error';
-            default: return 'default';
+            case 'approved':
+                return 'success';
+            case 'paid':
+                return 'primary';
+            case 'draft':
+                return 'warning';
+            case 'rejected':
+                return 'error';
+            default:
+                return 'default';
         }
     };
 
     const getStatusText = (status) => {
         switch (status) {
-            case 'approved': return 'Approved';
-            case 'paid': return 'Paid';
-            case 'draft': return 'Draft';
-            case 'rejected': return 'Rejected';
-            default: return status;
+            case 'approved':
+                return 'Approved';
+            case 'paid':
+                return 'Paid';
+            case 'draft':
+                return 'Draft';
+            case 'rejected':
+                return 'Rejected';
+            default:
+                return status;
         }
     };
 
@@ -272,11 +235,7 @@ const PeriodPayslips = ({ period }) => {
                 <Grid item xs={12} md={3}>
                     <FormControl fullWidth>
                         <InputLabel>Status Filter</InputLabel>
-                        <Select
-                            value={statusFilter}
-                            label="Status Filter"
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
+                        <Select value={statusFilter} label="Status Filter" onChange={(e) => setStatusFilter(e.target.value)}>
                             <MenuItem value="">All Status</MenuItem>
                             <MenuItem value="draft">Draft</MenuItem>
                             <MenuItem value="approved">Approved</MenuItem>
@@ -292,9 +251,9 @@ const PeriodPayslips = ({ period }) => {
                                 variant="contained"
                                 startIcon={<CheckCircleIcon />}
                                 onClick={handleBulkApprove}
-                                sx={{ 
+                                sx={{
                                     backgroundColor: '#2e7d32',
-                                    '&:hover': { backgroundColor: '#1b5e20' }
+                                    '&:hover': { backgroundColor: '#1b5e20' },
                                 }}
                             >
                                 Approve ({selectedPayslips.length})
@@ -321,12 +280,7 @@ const PeriodPayslips = ({ period }) => {
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
                                 <TableCell sx={{ fontWeight: 600, color: '#063455' }}>
-                                    <Checkbox
-                                        checked={selectedPayslips.length === payslips.length && payslips.length > 0}
-                                        indeterminate={selectedPayslips.length > 0 && selectedPayslips.length < payslips.length}
-                                        onChange={handleSelectAll}
-                                        sx={{ color: '#063455' }}
-                                    />
+                                    <Checkbox checked={selectedPayslips.length === payslips.length && payslips.length > 0} indeterminate={selectedPayslips.length > 0 && selectedPayslips.length < payslips.length} onChange={handleSelectAll} sx={{ color: '#063455' }} />
                                 </TableCell>
                                 <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee</TableCell>
                                 <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee ID</TableCell>
@@ -353,19 +307,15 @@ const PeriodPayslips = ({ period }) => {
                                 </TableRow>
                             ) : (
                                 payslips.map((payslip) => (
-                                    <TableRow 
-                                        key={payslip.id} 
-                                        sx={{ 
+                                    <TableRow
+                                        key={payslip.id}
+                                        sx={{
                                             '&:hover': { backgroundColor: '#f5f5f5' },
-                                            backgroundColor: selectedPayslips.includes(payslip.id) ? '#e3f2fd' : 'inherit'
+                                            backgroundColor: selectedPayslips.includes(payslip.id) ? '#e3f2fd' : 'inherit',
                                         }}
                                     >
                                         <TableCell>
-                                            <Checkbox
-                                                checked={selectedPayslips.includes(payslip.id)}
-                                                onChange={() => handleSelectPayslip(payslip.id)}
-                                                sx={{ color: '#063455' }}
-                                            />
+                                            <Checkbox checked={selectedPayslips.includes(payslip.id)} onChange={() => handleSelectPayslip(payslip.id)} sx={{ color: '#063455' }} />
                                         </TableCell>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -389,12 +339,7 @@ const PeriodPayslips = ({ period }) => {
                                             <Typography sx={{ fontWeight: 600, color: '#063455' }}>{formatCurrency(payslip.net_salary)}</Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Chip 
-                                                label={getStatusText(payslip.status)} 
-                                                size="small" 
-                                                color={getStatusColor(payslip.status)}
-                                                sx={{ fontWeight: 600 }}
-                                            />
+                                            <Chip label={getStatusText(payslip.status)} size="small" color={getStatusColor(payslip.status)} sx={{ fontWeight: 600 }} />
                                         </TableCell>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -403,7 +348,7 @@ const PeriodPayslips = ({ period }) => {
                                                         <VisibilityIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
-                                                {(payslip.status === 'draft') && (
+                                                {payslip.status === 'draft' && (
                                                     <>
                                                         <Tooltip title="Approve Payslip">
                                                             <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#2e7d32' }}>
@@ -417,19 +362,27 @@ const PeriodPayslips = ({ period }) => {
                                                         </Tooltip>
                                                     </>
                                                 )}
-                                                {(payslip.status === 'approved') && (
+                                                {payslip.status === 'approved' && (
                                                     <Tooltip title="Revert to Draft">
                                                         <IconButton size="small" onClick={() => handleRevertToDraft(payslip.id)} sx={{ color: '#ff9800' }}>
                                                             <CancelIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                <Tooltip title="Print Payslip">
-                                                    <IconButton 
-                                                        size="small" 
-                                                        onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')}
-                                                        sx={{ color: '#1976d2' }}
+                                                <Tooltip title="View Orders">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => {
+                                                            setOrdersForDialog(payslip.order_deductions || []);
+                                                            setShowOrdersDialog(true);
+                                                        }}
+                                                        sx={{ color: '#6a1b9a' }}
                                                     >
+                                                        <GetAppIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Print Payslip">
+                                                    <IconButton size="small" onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')} sx={{ color: '#1976d2' }}>
                                                         <PrintIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
@@ -538,6 +491,60 @@ const PeriodPayslips = ({ period }) => {
                     >
                         Print Payslip
                     </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Orders Dialog */}
+            <Dialog open={showOrdersDialog} onClose={() => setShowOrdersDialog(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
+                        CTS Order Deductions
+                    </Typography>
+                </DialogTitle>
+                <DialogContent>
+                    {ordersForDialog.length === 0 ? (
+                        <Box sx={{ py: 3 }}>
+                            <Typography color="textSecondary">No CTS orders found for this payslip.</Typography>
+                        </Box>
+                    ) : (
+                        <TableContainer>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Date</TableCell>
+                                        <TableCell>Order ID</TableCell>
+                                        <TableCell>Amount</TableCell>
+                                        <TableCell>Note</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {ordersForDialog.map((o) => {
+                                        const alreadyDeducted = !!o.deducted_at;
+                                        return (
+                                            <TableRow key={o.id} sx={{ opacity: alreadyDeducted ? 0.6 : 1, fontStyle: alreadyDeducted ? 'italic' : 'normal' }}>
+                                                <TableCell>{o.paid_at ? new Date(o.paid_at).toLocaleDateString() : '—'}</TableCell>
+                                                <TableCell>{o.id}</TableCell>
+                                                <TableCell>{formatCurrency(o.amount)}</TableCell>
+                                                <TableCell>
+                                                    <Box>
+                                                        <Typography variant="body2">{o.note || '—'}</Typography>
+                                                        {o.deducted_at && (
+                                                            <Typography variant="caption" color="textSecondary">
+                                                                Deducted: {new Date(o.deducted_at).toLocaleString()}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setShowOrdersDialog(false)}>Close</Button>
                 </DialogActions>
             </Dialog>
 

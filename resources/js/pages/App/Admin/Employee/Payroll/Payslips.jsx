@@ -1,48 +1,8 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
-import {
-    Box,
-    Card,
-    Typography,
-    Button,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Chip,
-    TextField,
-    InputAdornment,
-    IconButton,
-    Pagination,
-    CircularProgress,
-    Alert,
-    Snackbar,
-    Tooltip,
-    Avatar,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Grid,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions
-} from '@mui/material';
-import {
-    Search as SearchIcon,
-    Visibility as VisibilityIcon,
-    GetApp as GetAppIcon,
-    CheckCircle as CheckCircleIcon,
-    ArrowBack as ArrowBackIcon,
-    Person as PersonIcon,
-    FilterList as FilterListIcon,
-    Print as PrintIcon
-} from '@mui/icons-material';
+import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, TextField, InputAdornment, IconButton, Pagination, CircularProgress, Alert, Snackbar, Tooltip, Avatar, FormControl, InputLabel, Select, MenuItem, Grid, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Search as SearchIcon, Visibility as VisibilityIcon, GetApp as GetAppIcon, CheckCircle as CheckCircleIcon, ArrowBack as ArrowBackIcon, Person as PersonIcon, FilterList as FilterListIcon, Print as PrintIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 const Payslips = () => {
@@ -56,6 +16,8 @@ const Payslips = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [selectedPayslip, setSelectedPayslip] = useState(null);
     const [showPayslipDialog, setShowPayslipDialog] = useState(false);
+    const [showOrdersDialog, setShowOrdersDialog] = useState(false);
+    const [ordersForDialog, setOrdersForDialog] = useState([]);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     useEffect(() => {
@@ -65,7 +27,7 @@ const Payslips = () => {
     useEffect(() => {
         if (periods.length > 0 && !selectedPeriod) {
             // Auto-select the most recent period
-            const recentPeriod = periods.find(p => p.status === 'processing') || periods[0];
+            const recentPeriod = periods.find((p) => p.status === 'processing') || periods[0];
             setSelectedPeriod(recentPeriod?.id || '');
         }
     }, [periods]);
@@ -90,7 +52,7 @@ const Payslips = () => {
 
     const fetchPayslips = async () => {
         if (!selectedPeriod) return;
-        
+
         setLoading(true);
         try {
             const response = await axios.get(`/api/payroll/periods/${selectedPeriod}/payslips`, {
@@ -98,10 +60,10 @@ const Payslips = () => {
                     page: currentPage,
                     search: searchTerm,
                     status: statusFilter,
-                    per_page: 15
-                }
+                    per_page: 15,
+                },
             });
-            
+
             if (response.data.success) {
                 setPayslips(response.data.payslips.data || []);
                 setTotalPages(response.data.payslips.last_page || 1);
@@ -160,25 +122,35 @@ const Payslips = () => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
             style: 'currency',
-            currency: 'PKR'
-        }).format(amount || 0).replace('PKR', 'Rs');
+            currency: 'PKR',
+        })
+            .format(amount || 0)
+            .replace('PKR', 'Rs');
     };
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'approved': return 'success';
-            case 'paid': return 'primary';
-            case 'draft': return 'warning';
-            default: return 'default';
+            case 'approved':
+                return 'success';
+            case 'paid':
+                return 'primary';
+            case 'draft':
+                return 'warning';
+            default:
+                return 'default';
         }
     };
 
     const getStatusText = (status) => {
         switch (status) {
-            case 'approved': return 'Approved';
-            case 'paid': return 'Paid';
-            case 'draft': return 'Draft';
-            default: return status;
+            case 'approved':
+                return 'Approved';
+            case 'paid':
+                return 'Paid';
+            case 'draft':
+                return 'Draft';
+            default:
+                return status;
         }
     };
 
@@ -188,11 +160,7 @@ const Payslips = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button
-                            startIcon={<ArrowBackIcon />}
-                            onClick={() => router.visit(route('employees.payroll.dashboard'))}
-                            sx={{ color: '#063455' }}
-                        >
+                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.dashboard'))} sx={{ color: '#063455' }}>
                             Back to Dashboard
                         </Button>
                         <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
@@ -223,7 +191,7 @@ const Payslips = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        
+
                         <Grid item xs={12} sm={6} md={3}>
                             <FormControl fullWidth>
                                 <InputLabel>Status</InputLabel>
@@ -242,7 +210,7 @@ const Payslips = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        
+
                         <Grid item xs={12} sm={6} md={4}>
                             <TextField
                                 fullWidth
@@ -258,17 +226,17 @@ const Payslips = () => {
                                 }}
                             />
                         </Grid>
-                        
+
                         <Grid item xs={12} sm={6} md={2}>
                             <Button
                                 fullWidth
                                 variant="outlined"
                                 startIcon={<FilterListIcon />}
                                 onClick={fetchPayslips}
-                                sx={{ 
+                                sx={{
                                     color: '#063455',
                                     borderColor: '#063455',
-                                    '&:hover': { borderColor: '#052d45' }
+                                    '&:hover': { borderColor: '#052d45' },
                                 }}
                             >
                                 Apply Filters
@@ -302,17 +270,12 @@ const Payslips = () => {
                                 ) : payslips.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                                            <Typography color="textSecondary">
-                                                {selectedPeriod ? 'No payslips found for selected period' : 'Please select a payroll period'}
-                                            </Typography>
+                                            <Typography color="textSecondary">{selectedPeriod ? 'No payslips found for selected period' : 'Please select a payroll period'}</Typography>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     payslips.map((payslip) => (
-                                        <TableRow 
-                                            key={payslip.id}
-                                            sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
-                                        >
+                                        <TableRow key={payslip.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                     <Avatar sx={{ bgcolor: '#063455', width: 40, height: 40 }}>
@@ -328,9 +291,7 @@ const Payslips = () => {
                                                     </Box>
                                                 </Box>
                                             </TableCell>
-                                            <TableCell>
-                                                {payslip.employee?.department?.name || 'N/A'}
-                                            </TableCell>
+                                            <TableCell>{payslip.employee?.department?.name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                                                     {formatCurrency(payslip.basic_salary)}
@@ -347,41 +308,37 @@ const Payslips = () => {
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>
-                                                <Chip
-                                                    label={getStatusText(payslip.status)}
-                                                    size="small"
-                                                    color={getStatusColor(payslip.status)}
-                                                />
+                                                <Chip label={getStatusText(payslip.status)} size="small" color={getStatusColor(payslip.status)} />
                                             </TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                                     <Tooltip title="View Payslip">
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleViewPayslip(payslip.id)}
-                                                            sx={{ color: '#063455' }}
-                                                        >
+                                                        <IconButton size="small" onClick={() => handleViewPayslip(payslip.id)} sx={{ color: '#063455' }}>
                                                             <VisibilityIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-                                                    
-                                                    <Tooltip title="Print Payslip">
+
+                                                    <Tooltip title="View Orders">
                                                         <IconButton
                                                             size="small"
-                                                            onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')}
-                                                            sx={{ color: '#1976d2' }}
+                                                            onClick={() => {
+                                                                setOrdersForDialog(payslip.order_deductions || []);
+                                                                setShowOrdersDialog(true);
+                                                            }}
+                                                            sx={{ color: '#6a1b9a' }}
                                                         >
+                                                            <GetAppIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Print Payslip">
+                                                        <IconButton size="small" onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')} sx={{ color: '#1976d2' }}>
                                                             <PrintIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-                                                    
+
                                                     {payslip.status === 'draft' && (
                                                         <Tooltip title="Approve Payslip">
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => handleApprovePayslip(payslip.id)}
-                                                                sx={{ color: '#2e7d32' }}
-                                                            >
+                                                            <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#2e7d32' }}>
                                                                 <CheckCircleIcon fontSize="small" />
                                                             </IconButton>
                                                         </Tooltip>
@@ -418,12 +375,7 @@ const Payslips = () => {
                 </Card>
 
                 {/* Payslip Details Dialog */}
-                <Dialog
-                    open={showPayslipDialog}
-                    onClose={() => setShowPayslipDialog(false)}
-                    maxWidth="md"
-                    fullWidth
-                >
+                <Dialog open={showPayslipDialog} onClose={() => setShowPayslipDialog(false)} maxWidth="md" fullWidth>
                     <DialogTitle>
                         <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payslip Details - {selectedPayslip?.employee?.name}
@@ -439,19 +391,27 @@ const Payslips = () => {
                                             Employee Information
                                         </Typography>
                                         <Box sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Name</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Name
+                                            </Typography>
                                             <Typography variant="body1">{selectedPayslip.employee?.name}</Typography>
                                         </Box>
                                         <Box sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Employee ID</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Employee ID
+                                            </Typography>
                                             <Typography variant="body1">{selectedPayslip.employee?.employee_id}</Typography>
                                         </Box>
                                         <Box sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Department</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Department
+                                            </Typography>
                                             <Typography variant="body1">{selectedPayslip.employee?.department?.name}</Typography>
                                         </Box>
                                         <Box>
-                                            <Typography variant="subtitle2" color="textSecondary">Designation</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Designation
+                                            </Typography>
                                             <Typography variant="body1">{selectedPayslip.employee?.designation}</Typography>
                                         </Box>
                                     </Card>
@@ -464,31 +424,41 @@ const Payslips = () => {
                                             Salary Breakdown
                                         </Typography>
                                         <Box sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Basic Salary</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Basic Salary
+                                            </Typography>
                                             <Typography variant="body1" sx={{ fontWeight: 600 }}>
                                                 {formatCurrency(selectedPayslip.basic_salary)}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Total Allowances</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Total Allowances
+                                            </Typography>
                                             <Typography variant="body1" sx={{ fontWeight: 600, color: '#2e7d32' }}>
                                                 {formatCurrency(selectedPayslip.total_allowances)}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Total Deductions</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Total Deductions
+                                            </Typography>
                                             <Typography variant="body1" sx={{ fontWeight: 600, color: '#d32f2f' }}>
                                                 {formatCurrency(selectedPayslip.total_deductions)}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Gross Salary</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Gross Salary
+                                            </Typography>
                                             <Typography variant="body1" sx={{ fontWeight: 600 }}>
                                                 {formatCurrency(selectedPayslip.gross_salary)}
                                             </Typography>
                                         </Box>
                                         <Box>
-                                            <Typography variant="subtitle2" color="textSecondary">Net Salary</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Net Salary
+                                            </Typography>
                                             <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>
                                                 {formatCurrency(selectedPayslip.net_salary)}
                                             </Typography>
@@ -537,17 +507,15 @@ const Payslips = () => {
                         )}
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setShowPayslipDialog(false)}>
-                            Close
-                        </Button>
+                        <Button onClick={() => setShowPayslipDialog(false)}>Close</Button>
                         {selectedPayslip && (
                             <Button
                                 onClick={() => window.open(`/admin/employees/payroll/payslips/${selectedPayslip.id}/print`, '_blank')}
                                 variant="contained"
                                 startIcon={<PrintIcon />}
-                                sx={{ 
+                                sx={{
                                     backgroundColor: '#063455',
-                                    '&:hover': { backgroundColor: '#052d45' }
+                                    '&:hover': { backgroundColor: '#052d45' },
                                 }}
                             >
                                 Print Payslip
@@ -556,13 +524,62 @@ const Payslips = () => {
                     </DialogActions>
                 </Dialog>
 
+                {/* Orders Dialog */}
+                <Dialog open={showOrdersDialog} onClose={() => setShowOrdersDialog(false)} maxWidth="sm" fullWidth>
+                    <DialogTitle>
+                        <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
+                            CTS Order Deductions
+                        </Typography>
+                    </DialogTitle>
+                    <DialogContent>
+                        {ordersForDialog.length === 0 ? (
+                            <Box sx={{ py: 3 }}>
+                                <Typography color="textSecondary">No CTS orders found for this payslip.</Typography>
+                            </Box>
+                        ) : (
+                            <TableContainer>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Date</TableCell>
+                                            <TableCell>Order ID</TableCell>
+                                            <TableCell>Amount</TableCell>
+                                            <TableCell>Note</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {ordersForDialog.map((o) => {
+                                            const alreadyDeducted = !!o.deducted_at;
+                                            return (
+                                                <TableRow key={o.id} sx={{ opacity: alreadyDeducted ? 0.6 : 1, fontStyle: alreadyDeducted ? 'italic' : 'normal' }}>
+                                                    <TableCell>{o.paid_at ? new Date(o.paid_at).toLocaleDateString() : '—'}</TableCell>
+                                                    <TableCell>{o.id}</TableCell>
+                                                    <TableCell>{formatCurrency(o.amount)}</TableCell>
+                                                    <TableCell>
+                                                        <Box>
+                                                            <Typography variant="body2">{o.note || '—'}</Typography>
+                                                            {o.deducted_at && (
+                                                                <Typography variant="caption" color="textSecondary">
+                                                                    Deducted: {new Date(o.deducted_at).toLocaleString()}
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setShowOrdersDialog(false)}>Close</Button>
+                    </DialogActions>
+                </Dialog>
+
                 {/* Snackbar for notifications */}
-                <Snackbar
-                    open={snackbar.open}
-                    autoHideDuration={6000}
-                    onClose={handleCloseSnackbar}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                >
+                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                     <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                         {snackbar.message}
                     </Alert>

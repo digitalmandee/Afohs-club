@@ -55,6 +55,8 @@ class Order extends Model
         'payment_method',
         'reciept',
         'tenant_id',
+        'deducted_in_payslip_id',
+        'deducted_at',
     ];
 
     public function orderItems()
@@ -76,7 +78,7 @@ class Order extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
-    
+
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id', 'id');
@@ -95,5 +97,10 @@ class Order extends Model
     public function cashier()
     {
         return $this->belongsTo(User::class, 'cashier_id', 'id');
+    }
+
+    public function deductedInPayslip()
+    {
+        return $this->belongsTo(Payslip::class, 'deducted_in_payslip_id');
     }
 }

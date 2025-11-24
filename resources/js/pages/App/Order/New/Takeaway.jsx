@@ -77,6 +77,7 @@ const TakeAwayDialog = () => {
                             {[
                                 { id: 1, name: 'Member' },
                                 { id: 2, name: 'Guest' },
+                                { id: 3, name: 'Employee' },
                             ].map((option) => {
                                 const isSelected = orderDetails.member_type == option.id;
                                 return (

@@ -1,28 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
-import {
-    Box,
-    Card,
-    CardContent,
-    Typography,
-    Button,
-    Grid,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Divider,
-    CircularProgress,
-    Alert
-} from '@mui/material';
-import {
-    Print as PrintIcon,
-    ArrowBack as ArrowBackIcon,
-    GetApp as GetAppIcon
-} from '@mui/icons-material';
+import { Box, Typography, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Divider, CircularProgress, Alert } from '@mui/material';
 
 const PrintPayslip = ({ payslip }) => {
     const [loading, setLoading] = useState(false);
@@ -40,15 +18,20 @@ const PrintPayslip = ({ payslip }) => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
             style: 'currency',
-            currency: 'PKR'
-        }).format(amount || 0).replace('PKR', 'Rs');
+            currency: 'PKR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        })
+            .format(amount || 0)
+            .replace('PKR', '');
     };
 
     const formatDate = (date) => {
+        if (!date) return 'N/A';
         return new Date(date).toLocaleDateString('en-PK', {
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -117,20 +100,18 @@ const PrintPayslip = ({ payslip }) => {
     return (
         <>
             <Head title="Payslip Print" />
-            
+
             <style jsx global>{`
                 @media print {
                     body {
                         margin: 0;
-                        padding: 0;
+                        padding: 30px;
                         font-family: Arial, sans-serif;
                     }
-                    
                     @page {
                         margin: 0.5in;
                         size: A4;
                     }
-                    
                     * {
                         -webkit-print-color-adjust: exact !important;
                         color-adjust: exact !important;
@@ -139,261 +120,204 @@ const PrintPayslip = ({ payslip }) => {
                 }
             `}</style>
 
-            <Box sx={{ 
-                p: 3, 
-                backgroundColor: 'white',
-                minHeight: '100vh',
-                '@media print': {
-                    p: 0,
-                }
-            }}>
+            <Box
+                sx={{
+                    p: 4,
+                    backgroundColor: 'white',
+                    minHeight: '100vh',
+                    maxWidth: '210mm',
+                    margin: '0 auto',
+                    '@media print': {
+                        p: 0,
+                        maxWidth: 'none',
+                    },
+                }}
+            >
+                {/* Header */}
+                <Box sx={{ textAlign: 'center', mb: 5 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#000', mb: 0.5 }}>
+                        Payslip
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: '#000', mb: 0.5 }}>
+                        AFOHS CLUB
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#000' }}>
+                        Falcon Complex, Gulberg III, Lahore
+                    </Typography>
+                </Box>
 
-            {/* Payslip Content */}
-            <Card sx={{ 
-                maxWidth: '210mm',
-                margin: '0 auto',
-                '@media print': {
-                    boxShadow: 'none',
-                    border: 'none',
-                    maxWidth: 'none',
-                    margin: 0
-                }
-            }}>
-                <CardContent sx={{ p: 4 }}>
-                    {/* Header */}
-                    <Box sx={{ textAlign: 'center', mb: 4 }}>
-                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#063455', mb: 1 }}>
-                            AFOHS CLUB
-                        </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455', mb: 1 }}>
-                            SALARY SLIP
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                            Pay Period: {payslip.payroll_period?.period_name}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                            Generated on: {formatDate(new Date())}
-                        </Typography>
-                    </Box>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    {/* Employee Information */}
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
-                        <Grid item xs={6}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455', mb: 2 }}>
-                                Employee Information
-                            </Typography>
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="body2" color="textSecondary" component="span">Name: </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }} component="span">
-                                    {payslip.employee?.name}
+                {/* Employee Info */}
+                <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <Grid item xs={6}>
+                        <Grid container>
+                            <Grid item xs={5}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    Date of Joining
                                 </Typography>
-                            </Box>
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="body2" color="textSecondary" component="span">Employee ID: </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }} component="span">
-                                    {payslip.employee?.employee_id}
+                            </Grid>
+                            <Grid item xs={7}>
+                                <Typography variant="body2">: {formatDate(payslip.employee?.joining_date)}</Typography>
+                            </Grid>
+                            <Grid item xs={5}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    Pay Period
                                 </Typography>
-                            </Box>
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="body2" color="textSecondary" component="span">Department: </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }} component="span">
-                                    {payslip.employee?.department?.name || 'N/A'}
+                            </Grid>
+                            <Grid item xs={7}>
+                                <Typography variant="body2">: {payslip.payroll_period?.period_name}</Typography>
+                            </Grid>
+                            <Grid item xs={5}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    Worked Days
                                 </Typography>
-                            </Box>
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="body2" color="textSecondary" component="span">Designation: </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }} component="span">
-                                    {payslip.employee?.designation || 'N/A'}
-                                </Typography>
-                            </Box>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455', mb: 2 }}>
-                                Pay Period Details
-                            </Typography>
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="body2" color="textSecondary" component="span">Period: </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }} component="span">
-                                    {payslip.payroll_period?.period_name}
-                                </Typography>
-                            </Box>
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="body2" color="textSecondary" component="span">From: </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }} component="span">
-                                    {formatDate(payslip.payroll_period?.start_date)}
-                                </Typography>
-                            </Box>
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="body2" color="textSecondary" component="span">To: </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }} component="span">
-                                    {formatDate(payslip.payroll_period?.end_date)}
-                                </Typography>
-                            </Box>
-                            <Box sx={{ mb: 1 }}>
-                                <Typography variant="body2" color="textSecondary" component="span">Status: </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: payslip.status === 'approved' ? '#2e7d32' : '#ed6c02' }} component="span">
-                                    {payslip.status?.toUpperCase()}
-                                </Typography>
-                            </Box>
+                            </Grid>
+                            <Grid item xs={7}>
+                                <Typography variant="body2">: {payslip.total_working_days || 0}</Typography>
+                            </Grid>
                         </Grid>
                     </Grid>
+                    <Grid item xs={6}>
+                        <Grid container>
+                            <Grid item xs={5}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    Employee Name
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={7}>
+                                <Typography variant="body2">: {payslip.employee?.name}</Typography>
+                            </Grid>
+                            <Grid item xs={5}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    Designation
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={7}>
+                                <Typography variant="body2">: {payslip.employee?.designation}</Typography>
+                            </Grid>
+                            <Grid item xs={5}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    Department
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={7}>
+                                <Typography variant="body2">: {payslip.employee?.department?.name}</Typography>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Grid>
 
-                    <Divider sx={{ mb: 3 }} />
-
-                    {/* Salary Details */}
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                {/* Salary Details */}
+                <Box sx={{ mb: 4 }}>
+                    <Grid container spacing={4}>
                         {/* Earnings */}
-                        <Grid item xs={12} md={6}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455', mb: 2 }}>
-                                Earnings
-                            </Typography>
-                            <TableContainer component={Paper} variant="outlined">
-                                <Table size="small">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>Amount</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        <TableRow>
-                                            <TableCell>Basic Salary</TableCell>
-                                            <TableCell align="right">{formatCurrency(payslip.basic_salary)}</TableCell>
-                                        </TableRow>
-                                        {payslip.allowances && payslip.allowances.map((allowance, index) => (
-                                            <TableRow key={index}>
-                                                <TableCell>{allowance.allowance_type?.name}</TableCell>
-                                                <TableCell align="right">{formatCurrency(allowance.amount)}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                            <TableCell sx={{ fontWeight: 600 }}>Total Earnings</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>
-                                                {formatCurrency(payslip.gross_salary)}
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
+                        <Grid item xs={6}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #000', mb: 1, pb: 0.5 }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                    Earnings
+                                </Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                    Amount
+                                </Typography>
+                            </Box>
+                            <Box>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography variant="body2">Basic</Typography>
+                                    <Typography variant="body2">{formatCurrency(payslip.basic_salary)}</Typography>
+                                </Box>
+                                {payslip.allowances &&
+                                    payslip.allowances.map((allowance, index) => (
+                                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography variant="body2">{allowance.allowance_type?.name}</Typography>
+                                            <Typography variant="body2">{formatCurrency(allowance.amount)}</Typography>
+                                        </Box>
+                                    ))}
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mr: 4 }}>
+                                    Total Earnings
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    {formatCurrency(payslip.gross_salary)}
+                                </Typography>
+                            </Box>
                         </Grid>
 
                         {/* Deductions */}
-                        <Grid item xs={12} md={6}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455', mb: 2 }}>
-                                Deductions
-                            </Typography>
-                            <TableContainer component={Paper} variant="outlined">
-                                <Table size="small">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>Amount</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {payslip.deductions && payslip.deductions.length > 0 ? (
-                                            payslip.deductions.map((deduction, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell>{deduction.deduction_type?.name}</TableCell>
-                                                    <TableCell align="right">{formatCurrency(deduction.amount)}</TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={2} align="center" sx={{ py: 2, color: 'textSecondary' }}>
-                                                    No deductions
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                            <TableCell sx={{ fontWeight: 600 }}>Total Deductions</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>
-                                                {formatCurrency(payslip.total_deductions)}
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-                        </Grid>
-                    </Grid>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    {/* Net Salary */}
-                    <Box sx={{ backgroundColor: '#f8f9fa', p: 3, borderRadius: 1, mb: 3 }}>
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={6}>
-                                <Typography variant="h5" sx={{ fontWeight: 700, color: '#063455' }}>
-                                    NET SALARY
+                        <Grid item xs={6}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #000', mb: 1, pb: 0.5 }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                    Deductions
                                 </Typography>
-                                <Typography variant="h4" sx={{ fontWeight: 700, color: '#2e7d32' }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                    Amount
+                                </Typography>
+                            </Box>
+                            <Box>
+                                {payslip.deductions &&
+                                    payslip.deductions.map((deduction, index) => (
+                                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography variant="body2">{deduction.deduction_type?.name}</Typography>
+                                            <Typography variant="body2">{formatCurrency(deduction.amount)}</Typography>
+                                        </Box>
+                                    ))}
+                                {payslip.order_deductions &&
+                                    payslip.order_deductions.map((o) => (
+                                        <Box key={`order-${o.id}`} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography variant="body2">CTS Order #{o.id}</Typography>
+                                            <Typography variant="body2">{formatCurrency(o.amount)}</Typography>
+                                        </Box>
+                                    ))}
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mr: 4 }}>
+                                    Total Deductions
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    {formatCurrency(payslip.total_deductions)}
+                                </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mr: 4 }}>
+                                    Net Pay
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                                     {formatCurrency(payslip.net_salary)}
                                 </Typography>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                                    Amount in Words:
-                                </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600, fontStyle: 'italic' }}>
-                                    {numberToWords(Math.floor(payslip.net_salary))} Rupees Only
-                                </Typography>
-                            </Grid>
+                            </Box>
                         </Grid>
+                    </Grid>
+                </Box>
+
+                {/* Net Pay in Words */}
+                <Box sx={{ textAlign: 'center', mb: 8 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                        {formatCurrency(payslip.net_salary).replace('Rs', '').trim()}
+                    </Typography>
+                    <Typography variant="body2">{numberToWords(Math.floor(payslip.net_salary))} Rupees Only</Typography>
+                </Box>
+
+                {/* Signatures */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 4, mb: 4 }}>
+                    <Box sx={{ textAlign: 'center', width: '200px' }}>
+                        <Typography variant="body2" sx={{ mb: 4 }}>
+                            Employer Signature
+                        </Typography>
+                        <Divider sx={{ borderColor: '#000' }} />
                     </Box>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    {/* Footer */}
-                    <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #eee' }}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12} sm={6}>
-                                <Typography variant="body2" color="textSecondary">
-                                    This is a computer-generated payslip and does not require a signature.
-                                </Typography>
-                            </Grid>
-                            <Grid item xs={12} sm={6} sx={{ textAlign: 'right' }}>
-                                <Typography variant="body2" color="textSecondary">
-                                    Generated by AFOHS Club Payroll System
-                                </Typography>
-                                <Typography variant="body2" color="textSecondary">
-                                    {formatDate(new Date())}
-                                </Typography>
-                            </Grid>
-                        </Grid>
+                    <Box sx={{ textAlign: 'center', width: '200px' }}>
+                        <Typography variant="body2" sx={{ mb: 4 }}>
+                            Employee Signature
+                        </Typography>
+                        <Divider sx={{ borderColor: '#000' }} />
                     </Box>
-                </CardContent>
-            </Card>
+                </Box>
 
-            {/* Print Styles */}
-            <style jsx global>{`
-                @media print {
-                    body {
-                        margin: 0;
-                        padding: 0;
-                        font-size: 12px;
-                    }
-                    
-                    .MuiCard-root {
-                        box-shadow: none !important;
-                        border: none !important;
-                    }
-                    
-                    .MuiTableContainer-root {
-                        box-shadow: none !important;
-                    }
-                    
-                    .no-print {
-                        display: none !important;
-                    }
-                    
-                    @page {
-                        margin: 1cm;
-                        size: A4;
-                    }
-                }
-            `}</style>
+                {/* Footer */}
+                <Box sx={{ textAlign: 'center', mt: 4 }}>
+                    <Typography variant="caption" sx={{ color: '#666' }}>
+                        This is system generated payslip
+                    </Typography>
+                </Box>
             </Box>
         </>
     );
