@@ -1,32 +1,8 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
-import {
-    Box,
-    Card,
-    CardContent,
-    Typography,
-    TextField,
-    Button,
-    Grid,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Alert,
-    Snackbar,
-    IconButton,
-    Switch,
-    FormControlLabel,
-    InputAdornment,
-    CircularProgress
-} from '@mui/material';
-import {
-    Settings as SettingsIcon,
-    Save as SaveIcon,
-    Refresh as RefreshIcon,
-    ArrowBack as ArrowBackIcon
-} from '@mui/icons-material';
+import { Box, Card, CardContent, Typography, TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, Snackbar, IconButton, Switch, FormControlLabel, InputAdornment, CircularProgress } from '@mui/material';
+import { Settings as SettingsIcon, Save as SaveIcon, Refresh as RefreshIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 const PayrollSettings = () => {
@@ -35,13 +11,13 @@ const PayrollSettings = () => {
         pay_frequency: 'monthly',
         currency: 'PKR',
         working_days_per_month: 26,
-        working_hours_per_day: 8.00,
+        working_hours_per_day: 8.0,
         overtime_rate_multiplier: 1.5,
-        late_deduction_per_minute: 5.00,
+        late_deduction_per_minute: 5.0,
         absent_deduction_type: 'full_day',
-        absent_deduction_amount: 0.00,
+        absent_deduction_amount: 0.0,
         max_allowed_absents: 3,
-        grace_period_minutes: 15
+        grace_period_minutes: 15,
     });
 
     const [loading, setLoading] = useState(false);
@@ -99,9 +75,9 @@ const PayrollSettings = () => {
     };
 
     const handleInputChange = (field, value) => {
-        setSettings(prev => ({
+        setSettings((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
     };
 
@@ -117,7 +93,7 @@ const PayrollSettings = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{ bgcolor:'#f5f5f5', p: 3 }}>
+            <Box sx={{ bgcolor: '#f5f5f5', p: 3 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -142,9 +118,9 @@ const PayrollSettings = () => {
                             startIcon={<SaveIcon />}
                             onClick={handleSave}
                             variant="contained"
-                            sx={{ 
+                            sx={{
                                 backgroundColor: '#063455',
-                                '&:hover': { backgroundColor: '#052d45' }
+                                '&:hover': { backgroundColor: '#052d45' },
                             }}
                             disabled={saving}
                         >
@@ -164,43 +140,25 @@ const PayrollSettings = () => {
                                         Company Information
                                     </Typography>
                                 </Box>
-                                
+
                                 <Grid container spacing={3}>
                                     <Grid item xs={12}>
-                                        <TextField
-                                            fullWidth
-                                            label="Company Name"
-                                            value={settings.company_name}
-                                            onChange={(e) => handleInputChange('company_name', e.target.value)}
-                                            variant="outlined"
-                                        />
+                                        <TextField fullWidth label="Company Name" value={settings.company_name} onChange={(e) => handleInputChange('company_name', e.target.value)} variant="outlined" />
                                     </Grid>
-                                    
+
                                     <Grid item xs={12} sm={6}>
                                         <FormControl fullWidth>
                                             <InputLabel>Pay Frequency</InputLabel>
-                                            <Select
-                                                value={settings.pay_frequency}
-                                                label="Pay Frequency"
-                                                onChange={(e) => handleInputChange('pay_frequency', e.target.value)}
-                                            >
+                                            <Select value={settings.pay_frequency} label="Pay Frequency" onChange={(e) => handleInputChange('pay_frequency', e.target.value)}>
                                                 <MenuItem value="monthly">Monthly</MenuItem>
                                                 <MenuItem value="bi-weekly">Bi-Weekly</MenuItem>
                                                 <MenuItem value="weekly">Weekly</MenuItem>
                                             </Select>
                                         </FormControl>
                                     </Grid>
-                                    
+
                                     <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            fullWidth
-                                            label="Currency"
-                                            value={settings.currency}
-                                            onChange={(e) => handleInputChange('currency', e.target.value)}
-                                            variant="outlined"
-                                            disabled
-                                            helperText="Currency is fixed to PKR"
-                                        />
+                                        <TextField fullWidth label="Currency" value={settings.currency} onChange={(e) => handleInputChange('currency', e.target.value)} variant="outlined" disabled helperText="Currency is fixed to PKR" />
                                     </Grid>
                                 </Grid>
                             </CardContent>
@@ -214,43 +172,18 @@ const PayrollSettings = () => {
                                 <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600, mb: 3 }}>
                                     Working Hours Configuration
                                 </Typography>
-                                
+
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            fullWidth
-                                            label="Working Days per Month"
-                                            type="number"
-                                            value={settings.working_days_per_month}
-                                            onChange={(e) => handleInputChange('working_days_per_month', parseInt(e.target.value))}
-                                            variant="outlined"
-                                            inputProps={{ min: 20, max: 31 }}
-                                        />
+                                        <TextField fullWidth label="Working Days per Month" type="number" value={settings.working_days_per_month} onChange={(e) => handleInputChange('working_days_per_month', parseInt(e.target.value))} variant="outlined" inputProps={{ min: 20, max: 31 }} />
                                     </Grid>
-                                    
+
                                     <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            fullWidth
-                                            label="Working Hours per Day"
-                                            type="number"
-                                            value={settings.working_hours_per_day}
-                                            onChange={(e) => handleInputChange('working_hours_per_day', parseFloat(e.target.value))}
-                                            variant="outlined"
-                                            inputProps={{ min: 6, max: 12, step: 0.5 }}
-                                        />
+                                        <TextField fullWidth label="Working Hours per Day" type="number" value={settings.working_hours_per_day} onChange={(e) => handleInputChange('working_hours_per_day', parseFloat(e.target.value))} variant="outlined" inputProps={{ min: 6, max: 12, step: 0.5 }} />
                                     </Grid>
-                                    
+
                                     <Grid item xs={12}>
-                                        <TextField
-                                            fullWidth
-                                            label="Overtime Rate Multiplier"
-                                            type="number"
-                                            value={settings.overtime_rate_multiplier}
-                                            onChange={(e) => handleInputChange('overtime_rate_multiplier', parseFloat(e.target.value))}
-                                            variant="outlined"
-                                            inputProps={{ min: 1, max: 3, step: 0.1 }}
-                                            helperText="e.g., 1.5 means 150% of regular hourly rate"
-                                        />
+                                        <TextField fullWidth label="Overtime Rate Multiplier" type="number" value={settings.overtime_rate_multiplier} onChange={(e) => handleInputChange('overtime_rate_multiplier', parseFloat(e.target.value))} variant="outlined" inputProps={{ min: 1, max: 3, step: 0.1 }} helperText="e.g., 1.5 means 150% of regular hourly rate" />
                                     </Grid>
                                 </Grid>
                             </CardContent>
@@ -264,21 +197,12 @@ const PayrollSettings = () => {
                                 <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600, mb: 3 }}>
                                     Attendance & Deductions
                                 </Typography>
-                                
+
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} sm={6} md={3}>
-                                        <TextField
-                                            fullWidth
-                                            label="Grace Period (Minutes)"
-                                            type="number"
-                                            value={settings.grace_period_minutes}
-                                            onChange={(e) => handleInputChange('grace_period_minutes', parseInt(e.target.value))}
-                                            variant="outlined"
-                                            inputProps={{ min: 0, max: 60 }}
-                                            helperText="Late arrival grace period"
-                                        />
+                                        <TextField fullWidth label="Grace Period (Minutes)" type="number" value={settings.grace_period_minutes} onChange={(e) => handleInputChange('grace_period_minutes', parseInt(e.target.value))} variant="outlined" inputProps={{ min: 0, max: 60 }} helperText="Late arrival grace period" />
                                     </Grid>
-                                    
+
                                     <Grid item xs={12} sm={6} md={3}>
                                         <TextField
                                             fullWidth
@@ -293,35 +217,22 @@ const PayrollSettings = () => {
                                             inputProps={{ min: 0, step: 0.01 }}
                                         />
                                     </Grid>
-                                    
+
                                     <Grid item xs={12} sm={6} md={3}>
-                                        <TextField
-                                            fullWidth
-                                            label="Max Allowed Absents"
-                                            type="number"
-                                            value={settings.max_allowed_absents}
-                                            onChange={(e) => handleInputChange('max_allowed_absents', parseInt(e.target.value))}
-                                            variant="outlined"
-                                            inputProps={{ min: 0, max: 10 }}
-                                            helperText="Per month without deduction"
-                                        />
+                                        <TextField fullWidth label="Max Allowed Absents" type="number" value={settings.max_allowed_absents} onChange={(e) => handleInputChange('max_allowed_absents', parseInt(e.target.value))} variant="outlined" inputProps={{ min: 0, max: 10 }} helperText="Per month without deduction" />
                                     </Grid>
-                                    
+
                                     <Grid item xs={12} sm={6} md={3}>
                                         <FormControl fullWidth>
                                             <InputLabel>Absent Deduction Type</InputLabel>
-                                            <Select
-                                                value={settings.absent_deduction_type}
-                                                label="Absent Deduction Type"
-                                                onChange={(e) => handleInputChange('absent_deduction_type', e.target.value)}
-                                            >
+                                            <Select value={settings.absent_deduction_type} label="Absent Deduction Type" onChange={(e) => handleInputChange('absent_deduction_type', e.target.value)}>
                                                 <MenuItem value="full_day">Full Day Salary</MenuItem>
                                                 <MenuItem value="hourly">Hourly Rate</MenuItem>
                                                 <MenuItem value="fixed_amount">Fixed Amount</MenuItem>
                                             </Select>
                                         </FormControl>
                                     </Grid>
-                                    
+
                                     {settings.absent_deduction_type === 'fixed_amount' && (
                                         <Grid item xs={12} sm={6}>
                                             <TextField
@@ -345,12 +256,7 @@ const PayrollSettings = () => {
                 </Grid>
 
                 {/* Snackbar for notifications */}
-                <Snackbar
-                    open={snackbar.open}
-                    autoHideDuration={6000}
-                    onClose={handleCloseSnackbar}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                >
+                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                     <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                         {snackbar.message}
                     </Alert>

@@ -1,39 +1,9 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
-import { TbCashBanknoteOff } from "react-icons/tb";
+import { TbCashBanknoteOff } from 'react-icons/tb';
 import AdminLayout from '@/layouts/AdminLayout';
-import {
-    Box,
-    Card,
-    Typography,
-    Button,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Chip,
-    TextField,
-    InputAdornment,
-    IconButton,
-    Pagination,
-    CircularProgress,
-    Alert,
-    Snackbar,
-    Tooltip,
-    Avatar
-} from '@mui/material';
-import {
-    Search as SearchIcon,
-    Add as AddIcon,
-    Edit as EditIcon,
-    Visibility as VisibilityIcon,
-    ArrowBack as ArrowBackIcon,
-    AccountBalance as AccountBalanceIcon,
-    Person as PersonIcon
-} from '@mui/icons-material';
+import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, TextField, InputAdornment, IconButton, Pagination, CircularProgress, Alert, Snackbar, Tooltip, Avatar } from '@mui/material';
+import { Search as SearchIcon, Add as AddIcon, Edit as EditIcon, Visibility as VisibilityIcon, ArrowBack as ArrowBackIcon, AccountBalance as AccountBalanceIcon, Person as PersonIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 const EmployeeSalaries = () => {
@@ -55,8 +25,8 @@ const EmployeeSalaries = () => {
                 params: {
                     page: currentPage,
                     search: searchTerm,
-                    per_page: 15
-                }
+                    per_page: 15,
+                },
             });
 
             if (response.data.success) {
@@ -91,8 +61,10 @@ const EmployeeSalaries = () => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
             style: 'currency',
-            currency: 'PKR'
-        }).format(amount || 0).replace('PKR', 'Rs');
+            currency: 'PKR',
+        })
+            .format(amount || 0)
+            .replace('PKR', 'Rs');
     };
 
     const getSalaryStatusColor = (employee) => {
@@ -107,10 +79,12 @@ const EmployeeSalaries = () => {
 
     return (
         <AdminLayout>
-            <div style={{
-                minHeight: '100vh',
-                backgroundColor: '#f5f5f5',
-            }}>
+            <div
+                style={{
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
+                }}
+            >
                 <Box sx={{ p: 2 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -129,7 +103,7 @@ const EmployeeSalaries = () => {
                                 onClick={() => router.visit(route('employees.payroll.allowance-types'))}
                                 sx={{
                                     backgroundColor: '#063455',
-                                    '&:hover': { backgroundColor: '#052d45' }
+                                    '&:hover': { backgroundColor: '#052d45' },
                                 }}
                             >
                                 Manage Allowances
@@ -141,7 +115,7 @@ const EmployeeSalaries = () => {
                                 sx={{
                                     color: '#063455',
                                     borderColor: '#063455',
-                                    '&:hover': { borderColor: '#052d45' }
+                                    '&:hover': { borderColor: '#052d45' },
                                 }}
                             >
                                 Manage Deductions
@@ -158,19 +132,19 @@ const EmployeeSalaries = () => {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <SearchIcon sx={{m:0, p:0}} />
+                                        <SearchIcon sx={{ m: 0, p: 0 }} />
                                     </InputAdornment>
                                 ),
                             }}
                             sx={{
                                 '& .MuiInputBase-root': {
-                                    height: 40,           // 🔥 Controls total height
+                                    height: 40, // 🔥 Controls total height
                                     borderRadius: 1,
-                                    width: 215
+                                    width: 215,
                                 },
                                 '& .MuiInputBase-input': {
-                                    padding: '0 14px',     // 🔥 Centers placeholder vertically
-                                }
+                                    padding: '0 14px', // 🔥 Centers placeholder vertically
+                                },
                             }}
                         />
                     </Box>
@@ -180,37 +154,31 @@ const EmployeeSalaries = () => {
                         <TableContainer component={Paper}>
                             <Table>
                                 <TableHead>
-                                    <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
-                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Department</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee Type</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Basic Salary</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Effective From</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
+                                    <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Department</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Basic Salary</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Effective From</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {loading ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                            <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                                                 <CircularProgress sx={{ color: '#063455' }} />
                                             </TableCell>
                                         </TableRow>
                                     ) : employees.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                                                <Typography color="textSecondary">
-                                                    No employees found
-                                                </Typography>
+                                            <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                                                <Typography color="textSecondary">No employees found</Typography>
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         employees.map((employee) => (
-                                            <TableRow
-                                                key={employee.id}
-                                                sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
-                                            >
+                                            <TableRow key={employee.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                                 <TableCell>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                         <Avatar sx={{ bgcolor: '#063455', width: 40, height: 40 }}>
@@ -226,63 +194,33 @@ const EmployeeSalaries = () => {
                                                         </Box>
                                                     </Box>
                                                 </TableCell>
-                                                <TableCell>
-                                                    {employee.department?.name || 'N/A'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {employee.employee_type?.name || 'N/A'}
-                                                </TableCell>
+                                                <TableCell>{employee.department?.name || 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                        {employee.salary_structure
-                                                            ? formatCurrency(employee.salary_structure.basic_salary)
-                                                            : 'Not Set'
-                                                        }
+                                                        {employee.salary_structure ? formatCurrency(employee.salary_structure.basic_salary) : 'Not Set'}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Chip
-                                                        label={getSalaryStatusText(employee)}
-                                                        size="small"
-                                                        color={getSalaryStatusColor(employee)}
-                                                        sx={{ borderRadius: '4px' }}
-                                                    />
+                                                    <Chip label={getSalaryStatusText(employee)} size="small" color={getSalaryStatusColor(employee)} sx={{ borderRadius: '4px' }} />
                                                 </TableCell>
-                                                <TableCell>
-                                                    {employee.salary_structure
-                                                        ? new Date(employee.salary_structure.effective_from).toLocaleDateString()
-                                                        : 'N/A'
-                                                    }
-                                                </TableCell>
+                                                <TableCell>{employee.salary_structure ? new Date(employee.salary_structure.effective_from).toLocaleDateString() : 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                                         <Tooltip title="View Details">
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => router.visit(route('employees.payroll.salaries.view', employee.id))}
-                                                                sx={{ color: '#063455' }}
-                                                            >
+                                                            <IconButton size="small" onClick={() => router.visit(route('employees.payroll.salaries.view', employee.id))} sx={{ color: '#063455' }}>
                                                                 <VisibilityIcon fontSize="small" />
                                                             </IconButton>
                                                         </Tooltip>
 
                                                         {employee.salary_structure ? (
                                                             <Tooltip title="Edit Salary">
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={() => router.visit(route('employees.payroll.salaries.edit', employee.id))}
-                                                                    sx={{ color: '#ed6c02' }}
-                                                                >
+                                                                <IconButton size="small" onClick={() => router.visit(route('employees.payroll.salaries.edit', employee.id))} sx={{ color: '#ed6c02' }}>
                                                                     <EditIcon fontSize="small" />
                                                                 </IconButton>
                                                             </Tooltip>
                                                         ) : (
                                                             <Tooltip title="Create Salary Structure">
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={() => router.visit(route('employees.payroll.salaries.create', employee.id))}
-                                                                    sx={{ color: '#2e7d32' }}
-                                                                >
+                                                                <IconButton size="small" onClick={() => router.visit(route('employees.payroll.salaries.create', employee.id))} sx={{ color: '#2e7d32' }}>
                                                                     <AddIcon fontSize="small" />
                                                                 </IconButton>
                                                             </Tooltip>
@@ -319,12 +257,7 @@ const EmployeeSalaries = () => {
                     </Card>
 
                     {/* Snackbar for notifications */}
-                    <Snackbar
-                        open={snackbar.open}
-                        autoHideDuration={6000}
-                        onClose={handleCloseSnackbar}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    >
+                    <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                             {snackbar.message}
                         </Alert>

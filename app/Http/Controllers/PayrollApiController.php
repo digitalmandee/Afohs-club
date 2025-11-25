@@ -182,7 +182,6 @@ class PayrollApiController extends Controller
             'allowances.allowanceType',
             'deductions.deductionType',
             'department:id,name',
-            'employeeType:id,name'
         ]);
 
         // Server-side search
@@ -329,7 +328,6 @@ class PayrollApiController extends Controller
             'allowances.allowanceType',
             'deductions.deductionType',
             'department',
-            'employeeType'
         ])->findOrFail($employeeId);
 
         return response()->json(['success' => true, 'employee' => $employee]);

@@ -10,7 +10,15 @@ class Employee extends BaseModel
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['user_id', 'department_id', 'employee_type_id', 'employee_id', 'name', 'email', 'designation', 'phone_no', 'employment_type', 'address', 'emergency_no', 'gender', 'marital_status', 'national_id', 'account_no', 'salary', 'joining_date', 'created_by', 'updated_by', 'deleted_by'];
+    protected $fillable = [
+        'user_id', 'department_id', 'subdepartment_id', 'employee_id', 'name', 'email', 'designation',
+        'phone_no', 'employment_type', 'address', 'emergency_no', 'gender', 'marital_status', 'national_id', 'account_no',
+        'salary', 'joining_date', 'created_by', 'updated_by', 'deleted_by',
+        // Additional fields from old HR system
+        'father_name', 'age', 'date_of_birth', 'mob_b', 'tel_a', 'tel_b', 'cur_city', 'cur_country',
+        'per_address', 'per_city', 'per_country', 'license', 'license_no', 'vehicle_details', 'bank_details',
+        'learn_of_org', 'anyone_in_org', 'company', 'crime', 'crime_details', 'remarks', 'barcode', 'picture'
+    ];
 
     public function user()
     {
@@ -22,9 +30,24 @@ class Employee extends BaseModel
         return $this->belongsTo(Department::class);
     }
 
-    public function employeeType()
+    public function subdepartment()
     {
-        return $this->belongsTo(EmployeeType::class);
+        return $this->belongsTo(Subdepartment::class);
+    }
+
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable');
+    }
+
+    public function photo()
+    {
+        return $this->morphOne(Media::class, 'mediable')->where('type', 'employee_photo');
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(Media::class, 'mediable')->where('type', 'employee_document');
     }
 
     public function attendances()

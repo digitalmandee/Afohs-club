@@ -2,45 +2,8 @@ import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import {
-    Box,
-    Card,
-    CardContent,
-    Typography,
-    Button,
-    TextField,
-    Grid,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    IconButton,
-    Alert,
-    Snackbar,
-    Divider,
-    InputAdornment,
-    Chip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    CircularProgress
-} from '@mui/material';
-import {
-    ArrowBack as ArrowBackIcon,
-    Add as AddIcon,
-    Delete as DeleteIcon,
-    Save as SaveIcon,
-    Person as PersonIcon,
-    Edit as EditIcon
-} from '@mui/icons-material';
+import { Box, Card, CardContent, Typography, Button, TextField, Grid, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Alert, Snackbar, Divider, InputAdornment, Chip, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Add as AddIcon, Delete as DeleteIcon, Save as SaveIcon, Person as PersonIcon, Edit as EditIcon } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -48,7 +11,7 @@ import axios from 'axios';
 
 const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [] }) => {
     const [loading, setLoading] = useState(false);
-    
+
     // Helper function to get salary structure (handles both camelCase and snake_case)
     const getSalaryStructure = () => {
         return employee?.salaryStructure || employee?.salary_structure;
@@ -61,7 +24,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
         effective_from: new Date(),
         effective_to: null,
         allowances: [],
-        deductions: []
+        deductions: [],
     });
 
     const [showAllowanceDialog, setShowAllowanceDialog] = useState(false);
@@ -82,7 +45,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                 effective_from: new Date(salaryStructure.effective_from),
                 effective_to: salaryStructure.effective_to ? new Date(salaryStructure.effective_to) : null,
                 allowances: employee.allowances || [],
-                deductions: employee.deductions || []
+                deductions: employee.deductions || [],
             });
         }
     }, [employee]);
@@ -96,7 +59,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
         setSaving(true);
         try {
             const response = await axios.put(route('api.payroll.employees.salary-structure.update', employee.id), formData);
-            
+
             if (response.data.success) {
                 showSnackbar('Salary structure updated successfully!', 'success');
                 setTimeout(() => {
@@ -122,23 +85,23 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
             return;
         }
 
-        const allowanceType = (allowanceTypes || []).find(a => a.id === selectedAllowanceType);
+        const allowanceType = (allowanceTypes || []).find((a) => a.id === selectedAllowanceType);
         const newAllowance = {
             allowance_type_id: selectedAllowanceType,
             allowance_type: allowanceType,
             amount: parseFloat(allowanceAmount),
-            type: allowanceType.type
+            type: allowanceType.type,
         };
 
         if (editingAllowanceIndex !== null) {
             const updatedAllowances = [...formData.allowances];
             updatedAllowances[editingAllowanceIndex] = newAllowance;
-            setFormData(prev => ({ ...prev, allowances: updatedAllowances }));
+            setFormData((prev) => ({ ...prev, allowances: updatedAllowances }));
             setEditingAllowanceIndex(null);
         } else {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                allowances: [...prev.allowances, newAllowance]
+                allowances: [...prev.allowances, newAllowance],
             }));
         }
 
@@ -153,23 +116,23 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
             return;
         }
 
-        const deductionType = (deductionTypes || []).find(d => d.id === selectedDeductionType);
+        const deductionType = (deductionTypes || []).find((d) => d.id === selectedDeductionType);
         const newDeduction = {
             deduction_type_id: selectedDeductionType,
             deduction_type: deductionType,
             amount: parseFloat(deductionAmount),
-            type: deductionType.type
+            type: deductionType.type,
         };
 
         if (editingDeductionIndex !== null) {
             const updatedDeductions = [...formData.deductions];
             updatedDeductions[editingDeductionIndex] = newDeduction;
-            setFormData(prev => ({ ...prev, deductions: updatedDeductions }));
+            setFormData((prev) => ({ ...prev, deductions: updatedDeductions }));
             setEditingDeductionIndex(null);
         } else {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                deductions: [...prev.deductions, newDeduction]
+                deductions: [...prev.deductions, newDeduction],
             }));
         }
 
@@ -195,16 +158,16 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
     };
 
     const handleRemoveAllowance = (index) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            allowances: prev.allowances.filter((_, i) => i !== index)
+            allowances: prev.allowances.filter((_, i) => i !== index),
         }));
     };
 
     const handleRemoveDeduction = (index) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            deductions: prev.deductions.filter((_, i) => i !== index)
+            deductions: prev.deductions.filter((_, i) => i !== index),
         }));
     };
 
@@ -219,8 +182,10 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
             style: 'currency',
-            currency: 'PKR'
-        }).format(amount || 0).replace('PKR', 'Rs');
+            currency: 'PKR',
+        })
+            .format(amount || 0)
+            .replace('PKR', 'Rs');
     };
 
     const calculateTotalAllowances = () => {
@@ -253,7 +218,6 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
         setEditingDeductionIndex(null);
     };
 
-
     return (
         <AdminLayout>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -261,11 +225,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Button
-                                startIcon={<ArrowBackIcon />}
-                                onClick={() => router.visit(route('employees.payroll.salaries'))}
-                                sx={{ color: '#063455' }}
-                            >
+                            <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.salaries'))} sx={{ color: '#063455' }}>
                                 Back to Salaries
                             </Button>
                             <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
@@ -277,9 +237,9 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                             onClick={handleSave}
                             variant="contained"
                             disabled={saving}
-                            sx={{ 
+                            sx={{
                                 backgroundColor: '#063455',
-                                '&:hover': { backgroundColor: '#052d45' }
+                                '&:hover': { backgroundColor: '#052d45' },
                             }}
                         >
                             {saving ? 'Updating...' : 'Update Structure'}
@@ -297,46 +257,41 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                             Employee Information
                                         </Typography>
                                     </Box>
-                                    
+
                                     {employee && (
                                         <Box>
                                             <Box sx={{ mb: 2 }}>
-                                                <Typography variant="subtitle2" color="textSecondary">Name</Typography>
+                                                <Typography variant="subtitle2" color="textSecondary">
+                                                    Name
+                                                </Typography>
                                                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                                                     {employee.name}
                                                 </Typography>
                                             </Box>
                                             <Box sx={{ mb: 2 }}>
-                                                <Typography variant="subtitle2" color="textSecondary">Employee ID</Typography>
-                                                <Typography variant="body1">
-                                                    {employee.employee_id}
+                                                <Typography variant="subtitle2" color="textSecondary">
+                                                    Employee ID
                                                 </Typography>
+                                                <Typography variant="body1">{employee.employee_id}</Typography>
                                             </Box>
                                             <Box sx={{ mb: 2 }}>
-                                                <Typography variant="subtitle2" color="textSecondary">Department</Typography>
-                                                <Typography variant="body1">
-                                                    {employee.department?.name || 'N/A'}
+                                                <Typography variant="subtitle2" color="textSecondary">
+                                                    Department
                                                 </Typography>
+                                                <Typography variant="body1">{employee.department?.name || 'N/A'}</Typography>
                                             </Box>
                                             <Box sx={{ mb: 2 }}>
-                                                <Typography variant="subtitle2" color="textSecondary">Designation</Typography>
-                                                <Typography variant="body1">
-                                                    {employee.designation || 'N/A'}
+                                                <Typography variant="subtitle2" color="textSecondary">
+                                                    Designation
                                                 </Typography>
+                                                <Typography variant="body1">{employee.designation || 'N/A'}</Typography>
                                             </Box>
-                                            <Box sx={{ mb: 2 }}>
-                                                <Typography variant="subtitle2" color="textSecondary">Employee Type</Typography>
-                                                <Typography variant="body1">
-                                                    {employee.employee_type?.name || 'N/A'}
-                                                </Typography>
-                                            </Box>
+
                                             <Box>
-                                                <Typography variant="subtitle2" color="textSecondary">Current Status</Typography>
-                                                <Chip 
-                                                    label={employee.salary_structure ? 'Active' : 'No Structure'} 
-                                                    size="small" 
-                                                    color={employee.salary_structure ? 'success' : 'error'} 
-                                                />
+                                                <Typography variant="subtitle2" color="textSecondary">
+                                                    Current Status
+                                                </Typography>
+                                                <Chip label={employee.salary_structure ? 'Active' : 'No Structure'} size="small" color={employee.salary_structure ? 'success' : 'error'} />
                                             </Box>
                                         </Box>
                                     )}
@@ -349,7 +304,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                     <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600, mb: 3 }}>
                                         Updated Salary Summary
                                     </Typography>
-                                    
+
                                     <Box sx={{ mb: 2 }}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                             <Typography variant="body2">Basic Salary</Typography>
@@ -371,13 +326,17 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                         </Box>
                                         <Divider sx={{ my: 1 }} />
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Gross Salary</Typography>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                Gross Salary
+                                            </Typography>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                                                 {formatCurrency(calculateGrossSalary())}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>Net Salary</Typography>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>
+                                                Net Salary
+                                            </Typography>
                                             <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>
                                                 {formatCurrency(calculateNetSalary())}
                                             </Typography>
@@ -410,12 +369,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                             />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <DatePicker
-                                                label="Effective From"
-                                                value={formData.effective_from}
-                                                onChange={(date) => setFormData({ ...formData, effective_from: date })}
-                                                renderInput={(params) => <TextField {...params} fullWidth required />}
-                                            />
+                                            <DatePicker label="Effective From" value={formData.effective_from} onChange={(date) => setFormData({ ...formData, effective_from: date })} renderInput={(params) => <TextField {...params} fullWidth required />} />
                                         </Grid>
                                     </Grid>
 
@@ -425,13 +379,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                             <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
                                                 Allowances ({formData.allowances.length})
                                             </Typography>
-                                            <Button
-                                                startIcon={<AddIcon />}
-                                                onClick={() => setShowAllowanceDialog(true)}
-                                                variant="outlined"
-                                                size="small"
-                                                sx={{ color: '#2e7d32', borderColor: '#2e7d32' }}
-                                            >
+                                            <Button startIcon={<AddIcon />} onClick={() => setShowAllowanceDialog(true)} variant="outlined" size="small" sx={{ color: '#2e7d32', borderColor: '#2e7d32' }}>
                                                 Add Allowance
                                             </Button>
                                         </Box>
@@ -452,26 +400,14 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                                             <TableRow key={index}>
                                                                 <TableCell>{allowance.allowance_type?.name || 'N/A'}</TableCell>
                                                                 <TableCell>
-                                                                    <Chip 
-                                                                        label={allowance.allowance_type?.type || allowance.type || 'N/A'} 
-                                                                        size="small" 
-                                                                        color="primary" 
-                                                                    />
+                                                                    <Chip label={allowance.allowance_type?.type || allowance.type || 'N/A'} size="small" color="primary" />
                                                                 </TableCell>
                                                                 <TableCell>{formatCurrency(allowance.amount)}</TableCell>
                                                                 <TableCell>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        onClick={() => handleEditAllowance(index)}
-                                                                        sx={{ color: '#ed6c02', mr: 1 }}
-                                                                    >
+                                                                    <IconButton size="small" onClick={() => handleEditAllowance(index)} sx={{ color: '#ed6c02', mr: 1 }}>
                                                                         <EditIcon fontSize="small" />
                                                                     </IconButton>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        onClick={() => handleRemoveAllowance(index)}
-                                                                        sx={{ color: '#d32f2f' }}
-                                                                    >
+                                                                    <IconButton size="small" onClick={() => handleRemoveAllowance(index)} sx={{ color: '#d32f2f' }}>
                                                                         <DeleteIcon fontSize="small" />
                                                                     </IconButton>
                                                                 </TableCell>
@@ -482,9 +418,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                             </TableContainer>
                                         ) : (
                                             <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                                                <Typography color="textSecondary">
-                                                    No allowances added yet
-                                                </Typography>
+                                                <Typography color="textSecondary">No allowances added yet</Typography>
                                             </Box>
                                         )}
                                     </Box>
@@ -495,13 +429,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                             <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
                                                 Deductions ({formData.deductions.length})
                                             </Typography>
-                                            <Button
-                                                startIcon={<AddIcon />}
-                                                onClick={() => setShowDeductionDialog(true)}
-                                                variant="outlined"
-                                                size="small"
-                                                sx={{ color: '#d32f2f', borderColor: '#d32f2f' }}
-                                            >
+                                            <Button startIcon={<AddIcon />} onClick={() => setShowDeductionDialog(true)} variant="outlined" size="small" sx={{ color: '#d32f2f', borderColor: '#d32f2f' }}>
                                                 Add Deduction
                                             </Button>
                                         </Box>
@@ -522,26 +450,14 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                                             <TableRow key={index}>
                                                                 <TableCell>{deduction.deduction_type?.name}</TableCell>
                                                                 <TableCell>
-                                                                    <Chip 
-                                                                        label={deduction.deduction_type?.type || deduction.type || 'N/A'} 
-                                                                        size="small" 
-                                                                        color="secondary" 
-                                                                    />
+                                                                    <Chip label={deduction.deduction_type?.type || deduction.type || 'N/A'} size="small" color="secondary" />
                                                                 </TableCell>
                                                                 <TableCell>{formatCurrency(deduction.amount)}</TableCell>
                                                                 <TableCell>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        onClick={() => handleEditDeduction(index)}
-                                                                        sx={{ color: '#ed6c02', mr: 1 }}
-                                                                    >
+                                                                    <IconButton size="small" onClick={() => handleEditDeduction(index)} sx={{ color: '#ed6c02', mr: 1 }}>
                                                                         <EditIcon fontSize="small" />
                                                                     </IconButton>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        onClick={() => handleRemoveDeduction(index)}
-                                                                        sx={{ color: '#d32f2f' }}
-                                                                    >
+                                                                    <IconButton size="small" onClick={() => handleRemoveDeduction(index)} sx={{ color: '#d32f2f' }}>
                                                                         <DeleteIcon fontSize="small" />
                                                                     </IconButton>
                                                                 </TableCell>
@@ -552,9 +468,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                             </TableContainer>
                                         ) : (
                                             <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                                                <Typography color="textSecondary">
-                                                    No deductions added yet
-                                                </Typography>
+                                                <Typography color="textSecondary">No deductions added yet</Typography>
                                             </Box>
                                         )}
                                     </Box>
@@ -565,19 +479,13 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
 
                     {/* Add/Edit Allowance Dialog */}
                     <Dialog open={showAllowanceDialog} onClose={handleCloseAllowanceDialog} maxWidth="sm" fullWidth>
-                        <DialogTitle>
-                            {editingAllowanceIndex !== null ? 'Edit Allowance' : 'Add Allowance'}
-                        </DialogTitle>
+                        <DialogTitle>{editingAllowanceIndex !== null ? 'Edit Allowance' : 'Add Allowance'}</DialogTitle>
                         <DialogContent>
                             <Grid container spacing={3} sx={{ mt: 1 }}>
                                 <Grid item xs={12}>
                                     <FormControl fullWidth>
                                         <InputLabel>Allowance Type</InputLabel>
-                                        <Select
-                                            value={selectedAllowanceType}
-                                            label="Allowance Type"
-                                            onChange={(e) => setSelectedAllowanceType(e.target.value)}
-                                        >
+                                        <Select value={selectedAllowanceType} label="Allowance Type" onChange={(e) => setSelectedAllowanceType(e.target.value)}>
                                             {(allowanceTypes || []).map((type) => (
                                                 <MenuItem key={type.id} value={type.id}>
                                                     {type.name} ({type.type})
@@ -610,19 +518,13 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
 
                     {/* Add/Edit Deduction Dialog */}
                     <Dialog open={showDeductionDialog} onClose={handleCloseDeductionDialog} maxWidth="sm" fullWidth>
-                        <DialogTitle>
-                            {editingDeductionIndex !== null ? 'Edit Deduction' : 'Add Deduction'}
-                        </DialogTitle>
+                        <DialogTitle>{editingDeductionIndex !== null ? 'Edit Deduction' : 'Add Deduction'}</DialogTitle>
                         <DialogContent>
                             <Grid container spacing={3} sx={{ mt: 1 }}>
                                 <Grid item xs={12}>
                                     <FormControl fullWidth>
                                         <InputLabel>Deduction Type</InputLabel>
-                                        <Select
-                                            value={selectedDeductionType}
-                                            label="Deduction Type"
-                                            onChange={(e) => setSelectedDeductionType(e.target.value)}
-                                        >
+                                        <Select value={selectedDeductionType} label="Deduction Type" onChange={(e) => setSelectedDeductionType(e.target.value)}>
                                             {(deductionTypes || []).map((type) => (
                                                 <MenuItem key={type.id} value={type.id}>
                                                     {type.name} ({type.type})
@@ -654,12 +556,7 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                     </Dialog>
 
                     {/* Snackbar for notifications */}
-                    <Snackbar
-                        open={snackbar.open}
-                        autoHideDuration={6000}
-                        onClose={handleCloseSnackbar}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    >
+                    <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                             {snackbar.message}
                         </Alert>

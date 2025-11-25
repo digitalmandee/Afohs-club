@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FileHelper;
+use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeLog;
-use App\Models\EmployeeType;
 use App\Models\EmployeeSalaryStructure;
+use App\Models\Media;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,22 +37,22 @@ class EmployeeController extends Controller
         $limit = $request->query('limit') ?? 10;
         $search = $request->query('search', '');
         $departmentFilters = $request->query('department_ids', []);
-        $employeeTypeFilters = $request->query('employee_type_ids', []);
 
-        // Employees with pagination - include deleted departments and employee types
+        // Employees with pagination - include deleted departments and subdepartments
         $employeesQuery = Employee::with([
             'department' => function ($query) {
-                $query->withTrashed(); // Include soft deleted departments
+                $query->withTrashed();  // Include soft deleted departments
             },
-            'employeeType' => function ($query) {
-                $query->withTrashed(); // Include soft deleted employee types
-            }
+            'subdepartment' => function ($query) {
+                $query->withTrashed();  // Include soft deleted subdepartments
+            },
         ]);
 
         // Apply search filter if provided
         if (!empty($search)) {
             $employeesQuery->where(function ($query) use ($search) {
-                $query->where('name', 'like', '%' . $search . '%')
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
                     ->orWhere('employee_id', 'like', '%' . $search . '%')
                     ->orWhere('email', 'like', '%' . $search . '%')
                     ->orWhere('designation', 'like', '%' . $search . '%');
@@ -62,16 +64,10 @@ class EmployeeController extends Controller
             $employeesQuery->whereIn('department_id', $departmentFilters);
         }
 
-        // Apply employee type filters if provided
-        if (!empty($employeeTypeFilters) && is_array($employeeTypeFilters)) {
-            $employeesQuery->whereIn('employee_type_id', $employeeTypeFilters);
-        }
-
         $employees = $employeesQuery->paginate($limit)->withQueryString();
 
         // Get filter options
-        $departments = \App\Models\Department::select('id', 'name')->get();
-        $employeeTypes = \App\Models\EmployeeType::select('id', 'name')->get();
+        $departments = Department::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Employee/Dashboard1', [
             'stats' => [
@@ -85,25 +81,26 @@ class EmployeeController extends Controller
             ],
             'employees' => $employees,
             'departments' => $departments,
-            'employeeTypes' => $employeeTypes,
             'filters' => [
                 'search' => $search,
                 'department_ids' => $departmentFilters,
-                'employee_type_ids' => $employeeTypeFilters,
             ],
         ]);
     }
 
     public function create()
     {
-        $employeeTypes = EmployeeType::select('id', 'name')->get();
-
-        return Inertia::render('App/Admin/Employee/Create', compact('employeeTypes'));
+        return Inertia::render('App/Admin/Employee/Create');
     }
 
     public function edit($employeeId)
     {
-        $employee = Employee::with(['department', 'employeeType'])
+        $employee = Employee::with([
+            'department',
+            'subdepartment',
+            'photo',
+            'documents'
+        ])
             ->where('id', $employeeId)
             ->first();
 
@@ -111,10 +108,7 @@ class EmployeeController extends Controller
             return abort(404, 'Employee not found');
         }
 
-        $employeeTypes = EmployeeType::select('id', 'name')->get();
-
         return Inertia::render('App/Admin/Employee/Create', [
-            'employeeTypes' => $employeeTypes,
             'employee' => $employee,
             'isEdit' => true
         ]);
@@ -135,10 +129,32 @@ class EmployeeController extends Controller
             'address' => 'nullable|string',
             'emergency_no' => 'nullable|string',
             'department_id' => 'required|exists:departments,id',
+            'subdepartment_id' => 'nullable|exists:subdepartments,id',
             'salary' => 'nullable|numeric',
             'joining_date' => 'nullable|date',
             'employment_type' => 'required|in:full_time,part_time,contract',
-            'employee_type_id' => 'required|exists:employee_types,id',
+            'date_of_birth' => 'nullable|date',
+            // Additional fields validation
+            'father_name' => 'nullable|string',
+            'mob_b' => 'nullable|string',
+            'tel_a' => 'nullable|string',
+            'tel_b' => 'nullable|string',
+            'cur_city' => 'nullable|string',
+            'cur_country' => 'nullable|string',
+            'per_address' => 'nullable|string',
+            'per_city' => 'nullable|string',
+            'per_country' => 'nullable|string',
+            'license' => 'nullable|string',
+            'license_no' => 'nullable|string',
+            'vehicle_details' => 'nullable|string',
+            'bank_details' => 'nullable|string',
+            'learn_of_org' => 'nullable|string',
+            'anyone_in_org' => 'nullable|string',
+            'company' => 'nullable|string',
+            'crime' => 'nullable|string',
+            'crime_details' => 'nullable|string',
+            'remarks' => 'nullable|string',
+            'barcode' => 'nullable|string',
         ]);
 
         try {
@@ -148,31 +164,17 @@ class EmployeeController extends Controller
                 return response()->json(['success' => false, 'message' => 'Employee ID already exists'], 400);
             }
 
-            // fetch employee type
-            $employeeType = EmployeeType::find($request->employee_type_id);
-
-            $user = null;
-
-            // only create user if type slug is cashier
-            if ($employeeType && $employeeType->slug === 'cashier') {
-                if (User::where('email', $request->email)->exists()) {
-                    return response()->json(['success' => false, 'message' => 'Employee already has an account'], 400);
-                }
-
-                $user = User::create([
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    // 'phone_number' => $request->phone_no,
-                    'password' => bcrypt('1234'),
-                ]);
-
-                $user->assignRole('cashier');
+            // Calculate age from date of birth if provided
+            $age = null;
+            if ($request->filled('date_of_birth')) {
+                $birthDate = new \DateTime($request->date_of_birth);
+                $today = new \DateTime();
+                $age = $today->diff($birthDate)->y;
             }
 
             $employee = Employee::create([
-                'user_id' => $user?->id,  // null if not cashier
                 'department_id' => $request->department_id,
-                'employee_type_id' => $request->employee_type_id,
+                'subdepartment_id' => $request->subdepartment_id,
                 'employee_id' => $request->employee_id,
                 'name' => $request->name,
                 'email' => $request->email,
@@ -187,7 +189,29 @@ class EmployeeController extends Controller
                 'salary' => $request->salary,
                 'joining_date' => $request->joining_date,
                 'employment_type' => $request->employment_type,
-                'created_by' => Auth::id(),
+                'date_of_birth' => $request->date_of_birth,
+                'age' => $age,
+                // Additional fields
+                'father_name' => $request->father_name,
+                'mob_b' => $request->mob_b,
+                'tel_a' => $request->tel_a,
+                'tel_b' => $request->tel_b,
+                'cur_city' => $request->cur_city,
+                'cur_country' => $request->cur_country,
+                'per_address' => $request->per_address,
+                'per_city' => $request->per_city,
+                'per_country' => $request->per_country,
+                'license' => $request->license,
+                'license_no' => $request->license_no,
+                'vehicle_details' => $request->vehicle_details,
+                'bank_details' => $request->bank_details,
+                'learn_of_org' => $request->learn_of_org,
+                'anyone_in_org' => $request->anyone_in_org,
+                'company' => $request->company,
+                'crime' => $request->crime,
+                'crime_details' => $request->crime_details,
+                'remarks' => $request->remarks,
+                'barcode' => $request->barcode,
             ]);
 
             // Auto-create salary structure if salary is provided
@@ -195,6 +219,46 @@ class EmployeeController extends Controller
                 $this->createOrUpdateSalaryStructure($employee, $request->salary);
             }
 
+            // Handle photo upload
+            if ($request->hasFile('photo')) {
+                // Get file metadata BEFORE moving the file
+                $photo = $request->file('photo');
+                $mimeType = $photo->getMimeType();
+                $fileSize = $photo->getSize();
+
+                $photoPath = FileHelper::saveImage($photo, 'employees/photos');
+
+                $employee->media()->create([
+                    'type' => 'employee_photo',
+                    'file_name' => basename($photoPath),
+                    'file_path' => $photoPath,
+                    'mime_type' => $mimeType,
+                    'file_size' => $fileSize,
+                    'disk' => 'public',
+                    'created_by' => Auth::id(),
+                ]);
+            }
+
+            // Handle document uploads
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $document) {
+                    // Get file metadata BEFORE moving the file
+                    $mimeType = $document->getMimeType();
+                    $fileSize = $document->getSize();
+
+                    $docPath = FileHelper::saveImage($document, 'employees/documents');
+
+                    $employee->media()->create([
+                        'type' => 'employee_document',
+                        'file_name' => basename($docPath),
+                        'file_path' => $docPath,
+                        'mime_type' => $mimeType,
+                        'file_size' => $fileSize,
+                        'disk' => 'public',
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+            }
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Employee created successfully'], 201);
         } catch (\Throwable $th) {
@@ -249,6 +313,27 @@ class EmployeeController extends Controller
             'emergency_no' => 'nullable|string',
             'salary' => 'nullable|numeric',
             'joining_date' => 'nullable|date',
+            // Additional fields validation
+            'father_name' => 'nullable|string',
+            'mob_b' => 'nullable|string',
+            'tel_a' => 'nullable|string',
+            'tel_b' => 'nullable|string',
+            'cur_city' => 'nullable|string',
+            'cur_country' => 'nullable|string',
+            'per_address' => 'nullable|string',
+            'per_city' => 'nullable|string',
+            'per_country' => 'nullable|string',
+            'license' => 'nullable|string',
+            'license_no' => 'nullable|string',
+            'vehicle_details' => 'nullable|string',
+            'bank_details' => 'nullable|string',
+            'learn_of_org' => 'nullable|string',
+            'anyone_in_org' => 'nullable|string',
+            'company' => 'nullable|string',
+            'crime' => 'nullable|string',
+            'crime_details' => 'nullable|string',
+            'remarks' => 'nullable|string',
+            'barcode' => 'nullable|string',
         ]);
 
         try {
@@ -269,11 +354,19 @@ class EmployeeController extends Controller
             // Store old salary before updating
             $oldSalary = $employee->salary;
 
+            // Calculate age from date of birth if provided
+            $age = null;
+            if ($request->filled('date_of_birth')) {
+                $birthDate = new \DateTime($request->date_of_birth);
+                $today = new \DateTime();
+                $age = $today->diff($birthDate)->y;
+            }
+
             // Update employee data
             $employee->update($request->only([
                 'name',
                 'department_id',
-                'employee_type_id',
+                'subdepartment_id',
                 'employee_id',
                 'email',
                 'designation',
@@ -285,8 +378,35 @@ class EmployeeController extends Controller
                 'address',
                 'emergency_no',
                 'salary',
-                'joining_date'
+                'joining_date',
+                'date_of_birth',
+                // Additional fields
+                'father_name',
+                'mob_b',
+                'tel_a',
+                'tel_b',
+                'cur_city',
+                'cur_country',
+                'per_address',
+                'per_city',
+                'per_country',
+                'license',
+                'license_no',
+                'vehicle_details',
+                'bank_details',
+                'learn_of_org',
+                'anyone_in_org',
+                'company',
+                'crime',
+                'crime_details',
+                'remarks',
+                'barcode',
             ]));
+
+            // Update age if date_of_birth was provided
+            if ($age !== null) {
+                $employee->update(['age' => $age]);
+            }
 
             // Update associated user if exists
             if ($employee->user) {
@@ -304,6 +424,65 @@ class EmployeeController extends Controller
                 }
             }
 
+            // Handle photo upload - replace existing photo
+            if ($request->hasFile('photo')) {
+                // Delete old photo if exists
+                $oldPhoto = $employee->photo;
+                if ($oldPhoto) {
+                    FileHelper::deleteImage($oldPhoto->file_path);
+                    $oldPhoto->delete();
+                }
+
+                // Get file metadata BEFORE moving the file
+                $photo = $request->file('photo');
+                $mimeType = $photo->getMimeType();
+                $fileSize = $photo->getSize();
+
+                $photoPath = FileHelper::saveImage($photo, 'employees/photos');
+
+                $employee->media()->create([
+                    'type' => 'employee_photo',
+                    'file_name' => basename($photoPath),
+                    'file_path' => $photoPath,
+                    'mime_type' => $mimeType,
+                    'file_size' => $fileSize,
+                    'disk' => 'public',
+                    'created_by' => Auth::id(),
+                ]);
+            }
+
+            // Handle document uploads - add to existing documents
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $document) {
+                    // Get file metadata BEFORE moving the file
+                    $mimeType = $document->getMimeType();
+                    $fileSize = $document->getSize();
+
+                    $docPath = FileHelper::saveImage($document, 'employees/documents');
+
+                    $employee->media()->create([
+                        'type' => 'employee_document',
+                        'file_name' => basename($docPath),
+                        'file_path' => $docPath,
+                        'mime_type' => $mimeType,
+                        'file_size' => $fileSize,
+                        'disk' => 'public',
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+            }
+
+            // Handle deleted documents
+            if ($request->has('deleted_documents')) {
+                foreach ($request->deleted_documents as $mediaId) {
+                    $media = Media::find($mediaId);
+                    if ($media && $media->mediable_id === $employee->id && $media->mediable_type === get_class($employee)) {
+                        FileHelper::deleteImage($media->file_path);
+                        $media->delete();
+                    }
+                }
+            }
+
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Employee updated successfully'], 200);
         } catch (\Throwable $th) {
@@ -311,7 +490,6 @@ class EmployeeController extends Controller
             return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
         }
     }
-
 
     private function createOrUpdateSalaryStructure($employee, $newSalary)
     {

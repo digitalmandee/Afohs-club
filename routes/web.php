@@ -13,7 +13,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDepartmentController;
-use App\Http\Controllers\EmployeeTypeController;
+use App\Http\Controllers\EmployeeSubdepartmentController;
 use App\Http\Controllers\EventBookingController;
 use App\Http\Controllers\EventChargesTypeController;
 use App\Http\Controllers\EventMenuAddOnsController;
@@ -73,7 +73,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
         Route::get('/edit/{employeeId}', [EmployeeController::class, 'edit'])->name('employees.edit');
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
-        Route::get('/types', [EmployeeTypeController::class, 'index'])->name('employees.types');
+        Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments');
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
 
         Route::prefix('leaves')->group(function () {
@@ -229,10 +229,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/employee/dashboard', function () {
         return Inertia::render('App/Admin/Employee/Dashboard');
     })->name('employee.dashboard');
-
-    Route::get('/add/employee', function () {
-        return Inertia::render('App/Admin/Employee/AddEmployee');
-    })->name('employee.create');
 
     Route::get('/employee/list', function () {
         return Inertia::render('App/Admin/Employee/EmployeeList');
@@ -640,7 +636,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('departments', EmployeeDepartmentController::class)->except(['create', 'show', 'edit']);
         // Replace index with your own custom function
         Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll');
-        Route::resource('employee-types', EmployeeTypeController::class)->except(['create', 'index', 'show', 'edit']);
+
+        // Subdepartment API routes
+        Route::resource('subdepartments', EmployeeSubdepartmentController::class)->except(['create', 'show', 'edit']);
+        Route::get('subdepartments', [EmployeeSubdepartmentController::class, 'listAll'])->name('api.subdepartments.listAll');
+
         Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store');
         Route::put('employees/update/{employeeId}', [EmployeeController::class, 'update'])->name('api.employees.update');
 

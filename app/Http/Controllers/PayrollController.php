@@ -92,7 +92,6 @@ class PayrollController extends Controller
                 $query->where('is_active', true)->latest();
             },
             'department:id,name',
-            'employeeType:id,name'
         ])->get();
 
         return Inertia::render('App/Admin/Employee/Payroll/EmployeeSalaries', [
@@ -105,7 +104,7 @@ class PayrollController extends Controller
      */
     public function createSalaryStructure($employeeId)
     {
-        $employee = Employee::with(['department', 'employeeType'])->findOrFail($employeeId);
+        $employee = Employee::with(['department'])->findOrFail($employeeId);
         $allowanceTypes = AllowanceType::all();
         $deductionTypes = DeductionType::all();
 
@@ -128,7 +127,6 @@ class PayrollController extends Controller
             'allowances.allowanceType',
             'deductions.deductionType',
             'department',
-            'employeeType'
         ])->findOrFail($employeeId);
 
         $allowanceTypes = AllowanceType::all();
@@ -153,7 +151,6 @@ class PayrollController extends Controller
             'allowances.allowanceType',
             'deductions.deductionType',
             'department',
-            'employeeType'
         ])->findOrFail($employeeId);
 
         return Inertia::render('App/Admin/Employee/Payroll/ViewSalaryStructure', [

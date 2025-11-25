@@ -2,42 +2,13 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import {
-    Box,
-    Card,
-    CardContent,
-    Typography,
-    Button,
-    Grid,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Alert,
-    Snackbar,
-    Divider,
-    Chip,
-    Avatar,
-    IconButton,
-    CircularProgress
-} from '@mui/material';
-import {
-    ArrowBack as ArrowBackIcon,
-    Edit as EditIcon,
-    Person as PersonIcon,
-    AccountBalance as AccountBalanceIcon,
-    TrendingUp as TrendingUpIcon,
-    TrendingDown as TrendingDownIcon,
-    CalendarToday as CalendarTodayIcon
-} from '@mui/icons-material';
+import { Box, Card, CardContent, Typography, Button, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Alert, Snackbar, Divider, Chip, Avatar, IconButton, CircularProgress } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Person as PersonIcon, AccountBalance as AccountBalanceIcon, TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon, CalendarToday as CalendarTodayIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 const ViewSalaryStructure = ({ employee }) => {
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-    
+
     // Helper function to get salary structure (handles both camelCase and snake_case)
     const getSalaryStructure = () => {
         return employee?.salaryStructure || employee?.salary_structure;
@@ -54,8 +25,10 @@ const ViewSalaryStructure = ({ employee }) => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
             style: 'currency',
-            currency: 'PKR'
-        }).format(amount || 0).replace('PKR', 'Rs');
+            currency: 'PKR',
+        })
+            .format(amount || 0)
+            .replace('PKR', 'Rs');
     };
 
     const calculateTotalAllowances = () => {
@@ -78,7 +51,6 @@ const ViewSalaryStructure = ({ employee }) => {
         return calculateGrossSalary() - calculateTotalDeductions();
     };
 
-
     if (!employee) {
         return (
             <AdminLayout>
@@ -91,26 +63,26 @@ const ViewSalaryStructure = ({ employee }) => {
 
     return (
         <AdminLayout>
-            <Box sx={{bgcolor:'#f5f5f5', p: 2 }}>
+            <Box sx={{ bgcolor: '#f5f5f5', p: 2 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
-                                <ArrowBackIcon />
-                            </IconButton>
+                            <ArrowBackIcon />
+                        </IconButton>
                         <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Salary Structure Details
                         </Typography>
                     </Box>
-                    
+
                     {getSalaryStructure() && (
                         <Button
                             startIcon={<EditIcon />}
                             onClick={() => router.visit(route('employees.payroll.salaries.edit', employee.id))}
                             variant="contained"
-                            sx={{ 
+                            sx={{
                                 backgroundColor: '#063455',
-                                '&:hover': { backgroundColor: '#052d45' }
+                                '&:hover': { backgroundColor: '#052d45' },
                             }}
                         >
                             Edit Structure
@@ -136,11 +108,13 @@ const ViewSalaryStructure = ({ employee }) => {
                                         </Typography>
                                     </Box>
                                 </Box>
-                                
+
                                 <Grid container spacing={2}>
                                     <Grid item xs={12}>
                                         <Box sx={{ mb: 2 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Department</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Department
+                                            </Typography>
                                             <Typography variant="body1" sx={{ fontWeight: 600 }}>
                                                 {employee.department?.name || 'N/A'}
                                             </Typography>
@@ -148,28 +122,21 @@ const ViewSalaryStructure = ({ employee }) => {
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Box sx={{ mb: 2 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Designation</Typography>
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Designation
+                                            </Typography>
                                             <Typography variant="body1" sx={{ fontWeight: 600 }}>
                                                 {employee.designation || 'N/A'}
                                             </Typography>
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={12}>
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography variant="subtitle2" color="textSecondary">Employee Type</Typography>
-                                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                                {employee.employee_type?.name || 'N/A'}
-                                            </Typography>
-                                        </Box>
-                                    </Grid>
+
                                     <Grid item xs={12}>
                                         <Box>
-                                            <Typography variant="subtitle2" color="textSecondary">Status</Typography>
-                                            <Chip 
-                                                label={getSalaryStructure() ? 'Active Structure' : 'No Structure'} 
-                                                size="small" 
-                                                color={getSalaryStructure() ? 'success' : 'error'} 
-                                            />
+                                            <Typography variant="subtitle2" color="textSecondary">
+                                                Status
+                                            </Typography>
+                                            <Chip label={getSalaryStructure() ? 'Active Structure' : 'No Structure'} size="small" color={getSalaryStructure() ? 'success' : 'error'} />
                                         </Box>
                                     </Grid>
                                 </Grid>
@@ -187,9 +154,7 @@ const ViewSalaryStructure = ({ employee }) => {
                                                 <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
                                                     {formatCurrency(getSalaryStructure().basic_salary)}
                                                 </Typography>
-                                                <Typography variant="body2">
-                                                    Basic Salary
-                                                </Typography>
+                                                <Typography variant="body2">Basic Salary</Typography>
                                             </CardContent>
                                         </Card>
                                     </Grid>
@@ -200,9 +165,7 @@ const ViewSalaryStructure = ({ employee }) => {
                                                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                                                     {formatCurrency(calculateTotalAllowances())}
                                                 </Typography>
-                                                <Typography variant="caption">
-                                                    Allowances
-                                                </Typography>
+                                                <Typography variant="caption">Allowances</Typography>
                                             </CardContent>
                                         </Card>
                                     </Grid>
@@ -213,9 +176,7 @@ const ViewSalaryStructure = ({ employee }) => {
                                                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                                                     {formatCurrency(calculateTotalDeductions())}
                                                 </Typography>
-                                                <Typography variant="caption">
-                                                    Deductions
-                                                </Typography>
+                                                <Typography variant="caption">Deductions</Typography>
                                             </CardContent>
                                         </Card>
                                     </Grid>
@@ -234,11 +195,13 @@ const ViewSalaryStructure = ({ employee }) => {
                                         <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600, mb: 3 }}>
                                             Salary Structure Information
                                         </Typography>
-                                        
+
                                         <Grid container spacing={3}>
                                             <Grid item xs={12} sm={6}>
                                                 <Box sx={{ mb: 2 }}>
-                                                    <Typography variant="subtitle2" color="textSecondary">Basic Salary</Typography>
+                                                    <Typography variant="subtitle2" color="textSecondary">
+                                                        Basic Salary
+                                                    </Typography>
                                                     <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>
                                                         {formatCurrency(getSalaryStructure().basic_salary)}
                                                     </Typography>
@@ -246,7 +209,9 @@ const ViewSalaryStructure = ({ employee }) => {
                                             </Grid>
                                             <Grid item xs={12} sm={6}>
                                                 <Box sx={{ mb: 2 }}>
-                                                    <Typography variant="subtitle2" color="textSecondary">Effective From</Typography>
+                                                    <Typography variant="subtitle2" color="textSecondary">
+                                                        Effective From
+                                                    </Typography>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         <CalendarTodayIcon sx={{ fontSize: 16, color: '#063455' }} />
                                                         <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -280,7 +245,9 @@ const ViewSalaryStructure = ({ employee }) => {
                                                     </Box>
                                                     <Divider sx={{ my: 1 }} />
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                                                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Gross Salary</Typography>
+                                                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                            Gross Salary
+                                                        </Typography>
                                                         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                                                             {formatCurrency(calculateGrossSalary())}
                                                         </Typography>
@@ -295,7 +262,9 @@ const ViewSalaryStructure = ({ employee }) => {
                                                     </Box>
                                                     <Divider sx={{ my: 1 }} />
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>Net Salary</Typography>
+                                                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>
+                                                            Net Salary
+                                                        </Typography>
                                                         <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>
                                                             {formatCurrency(calculateNetSalary())}
                                                         </Typography>
@@ -332,11 +301,7 @@ const ViewSalaryStructure = ({ employee }) => {
                                                                     </Typography>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Chip 
-                                                                        label={allowance.allowance_type?.type} 
-                                                                        size="small" 
-                                                                        color="primary" 
-                                                                    />
+                                                                    <Chip label={allowance.allowance_type?.type} size="small" color="primary" />
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#2e7d32' }}>
@@ -383,11 +348,7 @@ const ViewSalaryStructure = ({ employee }) => {
                                                                     </Typography>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Chip 
-                                                                        label={deduction.deduction_type?.type} 
-                                                                        size="small" 
-                                                                        color="secondary" 
-                                                                    />
+                                                                    <Chip label={deduction.deduction_type?.type} size="small" color="secondary" />
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#d32f2f' }}>
@@ -421,9 +382,9 @@ const ViewSalaryStructure = ({ employee }) => {
                                     <Button
                                         variant="contained"
                                         onClick={() => router.visit(route('employees.payroll.salaries.create', employee.id))}
-                                        sx={{ 
+                                        sx={{
                                             backgroundColor: '#063455',
-                                            '&:hover': { backgroundColor: '#052d45' }
+                                            '&:hover': { backgroundColor: '#052d45' },
                                         }}
                                     >
                                         Create Salary Structure
@@ -435,12 +396,7 @@ const ViewSalaryStructure = ({ employee }) => {
                 </Grid>
 
                 {/* Snackbar for notifications */}
-                <Snackbar
-                    open={snackbar.open}
-                    autoHideDuration={6000}
-                    onClose={handleCloseSnackbar}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                >
+                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                     <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                         {snackbar.message}
                     </Alert>

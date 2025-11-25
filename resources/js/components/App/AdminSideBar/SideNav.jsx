@@ -112,368 +112,375 @@ export default function SideNav({ open, setOpen }) {
     const [profileView, setProfileView] = React.useState('profile');
     // const [openDropdown, setOpenDropdown] = useState({});
     const [openDropdown, setOpenDropdown] = useRemember({}, 'sidebarDropdown');
-    const menuItems = useMemo(() => [
-        {
-            text: 'Dashboard',
-            icon: <HomeIcon />,
-            path: route('dashboard'),
-        },
-        {
-            text: 'Room & Event',
-            icon: <CalendarMonthIcon />,
-            children: [
-                {
-                    text: 'Guests',
-                    path: route('guests.index'),
-                },
-                {
-                    text: 'Rooms',
-                    children: [
-                        {
-                            text: 'Dashboard',
-                            path: route('rooms.dashboard'),
-                        },
-                        {
-                            text: 'Manage',
-                            path: route('rooms.manage'),
-                        },
-                        {
-                            text: 'Check-In',
-                            path: route('rooms.checkin'),
-                        },
-                        {
-                            text: 'Check-Out',
-                            path: route('rooms.checkout'),
-                        },
-                        {
-                            text: 'Request',
-                            path: route('rooms.request'),
-                        },
-                        {
-                            text: 'Add Room',
-                            path: route('rooms.add'),
-                        },
-                        {
-                            text: 'All Rooms',
-                            path: route('rooms.all'),
-                        },
-                        {
-                            text: 'Calendar',
-                            path: route('rooms.booking.calendar'),
-                        },
-                        {
-                            text: 'Types',
-                            path: route('room-types.index'),
-                        },
-                        {
-                            text: 'Categories',
-                            path: route('room-categories.index'),
-                        },
-                        {
-                            text: 'Charges Type',
-                            path: route('room-charges-type.index'),
-                        },
-                        {
-                            text: 'MiniBar',
-                            path: route('room-minibar.index'),
-                        },
-                    ],
-                },
-                {
-                    text: 'Events',
-                    children: [
-                        {
-                            text: 'Dashboard',
-                            path: route('events.dashboard'),
-                        },
-                        {
-                            text: 'Manage',
-                            path: route('events.manage'),
-                        },
-                        {
-                            text: 'Completed',
-                            path: route('events.completed'),
-                        },
-                        {
-                            text: 'Cancelled',
-                            path: route('events.cancelled'),
-                        },
-                        {
-                            text: 'Calendar',
-                            path: route('events.calendar'),
-                        },
-                        {
-                            text: 'Venues',
-                            path: route('event-venues.index'),
-                        },
-                        {
-                            text: 'Menu',
-                            path: route('event-menu.index'),
-                        },
-                        {
-                            text: 'Menu Category',
-                            path: route('event-menu-category.index'),
-                        },
-                        {
-                            text: 'Menu Type',
-                            path: route('event-menu-type.index'),
-                        },
-                        {
-                            text: 'Charges Type',
-                            path: route('event-charges-type.index'),
-                        },
-                        {
-                            text: 'Menu AddOn',
-                            path: route('event-menu-addon.index'),
-                        },
-                        // {
-                        //     text: 'Locations',
-                        //     path: route('events.locations'),
-                        // },
-                    ],
-                },
-            ],
-        },
-        {
-            text: 'Membership ',
-            icon: <TiBusinessCard style={{ width: 25, height: 25 }} />,
-            children: [
-                {
-                    text: 'Dashboard',
-                    path: route('membership.dashboard'),
-                },
-                {
-                    text: 'Memberships',
-                    path: route('membership.members'),
-                },
-                {
-                    text: 'Type',
-                    path: route('member-types.index'),
-                },
-                {
-                    text: 'Category',
-                    path: route('member-categories.index'),
-                },
-                {
-                    text: 'Family Members',
-                    path: route('membership.family-members'),
-                },
-                {
-                    text: 'Applied Member',
-                    path: route('applied-member.index'),
-                },
-                {
-                    text: 'Finance',
-                    path: route('membership.finance'),
-                },
-            ],
-        },
+    const menuItems = useMemo(
+        () => [
+            {
+                text: 'Dashboard',
+                icon: <HomeIcon />,
+                path: route('dashboard'),
+            },
+            {
+                text: 'Room & Event',
+                icon: <CalendarMonthIcon />,
+                children: [
+                    {
+                        text: 'Guests',
+                        path: route('guests.index'),
+                    },
+                    {
+                        text: 'Rooms',
+                        children: [
+                            {
+                                text: 'Dashboard',
+                                path: route('rooms.dashboard'),
+                            },
+                            {
+                                text: 'Manage',
+                                path: route('rooms.manage'),
+                            },
+                            {
+                                text: 'Check-In',
+                                path: route('rooms.checkin'),
+                            },
+                            {
+                                text: 'Check-Out',
+                                path: route('rooms.checkout'),
+                            },
+                            {
+                                text: 'Request',
+                                path: route('rooms.request'),
+                            },
+                            {
+                                text: 'Add Room',
+                                path: route('rooms.add'),
+                            },
+                            {
+                                text: 'All Rooms',
+                                path: route('rooms.all'),
+                            },
+                            {
+                                text: 'Calendar',
+                                path: route('rooms.booking.calendar'),
+                            },
+                            {
+                                text: 'Types',
+                                path: route('room-types.index'),
+                            },
+                            {
+                                text: 'Categories',
+                                path: route('room-categories.index'),
+                            },
+                            {
+                                text: 'Charges Type',
+                                path: route('room-charges-type.index'),
+                            },
+                            {
+                                text: 'MiniBar',
+                                path: route('room-minibar.index'),
+                            },
+                        ],
+                    },
+                    {
+                        text: 'Events',
+                        children: [
+                            {
+                                text: 'Dashboard',
+                                path: route('events.dashboard'),
+                            },
+                            {
+                                text: 'Manage',
+                                path: route('events.manage'),
+                            },
+                            {
+                                text: 'Completed',
+                                path: route('events.completed'),
+                            },
+                            {
+                                text: 'Cancelled',
+                                path: route('events.cancelled'),
+                            },
+                            {
+                                text: 'Calendar',
+                                path: route('events.calendar'),
+                            },
+                            {
+                                text: 'Venues',
+                                path: route('event-venues.index'),
+                            },
+                            {
+                                text: 'Menu',
+                                path: route('event-menu.index'),
+                            },
+                            {
+                                text: 'Menu Category',
+                                path: route('event-menu-category.index'),
+                            },
+                            {
+                                text: 'Menu Type',
+                                path: route('event-menu-type.index'),
+                            },
+                            {
+                                text: 'Charges Type',
+                                path: route('event-charges-type.index'),
+                            },
+                            {
+                                text: 'Menu AddOn',
+                                path: route('event-menu-addon.index'),
+                            },
+                            // {
+                            //     text: 'Locations',
+                            //     path: route('events.locations'),
+                            // },
+                        ],
+                    },
+                ],
+            },
+            {
+                text: 'Membership ',
+                icon: <TiBusinessCard style={{ width: 25, height: 25 }} />,
+                children: [
+                    {
+                        text: 'Dashboard',
+                        path: route('membership.dashboard'),
+                    },
+                    {
+                        text: 'Memberships',
+                        path: route('membership.members'),
+                    },
+                    {
+                        text: 'Type',
+                        path: route('member-types.index'),
+                    },
+                    {
+                        text: 'Category',
+                        path: route('member-categories.index'),
+                    },
+                    {
+                        text: 'Family Members',
+                        path: route('membership.family-members'),
+                    },
+                    {
+                        text: 'Applied Member',
+                        path: route('applied-member.index'),
+                    },
+                    {
+                        text: 'Finance',
+                        path: route('membership.finance'),
+                    },
+                ],
+            },
 
-        {
-            text: 'Employee HR',
-            icon: <PeopleIcon />,
-            children: [
-                {
-                    text: 'Dashboard',
-                    path: route('employees.dashboard'),
-                },
-                {
-                    text: 'Departments',
-                    path: route('employees.departments'),
-                },
-                {
-                    text: 'Types',
-                    path: route('employees.types'),
-                },
-                {
-                    text: 'Leave Category',
-                    path: route('employees.leaves.category.index'),
-                },
-                {
-                    text: 'Leave Application',
-                    path: route('employees.leaves.application.index'),
-                },
-                {
-                    text: 'Leave Report',
-                    path: route('employees.leaves.application.report'),
-                },
-                {
-                    text: 'Attendance',
-                    path: route('employees.attendances.dashboard'),
-                },
-                {
-                    text: 'Management',
-                    path: route('employees.attendances.management'),
-                },
-                {
-                    text: 'Report',
-                    path: route('employees.attendances.report'),
-                },
-                {
-                    text: 'Monthly Report',
-                    path: route('employees.attendances.monthly.report'),
-                },
-                {
-                    text: 'Payroll',
-                    path: route('employee.payroll'),
-                },
-            ],
-        },
-        {
-            text: 'Reports',
-            icon: <AssessmentIcon />,
-            children: [
-                {
-                    text: 'Membership Reports',
-                    path: route('membership.reports'),
-                },
-                {
-                    text: 'POS Reports',
-                    path: route('admin.reports.pos.all'),
-                },
-                {
-                    text: 'POS Restaurant',
-                    path: route('admin.reports.pos.restaurant-wise'),
-                },
-                {
-                    text: 'Running Orders',
-                    path: route('admin.reports.pos.running-sales-orders'),
-                },
-                {
-                    text: 'Sales Summary',
-                    path: route('admin.reports.pos.sales-summary-with-items'),
-                },
-                {
-                    text: 'Cashier Sales List',
-                    path: route('admin.reports.pos.daily-sales-list-cashier-wise'),
-                },
-                {
-                    text: 'Dump Report',
-                    path: route('admin.reports.pos.daily-dump-items-report'),
-                },
-            ],
-        },
-        {
-            text: 'Finance',
-            icon: <PaymentsIcon />,
-            children: [
-                {
-                    text: 'Dashboard',
-                    path: route('finance.dashboard'),
-                },
-                {
-                    text: 'Bulk Transaction',
-                    path: route('finance.transaction.bulk-migration'),
-                },
-                {
-                    text: 'Add Transaction',
-                    path: route('finance.transaction.create'),
-                },
-                {
-                    text: 'Transaction',
-                    path: route('finance.transaction'),
-                },
-                {
-                    text: 'Vouchers',
-                    icon: <ConfirmationNumberIcon />,
-                    path: route('vouchers.dashboard'),
-                },
-            ],
-        },
+            {
+                text: 'Employee HR',
+                icon: <PeopleIcon />,
+                children: [
+                    {
+                        text: 'Dashboard',
+                        path: route('employees.dashboard'),
+                    },
+                    {
+                        text: 'Departments',
+                        path: route('employees.departments'),
+                    },
+                    {
+                        text: 'Subdepartments',
+                        path: route('employees.subdepartments'),
+                    },
+                    {
+                        text: 'Types',
+                        path: route('employees.types'),
+                    },
+                    {
+                        text: 'Leave Category',
+                        path: route('employees.leaves.category.index'),
+                    },
+                    {
+                        text: 'Leave Application',
+                        path: route('employees.leaves.application.index'),
+                    },
+                    {
+                        text: 'Leave Report',
+                        path: route('employees.leaves.application.report'),
+                    },
+                    {
+                        text: 'Attendance',
+                        path: route('employees.attendances.dashboard'),
+                    },
+                    {
+                        text: 'Management',
+                        path: route('employees.attendances.management'),
+                    },
+                    {
+                        text: 'Report',
+                        path: route('employees.attendances.report'),
+                    },
+                    {
+                        text: 'Monthly Report',
+                        path: route('employees.attendances.monthly.report'),
+                    },
+                    {
+                        text: 'Payroll',
+                        path: route('employee.payroll'),
+                    },
+                ],
+            },
+            {
+                text: 'Reports',
+                icon: <AssessmentIcon />,
+                children: [
+                    {
+                        text: 'Membership Reports',
+                        path: route('membership.reports'),
+                    },
+                    {
+                        text: 'POS Reports',
+                        path: route('admin.reports.pos.all'),
+                    },
+                    {
+                        text: 'POS Restaurant',
+                        path: route('admin.reports.pos.restaurant-wise'),
+                    },
+                    {
+                        text: 'Running Orders',
+                        path: route('admin.reports.pos.running-sales-orders'),
+                    },
+                    {
+                        text: 'Sales Summary',
+                        path: route('admin.reports.pos.sales-summary-with-items'),
+                    },
+                    {
+                        text: 'Cashier Sales List',
+                        path: route('admin.reports.pos.daily-sales-list-cashier-wise'),
+                    },
+                    {
+                        text: 'Dump Report',
+                        path: route('admin.reports.pos.daily-dump-items-report'),
+                    },
+                ],
+            },
+            {
+                text: 'Finance',
+                icon: <PaymentsIcon />,
+                children: [
+                    {
+                        text: 'Dashboard',
+                        path: route('finance.dashboard'),
+                    },
+                    {
+                        text: 'Bulk Transaction',
+                        path: route('finance.transaction.bulk-migration'),
+                    },
+                    {
+                        text: 'Add Transaction',
+                        path: route('finance.transaction.create'),
+                    },
+                    {
+                        text: 'Transaction',
+                        path: route('finance.transaction'),
+                    },
+                    {
+                        text: 'Vouchers',
+                        icon: <ConfirmationNumberIcon />,
+                        path: route('vouchers.dashboard'),
+                    },
+                ],
+            },
 
-        {
-            text: 'Subscription',
-            icon: <SubscriptionsIcon />,
-            children: [
-                {
-                    text: 'Dashboard',
-                    path: route('subscription.dashboard'),
-                },
-                {
-                    text: 'Management',
-                    path: route('subscriptions.management'),
-                },
-                {
-                    text: 'Type',
-                    path: route('subscription-types.index'),
-                },
-                {
-                    text: 'Categories',
-                    path: route('subscription-categories.index'),
-                },
-            ],
-        },
-        {
-            text: 'Cards',
-            icon: <FaRegAddressCard style={{ width: 25, height: 25 }} />,
-            path: route('cards.dashboard'),
-        },
-        // {
-        //     text: 'Kitchen',
-        //     icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
-        //     children: [
-        //         {
-        //             text: 'Dashboard',
-        //             path: route('kitchen.dashboard'),
-        //         },
-        //         {
-        //             text: 'Customer History',
-        //             path: route('kitchen.history'),
-        //         },
-        //     ],
-        // },
-        {
-            text: 'Kitchens',
-            icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
-            children: [
-                {
-                    text: 'Dashboard',
-                    path: route('locations.index'),
-                },
-                {
-                    text: 'Create New',
-                    path: route('locations.create'),
-                },
-            ],
-        },
-        {
-            text: 'Data Migration',
-            icon: <StorageIcon />,
-            path: route('data-migration.index'),
-        },
+            {
+                text: 'Subscription',
+                icon: <SubscriptionsIcon />,
+                children: [
+                    {
+                        text: 'Dashboard',
+                        path: route('subscription.dashboard'),
+                    },
+                    {
+                        text: 'Management',
+                        path: route('subscriptions.management'),
+                    },
+                    {
+                        text: 'Type',
+                        path: route('subscription-types.index'),
+                    },
+                    {
+                        text: 'Categories',
+                        path: route('subscription-categories.index'),
+                    },
+                ],
+            },
+            {
+                text: 'Cards',
+                icon: <FaRegAddressCard style={{ width: 25, height: 25 }} />,
+                path: route('cards.dashboard'),
+            },
+            // {
+            //     text: 'Kitchen',
+            //     icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
+            //     children: [
+            //         {
+            //             text: 'Dashboard',
+            //             path: route('kitchen.dashboard'),
+            //         },
+            //         {
+            //             text: 'Customer History',
+            //             path: route('kitchen.history'),
+            //         },
+            //     ],
+            // },
+            {
+                text: 'Kitchens',
+                icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
+                children: [
+                    {
+                        text: 'Dashboard',
+                        path: route('locations.index'),
+                    },
+                    {
+                        text: 'Create New',
+                        path: route('locations.create'),
+                    },
+                ],
+            },
+            {
+                text: 'Data Migration',
+                icon: <StorageIcon />,
+                path: route('data-migration.index'),
+            },
 
-        {
-            text: 'Settings',
-            icon: <SettingsIcon />,
-            children: [
-                {
-                    text: 'Role Management',
-                    path: route('admin.roles.index'),
-                },
-                {
-                    text: 'User Management',
-                    path: route('admin.users.index'),
-                },
-                {
-                    text: 'Billing',
-                    path: route('admin.billing-settings.edit'),
-                },
-                {
-                    text: 'Profile settings',
-                    path: '/settings/profile',
-                },
-                {
-                    text: 'Password',
-                    path: '/settings/password',
-                },
-            ],
-        },
-        {
-            text: 'Logout',
-            icon: <LogoutIcon />,
-            path: route('logout'),
-        },
-    ], [])
+            {
+                text: 'Settings',
+                icon: <SettingsIcon />,
+                children: [
+                    {
+                        text: 'Role Management',
+                        path: route('admin.roles.index'),
+                    },
+                    {
+                        text: 'User Management',
+                        path: route('admin.users.index'),
+                    },
+                    {
+                        text: 'Billing',
+                        path: route('admin.billing-settings.edit'),
+                    },
+                    {
+                        text: 'Profile settings',
+                        path: '/settings/profile',
+                    },
+                    {
+                        text: 'Password',
+                        path: '/settings/password',
+                    },
+                ],
+            },
+            {
+                text: 'Logout',
+                icon: <LogoutIcon />,
+                path: route('logout'),
+            },
+        ],
+        [],
+    );
 
     const firstLoad = React.useRef(true);
 
@@ -696,14 +703,7 @@ export default function SideNav({ open, setOpen }) {
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
                             // const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));
-                            const isSelected =
-                                (path && url === normalizePath(path)) ||
-                                (children &&
-                                    children.some(
-                                        (child) =>
-                                            url === normalizePath(child.path) ||
-                                            (child.children && child.children.some((sub) => url === normalizePath(sub.path)))
-                                    ))
+                            const isSelected = (path && url === normalizePath(path)) || (children && children.some((child) => url === normalizePath(child.path) || (child.children && child.children.some((sub) => url === normalizePath(sub.path)))));
                             return (
                                 <Box key={text} sx={{ position: 'relative' }}>
                                     <ListItem disablePadding sx={{ display: 'block', px: 3, py: 0.1 }}>
