@@ -27,7 +27,7 @@ const Profile = ({ mustVerifyEmail, status }) => {
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingTop: "1rem" }}>
-                <Typography variant="h4" style={{ color: '#063455', fontWeight: 500, marginLeft:"30px"}}>
+                <Typography variant="h5" style={{ color: '#063455', fontWeight: 600, marginLeft:"30px"}}>
                     Profile Information
                 </Typography>
                 <div style={{ maxWidth: '500px', margin: '0 auto', paddingTop:'1rem' }}>

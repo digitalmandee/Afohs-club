@@ -90,10 +90,10 @@ const RunPayrollDashboard = () => {
                     <div className="mb-4">
                         <h5 className="mb-0 d-flex align-items-center" style={{
                             color: '#063455',
-                            fontWeight: 500,
-                            fontSize: '30px'
+                            fontWeight: 600,
+                            // fontSize: '30px'
                         }}>
-                            <ArrowBack style={{ marginRight: "10px", cursor: "pointer" }} />
+                            <ArrowBack style={{ marginRight: "10px", cursor: "pointer", color:'#063455' }} />
                             Run Payroll Dashboard
                         </h5>
                     </div>

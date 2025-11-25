@@ -164,10 +164,10 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
-                <IconButton sx={{ color: '#000' }} onClick={() => window.history.back()}>
-                    <ArrowBack />
+                <IconButton onClick={() => window.history.back()}>
+                    <ArrowBack sx={{ color: '#063455' }} />
                 </IconButton>
-                <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>
+                <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#063455' }}>
                     Personal Information
                 </Typography>
             </Box>

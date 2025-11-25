@@ -77,7 +77,7 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                 <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
                     <Grid container justifyContent="space-between" alignItems="center">
                         <Grid item>
-                            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                            <Typography variant="h5" sx={{ fontWeight: '600', mb: 1 }}>
                                 Restaurant-Wise POS Reports
                             </Typography>
                             <Typography variant="h6" color="text.secondary">

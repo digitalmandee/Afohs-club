@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog } from '@mui/material';
-import { ArrowBack, Person, Groups, Edit, Phone, Email, LocationOn, CalendarToday, CreditCard, Badge, Warning, Receipt, Visibility } from '@mui/icons-material';
+import { Box, Typography, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog, IconButton } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Person, Groups, Edit, Phone, Email, LocationOn, CalendarToday, CreditCard, Badge, Warning, Receipt, Visibility } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import ReceiptComponent from '@/components/App/Invoice/Receipt';
@@ -178,33 +178,18 @@ const ViewProfile = ({ member }) => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    p: 3,
-                    // width: { sm: `calc(100% - ${open ? drawerWidthOpen : drawerWidthClosed}px)` },
-                    // ml: { sm: `${open ? drawerWidthOpen : drawerWidthClosed}px` },
-                    // transition: 'margin 0.3s, width 0.3s',
+                    p: 2,
+                    bgcolor:'#f5f5f5'
                 }}
             >
                 {/* Header */}
                 <Box sx={{ mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Button
-                                startIcon={<ArrowBack />}
-                                onClick={handleBack}
-                                variant="outlined"
-                                size="medium"
-                                sx={{
-                                    borderColor: '#E5E5EA',
-                                    color: '#063455',
-                                    '&:hover': {
-                                        backgroundColor: '#E5E5EA',
-                                        borderColor: '#E5E5EA',
-                                    },
-                                }}
-                            >
-                                Back to Dashboard
-                            </Button>
-                            <Typography variant="h4" sx={{ fontWeight: 700, color: '#063455', fontSize: '28px' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBackIcon sx={{ color: '#063455' }} />
+                            </IconButton>
+                            <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
                                 Member Profile
                             </Typography>
                         </Box>
@@ -1174,11 +1159,11 @@ const ViewProfile = ({ member }) => {
             >
                 <Box sx={{ display: 'flex', height: '100vh' }}>
                     {/* Receipt Component */}
-                    <ReceiptComponent 
-                        invoiceId={selectedOrderForReceipt?.invoice_id || selectedOrderForReceipt?.id} 
+                    <ReceiptComponent
+                        invoiceId={selectedOrderForReceipt?.invoice_id || selectedOrderForReceipt?.id}
                         invoiceRoute="member.orderhistory.invoice"
-                        openModal={openReceiptModal} 
-                        closeModal={handleCloseReceiptModal} 
+                        openModal={openReceiptModal}
+                        closeModal={handleCloseReceiptModal}
                     />
                 </Box>
             </Dialog>

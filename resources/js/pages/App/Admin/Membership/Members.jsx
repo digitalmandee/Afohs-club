@@ -98,7 +98,7 @@ const AllMembers = ({ members }) => {
                     {/* Recently Joined Section */}
                     <div className="mx-3">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <Typography sx={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>All Members</Typography>
+                            <Typography sx={{ fontWeight: 600, fontSize:'24px', color: '#063455' }}>All Members</Typography>
                         </div>
 
                         {/* Filter Modal */}

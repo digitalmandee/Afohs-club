@@ -224,10 +224,10 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                 <Box sx={{ p: 3 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.salaries'))} sx={{ color: '#063455' }}>
-                                Back to Salaries
-                            </Button>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBackIcon sx={{ color: '#063455' }} />
+                            </IconButton>
                             <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
                                 Edit Salary Structure
                             </Typography>

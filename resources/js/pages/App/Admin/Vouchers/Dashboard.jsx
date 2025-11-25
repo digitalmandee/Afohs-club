@@ -85,7 +85,7 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
         <Box sx={{ p: 3 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Typography variant="h4" fontWeight="bold">
+                        <Typography variant="h5" sx={{color:'#063455', fontWeight:'600'}}>
                             Voucher Management
                         </Typography>
                         <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route('vouchers.create'))} sx={{ backgroundColor: '#063455' }}>

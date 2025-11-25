@@ -85,9 +85,9 @@ const SubscriptionsMaintenanceSummary = () => {
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <div className="d-flex align-items-center">
                             <IconButton onClick={() => window.history.back()}>
-                                <ArrowBack />
+                                <ArrowBack sx={{color:'#063455'}} />
                             </IconButton>
-                            <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
+                            <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>
                                 Subscriptions & Maintenance Summary (Category-wise)
                             </Typography>
                         </div>

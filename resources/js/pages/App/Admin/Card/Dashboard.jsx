@@ -72,7 +72,7 @@ const CardsDashboard = ({
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center">
                         <div className="d-flex align-items-center">
-                            <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Card Dashboard</Typography>
+                            <Typography sx={{ marginLeft: '10px', fontWeight: 600, color: '#063455', fontSize: '30px' }}>Card Dashboard</Typography>
                         </div>
                     </div>
 

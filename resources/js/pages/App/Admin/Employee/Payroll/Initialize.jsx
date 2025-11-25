@@ -103,7 +103,7 @@ const InitializeList = () => {
                                     style={{ color: "#063455", height: 24, width: 24 }}
                                     onClick={() => window.history.back()}
                                 >
-                                    <ArrowBack />
+                                    <ArrowBack sx={{color:'#063455'}} />
                                 </IconButton>
                                 <Typography sx={{ color: '#063455', fontWeight: 500, fontSize: '30px', marginLeft: 2 }}>
                                     Initialization List

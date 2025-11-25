@@ -78,9 +78,9 @@ const SubscriptionType = ({ subscriptionTypesData }) => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={()=> window.history.back()}>
-                            <ArrowBackIcon sx={{ color: '#555' }} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
                             Subscription Type
                         </Typography>
                     </Box>

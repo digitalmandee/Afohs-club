@@ -100,7 +100,7 @@ const Management = () => {
                         <div className="col-auto d-flex align-items-center">
                             <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <IconButton>
-                                    <ArrowBack />
+                                    <ArrowBack sx={{ color: '#063455' }} />
                                 </IconButton>
                             </div>
                             <Typography

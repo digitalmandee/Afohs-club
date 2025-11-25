@@ -68,7 +68,7 @@ const ViewSalaryStructure = ({ employee }) => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
-                            <ArrowBackIcon />
+                            <ArrowBackIcon sx={{color: '#063455'}} />
                         </IconButton>
                         <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Salary Structure Details

@@ -65,7 +65,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                         <Row className="align-items-center mb-4">
                             <Col xs="auto">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <h2 style={{ margin: 0, fontWeight: '500', color: '#063455', fontSize: '30px' }}>Finance Dashboard</h2>
+                                    <h2 style={{ margin: 0, fontWeight: '600', color: '#063455' }}>Finance Dashboard</h2>
                                     {/* <pre>{JSON.stringify(FinancialInvoice, null, 2)}</pre> */}
                                 </div>
                             </Col>

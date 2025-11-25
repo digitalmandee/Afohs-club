@@ -61,7 +61,7 @@ export default function Billing({ settings }) {
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-                <Typography variant="h4" sx={{ fontWeight: 500, color: '#063455', ml:4, pt:3 }}>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455', ml:4, pt:3 }}>
                     Billing Settings
                 </Typography>
                 <Paper sx={{ p: 2, maxWidth: "800px", mx: "auto", mt:5 }}>

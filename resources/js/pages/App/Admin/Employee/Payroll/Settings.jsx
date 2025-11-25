@@ -96,9 +96,9 @@ const PayrollSettings = () => {
             <Box sx={{ bgcolor: '#f5f5f5', p: 3 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton edge="start" onClick={() => window.history.back()}>
-                            <ArrowBackIcon />
+                            <ArrowBackIcon sx={{color: '#063455'}} />
                         </IconButton>
                         <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payroll Settings

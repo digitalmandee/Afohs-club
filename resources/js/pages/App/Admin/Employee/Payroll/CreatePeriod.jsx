@@ -147,7 +147,7 @@ const CreatePeriod = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
-                            <ArrowBackIcon />
+                            <ArrowBackIcon sx={{color:'#063455'}} />
                         </IconButton>
                         <Box>
                             <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>

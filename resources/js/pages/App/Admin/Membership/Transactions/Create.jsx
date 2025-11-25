@@ -1007,7 +1007,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 <Box sx={{ p: 4 }}>
                     {/* Header */}
                     <Box sx={{ mb: 4 }}>
-                        <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: '#1e293b', mb: 1 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455', mb: 1 }}>
                             Invoice Generation
                         </Typography>
                         <Typography variant="body1" color="text.secondary">
@@ -1430,7 +1430,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         >
                                                             <Grid container spacing={3}>
                                                                 <Grid item xs={6}>
-                                                                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
+                                                                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: '#063455' }}>
                                                                         Subscription Type
                                                                     </Typography>
                                                                     <FormControl fullWidth>

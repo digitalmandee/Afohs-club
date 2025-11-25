@@ -45,7 +45,7 @@ const Password = () => {
                     paddingTop:'1rem'
                 }}
             >
-                <Typography variant="h4" style={{ color: '#063455', fontWeight: 500, marginLeft:'30px' }}>
+                <Typography variant="h5" style={{ color: '#063455', fontWeight: 600, marginLeft:'30px' }}>
                     Password
                 </Typography>
                 <Box style={{ maxWidth: '600px', margin:'0 auto', padding: '2rem' }}>
