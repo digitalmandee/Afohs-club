@@ -287,10 +287,6 @@ export default function SideNav({ open, setOpen }) {
                         path: route('employees.subdepartments'),
                     },
                     {
-                        text: 'Types',
-                        path: route('employees.types'),
-                    },
-                    {
                         text: 'Leave Category',
                         path: route('employees.leaves.category.index'),
                     },
