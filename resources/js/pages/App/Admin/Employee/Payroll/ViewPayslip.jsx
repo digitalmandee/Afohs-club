@@ -108,11 +108,11 @@ const ViewPayslip = ({ payslipId }) => {
         <AdminLayout>
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.payslips'))} sx={{ color: '#063455' }}>
-                        Back to Payslips
-                    </Button>
-                    <Divider orientation="vertical" flexItem />
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton onClick={() => window.history.back()}>
+                        <ArrowBackIcon sx={{ color: '#063455' }} />
+                    </IconButton>
+                    {/* <Divider orientation="vertical" flexItem /> */}
                     <Box>
                         <Typography variant="h4" sx={{ fontWeight: 600, color: '#063455' }}>
                             Payslip Details

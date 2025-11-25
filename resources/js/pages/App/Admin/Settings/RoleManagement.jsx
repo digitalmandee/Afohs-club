@@ -114,8 +114,8 @@ const RoleManagement = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <SecurityIcon sx={{ mr: 2, color: '#063455', fontSize: '2rem' }} />
-                        <Typography variant="h4" sx={{ fontWeight: 600, color: '#063455' }}>
+                        {/* <SecurityIcon sx={{ mr: 2, color: '#063455', fontSize: '2rem' }} /> */}
+                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
                             Role Management
                         </Typography>
                     </Box>

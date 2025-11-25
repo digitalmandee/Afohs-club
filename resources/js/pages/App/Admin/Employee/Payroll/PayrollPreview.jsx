@@ -4,6 +4,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, CardContent, Typography, Button, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Pagination, Snackbar, Alert, Collapse, IconButton } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as VisibilityIcon, MoreVert as MoreVertIcon, ArrowBack as ArrowBackIcon, PlayArrow as PlayArrowIcon, Assessment as AssessmentIcon, Payment as PaymentIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 const PayrollPreview = ({ period: initialPeriod, token: initialToken }) => {
@@ -91,11 +92,11 @@ const PayrollPreview = ({ period: initialPeriod, token: initialToken }) => {
         <AdminLayout>
             <Box sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button onClick={() => router.visit(route('employees.payroll.process'))} sx={{ color: '#063455' }}>
-                            Back to Payroll
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
+                        </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payroll Preview
                         </Typography>
                     </Box>
@@ -118,15 +119,15 @@ const PayrollPreview = ({ period: initialPeriod, token: initialToken }) => {
                                         <TableContainer component={Paper} sx={{ maxHeight: 500 }}>
                                             <Table stickyHeader size="small">
                                                 <TableHead>
-                                                    <TableRow sx={{bgcolor:'#E5E5EA'}}>
-                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Employee</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Department</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Basic Salary</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Allowances</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Deductions</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Order Deductions</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Gross Salary</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600, color:'#000' }}>Net Salary</TableCell>
+                                                    <TableRow sx={{ bgcolor: '#E5E5EA' }}>
+                                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Department</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Basic Salary</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Allowances</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Deductions</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Order Deductions</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Gross Salary</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600, color: '#000' }}>Net Salary</TableCell>
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>

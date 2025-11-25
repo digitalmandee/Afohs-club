@@ -54,10 +54,10 @@ const DetailedReport = ({ period, payslips }) => {
         <AdminLayout>
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.reports'))} sx={{ color: '#063455' }}>
-                        Back to Reports
-                    </Button>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton onClick={() => window.history.back()}>
+                        <ArrowBackIcon sx={{ color: '#063455' }} />
+                    </IconButton>
                     <Box>
                         <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
                             Detailed Payroll Report

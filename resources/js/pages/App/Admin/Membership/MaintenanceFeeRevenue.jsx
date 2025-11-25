@@ -37,14 +37,13 @@ const MaintenanceFeeRevenue = () => {
                         {/* Left section (Arrow + Title) */}
                         <div className="d-flex align-items-center">
                             <IconButton onClick={() => window.history.back()}>
-                                <ArrowBack />
+                                <ArrowBack sx={{color:'#063455'}} />
                             </IconButton>
                             <Typography
                                 sx={{
-                                    fontWeight: 500,
-                                    fontSize: '30px',
+                                    fontWeight: 600,
+                                    fontSize: '24px',
                                     color: '#063455',
-                                    ml: 1, // adds left margin for spacing between icon and text
                                 }}
                             >
                                 Maintenance Fee Revenue

@@ -150,9 +150,9 @@ const MonthlyMaintenanceFeeReport = () => {
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <div className="d-flex align-items-center">
                             <IconButton onClick={() => window.history.back()}>
-                                <ArrowBack />
+                                <ArrowBack sx={{color:'#063455'}} />
                             </IconButton>
-                            <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Monthly Maintenance Fee Report</Typography>
+                            <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Monthly Maintenance Fee Report</Typography>
                         </div>
                         <Button
                             variant="contained"

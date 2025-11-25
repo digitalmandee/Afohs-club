@@ -160,7 +160,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                         {/* <IconButton sx={{ color: '#333', mr: 1 }}>
                             <ArrowBack />
                         </IconButton> */}
-                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
                             Finance
                             {/* <pre>{JSON.stringify(membersdata, null, 2)}</pre> */}
                         </Typography>

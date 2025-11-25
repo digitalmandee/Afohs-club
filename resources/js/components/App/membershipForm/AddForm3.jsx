@@ -703,10 +703,10 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                 {/* <Container maxWidth="lg" sx={{ py: 4 }}> */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <IconButton onClick={onBack} sx={{ color: '#000' }}>
-                            <ArrowBackIcon />
+                        <IconButton onClick={onBack}>
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#063455' }}>
                             Membership Information
                         </Typography>
                     </Box>

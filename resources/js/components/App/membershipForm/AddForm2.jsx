@@ -56,10 +56,10 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
         <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
-                <IconButton onClick={onBack} sx={{ color: '#000' }}>
-                    <ArrowBack />
+                <IconButton onClick={onBack}>
+                    <ArrowBack sx={{ color: '#063455' }} />
                 </IconButton>
-                <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, color: '#333' }}>
+                <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#063455' }}>
                     Contact Information
                 </Typography>
             </Box>

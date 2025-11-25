@@ -87,7 +87,7 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                     <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
                         <Grid container justifyContent="space-between" alignItems="center">
                             <Grid item>
-                                <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                <Typography variant="h5" sx={{ fontWeight: '600', mb: 1 }}>
                                     Running Sales Orders
                                 </Typography>
                                 <Typography variant="h6" color="text.secondary">
@@ -165,7 +165,7 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
 
                     {/* Orders Table */}
                     <Paper elevation={2} sx={{ p: 3 }}>
-                        <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', textAlign: 'center' }}>
+                        <Typography variant="h5" sx={{ mb: 3, fontWeight: '600', textAlign: 'center' }}>
                             RUNNING SALES ORDERS
                         </Typography>
 

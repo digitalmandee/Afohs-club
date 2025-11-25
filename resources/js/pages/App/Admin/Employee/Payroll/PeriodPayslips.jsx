@@ -207,16 +207,16 @@ const PeriodPayslips = ({ period }) => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
-                            <ArrowBackIcon />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
                         <Box>
                             <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                                 Period Payslips
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
-                                {period?.period_name} - {period ? new Date(period.start_date).toLocaleDateString() : ''} to {period ? new Date(period.end_date).toLocaleDateString() : ''}
-                            </Typography>
                         </Box>
+                        <Typography variant="body2" color="textSecondary">
+                            {period?.period_name} - {period ? new Date(period.start_date).toLocaleDateString() : ''} to {period ? new Date(period.end_date).toLocaleDateString() : ''}
+                        </Typography>
                     </Box>
                     {/* <AssignmentIcon sx={{ fontSize: 40, color: '#063455', opacity: 0.7 }} /> */}
                 </Box>
@@ -300,13 +300,11 @@ const PeriodPayslips = ({ period }) => {
                         </Box>
                     </Grid>
                     <Grid item xs={12} md={3}>
-                        <Card sx={{ background: 'linear-gradient(135deg, #063455 0%, #0a4a6b 100%)', color: 'white' }}>
-                            <CardContent sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                    {payslips.length}
-                                </Typography>
-                                <Typography variant="body2">Total Payslips</Typography>
-                            </CardContent>
+                        <Card sx={{ backgroundColor: '#063455', color: 'white', display:'flex', height:40 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                {payslips.length}
+                            </Typography>
+                            <Typography variant="body2">Total Payslips</Typography>
                         </Card>
                     </Grid>
                 </Grid>
@@ -368,13 +366,13 @@ const PeriodPayslips = ({ period }) => {
                                             <TableCell>{payslip.employee?.employee_id || 'N/A'}</TableCell>
                                             <TableCell>{payslip.employee?.department?.name || 'N/A'}</TableCell>
                                             <TableCell>
-                                                <Typography sx={{ fontWeight: 600, color: '#2e7d32', borderRadius:'4px' }}>{formatCurrency(payslip.gross_salary)}</Typography>
+                                                <Typography sx={{ fontWeight: 600, color: '#2e7d32', borderRadius: '4px' }}>{formatCurrency(payslip.gross_salary)}</Typography>
                                             </TableCell>
                                             <TableCell>
-                                                <Typography sx={{ fontWeight: 600, color: '#d32f2f', borderRadius:'4px' }}>{formatCurrency(payslip.total_deductions)}</Typography>
+                                                <Typography sx={{ fontWeight: 600, color: '#d32f2f', borderRadius: '4px' }}>{formatCurrency(payslip.total_deductions)}</Typography>
                                             </TableCell>
                                             <TableCell>
-                                                <Typography sx={{ fontWeight: 600, color: '#063455', borderRadius:'4px' }}>{formatCurrency(payslip.net_salary)}</Typography>
+                                                <Typography sx={{ fontWeight: 600, color: '#063455', borderRadius: '4px' }}>{formatCurrency(payslip.net_salary)}</Typography>
                                             </TableCell>
                                             <TableCell>
                                                 <Chip label={getStatusText(payslip.status)} size="small" color={getStatusColor(payslip.status)} sx={{ fontWeight: 600 }} />

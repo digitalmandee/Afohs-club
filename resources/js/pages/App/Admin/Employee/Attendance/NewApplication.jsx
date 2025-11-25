@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
-import { Autocomplete, IconButton, TextField, Button, Alert, Select, MenuItem, FormHelperText, FormControl, InputLabel, Snackbar, Typography } from '@mui/material';
+import { Autocomplete, IconButton, TextField, Button, Alert, Select, MenuItem, FormHelperText, FormControl, InputLabel, Snackbar, Typography, Grid } from '@mui/material';
 import { Box } from '@mui/system';
 import { ArrowBack } from "@mui/icons-material"
 import axios from 'axios';
@@ -90,12 +90,12 @@ const LeaveApplication = () => {
 			>
 				<Box sx={{ px: 2, py: 2 }}>
 					<div style={{ paddingTop: '0.5rem' }}>
-						<div style={{ display: 'flex', alignItems:'center', marginBottom: '24px' }}>
+						<div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
 							<IconButton
-							onClick={()=>window.history.back()}>
-								<ArrowBack />
+								onClick={() => window.history.back()}>
+								<ArrowBack sx={{ color: '#063455' }} />
 							</IconButton>
-							<Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
+							<Typography variant="h5" style={{ fontWeight: '600', color: '#063455' }}>
 								{leaveApplication ? 'Edit Leave Application' : 'New Leave Application'}
 							</Typography>
 						</div>
@@ -142,8 +142,35 @@ const LeaveApplication = () => {
 								<FormHelperText>{errors.leave_category_id}</FormHelperText>
 							</FormControl>
 
-							<TextField type="date" label="Start Date" InputLabelProps={{ shrink: true }} fullWidth name="start_date" value={formData.start_date} onChange={handleChange} margin="normal" error={!!errors.start_date} helperText={errors.start_date} />
-							<TextField type="date" label="End Date" InputLabelProps={{ shrink: true }} fullWidth name="end_date" value={formData.end_date} onChange={handleChange} margin="normal" error={!!errors.end_date} helperText={errors.end_date} />
+							<Grid container spacing={2}>
+								<Grid item xs={12} sm={6}>
+									<TextField
+										type="date"
+										label="Start Date"
+										InputLabelProps={{ shrink: true }}
+										fullWidth
+										name="start_date"
+										value={formData.start_date}
+										onChange={handleChange}
+										error={!!errors.start_date}
+										helperText={errors.start_date}
+									/>
+								</Grid>
+
+								<Grid item xs={12} sm={6}>
+									<TextField
+										type="date"
+										label="End Date"
+										InputLabelProps={{ shrink: true }}
+										fullWidth
+										name="end_date"
+										value={formData.end_date}
+										onChange={handleChange}
+										error={!!errors.end_date}
+										helperText={errors.end_date}
+									/>
+								</Grid>
+							</Grid>
 							<TextField multiline rows={3} label="Reason" fullWidth name="reason" value={formData.reason} onChange={handleChange} margin="normal" error={!!errors.reason} helperText={errors.reason} />
 
 							{leaveApplication && (

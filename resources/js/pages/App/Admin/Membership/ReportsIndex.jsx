@@ -65,9 +65,9 @@ const ReportsIndex = () => {
                     {/* Header Section */}
                     <Box sx={{ mb: 4 }}>
                         <Typography 
-                            variant="h3" 
+                            variant="h5" 
                             sx={{ 
-                                fontWeight: 700, 
+                                fontWeight: 600, 
                                 color: '#063455', 
                                 mb: 1,
                                 display: 'flex',

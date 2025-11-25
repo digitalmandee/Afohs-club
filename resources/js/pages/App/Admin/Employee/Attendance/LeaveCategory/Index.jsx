@@ -137,7 +137,7 @@ const Management = () => {
                                     backgroundColor: '#0A3D62',
                                     color: 'white',
                                     textTransform: 'none',
-                                    padding: '12px',
+                                    // padding: '12px',
                                     fontSize: '16px',
                                 }}
                             >

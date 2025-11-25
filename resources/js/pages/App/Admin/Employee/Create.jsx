@@ -304,7 +304,7 @@ const EmployeeCreate = () => {
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
                     <div onClick={() => router.visit(route('employees.dashboard'))} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <IconButton>
-                            <ArrowBack />
+                            <ArrowBack sx={{ color: '#063455' }} />
                         </IconButton>
                     </div>
                     <h2 style={{ margin: 0, fontWeight: '600', color: '#0A3D62' }}>{isEdit ? 'Edit Employee' : 'Personal Detail'}</h2>
